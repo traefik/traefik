@@ -60,9 +60,9 @@ func init() {
 					},
 				},
 				Observability: &dynamic.RouterObservabilityConfig{
-					AccessLogs: pointer(true),
-					Tracing:    pointer(true),
-					Metrics:    pointer(true),
+					AccessLogs: new(true),
+					Tracing:    new(true),
+					Metrics:    new(true),
 				},
 			},
 		},
@@ -84,12 +84,12 @@ func init() {
 						Interval:        ptypes.Duration(111 * time.Second),
 						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
-						FollowRedirects: pointer(true),
+						FollowRedirects: new(true),
 						Headers: map[string]string{
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: pointer(true),
+					PassHostHeader: new(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
 						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
@@ -106,7 +106,7 @@ func init() {
 					Services: []dynamic.WRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 					Sticky: &dynamic.Sticky{
@@ -122,7 +122,7 @@ func init() {
 			"baz": {
 				Mirroring: &dynamic.Mirroring{
 					Service:     "foo",
-					MaxBodySize: pointer[int64](42),
+					MaxBodySize: new(int64(42)),
 					Mirrors: []dynamic.MirrorService{
 						{
 							Name:    "foo",
@@ -210,7 +210,7 @@ func init() {
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},
 					SSLProxyHeaders:                   map[string]string{"foo": "bar"},
-					STSSeconds:                        pointer(int64(42)),
+					STSSeconds:                        new(int64(42)),
 					STSIncludeSubdomains:              true,
 					STSPreload:                        true,
 					ForceSTSHeader:                    true,
@@ -276,11 +276,11 @@ func init() {
 						Key:                "cert.pem",
 						InsecureSkipVerify: true,
 					},
-					TrustForwardHeader:       pointer(true),
+					TrustForwardHeader:       new(true),
 					AuthResponseHeaders:      []string{"foo"},
 					AuthResponseHeadersRegex: "foo",
 					AuthRequestHeaders:       []string{"foo"},
-					MaxResponseBodySize:      pointer[int64](42),
+					MaxResponseBodySize:      new(int64(42)),
 				},
 				InFlightReq: &dynamic.InFlightReq{
 					Amount: 42,
@@ -387,7 +387,7 @@ func init() {
 					Services: []dynamic.TCPWRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 				},
@@ -434,7 +434,7 @@ func init() {
 					Services: []dynamic.UDPWRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 				},
@@ -1006,5 +1006,3 @@ func TestDo_staticConfiguration(t *testing.T) {
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
 	assert.JSONEq(t, expected, cleanJSON)
 }
-
-func pointer[T any](v T) *T { return &v }

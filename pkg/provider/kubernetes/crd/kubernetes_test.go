@@ -28,8 +28,6 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-func pointer[T any](v T) *T { return &v }
-
 func init() {
 	// required by k8s.MustParseYaml
 	err := traefikv1alpha1.AddToScheme(kscheme.Scheme)
@@ -435,11 +433,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
-										Weight: pointer(2),
+										Weight: new(2),
 									},
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
-										Weight: pointer(3),
+										Weight: new(3),
 									},
 								},
 							},
@@ -503,15 +501,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
-										Weight: pointer(2),
+										Weight: new(2),
 									},
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
-										Weight: pointer(3),
+										Weight: new(3),
 									},
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp3-8083",
-										Weight: pointer(4),
+										Weight: new(4),
 									},
 								},
 							},
@@ -1118,7 +1116,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{
 						"default-test.route-fdd3e9338e47a45efefc": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								TerminationDelay: pointer(500),
+								TerminationDelay: new(500),
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -1471,11 +1469,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-test.route-673acf455cb2dab0b43a-whoamitcp-ipv6-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-test.route-673acf455cb2dab0b43a-external.service.with.ipv6-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1522,7 +1520,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 										URL: "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1536,7 +1534,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 										URL: "http://[2001:db8:85a3:8d3:1319:8a2e:370:7347]:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1547,11 +1545,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-ipv6-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-external-svc-with-ipv6-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1688,11 +1686,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1933,9 +1931,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Tracing:    pointer(true),
-								Metrics:    pointer(true),
+								AccessLogs: new(true),
+								Tracing:    new(true),
+								Metrics:    new(true),
 							},
 						},
 					},
@@ -1952,7 +1950,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2025,7 +2023,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2085,9 +2083,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 									DB:             0,
 									PoolSize:       42,
 									MaxActiveConns: 42,
-									ReadTimeout:    pointer(ptypes.Duration(42 * time.Second)),
-									WriteTimeout:   pointer(ptypes.Duration(42 * time.Second)),
-									DialTimeout:    pointer(ptypes.Duration(42 * time.Second)),
+									ReadTimeout:    new(ptypes.Duration(42 * time.Second)),
+									WriteTimeout:   new(ptypes.Duration(42 * time.Second)),
+									DialTimeout:    new(ptypes.Duration(42 * time.Second)),
 								},
 							},
 						},
@@ -2104,7 +2102,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2160,7 +2158,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2223,7 +2221,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2276,7 +2274,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2293,7 +2291,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2336,11 +2334,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami2-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2356,7 +2354,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2373,7 +2371,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2415,7 +2413,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2431,7 +2429,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2466,7 +2464,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2482,7 +2480,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2524,11 +2522,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-wrr1",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-wrr2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2538,11 +2536,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami4-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2558,7 +2556,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2575,7 +2573,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2586,11 +2584,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami6-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami7-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2606,7 +2604,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.6:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2623,7 +2621,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.8:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2665,11 +2663,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-wrr2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2679,7 +2677,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2695,7 +2693,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2737,15 +2735,15 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-wrr2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-mirror1",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2755,7 +2753,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2779,7 +2777,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2796,7 +2794,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2840,7 +2838,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://external.domain:443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2848,8 +2846,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 									Path:              "/health",
 									Timeout:           5000000000,
 									Interval:          15000000000,
-									UnhealthyInterval: pointer(ptypes.Duration(15000000000)),
-									FollowRedirects:   pointer(true),
+									UnhealthyInterval: new(ptypes.Duration(15000000000)),
+									FollowRedirects:   new(true),
 								},
 							},
 						},
@@ -2906,7 +2904,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://external.domain:443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2914,8 +2912,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 									Path:              "/health1",
 									Timeout:           5000000000,
 									Interval:          15000000000,
-									UnhealthyInterval: pointer(ptypes.Duration(15000000000)),
-									FollowRedirects:   pointer(true),
+									UnhealthyInterval: new(ptypes.Duration(15000000000)),
+									FollowRedirects:   new(true),
 								},
 							},
 						},
@@ -2927,7 +2925,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://external.domain:443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2935,8 +2933,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 									Path:              "/health2",
 									Timeout:           5000000000,
 									Interval:          20000000000,
-									UnhealthyInterval: pointer(ptypes.Duration(20000000000)),
-									FollowRedirects:   pointer(true),
+									UnhealthyInterval: new(ptypes.Duration(20000000000)),
+									FollowRedirects:   new(true),
 								},
 							},
 						},
@@ -2972,7 +2970,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://external.domain:443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2980,8 +2978,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 									Path:              "/health1",
 									Timeout:           5000000000,
 									Interval:          15000000000,
-									UnhealthyInterval: pointer(ptypes.Duration(15000000000)),
-									FollowRedirects:   pointer(true),
+									UnhealthyInterval: new(ptypes.Duration(15000000000)),
+									FollowRedirects:   new(true),
 								},
 							},
 						},
@@ -3023,23 +3021,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "baz-whoami6-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "foo-wrr1",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "foo-mirror2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "foo-mirror3",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "foo-mirror4",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3055,7 +3053,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.6:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3066,19 +3064,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "foo-whoami4-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "baz-whoami6-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "foo-mirror1",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "bar-wrr2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3094,7 +3092,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3121,7 +3119,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3162,7 +3160,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "foo-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3228,7 +3226,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3245,7 +3243,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3295,7 +3293,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami4-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3305,7 +3303,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3321,7 +3319,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3338,7 +3336,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3386,7 +3384,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3403,7 +3401,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3443,8 +3441,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-hrw1": {
 							HighestRandomWeight: &dynamic.HighestRandomWeight{
 								Services: []dynamic.HRWService{
-									{Name: "default-whoami1-8080", Weight: pointer(10)},
-									{Name: "default-whoami2-8080", Weight: pointer(20)},
+									{Name: "default-whoami1-8080", Weight: new(10)},
+									{Name: "default-whoami2-8080", Weight: new(20)},
 								},
 							},
 						},
@@ -3459,7 +3457,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3476,7 +3474,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3531,7 +3529,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3548,7 +3546,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3597,7 +3595,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami4-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3607,7 +3605,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami5-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3623,7 +3621,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3640,7 +3638,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3683,7 +3681,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Fallback: "default-whoami4-8080",
 								Errors: &dynamic.FailoverError{
 									Status:              []string{"500-504", "404"},
-									MaxRequestBodyBytes: pointer[int64](1048576),
+									MaxRequestBodyBytes: new(int64(1048576)),
 								},
 							},
 						},
@@ -3698,7 +3696,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3715,7 +3713,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3757,11 +3755,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: pointer(10),
+										Weight: new(10),
 									},
 									{
 										Name:   "default-whoami2-8080",
-										Weight: pointer(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -3777,7 +3775,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3794,7 +3792,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3889,7 +3887,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3947,7 +3945,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4022,7 +4020,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4084,7 +4082,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4101,7 +4099,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4175,7 +4173,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4250,7 +4248,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4323,7 +4321,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4400,7 +4398,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4478,7 +4476,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4527,7 +4525,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4575,7 +4573,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://10.10.0.6:8443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4623,7 +4621,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://10.10.0.8:8443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4672,7 +4670,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4721,7 +4719,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4770,7 +4768,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4812,7 +4810,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address:     "test.com",
-								MaxBodySize: pointer(int64(-1)),
+								MaxBodySize: new(int64(-1)),
 								HeaderField: "X-Header-Field",
 								TLS: &dynamic.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
@@ -5033,7 +5031,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5092,7 +5090,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5139,7 +5137,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader:     pointer(false),
+								PassHostHeader:     new(false),
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: ptypes.Duration(10 * time.Second)},
 							},
 						},
@@ -5196,7 +5194,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5258,7 +5256,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5316,7 +5314,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5333,7 +5331,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5379,7 +5377,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://external.domain:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5423,7 +5421,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://external.domain:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5467,7 +5465,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://external.domain:443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5574,7 +5572,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://external.domain:443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5592,7 +5590,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "https://10.10.0.6:8443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5604,11 +5602,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-external-svc-with-https-443",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoamitls-443",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -5670,7 +5668,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test-route-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5809,7 +5807,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Fenced: true,
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5864,7 +5862,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5914,11 +5912,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-test-weighted",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-test-mirror",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -5926,7 +5924,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test-errorpage-errorpage-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5937,7 +5935,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-without-endpointslice-endpoints-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -5958,7 +5956,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-whoami-without-endpointslice-endpoints-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6005,11 +6003,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami2-8080",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -6019,11 +6017,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-sticky",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-sticky-default",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -6037,13 +6035,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 										HTTPOnly: true,
 										SameSite: "none",
 										MaxAge:   42,
-										Path:     pointer("/foo"),
+										Path:     new("/foo"),
 									},
 								},
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami3-8443",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -6057,13 +6055,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 										HTTPOnly: true,
 										SameSite: "none",
 										MaxAge:   42,
-										Path:     pointer("/"),
+										Path:     new("/"),
 									},
 								},
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami3-8443",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -6078,7 +6076,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										HTTPOnly: true,
 										SameSite: "none",
 										MaxAge:   42,
-										Path:     pointer("/"),
+										Path:     new("/"),
 									},
 								},
 								Servers: []dynamic.Server{
@@ -6089,7 +6087,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6105,7 +6103,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										HTTPOnly: true,
 										SameSite: "none",
 										MaxAge:   42,
-										Path:     pointer("/foo"),
+										Path:     new("/foo"),
 									},
 								},
 								Servers: []dynamic.Server{
@@ -6116,7 +6114,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6133,7 +6131,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.8:8443",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6184,7 +6182,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.2.2:9000",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6239,7 +6237,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.5.2:9000",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6294,7 +6292,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.8.2:9000",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6369,7 +6367,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.11.2:9000",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6449,7 +6447,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.14.2:9000",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6497,7 +6495,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -6576,7 +6574,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 				"default-test-route-6b204d94623b3df4370c": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Strategy:       dynamic.BalancerStrategyWRR,
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(100 * time.Millisecond),
 						},
@@ -6903,11 +6901,11 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Services: []dynamic.UDPWRRService{
 									{
 										Name:   "default-test.route-0-whoamiudp-8000",
-										Weight: pointer(2),
+										Weight: new(2),
 									},
 									{
 										Name:   "default-test.route-0-whoamiudp2-8080",
-										Weight: pointer(3),
+										Weight: new(3),
 									},
 								},
 							},
@@ -6970,15 +6968,15 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Services: []dynamic.UDPWRRService{
 									{
 										Name:   "default-test.route-0-whoamiudp-8000",
-										Weight: pointer(2),
+										Weight: new(2),
 									},
 									{
 										Name:   "default-test.route-0-whoamiudp2-8080",
-										Weight: pointer(3),
+										Weight: new(3),
 									},
 									{
 										Name:   "default-test.route-0-whoamiudp3-8083",
-										Weight: pointer(4),
+										Weight: new(4),
 									},
 								},
 							},
@@ -7713,7 +7711,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7730,7 +7728,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7829,7 +7827,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7846,7 +7844,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7863,7 +7861,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7880,7 +7878,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7897,7 +7895,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7945,23 +7943,23 @@ func TestCrossNamespace(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "cross-ns-whoami-svc-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-tr-svc-wrr1",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "cross-ns-tr-svc-wrr2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-tr-svc-mirror1",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "cross-ns-tr-svc-mirror2",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -7977,7 +7975,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -7995,7 +7993,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -8006,7 +8004,7 @@ func TestCrossNamespace(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "cross-ns-whoami-svc-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -8016,7 +8014,7 @@ func TestCrossNamespace(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "cross-ns-whoami-svc-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -8054,7 +8052,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -8089,7 +8087,7 @@ func TestCrossNamespace(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "cross-ns-whoami-svc-80",
-										Weight: pointer(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -8105,7 +8103,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -8133,7 +8131,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -8182,7 +8180,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -8280,7 +8278,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -8344,7 +8342,7 @@ func TestCrossNamespace(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -9415,7 +9413,7 @@ func TestExternalNameService(t *testing.T) {
 										URL: "http://external.domain:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -9684,7 +9682,7 @@ func TestNativeLB(t *testing.T) {
 										URL: "http://10.10.0.1:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -9866,7 +9864,7 @@ func TestNodePortLB(t *testing.T) {
 										URL: "http://172.16.4.4:32456",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -10310,7 +10308,7 @@ func TestGlobalNativeLB(t *testing.T) {
 										URL: "http://10.10.0.1:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -10356,7 +10354,7 @@ func TestGlobalNativeLB(t *testing.T) {
 										URL: "http://10.10.0.21:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -10399,7 +10397,7 @@ func TestGlobalNativeLB(t *testing.T) {
 										URL: "http://10.10.0.1:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},

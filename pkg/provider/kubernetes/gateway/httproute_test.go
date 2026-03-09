@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -92,9 +91,9 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
 			match: gatev1.HTTPRouteMatch{
-				Path: ptr.To(gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchPathPrefix),
-					Value: ptr.To("/"),
+				Path: new(gatev1.HTTPPathMatch{
+					Type:  new(gatev1.PathMatchPathPrefix),
+					Value: new("/"),
 				}),
 				Headers: nil,
 			},
@@ -104,9 +103,9 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
 			match: gatev1.HTTPRouteMatch{
-				Path: ptr.To(gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchPathPrefix),
-					Value: ptr.To("/"),
+				Path: new(gatev1.HTTPPathMatch{
+					Type:  new(gatev1.PathMatchPathPrefix),
+					Value: new("/"),
 				}),
 				Headers: []gatev1.HTTPHeaderMatch{
 					{Name: "foo", Value: "bar"},
@@ -126,7 +125,7 @@ func Test_buildMatchRule(t *testing.T) {
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  nil,
-					Value: ptr.To("/foo/"),
+					Value: new("/foo/"),
 				},
 			},
 			expectedRule:     `(Path("/foo") || PathPrefix("/foo/"))`,
@@ -136,7 +135,7 @@ func Test_buildMatchRule(t *testing.T) {
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
+					Type:  new(gatev1.PathMatchExact),
 					Value: nil,
 				},
 			},
@@ -147,8 +146,8 @@ func Test_buildMatchRule(t *testing.T) {
 			desc: "One Path",
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Type:  new(gatev1.PathMatchExact),
+					Value: new("/foo/"),
 				},
 			},
 			expectedRule:     `Path("/foo/")`,
@@ -158,12 +157,12 @@ func Test_buildMatchRule(t *testing.T) {
 			desc: "Path && Header",
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Type:  new(gatev1.PathMatchExact),
+					Value: new("/foo/"),
 				},
 				Headers: []gatev1.HTTPHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.HeaderMatchExact),
+						Type:  new(gatev1.HeaderMatchExact),
 						Name:  "my-header",
 						Value: "foo",
 					},
@@ -177,12 +176,12 @@ func Test_buildMatchRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{"foo.com"},
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Type:  new(gatev1.PathMatchExact),
+					Value: new("/foo/"),
 				},
 				Headers: []gatev1.HTTPHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.HeaderMatchExact),
+						Type:  new(gatev1.HeaderMatchExact),
 						Name:  "my-header",
 						Value: "foo",
 					},

@@ -209,7 +209,7 @@ func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routeKey strin
 	var condition *metav1.Condition
 	for bi, backendRef := range backendRefs {
 		svcName, svc, errCondition := p.loadTLSService(routeKey, route, bi, backendRef)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
 			condition = errCondition
