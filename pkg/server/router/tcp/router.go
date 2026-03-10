@@ -19,15 +19,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
-const (
-	defaultBufSize = 4096
-	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
-	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
-	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
-	// However, in practice the go server handshake can read up to 16384 + 2048 bytes,
-	// so we need to allow for some extra bytes to avoid rejecting valid handshakes.
-	maxTLSRecordLen = 16384 + 2048
-)
+// errClientHelloRead is used as a sentinel error to break the TLS handshake once we have read the ClientHello.
+var errClientHelloRead = errors.New("client hello successfully read")
 
 // Router is a TCP router.
 type Router struct {
@@ -127,8 +120,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
-	br := bufio.NewReader(conn)
-	hello, err := clientHelloInfo(br)
+	hello, err := clientHelloInfo(conn)
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
@@ -370,7 +362,10 @@ type clientHello struct {
 // clientHelloInfo returns various data from the clientHello handshake,
 // without consuming any bytes from br.
 // It returns an error if it can't peek the first byte from the connection.
-func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
+func clientHelloInfo(conn net.Conn) (*clientHello, error) {
+	var peeked bytes.Buffer
+	br := bufio.NewReader(io.TeeReader(conn, &peeked))
+
 	hdr, err := br.Peek(1)
 	if err != nil {
 		return nil, fmt.Errorf("peeking first byte: %w", err)
@@ -386,73 +381,48 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 			// we consider SSLv2 as TLS, and it will be refused by real TLS handshake.
 			return &clientHello{
 				isTLS:  true,
-				peeked: getPeeked(br),
+				peeked: peeked.String(),
 			}, nil
 		}
 		return &clientHello{
-			peeked: getPeeked(br),
+			peeked: peeked.String(),
 		}, nil // Not TLS.
 	}
 
-	const recordHeaderLen = 5
-	hdr, err = br.Peek(recordHeaderLen)
-	if err != nil {
-		return nil, fmt.Errorf("peeking client hello headers: %w", err)
-	}
-
-	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
-
-	if recLen > maxTLSRecordLen {
-		return nil, fmt.Errorf("peeking client hello bytes, oversized record: %d", recLen)
-	}
-
-	if recordHeaderLen+recLen > defaultBufSize {
-		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)
-	}
-
-	helloBytes, err := br.Peek(recordHeaderLen + recLen)
-	if err != nil {
-		return nil, fmt.Errorf("peeking client hello bytes: %w", err)
-	}
-
-	sni := ""
-	var protos []string
-	server := tls.Server(helloSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
+	var (
+		sni    string
+		protos []string
+	)
+	server := tls.Server(readOnlyConn{r: br}, &tls.Config{
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			sni = hello.ServerName
 			protos = hello.SupportedProtos
-			return nil, nil
+			return nil, errClientHelloRead
 		},
 	})
-	_ = server.Handshake()
+
+	if handshakeErr := server.Handshake(); !errors.Is(handshakeErr, errClientHelloRead) {
+		return nil, fmt.Errorf("reading client hello: %w", handshakeErr)
+	}
 
 	return &clientHello{
 		serverName: sni,
 		isTLS:      true,
-		peeked:     getPeeked(br),
+		peeked:     peeked.String(),
 		protos:     protos,
 	}, nil
 }
 
-func getPeeked(br *bufio.Reader) string {
-	peeked, err := br.Peek(br.Buffered())
-	if err != nil {
-		log.WithoutContext().Errorf("Error while peeking bytes: %s", err)
-		return ""
-	}
-	return string(peeked)
-}
-
-// helloSniffConn is a net.Conn that reads from r, fails on Writes,
+// readOnlyConn is a net.Conn that reads from r, fails on Writes,
 // and crashes otherwise.
-type helloSniffConn struct {
+type readOnlyConn struct {
 	net.Conn // nil; crash on any unexpected use
 
 	r io.Reader
 }
 
 // Read reads from the underlying reader.
-func (c helloSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
+func (c readOnlyConn) Read(p []byte) (int, error) { return c.r.Read(p) }
 
 // Write crashes all the time.
-func (helloSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
+func (readOnlyConn) Write(_ []byte) (int, error) { return 0, io.EOF }
