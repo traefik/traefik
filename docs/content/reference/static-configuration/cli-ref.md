@@ -663,6 +663,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
 
+`--providers.http.maxresponsebodysize`:  
+Defines the maximum size of the response body in bytes. (Default: ```-1```)
+
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```5```)
 

@@ -274,6 +274,7 @@
     endpoint = "foobar"
     pollInterval = "42s"
     pollTimeout = "42s"
+    maxResponseBodySize = 42
     [providers.http.tls]
       ca = "foobar"
       caOptional = true
