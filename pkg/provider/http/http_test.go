@@ -68,24 +68,55 @@ func TestProvider_SetDefaults(t *testing.T) {
 
 func TestProvider_fetchConfigurationData(t *testing.T) {
 	tests := []struct {
-		desc    string
-		handler func(rw http.ResponseWriter, req *http.Request)
-		expData []byte
-		expErr  bool
+		desc                string
+		handler             func(rw http.ResponseWriter, req *http.Request)
+		expData             []byte
+		expErr              bool
+		maxResponseBodySize int64
 	}{
 		{
-			desc:    "should return the fetched configuration data",
-			expData: []byte("{}"),
+			desc:                "should return the fetched configuration data",
+			maxResponseBodySize: defaultMaxResponseBodySize,
+			expData:             []byte("{}"),
 			handler: func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
 				_, _ = fmt.Fprintf(rw, "{}")
 			},
 		},
 		{
-			desc:   "should return an error if endpoint does not return an OK status code",
-			expErr: true,
+			desc:                "should return an error if endpoint does not return an OK status code",
+			maxResponseBodySize: defaultMaxResponseBodySize,
+			expErr:              true,
 			handler: func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusNoContent)
+			},
+		},
+		{
+			desc:                "should return an error response body is too long when maxResponseBodySize is 0",
+			maxResponseBodySize: 0,
+			expErr:              true,
+			handler: func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintf(rw, "{}")
+			},
+		},
+		{
+			desc:                "should return an error response body is too long when response is longer than maxResponseBodySize",
+			maxResponseBodySize: 1,
+			expErr:              true,
+			handler: func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintf(rw, "{}")
+			},
+		},
+		{
+			desc:                "should return the fetched configuration data when response is the same length with maxResponseBodySize",
+			maxResponseBodySize: 2,
+			expData:             []byte("{}"),
+			expErr:              false,
+			handler: func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintf(rw, "{}")
 			},
 		},
 	}
@@ -96,9 +127,10 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			defer server.Close()
 
 			provider := Provider{
-				Endpoint:     server.URL,
-				PollInterval: ptypes.Duration(1 * time.Second),
-				PollTimeout:  ptypes.Duration(1 * time.Second),
+				Endpoint:            server.URL,
+				PollInterval:        ptypes.Duration(1 * time.Second),
+				PollTimeout:         ptypes.Duration(1 * time.Second),
+				MaxResponseBodySize: test.maxResponseBodySize,
 			}
 
 			err := provider.Init()
