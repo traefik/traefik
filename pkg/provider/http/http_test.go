@@ -64,6 +64,7 @@ func TestProvider_SetDefaults(t *testing.T) {
 
 	assert.Equal(t, provider.PollInterval, ptypes.Duration(5*time.Second))
 	assert.Equal(t, provider.PollTimeout, ptypes.Duration(5*time.Second))
+	assert.Equal(t, provider.MaxResponseBodySize, int64(-1))
 }
 
 func TestProvider_fetchConfigurationData(t *testing.T) {
@@ -212,9 +213,10 @@ func TestProvider_Provide(t *testing.T) {
 	defer server.Close()
 
 	provider := Provider{
-		Endpoint:     server.URL,
-		PollTimeout:  ptypes.Duration(1 * time.Second),
-		PollInterval: ptypes.Duration(100 * time.Millisecond),
+		Endpoint:            server.URL,
+		PollTimeout:         ptypes.Duration(1 * time.Second),
+		PollInterval:        ptypes.Duration(100 * time.Millisecond),
+		MaxResponseBodySize: defaultMaxResponseBodySize,
 	}
 
 	err := provider.Init()
@@ -267,9 +269,10 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 	defer server.Close()
 
 	provider := Provider{
-		Endpoint:     server.URL + "/endpoint",
-		PollTimeout:  ptypes.Duration(1 * time.Second),
-		PollInterval: ptypes.Duration(100 * time.Millisecond),
+		Endpoint:            server.URL + "/endpoint",
+		PollTimeout:         ptypes.Duration(1 * time.Second),
+		PollInterval:        ptypes.Duration(100 * time.Millisecond),
+		MaxResponseBodySize: defaultMaxResponseBodySize,
 	}
 
 	err := provider.Init()
