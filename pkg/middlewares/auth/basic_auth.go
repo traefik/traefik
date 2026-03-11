@@ -72,7 +72,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Pick up randomly a real user secret to compare with the provided password to mitigate timing attacks.
 	randomHashKey := b.usersHashes[b.rand.Intn(len(b.usersHashes))]
-	
+
 	var authenticated bool
 	user, password, ok := req.BasicAuth()
 	if ok {
