@@ -1262,7 +1262,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        "Host(`x-forwarded-prefix-regex.localhost`) && PathRegexp(`(?i)^(/something)(/.+)`)",
+							Rule:        "Host(`x-forwarded-prefix-regex.localhost`) && PathRegexp(`(?i)^/(something)(/.+)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-regex-whoami-80",
@@ -1302,7 +1302,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)(/something)(/.+)",
+								Regex:            "(?i)/(something)(/.+)",
 								Replacement:      "$2",
 								XForwardedPrefix: "$1",
 							},
