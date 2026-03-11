@@ -12,7 +12,7 @@ func Test_parseIngressConfig(t *testing.T) {
 	tests := []struct {
 		desc        string
 		annotations map[string]string
-		expected    ingressConfig
+		expected    IngressConfig
 	}{
 		{
 			desc: "all fields set",
@@ -41,7 +41,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/x-forwarded-prefix":       "/test",
 				"nginx.ingress.kubernetes.io/upstream-vhost":           "upstream-vhost",
 			},
-			expected: ingressConfig{
+			expected: IngressConfig{
 				SSLPassthrough:        ptr.To(true),
 				Affinity:              ptr.To("cookie"),
 				SessionCookieName:     ptr.To("mycookie"),
@@ -72,7 +72,7 @@ func Test_parseIngressConfig(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.ingress.kubernetes.io/ssl-passthrough": "false",
 			},
-			expected: ingressConfig{
+			expected: IngressConfig{
 				SSLPassthrough: ptr.To(false),
 			},
 		},
@@ -82,7 +82,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/ssl-passthrough":                     "notabool",
 				"nginx.ingress.kubernetes.io/session-cookie-max-age (in seconds)": "notanint",
 			},
-			expected: ingressConfig{
+			expected: IngressConfig{
 				SSLPassthrough: ptr.To(false),
 			},
 		},

@@ -276,6 +276,8 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 		return c.buildMirroring(ctx, tService, id, conf)
 	case tService.Spec.HighestRandomWeight != nil:
 		return c.buildHRW(ctx, tService, id, conf)
+	case tService.Spec.Failover != nil:
+		return c.buildFailover(ctx, tService, id, conf)
 	default:
 
 		return errors.New("unspecified service type")
@@ -768,6 +770,33 @@ func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.T
 			Services: hrwServices,
 		},
 	}
+
+	return nil
+}
+
+func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	serviceName, service, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Service)
+	if err != nil {
+		return fmt.Errorf("getting service: %w", err)
+	}
+
+	fallbackName, fallback, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Fallback)
+	if err != nil {
+		return fmt.Errorf("getting fallback service: %w", err)
+	}
+
+	failover := &dynamic.Failover{
+		Service:  serviceName,
+		Fallback: fallbackName,
+		Errors: &dynamic.FailoverError{
+			Status:              tService.Spec.Failover.Errors.Status,
+			MaxRequestBodyBytes: tService.Spec.Failover.Errors.MaxRequestBodyBytes,
+		},
+	}
+
+	conf[id] = &dynamic.Service{Failover: failover}
+	conf[serviceName] = service
+	conf[fallbackName] = fallback
 
 	return nil
 }
