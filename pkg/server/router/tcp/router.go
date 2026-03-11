@@ -397,6 +397,7 @@ func clientHelloInfo(conn net.Conn) (*clientHello, error) {
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			sni = hello.ServerName
 			protos = hello.SupportedProtos
+            // This error prevents unnecessary additional steps in the TLS ClientHello message processing.
 			return nil, errClientHelloRead
 		},
 	})
