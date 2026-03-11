@@ -64,7 +64,7 @@ func TestProvider_SetDefaults(t *testing.T) {
 
 	assert.Equal(t, provider.PollInterval, ptypes.Duration(5*time.Second))
 	assert.Equal(t, provider.PollTimeout, ptypes.Duration(5*time.Second))
-	assert.Equal(t, provider.MaxResponseBodySize, int64(-1))
+	assert.Equal(t, int64(-1), provider.MaxResponseBodySize)
 }
 
 func TestProvider_fetchConfigurationData(t *testing.T) {
