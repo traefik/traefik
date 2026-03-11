@@ -3,9 +3,13 @@ package auth
 import (
 	"context"
 	"fmt"
+	"maps"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
+	"time"
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/opentracing/opentracing-go/ext"
@@ -24,9 +28,11 @@ type basicAuth struct {
 	next         http.Handler
 	auth         *goauth.BasicAuth
 	users        map[string]string
+	usersHashes  []string
 	headerField  string
 	removeHeader bool
 	name         string
+	rand         *rand.Rand
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -40,9 +46,11 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	ba := &basicAuth{
 		next:         next,
 		users:        users,
+		usersHashes:  slices.Collect(maps.Values(users)),
 		headerField:  authConfig.HeaderField,
 		removeHeader: authConfig.RemoveHeader,
 		name:         name,
+		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 
 	realm := defaultRealm
@@ -62,11 +70,18 @@ func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
 
+	var authenticated bool
+
+	// Pick up randomly a real user secret to compare with the provided password to mitigate timing attacks.
+	randomHashKey := b.usersHashes[b.rand.Intn(len(b.usersHashes))]
+
 	user, password, ok := req.BasicAuth()
 	if ok {
 		secret := b.auth.Secrets(user, b.auth.Realm)
-		if secret == "" || !goauth.CheckSecret(password, secret) {
-			ok = false
+		if secret != "" {
+			authenticated = goauth.CheckSecret(password, secret)
+		} else {
+			_ = goauth.CheckSecret(password, b.users[randomHashKey])
 		}
 	}
 
@@ -75,7 +90,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logData.Core[accesslog.ClientUsername] = user
 	}
 
-	if !ok {
+	if !authenticated {
 		logger.Debug("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
 
@@ -97,7 +112,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	b.next.ServeHTTP(rw, req)
 }
 
-func (b *basicAuth) secretBasic(user, realm string) string {
+func (b *basicAuth) secretBasic(user, _ string) string {
 	if secret, ok := b.users[user]; ok {
 		return secret
 	}
