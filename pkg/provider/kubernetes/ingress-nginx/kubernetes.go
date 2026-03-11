@@ -95,13 +95,13 @@ type certBlocks struct {
 type ingress struct {
 	*netv1.Ingress
 
-	IngressConfig ingressConfig
+	IngressConfig IngressConfig
 }
 
 type ingressPath struct {
 	netv1.HTTPIngressPath
 
-	IngressConfig ingressConfig
+	IngressConfig IngressConfig
 }
 
 type canaryBackend struct {
@@ -225,6 +225,12 @@ type Provider struct {
 
 	k8sClient         *clientWrapper
 	lastConfiguration safe.Safe
+
+	applyMiddlewareFunc func(routerKey string, router *dynamic.Router, config *dynamic.Configuration, ingressConfig IngressConfig) error
+}
+
+func (p *Provider) SetApplyMiddlewareFunc(fn func(routerKey string, router *dynamic.Router, config *dynamic.Configuration, ingressConfig IngressConfig) error) {
+	p.applyMiddlewareFunc = fn
 }
 
 func (p *Provider) SetDefaults() {
@@ -398,7 +404,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
-		svc, err := p.buildService(p.defaultBackendServiceNamespace, ib, nil, ingressConfig{})
+		svc, err := p.buildService(p.defaultBackendServiceNamespace, ib, nil, IngressConfig{})
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("Cannot build default backend service")
 			return conf
@@ -850,7 +856,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	return conf
 }
 
-func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
+func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (*namedServersTransport, error) {
 	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
 	proxyReadTimeout := ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)
 	proxySendTimeout := ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)
@@ -912,7 +918,7 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	return nst, nil
 }
 
-func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg ingressConfig) (*dynamic.Service, error) {
+func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg IngressConfig) (*dynamic.Service, error) {
 	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
@@ -943,7 +949,7 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 	return svc, nil
 }
 
-func (p *Provider) buildPassthroughService(namespace string, backend netv1.IngressBackend, cfg ingressConfig) (*dynamic.TCPService, error) {
+func (p *Provider) buildPassthroughService(namespace string, backend netv1.IngressBackend, cfg IngressConfig) (*dynamic.TCPService, error) {
 	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
@@ -971,7 +977,7 @@ func getPort(service *corev1.Service, backend netv1.IngressBackend) (string, cor
 	return "", corev1.ServicePort{}, false
 }
 
-func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg ingressConfig) ([]backendAddress, error) {
+func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]backendAddress, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting service: %w", err)
@@ -1193,11 +1199,10 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
+func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
 	if err := p.applyCustomHTTPErrors(namespace, ingressName, routerKey, backend, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
 	}
-
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
 	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
 	applyRedirect(routerKey, ingressConfig, rt, conf)
@@ -1244,10 +1249,25 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 
 	p.applyRetry(routerKey, ingressConfig, rt, conf)
 
+	if p.applyMiddlewareFunc == nil &&
+		(ptr.Deref(ingressConfig.EnableModSecurity, false) ||
+			ptr.Deref(ingressConfig.EnableOWASPCoreRules, false) ||
+			ptr.Deref(ingressConfig.ModSecuritySnippet, "") != "" ||
+			ptr.Deref(ingressConfig.ModSecurityTransactionID, "") != "") {
+		return errors.New("mod-security annotations are not supported")
+	}
+
+	if p.applyMiddlewareFunc != nil {
+		err := p.applyMiddlewareFunc(routerKey, rt, conf, ingressConfig)
+		if err != nil {
+			return fmt.Errorf("applying middleware: %w", err)
+		}
+	}
+
 	return nil
 }
 
-func (p *Provider) applySnippets(routerName, serverSnippet string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applySnippets(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	configurationSnippet := ptr.Deref(ingressConfig.ConfigurationSnippet, "")
 	if serverSnippet == "" && configurationSnippet == "" {
 		return nil
@@ -1270,7 +1290,7 @@ func (p *Provider) applySnippets(routerName, serverSnippet string, ingressConfig
 	return nil
 }
 
-func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHTTPErrors := ptr.Deref(config.CustomHTTPErrors, p.CustomHTTPErrors)
 	if len(customHTTPErrors) == 0 {
 		return nil
@@ -1332,7 +1352,7 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	return nil
 }
 
-func applyLimitRPMConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyLimitRPMConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	limitRPM := ptr.Deref(ingressConfig.LimitRPM, 0)
 	if limitRPM <= 0 {
 		return
@@ -1350,7 +1370,7 @@ func applyLimitRPMConfiguration(routerName string, ingressConfig ingressConfig, 
 	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
-func applyLimitRPSConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyLimitRPSConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	limitRPS := ptr.Deref(ingressConfig.LimitRPS, 0)
 	if limitRPS <= 0 {
 		return
@@ -1368,7 +1388,7 @@ func applyLimitRPSConfiguration(routerName string, ingressConfig ingressConfig, 
 	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
-func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyRedirect(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.PermanentRedirect == nil && ingressConfig.TemporalRedirect == nil {
 		return
 	}
@@ -1410,7 +1430,7 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 }
 
-func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHeaders(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
 	if customHeaders == "" {
 		return nil
@@ -1459,7 +1479,7 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressCo
 // Validation identical to ingress-nginx.
 var regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
 
-func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.RewriteTarget == nil {
 		return
 	}
@@ -1494,7 +1514,7 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
 }
 
-func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyAppRootConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.AppRoot == nil || !strings.HasPrefix(*ingressConfig.AppRoot, "/") {
 		return
 	}
@@ -1510,7 +1530,7 @@ func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, r
 	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
 }
 
-func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.FromToWwwRedirect == nil || !*ingressConfig.FromToWwwRedirect {
 		return
 	}
@@ -1553,7 +1573,7 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
 
-func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if ingressConfig.AuthType == nil {
 		return nil
 	}
@@ -1668,7 +1688,7 @@ func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error
 	return &blocks, nil
 }
 
-func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyCORSConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if !ptr.Deref(ingressConfig.EnableCORS, false) {
 		return
 	}
@@ -1688,7 +1708,7 @@ func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
 }
 
-func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyUpstreamVhost(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.UpstreamVhost == nil {
 		return
 	}
@@ -1703,7 +1723,7 @@ func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dyna
 	rt.Middlewares = append(rt.Middlewares, vHostMiddlewareName)
 }
 
-func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	allowedSourceRange := ptr.Deref(ingressConfig.AllowlistSourceRange, ptr.Deref(ingressConfig.WhitelistSourceRange, ""))
 	if allowedSourceRange == "" {
 		return
@@ -1724,7 +1744,7 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingre
 	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
 }
 
-func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	disableRequestBuffering := !p.ProxyRequestBuffering
 	if ingressConfig.ProxyRequestBuffering != nil {
 		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
@@ -1801,7 +1821,7 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 	return nil
 }
 
-func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
 		forceSSLRedirect = *ingressConfig.ForceSSLRedirect
@@ -1857,7 +1877,7 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 	// even if sslRedirect is enabled.
 }
 
-func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func applyForwardAuthConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if ingressConfig.AuthURL == nil {
 		return nil
 	}
@@ -1884,7 +1904,7 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 
 // discoverCanaryBackends checks if the canary ingress is matching any of the existing ingress rules,
 // and if so returns the canary backends to be applied, and the paths of the matched ingress rules.
-func (p *Provider) discoverCanaryBackends(namespace string, canaryIngressRule netv1.IngressRule, canaryIngressConfig ingressConfig, ingressPaths map[string]ingressPath, matchedIngressPaths map[string]struct{}) (map[string]*canaryBackend, map[string]struct{}, error) {
+func (p *Provider) discoverCanaryBackends(namespace string, canaryIngressRule netv1.IngressRule, canaryIngressConfig IngressConfig, ingressPaths map[string]ingressPath, matchedIngressPaths map[string]struct{}) (map[string]*canaryBackend, map[string]struct{}, error) {
 	canaryPaths := make(map[string]struct{})          // indexed by namespace+host+path+pathType.
 	canaryBackends := make(map[string]*canaryBackend) // indexed by service namespace+name+port.
 
@@ -1932,7 +1952,7 @@ func (p *Provider) discoverCanaryBackends(namespace string, canaryIngressRule ne
 	return canaryBackends, canaryPaths, nil
 }
 
-func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if !ptr.Deref(ingressConfig.AuthTLSPassCertificateToUpstream, false) {
 		return nil
 	}
@@ -1963,7 +1983,7 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 	return nil
 }
 
-func (p *Provider) applyRetry(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	attempts := ptr.Deref(ingressConfig.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
 	// Safeguard to deactivate retry when the value is less than 0.
 	if attempts < 0 {
@@ -2063,7 +2083,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	return users, nil
 }
 
-func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config ingressConfig, allHosts map[string]bool) string {
+func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool) string {
 	var rules []string
 	if host != "" {
 		hosts := []string{host}
@@ -2170,7 +2190,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func (p *Provider) loadCertBlock(ingressNamespace string, config ingressConfig) (*certBlocks, error) {
+func (p *Provider) loadCertBlock(ingressNamespace string, config IngressConfig) (*certBlocks, error) {
 	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
 	if len(secretParts) != 2 {
 		return nil, errors.New("auth-tls-secret is not in a correct namespace/name format")
@@ -2226,7 +2246,7 @@ func clientAuthTypeFromString(verifyClient *string) string {
 	}
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config IngressConfig) (tls.Options, error) {
 	blocks, err := p.loadCertBlock(ingressNamespace, config)
 	if err != nil {
 		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
@@ -2267,7 +2287,7 @@ func nginxSizeToBytes(nginxSize string) (int64, error) {
 
 // buildSticky returns a Sticky configuration if the affinity configuration is set to "cookie" and nil otherwise.
 // It also appends the given nameSuffix to the cookie name if not empty.
-func buildSticky(cfg ingressConfig, nameSuffix string) *dynamic.Sticky {
+func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 	if ptr.Deref(cfg.Affinity, "") != "cookie" {
 		return nil
 	}
