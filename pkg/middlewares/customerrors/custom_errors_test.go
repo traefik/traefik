@@ -154,6 +154,85 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "My 503 page.")
 			},
 		},
+		{
+			desc: "nginx headers: backend status code preserved",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+				NginxHeaders: &http.Header{
+					"X-Namespaces":   {"default"},
+					"X-Ingress-Name": {"my-ingress"},
+					"X-Service-Name": {"my-service"},
+					"X-Service-Port": {"80"},
+				},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Error page backend returns 200 (the default when no WriteHeader is called).
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// In nginx mode, the error page backend's status code (200) is preserved,
+				// NOT overridden to the original error code (500).
+				assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
+		{
+			desc: "nginx headers: X-Code and nginx headers forwarded",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+				NginxHeaders: &http.Header{
+					"X-Namespaces":   {"default"},
+					"X-Ingress-Name": {"my-ingress"},
+					"X-Service-Name": {"my-service"},
+					"X-Service-Port": {"80"},
+				},
+			},
+			backendCode: http.StatusBadGateway,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Verify that nginx-specific headers are set on the request.
+				assert.Equal(t, "502", r.Header.Get("X-Code"))
+				assert.Equal(t, "default", r.Header.Get("X-Namespaces"))
+				assert.Equal(t, "my-ingress", r.Header.Get("X-Ingress-Name"))
+				assert.Equal(t, "my-service", r.Header.Get("X-Service-Name"))
+				assert.Equal(t, "80", r.Header.Get("X-Service-Port"))
+				assert.Equal(t, "/test?foo=bar&baz=buz", r.Header.Get("X-Original-Uri"))
+				// Return a custom status code.
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = fmt.Fprintln(w, "Custom 404 page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// Backend's chosen status code (404) is preserved in nginx mode.
+				assert.Equal(t, http.StatusNotFound, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom 404 page.")
+			},
+		},
+		{
+			desc: "non-nginx: code modifier enforces original error code",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Error page backend returns 200 (the default).
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// Without nginx headers, newCodeModifier enforces the original error code (500),
+				// even though the error page backend returned 200.
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
 	}
 
 	for _, test := range testCases {

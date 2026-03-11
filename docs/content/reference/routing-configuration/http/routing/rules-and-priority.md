@@ -229,8 +229,8 @@ Negative priority values are supported.
 
 Traefik reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
 
-- `(MaxInt32 - 1000)` for 32-bit platforms,
-- `(MaxInt64 - 1000)` for 64-bit platforms.
+- `(MaxInt32 - 1000)` = `2147482647` for 32-bit platforms,
+- `(MaxInt64 - 1000)` = `9223372036854774807` for 64-bit platforms.
 
 ### Example
 

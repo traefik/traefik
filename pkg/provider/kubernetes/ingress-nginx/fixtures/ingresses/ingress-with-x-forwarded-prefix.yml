@@ -1,0 +1,71 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-x-forwarded-prefix
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "x-forwarded-prefix-header-value"
+    nginx.ingress.kubernetes.io/rewrite-target: "/path"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: x-forwarded-prefix.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-x-forwarded-prefix-regex
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "$2"
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "$1"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: x-forwarded-prefix-regex.localhost
+      http:
+        paths:
+          - path: (/something)(/.+)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-x-forwarded-prefix-three-groups
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$3"
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "/$1/$2"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: x-forwarded-prefix-three-groups.localhost
+      http:
+        paths:
+          - path: /(prefix)/(sub)/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

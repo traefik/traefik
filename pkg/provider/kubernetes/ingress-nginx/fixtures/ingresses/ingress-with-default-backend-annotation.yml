@@ -5,7 +5,7 @@ metadata:
   name: ingress-with-default-backend-annotation
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/default-backend: whoami_b
+    nginx.ingress.kubernetes.io/default-backend: whoami-b
 
 spec:
   ingressClassName: nginx
