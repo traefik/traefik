@@ -310,6 +310,7 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
+    maxResponseBodySize: 42
   plugin:
     PluginConf0:
       name0: foobar

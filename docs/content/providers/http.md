@@ -178,3 +178,25 @@ providers:
 ```bash tab="CLI"
 --providers.http.tls.insecureSkipVerify=true
 ```
+
+### `maxResponseBodySize`
+
+_Optional, Default=-1_
+
+Defines the maximum size of the response body in bytes.
+If left unset (or set to -1), the response body size is unrestricted which can have performance implications.
+
+```yaml tab="File (YAML)"
+providers:
+  http:
+    maxResponseBodySize: -1
+```
+
+```toml tab="File (TOML)"
+[providers.http]
+    maxResponseBodySize = -1
+```
+
+```bash tab="CLI"
+--providers.http.maxResponseBodySize=-1
+```

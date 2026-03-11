@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"k8s.io/utils/ptr"
 )
 
 func TestProvider_Init(t *testing.T) {
@@ -64,14 +65,16 @@ func TestProvider_SetDefaults(t *testing.T) {
 
 	assert.Equal(t, provider.PollInterval, ptypes.Duration(5*time.Second))
 	assert.Equal(t, provider.PollTimeout, ptypes.Duration(5*time.Second))
+	assert.Equal(t, int64(-1), provider.MaxResponseBodySize)
 }
 
 func TestProvider_fetchConfigurationData(t *testing.T) {
 	tests := []struct {
-		desc    string
-		handler func(rw http.ResponseWriter, req *http.Request)
-		expData []byte
-		expErr  bool
+		desc                string
+		handler             func(rw http.ResponseWriter, req *http.Request)
+		expData             []byte
+		expErr              bool
+		maxResponseBodySize *int64
 	}{
 		{
 			desc:    "should return the fetched configuration data",
@@ -88,6 +91,34 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 				rw.WriteHeader(http.StatusNoContent)
 			},
 		},
+		{
+			desc:                "should return an error response body is too long when maxResponseBodySize is 0",
+			maxResponseBodySize: ptr.To(int64(0)),
+			expErr:              true,
+			handler: func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintf(rw, "{}")
+			},
+		},
+		{
+			desc:                "should return an error response body is too long when response is longer than maxResponseBodySize",
+			maxResponseBodySize: ptr.To(int64(1)),
+			expErr:              true,
+			handler: func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintf(rw, "{}")
+			},
+		},
+		{
+			desc:                "should return the fetched configuration data when response is the same length with maxResponseBodySize",
+			maxResponseBodySize: ptr.To(int64(2)),
+			expData:             []byte("{}"),
+			expErr:              false,
+			handler: func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintf(rw, "{}")
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -95,10 +126,14 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(test.handler))
 			defer server.Close()
 
-			provider := Provider{
-				Endpoint:     server.URL,
-				PollInterval: ptypes.Duration(1 * time.Second),
-				PollTimeout:  ptypes.Duration(1 * time.Second),
+			var provider Provider
+			provider.SetDefaults()
+
+			provider.Endpoint = server.URL
+			provider.PollTimeout = ptypes.Duration(1 * time.Second)
+			provider.PollInterval = ptypes.Duration(100 * time.Millisecond)
+			if test.maxResponseBodySize != nil {
+				provider.MaxResponseBodySize = *test.maxResponseBodySize
 			}
 
 			err := provider.Init()
@@ -179,11 +214,12 @@ func TestProvider_Provide(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	provider := Provider{
-		Endpoint:     server.URL,
-		PollTimeout:  ptypes.Duration(1 * time.Second),
-		PollInterval: ptypes.Duration(100 * time.Millisecond),
-	}
+	var provider Provider
+	provider.SetDefaults()
+
+	provider.Endpoint = server.URL
+	provider.PollTimeout = ptypes.Duration(1 * time.Second)
+	provider.PollInterval = ptypes.Duration(100 * time.Millisecond)
 
 	err := provider.Init()
 	require.NoError(t, err)
@@ -234,11 +270,12 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	provider := Provider{
-		Endpoint:     server.URL + "/endpoint",
-		PollTimeout:  ptypes.Duration(1 * time.Second),
-		PollInterval: ptypes.Duration(100 * time.Millisecond),
-	}
+	var provider Provider
+	provider.SetDefaults()
+
+	provider.Endpoint = server.URL + "/endpoint"
+	provider.PollTimeout = ptypes.Duration(1 * time.Second)
+	provider.PollInterval = ptypes.Duration(100 * time.Millisecond)
 
 	err := provider.Init()
 	require.NoError(t, err)
