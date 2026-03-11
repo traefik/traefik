@@ -19,6 +19,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v3/pkg/middlewares/encodedcharacters"
+	"github.com/traefik/traefik/v3/pkg/middlewares/filtertlsclientcert"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
 	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
@@ -278,6 +279,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return passtlsclientcert.New(ctx, next, *config.PassTLSClientCert, middlewareName)
+		}
+	}
+
+	// FilterTLSClientCert
+	if config.FilterTLSClientCert != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return filtertlsclientcert.New(ctx, next, *config.FilterTLSClientCert, middlewareName)
 		}
 	}
 

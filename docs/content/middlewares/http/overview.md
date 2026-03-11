@@ -109,6 +109,7 @@ http:
 | [ContentType](contenttype.md)             | Handles Content-Type auto-detection               | Misc                        |
 | [DigestAuth](digestauth.md)               | Adds Digest Authentication                        | Security, Authentication    |
 | [Errors](errorpages.md)                   | Defines custom error pages                        | Request Lifecycle           |
+| [FilterTLSClientCert](filtertlsclientcert.md) | Filters requests based on client certificate DN | Security                |
 | [ForwardAuth](forwardauth.md)             | Delegates Authentication                          | Security, Authentication    |
 | [Headers](headers.md)                     | Adds / Updates headers                            | Security                    |
 | [IPAllowList](ipallowlist.md)             | Limits the allowed client IPs                     | Security, Request lifecycle |
