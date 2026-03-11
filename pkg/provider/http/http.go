@@ -161,7 +161,7 @@ func (p *Provider) fetchConfigurationData() ([]byte, error) {
 
 	data, err := io.ReadAll(io.LimitReader(res.Body, p.MaxResponseBodySize+1))
 	if err != nil {
-		return nil, fmt.Errorf("read response body: %w", err)
+		return nil, fmt.Errorf("reading response body: %w", err)
 	}
 	if int64(len(data)) > p.MaxResponseBodySize {
 		return nil, errors.New("response body too large")
