@@ -105,6 +105,14 @@ log:
 
 The rotation of the log files can be configured with the following options.
 
+### USR1 Signal
+
+Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
+This allows the logs to be rotated and processed by an external program, such as `logrotate`.
+
+!!! warning
+    This does not work on Windows due to the lack of USR signals.
+
 ### `maxSize`
 
 `maxSize` is the maximum size in megabytes of the log file before it gets rotated.

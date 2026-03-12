@@ -20,6 +20,10 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-accesslog-filters-retryattempts" href="#opt-accesslog-filters-retryattempts" title="#opt-accesslog-filters-retryattempts">accesslog.filters.retryattempts</a> | Keep access logs when at least one retry happened. | false |
 | <a id="opt-accesslog-filters-statuscodes" href="#opt-accesslog-filters-statuscodes" title="#opt-accesslog-filters-statuscodes">accesslog.filters.statuscodes</a> | Keep access logs with status codes in the specified range. | |
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">accesslog.format</a> | Access log format: json, common, or genericCLF | common |
+| <a id="opt-accesslog-maxsize" href="#opt-accesslog-maxsize" title="#opt-accesslog-maxsize">accesslog.maxsize</a> | Maximum size in megabytes of the access log file before it gets rotated. | 0 |
+| <a id="opt-accesslog-maxage" href="#opt-accesslog-maxage" title="#opt-accesslog-maxage">accesslog.maxage</a> | Maximum number of days to retain old access log files based on the timestamp encoded in their filename. | 0 |
+| <a id="opt-accesslog-maxbackups" href="#opt-accesslog-maxbackups" title="#opt-accesslog-maxbackups">accesslog.maxbackups</a> | Maximum number of old access log files to retain. | 0 |
+| <a id="opt-accesslog-compress" href="#opt-accesslog-compress" title="#opt-accesslog-compress">accesslog.compress</a> | Compress access log files in gzip after rotation. | false |
 | <a id="opt-accesslog-otlp" href="#opt-accesslog-otlp" title="#opt-accesslog-otlp">accesslog.otlp</a> | Settings for OpenTelemetry. | false |
 | <a id="opt-accesslog-otlp-grpc" href="#opt-accesslog-otlp-grpc" title="#opt-accesslog-otlp-grpc">accesslog.otlp.grpc</a> | gRPC configuration for the OpenTelemetry collector. | false |
 | <a id="opt-accesslog-otlp-grpc-endpoint" href="#opt-accesslog-otlp-grpc-endpoint" title="#opt-accesslog-otlp-grpc-endpoint">accesslog.otlp.grpc.endpoint</a> | Sets the gRPC endpoint (host:port) of the collector. | localhost:4317 |

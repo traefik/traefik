@@ -9,8 +9,11 @@ Access log settings. (Default: ```false```)
 `TRAEFIK_ACCESSLOG_ADDINTERNALS`:  
 Enables access log for internal services (ping, dashboard, etc...). (Default: ```false```)
 
-`TRAEFIK_ACCESSLOG_BUFFERINGSIZE`:  
+`TRAEFIK_ACCESSLOG_BUFFERINGSIZE`:
 Number of access log lines to process in a buffered way. (Default: ```0```)
+
+`TRAEFIK_ACCESSLOG_COMPRESS`:
+Determines if the rotated access log files should be compressed using gzip. (Default: ```false```)
 
 `TRAEFIK_ACCESSLOG_FIELDS_DEFAULTMODE`:  
 Default mode for fields: keep | drop (Default: ```keep```)
@@ -36,8 +39,17 @@ Keep access logs when at least one retry happened. (Default: ```false```)
 `TRAEFIK_ACCESSLOG_FILTERS_STATUSCODES`:  
 Keep access logs with status codes in the specified range.
 
-`TRAEFIK_ACCESSLOG_FORMAT`:  
+`TRAEFIK_ACCESSLOG_FORMAT`:
 Access log format: json | common (Default: ```common```)
+
+`TRAEFIK_ACCESSLOG_MAXAGE`:
+Maximum number of days to retain old access log files based on the timestamp encoded in their filename. (Default: ```0```)
+
+`TRAEFIK_ACCESSLOG_MAXBACKUPS`:
+Maximum number of old access log files to retain. (Default: ```0```)
+
+`TRAEFIK_ACCESSLOG_MAXSIZE`:
+Maximum size in megabytes of the access log file before it gets rotated. (Default: ```0```)
 
 `TRAEFIK_ACCESSLOG_OTLP`:  
 Settings for OpenTelemetry. (Default: ```false```)
