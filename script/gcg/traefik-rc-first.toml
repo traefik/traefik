@@ -4,7 +4,7 @@ RepositoryName = "traefik"
 OutputType = "file"
 FileName = "traefik_changelog.md"
 
-# example RC1 of v3.7.0-rc1
+# example RC1 of v3.7.0-ea.1
 CurrentRef = "master"
 PreviousRef = "v3.6.0-rc1"
 BaseBranch = "master"
