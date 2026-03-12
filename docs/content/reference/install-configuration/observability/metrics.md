@@ -239,6 +239,7 @@ metrics:
 | <a id="opt-metrics-prometheus-manualRouting" href="#opt-metrics-prometheus-manualRouting" title="#opt-metrics-prometheus-manualRouting">`metrics.prometheus.manualRouting`</a> | Set to _true_, it disables the default internal router in order to allow creating a custom router for the `prometheus@internal` service. | false    | No      |
 | <a id="opt-metrics-prometheus-entryPoint" href="#opt-metrics-prometheus-entryPoint" title="#opt-metrics-prometheus-entryPoint">`metrics.prometheus.entryPoint`</a> | Traefik Entrypoint name used to expose metrics. | "traefik"     | No      |
 | <a id="opt-metrics-prometheus-headerLabels" href="#opt-metrics-prometheus-headerLabels" title="#opt-metrics-prometheus-headerLabels">`metrics.prometheus.headerLabels`</a> | Defines extra labels extracted from request headers for the `requests_total` metrics.<br />More information [here](#headerlabels). |       | Yes      |
+| <a id="opt-metrics-prometheus-responseHeaderLabels" href="#opt-metrics-prometheus-responseHeaderLabels" title="#opt-metrics-prometheus-responseHeaderLabels">`metrics.prometheus.responseHeaderLabels`</a> | Defines extra labels extracted from response headers for the `requests_total` metrics.<br />More information [here](#responseheaderlabels). |       | Yes      |
 
 ##### headerLabels
 
@@ -276,6 +277,55 @@ curl -H "User-Agent: foobar" http://localhost
 
 ```bash tab="Metric"
 traefik_entrypoint_requests_total\{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"\} 1
+```
+
+##### responseHeaderLabels
+
+Defines the extra labels for the `requests_total` metrics, and for each of them, the response header containing the value for this label.
+If the header is not present in the response it will be added nonetheless with an empty value.
+The label must be a valid label name for Prometheus metrics, otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
+
+###### Configuration Example
+
+Here is an example of the entryPoint `requests_total` metric with an additional "content_type" label extracted from the response Content-Type header.
+
+When configuring the label in Static Configuration:
+
+```yaml tab="Configuration"
+# static_configuration.yaml
+metrics:
+  prometheus:
+    responseHeaderLabels:
+      content_type: Content-Type
+```
+
+```bash tab="Request"
+curl http://localhost
+```
+
+```bash tab="Metric"
+traefik_entrypoint_requests_total\{code="200",content_type="application/json",entrypoint="web",method="GET",protocol="http"\} 1
+```
+
+###### Combining Request and Response Headers
+
+You can use both `headerLabels` and `responseHeaderLabels` together to capture information from both request and response headers:
+
+```yaml tab="Configuration"
+# static_configuration.yaml
+metrics:
+  prometheus:
+    headerLabels:
+      useragent: User-Agent
+    responseHeaderLabels:
+      content_type: Content-Type
+      cache_status: X-Cache-Status
+```
+
+This produces metrics with labels from both request and response headers:
+
+```bash tab="Metric"
+traefik_entrypoint_requests_total\{cache_status="HIT",code="200",content_type="application/json",entrypoint="web",method="GET",protocol="http",useragent="curl/7.68.0"\} 1
 ```
 
 ### StatsD
