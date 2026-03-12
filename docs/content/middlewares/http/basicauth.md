@@ -12,6 +12,12 @@ Adding Basic Authentication
 
 The BasicAuth middleware grants access to services to authorized users only.
 
+!!! warning "Timing attacks"
+
+    The BasicAuth middleware is vulnerable to timing attacks when the configured users' password hashes do not use the same algorithm and cost.
+    However, when the configured user's password hashes are of the same algorithm and cost, the middleware guarantees the same comparison time between existing and non-existing users.
+    This prevents an attacker from leveraging the time difference to determine whether a user exists.
+
 ## Configuration Examples
 
 ```yaml tab="Docker"
