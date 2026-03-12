@@ -64,7 +64,7 @@ In the same folder as the `dynamic/tls.yaml` file, create a `docker-compose.yaml
 ```yaml
 services:
   traefik:
-    image: traefik:v3.6
+    image: traefik:v3.7
     container_name: traefik
     restart: unless-stopped
     security_opt:

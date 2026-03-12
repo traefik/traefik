@@ -50,7 +50,7 @@ enabling seamless integration between Traefik's networking capabilities and Knat
 5. Install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-knative-rbac.yml).
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
     ```
 
 ## Configuration Example
