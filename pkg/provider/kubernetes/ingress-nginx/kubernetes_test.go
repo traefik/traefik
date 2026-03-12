@@ -626,62 +626,10 @@ func TestLoadIngresses(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-forwardauth-snippet-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth-snippet`)",
-							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-forwardauth-snippet-rule-0-path-0-snippet", "default-ingress-with-forwardauth-snippet-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-forwardauth-snippet-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-forwardauth-snippet-rule-0-path-0-snippet": {
-							Snippet: &dynamic.Snippet{
-								Auth: &dynamic.Auth{
-									Address:             "http://whoami.default.svc/",
-									AuthResponseHeaders: []string{"X-Auth-Snippet"},
-									AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=foo",
-									Method:              http.MethodPost,
-								},
-							},
-						},
-						"default-ingress-with-forwardauth-snippet-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-forwardauth-snippet-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-forwardauth-snippet",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-forwardauth-snippet": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -5125,41 +5073,10 @@ func TestLoadIngresses(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-server-snippet-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-server-snippet-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-server-snippet-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-server-snippet",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-server-snippet": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -5178,41 +5095,10 @@ func TestLoadIngresses(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-configuration-snippet-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-configuration-snippet-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-configuration-snippet-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-configuration-snippet",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-configuration-snippet": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -5231,41 +5117,10 @@ func TestLoadIngresses(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-both-snippets-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-both-snippets-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-both-snippets-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-both-snippets",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-both-snippets": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -5436,165 +5291,6 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-both-snippets-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-both-snippets",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-both-snippets": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:                    "Server snippet with allowSnippetAnnotations disabled",
-			allowSnippetAnnotations: false,
-			paths: []string{
-				"services.yml",
-				"ingressclasses.yml",
-				"ingresses/ingress-with-server-snippet.yml",
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-server-snippet-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-server-snippet-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-server-snippet-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-server-snippet",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-server-snippet": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:                    "Configuration snippet with allowSnippetAnnotations disabled",
-			allowSnippetAnnotations: false,
-			paths: []string{
-				"services.yml",
-				"ingressclasses.yml",
-				"ingresses/ingress-with-configuration-snippet.yml",
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-configuration-snippet-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-configuration-snippet-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-ingress-with-configuration-snippet-whoami-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
-								ServersTransport: "default-ingress-with-configuration-snippet",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-configuration-snippet": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:                    "Both snippets with allowSnippetAnnotations disabled",
-			allowSnippetAnnotations: false,
-			paths: []string{
-				"services.yml",
-				"ingressclasses.yml",
-				"ingresses/ingress-with-both-snippets.yml",
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-both-snippets-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-both-snippets-whoami-80",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-both-snippets-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
