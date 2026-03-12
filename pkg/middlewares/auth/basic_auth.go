@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"slices"
 	"strings"
-	"time"
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/opentracing/opentracing-go/ext"
@@ -28,11 +26,11 @@ type basicAuth struct {
 	next         http.Handler
 	auth         *goauth.BasicAuth
 	users        map[string]string
-	usersHashes  []string
 	headerField  string
 	removeHeader bool
 	name         string
-	rand         *rand.Rand
+
+	notFoundSecret string
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -43,14 +41,18 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		return nil, err
 	}
 
+	// To prevent timing attacks, we need to compute a hash even if the user is not found.
+	// We assume it to be safe only when the users hashes are all from the same algorithm,
+	// so we can pick the first one as a random hash to compute.
+	notFoundSecret := users[slices.Collect(maps.Values(users))[0]]
+
 	ba := &basicAuth{
-		next:         next,
-		users:        users,
-		usersHashes:  slices.Collect(maps.Values(users)),
-		headerField:  authConfig.HeaderField,
-		removeHeader: authConfig.RemoveHeader,
-		name:         name,
-		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
+		next:           next,
+		users:          users,
+		headerField:    authConfig.HeaderField,
+		removeHeader:   authConfig.RemoveHeader,
+		name:           name,
+		notFoundSecret: notFoundSecret,
 	}
 
 	realm := defaultRealm
@@ -70,17 +72,14 @@ func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
 
-	// Pick up randomly a real user secret to compare with the provided password to mitigate timing attacks.
-	randomHashKey := b.usersHashes[b.rand.Intn(len(b.usersHashes))]
-	
-	var authenticated bool
 	user, password, ok := req.BasicAuth()
+	var authenticated bool
 	if ok {
 		secret := b.auth.Secrets(user, b.auth.Realm)
 		if secret != "" {
 			authenticated = goauth.CheckSecret(password, secret)
 		} else {
-			_ = goauth.CheckSecret(password, b.users[randomHashKey])
+			_ = goauth.CheckSecret(password, b.notFoundSecret)
 		}
 	}
 
