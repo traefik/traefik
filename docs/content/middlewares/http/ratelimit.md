@@ -1211,3 +1211,162 @@ http:
     [http.middlewares.test-ratelimit.rateLimit.redis]
       dialTimeout = "42s"
 ```
+
+#### `redis.masterName`
+
+_Optional_
+
+Defines the name of the Redis master when using Redis Sentinel.
+This is required when connecting to a Redis Sentinel cluster.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.masterName=mymaster"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      masterName: mymaster
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.masterName=mymaster"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          masterName: mymaster
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      masterName = "mymaster"
+```
+
+#### `redis.sentinelUsername`
+
+_Optional_
+
+Defines the username for Redis Sentinel authentication.
+This is used when the Sentinel cluster requires authentication.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelUsername=sentinel_user"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      secret: mysecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+  namespace: default
+data:
+  username: dXNlcm5hbWU= # username: username
+  password: cGFzc3dvcmQ= # password: password
+  sentinelUsername: c2VudGluZWxfdXNlcg== # sentinelUsername: sentinel_user
+  sentinelPassword: c2VudGluZWxfcGFzc3dvcmQ= # sentinelPassword: sentinel_password
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelUsername=sentinel_user"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          sentinelUsername: sentinel_user
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      sentinelUsername = "sentinel_user"
+```
+
+#### `redis.sentinelPassword`
+
+_Optional_
+
+Defines the password for Redis Sentinel authentication.
+This is used when the Sentinel cluster requires authentication.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelPassword=sentinel_password"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    # ...
+    redis:
+      secret: mysecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+  namespace: default
+data:
+  username: dXNlcm5hbWU= # username: username
+  password: cGFzc3dvcmQ= # password: password
+  sentinelUsername: c2VudGluZWxfdXNlcg== # sentinelUsername: sentinel_user
+  sentinelPassword: c2VudGluZWxfcGFzc3dvcmQ= # sentinelPassword: sentinel_password
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelPassword=sentinel_password"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # ...
+        redis:
+          sentinelPassword: sentinel_password
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.redis]
+      sentinelPassword = "sentinel_password"
+```
