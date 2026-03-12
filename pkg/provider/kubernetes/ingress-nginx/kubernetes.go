@@ -636,6 +636,37 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			conf.HTTP.Services[defaultBackendName] = defaultBackendService
 		}
 
+		// When strictValidatePathType is enabled, regex characters are not allowed if pathType is Prefix or Exact.
+		// If one of the path is invalid, ignore the ingress.
+		if p.StrictValidatePathType {
+			valid := true
+
+			for _, rule := range ingress.Spec.Rules {
+				if rule.HTTP == nil {
+					continue
+				}
+
+				for _, pa := range rule.HTTP.Paths {
+					if len(pa.Path) > 0 {
+						pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
+						if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
+							logger.Error().Msgf("Ignoring ingress: regex characters are not allowed for pathType %s when strictValidatePathType is enabled", pathType)
+							valid = false
+							break
+						}
+					}
+				}
+
+				if !valid {
+					break
+				}
+			}
+
+			if !valid {
+				continue
+			}
+		}
+
 		for ri, rule := range ingress.Spec.Rules {
 			if ptr.Deref(ingress.IngressConfig.SSLPassthrough, false) {
 				if rule.Host == "" {
@@ -742,15 +773,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 						Msg("Ignoring path with no service backend")
 
 					continue
-				}
-
-				// If strictValidatePathType is enabled, regex characters are not allowed when pathType is Prefix or Exact.
-				pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
-				if p.StrictValidatePathType && len(pa.Path) > 0 {
-					if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
-						logger.Error().Str("path", pa.Path).Msgf("Ignoring path: regex characters are not allowed for pathType %s when strictValidatePathType is enabled", pathType)
-						continue
-					}
 				}
 
 				// TODO: if no service, do not add middlewares and 503.
