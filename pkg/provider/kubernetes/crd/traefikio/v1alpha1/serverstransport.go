@@ -82,6 +82,14 @@ type ForwardingTimeouts struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
+	// ReadTimeout is the timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout is the timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
