@@ -3820,6 +3820,104 @@ func TestDynConfBuilder_build(t *testing.T) {
 			},
 		},
 		{
+			desc: "one container with mirroring service",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.http.routers.Test.rule":                                  "Host(`Test.traefik.wtf`)",
+						"traefik.http.routers.Test.service":                               "mirrored-api",
+						"traefik.http.services.mirrored-api.mirroring.service":            "appv1",
+						"traefik.http.services.mirrored-api.mirroring.mirrors[0].name":    "appv2",
+						"traefik.http.services.mirrored-api.mirroring.mirrors[0].percent": "10",
+						"traefik.http.services.appv1.loadbalancer.server.port":            "8080",
+						"traefik.http.services.appv2.loadbalancer.server.port":            "8081",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("8080/tcp"): []nat.PortBinding{},
+							nat.Port("8081/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "mirrored-api",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"mirrored-api": {
+							Mirroring: &dynamic.Mirroring{
+								Service:     "appv1",
+								MirrorBody:  pointer(true),
+								MaxBodySize: pointer(int64(-1)),
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:    "appv2",
+										Percent: 10,
+									},
+								},
+							},
+						},
+						"appv1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:8080",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"appv2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:8081",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
 			desc: "one container with default generated certificate labels",
 			containers: []dockerData{
 				{
