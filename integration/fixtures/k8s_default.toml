@@ -15,3 +15,4 @@
 
 [providers.kubernetesIngress]
   allowEmptyServices = true
+  kubernetesObservabilityFields = true
