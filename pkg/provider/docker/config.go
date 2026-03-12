@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
-	containertypes "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/label"
@@ -335,10 +336,10 @@ func (p *DynConfBuilder) getIPPort(ctx context.Context, container dockerData, se
 		switch {
 		case err != nil:
 			logger.Info().Msgf("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
-		case portBinding.HostIP == "0.0.0.0" || len(portBinding.HostIP) == 0:
+		case portBinding.HostIP.IsUnspecified() || portBinding.HostIP.IsValid():
 			logger.Info().Msgf("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
 		default:
-			ip = portBinding.HostIP
+			ip = portBinding.HostIP.String()
 			port = portBinding.HostPort
 			usedBound = true
 		}
@@ -387,7 +388,7 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 
 	if container.NetworkSettings.NetworkMode.IsContainer() {
 		connectedContainer := container.NetworkSettings.NetworkMode.ConnectedContainer()
-		containerInspected, err := p.apiClient.ContainerInspect(context.Background(), connectedContainer)
+		res, err := p.apiClient.ContainerInspect(context.Background(), connectedContainer, client.ContainerInspectOptions{})
 		if err != nil {
 			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s: failed to inspect container ID %s", container.Name, connectedContainer)
 			return ""
@@ -395,10 +396,10 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 
 		// Check connected container for traefik.docker.network,
 		// falling back to the network specified on the current container.
-		containerParsed := parseContainer(containerInspected)
+		containerParsed := parseContainer(res.Container)
 		extraConf, err := p.extractLabels(containerParsed)
 		if err != nil {
-			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s: failed to get extra configuration for container %s", container.Name, containerInspected.Name)
+			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s: failed to get extra configuration for container %s", container.Name, res.Container.Name)
 			return ""
 		}
 
@@ -424,11 +425,11 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 	return ""
 }
 
-func (p *DynConfBuilder) getPortBinding(container dockerData, serverPort string) (*nat.PortBinding, error) {
+func (p *DynConfBuilder) getPortBinding(container dockerData, serverPort string) (*networktypes.PortBinding, error) {
 	port := getPort(container, serverPort)
 
 	for netPort, portBindings := range container.NetworkSettings.Ports {
-		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
+		if strconv.Itoa(int(netPort.Num())) == port && (netPort.Proto() == networktypes.TCP || netPort.Proto() == networktypes.UDP) {
 			for _, p := range portBindings {
 				return &p, nil
 			}

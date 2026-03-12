@@ -3,31 +3,30 @@ package docker
 import (
 	"context"
 
-	dockertypes "github.com/docker/docker/api/types"
-	containertypes "github.com/docker/docker/api/types/container"
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
-	dockerclient "github.com/docker/docker/client"
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
 )
 
 type fakeTasksClient struct {
-	dockerclient.APIClient
+	client.APIClient
 
 	tasks     []swarmtypes.Task
 	container containertypes.InspectResponse
 	err       error
 }
 
-func (c *fakeTasksClient) TaskList(ctx context.Context, options swarmtypes.TaskListOptions) ([]swarmtypes.Task, error) {
-	return c.tasks, c.err
+func (c *fakeTasksClient) TaskList(ctx context.Context, options client.TaskListOptions) (client.TaskListResult, error) {
+	return client.TaskListResult{Items: c.tasks}, c.err
 }
 
-func (c *fakeTasksClient) ContainerInspect(ctx context.Context, container string) (containertypes.InspectResponse, error) {
-	return c.container, c.err
+func (c *fakeTasksClient) ContainerInspect(ctx context.Context, container string, options client.ContainerInspectOptions) (client.ContainerInspectResult, error) {
+	return client.ContainerInspectResult{Container: c.container}, c.err
 }
 
 type fakeServicesClient struct {
-	dockerclient.APIClient
+	client.APIClient
 
 	dockerVersion string
 	networks      []networktypes.Summary
@@ -37,27 +36,29 @@ type fakeServicesClient struct {
 	err           error
 }
 
-func (c *fakeServicesClient) NodeInspectWithRaw(ctx context.Context, nodeID string) (swarmtypes.Node, []byte, error) {
+func (c *fakeServicesClient) NodeInspect(ctx context.Context, nodeID string, options client.NodeInspectOptions) (client.NodeInspectResult, error) {
 	for _, node := range c.nodes {
 		if node.ID == nodeID {
-			return node, nil, nil
+			return client.NodeInspectResult{
+				Node: node,
+			}, nil
 		}
 	}
-	return swarmtypes.Node{}, nil, c.err
+	return client.NodeInspectResult{}, c.err
 }
 
-func (c *fakeServicesClient) ServiceList(ctx context.Context, options swarmtypes.ServiceListOptions) ([]swarmtypes.Service, error) {
-	return c.services, c.err
+func (c *fakeServicesClient) ServiceList(ctx context.Context, options client.ServiceListOptions) (client.ServiceListResult, error) {
+	return client.ServiceListResult{Items: c.services}, c.err
 }
 
-func (c *fakeServicesClient) ServerVersion(ctx context.Context) (dockertypes.Version, error) {
-	return dockertypes.Version{APIVersion: c.dockerVersion}, c.err
+func (c *fakeServicesClient) ServerVersion(ctx context.Context, options client.ServerVersionOptions) (client.ServerVersionResult, error) {
+	return client.ServerVersionResult{APIVersion: c.dockerVersion}, c.err
 }
 
-func (c *fakeServicesClient) NetworkList(ctx context.Context, options networktypes.ListOptions) ([]networktypes.Summary, error) {
-	return c.networks, c.err
+func (c *fakeServicesClient) NetworkList(ctx context.Context, options client.NetworkListOptions) (client.NetworkListResult, error) {
+	return client.NetworkListResult{Items: c.networks}, c.err
 }
 
-func (c *fakeServicesClient) TaskList(ctx context.Context, options swarmtypes.TaskListOptions) ([]swarmtypes.Task, error) {
-	return c.tasks, c.err
+func (c *fakeServicesClient) TaskList(ctx context.Context, options client.TaskListOptions) (client.TaskListResult, error) {
+	return client.TaskListResult{Items: c.tasks}, c.err
 }
