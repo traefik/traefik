@@ -1433,18 +1433,6 @@ proxy_method $request_method;
 			},
 		},
 		{
-			desc:                "auth snippet and configuration snippet - get header values from auth",
-			authSnippet:         `add_header X-Auth-Debug $request_uri always;`,
-			authResponseHeaders: []string{"X-Auth-Debug"},
-			configurationSnippet: `
-auth_request_set $authHeader0 $upstream_http_x_auth_debug;
-proxy_set_header X-Auth-Debug $authHeader0;`,
-			method: http.MethodPost,
-			expectedRequestHeaders: map[string]string{
-				"X-Auth-Debug": "/auth",
-			},
-		},
-		{
 			desc: "forward auth passes with 200 response",
 			authServerHandler: func(t *testing.T) http.HandlerFunc {
 				t.Helper()

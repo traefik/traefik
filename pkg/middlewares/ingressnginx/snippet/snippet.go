@@ -571,9 +571,7 @@ func WriteResponse(rw http.ResponseWriter, req *http.Request, ctx *actionContext
 	}
 
 	rw.WriteHeader(ctx.statusCode)
-	if ctx.body != "" {
-		_, _ = rw.Write([]byte(ctx.body))
-	}
+	_, _ = rw.Write([]byte(ctx.body))
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {

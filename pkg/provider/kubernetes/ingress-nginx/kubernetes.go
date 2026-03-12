@@ -474,6 +474,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			IngressConfig: parseIngressConfig(ing),
 		}
 
+		// Discard the ingress if snippet annotations aren't allowed.
+		if (ptr.Deref(i.IngressConfig.ServerSnippet, "") != "" || ptr.Deref(i.IngressConfig.ConfigurationSnippet, "") != "" || ptr.Deref(i.IngressConfig.AuthSnippet, "") != "") && !p.AllowSnippetAnnotations {
+			logger.Warn().Msg("Snippet annotations aren't allowed, the ingress is discarded. You can configure this by using the allowSnippetAnnotation option in the provider configuration.")
+			continue
+		}
+
 		// Canary ingresses should be processed separately after processing all the ingresses
 		// to ensure that the canary rules are matching the ingress rules.
 		if ptr.Deref(i.IngressConfig.Canary, false) {
@@ -1309,10 +1315,6 @@ func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingres
 		return nil
 	}
 
-	if (serverSnippet != "" || configurationSnippet != "") && !p.AllowSnippetAnnotations {
-		return errors.New("snippet annotations are not allowed")
-	}
-
 	snippetMiddlewareName := routerName + "-snippet"
 	conf.HTTP.Middlewares[snippetMiddlewareName] = &dynamic.Middleware{
 		Snippet: &dynamic.Snippet{
@@ -1334,10 +1336,7 @@ func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingres
 			AuthResponseHeaders: authResponseHeaders,
 			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
 			Method:              ptr.Deref(ingressConfig.AuthMethod, ""),
-		}
-
-		if p.AllowSnippetAnnotations {
-			authMiddleware.Snippet = ptr.Deref(ingressConfig.AuthSnippet, "")
+			Snippet:             ptr.Deref(ingressConfig.AuthSnippet, ""),
 		}
 
 		conf.HTTP.Middlewares[snippetMiddlewareName].Snippet.Auth = authMiddleware
