@@ -7602,6 +7602,27 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Ingress with multiple paths and one invalid path with StrictValidatePathType drops the whole ingress",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-invalid-path-strict-validate.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
