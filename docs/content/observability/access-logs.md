@@ -283,6 +283,9 @@ accessLog:
     | `TLSClientSubject`      | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`)                                                               |
     | `TraceId`               | A consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string                           |
     | `SpanId`                | A unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.                                                |
+    | `KubernetesNamespace`   | The Kubernetes namespace.                                                                                                                                           |
+    | `KubernetesKind`        | The Kubernetes resource Kind.                                                                                                                                       |
+    | `KubernetesName`        | The Kubernetes resource name.                                                                                                                                       |
 
 ## Log Rotation
 

@@ -138,6 +138,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		epEnabled:                      config.AddEntryPointsLabels,
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
+		needsKubernetesLabels:          config.AddKubernetesLabels,
 		configReloadsCounter:           configReloads,
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
 		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimestamp,
@@ -145,10 +146,14 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	}
 
 	if config.AddEntryPointsLabels {
+		entryPointsLabels := []string{"code", "method", "protocol", "entrypoint"}
+		if config.AddKubernetesLabels {
+			entryPointsLabels = append(entryPointsLabels, "namespace", "kind", "name")
+		}
 		entryPointReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTotalName,
 			Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
-		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
+		}, config.HeaderLabels, entryPointsLabels)
 		entryPointReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.",
@@ -157,15 +162,15 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name:    entryPointReqDurationName,
 			Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
-		}, []string{"code", "method", "protocol", "entrypoint"})
+		}, entryPointsLabels)
 		entryPointReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsBytesTotalName,
 			Help: "The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "entrypoint"})
+		}, entryPointsLabels)
 		entryPointRespsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: entryPointRespsBytesTotalName,
 			Help: "The total size of responses in bytes handled by an entrypoint, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "entrypoint"})
+		}, entryPointsLabels)
 
 		promState.vectors = append(promState.vectors,
 			entryPointReqs.cv,
@@ -183,10 +188,14 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	}
 
 	if config.AddRoutersLabels {
+		routersLabels := []string{"code", "method", "protocol", "router", "service"}
+		if config.AddKubernetesLabels {
+			routersLabels = append(routersLabels, "namespace", "kind", "name")
+		}
 		routerReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTotalName,
 			Help: "How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.",
-		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
+		}, config.HeaderLabels, routersLabels)
 		routerReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
@@ -195,15 +204,15 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name:    routerReqDurationName,
 			Help:    "How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			Buckets: buckets,
-		}, []string{"code", "method", "protocol", "router", "service"})
+		}, routersLabels)
 		routerReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: routerReqsBytesTotalName,
 			Help: "The total size of requests in bytes handled by a router, partitioned by service, status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "router", "service"})
+		}, routersLabels)
 		routerRespsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: routerRespsBytesTotalName,
 			Help: "The total size of responses in bytes handled by a router, partitioned by service, status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "router", "service"})
+		}, routersLabels)
 
 		promState.vectors = append(promState.vectors,
 			routerReqs.cv,
@@ -220,10 +229,14 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	}
 
 	if config.AddServicesLabels {
+		servicesLabels := []string{"code", "method", "protocol", "service"}
+		if config.AddKubernetesLabels {
+			servicesLabels = append(servicesLabels, "namespace", "kind", "name")
+		}
 		serviceReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
 			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
-		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
+		}, config.HeaderLabels, servicesLabels)
 		serviceReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.",
@@ -232,7 +245,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name:    serviceReqDurationName,
 			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
-		}, []string{"code", "method", "protocol", "service"})
+		}, servicesLabels)
 		serviceRetries := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceRetriesTotalName,
 			Help: "How many request retries happened on a service.",
@@ -244,11 +257,11 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		serviceReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsBytesTotalName,
 			Help: "The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
+		}, servicesLabels)
 		serviceRespsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceRespsBytesTotalName,
 			Help: "The total size of responses in bytes returned by a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
+		}, servicesLabels)
 
 		promState.vectors = append(promState.vectors,
 			serviceReqs.cv,
