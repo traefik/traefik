@@ -283,6 +283,193 @@ accessLog:
     | `TLSClientSubject`      | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`)                                                               |
     | `TraceId`               | A consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string                           |
     | `SpanId`                | A unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.                                                |
+## JSON Format
+
+The JSON format provides structured access logs suitable for parsing by log aggregation systems, monitoring platforms, and automated analysis tools.
+
+### Overview
+
+When using the JSON format (`format: json`), Traefik outputs each access log as a complete JSON object on a single line, making it easy for JSON log parsers to process.
+
+### JSON Structure
+
+Each JSON log entry contains the following top-level field groups:
+
+- **Request fields**: Information about the incoming client request (prefixed with `Request`)
+- **Origin fields**: Information about the upstream/backend service response (prefixed with `Origin`)
+- **Downstream fields**: Information about the client connection (prefixed with `Downstream`)
+- **Traefik-specific fields**: Router name, service details, timing information, etc.
+
+### Field Prefixes Explained
+
+When examining JSON logs, you'll encounter fields with different prefixes:
+
+#### `Request.*` Fields
+Fields with the `Request` prefix contain information from the original client request:
+- `RequestMethod`: HTTP method (GET, POST, etc.)
+- `RequestPath`: The URI path requested
+- `RequestProtocol`: HTTP version (HTTP/1.1, HTTP/2, etc.)
+- `RequestScheme`: http or https
+- `RequestContentSize`: Size of the request body in bytes
+- Request headers (when included)
+
+#### `Origin.*` Fields
+Fields with the `Origin` prefix relate to the upstream/backend service that handled the request:
+- `OriginStatus`: HTTP status code returned by the backend
+- `OriginContentSize`: Response body size from the backend
+- `OriginDuration`: Time taken by the backend to generate the response
+- Origin headers (when included)
+
+#### `Downstream.*` Fields  
+Fields with the `Downstream` prefix describe the connection between the client and Traefik:
+- `DownstreamStatus`: HTTP status code returned by Traefik to the client
+- `DownstreamContentSize`: Response body size sent to the client
+
+### Configuration Examples
+
+#### Basic JSON Logging
+
+```yaml tab="File (YAML)"
+accessLog:
+  format: json
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  format = "json"
+```
+
+```bash tab="CLI"
+--accesslog.format=json
+```
+
+#### JSON Logging to File
+
+```yaml tab="File (YAML)"
+accessLog:
+  filePath: /var/log/traefik/access.json
+  format: json
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  filePath = "/var/log/traefik/access.json"
+  format = "json"
+```
+
+```bash tab="CLI"
+--accesslog.filepath=/var/log/traefik/access.json
+--accesslog.format=json
+```
+
+#### JSON Logging with HTTP Headers
+
+To include HTTP headers in the JSON logs (e.g., for tracking user agents, authorization types):
+
+```yaml tab="File (YAML)"
+accessLog:
+  format: json
+  fields:
+    headers:
+      defaultMode: keep
+      names:
+        User-Agent: keep
+        Authorization: redact
+        Content-Type: keep
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  format = "json"
+
+  [accessLog.fields.headers]
+    defaultMode = "keep"
+    
+    [accessLog.fields.headers.names]
+      "User-Agent" = "keep"
+      "Authorization" = "redact"
+      "Content-Type" = "keep"
+```
+
+### JSON Output Examples
+
+#### Example 1: Basic HTTP Request
+
+A simple GET request to a service:
+
+```json
+{
+  "ClientAddr": "192.168.1.100:54321",
+  "ClientHost": "192.168.1.100",
+  "ClientPort": "54321",
+  "ClientUsername": "-",
+  "DownstreamContentSize": 1024,
+  "DownstreamStatus": 200,
+  "Duration": 45000000,
+  "GzipRatio": 0,
+  "OriginContentSize": 1024,
+  "OriginDuration": 40000000,
+  "OriginStatus": 200,
+  "Overhead": 5000000,
+  "RequestAddr": "example.com:80",
+  "RequestContentSize": 0,
+  "RequestCount": 1,
+  "RequestHost": "example.com",
+  "RequestMethod": "GET",
+  "RequestPath": "/api/v1/users",
+  "RequestPort": "80",
+  "RequestProtocol": "HTTP/1.1",
+  "RequestScheme": "http",
+  "RetryAttempts": 0,
+  "StartLocal": "2026-03-08T14:32:15.123456789Z",
+  "StartUTC": "2026-03-08T14:32:15.123456789Z",
+  "entryPointName": "web",
+  "level": "info",
+  "msg": "",
+  "time": "2026-03-08T14:32:15Z"
+}
+```
+
+#### Example 2: HTTPS POST Request with Router/Service Information
+
+A more complex request matching configured routes:
+
+```json
+{
+  "ClientAddr": "192.168.1.105:55000",
+  "ClientHost": "192.168.1.105",
+  "ClientPort": "55000",
+  "ClientUsername": "-",
+  "DownstreamContentSize": 256,
+  "DownstreamStatus": 201,
+  "Duration": 125000000,
+  "GzipRatio": 0.35,
+  "OriginContentSize": 256,
+  "OriginDuration": 100000000,
+  "OriginStatus": 201,
+  "Overhead": 15000000,
+  "RequestAddr": "api.example.com:443",
+  "RequestContentSize": 512,
+  "RequestCount": 25,
+  "RequestHost": "api.example.com",
+  "RequestMethod": "POST",
+  "RequestPath": "/v2/orders",
+  "RequestPort": "443",
+  "RequestProtocol": "HTTP/2",
+  "RequestScheme": "https",
+  "RetryAttempts": 1,
+  "RouterName": "api-router",
+  "ServiceName": "orders-service",
+  "StartLocal": "2026-03-08T14:35:20.456789123Z",
+  "StartUTC": "2026-03-08T14:35:20.456789123Z",
+  "TLSCipher": "TLS_AES_256_GCM_SHA384",
+  "TLSVersion": "1.3",
+  "entryPointName": "websecure",
+  "level": "info",
+  "msg": "",
+  "time": "2026-03-08T14:35:20Z"
+}
+```
 
 ## Log Rotation
 
