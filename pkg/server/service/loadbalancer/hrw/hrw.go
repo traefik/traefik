@@ -134,7 +134,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// For supporting consistent hashing using custom variables or text
 	if b.nginxUpstreamHashBy != "" {
-		key = ingressnginx.ReplaceVariables(b.nginxUpstreamHashBy, req, nil)
+		key = ingressnginx.ReplaceVariables(b.nginxUpstreamHashBy, req, nil, nil)
 	}
 
 	server, err := b.nextServer(key)
