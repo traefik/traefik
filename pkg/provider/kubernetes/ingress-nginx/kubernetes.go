@@ -386,7 +386,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host), "-")
 
 				conf.TCP.Routers[routerKey] = &dynamic.TCPRouter{
-					Rule: fmt.Sprintf("HostSNI(`%s`)", rule.Host),
+					Rule: fmt.Sprintf("HostSNI(%q)", rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -1063,10 +1063,10 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 
 		switch pathType {
 		case netv1.PathTypeExact:
-			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
+			rules = append(rules, fmt.Sprintf("Path(%q)", pa.Path))
 		case netv1.PathTypePrefix:
 			if ptr.Deref(config.UseRegex, false) {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", fmt.Sprintf("^%s", pa.Path)))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
@@ -1079,10 +1079,10 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
+		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
-	return fmt.Sprintf("Host(`%s`)", host)
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
