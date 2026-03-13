@@ -17,6 +17,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 		config          dynamic.HeaderModifier
 		requestHeaders  http.Header
 		expectedHeaders http.Header
+		expectedHost    string
 	}{
 		{
 			desc:            "no config",
@@ -92,6 +93,14 @@ func TestRequestHeaderModifier(t *testing.T) {
 			requestHeaders:  map[string][]string{"Foo": {"Bar"}, "Bar": {"Foo"}, "Baz": {"Bar"}},
 			expectedHeaders: map[string][]string{"Baz": {"Bar"}},
 		},
+		{
+			desc: "set Host header",
+			config: dynamic.HeaderModifier{
+				Set: map[string]string{"Host": "example.com"},
+			},
+			expectedHeaders: map[string][]string{},
+			expectedHost:    "example.com",
+		},
 	}
 
 	for _, test := range testCases {
@@ -99,8 +108,10 @@ func TestRequestHeaderModifier(t *testing.T) {
 			t.Parallel()
 
 			var gotHeaders http.Header
+			var gotHost string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				gotHeaders = r.Header
+				gotHost = r.Host
 			})
 
 			handler := NewRequestHeaderModifier(t.Context(), next, test.config, "foo-request-header-modifier")
@@ -112,6 +123,9 @@ func TestRequestHeaderModifier(t *testing.T) {
 			handler.ServeHTTP(resp, req)
 
 			assert.Equal(t, test.expectedHeaders, gotHeaders)
+			if test.expectedHost != "" {
+				assert.Equal(t, test.expectedHost, gotHost)
+			}
 		})
 	}
 }
