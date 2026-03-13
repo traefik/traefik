@@ -9,7 +9,7 @@ env:
   CGO_ENABLED: 0
   VERSION: ${{ github.ref_name }}
   TRAEFIKER_EMAIL: "traefiker@traefik.io"
-  CODENAME: ramequin
+  CODENAME: langres
 
 jobs:
 
