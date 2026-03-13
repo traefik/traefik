@@ -232,7 +232,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		// Add the default backend service router to the configuration.
 		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
-			Rule: "PathPrefix(`/`)",
+			Rule: `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -240,7 +240,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		}
 
 		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
-			Rule: "PathPrefix(`/`)",
+			Rule: `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -309,7 +309,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -323,7 +323,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			conf.HTTP.Routers[defaultBackendName] = rt
 
 			rtTLS := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -1093,11 +1093,11 @@ func buildHostRule(host string) string {
 // Kubernetes Ingress API.
 func buildPrefixRule(path string) string {
 	if path == "/" {
-		return "PathPrefix(`/`)"
+		return `PathPrefix("/")`
 	}
 
 	path = strings.TrimSuffix(path, "/")
-	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
+	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, fmt.Sprintf("%s/", path))
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
