@@ -1,4 +1,4 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTh, AriaThead, AriaTr, Box, Flex, styled } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTh, AriaThead, AriaTr, Box, Flex, styled } from '@traefik-labs/faency'
 import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
