@@ -112,7 +112,6 @@ func NewCompressionHandler(cfg Config, newWriter NewCompressionWriter, next http
 }
 
 func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	compressionWriter, err := c.getCompressionWriter(rw)
 	if err != nil {
 		logger := middlewares.GetLogger(r.Context(), c.cfg.MiddlewareName, typeName)
@@ -453,7 +452,7 @@ func (r *responseWriter) close() error {
 func (r *responseWriter) ensureVaryHeader() {
 	values := r.rw.Header().Values(vary)
 	for _, v := range values {
-		for _, item := range strings.Split(v, ",") {
+		for item := range strings.SplitSeq(v, ",") {
 			if strings.EqualFold(strings.TrimSpace(item), acceptEncoding) {
 				return
 			}

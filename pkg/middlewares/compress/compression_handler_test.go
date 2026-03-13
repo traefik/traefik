@@ -123,7 +123,6 @@ func Test_AlreadyCompressed(t *testing.T) {
 	}
 }
 
-
 func Test_AlreadyCompressedNoDuplicateVary(t *testing.T) {
 	testCases := []struct {
 		desc           string

@@ -12,6 +12,7 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
@@ -177,7 +178,6 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 
 	assert.Equal(t, rw.Body.Bytes(), fakeCompressedBody)
 }
-
 
 func TestShouldNotDuplicateVaryHeader(t *testing.T) {
 	testCases := []struct {

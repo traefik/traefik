@@ -14,6 +14,7 @@ import (
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/klauspost/compress/zstd"
+
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
@@ -194,6 +195,7 @@ func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.R
 // has already set it.
 type deduplicateVaryWriter struct {
 	http.ResponseWriter
+
 	headersSent bool
 }
 
@@ -242,7 +244,7 @@ func deduplicateVary(h http.Header) {
 	seen := make(map[string]struct{})
 	var unique []string
 	for _, v := range varyValues {
-		for _, item := range strings.Split(v, ",") {
+		for item := range strings.SplitSeq(v, ",") {
 			normalized := strings.TrimSpace(item)
 			lower := strings.ToLower(normalized)
 			if _, ok := seen[lower]; !ok {
