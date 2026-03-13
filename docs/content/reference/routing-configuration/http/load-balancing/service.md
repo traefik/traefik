@@ -483,6 +483,67 @@ Below are the available options for the passive health check mechanism:
 | <a id="opt-failureWindow" href="#opt-failureWindow" title="#opt-failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
 | <a id="opt-maxFailedAttempts" href="#opt-maxFailedAttempts" title="#opt-maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
 
+### Middlewares
+
+You can attach a list of [middlewares](../middlewares/overview.md) to each HTTP service.
+The middlewares will take effect for all requests handled by the service, regardless of which router forwards the request.
+
+!!! info "Middlewares Execution Order"
+
+    When both a router and a service have middlewares configured, the router middlewares are applied first, followed by the service middlewares.
+    This means the request passes through router middlewares before reaching service middlewares.
+
+!!! info "Supported Providers"
+
+    Service-level middlewares can be configured with the [File](../../../install-configuration/providers/others/file.md), [Docker](../../other-providers/docker.md), [Swarm](../../other-providers/docker.md), [Kubernetes IngressRoute](../../kubernetes/crd/http/ingressroute.md), [Kubernetes Ingress](../../kubernetes/ingress.md), and [Kubernetes Gateway API](../../kubernetes/gateway-api.md) providers.
+
+??? example "Attaching Middlewares to a Service -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          middlewares:
+            - add-header
+          loadBalancer:
+            servers:
+              - url: "http://127.0.0.1:8080"
+
+      middlewares:
+        add-header:
+          headers:
+            customRequestHeaders:
+              X-Custom-Header: "service-middleware"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service]
+        middlewares = ["add-header"]
+        [http.services.my-service.loadBalancer]
+          [[http.services.my-service.loadBalancer.servers]]
+            url = "http://127.0.0.1:8080"
+
+    [http.middlewares]
+      [http.middlewares.add-header.headers]
+        [http.middlewares.add-header.headers.customRequestHeaders]
+          X-Custom-Header = "service-middleware"
+    ```
+
+??? example "Attaching Middlewares to a Service -- Using [Docker Labels](../../other-providers/docker.md)"
+
+    ```yaml
+    labels:
+      # Define the middleware
+      - "traefik.http.middlewares.add-header.headers.customRequestHeaders.X-Custom-Header=service-middleware"
+      # Attach middleware to the service (at service level, not loadBalancer level)
+      - "traefik.http.services.my-service.middlewares=add-header"
+      # Configure the service
+      - "traefik.http.services.my-service.loadbalancer.server.port=8080"
+    ```
+
 ## Advanced Service Types
 
 Advanced service types allow you to compose multiple services together for weighted distribution, consistent hashing, mirroring, or failover scenarios.

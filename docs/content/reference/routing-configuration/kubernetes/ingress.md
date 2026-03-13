@@ -256,6 +256,14 @@ spec:
     traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
     ```
 
+??? info "`traefik.ingress.kubernetes.io/service.middlewares`"
+
+    See [service middlewares](../http/load-balancing/service.md#middlewares) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.middlewares: auth@file,prefix@kubernetescrd
+    ```
+
 ## TLS
 
 ### Enabling TLS via HTTP Options on Entrypoint
