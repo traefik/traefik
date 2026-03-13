@@ -97,9 +97,9 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
-	log.Warn().Msg("Traefik can reject some encoded characters in the request path." +
-		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
-		"it is recommended to set these options to `false` to avoid split-view situation." +
+	log.Warn().Msg("Traefik can reject some encoded characters in the request path. " +
+		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986), " +
+		"it is recommended to set these options to `false` to avoid split-view situation. " +
 		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.7/migrate/v3/#encoded-characters-configuration-default-values")
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
@@ -624,8 +624,6 @@ func checkNewVersion(staticConfiguration *static.Configuration) {
 	if staticConfiguration.Global.CheckNewVersion {
 		logger.Info().Msg(`Version check is enabled.`)
 		logger.Info().Msg(`Traefik checks for new releases to notify you if your version is out of date.`)
-		logger.Info().Msg(`It also collects usage data during this process.`)
-		logger.Info().Msg(`Check the documentation to get more info: https://doc.traefik.io/traefik/contributing/data-collection/`)
 
 		ticker := time.Tick(24 * time.Hour)
 		safe.Go(func() {
@@ -634,11 +632,8 @@ func checkNewVersion(staticConfiguration *static.Configuration) {
 			}
 		})
 	} else {
-		logger.Info().Msg(`
-Version check is disabled.
-You will not be notified if a new version is available.
-More details: https://doc.traefik.io/traefik/contributing/data-collection/
-`)
+		logger.Info().Msg(`Version check is disabled. `)
+		logger.Info().Msg(`You will not be notified if a new version is available.`)
 	}
 }
 
@@ -646,17 +641,13 @@ func stats(staticConfiguration *static.Configuration) {
 	logger := log.With().Logger()
 
 	if staticConfiguration.Global.SendAnonymousUsage {
-		logger.Info().Msg(`Stats collection is enabled.`)
-		logger.Info().Msg(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
-		logger.Info().Msg(`Help us improve Traefik by leaving this feature on :)`)
-		logger.Info().Msg(`More details on: https://doc.traefik.io/traefik/contributing/data-collection/`)
+		logger.Info().Msg("Stats collection is enabled. " +
+			"Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.")
 		collect(staticConfiguration)
 	} else {
-		logger.Info().Msg(`
-Stats collection is disabled.
-Help us improve Traefik by turning this feature on :)
-More details on: https://doc.traefik.io/traefik/contributing/data-collection/
-`)
+		logger.Info().Msg("Stats collection is disabled. " +
+			"Help us improve Traefik by turning this feature on :) " +
+			"More details on: https://doc.traefik.io/traefik/contributing/data-collection/")
 	}
 }
 
