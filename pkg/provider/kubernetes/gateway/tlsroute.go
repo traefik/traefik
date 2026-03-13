@@ -83,6 +83,20 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			parentStatuses = append(parentStatuses, *parentStatus)
 		}
 
+		// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
+		// Note that when there is HTTPS listeners this will predate the traffic and reject the connection to undefined hosts instead of returning a 404.
+		if len(conf.TCP.Routers) > 0 {
+			conf.TCP.Routers["deny-unknown-host"] = &dynamic.TCPRouter{
+				Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+				Priority: 1,
+				Service:  "deny-unknown-host",
+				TLS:      &dynamic.RouterTCPTLSConfig{},
+			}
+			conf.TCP.Services["deny-unknown-host"] = &dynamic.TCPService{
+				LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+			}
+		}
+
 		routeStatus := gatev1.TLSRouteStatus{
 			RouteStatus: gatev1.RouteStatus{
 				Parents: parentStatuses,
@@ -330,7 +344,7 @@ func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
 			continue
 		}
 
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-]+\.`, 1)
 		rules = append(rules, fmt.Sprintf("HostSNIRegexp(%q)", fmt.Sprintf("^%s$", host)))
 	}
 

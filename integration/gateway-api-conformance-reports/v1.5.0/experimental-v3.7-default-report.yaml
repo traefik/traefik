@@ -72,14 +72,10 @@ profiles:
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
-    failedTests:
-    - TLSRouteHostnameIntersection
-    - TLSRouteInvalidBackendRefNonexistent
-    - TLSRouteInvalidBackendRefUnknownKind
-    result: failure
+    result: success
     statistics:
-      Failed: 3
-      Passed: 15
+      Failed: 0
+      Passed: 18
       Skipped: 0
   extended:
     result: success
@@ -102,6 +98,6 @@ profiles:
     - ListenerSet
     - TLSRouteModeMixed
   name: GATEWAY-TLS
-  summary: Core tests failed with 3 test failures. Extended tests succeeded.
+  summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:
 - TLSRouteTerminateSimpleSameNamespace
