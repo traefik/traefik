@@ -730,19 +730,19 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 func buildHostRuleV2(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)
-		return fmt.Sprintf("HostRegexp(`%s`)", host)
+		return fmt.Sprintf("HostRegexp(%q)", host)
 	}
 
-	return fmt.Sprintf("Host(`%s`)", host)
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
+		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
-	return fmt.Sprintf("Host(`%s`)", host)
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
