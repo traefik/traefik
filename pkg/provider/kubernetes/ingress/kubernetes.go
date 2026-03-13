@@ -299,7 +299,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -883,7 +883,7 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 		return buildStrictPrefixMatchingRule(path)
 	}
 
-	return fmt.Sprintf("%s(`%s`)", matcher, path)
+	return fmt.Sprintf("%s(%q)", matcher, path)
 }
 
 // buildStrictPrefixMatchingRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
@@ -894,11 +894,11 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 // Kubernetes Ingress API.
 func buildStrictPrefixMatchingRule(path string) string {
 	if path == "/" {
-		return "PathPrefix(`/`)"
+		return `PathPrefix("/")`
 	}
 
 	path = strings.TrimSuffix(path, "/")
-	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
+	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, fmt.Sprintf("%s/", path))
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
