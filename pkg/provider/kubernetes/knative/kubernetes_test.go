@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/ptr"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	knfake "knative.dev/networking/pkg/client/clientset/versioned/fake"
 )
@@ -63,7 +62,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0-split-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: types.Duration(100 * time.Millisecond),
 								},
@@ -77,7 +76,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0-split-1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: types.Duration(100 * time.Millisecond),
 								},
@@ -93,7 +92,7 @@ func Test_loadConfiguration(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-helloworld-go-rule-0-path-0-split-0",
-										Weight: ptr.To(50),
+										Weight: new(50),
 										Headers: map[string]string{
 											"Knative-Serving-Namespace": "default",
 											"Knative-Serving-Revision":  "helloworld-go-00001",
@@ -101,7 +100,7 @@ func Test_loadConfiguration(t *testing.T) {
 									},
 									{
 										Name:   "default-helloworld-go-rule-0-path-0-split-1",
-										Weight: ptr.To(50),
+										Weight: new(50),
 										Headers: map[string]string{
 											"Knative-Serving-Namespace": "default",
 											"Knative-Serving-Revision":  "helloworld-go-00002",
@@ -133,7 +132,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0-split-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: types.Duration(100 * time.Millisecond),
 								},
@@ -147,7 +146,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0-split-1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: types.Duration(100 * time.Millisecond),
 								},
@@ -163,7 +162,7 @@ func Test_loadConfiguration(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-helloworld-go-rule-0-path-0-split-0",
-										Weight: ptr.To(50),
+										Weight: new(50),
 										Headers: map[string]string{
 											"Knative-Serving-Namespace": "default",
 											"Knative-Serving-Revision":  "helloworld-go-00001",
@@ -171,7 +170,7 @@ func Test_loadConfiguration(t *testing.T) {
 									},
 									{
 										Name:   "default-helloworld-go-rule-0-path-0-split-1",
-										Weight: ptr.To(50),
+										Weight: new(50),
 										Headers: map[string]string{
 											"Knative-Serving-Namespace": "default",
 											"Knative-Serving-Revision":  "helloworld-go-00002",
@@ -210,7 +209,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0-split-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: types.Duration(100 * time.Millisecond),
 								},
@@ -224,7 +223,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0-split-1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: types.Duration(100 * time.Millisecond),
 								},
@@ -240,7 +239,7 @@ func Test_loadConfiguration(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-helloworld-go-rule-0-path-0-split-0",
-										Weight: ptr.To(50),
+										Weight: new(50),
 										Headers: map[string]string{
 											"Knative-Serving-Namespace": "default",
 											"Knative-Serving-Revision":  "helloworld-go-00001",
@@ -248,7 +247,7 @@ func Test_loadConfiguration(t *testing.T) {
 									},
 									{
 										Name:   "default-helloworld-go-rule-0-path-0-split-1",
-										Weight: ptr.To(50),
+										Weight: new(50),
 										Headers: map[string]string{
 											"Knative-Serving-Namespace": "default",
 											"Knative-Serving-Revision":  "helloworld-go-00002",

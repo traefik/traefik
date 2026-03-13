@@ -58,9 +58,9 @@ func WithServiceName(serviceName string) func(*dynamic.Router) {
 func WithObservability() func(*dynamic.Router) {
 	return func(r *dynamic.Router) {
 		r.Observability = &dynamic.RouterObservabilityConfig{
-			AccessLogs:     pointer(true),
-			Metrics:        pointer(true),
-			Tracing:        pointer(true),
+			AccessLogs:     new(true),
+			Metrics:        new(true),
+			Tracing:        new(true),
 			TraceVerbosity: otypes.MinimalVerbosity,
 		}
 	}
@@ -214,5 +214,3 @@ func WithSticky(cookieName string) func(*dynamic.ServersLoadBalancer) {
 		}
 	}
 }
-
-func pointer[T any](v T) *T { return &v }

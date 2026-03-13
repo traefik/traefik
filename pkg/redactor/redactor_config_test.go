@@ -59,9 +59,9 @@ func init() {
 					},
 				},
 				Observability: &dynamic.RouterObservabilityConfig{
-					AccessLogs: pointer(true),
-					Tracing:    pointer(true),
-					Metrics:    pointer(true),
+					AccessLogs: new(true),
+					Tracing:    new(true),
+					Metrics:    new(true),
 				},
 			},
 		},
@@ -83,12 +83,12 @@ func init() {
 						Interval:        ptypes.Duration(111 * time.Second),
 						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
-						FollowRedirects: pointer(true),
+						FollowRedirects: new(true),
 						Headers: map[string]string{
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: pointer(true),
+					PassHostHeader: new(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
 						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
@@ -105,7 +105,7 @@ func init() {
 					Services: []dynamic.WRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 					Sticky: &dynamic.Sticky{
@@ -209,7 +209,7 @@ func init() {
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},
 					SSLProxyHeaders:                   map[string]string{"foo": "bar"},
-					STSSeconds:                        pointer(int64(42)),
+					STSSeconds:                        new(int64(42)),
 					STSIncludeSubdomains:              true,
 					STSPreload:                        true,
 					ForceSTSHeader:                    true,
@@ -386,7 +386,7 @@ func init() {
 					Services: []dynamic.TCPWRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 				},
@@ -433,7 +433,7 @@ func init() {
 					Services: []dynamic.UDPWRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 				},
@@ -1006,4 +1006,4 @@ func TestDo_staticConfiguration(t *testing.T) {
 	assert.JSONEq(t, expected, cleanJSON)
 }
 
-func pointer[T any](v T) *T { return &v }
+func pointer[T any](v T) *T { return new(v) }
