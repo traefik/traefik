@@ -2,11 +2,13 @@ package tcpmiddleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
@@ -21,14 +23,23 @@ const (
 	middlewareStackKey middlewareStackType = iota
 )
 
+// PluginsBuilder the plugin's builder interface.
+type PluginsBuilder interface {
+	BuildTCP(pName string, config map[string]interface{}, middlewareName string) (tcp.Constructor, error)
+}
+
 // Builder the middleware builder.
 type Builder struct {
-	configs map[string]*runtime.TCPMiddlewareInfo
+	configs       map[string]*runtime.TCPMiddlewareInfo
+	pluginBuilder PluginsBuilder
 }
 
 // NewBuilder creates a new Builder.
-func NewBuilder(configs map[string]*runtime.TCPMiddlewareInfo) *Builder {
-	return &Builder{configs: configs}
+func NewBuilder(configs map[string]*runtime.TCPMiddlewareInfo, pluginBuilder PluginsBuilder) *Builder {
+	return &Builder{
+		configs:       configs,
+		pluginBuilder: pluginBuilder,
+	}
 }
 
 // BuildChain creates a middleware chain.
@@ -113,9 +124,49 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// Plugin
+	if config.Plugin != nil {
+		if b.pluginBuilder == nil {
+			return nil, fmt.Errorf("plugin middleware %q is not available: no plugin builder", middlewareName)
+		}
+
+		pluginType, pluginConfig, err := findPluginConfig(config.Plugin)
+		if err != nil {
+			return nil, fmt.Errorf("plugin config error: %w", err)
+		}
+
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			constructor, err := b.pluginBuilder.BuildTCP(pluginType, pluginConfig, middlewareName)
+			if err != nil {
+				return nil, err
+			}
+			return constructor(next)
+		}
+	}
+
 	if middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
 	return middleware, nil
+}
+
+func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]interface{}, error) {
+	if len(rawConfig) != 1 {
+		return "", nil, errors.New("invalid configuration: no configuration or too many plugin definition")
+	}
+
+	var pluginType string
+	var rawPluginConfig map[string]interface{}
+
+	for pType, pConfig := range rawConfig {
+		pluginType = pType
+		rawPluginConfig = pConfig
+	}
+
+	if pluginType == "" {
+		return "", nil, errors.New("missing plugin type")
+	}
+
+	return pluginType, rawPluginConfig, nil
 }

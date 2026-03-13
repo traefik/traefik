@@ -2134,6 +2134,13 @@ func (in *TCPMiddleware) DeepCopyInto(out *TCPMiddleware) {
 		*out = new(TCPIPAllowList)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Plugin != nil {
+		in, out := &in.Plugin, &out.Plugin
+		*out = make(map[string]PluginConf, len(*in))
+		for key, val := range *in {
+			(*out)[key] = *val.DeepCopy()
+		}
+	}
 	return
 }
 
