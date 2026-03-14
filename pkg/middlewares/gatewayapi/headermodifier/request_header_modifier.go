@@ -3,6 +3,7 @@ package headermodifier
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -40,10 +41,21 @@ func (r *requestHeaderModifier) GetTracingInformation() (string, string) {
 
 func (r *requestHeaderModifier) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for headerName, headerValue := range r.set {
+		// In Go's net/http, the Host header is not stored in the Header map
+		// but in the Request.Host field. Setting it via Header.Set is a no-op
+		// for the actual host used in upstream requests.
+		if strings.EqualFold(headerName, "Host") {
+			req.Host = headerValue
+			continue
+		}
 		req.Header.Set(headerName, headerValue)
 	}
 
 	for headerName, headerValue := range r.add {
+		if strings.EqualFold(headerName, "Host") {
+			req.Host = headerValue
+			continue
+		}
 		req.Header.Add(headerName, headerValue)
 	}
 
