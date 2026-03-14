@@ -2365,6 +2365,97 @@ func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
 	}
 }
 
+func (s *SimpleSuite) TestDDOS() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	file := s.adaptFile("fixtures/simple_ddos.toml", struct{}{})
+
+	_, output := s.cmdTraefik(withConfigFile(file))
+
+	defer func() {
+		if s.T().Failed() {
+			s.T().Log("---- Traefik Logs ----")
+			s.T().Log(output)
+		}
+	}()
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
+
+	// Try with an http router.
+	conn, err := net.Dial("tcp", "127.0.0.1:8000")
+	require.NoError(s.T(), err)
+
+	waitForWritePartial(s.T(), conn)
+
+	// Try with a tcp router only.
+	conn, err = net.Dial("tcp", "127.0.0.1:8001")
+	require.NoError(s.T(), err)
+
+	waitForWritePartial(s.T(), conn)
+}
+
+func waitForWritePartial(t *testing.T, conn net.Conn) {
+	t.Helper()
+
+	end := make(chan struct{})
+	go func() {
+		if _, err := conn.Write([]byte{0x16, 0x03, 0x03, 0x00, 0x10}); err != nil {
+			require.NoError(t, err)
+		}
+
+		_, err := conn.Read(make([]byte, 1))
+		require.ErrorIs(t, err, io.EOF)
+
+		close(end)
+	}()
+
+	select {
+	case <-end:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatalf("timeout waiting for connection timeout")
+	}
+}
+
+func (s *SimpleSuite) TestAllowACMEByPassRedirect() {
+	// Start a local server that simulates an ACME challenge solver.
+	acmeSolver := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write([]byte("acme-challenge-token"))
+	}))
+	defer acmeSolver.Close()
+
+	file := s.adaptFile("fixtures/simple_acme_bypass_redirect.toml", struct {
+		AcmeSolverURL string
+	}{
+		AcmeSolverURL: acmeSolver.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to be ready with the user-defined ACME challenge router.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("acme-challenge@file"))
+	require.NoError(s.T(), err)
+
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	// ACME challenge path should NOT be redirected — it should reach the solver.
+	resp, err := noRedirectClient.Get("http://127.0.0.1:8888/.well-known/acme-challenge/test-token")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, resp.StatusCode)
+
+	// Normal path should be redirected to HTTPS.
+	resp, err = noRedirectClient.Get("http://127.0.0.1:8888/other-path")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusMovedPermanently, resp.StatusCode)
+}
+
 func (s *SimpleSuite) TestFailoverService() {
 	s.createComposeProject("base")
 

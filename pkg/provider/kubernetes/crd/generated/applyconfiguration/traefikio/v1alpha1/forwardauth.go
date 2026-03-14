@@ -35,6 +35,7 @@ type ForwardAuthApplyConfiguration struct {
 	AuthResponseHeadersRegex *string                                    `json:"authResponseHeadersRegex,omitempty"`
 	AuthRequestHeaders       []string                                   `json:"authRequestHeaders,omitempty"`
 	TLS                      *ClientTLSWithCAOptionalApplyConfiguration `json:"tls,omitempty"`
+	MaxResponseBodySize      *int64                                     `json:"maxResponseBodySize,omitempty"`
 	AddAuthCookiesToResponse []string                                   `json:"addAuthCookiesToResponse,omitempty"`
 	HeaderField              *string                                    `json:"headerField,omitempty"`
 	ForwardBody              *bool                                      `json:"forwardBody,omitempty"`
@@ -99,6 +100,14 @@ func (b *ForwardAuthApplyConfiguration) WithAuthRequestHeaders(values ...string)
 // If called multiple times, the TLS field is set to the value of the last call.
 func (b *ForwardAuthApplyConfiguration) WithTLS(value *ClientTLSWithCAOptionalApplyConfiguration) *ForwardAuthApplyConfiguration {
 	b.TLS = value
+	return b
+}
+
+// WithMaxResponseBodySize sets the MaxResponseBodySize field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MaxResponseBodySize field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithMaxResponseBodySize(value int64) *ForwardAuthApplyConfiguration {
+	b.MaxResponseBodySize = &value
 	return b
 }
 

@@ -327,16 +327,16 @@ func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
 		uniqHostnames[hostname] = struct{}{}
 
 		if wildcard == 0 {
-			rules = append(rules, fmt.Sprintf("HostSNI(`%s`)", host))
+			rules = append(rules, fmt.Sprintf("HostSNI(%q)", host))
 			continue
 		}
 
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
-		rules = append(rules, fmt.Sprintf("HostSNIRegexp(`^%s$`)", host))
+		rules = append(rules, fmt.Sprintf("HostSNIRegexp(%q)", fmt.Sprintf("^%s$", host)))
 	}
 
 	if len(hostnames) == 0 || len(rules) == 0 {
-		return "HostSNI(`*`)", 0
+		return `HostSNI("*")`, 0
 	}
 
 	return strings.Join(rules, " || "), priority

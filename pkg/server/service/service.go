@@ -372,7 +372,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
-	balancer := hrw.New(config.HealthCheck != nil)
+	balancer := hrw.New(config.HealthCheck != nil, "")
 	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
@@ -438,7 +438,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyHRW:
-		lb = hrw.New(service.HealthCheck != nil)
+		lb = hrw.New(service.HealthCheck != nil, service.NginxUpstreamHashBy)
 	case dynamic.BalancerStrategyLeastTime:
 		lb = leasttime.New(service.Sticky, service.HealthCheck != nil)
 	default:

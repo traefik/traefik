@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"unicode/utf8"
+	"unicode"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
@@ -256,7 +256,7 @@ func queryRegexp(tree *matchersTree, queries ...string) error {
 // IsASCII checks if the given string contains only ASCII characters.
 func IsASCII(s string) bool {
 	for i := range len(s) {
-		if s[i] >= utf8.RuneSelf {
+		if s[i] > unicode.MaxASCII {
 			return false
 		}
 	}

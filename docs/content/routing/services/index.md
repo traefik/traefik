@@ -1704,7 +1704,7 @@ A failover service job is to forward all requests to a fallback service when the
 
 !!! info "Supported Providers"
 
-    This strategy can currently only be defined with the [File](../../providers/file.md) provider.
+    This strategy can be defined with the [File](../../providers/file.md) and [Kubernetes CRD](../../providers/kubernetes-crd.md) providers.
 
 ```yaml tab="YAML"
 ## Dynamic configuration
