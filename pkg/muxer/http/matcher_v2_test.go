@@ -196,9 +196,19 @@ func TestHostV2Matcher(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			desc:          "invalid Host matcher (non-ASCII)",
-			rule:          "Host(`🦭.com`)",
-			expectedError: true,
+			desc: "valid Host matcher (IDN unicode)",
+			rule: "Host(`ß-ä-ö-ü.de`)",
+			expected: map[string]int{
+				"https://xn------4ka0a3ivb.de":      http.StatusOK,
+				"https://xn------4ka0a3ivb.de/path": http.StatusOK,
+			},
+		},
+		{
+			desc: "valid Host matcher (IDN emoji)",
+			rule: "Host(`🦭.com`)",
+			expected: map[string]int{
+				"https://xn--9t9h.com": http.StatusOK,
+			},
 		},
 		{
 			desc: "valid Host matcher (many parameters)",
