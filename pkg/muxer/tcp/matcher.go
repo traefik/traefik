@@ -10,6 +10,7 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"golang.org/x/net/idna"
 )
 
 var tcpFuncs = map[string]func(*matchersTree, ...string) error{
@@ -76,7 +77,12 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 	}
 
 	if !hostOrIP.MatchString(host) {
-		return fmt.Errorf("invalid value for HostSNI matcher, %q is not a valid hostname", host)
+		// Try converting IDN unicode to punycode before rejecting.
+		ascii, err := idna.Lookup.ToASCII(host)
+		if err != nil || !hostOrIP.MatchString(ascii) {
+			return fmt.Errorf("invalid value for HostSNI matcher, %q is not a valid hostname", host)
+		}
+		host = ascii
 	}
 
 	tree.matcher = func(meta ConnData) bool {
