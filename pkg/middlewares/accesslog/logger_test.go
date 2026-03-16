@@ -622,6 +622,8 @@ func TestLoggerJSON(t *testing.T) {
 				"StartUTC":                assertNotEmpty(),
 				TraceID:                   assertString("01000000000000000000000000000000"),
 				SpanID:                    assertString("0100000000000000"),
+				OTelTraceID:               assertString("01000000000000000000000000000000"),
+				OTelSpanID:                assertString("0100000000000000"),
 			},
 		},
 		{
