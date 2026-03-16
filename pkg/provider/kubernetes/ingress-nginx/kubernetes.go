@@ -464,6 +464,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			Str("namespace", ing.Namespace).
 			Logger()
 
+		if err := p.isIngressValid(ing); err != nil {
+			logger.Error().Err(err).Msg("Invalid Ingress configuration")
+			continue
+		}
+
 		i := ingress{
 			Ingress:       ing,
 			IngressConfig: parseIngressConfig(ing),
@@ -634,37 +639,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 			}
 			conf.HTTP.Services[defaultBackendName] = defaultBackendService
-		}
-
-		// When strictValidatePathType is enabled, regex characters are not allowed if pathType is Prefix or Exact.
-		// If one of the path is invalid, ignore the ingress.
-		if p.StrictValidatePathType {
-			valid := true
-
-			for _, rule := range ingress.Spec.Rules {
-				if rule.HTTP == nil {
-					continue
-				}
-
-				for _, pa := range rule.HTTP.Paths {
-					if len(pa.Path) > 0 {
-						pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
-						if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
-							logger.Error().Msgf("Ignoring ingress: regex characters are not allowed for pathType %s when strictValidatePathType is enabled", pathType)
-							valid = false
-							break
-						}
-					}
-				}
-
-				if !valid {
-					break
-				}
-			}
-
-			if !valid {
-				continue
-			}
 		}
 
 		for ri, rule := range ingress.Spec.Rules {
@@ -897,6 +871,29 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	}
 
 	return conf
+}
+
+func (p *Provider) isIngressValid(ingress *netv1.Ingress) error {
+	// When strictValidatePathType is enabled, regex characters are not allowed if pathType is Prefix or Exact.
+	// If one of the path is invalid, ignore the ingress.
+	if p.StrictValidatePathType {
+		for _, rule := range ingress.Spec.Rules {
+			if rule.HTTP == nil {
+				continue
+			}
+
+			for _, pa := range rule.HTTP.Paths {
+				if len(pa.Path) > 0 {
+					pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
+					if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
+						return fmt.Errorf("regex characters are not allowed for pathType %s when strictValidatePathType is enabled", pathType)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (*namedServersTransport, error) {
