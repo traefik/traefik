@@ -1093,10 +1093,6 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 	}
 
 	trimmedH1 := strings.TrimPrefix(string(h1), "*")
-	// root domain doesn't match subdomain wildcard.
-	if trimmedH1 == string(h2) {
-		return ""
-	}
 
 	if !strings.HasSuffix(string(h2), trimmedH1) {
 		return ""
