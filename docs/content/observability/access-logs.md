@@ -283,7 +283,7 @@ accessLog:
     | `TLSClientSubject`      | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`)                                                               |
     | `TraceId`               | (Deprecated) A consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string              |
     | `SpanId`                | (Deprecated) A unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.                                   |
-    | `trace_id`              | OTel-conformant trace for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string                             |
+    | `trace_id`              | OTel-conformant trace identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string                             |
     | `span_id`               | OTel-conformant span identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.                                    |
 
 ## Log Rotation
