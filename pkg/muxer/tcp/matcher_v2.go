@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"golang.org/x/net/idna"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"golang.org/x/net/idna"
 )
 
 var tcpFuncsV2 = map[string]func(*matchersTree, ...string) error{

@@ -959,9 +959,12 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
-			desc:          "Non-ASCII Host",
-			rule:          "Host(`locàlhost`)",
-			expectedError: true,
+			desc: "Non-ASCII Host",
+			rule: "Host(`locàlhost`)",
+			expected: map[string]int{
+				"http://xn--loclhost-1ya/foo": http.StatusOK,
+				"http://localhost/foo":         http.StatusNotFound,
+			},
 		},
 		{
 			desc:          "Non-ASCII HostRegexp",

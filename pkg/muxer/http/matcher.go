@@ -10,8 +10,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
-	"golang.org/x/net/idna"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"golang.org/x/net/idna"
 )
 
 var httpFuncs = matcherBuilderFuncs{

@@ -77,9 +77,10 @@ func Test_HostSNI(t *testing.T) {
 			buildErr: true,
 		},
 		{
-			desc:     "Invalid HostSNI matcher (non ASCII host)",
-			rule:     "HostSNI(`🦭.com`)",
-			buildErr: true,
+			desc:       "Non ASCII HostSNI matcher (auto punycode)",
+			rule:       "HostSNI(`🦭.com`)",
+			serverName: "xn--9t9h.com",
+			match:      true,
 		},
 		{
 			desc:       "Valid HostSNI matcher - puny-coded emoji",
