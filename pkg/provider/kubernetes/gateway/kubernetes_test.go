@@ -7630,6 +7630,13 @@ func Test_findMatchingHostnames(t *testing.T) {
 			want:             []gatev1.Hostname{"toto.foo.com", "test.foo.com"},
 			wantOk:           true,
 		},
+		{
+			desc:             "Matching wildcard subsubdomain with listener wildcard subdomain",
+			listenerHostname: ptr.To(gatev1.Hostname("*.foo.com")),
+			routeHostnames:   []gatev1.Hostname{"*.bar.foo.com"},
+			want:             []gatev1.Hostname{"*.bar.foo.com"},
+			wantOk:           true,
+		},
 	}
 
 	for _, test := range testCases {
