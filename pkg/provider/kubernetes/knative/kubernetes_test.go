@@ -12,6 +12,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientfeatures "k8s.io/client-go/features"
+	clientfeaturestesting "k8s.io/client-go/features/testing"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/ptr"
@@ -263,6 +265,11 @@ func Test_loadConfiguration(t *testing.T) {
 			},
 		},
 	}
+
+	// Disable WatchListClient because the knative informers (third-party dependency)
+	// don't wrap their ListWatch with cache.ToListWatcherWithWatchListSemantics,
+	// which causes fake clients to hang waiting for bookmark events.
+	clientfeaturestesting.SetFeatureDuringTest(t, clientfeatures.WatchListClient, false)
 
 	for _, testCase := range testCases {
 		t.Run(testCase.desc, func(t *testing.T) {
