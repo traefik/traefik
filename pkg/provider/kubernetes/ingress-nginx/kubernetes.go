@@ -74,6 +74,8 @@ var (
 
 	headerRegexp      = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
 	headerValueRegexp = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
+	// The same regexp used in ingress-nginx:https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
+	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 )
 
 type backendAddress struct {
@@ -219,6 +221,8 @@ type Provider struct {
 	// Its value is set to the HTTPEntryPoint value if it is set, otherwise it is computed in SetEffectiveConfiguration.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
+	StrictValidatePathType bool `description:"Defines whether to reject the entire ingress when any path contains regex characters and pathType is Prefix or Exact." json:"strictValidatePathType,omitempty" toml:"strictValidatePathType,omitempty" yaml:"strictValidatePathType,omitempty" export:"true"`
+
 	allowedHeaders                 []string
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
@@ -246,6 +250,7 @@ func (p *Provider) SetDefaults() {
 	p.ProxyNextUpstream = defaultProxyNextUpstream
 	p.ProxyNextUpstreamTries = defaultProxyNextUpstreamTries
 	p.UpstreamKeepaliveTimeout = defaultUpstreamKeepaliveTimeout
+	p.StrictValidatePathType = true
 }
 
 // Init the provider.
@@ -446,6 +451,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	)
 
 	hosts := make(map[string]bool)
+	hostsWithUseRegex := make(map[string]bool)
 	serverSnippets := make(map[string]string)
 	ingressPaths := make(map[string]ingressPath) // indexed by namespace+host+path+pathType.
 	for _, ing := range p.k8sClient.ListIngresses() {
@@ -457,6 +463,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			Str("ingress", ing.Name).
 			Str("namespace", ing.Namespace).
 			Logger()
+
+		if err := p.isIngressValid(ing); err != nil {
+			logger.Error().Err(err).Msg("Invalid Ingress configuration")
+			continue
+		}
 
 		i := ingress{
 			Ingress:       ing,
@@ -472,6 +483,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		for _, rule := range ing.Spec.Rules {
 			hosts[rule.Host] = true
+
+			// If any ingress in this host enable use-regex, all paths on that host must use regex matching.
+			// Using rewrite-target annotation also implies that use-regex is true.
+			if ptr.Deref(i.IngressConfig.UseRegex, false) || i.IngressConfig.RewriteTarget != nil {
+				hostsWithUseRegex[rule.Host] = true
+			}
 
 			if srvSnippet := ptr.Deref(i.IngressConfig.ServerSnippet, ""); srvSnippet != "" {
 				if serverSnippets[rule.Host] != "" {
@@ -779,7 +796,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					EntryPoints: p.NonTLSEntryPoints,
-					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts),
+					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts, hostsWithUseRegex),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -854,6 +871,29 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	}
 
 	return conf
+}
+
+func (p *Provider) isIngressValid(ingress *netv1.Ingress) error {
+	// When strictValidatePathType is enabled, regex characters are not allowed if pathType is Prefix or Exact.
+	// If one of the path is invalid, ignore the ingress.
+	if p.StrictValidatePathType {
+		for _, rule := range ingress.Spec.Rules {
+			if rule.HTTP == nil {
+				continue
+			}
+
+			for _, pa := range rule.HTTP.Paths {
+				if len(pa.Path) > 0 {
+					pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
+					if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
+						return fmt.Errorf("regex characters are not allowed for pathType %s when strictValidatePathType is enabled", pathType)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (*namedServersTransport, error) {
@@ -1491,12 +1531,11 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 
 	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 
+	// The usage of rewrite-target annotation implies the usage of regex.
 	rewriteTarget := &dynamic.RewriteTarget{
+		// Location modifier regex on ingress-nginx is case insensitive.
+		Regex:       "(?i)" + rulePath,
 		Replacement: *ingressConfig.RewriteTarget,
-	}
-
-	if ptr.Deref(ingressConfig.UseRegex, false) {
-		rewriteTarget.Regex = rulePath
 	}
 
 	if ingressConfig.XForwardedPrefix != nil {
@@ -2083,7 +2122,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	return users, nil
 }
 
-func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool) string {
+func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool, hostsWithUseRegex map[string]bool) string {
 	var rules []string
 	if host != "" {
 		hosts := []string{host}
@@ -2117,12 +2156,14 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 			pathType = netv1.PathTypePrefix
 		}
 
+		useRegex := hostsWithUseRegex[host]
+
 		switch pathType {
 		case netv1.PathTypeExact:
 			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
 		case netv1.PathTypePrefix:
-			if ptr.Deref(config.UseRegex, false) {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
+			if useRegex {
+				rules = append(rules, fmt.Sprintf("PathRegexp(`(?i)^%s`)", pa.Path))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}

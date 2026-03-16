@@ -31,6 +31,7 @@ func TestLoadIngresses(t *testing.T) {
 		allowCrossNamespaceResources   bool
 		globalAllowedResponseHeaders   []string
 		allowSnippetAnnotations        bool
+		strictValidatePathType         *bool
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
@@ -1261,14 +1262,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        "Host(`x-forwarded-prefix-regex.localhost`) && PathRegexp(`^(/something)(/.+)`)",
+							Rule:        "Host(`x-forwarded-prefix-regex.localhost`) && PathRegexp(`(?i)^/(something)(/.+)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-regex-whoami-80",
 						},
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        "Host(`x-forwarded-prefix-three-groups.localhost`) && PathRegexp(`^/(prefix)/(sub)/(.*)`)",
+							Rule:        "Host(`x-forwarded-prefix-three-groups.localhost`) && PathRegexp(`(?i)^/(prefix)/(sub)/(.*)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-three-groups-whoami-80",
@@ -1277,7 +1278,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "/(prefix)/(sub)/(.*)",
+								Regex:            "(?i)/(prefix)/(sub)/(.*)",
 								Replacement:      "/$3",
 								XForwardedPrefix: "/$1/$2",
 							},
@@ -1289,6 +1290,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:            "(?i)/",
 								Replacement:      "/path",
 								XForwardedPrefix: "x-forwarded-prefix-header-value",
 							},
@@ -1300,7 +1302,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(/something)(/.+)",
+								Regex:            "(?i)/(something)(/.+)",
 								Replacement:      "$2",
 								XForwardedPrefix: "$1",
 							},
@@ -1413,7 +1415,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-use-regex-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        "Host(`use-regex.localhost`) && PathRegexp(`^/test(.*)`)",
+							Rule:        "Host(`use-regex.localhost`) && PathRegexp(`(?i)^/test(.*)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-use-regex-whoami-80",
@@ -1461,6 +1463,208 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Use Regex cross ingress",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-use-regex-cross-ingress.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-a-with-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`shared.localhost`) && PathRegexp(`(?i)^/test(.*)`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-a-with-use-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-a-with-use-regex-whoami-80",
+						},
+						"default-ingress-b-without-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`shared.localhost`) && PathRegexp(`(?i)^/static`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-b-without-use-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-b-without-use-regex-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-a-with-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-b-without-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-a-with-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-a-with-use-regex",
+							},
+						},
+						"default-ingress-b-without-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-b-without-use-regex",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-a-with-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-b-without-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Use Regex isolated",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-use-regex-isolated.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-a-with-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`regex.localhost`) && PathRegexp(`(?i)^/test(.*)`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-a-with-use-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-a-with-use-regex-whoami-80",
+						},
+						"default-ingress-b-without-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`no-regex.localhost`) && (Path(`/static`) || PathPrefix(`/static/`))",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-b-without-use-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-b-without-use-regex-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-a-with-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-b-without-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-a-with-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-a-with-use-regex",
+							},
+						},
+						"default-ingress-b-without-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-b-without-use-regex",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-a-with-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-b-without-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Rewrite Target",
 			paths: []string{
 				"services.yml",
@@ -1476,7 +1680,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-rewrite-target-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        "Host(`rewrite-target.localhost`) && PathRegexp(`^/something(/|$)(.*)`)",
+							Rule:        "Host(`rewrite-target.localhost`) && PathRegexp(`(?i)^/something(/|$)(.*)`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-whoami-80",
 							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-rule-0-path-0-retry"},
@@ -1485,7 +1689,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "/something(/|$)(.*)",
+								Regex:       "(?i)/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
@@ -1557,6 +1761,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "(?i)/original",
 								Replacement: "/rewritten",
 							},
 						},
@@ -1588,6 +1793,259 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-rewrite-target-no-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Rewrite target cross ingress",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-rewrite-target-cross-ingress.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-a-with-rewrite-target-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`shared.localhost`) && PathRegexp(`(?i)^/something(/|$)(.*)`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-a-with-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-a-with-rewrite-target-rule-0-path-0-rewrite-target", "default-ingress-a-with-rewrite-target-rule-0-path-0-retry"},
+						},
+						"default-ingress-b-without-rewrite-target-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`shared.localhost`) && PathRegexp(`(?i)^/static`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-b-without-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-b-without-rewrite-target-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-a-with-rewrite-target-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "(?i)/something(/|$)(.*)",
+								Replacement: "/$2",
+							},
+						},
+						"default-ingress-a-with-rewrite-target-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+						"default-ingress-b-without-rewrite-target-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-a-with-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-a-with-rewrite-target",
+							},
+						},
+						"default-ingress-b-without-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-b-without-rewrite-target",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-a-with-rewrite-target": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-b-without-rewrite-target": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Rewrite target isolated",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-rewrite-target-isolated.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-a-with-rewrite-target-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`rewrite.localhost`) && PathRegexp(`(?i)^/something(/|$)(.*)`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-a-with-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-a-with-rewrite-target-rule-0-path-0-rewrite-target", "default-ingress-a-with-rewrite-target-rule-0-path-0-retry"},
+						},
+						"default-ingress-b-without-rewrite-target-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`no-rewrite.localhost`) && (Path(`/static`) || PathPrefix(`/static/`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-b-without-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-b-without-rewrite-target-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-a-with-rewrite-target-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "(?i)/something(/|$)(.*)",
+								Replacement: "/$2",
+							},
+						},
+						"default-ingress-a-with-rewrite-target-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+						"default-ingress-b-without-rewrite-target-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-a-with-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-a-with-rewrite-target",
+							},
+						},
+						"default-ingress-b-without-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-b-without-rewrite-target",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-a-with-rewrite-target": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-b-without-rewrite-target": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Rewrite target with use-regex false still applies regex",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-rewrite-target-use-regex-false.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`rewrite-target.localhost`) && PathRegexp(`(?i)^/something(/|$)(.*)`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-use-regex-false-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "(?i)/something(/|$)(.*)",
+								Replacement: "/$2",
+							},
+						},
+						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-rewrite-target-use-regex-false-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-rewrite-target-use-regex-false",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-rewrite-target-use-regex-false": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -7065,6 +7523,106 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Use Regex with Prefix pathType and StrictValidatePathType enabled",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-use-regex-prefix-pathtype.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Use Regex with Prefix pathType and StrictValidatePathType disabled",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-use-regex-prefix-pathtype.yml",
+			},
+			strictValidatePathType: ptr.To(false),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        "Host(`use-regex.localhost`) && PathRegexp(`(?i)^/test(.*)`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-use-regex-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-use-regex",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Ingress with multiple paths and one invalid path with StrictValidatePathType drops the whole ingress",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-invalid-path-strict-validate.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -7094,6 +7652,9 @@ func TestLoadIngresses(t *testing.T) {
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 			}
 			p.SetDefaults()
+			if test.strictValidatePathType != nil {
+				p.StrictValidatePathType = *test.strictValidatePathType
+			}
 
 			conf := p.loadConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)

@@ -38,7 +38,7 @@ spec:
     - host: x-forwarded-prefix-regex.localhost
       http:
         paths:
-          - path: (/something)(/.+)
+          - path: /(something)(/.+)
             pathType: ImplementationSpecific
             backend:
               service:
