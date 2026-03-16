@@ -162,7 +162,7 @@ type TCPServer struct {
 // +k8s:deepcopy-gen=true
 
 // ProxyProtocol holds the PROXY Protocol configuration.
-// More info: https://doc.traefik.io/traefik/v3.6/routing/services/#proxy-protocol
+// More info: https://doc.traefik.io/traefik/v3.7/routing/services/#proxy-protocol
 type ProxyProtocol struct {
 	// Version defines the PROXY Protocol version to use.
 	// +kubebuilder:validation:Minimum=1
