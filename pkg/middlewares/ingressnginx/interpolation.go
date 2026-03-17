@@ -13,7 +13,7 @@ import (
 )
 
 // This the list of supported NGINX variables for interpolation.
-// It is not exhaustive, but covers the most commonly used ones in Ingress NGINX annotations.
+// It is not exhaustive but covers the most commonly used ones in Ingress NGINX annotations.
 const (
 	scheme              = "scheme"
 	host                = "host"

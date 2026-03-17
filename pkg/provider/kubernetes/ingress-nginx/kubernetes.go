@@ -464,19 +464,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			Str("namespace", ing.Namespace).
 			Logger()
 
-		if err := p.isIngressValid(ing); err != nil {
-			logger.Error().Err(err).Msg("Invalid Ingress configuration")
-			continue
-		}
-
 		i := ingress{
 			Ingress:       ing,
 			IngressConfig: parseIngressConfig(ing),
 		}
 
-		// Discard the ingress if snippet annotations aren't allowed.
-		if (ptr.Deref(i.IngressConfig.ServerSnippet, "") != "" || ptr.Deref(i.IngressConfig.ConfigurationSnippet, "") != "" || ptr.Deref(i.IngressConfig.AuthSnippet, "") != "") && !p.AllowSnippetAnnotations {
-			logger.Warn().Msg("Snippet annotations aren't allowed, the ingress is discarded. You can configure this by using the allowSnippetAnnotation option in the provider configuration.")
+		if err := p.isIngressValid(i); err != nil {
+			logger.Error().Err(err).Msg("Invalid Ingress configuration")
 			continue
 		}
 
@@ -879,7 +873,14 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	return conf
 }
 
-func (p *Provider) isIngressValid(ingress *netv1.Ingress) error {
+func (p *Provider) isIngressValid(ingress ingress) error {
+	// Discard the ingress if snippet annotations aren't allowed.
+	if !p.AllowSnippetAnnotations && (ptr.Deref(ingress.IngressConfig.ServerSnippet, "") != "" ||
+		ptr.Deref(ingress.IngressConfig.ConfigurationSnippet, "") != "" ||
+		ptr.Deref(ingress.IngressConfig.AuthSnippet, "") != "") {
+		return errors.New("snippet annotations aren't allowed when allowSnippetAnnotations is disabled")
+	}
+
 	// When strictValidatePathType is enabled, regex characters are not allowed if pathType is Prefix or Exact.
 	// If one of the path is invalid, ignore the ingress.
 	if p.StrictValidatePathType {
