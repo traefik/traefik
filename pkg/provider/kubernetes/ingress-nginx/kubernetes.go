@@ -1286,9 +1286,7 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
-	if err := p.applySnippetsAndAuth(routerKey, serverSnippet, ingressConfig, rt, conf); err != nil {
-		return fmt.Errorf("applying snippets: %w", err)
-	}
+	p.applySnippetsAndAuth(routerKey, serverSnippet, ingressConfig, rt, conf)
 
 	p.applyRetry(routerKey, ingressConfig, rt, conf)
 
@@ -1310,11 +1308,11 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 	return nil
 }
 
-func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	configurationSnippet := ptr.Deref(ingressConfig.ConfigurationSnippet, "")
 	authURL := ptr.Deref(ingressConfig.AuthURL, "")
 	if serverSnippet == "" && configurationSnippet == "" && authURL == "" {
-		return nil
+		return
 	}
 
 	snippetMiddlewareName := routerName + "-snippet"
@@ -1336,8 +1334,6 @@ func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingres
 	}
 
 	rt.Middlewares = append(rt.Middlewares, snippetMiddlewareName)
-
-	return nil
 }
 
 func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
