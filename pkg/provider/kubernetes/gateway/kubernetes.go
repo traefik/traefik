@@ -1093,24 +1093,13 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 	}
 
 	trimmedH1 := strings.TrimPrefix(string(h1), "*")
-	// root domain doesn't match subdomain wildcard.
-	if trimmedH1 == string(h2) {
-		return ""
-	}
 
 	if !strings.HasSuffix(string(h2), trimmedH1) {
 		return ""
 	}
 
-	return lessWildcards(h1, h2)
-}
-
-func lessWildcards(h1, h2 gatev1.Hostname) gatev1.Hostname {
-	if strings.Count(string(h1), "*") > strings.Count(string(h2), "*") {
-		return h2
-	}
-
-	return h1
+	// since h1 is a suffix of h2, we know h2 is the more specific host
+	return h2
 }
 
 func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool {
