@@ -3,8 +3,10 @@ package auth
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
@@ -27,6 +29,8 @@ type basicAuth struct {
 	headerField  string
 	removeHeader bool
 	name         string
+
+	notFoundSecret string
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -37,12 +41,18 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		return nil, err
 	}
 
+	// To prevent timing attacks, we need to compute a hash even if the user is not found.
+	// We assume it to be safe only when the users hashes are all from the same algorithm,
+	// so we can pick the first one as a random hash to compute.
+	notFoundSecret := users[slices.Collect(maps.Values(users))[0]]
+
 	ba := &basicAuth{
-		next:         next,
-		users:        users,
-		headerField:  authConfig.HeaderField,
-		removeHeader: authConfig.RemoveHeader,
-		name:         name,
+		next:           next,
+		users:          users,
+		headerField:    authConfig.HeaderField,
+		removeHeader:   authConfig.RemoveHeader,
+		name:           name,
+		notFoundSecret: notFoundSecret,
 	}
 
 	realm := defaultRealm
@@ -63,10 +73,13 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
 
 	user, password, ok := req.BasicAuth()
+	var authenticated bool
 	if ok {
 		secret := b.auth.Secrets(user, b.auth.Realm)
-		if secret == "" || !goauth.CheckSecret(password, secret) {
-			ok = false
+		if secret != "" {
+			authenticated = goauth.CheckSecret(password, secret)
+		} else {
+			_ = goauth.CheckSecret(password, b.notFoundSecret)
 		}
 	}
 
@@ -75,7 +88,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logData.Core[accesslog.ClientUsername] = user
 	}
 
-	if !ok {
+	if !authenticated {
 		logger.Debug("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
 
@@ -97,7 +110,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	b.next.ServeHTTP(rw, req)
 }
 
-func (b *basicAuth) secretBasic(user, realm string) string {
+func (b *basicAuth) secretBasic(user, _ string) string {
 	if secret, ok := b.users[user]; ok {
 		return secret
 	}
