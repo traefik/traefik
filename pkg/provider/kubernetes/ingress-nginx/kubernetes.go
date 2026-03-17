@@ -1312,7 +1312,8 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 
 func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	configurationSnippet := ptr.Deref(ingressConfig.ConfigurationSnippet, "")
-	if serverSnippet == "" && configurationSnippet == "" && ingressConfig.AuthURL == nil {
+	authURL := ptr.Deref(ingressConfig.AuthURL, "")
+	if serverSnippet == "" && configurationSnippet == "" && authURL == "" {
 		return nil
 	}
 
@@ -1324,23 +1325,14 @@ func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingres
 		},
 	}
 
-	if ingressConfig.AuthURL != nil {
-		authURL := ptr.Deref(ingressConfig.AuthURL, "")
-		if authURL == "" {
-			return errors.New("empty auth-url found in ingress annotations")
-		}
-
-		authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
-
-		authMiddleware := &dynamic.Auth{
+	if authURL != "" {
+		conf.HTTP.Middlewares[snippetMiddlewareName].Snippet.Auth = &dynamic.Auth{
 			Address:             authURL,
-			AuthResponseHeaders: authResponseHeaders,
+			AuthResponseHeaders: strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ","),
 			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
 			Method:              ptr.Deref(ingressConfig.AuthMethod, ""),
 			Snippet:             ptr.Deref(ingressConfig.AuthSnippet, ""),
 		}
-
-		conf.HTTP.Middlewares[snippetMiddlewareName].Snippet.Auth = authMiddleware
 	}
 
 	rt.Middlewares = append(rt.Middlewares, snippetMiddlewareName)
