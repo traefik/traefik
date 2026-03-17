@@ -31,6 +31,10 @@ func TestLoadIngresses(t *testing.T) {
 		allowCrossNamespaceResources   bool
 		globalAllowedResponseHeaders   []string
 		allowSnippetAnnotations        bool
+		defaultTLS                     bool
+		entryPointsSet                 bool
+		nonTLSEntryPoints              []string
+		tlsEntryPoints                 []string
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
@@ -466,6 +470,87 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			desc:              "No TLS with defaultTLS and only TLS entrypoints",
+			defaultTLS:        true,
+			entryPointsSet:    true,
+			nonTLSEntryPoints: []string{},
+			tlsEntryPoints:    []string{"https"},
+			paths: []string{
+				"ingresses/ingress-without-tls.yml",
+				"ingressclasses.yml",
+				"services.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-without-tls-rule-0-path-0": {
+							EntryPoints: []string{"https"},
+							Rule:        "Host(`whoami-no-tls.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Middlewares: []string{"default-ingress-without-tls-rule-0-path-0-retry"},
+							Service:     "default-ingress-without-tls-whoami-80",
+						},
+						"default-ingress-without-tls-rule-0-path-0-http": {
+							EntryPoints: []string{},
+							Rule:        "Host(`whoami-no-tls.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-without-tls-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-without-tls-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-ingress-without-tls-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-without-tls-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-without-tls",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-without-tls": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -7083,13 +7168,21 @@ func TestLoadIngresses(t *testing.T) {
 				<-eventCh
 			}
 
+			nonTLSEntryPoints := []string{"http"}
+			tlsEntryPoints := []string{"https"}
+			if test.entryPointsSet {
+				nonTLSEntryPoints = test.nonTLSEntryPoints
+				tlsEntryPoints = test.tlsEntryPoints
+			}
+
 			p := Provider{
 				k8sClient:                      client,
 				defaultBackendServiceName:      test.defaultBackendServiceName,
 				defaultBackendServiceNamespace: test.defaultBackendServiceNamespace,
 				AllowSnippetAnnotations:        test.allowSnippetAnnotations,
-				NonTLSEntryPoints:              []string{"http"},
-				TLSEntryPoints:                 []string{"https"},
+				DefaultTLS:                     test.defaultTLS,
+				NonTLSEntryPoints:              nonTLSEntryPoints,
+				TLSEntryPoints:                 tlsEntryPoints,
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 			}

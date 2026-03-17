@@ -73,6 +73,9 @@ providers:
     globalAllowedResponseHeaders:
       - "X-Custom-Header1"
       - "X-Custom-Header2"
+    # Compatibility: treat ingresses without spec.tls as TLS
+    # when only TLS entrypoints exist
+    defaultTLS: false
 ```
 
 ```toml tab="File (TOML)"
@@ -97,6 +100,9 @@ providers:
   customHTTPErrors = ["404", "503"]
   allowCrossNamespaceResources = true
   globalAllowedResponseHeaders = ["X-Custom-Header1", "X-Custom-Header2"]
+  # Compatibility: treat ingresses without spec.tls as TLS
+  # when only TLS entrypoints exist
+  defaultTLS = false
 ```
 
 ```bash tab="CLI"
@@ -116,6 +122,7 @@ providers:
 --providers.kubernetesingressnginx.customhttperrors=404,503
 --providers.kubernetesingressnginx.allowCrossNamespaceResources=true
 --providers.kubernetesingressnginx.globalAllowedResponseHeaders=X-Custom-Header1,X-Custom-Header2
+--providers.kubernetesingressnginx.defaulttls=false
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -141,6 +148,9 @@ providers:
     watchIngressWithoutClass: false
     # -- Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class
     ingressClassByName: false
+    # -- Compatibility: treat ingresses without spec.tls as TLS
+    # when only TLS entrypoints exist
+    defaultTLS: false
 ```
 
 This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to route traffic to your cluster services.
@@ -178,6 +188,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-proxyNextUpstreamTimeouta" href="#opt-providers-kubernetesIngressNGINX-proxyNextUpstreamTimeouta" title="#opt-providers-kubernetesIngressNGINX-proxyNextUpstreamTimeouta">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyNextUpstreamTimeout`</a></a> | Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds. 0 means no timeout. This is used as the global retry timeout when no ingress-specific value is configured. An ingress-specific retry timeout can be set using [`nginx.ingress.kubernetes.io/proxy-next-upstream-timeout`](../../../../routing-configuration/kubernetes/ingress-nginx/#opt-nginx-ingress-kubernetes-ioproxy-next-upstream-timeout) annotation.                                                                | 0               | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-customHTTPErrors" href="#opt-providers-kubernetesIngressNGINX-customHTTPErrors" title="#opt-providers-kubernetesIngressNGINX-customHTTPErrors">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`customHTTPErrors`<br/></a> | Defines which status should result in calling the default backend to return an error page.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | []              | No       || <a id="opt-providers-kubernetesIngressNGINX-allowCrossNamespaceResources" href="#opt-providers-kubernetesIngressNGINX-allowCrossNamespaceResources" title="#opt-providers-kubernetesIngressNGINX-allowCrossNamespaceResources">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`allowCrossNamespaceResources`</a> | Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces.                                                                                                                                                                                                                                                                                                                                                              | false   | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-globalAllowedResponseHeaders" href="#opt-providers-kubernetesIngressNGINX-globalAllowedResponseHeaders" title="#opt-providers-kubernetesIngressNGINX-globalAllowedResponseHeaders">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`globalAllowedResponseHeaders`</a> | List of allowed response headers inside the custom headers annotations. It is required to configure it for the custom headers annotations to take effect.                                                                                                                                                                                                                                                                                                                                                                                                       | []      | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-defaultTLS" href="#opt-providers-kubernetesIngressNGINX-defaultTLS" title="#opt-providers-kubernetesIngressNGINX-defaultTLS">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`defaultTLS`</a> | Treat ingresses without spec.tls as TLS when only TLS entrypoints exist (uses the default TLS store certificate).                                                                                                                                                                                                                                                                                                                                                                                     | false  | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-httpentrypoint" href="#opt-providers-kubernetesIngressNGINX-httpentrypoint" title="#opt-providers-kubernetesIngressNGINX-httpentrypoint">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`httpentrypoint`</a> | Defines the EntryPoint to use for HTTP requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-httpsentrypoint" href="#opt-providers-kubernetesIngressNGINX-httpsentrypoint" title="#opt-providers-kubernetesIngressNGINX-httpsentrypoint">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`httpsentrypoint`</a> | Defines the EntryPoint to use for HTTPS requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ""     | No       |
 

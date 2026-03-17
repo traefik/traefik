@@ -211,6 +211,8 @@ type Provider struct {
 
 	AllowSnippetAnnotations bool `description:"Enables to parse and add -snippet annotations/directives." json:"allowSnippetAnnotations,omitempty" toml:"allowSnippetAnnotations,omitempty" yaml:"allowSnippetAnnotations,omitempty" export:"true"`
 
+	DefaultTLS bool `description:"Treat ingresses without spec.tls as TLS when only TLS entrypoints exist (uses the default TLS store certificate)." json:"defaultTLS,omitempty" toml:"defaultTLS,omitempty" yaml:"defaultTLS,omitempty" export:"true"`
+
 	HTTPEntryPoint  string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
 	HTTPSEntryPoint string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
 	// TLSEntryPoints is set to the HTTPSEntryPoint value if it is set, otherwise it is left empty.
@@ -544,6 +546,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				logger.Error().Err(err).Msg("Error configuring TLS")
 				continue
 			}
+		}
+		// Optional compatibility mode: when only TLS entrypoints exist, treat ingresses without
+		// spec.tls as TLS and rely on the default TLS store certificate.
+		if p.DefaultTLS && !hasTLS && len(p.NonTLSEntryPoints) == 0 && len(p.TLSEntryPoints) > 0 {
+			hasTLS = true
 		}
 
 		var clientAuthTLSOptionName string

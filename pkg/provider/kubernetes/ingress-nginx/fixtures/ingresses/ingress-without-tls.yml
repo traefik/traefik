@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-without-tls
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami-no-tls.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
