@@ -65,7 +65,7 @@ func New(ctx context.Context, next http.Handler, config *dynamic.Snippet, name s
 	logger.Debug().Msg("Creating middleware")
 
 	if config.ServerSnippet == "" && config.ConfigurationSnippet == "" && config.Auth == nil {
-		return nil, errors.New("at least one of serverSnippet, configurationSnippet or NginxAuth option must be provided")
+		return nil, errors.New("at least one of serverSnippet, configurationSnippet or auth option must be provided")
 	}
 
 	if config.Auth != nil && config.Auth.Address == "" {
