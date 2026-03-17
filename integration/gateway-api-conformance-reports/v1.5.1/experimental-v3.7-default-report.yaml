@@ -81,10 +81,11 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 3
+      Passed: 4
       Skipped: 0
     supportedFeatures:
     - GatewayPort8080
+    - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
     - GatewayAddressEmpty
@@ -96,8 +97,8 @@ profiles:
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - ListenerSet
-    - TLSRouteModeMixed
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:
+- TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace

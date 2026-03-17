@@ -725,18 +725,6 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 				continue
 			}
-
-			// Keep Traefik statuses for ancestors that are not being updated now.
-			isBeingUpdated := false
-			for _, newAncestor := range status.Ancestors {
-				if reflect.DeepEqual(ancestorStatus.AncestorRef, newAncestor.AncestorRef) {
-					isBeingUpdated = true
-					break
-				}
-			}
-			if !isBeingUpdated {
-				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
-			}
 		}
 
 		if len(ancestorStatuses) > 16 {
