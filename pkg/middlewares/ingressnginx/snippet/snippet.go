@@ -356,7 +356,7 @@ func (s *Snippet) executeForwardAuth(rw http.ResponseWriter, req *http.Request, 
 	}
 
 	// Copy headers from original request
-	writeHeader(req, forwardReq, false, nil)
+	writeHeader(req, forwardReq)
 
 	// Apply auth-snippet directives to the auth request
 	if s.authActions != nil {
@@ -574,7 +574,7 @@ func WriteResponse(rw http.ResponseWriter, req *http.Request, ctx *actionContext
 	_, _ = rw.Write([]byte(ctx.body))
 }
 
-func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
+func writeHeader(req, forwardReq *http.Request) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 
 	RemoveConnectionHeaders(forwardReq)
@@ -586,74 +586,27 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 		forwardReq.Header.Set(userAgentHeader, "")
 	}
 
-	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
-
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		if trustForwardHeader {
-			if prior, ok := req.Header[forward.XForwardedFor]; ok {
-				clientIP = strings.Join(prior, ", ") + ", " + clientIP
-			}
-		}
 		forwardReq.Header.Set(forward.XForwardedFor, clientIP)
 	}
 
-	xMethod := req.Header.Get(xForwardedMethod)
-	switch {
-	case xMethod != "" && trustForwardHeader:
-		forwardReq.Header.Set(xForwardedMethod, xMethod)
-	case req.Method != "":
+	forwardReq.Header.Del(xForwardedMethod)
+	if req.Method != "" {
 		forwardReq.Header.Set(xForwardedMethod, req.Method)
-	default:
-		forwardReq.Header.Del(xForwardedMethod)
 	}
 
-	xfp := req.Header.Get(forward.XForwardedProto)
-	switch {
-	case xfp != "" && trustForwardHeader:
-		forwardReq.Header.Set(forward.XForwardedProto, xfp)
-	case req.TLS != nil:
+	forwardReq.Header.Set(forward.XForwardedProto, "http")
+	if req.TLS != nil {
 		forwardReq.Header.Set(forward.XForwardedProto, "https")
-	default:
-		forwardReq.Header.Set(forward.XForwardedProto, "http")
 	}
 
-	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" && trustForwardHeader {
-		forwardReq.Header.Set(forward.XForwardedPort, xfp)
-	}
-
-	xfh := req.Header.Get(forward.XForwardedHost)
-	switch {
-	case xfh != "" && trustForwardHeader:
-		forwardReq.Header.Set(forward.XForwardedHost, xfh)
-	case req.Host != "":
+	forwardReq.Header.Del(forward.XForwardedHost)
+	if req.Host != "" {
 		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
-	default:
-		forwardReq.Header.Del(forward.XForwardedHost)
 	}
 
-	xfURI := req.Header.Get(xForwardedURI)
-	switch {
-	case xfURI != "" && trustForwardHeader:
-		forwardReq.Header.Set(xForwardedURI, xfURI)
-	case req.URL.RequestURI() != "":
+	forwardReq.Header.Del(xForwardedURI)
+	if req.URL.RequestURI() != "" {
 		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
-	default:
-		forwardReq.Header.Del(xForwardedURI)
 	}
-}
-
-func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
-	if len(allowedHeaders) == 0 {
-		return forwardRequestHeaders
-	}
-
-	filteredHeaders := http.Header{}
-	for _, headerName := range allowedHeaders {
-		values := forwardRequestHeaders.Values(headerName)
-		if len(values) > 0 {
-			filteredHeaders[http.CanonicalHeaderKey(headerName)] = append([]string(nil), values...)
-		}
-	}
-
-	return filteredHeaders
 }
