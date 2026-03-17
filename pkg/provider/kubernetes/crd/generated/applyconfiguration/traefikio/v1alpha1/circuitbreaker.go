@@ -32,12 +32,19 @@ import (
 
 // CircuitBreakerApplyConfiguration represents a declarative configuration of the CircuitBreaker type for use
 // with apply.
+//
+// CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreakerApplyConfiguration struct {
-	Expression       *string             `json:"expression,omitempty"`
-	CheckPeriod      *intstr.IntOrString `json:"checkPeriod,omitempty"`
+	// Expression is the condition that triggers the tripped state.
+	Expression *string `json:"expression,omitempty"`
+	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
+	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty"`
+	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty"`
+	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty"`
-	ResponseCode     *int                `json:"responseCode,omitempty"`
+	// ResponseCode is the status code that the circuit breaker will return while it is in the open state.
+	ResponseCode *int `json:"responseCode,omitempty"`
 }
 
 // CircuitBreakerApplyConfiguration constructs a declarative configuration of the CircuitBreaker type for use with

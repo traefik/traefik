@@ -28,8 +28,15 @@ package v1alpha1
 
 // RootCAApplyConfiguration represents a declarative configuration of the RootCA type for use
 // with apply.
+//
+// RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
+// If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
 type RootCAApplyConfiguration struct {
-	Secret    *string `json:"secret,omitempty"`
+	// Secret defines the name of a Secret that holds a CA certificate.
+	// The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.
+	Secret *string `json:"secret,omitempty"`
+	// ConfigMap defines the name of a ConfigMap that holds a CA certificate.
+	// The referenced ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.
 	ConfigMap *string `json:"configMap,omitempty"`
 }
 
