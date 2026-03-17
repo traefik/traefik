@@ -28,9 +28,9 @@ This ensures strict boundaries between tenants and prevents cross-tenant configu
 
 Each Traefik instance should be:
 
-- Deployed in the tenant's namespace with a dedicated `ServiceAccount`
-- Configured with `providers.kubernetesCRD.namespaces` and/or `providers.kubernetesIngress.namespaces` to restrict resource watch to that tenant's namespaces only
-- Subject to Kubernetes RBAC that limits its access to only the resources it needs
+* Deployed in the tenant's namespace with a dedicated `ServiceAccount`
+* Configured with `providers.kubernetesCRD.namespaces` and/or `providers.kubernetesIngress.namespaces` to restrict resource watch to that tenant's namespaces only
+* Subject to Kubernetes RBAC that limits its access to only the resources it needs
 
 This namespace-per-tenant topology, combined with Kubernetes `NetworkPolicy` resources, provides the strongest available isolation when running Traefik on a shared cluster.
 
