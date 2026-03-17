@@ -290,7 +290,7 @@ func Test_ReplaceVariables(t *testing.T) {
 		t.Run(testCase.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := ReplaceVariables(testCase.src, testCase.req, testCase.vars, nil)
+			got := ReplaceVariables(testCase.src, testCase.req, nil, testCase.vars)
 			require.Equal(t, testCase.expected, got)
 		})
 	}

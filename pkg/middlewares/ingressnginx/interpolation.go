@@ -51,7 +51,7 @@ var varRegexp = regexp.MustCompile(`(\$\{?([a-zA-Z_][a-zA-Z0-9_]*|[1-9])}?)`)
 // `$uri`, `$document_uri`, `$server_name`, `$server_port`, `$content_type`, `$content_length`,
 // `$cookie_*`, `$is_args`, and `$proxy_add_x_forwarded_for` variables.
 // Custom variables can be passed through the vars param.
-func ReplaceVariables(str string, req *http.Request, vars map[string]string, responseHeaders http.Header) string {
+func ReplaceVariables(str string, req *http.Request, responseHeaders http.Header, vars map[string]string) string {
 	return varRegexp.ReplaceAllStringFunc(str, func(variable string) string {
 		groups := varRegexp.FindStringSubmatch(variable)
 		val, err := variableValue(groups[1], groups[2], req, responseHeaders, vars)
@@ -65,7 +65,7 @@ func ReplaceVariables(str string, req *http.Request, vars map[string]string, res
 
 // variableValue returns the value of the given NGINX variable based on the HTTP request and the custom vars map.
 func variableValue(rawVariable, variable string, req *http.Request, responseHeaders http.Header, vars map[string]string) (string, error) {
-	// $upstream_http_name variables are used to access HTTP headers in the request.
+	// $upstream_http_name variables are used to access HTTP headers in the response.
 	if header, ok := strings.CutPrefix(variable, upstreamHTTPHeaders); ok {
 		return strings.Join(responseHeaders.Values(strings.ReplaceAll(header, "_", "-")), ","), nil
 	}

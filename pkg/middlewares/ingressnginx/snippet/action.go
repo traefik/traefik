@@ -53,7 +53,7 @@ func createProxyMethodAction(d config.IDirective) (action, error) {
 	method := trimQuote(params[0].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		req.Method = ingressnginx.ReplaceVariables(method, ctx.req, ctx.vars, nil)
+		req.Method = ingressnginx.ReplaceVariables(method, ctx.req, nil, ctx.vars)
 		return false, nil
 	}, nil
 }
@@ -210,7 +210,7 @@ func applyHeaderOps(h http.Header, r *http.Request, ops []headerOp, flags direct
 			continue
 		}
 
-		resolvedVal := ingressnginx.ReplaceVariables(op.value, ctx.req, ctx.vars, nil)
+		resolvedVal := ingressnginx.ReplaceVariables(op.value, ctx.req, nil, ctx.vars)
 		if flags.appendMode {
 			target.Add(op.key, resolvedVal)
 		} else {
@@ -382,7 +382,7 @@ func createAuthRequestSetAction(d config.IDirective) (action, error) {
 	value := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, ctx.req, ctx.vars, ctx.authResponseHeaders)
+		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, ctx.req, ctx.authResponseHeaders, ctx.vars)
 		return false, nil
 	}, nil
 }
@@ -397,7 +397,7 @@ func createProxySetHeaderAction(d config.IDirective) (action, error) {
 	val := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		resolved := ingressnginx.ReplaceVariables(val, ctx.req, ctx.vars, nil)
+		resolved := ingressnginx.ReplaceVariables(val, ctx.req, nil, ctx.vars)
 		if resolved == "" {
 			req.Header.Del(key)
 		} else {
@@ -646,7 +646,7 @@ func parseIntSimple(s string) (int, bool) {
 
 func createReturnURLAction(u string) action {
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		resolvedURL := ingressnginx.ReplaceVariables(u, ctx.req, ctx.vars, nil)
+		resolvedURL := ingressnginx.ReplaceVariables(u, ctx.req, nil, ctx.vars)
 		ctx.statusCode = http.StatusFound
 		ctx.redirectURL = resolvedURL
 		return true, nil
@@ -680,7 +680,7 @@ func createReturnAction(d config.IDirective) (action, error) {
 		return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
 			ctx.statusCode = code
 			if text != "" {
-				ctx.redirectURL = ingressnginx.ReplaceVariables(text, ctx.req, ctx.vars, nil)
+				ctx.redirectURL = ingressnginx.ReplaceVariables(text, ctx.req, nil, ctx.vars)
 			}
 			return true, nil
 		}, nil
@@ -689,7 +689,7 @@ func createReturnAction(d config.IDirective) (action, error) {
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
 		ctx.statusCode = code
 		if text != "" {
-			ctx.body = ingressnginx.ReplaceVariables(text, ctx.req, ctx.vars, nil)
+			ctx.body = ingressnginx.ReplaceVariables(text, ctx.req, nil, ctx.vars)
 		}
 		return true, nil
 	}, nil
@@ -761,7 +761,7 @@ func createRewriteAction(d config.IDirective) (action, error) {
 
 		// Build the replacement string: first replace capture groups, then NGINX variables.
 		result := replaceCaptureGroups(replacement, matches)
-		result = ingressnginx.ReplaceVariables(result, ctx.req, ctx.vars, nil)
+		result = ingressnginx.ReplaceVariables(result, ctx.req, nil, ctx.vars)
 
 		// Determine redirect behavior.
 		switch {
@@ -825,7 +825,7 @@ func createSetAction(d config.IDirective) (action, error) {
 	value := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, ctx.req, ctx.vars, nil)
+		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, ctx.req, nil, ctx.vars)
 		return false, nil
 	}, nil
 }
@@ -848,7 +848,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 	if len(parts) == 1 {
 		varExpr := parts[0]
 		return func(req *http.Request, ctx *actionContext) bool {
-			val := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
+			val := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			// If the variable was not resolved, treat as undefined.
 			if val == varExpr {
 				return false
@@ -868,15 +868,15 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 	switch operator {
 	case "=":
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
-			expected := ingressnginx.ReplaceVariables(expectedExpr, ctx.req, ctx.vars, nil)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
+			expected := ingressnginx.ReplaceVariables(expectedExpr, ctx.req, nil, ctx.vars)
 			return varVal == expected
 		}, nil
 
 	case "!=":
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
-			expected := ingressnginx.ReplaceVariables(expectedExpr, ctx.req, ctx.vars, nil)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
+			expected := ingressnginx.ReplaceVariables(expectedExpr, ctx.req, nil, ctx.vars)
 			return varVal != expected
 		}, nil
 
@@ -886,7 +886,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			matches := re.FindStringSubmatch(varVal)
 			if matches == nil {
 				return false
@@ -901,7 +901,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			return !re.MatchString(varVal)
 		}, nil
 
@@ -911,7 +911,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling case-insensitive regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			matches := re.FindStringSubmatch(varVal)
 			if matches == nil {
 				return false
@@ -926,7 +926,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling case-insensitive regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, ctx.vars, nil)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			return !re.MatchString(varVal)
 		}, nil
 

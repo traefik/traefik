@@ -316,7 +316,7 @@ func (s *Snippet) wrapResponseWriterWithCollectors(rw http.ResponseWriter, ctx *
 			if !entry.always && !isAddHeaderStatusCode(code) {
 				continue
 			}
-			resolvedVal := ingressnginx.ReplaceVariables(entry.value, ctx.req, ctx.vars, nil)
+			resolvedVal := ingressnginx.ReplaceVariables(entry.value, ctx.req, nil, ctx.vars)
 			h.Add(entry.key, resolvedVal)
 		}
 
@@ -340,7 +340,7 @@ func isAddHeaderStatusCode(code int) bool {
 // executeForwardAuth executes the forward auth subrequest.
 // Returns true if the request was terminated (auth failed).
 func (s *Snippet) executeForwardAuth(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-	address := ingressnginx.ReplaceVariables(s.address, req, ctx.vars, nil)
+	address := ingressnginx.ReplaceVariables(s.address, req, nil, ctx.vars)
 
 	method := http.MethodGet
 	if s.method != "" {
