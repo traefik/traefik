@@ -33,7 +33,10 @@ func extendedGatewayFeatures() sets.Set[features.Feature] {
 
 // extendedTLSRouteFeatures returns the supported extended TLS Route features.
 func extendedTLSRouteFeatures() sets.Set[features.Feature] {
-	return sets.New(features.TLSRouteModeTerminateFeature)
+	return sets.New(
+		features.TLSRouteModeTerminateFeature,
+		features.TLSRouteModeMixedFeature,
+	)
 }
 
 // extendedHTTPRouteFeatures returns the supported extended HTTP Route features.

@@ -658,47 +658,6 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		gatewayListeners[i].Attached = true
 	}
 
-	// Detect mixed TLS mode conflicts on the same port.
-	// When two TLS listeners on the same port have different modes
-	// (e.g., one Terminate, one Passthrough) and mixed mode is not supported,
-	// both must be rejected with ProtocolConflict.
-	tlsModes := map[gatev1.PortNumber]map[gatev1.TLSModeType][]int{}
-	for i, listener := range gateway.Spec.Listeners {
-		if listener.Protocol != gatev1.TLSProtocolType || listener.TLS == nil {
-			continue
-		}
-		if !gatewayListeners[i].Attached {
-			continue
-		}
-		mode := gatev1.TLSModePassthrough
-		if listener.TLS.Mode != nil {
-			mode = *listener.TLS.Mode
-		}
-		if tlsModes[listener.Port] == nil {
-			tlsModes[listener.Port] = map[gatev1.TLSModeType][]int{}
-		}
-		tlsModes[listener.Port][mode] = append(tlsModes[listener.Port][mode], i)
-	}
-	for port, modes := range tlsModes {
-		if len(modes) <= 1 {
-			continue
-		}
-		for _, indices := range modes {
-			for _, idx := range indices {
-				gatewayListeners[idx].Status.Conditions = []metav1.Condition{{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: gateway.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.ListenerReasonProtocolConflict),
-					Message:            fmt.Sprintf("Mixed TLS modes on port %d are not supported", port),
-				}}
-				gatewayListeners[idx].Status.SupportedKinds = nil
-				gatewayListeners[idx].Attached = false
-			}
-		}
-	}
-
 	if len(tlsConfigs) > 0 {
 		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
 	}
