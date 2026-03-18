@@ -511,7 +511,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
+			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on",
 		},
 	}
 
