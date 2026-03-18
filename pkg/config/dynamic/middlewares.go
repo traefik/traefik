@@ -14,7 +14,7 @@ const (
 	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
-	RetryDefaultMaxRequestBodyBytes int64 = -1
+	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
 )
 
 // +k8s:deepcopy-gen=true
