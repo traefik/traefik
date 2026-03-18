@@ -25,6 +25,8 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
+const defaultMaxResponseBodySize = -1
+
 // Provider is a provider.Provider implementation that queries an HTTP(s) endpoint for a configuration.
 type Provider struct {
 	Endpoint     string            `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint"`
@@ -35,12 +37,14 @@ type Provider struct {
 
 	httpClient            *http.Client
 	lastConfigurationHash uint64
+	MaxResponseBodySize   int64 `description:"Defines the maximum size of the response body in bytes." json:"maxResponseBodySize,omitempty" toml:"maxResponseBodySize,omitempty" yaml:"maxResponseBodySize,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	p.PollInterval = ptypes.Duration(5 * time.Second)
 	p.PollTimeout = ptypes.Duration(5 * time.Second)
+	p.MaxResponseBodySize = defaultMaxResponseBodySize
 }
 
 // Init the provider.
@@ -168,7 +172,19 @@ func (p *Provider) fetchConfigurationData() ([]byte, error) {
 		return nil, fmt.Errorf("received non-ok response code: %d", res.StatusCode)
 	}
 
-	return io.ReadAll(res.Body)
+	if p.MaxResponseBodySize < 0 {
+		return io.ReadAll(res.Body)
+	}
+
+	data, err := io.ReadAll(io.LimitReader(res.Body, p.MaxResponseBodySize+1))
+	if err != nil {
+		return nil, fmt.Errorf("reading response body: %w", err)
+	}
+	if int64(len(data)) > p.MaxResponseBodySize {
+		return nil, errors.New("response body too large")
+	}
+
+	return data, nil
 }
 
 // decodeConfiguration decodes and returns the dynamic configuration from the given data.

@@ -51,7 +51,8 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 		return
 	}
 
-	br := bufio.NewReader(conn)
+	var peeked bytes.Buffer
+	br := bufio.NewReader(io.TeeReader(conn, &peeked))
 
 	b := make([]byte, len(PostgresStartTLSMsg))
 	_, err = br.Read(b)
@@ -93,7 +94,7 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	}
 
 	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough.
-	proxiedConn := r.GetConn(conn, hello.peeked)
+	proxiedConn := r.GetConn(conn, peeked.String())
 	if _, ok := handlerTCPTLS.(*tcp.TLSHandler); !ok {
 		proxiedConn = &postgresConn{WriteCloser: proxiedConn}
 	}

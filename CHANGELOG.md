@@ -1,3 +1,14 @@
+## [v2.11.41](https://github.com/traefik/traefik/tree/v2.11.41) (2026-03-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.40...v2.11.41)
+
+**Bug fixes:**
+- **[http]** Add maxResponseBodySize configuration on HTTP provider ([#12788](https://github.com/traefik/traefik/pull/12788) @gndz07)
+- **[tls]** Support fragmented TLS client hello ([#12787](https://github.com/traefik/traefik/pull/12787) @rtribotte)
+- **[middleware, authentication]** Make basic auth check timing constant ([#12803](https://github.com/traefik/traefik/pull/12803) @rtribotte)
+
+**Documentation:**
+- Bump mkdocs-traefiklabs to use consent mode ([#12804](https://github.com/traefik/traefik/pull/12804) @darkweaver87)
+
 ## [v3.6.10](https://github.com/traefik/traefik/tree/v3.6.10) (2026-03-06)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.9...v3.6.10)
 
