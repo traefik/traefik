@@ -107,7 +107,7 @@ The `maxRequestBodyBytes` option controls the maximum size of request bodies tha
 
 **⚠️ Important Security Consideration**
 
-When `maxRequestBodyBytes` is set as -1, it means request body size is unlimited. This can have significant security and performance implications:
+When `maxRequestBodyBytes` is set to `-1`, it means there is no limit for request body size. This can have significant security and performance implications:
 
 - **Security Risk**: Attackers can send extremely large request bodies, potentially causing DoS attacks or memory exhaustion
 - **Performance Impact**: Large request bodies consume memory and processing resources, affecting overall system performance
