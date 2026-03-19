@@ -51,15 +51,18 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 		return
 	}
 
-	var peeked bytes.Buffer
-	br := bufio.NewReader(io.TeeReader(conn, &peeked))
-
+	// Consume and discard the SSLRequest bytes from the Conn's peeked buffer
+	// before setting up the TeeReader, so they are not included in the peeked data
+	// passed to the TLS handler.
 	b := make([]byte, len(PostgresStartTLSMsg))
-	_, err = br.Read(b)
+	_, err = conn.Read(b)
 	if err != nil {
 		_ = conn.Close()
 		return
 	}
+
+	var peeked bytes.Buffer
+	br := bufio.NewReader(io.TeeReader(conn, &peeked))
 
 	hello, err := clientHelloInfo(br)
 	if err != nil {

@@ -305,6 +305,58 @@ func (s *TCPSuite) TestWRR() {
 	assert.Equal(s.T(), map[string]int{"whoami-b": 3, "whoami-ab": 1}, call)
 }
 
+// TestPostgresSTARTTLS is a regression test for https://github.com/traefik/traefik/issues/12842.
+// It verifies that postgres STARTTLS connections work with TLS termination mode.
+func (s *TCPSuite) TestPostgresSTARTTLS() {
+	file := s.adaptFile("fixtures/tcp/postgres-starttls.toml", struct {
+		WhoamiNoCert string
+	}{
+		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
+
+	// Simulate a postgres STARTTLS client connection.
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:8093", 2*time.Second)
+	require.NoError(s.T(), err)
+	defer conn.Close()
+
+	// Send the PostgreSQL SSLRequest message: int32(8) + int32(80877103).
+	postgresStartTLSMsg := []byte{0, 0, 0, 8, 4, 210, 22, 47}
+	_, err = conn.Write(postgresStartTLSMsg)
+	require.NoError(s.T(), err)
+
+	// Expect the server to reply with 'S' (83), accepting the STARTTLS request.
+	reply := make([]byte, 1)
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_, err = io.ReadFull(conn, reply)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), byte(83), reply[0], "Expected PostgreSQL STARTTLS reply 'S'")
+
+	// Clear deadline before TLS handshake.
+	_ = conn.SetReadDeadline(time.Time{})
+
+	// Perform TLS handshake (this is where the bug manifested).
+	tlsConn := tls.Client(conn, &tls.Config{
+		InsecureSkipVerify: true,
+	})
+	err = tlsConn.Handshake()
+	require.NoError(s.T(), err, "TLS handshake should succeed after postgres STARTTLS negotiation")
+
+	// Send data through the TLS connection and verify the backend responds.
+	_, err = tlsConn.Write([]byte("WHO"))
+	require.NoError(s.T(), err)
+
+	out := make([]byte, 2048)
+	_ = tlsConn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	n, err := tlsConn.Read(out)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), string(out[:n]), "whoami-no-cert")
+}
+
 func welcome(addr string) (string, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {

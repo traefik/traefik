@@ -1237,6 +1237,87 @@ func buildClientHelloRecord(t *testing.T, serverName string) []byte {
 	return record
 }
 
+// TestPostgresTLSTermination is a regression test for https://github.com/traefik/traefik/issues/12842.
+// It verifies that postgres STARTTLS connections work with TLS termination mode
+// (i.e. when the TCP router has tls=true without passthrough).
+func TestPostgresTLSTermination(t *testing.T) {
+	serverName := "test.localhost"
+
+	certPEM, keyPEM, err := generate.KeyPair(serverName, time.Time{})
+	require.NoError(t, err)
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	router, err := NewRouter()
+	require.NoError(t, err)
+
+	// Register a TCP TLS route (TLS termination, not passthrough) with a TLSHandler.
+	// The TLSHandler wraps the actual handler, performing the TLS handshake.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`"+serverName+"`)", "", 0, &tcp2.TLSHandler{
+		Next: tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+			_, _ = conn.Write([]byte("POSTGRES-OK"))
+			_ = conn.Close()
+		}),
+		Config: tlsConf,
+	})
+	require.NoError(t, err)
+
+	// Also need a TCP route to make the router enter the postgres detection path.
+	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		_ = conn.Close()
+	}))
+	require.NoError(t, err)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		tcpConn, _ := conn.(*net.TCPConn)
+		router.ServeTCP(tcpConn)
+	}()
+
+	clientConn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.Close() })
+
+	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
+	_, err = clientConn.Write(PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	// Step 2: Client receives PostgresStartTLSReply ('S').
+	reply := make([]byte, 1)
+	_, err = io.ReadFull(clientConn, reply)
+	require.NoError(t, err)
+	require.Equal(t, PostgresStartTLSReply, reply)
+
+	// Step 3: Client performs TLS handshake.
+	tlsClient := tls.Client(clientConn, &tls.Config{
+		ServerName:         serverName,
+		InsecureSkipVerify: true,
+	})
+
+	err = tlsClient.Handshake()
+	require.NoError(t, err, "TLS handshake should succeed after postgres STARTTLS negotiation")
+
+	// Step 4: Read the response from the handler through the TLS connection.
+	buf := make([]byte, 256)
+	n, err := tlsClient.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, "POSTGRES-OK", string(buf[:n]))
+
+	_ = tlsClient.Close()
+}
+
 func TestPostgres(t *testing.T) {
 	router, err := NewRouter()
 	require.NoError(t, err)
