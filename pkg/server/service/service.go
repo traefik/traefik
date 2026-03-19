@@ -545,6 +545,7 @@ type serverBalancer interface {
 // healthcheck.StatusUpdater interface from the original handler.
 type statusUpdaterHandler struct {
 	http.Handler
+
 	statusUpdater healthcheck.StatusUpdater
 }
 
