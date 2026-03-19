@@ -1151,12 +1151,34 @@ func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
 	}
 }
 
-// Test_clientHelloInfo_validRecordLength verifies that clientHelloInfo
-// still works correctly with legitimate TLS record sizes.
-func Test_clientHelloInfo_validRecordLength(t *testing.T) {
+// Test_clientHelloInfo_tlsRecordFragmentation documents a known limitation:
+// clientHelloInfo only reads a single TLS record. When a ClientHello handshake
+// message is split across multiple TLS records (RFC 5246 §6.2.1), the SNI cannot
+// be extracted, leaving serverName empty and allowing SNI-based routing to be bypassed.
+func Test_clientHelloInfo_tlsRecordFragmentation(t *testing.T) {
+	serverName := "foo.example.com"
+	record := buildClientHelloRecord(t, serverName)
+
+	const hdrLen = 5
+	payload := record[hdrLen:]
+
+	ver1, ver2 := record[1], record[2]
+
+	var recordsData bytes.Buffer
+	for _, part := range [][]byte{payload[:len(serverName)/2], payload[len(serverName)/2:]} {
+		recordsData.WriteByte(0x16)
+		recordsData.WriteByte(ver1)
+		recordsData.WriteByte(ver2)
+		recordsData.WriteByte(byte(len(part) >> 8))
+		recordsData.WriteByte(byte(len(part)))
+		recordsData.Write(part)
+	}
+
 	serverConn, clientConn := net.Pipe()
-	defer serverConn.Close()
-	defer clientConn.Close()
+	t.Cleanup(func() {
+		_ = serverConn.Close()
+		_ = clientConn.Close()
+	})
 
 	type result struct {
 		hello *clientHello
@@ -1170,28 +1192,49 @@ func Test_clientHelloInfo_validRecordLength(t *testing.T) {
 		resultCh <- result{hello, err}
 	}()
 
-	// Build a TLS record header with a small (valid) record length.
-	recLen := 100
-	hdr := []byte{
-		0x16,       // Content Type: Handshake
-		0x03, 0x03, // Version: TLS 1.2
-		byte(recLen >> 8),   // Length high byte
-		byte(recLen & 0xFF), // Length low byte
-	}
-	payload := make([]byte, recLen)
-
-	_, err := clientConn.Write(append(hdr, payload...))
+	_, err := clientConn.Write(recordsData.Bytes())
 	require.NoError(t, err)
-	clientConn.Close()
+	_ = clientConn.Close()
 
 	select {
 	case r := <-resultCh:
 		require.NoError(t, r.err)
 		require.NotNil(t, r.hello)
 		assert.True(t, r.hello.isTLS)
+		assert.Equal(t, serverName, r.hello.serverName)
 	case <-time.After(5 * time.Second):
-		t.Fatal("clientHelloInfo blocked on valid TLS record")
+		t.Fatal("clientHelloInfo blocked")
 	}
+}
+
+// buildClientHelloRecord captures a real TLS ClientHello record from Go's TLS stack
+// for the given serverName.
+// It returns the raw record bytes and the byte offset of the SNI value within those bytes.
+func buildClientHelloRecord(t *testing.T, serverName string) []byte {
+	t.Helper()
+
+	serverConn, clientConn := net.Pipe()
+
+	recordCh := make(chan []byte, 1)
+	go func() {
+		buf := make([]byte, 65536)
+		n, _ := serverConn.Read(buf)
+		_ = serverConn.Close()
+		recordCh <- buf[:n]
+	}()
+
+	go func() {
+		tlsConn := tls.Client(clientConn, &tls.Config{
+			ServerName:         serverName,
+			InsecureSkipVerify: true, //nolint:gosec
+		})
+		_ = tlsConn.Handshake()
+		_ = clientConn.Close()
+	}()
+
+	record := <-recordCh
+
+	return record
 }
 
 func TestPostgres(t *testing.T) {

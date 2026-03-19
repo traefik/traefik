@@ -310,6 +310,7 @@
     [providers.http.headers]
       name0 = "foobar"
       name1 = "foobar"
+    maxResponseBodySize = 42
     [providers.http.tls]
       ca = "foobar"
       cert = "foobar"

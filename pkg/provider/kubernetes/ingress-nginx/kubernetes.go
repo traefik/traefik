@@ -135,20 +135,20 @@ func (c canaryBackend) AppendCanaryRule(rule string) string {
 	if c.Header != "" {
 		switch {
 		case c.HeaderValue == "" && c.HeaderPattern != "":
-			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`, `%s`)", c.Header, c.HeaderPattern))
+			rules = append(rules, fmt.Sprintf("HeaderRegexp(%q, %q)", c.Header, c.HeaderPattern))
 
 		case c.HeaderValue != "":
-			rules = append(rules, fmt.Sprintf("Header(`%s`, `%s`)", c.Header, c.HeaderValue))
+			rules = append(rules, fmt.Sprintf("Header(%q, %q)", c.Header, c.HeaderValue))
 
 		default:
-			rules = append(rules, fmt.Sprintf("Header(`%s`, `always`)", c.Header))
+			rules = append(rules, fmt.Sprintf(`Header(%q, "always")`, c.Header))
 		}
 	}
 
 	if c.Cookie != "" {
-		cookieRule := fmt.Sprintf("HeaderRegexp(`Cookie`, `%s`)", fmt.Sprintf("(^|;\\s*)%s=always(;|$)", c.Cookie))
+		cookieRule := fmt.Sprintf(`HeaderRegexp("Cookie", %q)`, fmt.Sprintf("(^|;\\s*)%s=always(;|$)", c.Cookie))
 		if c.Header != "" && c.HeaderValue == "" && c.HeaderPattern == "" {
-			cookieRule = fmt.Sprintf("(%s && !%s)", cookieRule, fmt.Sprintf("Header(`%s`, `never`)", c.Header))
+			cookieRule = fmt.Sprintf("(%s && !%s)", cookieRule, fmt.Sprintf(`Header(%q, "never")`, c.Header))
 		}
 
 		rules = append(rules, cookieRule)
@@ -161,10 +161,10 @@ func (c canaryBackend) AppendCanaryRule(rule string) string {
 func (c canaryBackend) AppendNonCanaryRule(rule string) string {
 	var rules []string
 	if c.Header != "" && c.HeaderValue == "" && c.HeaderPattern == "" {
-		rules = append(rules, fmt.Sprintf("Header(`%s`, `never`)", c.Header))
+		rules = append(rules, fmt.Sprintf(`Header(%q, "never")`, c.Header))
 	}
 	if c.Cookie != "" {
-		rules = append(rules, fmt.Sprintf("HeaderRegexp(`Cookie`, `%s`)", fmt.Sprintf("(^|;\\s*)%s=never(;|$)", c.Cookie)))
+		rules = append(rules, fmt.Sprintf(`HeaderRegexp("Cookie", %q)`, fmt.Sprintf("(^|;\\s*)%s=never(;|$)", c.Cookie)))
 	}
 
 	return fmt.Sprintf("(%s) && (%s)", rule, strings.Join(rules, " || "))
@@ -418,7 +418,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		// Add the default backend service router to the configuration.
 		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
 			EntryPoints: p.NonTLSEntryPoints,
-			Rule:        "PathPrefix(`/`)",
+			Rule:        `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -427,7 +427,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
 			EntryPoints: p.TLSEntryPoints,
-			Rule:        "PathPrefix(`/`)",
+			Rule:        `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -602,7 +602,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
 				EntryPoints: p.NonTLSEntryPoints,
-				Rule:        "PathPrefix(`/`)",
+				Rule:        `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -617,7 +617,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			rtTLS := &dynamic.Router{
 				EntryPoints: p.TLSEntryPoints,
-				Rule:        "PathPrefix(`/`)",
+				Rule:        `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -678,7 +678,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host), "-")
 				conf.TCP.Routers[routerKey] = &dynamic.TCPRouter{
 					EntryPoints: p.TLSEntryPoints,
-					Rule:        fmt.Sprintf("HostSNI(`%s`)", rule.Host),
+					Rule:        fmt.Sprintf("HostSNI(%q)", rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -935,7 +935,7 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	}
 
 	nst.ServersTransport.ServerName = ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, ""))
-	nst.ServersTransport.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off"
+	nst.ServersTransport.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on"
 
 	if sslSecret := ptr.Deref(cfg.ProxySSLSecret, ""); sslSecret != "" {
 		parts := strings.Split(sslSecret, "/")
@@ -1590,11 +1590,11 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		return
 	}
 
-	newRule := fmt.Sprintf("Host(`www.%s`)", ruleHost)
+	newRule := fmt.Sprintf("Host(%q)", fmt.Sprintf("www.%s", ruleHost))
 	if wwwType {
 		// if current ingress host is www.example.com, redirect from example.com => www.example.com
 		host := strings.TrimPrefix(ruleHost, "www.")
-		newRule = fmt.Sprintf("Host(`%s`)", host)
+		newRule = fmt.Sprintf("Host(%q)", host)
 	}
 
 	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
@@ -2141,10 +2141,10 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 
 		switch pathType {
 		case netv1.PathTypeExact:
-			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
+			rules = append(rules, fmt.Sprintf("Path(%q)", pa.Path))
 		case netv1.PathTypePrefix:
 			if useRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`(?i)^%s`)", pa.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", fmt.Sprintf("(?i)^%s", pa.Path)))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
@@ -2157,10 +2157,10 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
+		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
-	return fmt.Sprintf("Host(`%s`)", host)
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
@@ -2171,11 +2171,11 @@ func buildHostRule(host string) string {
 // Kubernetes Ingress API.
 func buildPrefixRule(path string) string {
 	if path == "/" {
-		return "PathPrefix(`/`)"
+		return `PathPrefix("/")`
 	}
 
 	path = strings.TrimSuffix(path, "/")
-	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
+	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, fmt.Sprintf("%s/", path))
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {

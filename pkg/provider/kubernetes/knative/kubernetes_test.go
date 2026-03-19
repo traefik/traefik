@@ -57,7 +57,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0": {
 							EntryPoints: []string{"priv-http", "priv-https"},
 							Service:     "default-helloworld-go-rule-0-path-0-wrr",
-							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Rule:        `(Host("helloworld-go.default") || Host("helloworld-go.default.svc") || Host("helloworld-go.default.svc.cluster.local"))`,
 							Middlewares: []string{},
 						},
 					},
@@ -127,7 +127,7 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0": {
 							EntryPoints: []string{"http", "https"},
 							Service:     "default-helloworld-go-rule-0-path-0-wrr",
-							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Rule:        `(Host("helloworld-go.default") || Host("helloworld-go.default.svc") || Host("helloworld-go.default.svc.cluster.local"))`,
 							Middlewares: []string{},
 						},
 					},
@@ -197,13 +197,13 @@ func Test_loadConfiguration(t *testing.T) {
 						"default-helloworld-go-rule-0-path-0": {
 							EntryPoints: []string{"http", "https"},
 							Service:     "default-helloworld-go-rule-0-path-0-wrr",
-							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Rule:        `(Host("helloworld-go.default") || Host("helloworld-go.default.svc") || Host("helloworld-go.default.svc.cluster.local"))`,
 							Middlewares: []string{},
 						},
 						"default-helloworld-go-rule-0-path-0-tls": {
 							EntryPoints: []string{"http", "https"},
 							Service:     "default-helloworld-go-rule-0-path-0-wrr",
-							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Rule:        `(Host("helloworld-go.default") || Host("helloworld-go.default.svc") || Host("helloworld-go.default.svc.cluster.local"))`,
 							Middlewares: []string{},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -314,12 +314,12 @@ func Test_buildRule(t *testing.T) {
 		{
 			desc:  "single host, no headers, no path",
 			hosts: []string{"example.com"},
-			want:  "(Host(`example.com`))",
+			want:  `(Host("example.com"))`,
 		},
 		{
 			desc:  "multiple hosts, no headers, no path",
 			hosts: []string{"example.com", "foo.com"},
-			want:  "(Host(`example.com`) || Host(`foo.com`))",
+			want:  `(Host("example.com") || Host("foo.com"))`,
 		},
 		{
 			desc:  "single host, single header, no path",
@@ -327,7 +327,7 @@ func Test_buildRule(t *testing.T) {
 			headers: map[string]knativenetworkingv1alpha1.HeaderMatch{
 				"X-Header": {Exact: "value"},
 			},
-			want: "(Host(`example.com`)) && (Header(`X-Header`,`value`))",
+			want: `(Host("example.com")) && (Header("X-Header","value"))`,
 		},
 		{
 			desc:  "single host, multiple headers, no path",
@@ -336,7 +336,7 @@ func Test_buildRule(t *testing.T) {
 				"X-Header":  {Exact: "value"},
 				"X-Header2": {Exact: "value2"},
 			},
-			want: "(Host(`example.com`)) && (Header(`X-Header`,`value`) && Header(`X-Header2`,`value2`))",
+			want: `(Host("example.com")) && (Header("X-Header","value") && Header("X-Header2","value2"))`,
 		},
 		{
 			desc:  "single host, multiple headers, with path",
@@ -346,13 +346,13 @@ func Test_buildRule(t *testing.T) {
 				"X-Header2": {Exact: "value2"},
 			},
 			path: "/foo",
-			want: "(Host(`example.com`)) && (Header(`X-Header`,`value`) && Header(`X-Header2`,`value2`)) && PathPrefix(`/foo`)",
+			want: `(Host("example.com")) && (Header("X-Header","value") && Header("X-Header2","value2")) && PathPrefix("/foo")`,
 		},
 		{
 			desc:  "single host, no headers, with path",
 			hosts: []string{"example.com"},
 			path:  "/foo",
-			want:  "(Host(`example.com`)) && PathPrefix(`/foo`)",
+			want:  `(Host("example.com")) && PathPrefix("/foo")`,
 		},
 	}
 
@@ -377,7 +377,7 @@ func Test_mergeHTTPConfigs(t *testing.T) {
 			configs: []*dynamic.HTTPConfiguration{
 				{
 					Routers: map[string]*dynamic.Router{
-						"router1": {Rule: "Host(`example.com`)"},
+						"router1": {Rule: `Host("example.com")`},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
@@ -394,7 +394,7 @@ func Test_mergeHTTPConfigs(t *testing.T) {
 			},
 			want: &dynamic.HTTPConfiguration{
 				Routers: map[string]*dynamic.Router{
-					"router1": {Rule: "Host(`example.com`)"},
+					"router1": {Rule: `Host("example.com")`},
 				},
 				Middlewares: map[string]*dynamic.Middleware{
 					"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
@@ -409,7 +409,7 @@ func Test_mergeHTTPConfigs(t *testing.T) {
 			configs: []*dynamic.HTTPConfiguration{
 				{
 					Routers: map[string]*dynamic.Router{
-						"router1": {Rule: "Host(`example.com`)"},
+						"router1": {Rule: `Host("example.com")`},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
@@ -420,7 +420,7 @@ func Test_mergeHTTPConfigs(t *testing.T) {
 				},
 				{
 					Routers: map[string]*dynamic.Router{
-						"router2": {Rule: "PathPrefix(`/test`)"},
+						"router2": {Rule: `PathPrefix("/test")`},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"middleware2": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
@@ -432,8 +432,8 @@ func Test_mergeHTTPConfigs(t *testing.T) {
 			},
 			want: &dynamic.HTTPConfiguration{
 				Routers: map[string]*dynamic.Router{
-					"router1": {Rule: "Host(`example.com`)"},
-					"router2": {Rule: "PathPrefix(`/test`)"},
+					"router1": {Rule: `Host("example.com")`},
+					"router2": {Rule: `PathPrefix("/test")`},
 				},
 				Middlewares: map[string]*dynamic.Middleware{
 					"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
