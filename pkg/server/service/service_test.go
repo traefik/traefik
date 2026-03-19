@@ -729,6 +729,65 @@ func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (
 	return s(ctx, serviceName)
 }
 
+func TestGetServiceHandler_HealthCheck(t *testing.T) {
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+	testCases := []struct {
+		desc        string
+		withHeaders bool
+	}{
+		{
+			desc: "without service headers",
+		},
+		{
+			desc:        "with service headers",
+			withHeaders: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(backend.Close)
+
+			childSvc := &dynamic.Service{
+				LoadBalancer: &dynamic.ServersLoadBalancer{
+					Servers: []dynamic.Server{{URL: backend.URL}},
+					HealthCheck: &dynamic.ServerHealthCheck{
+						Path: "/health",
+					},
+				},
+			}
+
+			wrrService := dynamic.WRRService{Name: "child@file", Weight: pointer(1)}
+			if test.withHeaders {
+				wrrService.Headers = map[string]string{"X-Custom": "value"}
+			}
+
+			configs := map[string]*runtime.ServiceInfo{
+				"child@file": {Service: childSvc},
+				"wrr@file": {
+					Service: &dynamic.Service{
+						Weighted: &dynamic.WeightedRoundRobin{
+							Services:    []dynamic.WRRService{wrrService},
+							HealthCheck: &dynamic.HealthCheck{},
+						},
+					},
+				},
+			}
+
+			manager := NewManager(configs, nil, nil, &transportManagerMock{}, pb)
+
+			_, err := manager.BuildHTTP(t.Context(), "wrr@file")
+			require.NoError(t, err)
+		})
+	}
+}
+
 type internalHandler struct{}
 
 func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}

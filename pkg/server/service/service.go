@@ -330,13 +330,18 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 	}
 
 	if service.Headers != nil {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		var handler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			for k, v := range service.Headers {
 				req.Header.Set(k, v)
 			}
 
 			svcHandler.ServeHTTP(rw, req)
-		}), nil
+		})
+		if su, ok := svcHandler.(healthcheck.StatusUpdater); ok {
+			handler = &statusUpdaterHandler{Handler: handler, statusUpdater: su}
+		}
+
+		return handler, nil
 	}
 
 	return svcHandler, nil
@@ -507,6 +512,17 @@ type serverBalancer interface {
 	healthcheck.StatusSetter
 
 	AddServer(name string, handler http.Handler, server dynamic.Server)
+}
+
+// statusUpdaterHandler wraps an http.Handler while preserving the
+// healthcheck.StatusUpdater interface from the original handler.
+type statusUpdaterHandler struct {
+	http.Handler
+	statusUpdater healthcheck.StatusUpdater
+}
+
+func (s *statusUpdaterHandler) RegisterStatusUpdater(fn func(up bool)) error {
+	return s.statusUpdater.RegisterStatusUpdater(fn)
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {
