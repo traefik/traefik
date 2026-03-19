@@ -143,8 +143,13 @@ type TCPServersTransport struct {
 	// connection, to close the reading capability as well, hence fully terminating the
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
-	TerminationDelay ptypes.Duration  `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
-	TLS              *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	TerminationDelay ptypes.Duration   `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	TLS              *TLSClientConfig  `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	ProxyProtocol    *TCPProxyProtocol `description:"Defines the ProxyProtocol configuration" json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+type TCPProxyProtocol struct {
+	Version int `description:"Defines the proxy protocol version. If 0 disables proxy protocol" json:"version,omityempty" toml:"version,omitempty" yaml:"version,omitempty" file:"allowEmpty" kv:"allowEmpty" label:"allowEmpty" export:"true"`
 }
 
 // TLSClientConfig options to configure TLS communication between Traefik and the servers.
