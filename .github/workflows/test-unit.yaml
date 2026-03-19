@@ -82,6 +82,9 @@ jobs:
           npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: UI unit tests
         run: |
           yarn --cwd webui install --ignore-scripts

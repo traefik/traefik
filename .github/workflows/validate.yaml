@@ -79,3 +79,56 @@ jobs:
         run: |
           make generate-crd
           git diff --exit-code
+
+  validate-licenses:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check for dependency changes
+        id: deps-changed
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '^(go\.(mod|sum)|webui/yarn\.lock|docs/requirements\.txt)$'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Go
+        if: steps.deps-changed.outputs.changed == 'true'
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+
+      - name: Set up Python
+        if: steps.deps-changed.outputs.changed == 'true'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        if: steps.deps-changed.outputs.changed == 'true'
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version-file: webui/.nvmrc
+
+      - name: Enable Corepack
+        if: steps.deps-changed.outputs.changed == 'true'
+        run: corepack enable
+
+      - name: Install WebUI dependencies
+        if: steps.deps-changed.outputs.changed == 'true'
+        run: yarn --cwd webui install --mode skip-build
+
+      - name: Install license tools
+        if: steps.deps-changed.outputs.changed == 'true'
+        run: pip install cyclonedx-bom==8.7.0 uv
+
+      - name: Validate licenses
+        if: steps.deps-changed.outputs.changed == 'true'
+        run: make validate-licenses
