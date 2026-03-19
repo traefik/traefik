@@ -326,6 +326,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-providers-http" href="#opt-providers-http" title="#opt-providers-http">providers.http</a> | Enables HTTP provider. | false |
 | <a id="opt-providers-http-endpoint" href="#opt-providers-http-endpoint" title="#opt-providers-http-endpoint">providers.http.endpoint</a> | Load configuration from this endpoint. | |
 | <a id="opt-providers-http-headers-name" href="#opt-providers-http-headers-name" title="#opt-providers-http-headers-name">providers.http.headers._name_</a> | Define custom headers to be sent to the endpoint. | |
+| <a id="opt-providers-http-maxresponsebodysize" href="#opt-providers-http-maxresponsebodysize" title="#opt-providers-http-maxresponsebodysize">providers.http.maxresponsebodysize</a> | Defines the maximum size of the response body in bytes. | -1 |
 | <a id="opt-providers-http-pollinterval" href="#opt-providers-http-pollinterval" title="#opt-providers-http-pollinterval">providers.http.pollinterval</a> | Polling interval for endpoint. | 5 |
 | <a id="opt-providers-http-polltimeout" href="#opt-providers-http-polltimeout" title="#opt-providers-http-polltimeout">providers.http.polltimeout</a> | Polling timeout for endpoint. | 5 |
 | <a id="opt-providers-http-tls-ca" href="#opt-providers-http-tls-ca" title="#opt-providers-http-tls-ca">providers.http.tls.ca</a> | TLS CA | |

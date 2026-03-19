@@ -19,15 +19,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-const (
-	defaultBufSize = 4096
-	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
-	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
-	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
-	// However, in practice the go server handshake can read up to 16384 + 2048 bytes,
-	// so we need to allow for some extra bytes to avoid rejecting valid handshakes.
-	maxTLSRecordLen = 16384 + 2048
-)
+// errClientHelloRead is used as a sentinel error to break the TLS handshake once we have read the ClientHello.
+var errClientHelloRead = errors.New("client hello successfully read")
 
 // Router is a TCP router.
 type Router struct {
@@ -127,7 +120,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
-	br := bufio.NewReader(conn)
+	var peeked bytes.Buffer
+	br := bufio.NewReader(io.TeeReader(conn, &peeked))
+
 	postgres, err := isPostgres(br)
 	if err != nil {
 		conn.Close()
@@ -135,7 +130,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	if postgres {
-		r.servePostgres(r.GetConn(conn, getPeeked(br)))
+		r.servePostgres(r.GetConn(conn, peeked.String()))
 		return
 	}
 
@@ -168,9 +163,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		handler, _ := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
-			handler.ServeTCP(r.GetConn(conn, hello.peeked))
+			handler.ServeTCP(r.GetConn(conn, peeked.String()))
 		case r.httpForwarder != nil:
-			r.httpForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
+			r.httpForwarder.ServeTCP(r.GetConn(conn, peeked.String()))
 		default:
 			conn.Close()
 		}
@@ -179,7 +174,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// Handling ACME-TLS/1 challenges.
 	if !r.acmeTLSPassthrough && slices.Contains(hello.protos, tlsalpn01.ACMETLS1Protocol) {
-		r.acmeTLSALPNHandler().ServeTCP(r.GetConn(conn, hello.peeked))
+		r.acmeTLSALPNHandler().ServeTCP(r.GetConn(conn, peeked.String()))
 		return
 	}
 
@@ -193,14 +188,14 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// In order not to depart from the behavior in 2.6,
 		// we only allow an HTTPS router to take precedence over a TCP-TLS router if it is _not_ an HostSNI(*) router
 		// (so basically any router that has a specific HostSNI based rule).
-		handlerHTTPS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked.String()))
 		return
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, catchAllTCPTLS := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS != nil && !catchAllTCPTLS {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked.String()))
 		return
 	}
 
@@ -208,19 +203,19 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// We end up here for e.g. an HTTPS router that only has a PathPrefix rule,
 	// which under the scenes is counted as an HostSNI(*) rule.
 	if handlerHTTPS != nil {
-		handlerHTTPS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked.String()))
 		return
 	}
 
 	// Fallback on TCP TLS catchAll.
 	if handlerTCPTLS != nil {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked.String()))
 		return
 	}
 
 	// To handle 404s for HTTPS.
 	if r.httpsForwarder != nil {
-		r.httpsForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
+		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked.String()))
 		return
 	}
 
@@ -375,7 +370,6 @@ type clientHello struct {
 	serverName string   // SNI server name
 	protos     []string // ALPN protocols list
 	isTLS      bool     // whether we are a TLS handshake
-	peeked     string   // the bytes peeked from the hello while getting the info
 }
 
 // clientHelloInfo returns various data from the clientHello handshake,
@@ -396,74 +390,46 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 		if hdr[0] == recordTypeSSLv2 {
 			// we consider SSLv2 as TLS, and it will be refused by real TLS handshake.
 			return &clientHello{
-				isTLS:  true,
-				peeked: getPeeked(br),
+				isTLS: true,
 			}, nil
 		}
-		return &clientHello{
-			peeked: getPeeked(br),
-		}, nil // Not TLS.
+		return &clientHello{}, nil // Not TLS.
 	}
 
-	const recordHeaderLen = 5
-	hdr, err = br.Peek(recordHeaderLen)
-	if err != nil {
-		return nil, fmt.Errorf("peeking client hello headers: %w", err)
-	}
-
-	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
-
-	if recLen > maxTLSRecordLen {
-		return nil, fmt.Errorf("peeking client hello bytes, oversized record: %d", recLen)
-	}
-
-	if recordHeaderLen+recLen > defaultBufSize {
-		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)
-	}
-
-	helloBytes, err := br.Peek(recordHeaderLen + recLen)
-	if err != nil {
-		return nil, fmt.Errorf("peeking client hello bytes: %w", err)
-	}
-
-	sni := ""
-	var protos []string
-	server := tls.Server(helloSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
+	var (
+		sni    string
+		protos []string
+	)
+	server := tls.Server(readOnlyConn{r: br}, &tls.Config{
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			sni = hello.ServerName
 			protos = hello.SupportedProtos
-			return nil, nil
+			// This error prevents unnecessary additional steps in the TLS ClientHello message processing.
+			return nil, errClientHelloRead
 		},
 	})
-	_ = server.Handshake()
+
+	if handshakeErr := server.Handshake(); !errors.Is(handshakeErr, errClientHelloRead) {
+		return nil, fmt.Errorf("reading client hello: %w", handshakeErr)
+	}
 
 	return &clientHello{
 		serverName: sni,
 		isTLS:      true,
-		peeked:     getPeeked(br),
 		protos:     protos,
 	}, nil
 }
 
-func getPeeked(br *bufio.Reader) string {
-	peeked, err := br.Peek(br.Buffered())
-	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking bytes")
-		return ""
-	}
-	return string(peeked)
-}
-
-// helloSniffConn is a net.Conn that reads from r, fails on Writes,
+// readOnlyConn is a net.Conn that reads from r, fails on Writes,
 // and crashes otherwise.
-type helloSniffConn struct {
+type readOnlyConn struct {
 	net.Conn // nil; crash on any unexpected use
 
 	r io.Reader
 }
 
 // Read reads from the underlying reader.
-func (c helloSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
+func (c readOnlyConn) Read(p []byte) (int, error) { return c.r.Read(p) }
 
 // Write crashes all the time.
-func (helloSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
+func (readOnlyConn) Write(_ []byte) (int, error) { return 0, io.EOF }

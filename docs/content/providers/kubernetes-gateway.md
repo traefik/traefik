@@ -8,11 +8,11 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specification from the Kubernetes Special Interest Groups (SIGs).
 
-This provider supports Standard version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the Gateway API specification. 
+This provider supports Standard version [v1.5.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.5.1) of the Gateway API specification.
 
-It fully supports all HTTP core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
+It fully supports all HTTP core and some extended features, as well as `TLSRoute` (Standard channel) and `TCPRoute` (Experimental channel via the [`experimentalChannel`](#experimentalchannel) option).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.5.1/traefik-traefik).
 
 ## Requirements
 
@@ -27,7 +27,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
     ```bash
     # Install Gateway API CRDs from the Standard channel.
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
     ```
 
 2. Install the additional Traefik RBAC required for Gateway API.
@@ -251,7 +251,7 @@ providers:
 _Optional, Default: false_
 
 Toggles support for the Experimental Channel resources ([Gateway API release channels documentation](https://gateway-api.sigs.k8s.io/concepts/versioning/#release-channels)).
-This option currently enables support for `TCPRoute` and `TLSRoute`.
+This option currently enables support for `TCPRoute`.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -275,7 +275,7 @@ providers:
 
     ```bash
     # Install Gateway API CRDs from the Experimental channel.
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
     ```
 
 ### `labelselector`

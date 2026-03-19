@@ -1,11 +1,11 @@
 ---
-title: "Traefik in Multi-Tenant Kubernetes Clusterss"
+title: "Traefik in Multi-Tenant Kubernetes Clusters"
 description: "Traefik is not recommended for multi-tenant Kubernetes clusters due to TLS certificate management and broader isolation, traffic, and security concerns. Read the technical guidelines."
 ---
 
 # Traefik in Multi-Tenant Kubernetes Clusters
 
-Traefik is primarily designed as a cluster-wide ingress controller. For this reason, when using the Kubernetes `Ingress` or `IngressRoute` specifications, **it is not recommended to use Traefik in multi-tenant Kubernetes clusters**, where multiple teams or tenants share the same cluster.
+Traefik is primarily designed as a cluster-wide ingress controller. For this reason, when using the Kubernetes `Ingress` or `IngressRoute` specifications, **it is not recommended to use a shared instance of Traefik in multi-tenant Kubernetes clusters**, where multiple teams or tenants share the same cluster.
 
 The main reasons include:
 
@@ -21,16 +21,18 @@ As this Store is global in Traefik, it is shared across all namespaces, meaning 
 
 This lack of isolation poses a risk in multi-tenant environments where different teams or applications require strict boundaries between resources, especially around sensitive data like TLS certificates.
 
-In contrast, the [Kubernetes Gateway API](../providers/kubernetes-gateway.md) provides better primitives for secure multi-tenancy. 
-Specifically, the `Listener` resource in the Gateway API allows administrators to explicitly define which Route resources (e.g., `HTTPRoute`) are permitted to bind to which domain names or ports. 
-This capability enforces stricter ownership and isolation, making it a safer choice for multi-tenant use cases.
+## Recommended Setup
 
-## Recommended setup
+The recommended approach for multi-tenant Kubernetes clusters is to **deploy one dedicated Traefik instance per tenant**, scoped to that tenant's namespace(s).
+This ensures strict boundaries between tenants and prevents cross-tenant configuration leakage.
 
-When strict boundaries are required between resources and teams, we recommend using one Traefik instance per tenant.
+Each Traefik instance should be:
 
-In Kubernetes one way to isolate a tenant is to restrict it to a namespace.
-In that case, the namespace options from the Kubernetes [CRD](../providers/kubernetes-crd.md#namespaces) and [Ingress](../providers/kubernetes-ingress.md#namespaces) providers can be leveraged.  
+* Deployed in the tenant's namespace with a dedicated `ServiceAccount`
+* Configured with `providers.kubernetesCRD.namespaces` and/or `providers.kubernetesIngress.namespaces` to restrict resource watch to that tenant's namespaces only
+* Subject to Kubernetes RBAC that limits its access to only the resources it needs
+
+This namespace-per-tenant topology, combined with Kubernetes `NetworkPolicy` resources, provides the strongest available isolation when running Traefik on a shared cluster.
 
 !!! tip "Dedicate one Traefik instance per tenant using the Helm Chart" 
 
@@ -43,3 +45,18 @@ In that case, the namespace options from the Kubernetes [CRD](../providers/kuber
         namespaces:
           - tenant
     ```
+
+## Gateway API
+
+We also encourage users to adopt [Kubernetes Gateway API](../providers/kubernetes-gateway.md), which is designed
+with multi-tenancy as a first-class concern. Gateway API provides a more expressive and role-oriented model
+for managing ingress, with built-in support for delegating route configuration to individual tenants while
+preserving infrastructure-level control for cluster operators. This tooling handles multi-tenant scenarios
+more robustly than the traditional Ingress model and is the recommended direction for new deployments.
+
+For example, concerning TLS certificate management, the `Listener` resource allows administrators to explicitly
+define which `Route` resources (e.g., `HTTPRoute`) are permitted to bind to which domain names or ports.
+This enforces stricter ownership and isolation between tenants, making the Gateway API a safer and more robust
+choice for multi-tenant use cases than the traditional Ingress model.
+
+For new deployments in multi-tenant environments, adopting Gateway API is the recommended direction.

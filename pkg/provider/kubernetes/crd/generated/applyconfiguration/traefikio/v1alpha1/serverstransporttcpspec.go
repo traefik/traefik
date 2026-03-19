@@ -33,12 +33,19 @@ import (
 
 // ServersTransportTCPSpecApplyConfiguration represents a declarative configuration of the ServersTransportTCPSpec type for use
 // with apply.
+//
+// ServersTransportTCPSpec defines the desired state of a ServersTransportTCP.
 type ServersTransportTCPSpecApplyConfiguration struct {
-	DialTimeout      *intstr.IntOrString                `json:"dialTimeout,omitempty"`
-	DialKeepAlive    *intstr.IntOrString                `json:"dialKeepAlive,omitempty"`
-	ProxyProtocol    *dynamic.ProxyProtocol             `json:"proxyProtocol,omitempty"`
-	TerminationDelay *intstr.IntOrString                `json:"terminationDelay,omitempty"`
-	TLS              *TLSClientConfigApplyConfiguration `json:"tls,omitempty"`
+	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// DialKeepAlive is the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
+	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
+	// ProxyProtocol holds the PROXY Protocol configuration.
+	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
+	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
+	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
+	// TLS defines the TLS configuration
+	TLS *TLSClientConfigApplyConfiguration `json:"tls,omitempty"`
 }
 
 // ServersTransportTCPSpecApplyConfiguration constructs a declarative configuration of the ServersTransportTCPSpec type for use with
