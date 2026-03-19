@@ -486,7 +486,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			// If any ingress in this host enable use-regex, all paths on that host must use regex matching.
 			// Using rewrite-target annotation also implies that use-regex is true.
-			if ptr.Deref(i.IngressConfig.UseRegex, false) || i.IngressConfig.RewriteTarget != nil {
+			if ptr.Deref(i.IngressConfig.UseRegex, false) || !(i.IngressConfig.RewriteTarget == nil || *i.IngressConfig.RewriteTarget == "") {
 				hostsWithUseRegex[rule.Host] = true
 			}
 
@@ -1526,7 +1526,7 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig IngressCo
 var regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
 
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.RewriteTarget == nil {
+	if ingressConfig.RewriteTarget == nil || *ingressConfig.RewriteTarget == "" {
 		return
 	}
 
