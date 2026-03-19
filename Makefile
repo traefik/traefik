@@ -177,6 +177,16 @@ generate-crd:
 generate-genconf:
 	go run ./cmd/internal/gen/
 
+.PHONY: generate-licenses
+#? generate-licenses: Generate SBOM and third-party license attribution files
+generate-licenses:
+	$(CURDIR)/script/generate-licenses.sh
+
+.PHONY: validate-licenses
+#? validate-licenses: Validate that license attribution files are up to date
+validate-licenses:
+	$(CURDIR)/script/validate-licenses.sh
+
 .PHONY: fmt
 #? fmt: Format the Code
 fmt:
