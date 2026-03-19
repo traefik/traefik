@@ -933,6 +933,9 @@ Load configuration from this endpoint.
 `--providers.http.headers.<name>`:  
 Define custom headers to be sent to the endpoint.
 
+`--providers.http.maxresponsebodysize`:  
+Defines the maximum size of the response body in bytes. (Default: ```-1```)
+
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```5```)
 

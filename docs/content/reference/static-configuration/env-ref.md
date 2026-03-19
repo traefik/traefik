@@ -933,6 +933,9 @@ Load configuration from this endpoint.
 `TRAEFIK_PROVIDERS_HTTP_HEADERS_<NAME>`:  
 Define custom headers to be sent to the endpoint.
 
+`TRAEFIK_PROVIDERS_HTTP_MAXRESPONSEBODYSIZE`:  
+Defines the maximum size of the response body in bytes. (Default: ```-1```)
+
 `TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
 Polling interval for endpoint. (Default: ```5```)
 
