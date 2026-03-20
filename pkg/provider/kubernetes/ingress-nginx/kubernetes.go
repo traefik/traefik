@@ -486,7 +486,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			// If any ingress in this host enable use-regex, all paths on that host must use regex matching.
 			// Using rewrite-target annotation also implies that use-regex is true.
-			if ptr.Deref(i.IngressConfig.UseRegex, false) || !(i.IngressConfig.RewriteTarget == nil || *i.IngressConfig.RewriteTarget == "") {
+			if ptr.Deref(i.IngressConfig.UseRegex, false) || !(ptr.Deref(i.IngressConfig.RewriteTarget, "") == "") {
 				hostsWithUseRegex[rule.Host] = true
 			}
 
@@ -1526,12 +1526,13 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig IngressCo
 var regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
 
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.RewriteTarget == nil || *ingressConfig.RewriteTarget == "" {
+	rewrite := ptr.Deref(ingressConfig.RewriteTarget, "")
+	if rewrite == "" {
 		return
 	}
 
 	// Skip rewrite if the path is equal to the target.
-	if *ingressConfig.RewriteTarget == rulePath {
+	if rewrite == rulePath {
 		return
 	}
 
@@ -1539,9 +1540,9 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 
 	// The usage of rewrite-target annotation implies the usage of regex.
 	rewriteTarget := &dynamic.RewriteTarget{
-		// Location modifier regex on ingress-nginx is case insensitive.
+		// Location modifier regex on ingress-nginx is case-insensitive.
 		Regex:       "(?i)" + rulePath,
-		Replacement: *ingressConfig.RewriteTarget,
+		Replacement: rewrite,
 	}
 
 	if ingressConfig.XForwardedPrefix != nil {
