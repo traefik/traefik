@@ -722,7 +722,7 @@ func createRewriteAction(d config.IDirective) (action, error) {
 	}
 
 	pattern := params[0].String()
-	replacement := params[1].String()
+	replacement := trimQuote(params[1].String())
 
 	var flag string
 	if len(params) >= 3 {
