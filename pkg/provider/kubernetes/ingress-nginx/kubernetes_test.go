@@ -196,7 +196,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-forwardauth-rule-0-path-0-forward-auth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address:             "http://whoami.default.svc/",
-								AuthResponseHeaders: []string{"X-Foo"},
+								AuthResponseHeaders: []string{"X-Foo", "X-Bar"},
 							},
 						},
 					},

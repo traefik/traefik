@@ -1004,7 +1004,14 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 		return errors.New("empty auth-url found in ingress annotations")
 	}
 
-	authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
+	var authResponseHeaders []string
+	if raw := ptr.Deref(ingressConfig.AuthResponseHeaders, ""); raw != "" {
+		for h := range strings.SplitSeq(raw, ",") {
+			if trimmed := strings.TrimSpace(h); trimmed != "" {
+				authResponseHeaders = append(authResponseHeaders, trimmed)
+			}
+		}
+	}
 
 	forwardMiddlewareName := routerName + "-forward-auth"
 	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
