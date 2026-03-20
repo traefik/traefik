@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -153,21 +152,22 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 	}
 }
 
-func TestDigestCanonicalHeader(t *testing.T) {
-	var called bool
-	m, err := NewDigest(context.Background(), http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		called = true
+func TestDigestAuthUserHeaderCanonical(t *testing.T) {
+	var nextCalled bool
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		nextCalled = true
 		assert.Empty(t, req.Header.Get("X-User"))
 		assert.Equal(t, []string{"test"}, req.Header["x-user"])
-	}),
-		dynamic.DigestAuth{
-			Users:       []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
-			HeaderField: "x-user",
-		},
-		"test")
+	})
+	auth := dynamic.DigestAuth{
+		Users:       []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
+		HeaderField: "x-user",
+	}
+	m, err := NewDigest(t.Context(), next, auth, "test")
 	require.NoError(t, err)
 
 	srv := httptest.NewServer(m)
+	t.Cleanup(srv.Close)
 
 	req := testhelpers.MustNewRequest(http.MethodGet, srv.URL, nil)
 	req.Header.Set("X-User", "admin")
@@ -176,5 +176,5 @@ func TestDigestCanonicalHeader(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.True(t, called)
+	assert.True(t, nextCalled)
 }
