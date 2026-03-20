@@ -21,6 +21,7 @@ func TestHandler(t *testing.T) {
 		desc                string
 		errorPage           *dynamic.ErrorPage
 		backendCode         int
+		backendHeaders      map[string]string
 		backendErrorHandler http.HandlerFunc
 		validate            func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -233,6 +234,74 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "Custom error page.")
 			},
 		},
+		{
+			desc: "forwardHeaders: WWW-Authenticate forwarded from backend to client",
+			errorPage: &dynamic.ErrorPage{
+				Service:        "error",
+				Query:          "/{status}",
+				Status:         []string{"401"},
+				ForwardHeaders: []string{"WWW-Authenticate"},
+			},
+			backendCode: http.StatusUnauthorized,
+			backendHeaders: map[string]string{
+				"WWW-Authenticate": `Basic realm="Login Required"`,
+			},
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintln(w, "Error page body.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
+				assert.Equal(t, `Basic realm="Login Required"`, recorder.Header().Get("WWW-Authenticate"))
+				assert.Contains(t, recorder.Body.String(), "Error page body.")
+			},
+		},
+		{
+			desc: "forwardHeaders: headers not in list are not forwarded",
+			errorPage: &dynamic.ErrorPage{
+				Service:        "error",
+				Query:          "/{status}",
+				Status:         []string{"500"},
+				ForwardHeaders: []string{"WWW-Authenticate"},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendHeaders: map[string]string{
+				"X-Custom-Header":  "should-not-appear",
+				"WWW-Authenticate": `Bearer realm="example"`,
+			},
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintln(w, "Error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Equal(t, `Bearer realm="example"`, recorder.Header().Get("WWW-Authenticate"))
+				assert.Empty(t, recorder.Header().Get("X-Custom-Header"))
+			},
+		},
+		{
+			desc: "forwardHeaders not set: backend headers not forwarded (default behavior)",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/{status}",
+				Status:  []string{"401"},
+			},
+			backendCode: http.StatusUnauthorized,
+			backendHeaders: map[string]string{
+				"WWW-Authenticate": `Basic realm="Login Required"`,
+			},
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintln(w, "Error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
+				assert.Empty(t, recorder.Header().Get("WWW-Authenticate"))
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -242,6 +311,10 @@ func TestHandler(t *testing.T) {
 			serviceBuilderMock := &mockServiceBuilder{handler: test.backendErrorHandler}
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				for k, v := range test.backendHeaders {
+					w.Header().Set(k, v)
+				}
+
 				w.WriteHeader(test.backendCode)
 
 				if test.backendCode == http.StatusNotModified {

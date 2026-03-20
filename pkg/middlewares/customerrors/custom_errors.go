@@ -40,6 +40,7 @@ type customErrors struct {
 	backendQuery        string
 	statusRewrites      []statusRewrite
 	forwardNginxHeaders http.Header
+	forwardHeaders      []string
 }
 
 type statusRewrite struct {
@@ -83,6 +84,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendQuery:        config.Query,
 		statusRewrites:      statusRewrites,
 		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
+		forwardHeaders:      config.ForwardHeaders,
 	}, nil
 }
 
@@ -158,6 +160,18 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
+	// Forward whitelisted response headers from the original backend error response to the client.
+	if len(c.forwardHeaders) > 0 {
+		backendHeaders := catcher.getHeaders()
+		for _, name := range c.forwardHeaders {
+			if vals := backendHeaders.Values(name); len(vals) > 0 {
+				for _, v := range vals {
+					rw.Header().Add(name, v)
+				}
+			}
+		}
 	}
 
 	if len(c.forwardNginxHeaders) > 0 {
@@ -302,6 +316,12 @@ func (cc *codeCatcher) getCode() int {
 // and for which the response should be deferred to the error handler.
 func (cc *codeCatcher) isFilteredCode() bool {
 	return cc.caughtFilteredCode
+}
+
+// getHeaders returns the response headers captured from the backend response.
+// These headers are normally discarded when a filtered status code is intercepted.
+func (cc *codeCatcher) getHeaders() http.Header {
+	return cc.headerMap
 }
 
 // codeModifier forwards a response back to the client,

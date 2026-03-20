@@ -360,6 +360,11 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 			(*out)[key] = val
 		}
 	}
+	if in.ForwardHeaders != nil {
+		in, out := &in.ForwardHeaders, &out.ForwardHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.NginxHeaders != nil {
 		in, out := &in.NginxHeaders, &out.NginxHeaders
 		*out = new(http.Header)
