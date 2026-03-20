@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -275,4 +276,28 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 			require.NotContains(t, "traefik", string(body))
 		})
 	}
+}
+
+func TestBasicCanonicalHeader(t *testing.T) {
+	var called bool
+	m, err := NewBasic(context.Background(), http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		called = true
+		assert.Empty(t, req.Header.Get("X-User"))
+		assert.Equal(t, []string{"test"}, req.Header["x-user"])
+	}),
+		dynamic.BasicAuth{
+			Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+			HeaderField: "x-user",
+		},
+		"test")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
+	req.SetBasicAuth("test", "test")
+	req.Header.Set("X-User", "admin")
+	rw := httptest.NewRecorder()
+	m.ServeHTTP(rw, req)
+
+	assert.Equal(t, http.StatusOK, rw.Result().StatusCode)
+	assert.True(t, called)
 }
