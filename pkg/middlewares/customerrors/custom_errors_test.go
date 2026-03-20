@@ -282,6 +282,57 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
+			desc: "forwardHeaders: hop-by-hop headers are filtered out even if listed",
+			errorPage: &dynamic.ErrorPage{
+				Service:        "error",
+				Query:          "/{status}",
+				Status:         []string{"401"},
+				ForwardHeaders: []string{"WWW-Authenticate", "Connection", "Transfer-Encoding", "Keep-Alive"},
+			},
+			backendCode: http.StatusUnauthorized,
+			backendHeaders: map[string]string{
+				"WWW-Authenticate": `Basic realm="test"`,
+				"Connection":       "keep-alive",
+				"Transfer-Encoding": "chunked",
+			},
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintln(w, "Error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
+				assert.Equal(t, `Basic realm="test"`, recorder.Header().Get("WWW-Authenticate"))
+				assert.Empty(t, recorder.Header().Get("Connection"), "hop-by-hop header Connection must not be forwarded")
+				assert.Empty(t, recorder.Header().Get("Transfer-Encoding"), "hop-by-hop header Transfer-Encoding must not be forwarded")
+			},
+		},
+		{
+			desc: "forwardHeaders: whitespace and duplicates are normalized",
+			errorPage: &dynamic.ErrorPage{
+				Service:        "error",
+				Query:          "/{status}",
+				Status:         []string{"401"},
+				ForwardHeaders: []string{"  www-authenticate ", "WWW-Authenticate", "x-custom"},
+			},
+			backendCode: http.StatusUnauthorized,
+			backendHeaders: map[string]string{
+				"WWW-Authenticate": `Bearer realm="test"`,
+				"X-Custom":         "value1",
+			},
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintln(w, "Error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
+				// Despite duplicated WWW-Authenticate in config, only forwarded once.
+				assert.Equal(t, `Bearer realm="test"`, recorder.Header().Get("WWW-Authenticate"))
+				assert.Equal(t, "value1", recorder.Header().Get("X-Custom"))
+			},
+		},
+		{
 			desc: "forwardHeaders not set: backend headers not forwarded (default behavior)",
 			errorPage: &dynamic.ErrorPage{
 				Service: "error",

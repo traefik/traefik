@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
 	"k8s.io/utils/ptr"
 )
@@ -26,6 +27,18 @@ var (
 )
 
 const typeName = "CustomError"
+
+// hopHeaders are hop-by-hop headers that must not be forwarded to the client,
+// even if explicitly listed in forwardHeaders.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+var hopHeaders = map[string]struct{}{
+	forward.Connection:       {},
+	forward.KeepAlive:        {},
+	forward.Te:               {},
+	forward.Trailers:         {},
+	forward.TransferEncoding: {},
+	forward.Upgrade:          {},
+}
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -76,6 +89,27 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		})
 	}
 
+	// Normalize and deduplicate forwardHeaders: trim whitespace, canonicalize,
+	// and remove hop-by-hop headers that must not be forwarded to clients.
+	var forwardHeaders []string
+	if len(config.ForwardHeaders) > 0 {
+		seen := make(map[string]struct{}, len(config.ForwardHeaders))
+		for _, h := range config.ForwardHeaders {
+			canonical := http.CanonicalHeaderKey(strings.TrimSpace(h))
+			if canonical == "" {
+				continue
+			}
+			if _, isHop := hopHeaders[canonical]; isHop {
+				continue
+			}
+			if _, dup := seen[canonical]; dup {
+				continue
+			}
+			seen[canonical] = struct{}{}
+			forwardHeaders = append(forwardHeaders, canonical)
+		}
+	}
+
 	return &customErrors{
 		name:                name,
 		next:                next,
@@ -84,7 +118,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendQuery:        config.Query,
 		statusRewrites:      statusRewrites,
 		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
-		forwardHeaders:      config.ForwardHeaders,
+		forwardHeaders:      forwardHeaders,
 	}, nil
 }
 

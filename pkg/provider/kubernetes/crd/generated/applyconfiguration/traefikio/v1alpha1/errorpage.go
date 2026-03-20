@@ -33,6 +33,7 @@ type ErrorPageApplyConfiguration struct {
 	StatusRewrites map[string]int             `json:"statusRewrites,omitempty"`
 	Service        *ServiceApplyConfiguration `json:"service,omitempty"`
 	Query          *string                    `json:"query,omitempty"`
+	ForwardHeaders []string                   `json:"forwardHeaders,omitempty"`
 }
 
 // ErrorPageApplyConfiguration constructs a declarative configuration of the ErrorPage type for use with
@@ -78,5 +79,15 @@ func (b *ErrorPageApplyConfiguration) WithService(value *ServiceApplyConfigurati
 // If called multiple times, the Query field is set to the value of the last call.
 func (b *ErrorPageApplyConfiguration) WithQuery(value string) *ErrorPageApplyConfiguration {
 	b.Query = &value
+	return b
+}
+
+// WithForwardHeaders adds the given value to the ForwardHeaders field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ForwardHeaders field.
+func (b *ErrorPageApplyConfiguration) WithForwardHeaders(values ...string) *ErrorPageApplyConfiguration {
+	for i := range values {
+		b.ForwardHeaders = append(b.ForwardHeaders, values[i])
+	}
 	return b
 }
