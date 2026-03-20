@@ -769,8 +769,13 @@ func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alp
 	}
 
 	conf[id] = &dynamic.Service{Failover: failover}
-	conf[serviceName] = service
-	conf[fallbackName] = fallback
+	if service != nil {
+		conf[serviceName] = service
+	}
+
+	if fallback != nil {
+		conf[fallbackName] = fallback
+	}
 
 	return nil
 }
