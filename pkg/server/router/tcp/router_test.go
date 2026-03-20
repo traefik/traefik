@@ -1237,13 +1237,39 @@ func buildClientHelloRecord(t *testing.T, serverName string) []byte {
 	return record
 }
 
-// TestPostgresTLSTermination is a regression test for https://github.com/traefik/traefik/issues/12842.
-// It verifies that postgres STARTTLS connections work with TLS termination mode
-// (i.e. when the TCP router has tls=true without passthrough).
-func TestPostgresTLSTermination(t *testing.T) {
-	serverName := "test.localhost"
+func TestPostgres(t *testing.T) {
+	router, err := NewRouter()
+	require.NoError(t, err)
 
-	certPEM, keyPEM, err := generate.KeyPair(serverName, time.Time{})
+	// This test requires to have a TLS route, but does not actually check the
+	// content of the handler. It would require to code a TLS handshake to
+	// check the SNI and content of the handlerFunc.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
+	require.NoError(t, err)
+
+	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		_, _ = conn.Write([]byte("OK"))
+		_ = conn.Close()
+	}))
+	require.NoError(t, err)
+
+	mockConn := newMockConn()
+	go router.ServeTCP(mockConn)
+
+	mockConn.dataRead <- PostgresStartTLSMsg
+	b := <-mockConn.dataWrite
+	require.Equal(t, PostgresStartTLSReply, b)
+
+	mockConn = newMockConn()
+	go router.ServeTCP(mockConn)
+
+	mockConn.dataRead <- []byte("HTTP")
+	b = <-mockConn.dataWrite
+	require.Equal(t, []byte("OK"), b)
+}
+
+func TestPostgresTLSTermination(t *testing.T) {
+	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
 	require.NoError(t, err)
 
 	cert, err := tls.X509KeyPair(certPEM, keyPEM)
@@ -1256,21 +1282,15 @@ func TestPostgresTLSTermination(t *testing.T) {
 	router, err := NewRouter()
 	require.NoError(t, err)
 
-	// Register a TCP TLS route (TLS termination, not passthrough) with a TLSHandler.
+	// Register a TCPTLS route (TLS termination, not passthrough) with a TLSHandler.
 	// The TLSHandler wraps the actual handler, performing the TLS handshake.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`"+serverName+"`)", "", 0, &tcp2.TLSHandler{
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, &tcp2.TLSHandler{
+		Config: tlsConf,
 		Next: tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-			_, _ = conn.Write([]byte("POSTGRES-OK"))
+			_, _ = conn.Write([]byte("OK"))
 			_ = conn.Close()
 		}),
-		Config: tlsConf,
 	})
-	require.NoError(t, err)
-
-	// Also need a TCP route to make the router enter the postgres detection path.
-	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-		_ = conn.Close()
-	}))
 	require.NoError(t, err)
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -1279,10 +1299,9 @@ func TestPostgresTLSTermination(t *testing.T) {
 
 	go func() {
 		conn, err := ln.Accept()
-		if err != nil {
-			return
-		}
-		tcpConn, _ := conn.(*net.TCPConn)
+		require.NoError(t, err)
+
+		tcpConn := conn.(*net.TCPConn)
 		router.ServeTCP(tcpConn)
 	}()
 
@@ -1302,103 +1321,146 @@ func TestPostgresTLSTermination(t *testing.T) {
 
 	// Step 3: Client performs TLS handshake.
 	tlsClient := tls.Client(clientConn, &tls.Config{
-		ServerName:         serverName,
+		ServerName:         "test.localhost",
 		InsecureSkipVerify: true,
 	})
-
-	err = tlsClient.Handshake()
-	require.NoError(t, err, "TLS handshake should succeed after postgres STARTTLS negotiation")
+	require.NoError(t, tlsClient.Handshake())
+	t.Cleanup(func() { _ = tlsClient.Close() })
 
 	// Step 4: Read the response from the handler through the TLS connection.
 	buf := make([]byte, 256)
 	n, err := tlsClient.Read(buf)
 	require.NoError(t, err)
-	assert.Equal(t, "POSTGRES-OK", string(buf[:n]))
-
-	_ = tlsClient.Close()
+	assert.Equal(t, "OK", string(buf[:n]))
 }
 
-func TestPostgres(t *testing.T) {
+func TestPostgresTLSPassthrough(t *testing.T) {
+	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
+	require.NoError(t, err)
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
 	router, err := NewRouter()
 	require.NoError(t, err)
 
-	// This test requires to have a TLS route, but does not actually check the
-	// content of the handler. It would require to code a TLS handshake to
-	// check the SNI and content of the handlerFunc.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
-	require.NoError(t, err)
+	// Register a TCPTLS route (TLS passthrough) with a tcp.Handler.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		// First we should receive the PostgresStartTLSMsg.
+		buf := make([]byte, len(PostgresStartTLSMsg))
+		_, err := conn.Read(buf)
+		require.NoError(t, err)
+		assert.Equal(t, PostgresStartTLSMsg, buf)
 
-	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-		_, _ = conn.Write([]byte("OK"))
-		_ = conn.Close()
+		// Next we should answer with the PostgresStartTLSReply.
+		_, err = conn.Write(PostgresStartTLSReply)
+		require.NoError(t, err)
+
+		// Then we should do the TLS handshake.
+		tlsConn := tls.Server(conn, tlsConf)
+		require.NoError(t, tlsConn.Handshake())
+
+		// Finally we write the response through the TLS connection.
+		_, err = tlsConn.Write([]byte("OK"))
+		require.NoError(t, err)
 	}))
 	require.NoError(t, err)
 
-	mockConn := NewMockConn()
-	go router.ServeTCP(mockConn)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
 
-	mockConn.dataRead <- PostgresStartTLSMsg
-	b := <-mockConn.dataWrite
-	require.Equal(t, PostgresStartTLSReply, b)
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
 
-	mockConn = NewMockConn()
-	go router.ServeTCP(mockConn)
+		tcpConn := conn.(*net.TCPConn)
+		router.ServeTCP(tcpConn)
+	}()
 
-	mockConn.dataRead <- []byte("HTTP")
-	b = <-mockConn.dataWrite
-	require.Equal(t, []byte("OK"), b)
+	clientConn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.Close() })
+
+	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
+	_, err = clientConn.Write(PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	// Step 2: Client receives PostgresStartTLSReply ('S').
+	reply := make([]byte, 1)
+	_, err = io.ReadFull(clientConn, reply)
+	require.NoError(t, err)
+	require.Equal(t, PostgresStartTLSReply, reply)
+
+	// Step 3: Client performs TLS handshake.
+	tlsClient := tls.Client(clientConn, &tls.Config{
+		ServerName:         "test.localhost",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(t, tlsClient.Handshake())
+	t.Cleanup(func() { _ = tlsClient.Close() })
+
+	// Step 4: Read the response from the handler through the TLS connection.
+	buf := make([]byte, 256)
+	n, err := tlsClient.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, "OK", string(buf[:n]))
 }
 
-type MockConn struct {
+type mockConn struct {
 	dataRead  chan []byte
 	dataWrite chan []byte
 }
 
-func NewMockConn() *MockConn {
-	return &MockConn{
+func newMockConn() *mockConn {
+	return &mockConn{
 		dataRead:  make(chan []byte),
 		dataWrite: make(chan []byte),
 	}
 }
 
-func (m *MockConn) Read(b []byte) (n int, err error) {
+func (m *mockConn) Read(b []byte) (n int, err error) {
 	temp := <-m.dataRead
 	copy(b, temp)
 	return len(temp), nil
 }
 
-func (m *MockConn) Write(b []byte) (n int, err error) {
+func (m *mockConn) Write(b []byte) (n int, err error) {
 	m.dataWrite <- b
 	return len(b), nil
 }
 
-func (m *MockConn) Close() error {
+func (m *mockConn) Close() error {
 	close(m.dataRead)
 	close(m.dataWrite)
 	return nil
 }
 
-func (m *MockConn) LocalAddr() net.Addr {
+func (m *mockConn) LocalAddr() net.Addr {
 	return nil
 }
 
-func (m *MockConn) RemoteAddr() net.Addr {
+func (m *mockConn) RemoteAddr() net.Addr {
 	return &net.TCPAddr{}
 }
 
-func (m *MockConn) SetDeadline(t time.Time) error {
+func (m *mockConn) SetDeadline(t time.Time) error {
 	return nil
 }
 
-func (m *MockConn) SetReadDeadline(t time.Time) error {
+func (m *mockConn) SetReadDeadline(t time.Time) error {
 	return nil
 }
 
-func (m *MockConn) SetWriteDeadline(t time.Time) error {
+func (m *mockConn) SetWriteDeadline(t time.Time) error {
 	return nil
 }
 
-func (m *MockConn) CloseWrite() error {
+func (m *mockConn) CloseWrite() error {
 	close(m.dataRead)
 	close(m.dataWrite)
 	return nil
