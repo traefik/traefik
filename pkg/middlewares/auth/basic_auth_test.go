@@ -103,6 +103,30 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body))
 }
 
+func TestBasicAuthUserHeaderCanonical(t *testing.T) {
+	var nextCalled bool
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		nextCalled = true
+		assert.Empty(t, req.Header.Get("X-User"))
+		assert.Equal(t, []string{"test"}, req.Header["x-user"])
+	})
+	auth := dynamic.BasicAuth{
+		Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		HeaderField: "x-user",
+	}
+	m, err := NewBasic(t.Context(), next, auth, "test")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
+	req.SetBasicAuth("test", "test")
+	req.Header.Set("X-User", "admin")
+	rw := httptest.NewRecorder()
+	m.ServeHTTP(rw, req)
+
+	assert.Equal(t, http.StatusOK, rw.Result().StatusCode)
+	assert.True(t, nextCalled)
+}
+
 func TestBasicAuthHeaderRemoved(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Empty(t, r.Header.Get(authorizationHeader))
