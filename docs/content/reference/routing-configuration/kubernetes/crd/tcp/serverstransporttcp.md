@@ -3,7 +3,7 @@ title : 'ServersTransportTCP'
 description : 'Understand the service routing configuration for the Kubernetes ServerTransportTCP & Traefik CRD'
 ---
 
-`ServersTransportTCP` is the CRD implementation of [ServersTransportTCP](../../../tcp/serverstransport.md).
+`ServersTransportTCP` is the CRD implementation of [ServersTransport](../../../tcp/serverstransport.md).
 
 Before creating `ServersTransportTCP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
