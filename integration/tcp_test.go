@@ -3,6 +3,7 @@ package integration
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -29,6 +30,7 @@ func (s *TCPSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
 	s.createComposeProject("tcp")
+	s.createComposeProject("postgres")
 	s.composeUp()
 }
 
@@ -309,9 +311,9 @@ func (s *TCPSuite) TestWRR() {
 // It verifies that postgres STARTTLS connections work with TLS termination mode.
 func (s *TCPSuite) TestPostgresSTARTTLS() {
 	file := s.adaptFile("fixtures/tcp/postgres-starttls.toml", struct {
-		WhoamiNoCert string
+		PostgresAddr string
 	}{
-		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
+		PostgresAddr: s.getComposeServiceIP("postgres") + ":5432",
 	})
 
 	s.traefikCmd(withConfigFile(file))
@@ -319,42 +321,119 @@ func (s *TCPSuite) TestPostgresSTARTTLS() {
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
-	// Simulate a postgres STARTTLS client connection.
+	// Wait for postgres to be ready.
+	err = try.Do(10*time.Second, func() error {
+		c, err := net.DialTimeout("tcp", s.getComposeServiceIP("postgres")+":5432", time.Second)
+		if err != nil {
+			return err
+		}
+		_ = c.Close()
+		return nil
+	})
+	require.NoError(s.T(), err)
+
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8093", 2*time.Second)
 	require.NoError(s.T(), err)
 	defer conn.Close()
 
 	// Send the PostgreSQL SSLRequest message: int32(8) + int32(80877103).
-	postgresStartTLSMsg := []byte{0, 0, 0, 8, 4, 210, 22, 47}
-	_, err = conn.Write(postgresStartTLSMsg)
+	_, err = conn.Write([]byte{0, 0, 0, 8, 4, 210, 22, 47})
 	require.NoError(s.T(), err)
 
-	// Expect the server to reply with 'S' (83), accepting the STARTTLS request.
 	reply := make([]byte, 1)
 	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 	_, err = io.ReadFull(conn, reply)
 	require.NoError(s.T(), err)
-	assert.Equal(s.T(), byte(83), reply[0], "Expected PostgreSQL STARTTLS reply 'S'")
+	assert.Equal(s.T(), byte('S'), reply[0])
 
-	// Clear deadline before TLS handshake.
 	_ = conn.SetReadDeadline(time.Time{})
 
-	// Perform TLS handshake (this is where the bug manifested).
-	tlsConn := tls.Client(conn, &tls.Config{
-		InsecureSkipVerify: true,
-	})
+	// Perform TLS handshake (Traefik terminates TLS).
+	tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
 	err = tlsConn.Handshake()
-	require.NoError(s.T(), err, "TLS handshake should succeed after postgres STARTTLS negotiation")
-
-	// Send data through the TLS connection and verify the backend responds.
-	_, err = tlsConn.Write([]byte("WHO"))
 	require.NoError(s.T(), err)
 
-	out := make([]byte, 2048)
-	_ = tlsConn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	n, err := tlsConn.Read(out)
+	// Send postgres StartupMessage: length(int32) + protocol 3.0(int32) + params.
+	// Null-terminated key=value pairs: "user\0test\0database\0test\0", followed by a final \0 to end the list.
+	params := "user\x00test\x00database\x00test\x00\x00"
+	msgLen := 4 + 4 + len(params)
+	startup := make([]byte, msgLen)
+	binary.BigEndian.PutUint32(startup[0:4], uint32(msgLen))
+	binary.BigEndian.PutUint32(startup[4:8], 196608) // protocol version 3.0
+	copy(startup[8:], params)
+	_, err = tlsConn.Write(startup)
 	require.NoError(s.T(), err)
-	assert.Contains(s.T(), string(out[:n]), "whoami-no-cert")
+
+	// Read postgres response header: type(1 byte) + length(4 bytes).
+	_ = tlsConn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	header := make([]byte, 5)
+	_, err = io.ReadFull(tlsConn, header)
+	require.NoError(s.T(), err)
+
+	// Postgres must reply with an Authentication message ('R').
+	assert.Equal(s.T(), byte('R'), header[0])
+}
+
+// TestPostgresSTARTTLSPassthrough verifies that postgres STARTTLS connections work with TLS passthrough mode.
+func (s *TCPSuite) TestPostgresSTARTTLSPassthrough() {
+	file := s.adaptFile("fixtures/tcp/postgres-starttls-passthrough.toml", struct {
+		PostgresSSLAddr string
+	}{
+		PostgresSSLAddr: s.getComposeServiceIP("postgres-ssl") + ":5432",
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
+
+	// Wait for postgres-ssl to be ready.
+	err = try.Do(15*time.Second, func() error {
+		c, err := net.DialTimeout("tcp", s.getComposeServiceIP("postgres-ssl")+":5432", time.Second)
+		if err != nil {
+			return err
+		}
+		_ = c.Close()
+		return nil
+	})
+	require.NoError(s.T(), err)
+
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:8094", 2*time.Second)
+	require.NoError(s.T(), err)
+	defer conn.Close()
+
+	_, err = conn.Write([]byte{0, 0, 0, 8, 4, 210, 22, 47})
+	require.NoError(s.T(), err)
+
+	reply := make([]byte, 1)
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_, err = io.ReadFull(conn, reply)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), byte('S'), reply[0])
+
+	_ = conn.SetReadDeadline(time.Time{})
+
+	// TLS handshake goes through to postgres-ssl (passthrough mode).
+	tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+	err = tlsConn.Handshake()
+	require.NoError(s.T(), err)
+
+	// Null-terminated key=value pairs: "user\0test\0database\0test\0", followed by a final \0 to end the list.
+	params := "user\x00test\x00database\x00test\x00\x00"
+	msgLen := 4 + 4 + len(params)
+	startup := make([]byte, msgLen)
+	binary.BigEndian.PutUint32(startup[0:4], uint32(msgLen))
+	binary.BigEndian.PutUint32(startup[4:8], 196608)
+	copy(startup[8:], params)
+	_, err = tlsConn.Write(startup)
+	require.NoError(s.T(), err)
+
+	_ = tlsConn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	header := make([]byte, 5)
+	_, err = io.ReadFull(tlsConn, header)
+	require.NoError(s.T(), err)
+
+	assert.Equal(s.T(), byte('R'), header[0])
 }
 
 func welcome(addr string) (string, error) {

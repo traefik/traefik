@@ -8,7 +8,7 @@
 
 [entryPoints]
   [entryPoints.tcp]
-    address = ":8093"
+    address = ":8094"
 
 [api]
   insecure = true
@@ -20,13 +20,14 @@
 
 [tcp]
   [tcp.routers]
-    [tcp.routers.to-postgres]
+    [tcp.routers.to-postgres-ssl]
       rule = "HostSNI(`*`)"
-      service = "postgres"
+      service = "postgres-ssl"
       entryPoints = [ "tcp" ]
-      [tcp.routers.to-postgres.tls]
+      [tcp.routers.to-postgres-ssl.tls]
+        passthrough = true
 
   [tcp.services]
-    [tcp.services.postgres.loadBalancer]
-      [[tcp.services.postgres.loadBalancer.servers]]
-        address = "{{ .PostgresAddr }}"
+    [tcp.services.postgres-ssl.loadBalancer]
+      [[tcp.services.postgres-ssl.loadBalancer.servers]]
+        address = "{{ .PostgresSSLAddr }}"
