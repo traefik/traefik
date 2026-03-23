@@ -364,6 +364,9 @@ func (c *peekConn) Read(p []byte) (int, error) {
 	if len(c.peeked) > 0 {
 		n := copy(p, c.peeked)
 		c.peeked = c.peeked[n:]
+		if len(c.peeked) == 0 {
+			c.peeked = nil
+		}
 		return n, nil
 	}
 
