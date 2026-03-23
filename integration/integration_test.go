@@ -238,8 +238,8 @@ func (s *BaseSuite) createContainer(ctx context.Context, containerConfig compose
 		Cmd:        containerConfig.Command,
 		Entrypoint: containerConfig.Entrypoint,
 		Labels:     containerConfig.Labels,
-		Name:     id,
-		Networks: []string{s.network.Name},
+		Name:       id,
+		Networks:   []string{s.network.Name},
 		ConfigModifier: func(config *container.Config) {
 			config.Hostname = containerConfig.Hostname
 		},

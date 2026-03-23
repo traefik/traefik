@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"io"
@@ -20,13 +19,13 @@ var (
 )
 
 // isPostgres determines whether the buffer contains the Postgres STARTTLS message.
-func isPostgres(br *bufio.Reader) (bool, error) {
+func isPostgres(conn *peekConn) (bool, error) {
 	// Peek the first 8 bytes individually to prevent blocking on peek
 	// if the underlying conn does not send enough bytes.
 	// It could happen if a protocol start by sending less than 8 bytes,
 	// and expect a response before proceeding.
 	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
-		peeked, err := br.Peek(i)
+		peeked, err := conn.Peek(i)
 		if err != nil {
 			var opErr *net.OpError
 			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
@@ -44,16 +43,13 @@ func isPostgres(br *bufio.Reader) (bool, error) {
 
 // servePostgres serves a connection with a Postgres client negotiating a STARTTLS session.
 // It handles TCP TLS routing, after accepting to start the STARTTLS session.
-func (r *Router) servePostgres(conn tcp.WriteCloser) {
+func (r *Router) servePostgres(conn *peekConn) {
 	_, err := conn.Write(PostgresStartTLSReply)
 	if err != nil {
 		_ = conn.Close()
 		return
 	}
 
-	// Consume and discard the SSLRequest bytes from the Conn's peeked buffer
-	// before setting up the TeeReader, so they are not included in the peeked data
-	// passed to the TLS handler.
 	b := make([]byte, len(PostgresStartTLSMsg))
 	_, err = conn.Read(b)
 	if err != nil {
@@ -61,10 +57,7 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 		return
 	}
 
-	var peeked bytes.Buffer
-	br := bufio.NewReader(io.TeeReader(conn, &peeked))
-
-	hello, err := clientHelloInfo(br)
+	hello, err := clientHelloInfo(conn)
 	if err != nil {
 		_ = conn.Close()
 		return
@@ -97,9 +90,9 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	}
 
 	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough.
-	proxiedConn := r.GetConn(conn, peeked.String())
+	var proxiedConn tcp.WriteCloser = conn
 	if _, ok := handlerTCPTLS.(*tcp.TLSHandler); !ok {
-		proxiedConn = &postgresConn{WriteCloser: proxiedConn}
+		proxiedConn = &postgresConn{WriteCloser: conn}
 	}
 
 	handlerTCPTLS.ServeTCP(proxiedConn)

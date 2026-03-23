@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -120,21 +119,20 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
-	var peeked bytes.Buffer
-	br := bufio.NewReader(io.TeeReader(conn, &peeked))
+	pConn := newPeekConn(conn)
 
-	postgres, err := isPostgres(br)
+	postgres, err := isPostgres(pConn)
 	if err != nil {
 		conn.Close()
 		return
 	}
 
 	if postgres {
-		r.servePostgres(r.GetConn(conn, peeked.String()))
+		r.servePostgres(pConn)
 		return
 	}
 
-	hello, err := clientHelloInfo(br)
+	hello, err := clientHelloInfo(pConn)
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
@@ -163,9 +161,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		handler, _ := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
-			handler.ServeTCP(r.GetConn(conn, peeked.String()))
+			handler.ServeTCP(pConn)
 		case r.httpForwarder != nil:
-			r.httpForwarder.ServeTCP(r.GetConn(conn, peeked.String()))
+			r.httpForwarder.ServeTCP(pConn)
 		default:
 			conn.Close()
 		}
@@ -174,7 +172,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// Handling ACME-TLS/1 challenges.
 	if !r.acmeTLSPassthrough && slices.Contains(hello.protos, tlsalpn01.ACMETLS1Protocol) {
-		r.acmeTLSALPNHandler().ServeTCP(r.GetConn(conn, peeked.String()))
+		r.acmeTLSALPNHandler().ServeTCP(pConn)
 		return
 	}
 
@@ -188,14 +186,14 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// In order not to depart from the behavior in 2.6,
 		// we only allow an HTTPS router to take precedence over a TCP-TLS router if it is _not_ an HostSNI(*) router
 		// (so basically any router that has a specific HostSNI based rule).
-		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked.String()))
+		handlerHTTPS.ServeTCP(pConn)
 		return
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, catchAllTCPTLS := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS != nil && !catchAllTCPTLS {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked.String()))
+		handlerTCPTLS.ServeTCP(pConn)
 		return
 	}
 
@@ -203,19 +201,19 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// We end up here for e.g. an HTTPS router that only has a PathPrefix rule,
 	// which under the scenes is counted as an HostSNI(*) rule.
 	if handlerHTTPS != nil {
-		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked.String()))
+		handlerHTTPS.ServeTCP(pConn)
 		return
 	}
 
 	// Fallback on TCP TLS catchAll.
 	if handlerTCPTLS != nil {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked.String()))
+		handlerTCPTLS.ServeTCP(pConn)
 		return
 	}
 
 	// To handle 404s for HTTPS.
 	if r.httpsForwarder != nil {
-		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked.String()))
+		r.httpsForwarder.ServeTCP(pConn)
 		return
 	}
 
@@ -234,17 +232,6 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 	}
 
 	r.hostHTTPTLSConfig[sniHost] = config
-}
-
-// GetConn creates a connection proxy with a peeked string.
-func (r *Router) GetConn(conn tcp.WriteCloser, peeked string) tcp.WriteCloser {
-	// TODO should it really be on Router ?
-	conn = &Conn{
-		Peeked:      []byte(peeked),
-		WriteCloser: conn,
-	}
-
-	return conn
 }
 
 // GetHTTPHandler gets the attached http handler.
@@ -340,30 +327,47 @@ func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
 	_ = conn.Close()
 }
 
-// Conn is a connection proxy that handles Peeked bytes.
-type Conn struct {
-	// Conn is the underlying connection.
-	// It can be type asserted against *net.TCPConn or other types as needed.
-	// It should not be read from directly unless Peeked is nil.
+// peekConn wraps a tcp.WriteCloser with a bufio.Reader for Peek operations
+// and a peeked buffer that accumulates bytes consumed during protocol detection
+// so they can be replayed on subsequent Read calls.
+type peekConn struct {
 	tcp.WriteCloser
 
-	// Peeked are the bytes that have been read from Conn for the purposes of route matching,
-	// but have not yet been consumed by Read calls.
-	// It set to nil by Read when fully consumed.
-	Peeked []byte
+	peeked []byte
+	reader *bufio.Reader
 }
 
-// Read reads bytes from the connection (using the buffer prior to actually reading).
-func (c *Conn) Read(p []byte) (n int, err error) {
-	if len(c.Peeked) > 0 {
-		n = copy(p, c.Peeked)
-		c.Peeked = c.Peeked[n:]
-		if len(c.Peeked) == 0 {
-			c.Peeked = nil
-		}
+func newPeekConn(conn tcp.WriteCloser) *peekConn {
+	return &peekConn{
+		WriteCloser: conn,
+		reader:      bufio.NewReader(conn),
+	}
+}
+
+// Peek allows peeking into the connection without consuming bytes, by using the bufio.Reader's Peek method.
+func (c *peekConn) Peek(n int) ([]byte, error) {
+	return c.reader.Peek(n)
+}
+
+// PeekRead reads from the connection and accumulates the read bytes into the peeked buffer,
+// allowing them to be replayed later.
+func (c *peekConn) PeekRead(p []byte) (int, error) {
+	n, err := c.reader.Read(p)
+	if n > 0 {
+		c.peeked = append(c.peeked, p[:n]...)
+	}
+	return n, err
+}
+
+// Read drains accumulated peeked bytes first, then reads from the bufio reader.
+func (c *peekConn) Read(p []byte) (int, error) {
+	if len(c.peeked) > 0 {
+		n := copy(p, c.peeked)
+		c.peeked = c.peeked[n:]
 		return n, nil
 	}
-	return c.WriteCloser.Read(p)
+
+	return c.reader.Read(p)
 }
 
 type clientHello struct {
@@ -373,10 +377,10 @@ type clientHello struct {
 }
 
 // clientHelloInfo returns various data from the clientHello handshake,
-// without consuming any bytes from br.
+// without consuming any bytes from conn.
 // It returns an error if it can't peek the first byte from the connection.
-func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
-	hdr, err := br.Peek(1)
+func clientHelloInfo(conn *peekConn) (*clientHello, error) {
+	hdr, err := conn.Peek(1)
 	if err != nil {
 		return nil, fmt.Errorf("peeking first byte: %w", err)
 	}
@@ -400,7 +404,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 		sni    string
 		protos []string
 	)
-	server := tls.Server(readOnlyConn{r: br}, &tls.Config{
+	server := tls.Server(readOnlyConn{conn: conn}, &tls.Config{
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			sni = hello.ServerName
 			protos = hello.SupportedProtos
@@ -420,16 +424,17 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	}, nil
 }
 
-// readOnlyConn is a net.Conn that reads from r, fails on Writes,
-// and crashes otherwise.
+// readOnlyConn is a net.Conn that reads from conn, fails on Writes and crashes otherwise.
 type readOnlyConn struct {
 	net.Conn // nil; crash on any unexpected use
 
-	r io.Reader
+	conn *peekConn
 }
 
-// Read reads from the underlying reader.
-func (c readOnlyConn) Read(p []byte) (int, error) { return c.r.Read(p) }
+// Read reads from the conn using PeekRead to keep the read bytes.
+func (c readOnlyConn) Read(p []byte) (int, error) {
+	return c.conn.PeekRead(p)
+}
 
 // Write crashes all the time.
 func (readOnlyConn) Write(_ []byte) (int, error) { return 0, io.EOF }

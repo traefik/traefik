@@ -1122,8 +1122,8 @@ func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
 			resultCh := make(chan result, 1)
 
 			go func() {
-				br := bufio.NewReader(serverConn)
-				hello, err := clientHelloInfo(br)
+				pConn := &peekConn{reader: bufio.NewReader(serverConn)}
+				hello, err := clientHelloInfo(pConn)
 				resultCh <- result{hello, err}
 			}()
 
@@ -1187,8 +1187,8 @@ func Test_clientHelloInfo_tlsRecordFragmentation(t *testing.T) {
 	resultCh := make(chan result, 1)
 
 	go func() {
-		br := bufio.NewReader(serverConn)
-		hello, err := clientHelloInfo(br)
+		pConn := &peekConn{reader: bufio.NewReader(serverConn)}
+		hello, err := clientHelloInfo(pConn)
 		resultCh <- result{hello, err}
 	}()
 
