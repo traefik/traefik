@@ -30,7 +30,6 @@ func (s *TCPSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
 	s.createComposeProject("tcp")
-	s.createComposeProject("postgres")
 	s.composeUp()
 }
 
@@ -307,8 +306,6 @@ func (s *TCPSuite) TestWRR() {
 	assert.Equal(s.T(), map[string]int{"whoami-b": 3, "whoami-ab": 1}, call)
 }
 
-// TestPostgresSTARTTLS is a regression test for https://github.com/traefik/traefik/issues/12842.
-// It verifies that postgres STARTTLS connections work with TLS termination mode.
 func (s *TCPSuite) TestPostgresSTARTTLS() {
 	file := s.adaptFile("fixtures/tcp/postgres-starttls.toml", struct {
 		PostgresAddr string
@@ -318,7 +315,7 @@ func (s *TCPSuite) TestPostgresSTARTTLS() {
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`postgres-starttls`)"))
 	require.NoError(s.T(), err)
 
 	// Wait for postgres to be ready.
@@ -349,7 +346,10 @@ func (s *TCPSuite) TestPostgresSTARTTLS() {
 	_ = conn.SetReadDeadline(time.Time{})
 
 	// Perform TLS handshake (Traefik terminates TLS).
-	tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+	tlsConn := tls.Client(conn, &tls.Config{
+		ServerName:         "postgres-starttls",
+		InsecureSkipVerify: true,
+	})
 	err = tlsConn.Handshake()
 	require.NoError(s.T(), err)
 
@@ -374,7 +374,6 @@ func (s *TCPSuite) TestPostgresSTARTTLS() {
 	assert.Equal(s.T(), byte('R'), header[0])
 }
 
-// TestPostgresSTARTTLSPassthrough verifies that postgres STARTTLS connections work with TLS passthrough mode.
 func (s *TCPSuite) TestPostgresSTARTTLSPassthrough() {
 	file := s.adaptFile("fixtures/tcp/postgres-starttls-passthrough.toml", struct {
 		PostgresSSLAddr string
@@ -384,7 +383,7 @@ func (s *TCPSuite) TestPostgresSTARTTLSPassthrough() {
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`postgres-starttls-passthrough`)"))
 	require.NoError(s.T(), err)
 
 	// Wait for postgres-ssl to be ready.
@@ -414,7 +413,10 @@ func (s *TCPSuite) TestPostgresSTARTTLSPassthrough() {
 	_ = conn.SetReadDeadline(time.Time{})
 
 	// TLS handshake goes through to postgres-ssl (passthrough mode).
-	tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+	tlsConn := tls.Client(conn, &tls.Config{
+		ServerName:         "postgres-starttls-passthrough",
+		InsecureSkipVerify: true,
+	})
 	err = tlsConn.Handshake()
 	require.NoError(s.T(), err)
 

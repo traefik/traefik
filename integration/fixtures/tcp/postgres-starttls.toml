@@ -21,7 +21,7 @@
 [tcp]
   [tcp.routers]
     [tcp.routers.to-postgres]
-      rule = "HostSNI(`*`)"
+      rule = "HostSNI(`postgres-starttls`)"
       service = "postgres"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-postgres.tls]

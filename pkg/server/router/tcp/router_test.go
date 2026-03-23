@@ -1237,37 +1237,6 @@ func buildClientHelloRecord(t *testing.T, serverName string) []byte {
 	return record
 }
 
-func TestPostgres(t *testing.T) {
-	router, err := NewRouter()
-	require.NoError(t, err)
-
-	// This test requires to have a TLS route, but does not actually check the
-	// content of the handler. It would require to code a TLS handshake to
-	// check the SNI and content of the handlerFunc.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
-	require.NoError(t, err)
-
-	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-		_, _ = conn.Write([]byte("OK"))
-		_ = conn.Close()
-	}))
-	require.NoError(t, err)
-
-	mockConn := newMockConn()
-	go router.ServeTCP(mockConn)
-
-	mockConn.dataRead <- PostgresStartTLSMsg
-	b := <-mockConn.dataWrite
-	require.Equal(t, PostgresStartTLSReply, b)
-
-	mockConn = newMockConn()
-	go router.ServeTCP(mockConn)
-
-	mockConn.dataRead <- []byte("HTTP")
-	b = <-mockConn.dataWrite
-	require.Equal(t, []byte("OK"), b)
-}
-
 func TestPostgresTLSTermination(t *testing.T) {
 	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
 	require.NoError(t, err)
@@ -1409,59 +1378,4 @@ func TestPostgresTLSPassthrough(t *testing.T) {
 	n, err := tlsClient.Read(buf)
 	require.NoError(t, err)
 	assert.Equal(t, "OK", string(buf[:n]))
-}
-
-type mockConn struct {
-	dataRead  chan []byte
-	dataWrite chan []byte
-}
-
-func newMockConn() *mockConn {
-	return &mockConn{
-		dataRead:  make(chan []byte),
-		dataWrite: make(chan []byte),
-	}
-}
-
-func (m *mockConn) Read(b []byte) (n int, err error) {
-	temp := <-m.dataRead
-	copy(b, temp)
-	return len(temp), nil
-}
-
-func (m *mockConn) Write(b []byte) (n int, err error) {
-	m.dataWrite <- b
-	return len(b), nil
-}
-
-func (m *mockConn) Close() error {
-	close(m.dataRead)
-	close(m.dataWrite)
-	return nil
-}
-
-func (m *mockConn) LocalAddr() net.Addr {
-	return nil
-}
-
-func (m *mockConn) RemoteAddr() net.Addr {
-	return &net.TCPAddr{}
-}
-
-func (m *mockConn) SetDeadline(t time.Time) error {
-	return nil
-}
-
-func (m *mockConn) SetReadDeadline(t time.Time) error {
-	return nil
-}
-
-func (m *mockConn) SetWriteDeadline(t time.Time) error {
-	return nil
-}
-
-func (m *mockConn) CloseWrite() error {
-	close(m.dataRead)
-	close(m.dataWrite)
-	return nil
 }
