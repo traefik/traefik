@@ -8233,3 +8233,721 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 
 	return k8sObjects, gwObjects
 }
+
+func Test_matchingGatewayListeners_ListenerSet(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		gwListeners    []gatewayListener
+		parentRefs     []gatev1.ParentReference
+		routeNamespace string
+		wantLen        int
+	}{
+		{
+			desc: "Gateway parentRef matches only Gateway-sourced listeners",
+			gwListeners: []gatewayListener{
+				{
+					GWName:      "my-gw",
+					GWNamespace: "default",
+					Source:      kindGateway,
+				},
+				{
+					GWName:          "my-gw",
+					GWNamespace:     "default",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+				},
+			},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "my-gw",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+			}},
+			wantLen: 1,
+		},
+		{
+			desc: "ListenerSet parentRef matches only ListenerSet-sourced listeners",
+			gwListeners: []gatewayListener{
+				{
+					GWName:      "my-gw",
+					GWNamespace: "default",
+					Source:      kindGateway,
+				},
+				{
+					GWName:          "my-gw",
+					GWNamespace:     "default",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+				},
+			},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "my-ls",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("ListenerSet")),
+			}},
+			wantLen: 1,
+		},
+		{
+			desc: "ListenerSet parentRef with wrong name does not match",
+			gwListeners: []gatewayListener{
+				{
+					GWName:          "my-gw",
+					GWNamespace:     "default",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+				},
+			},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "other-ls",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("ListenerSet")),
+			}},
+			wantLen: 0,
+		},
+		{
+			desc: "ListenerSet parentRef with wrong namespace does not match",
+			gwListeners: []gatewayListener{
+				{
+					GWName:          "my-gw",
+					GWNamespace:     "default",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+				},
+			},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "my-ls",
+				Namespace: ptr.To(gatev1.Namespace("other")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("ListenerSet")),
+			}},
+			wantLen: 0,
+		},
+		{
+			desc: "Empty Source treated as kindGateway",
+			gwListeners: []gatewayListener{
+				{
+					GWName:      "my-gw",
+					GWNamespace: "default",
+					Source:      "", // empty = Gateway for backward compat
+				},
+			},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "my-gw",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+			}},
+			wantLen: 1,
+		},
+		{
+			desc: "Default parentRef kind (empty) matches Gateway-sourced listeners",
+			gwListeners: []gatewayListener{
+				{
+					GWName:      "my-gw",
+					GWNamespace: "default",
+					Source:      kindGateway,
+				},
+			},
+			routeNamespace: "default",
+			parentRefs: []gatev1.ParentReference{{
+				Name: "my-gw",
+				// Kind defaults to Gateway when nil
+			}},
+			wantLen: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			listeners := matchingGatewayListeners(test.gwListeners, test.routeNamespace, test.parentRefs)
+			assert.Len(t, listeners, test.wantLen)
+		})
+	}
+}
+
+func Test_routeKeySegment(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		listener gatewayListener
+		expected string
+	}{
+		{
+			desc: "Gateway-sourced listener",
+			listener: gatewayListener{
+				GWName:      "my-gw",
+				GWNamespace: "default",
+				Source:      kindGateway,
+			},
+			expected: "gw-default-my-gw",
+		},
+		{
+			desc: "ListenerSet-sourced listener",
+			listener: gatewayListener{
+				GWName:          "my-gw",
+				GWNamespace:     "default",
+				Source:          kindListenerSet,
+				SourceName:      "my-ls",
+				SourceNamespace: "custom-ns",
+			},
+			expected: "ls-custom-ns-my-ls",
+		},
+		{
+			desc: "Empty source treated as Gateway",
+			listener: gatewayListener{
+				GWName:      "my-gw",
+				GWNamespace: "default",
+				Source:      "",
+			},
+			expected: "gw-default-my-gw",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, test.listener.routeKeySegment())
+		})
+	}
+}
+
+func Test_listenerSetRefsGateway(t *testing.T) {
+	gw := &gatev1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-gw",
+			Namespace: "default",
+		},
+	}
+
+	testCases := []struct {
+		desc     string
+		ls       *gatev1.ListenerSet
+		expected bool
+	}{
+		{
+			desc: "Matching reference",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name: "my-gw",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "Wrong name",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name: "other-gw",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "Wrong namespace",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name:      "my-gw",
+						Namespace: ptr.To(gatev1.Namespace("other")),
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "Cross-namespace matching",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "other",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name:      "my-gw",
+						Namespace: ptr.To(gatev1.Namespace("default")),
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "Wrong group",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Group: ptr.To(gatev1.Group("wrong.group")),
+						Name:  "my-gw",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "Wrong kind",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Kind: ptr.To(gatev1.Kind("NotAGateway")),
+						Name: "my-gw",
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, listenerSetRefsGateway(test.ls, gw))
+		})
+	}
+}
+
+func Test_isListenerSetAllowed(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		gw         *gatev1.Gateway
+		ls         *gatev1.ListenerSet
+		namespaces []*corev1.Namespace
+		expected   bool
+	}{
+		{
+			desc: "Nil AllowedListeners",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec:       gatev1.GatewaySpec{},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: false,
+		},
+		{
+			desc: "Nil From",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: false,
+		},
+		{
+			desc: "FromNone",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: ptr.To(gatev1.NamespacesFromNone),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: false,
+		},
+		{
+			desc: "FromSame - same namespace",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: ptr.To(gatev1.NamespacesFromSame),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: true,
+		},
+		{
+			desc: "FromSame - different namespace",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: ptr.To(gatev1.NamespacesFromSame),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "other"},
+			},
+			expected: false,
+		},
+		{
+			desc: "FromAll",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: ptr.To(gatev1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "any-namespace"},
+			},
+			expected: true,
+		},
+		{
+			desc: "FromSelector - matching namespace labels",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: ptr.To(gatev1.NamespacesFromSelector),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"env": "prod"},
+							},
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ls",
+					Namespace: "default",
+				},
+			},
+			namespaces: []*corev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "default",
+						Labels: map[string]string{"env": "prod"},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "FromSelector - non-matching namespace labels",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: ptr.To(gatev1.NamespacesFromSelector),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"env": "prod"},
+							},
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ls",
+					Namespace: "default",
+				},
+			},
+			namespaces: []*corev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "default",
+						Labels: map[string]string{"env": "staging"},
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var k8sObjects []runtime.Object
+			for _, ns := range test.namespaces {
+				k8sObjects = append(k8sObjects, ns)
+			}
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 {
+				<-eventCh
+			}
+
+			p := Provider{client: client}
+
+			assert.Equal(t, test.expected, p.isListenerSetAllowed(test.gw, test.ls))
+		})
+	}
+}
+
+func Test_makeListenerSetStatus(t *testing.T) {
+	testCases := []struct {
+		desc                   string
+		info                   *listenerSetInfo
+		allListeners           []gatewayListener
+		gwStatus               gatev1.GatewayStatus
+		wantAcceptedStatus     metav1.ConditionStatus
+		wantAcceptedReason     string
+		wantProgrammedStatus   metav1.ConditionStatus
+		wantProgrammedReason   string
+		wantListenerEntryCount int
+	}{
+		{
+			desc: "All listeners valid, Gateway accepted",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				accepted: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:            "http",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+					Status: &gatev1.ListenerStatus{
+						Name:           "http",
+						SupportedKinds: []gatev1.RouteGroupKind{{Kind: "HTTPRoute", Group: ptr.To(gatev1.Group(gatev1.GroupName))}},
+						Conditions:     []metav1.Condition{}, // no errors
+					},
+				},
+			},
+			gwStatus: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{
+					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
+				},
+			},
+			wantAcceptedStatus:     metav1.ConditionTrue,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonAccepted),
+			wantProgrammedStatus:   metav1.ConditionTrue,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
+			wantListenerEntryCount: 1,
+		},
+		{
+			desc: "Gateway not accepted",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				accepted: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:            "http",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+					Status: &gatev1.ListenerStatus{
+						Name:       "http",
+						Conditions: []metav1.Condition{},
+					},
+				},
+			},
+			gwStatus: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{
+					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionFalse},
+				},
+			},
+			wantAcceptedStatus:     metav1.ConditionFalse,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonParentNotAccepted),
+			wantProgrammedStatus:   metav1.ConditionFalse,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonInvalid),
+			wantListenerEntryCount: 1,
+		},
+		{
+			desc: "Listener has errors",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				accepted: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:            "http",
+					Source:          kindListenerSet,
+					SourceName:      "my-ls",
+					SourceNamespace: "default",
+					Status: &gatev1.ListenerStatus{
+						Name: "http",
+						Conditions: []metav1.Condition{
+							{
+								Type:   string(gatev1.ListenerConditionAccepted),
+								Status: metav1.ConditionFalse,
+								Reason: string(gatev1.ListenerReasonPortUnavailable),
+							},
+						},
+					},
+				},
+			},
+			gwStatus: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{
+					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
+				},
+			},
+			wantAcceptedStatus:     metav1.ConditionTrue,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonListenersNotValid),
+			wantProgrammedStatus:   metav1.ConditionFalse,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonListenersNotValid),
+			wantListenerEntryCount: 1,
+		},
+		{
+			desc: "Filters out listeners from other ListenerSets",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				accepted: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:            "http",
+					Source:          kindListenerSet,
+					SourceName:      "other-ls",
+					SourceNamespace: "default",
+					Status: &gatev1.ListenerStatus{
+						Name:       "http",
+						Conditions: []metav1.Condition{},
+					},
+				},
+				{
+					Name:        "http-gw",
+					Source:      kindGateway,
+					GWName:      "my-gw",
+					GWNamespace: "default",
+					Status: &gatev1.ListenerStatus{
+						Name:       "http-gw",
+						Conditions: []metav1.Condition{},
+					},
+				},
+			},
+			gwStatus: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{
+					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
+				},
+			},
+			wantAcceptedStatus:     metav1.ConditionTrue,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonAccepted),
+			wantProgrammedStatus:   metav1.ConditionTrue,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
+			wantListenerEntryCount: 0, // no listeners belong to this LS
+		},
+		{
+			desc: "ListenerSet not allowed by Gateway",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "other-ns",
+						Generation: 2,
+					},
+				},
+				accepted: false,
+			},
+			allListeners:           nil,
+			gwStatus:               gatev1.GatewayStatus{},
+			wantAcceptedStatus:     metav1.ConditionFalse,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonNotAllowed),
+			wantProgrammedStatus:   metav1.ConditionFalse,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonNotAllowed),
+			wantListenerEntryCount: 0,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			status := makeListenerSetStatus(test.info, test.allListeners, test.gwStatus)
+
+			assert.Len(t, status.Listeners, test.wantListenerEntryCount)
+
+			var acceptedCond, programmedCond *metav1.Condition
+			for _, c := range status.Conditions {
+				c := c
+				switch c.Type {
+				case string(gatev1.ListenerSetConditionAccepted):
+					acceptedCond = &c
+				case string(gatev1.ListenerSetConditionProgrammed):
+					programmedCond = &c
+				}
+			}
+
+			require.NotNil(t, acceptedCond, "Accepted condition should be set")
+			assert.Equal(t, test.wantAcceptedStatus, acceptedCond.Status)
+			assert.Equal(t, test.wantAcceptedReason, acceptedCond.Reason)
+
+			require.NotNil(t, programmedCond, "Programmed condition should be set")
+			assert.Equal(t, test.wantProgrammedStatus, programmedCond.Status)
+			assert.Equal(t, test.wantProgrammedReason, programmedCond.Reason)
+		})
+	}
+}

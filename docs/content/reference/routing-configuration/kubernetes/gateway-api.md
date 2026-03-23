@@ -10,7 +10,7 @@ For detailed information on the Gateway API concepts and resources, refer to the
 
 The Kubernetes Gateway API provider supports version [v1.5.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.5.1) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
 For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.5.1/traefik-traefik).
 
@@ -110,14 +110,115 @@ data:
     LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRUUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQ1Nzd2dna25BZ0VBQW9JQ0FRQ1pNNm1WNUJkV2V0QzYKbXZ6dGFQaGxTY2dJY253emdzbDhBcXp3RDJNOVJWVkZwRUxBbTh2OTNlRWtMZEY2ZnNkY0FhUXQxWlFDSFdYbwovZkxwUTVVa1B4dXY2TVArdjRtSjB2OGRLRlo3UjcwaTVud1lCMkVlVkw2RUNZaWlxNmZ6VEtsa3F6U0QvNW93CnpTdy96amtHVGEwSXcvdkg5YXNINzRIajNXdEE3RythenZjaVlhQTZxK1dWYlZxNlBIanF6em9obEFuMkh1anoKNmhEamFpZXN2TGx3QS9CL3JoRHNBS2graTByOEFKUTFqM0JiTGJuYkJyWmZqYnBJUjNhYVh5amkwK3RQWENnVQo5M0JlOXZtS2U2U2NHUjcvNk9ubWJrU3NMY2RXaFpVNzcrL2c4WllsZGhwS01nczc4ekJYUlh4bHlzSThHRUtqClNYbnd5OVpmTU9kSTRKQU1jbU9JTmlZQWNtWm5JTUJIa0xacFl3aUl0eFdseXVJcWxoZFpkSHNrTFdNSjBSTHUKMUZoUzJwRVdDTmUzN1QwYjlobTRYNDlydUFiekl1M01xSmczcXFIdGRMNGRkZ1JZRHNjMXd0cDJrR2dBZGxDaQpySHJReitZeDBCTU9WbGRHM2htUlFIeWRxMkhyWW0xeEFDNWpMZ3FvaVZhY09wd0xKY21PcGsrZWVNQkNZNVo0CnpDWDdYV3l3YVZjbTJzdmhpTzE4QmRSK2g5aFliMkRNZDFCendDbE95endQcUlvQy9uNGRURG96Ry9GT3NySzgKLzRGeHc2NkNWZjNxODMwTVB3UndsQ0sxQ0I3RjNQK3lKWkpPelRuK05QZ2dGQW9NaGZUYXBQWTFhUGlWajBzVApvb0IwWjhjRVdUZE5ycUFObVBrOWgzaEIycG44SndJREFRQUJBb0lDQUVCa2dKRXA3ODAvamVBQktQSTR2cjhFCkJmblc5UEZKdFpwVUhaQkJSM3NIVzFJTU9xcHVVWTJBNXhLbjEzWmZOemdxMEhFYlpqeUZVc0pkaXU0VW8razYKUlU3b3pRaVVSU0VTK0h1dTZycWlhcEx5d1pIditCZ2hrbm80NzU4Lyt6VytNU3pJOFNmU0ZXTVJ1ZG1QdWxRMQo3ZGJUV1U2d3FaU0tUTlFUeXZMYzdnUHBuZUpybWtkTzNRNnppZ0RoVGdtVDFHRXNzZ3NxN3NzbXhMWnhkZithCnkyNlRtVkJ4UDFlUzV6OVpHTWxYRFBSK044RjdOTFVrMng3S21WT3NCZVBZdjN5bmlpNHZGQUhNQndWRFZadXAKWUlUajRpMjZIaVhtanlLM2t5T0F2anNWSElRMXh1QTBCZFROdC84WXRtYllJL005QitydVg0UDJiRFNUMktRKwo4TlN2Uk9wbVppcnBHZkY3bExMSGpJUjlTMFhCWDd6VDRoWnBRWnpqK3NEWnhDM2Y3TGIwRFlKYkp0TmlDYTQxCmNpTjhNUlNldzNneHZ0RVk0RzdnN3hjbkJNdjdNT3RwQTE3d2gvMHdLd0h0amYzSWh2TmIzdkZwT0k5d1FqSzYKSlRQMng4bENJV0tyalpObVN0UksreHJTN3hTOUZVdnBhSVlyclRLQkZWSmcyMURCYWI1L3hqRlBlQWxXejczSwpvVkhsa0hLdXNMSjZLczZzcXo0ZG9mbzg3dkFsUFJzTXRkZ1ZnZFIzNXhLTGtEWXNIbGxML3Z5dE9oSkNieXB5CkJqQm1TR0RMdzBDdWplaHVtU2czYjdSUGVTNk5rbHNqUEIrMVpzRjhpVGdCcjMyM1hvTmNha2dhWWVYQlg4NFAKaE1WZHUxWk1rbXJZMWhXTzEydnhBb0lCQVFEWU5Vb2xCMkhsdWlDcVFqdmU4UFNhV0YxRmhwNUlOMGJIZEppeApIdkhqMkplVHJ6V1pUZFlIdFNJR2RzalhTOTBESXo2bXJhMW9YZXFRYlgrODVlOUFQQkZnRTJmNU5uTzBCSVVJCk5hMXRiVGpIOUhjRGRzQmJKUkZwYnk1ODZUb3lhdFY3bS9zcjVpQUZlZFMyenFOTm1XUmZOdllZS2xselZoSEUKdUd4ZjZxMHJTWktVQUhja2s1bU5Yais3WFhZaTgyemErVEE3ZjBDVm5OamR3OXFpd3B2aTJKTFB2SnA0bWt6KwpyMEN1RW9yV2NhMUdTL2hTVWdXemw3NzhQdlRpZFI2RW4zMDB2ZlIyTE84aG1xRjhVL3Bpb2UrTDVjSllRNnNKCk1YMngrYThzWFFpZ3dwdG02aUNxQ2FuS3ExN3NUZS9RTmQ1czdwb3ZOaHVKOHd3dEFvSUJBUUMxWmM5ZktPUFgKVzZSN1VoaHRRcmhIc3htQnRIQ1BuNWRLbjN5MElNNWRBaEFSdFZDV1U0M0hOTHpCNW1LbjU2dnZrSVNFaXdBbAoxTGhuY2I3YXQ2cHpTSlZtMm5oTDhjeUZrdGQrNzVyL1FHNFlpNnZQbHNBODV5ZXZpZDhZcWswaHdaZXExY05xCmxETUN3NWsrV0drckM2VW5jZXNIc2FWbDJTUGdZV1c1L3I1NnVxUnBsaVFka1EyZmlEYWRyblVueU8ycHg3bFMKVG1HemZaNmtzTWh2MlZFR1NPRm05aUo0dWlPb0xyZVhoU1RQRmxTdjdZUTZSWWtSaGgwT0tqdXM5bXZacEIxWApjcytYN0UyVTNlM0RZelpCR0NFdmxxaFNWTFRScjdIN21pMWxUMEozR0RzbDdiUk9xOE50WVdQa3hhSlNCUnQ5Ck9TcTlkTm9CcGRvakFvSUJBQ2lQdnN3NW1WVW0yUS80QXhGdE5RWnJ3M3ZTcUlrMXpaS0h2a21rVzQ3NlNGMk4KaGttdmY1TE1tWWlLNmx6eHY1SGlIOVBYUzJ3RUNvaHo4bjMyeVM3TTFobW5LbDlucHNkRC9jMHZmTXpGcTl4ZgpjYUIxdTlxZGxxbW9FUm1nQzZuL3Z2TkVyUmRzUWQrbEhwSDVMRXZYbGl3Q3ZLS0Y5MmdhNHBSOFlPQ1J2MUVhCnFXUVl2a0ZmYTNSSkZUM0taK3BncnJCYUJZRnoreUxXWFIwbHJEUFN2TG9QRldQaHB6MHUvWGplV2cwT0wzdlIKc2NjNVkybldOM21jNDFpaFd3SE5KUitPYUVmbnh5QVFpQUJPNlRMUThtMWtvZk1sOUpMb2h3TGZoUXhKb21KNQpSYkFiTWxwWlhDMXFTSzliL1IvcDh5NmxuSWZsTDRuaDVjSzRsVFVDZ2dFQUpSSHVSQU1tTksrTXVJcjVaUEs2Cm1DUjR0UEg4QXMzWmJDMlZuWFlLMWlVQ3hhdXBFVjkzM05yaExEcjV0Rmg2NFpWR0Q1UWNicDYvSkp5eEpSOWQKblB1YlZJNlhBT1lrSnJQd2lBZE5SSmFWS1R6NTJvMXpNYjhIZEM4WHdZR2tDNTcxY0xzSW1YSTV6bm5NaWxvaworK0FBVzBSRGhLb0FKQVV3K0x6T3ZpamFJbGljR3R2TSs2SFdCK0VkVURJRHpTS1p0eFdTd01nMTNTbHh6elExCmNlNFdTZE9CQkxxT0p0L2JRNVp3ZkcyQUxUWGlEcVhhWE5JekJickRtMDUwTFkrYVVMcmlLQ25WVkxXODBReGQKZDQyQjIrR2pmb2NxVk5Ec3R1RlIzUm9QNXVGQXN2Zm50b09TVW5WMWxaZk9nMFVFUEFEQk1tRUpZL2hLU1FYcwp3d0tDQVFBNWQya2hFQ1c1V3QrMzRYWnl1b3NFTjZ4UDExbC96VDRBZjhGSWtQLzlkb0JXRnBhc28zbG1NcXZHCmhPeFErbnZBSjFhNzhZRjA4N3p1UC9DZkQ0UElOUTV4YzZHMDNQdG5JOVNVT0dpMDB4Zlg5MU5NMHBHYWJqb0QKZ0RqVzJxSkJDaVB5N0RIR1RlZkU5eUNUbkhrY1NBbWllVGc3aGFyeEZPOUREZTJKbzhKQXV2SHI1aGVxazVIcgpLYlgzTy9vNUMwcWVnYW1rWVRLcHZzV2VFdXhkY2l5LzFQd3NnV3BuV1JPWllQNENrSkJweEx1bDNVamVSY3dkCnRhcjBJYU52WlV2NFd4U0JZdWVHMDFyYUd2SDZtTTcyTEExR3MrMytwTnZwUVo3bGo2S09tcFlhQUlhemVxY2MKTjJjT2R5U1RqZmQ5OFlNVFAxbmIyK3N1Yy91VAotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
 ```
 
+## Using a ListenerSet
+
+A `ListenerSet` is a Gateway API resource ([GEP-1713](https://gateway-api.sigs.k8s.io/geps/gep-1713/)) that allows attaching additional listeners to an existing `Gateway`.
+This is useful for delegating TLS certificate management to application teams, breaking the 64-listener limit on a single Gateway, and reducing contention on the shared Gateway resource.
+
+!!! info "Gateway Opt-in"
+
+    The parent `Gateway` must explicitly allow ListenerSets through the `spec.allowedListeners` field.
+    By default, no ListenerSets are allowed (`None`).
+
+!!! info "Listener ports"
+
+    Please note that `ListenerSet` listener ports must match the configured [EntryPoint ports](../../install-configuration/entrypoints.md) of the Traefik deployment, just like `Gateway` listeners.
+
+!!! info "Route Attachment"
+
+    Routes that want to attach to a `ListenerSet` listener must use `kind: ListenerSet` in their `parentRefs`.
+    Routes using `kind: Gateway` will not match listeners defined in a ListenerSet.
+
+The following example shows a `Gateway` that allows ListenerSets from all namespaces, with a ListenerSet adding an HTTPS listener, and an `HTTPRoute` attached to it:
+
+```yaml tab="Gateway"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik
+  namespace: default
+spec:
+  gatewayClassName: traefik
+
+  # Allow ListenerSets from all namespaces.
+  allowedListeners:
+    namespaces:
+      from: All
+
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+```yaml tab="ListenerSet"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: app-listeners
+  namespace: app-team
+spec:
+  parentRef:
+    name: traefik
+    namespace: default
+    kind: Gateway
+    group: gateway.networking.k8s.io
+
+  listeners:
+    - name: https-app
+      protocol: HTTPS
+      port: 443
+      hostname: app.example.com
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: app-tls-cert
+
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+```yaml tab="HTTPRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app-route
+  namespace: app-team
+spec:
+  parentRefs:
+    - name: app-listeners
+      sectionName: https-app
+      kind: ListenerSet
+
+  hostnames:
+    - app.example.com
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - name: app-service
+          port: 80
+```
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
 and/or `TLSRoute` resources must be deployed to forward some traffic to Kubernetes backend [services](https://kubernetes.io/docs/concepts/services-networking/service/).
 
-!!! info "Attaching to Gateways"
+!!! info "Attaching to Gateways and ListenerSets"
 
-    As demonstrated in the following examples, a Route resource must be configured with `ParentRefs` that reference the parent `Gateway` it should be associated with.
+    As demonstrated in the following examples, a Route resource must be configured with `ParentRefs` that reference the parent `Gateway` or `ListenerSet` it should be associated with.
 
 ### HTTP/HTTPS
 
