@@ -14,7 +14,7 @@ import (
 
 func TestStripPrefixRegex(t *testing.T) {
 	testPrefixRegex := dynamic.StripPrefixRegex{
-		Regex: []string{"/a/api/", "/b/([a-z0-9]+)/", "/c/[a-z0-9]+/[0-9]+/"},
+		Regex: []string{"/a/api/", "/b/([a-z0-9]+)/", "/c/[a-z0-9]+/[0-9]+/", "/t /test"},
 	}
 
 	testCases := []struct {
@@ -104,6 +104,41 @@ func TestStripPrefixRegex(t *testing.T) {
 			expectedRawPath:    "/a%2Fb",
 			expectedHeader:     "/a/api/",
 		},
+		{
+			path:               "/b/ap%69/test",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/test",
+			expectedRawPath:    "/test",
+			expectedHeader:     "/b/api/",
+		},
+		{
+			path:               "/b/ap%69/a%2Fb",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/b",
+			expectedRawPath:    "/a%2Fb",
+			expectedHeader:     "/b/api/",
+		},
+		{
+			// no match, request passes through unchanged.
+			path:               "/t%2F/test/foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/t//test/foo",
+			expectedRawPath:    "/t%2F/test/foo",
+		},
+		{
+			path:               "/t /test/a%2Fb",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/b",
+			expectedRawPath:    "/a%2Fb",
+			expectedHeader:     "/t /test",
+		},
+		{
+			path:               "/t%20/test/a%2Fb",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/b",
+			expectedRawPath:    "/a%2Fb",
+			expectedHeader:     "/t /test",
+		},
 	}
 
 	for _, test := range testCases {
@@ -130,7 +165,8 @@ func TestStripPrefixRegex(t *testing.T) {
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", stripprefix.ForwardedPrefixHeader)
 
-			if test.expectedPath != test.path {
+			// Only check RequestURI when the middleware actually stripped a prefix.
+			if test.expectedHeader != "" {
 				expectedRequestURI := test.expectedPath
 				if test.expectedRawPath != "" {
 					// go HTTP uses the raw path when existent in the RequestURI
