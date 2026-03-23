@@ -209,6 +209,7 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        forwardHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware10.errors.statusRewrites]
           name0 = 42
           name1 = 42

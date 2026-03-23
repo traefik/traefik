@@ -267,7 +267,7 @@ func TestHandler(t *testing.T) {
 			},
 			backendCode: http.StatusInternalServerError,
 			backendHeaders: map[string]string{
-				"X-Custom-Header":  "should-not-appear",
+				"X-Custom-Header": "should-not-appear",
 				"WWW-Authenticate": `Bearer realm="example"`,
 			},
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -292,7 +292,7 @@ func TestHandler(t *testing.T) {
 			backendCode: http.StatusUnauthorized,
 			backendHeaders: map[string]string{
 				"WWW-Authenticate": `Basic realm="test"`,
-				"Connection":       "keep-alive",
+				"Connection": "keep-alive",
 				"Transfer-Encoding": "chunked",
 			},
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -318,7 +318,7 @@ func TestHandler(t *testing.T) {
 			backendCode: http.StatusUnauthorized,
 			backendHeaders: map[string]string{
 				"WWW-Authenticate": `Bearer realm="test"`,
-				"X-Custom":         "value1",
+				"X-Custom": "value1",
 			},
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
