@@ -654,6 +654,7 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		Status:         errorPage.Status,
 		StatusRewrites: errorPage.StatusRewrites,
 		Query:          errorPage.Query,
+		ForwardHeaders: errorPage.ForwardHeaders,
 	}
 
 	cb := configBuilder{

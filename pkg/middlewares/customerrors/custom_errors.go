@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
 	"k8s.io/utils/ptr"
 )
@@ -26,6 +27,18 @@ var (
 )
 
 const typeName = "CustomError"
+
+// hopHeaders are hop-by-hop headers that must not be forwarded to the client,
+// even if explicitly listed in forwardHeaders.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+var hopHeaders = map[string]struct{}{
+	forward.Connection:       {},
+	forward.KeepAlive:        {},
+	forward.Te:               {},
+	forward.Trailers:         {},
+	forward.TransferEncoding: {},
+	forward.Upgrade:          {},
+}
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -40,6 +53,7 @@ type customErrors struct {
 	backendQuery        string
 	statusRewrites      []statusRewrite
 	forwardNginxHeaders http.Header
+	forwardHeaders      []string
 }
 
 type statusRewrite struct {
@@ -75,6 +89,27 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		})
 	}
 
+	// Normalize and deduplicate forwardHeaders: trim whitespace, canonicalize,
+	// and remove hop-by-hop headers that must not be forwarded to clients.
+	var forwardHeaders []string
+	if len(config.ForwardHeaders) > 0 {
+		seen := make(map[string]struct{}, len(config.ForwardHeaders))
+		for _, h := range config.ForwardHeaders {
+			canonical := http.CanonicalHeaderKey(strings.TrimSpace(h))
+			if canonical == "" {
+				continue
+			}
+			if _, isHop := hopHeaders[canonical]; isHop {
+				continue
+			}
+			if _, dup := seen[canonical]; dup {
+				continue
+			}
+			seen[canonical] = struct{}{}
+			forwardHeaders = append(forwardHeaders, canonical)
+		}
+	}
+
 	return &customErrors{
 		name:                name,
 		next:                next,
@@ -83,6 +118,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendQuery:        config.Query,
 		statusRewrites:      statusRewrites,
 		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
+		forwardHeaders:      forwardHeaders,
 	}, nil
 }
 
@@ -158,6 +194,18 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
+	// Forward whitelisted response headers from the original backend error response to the client.
+	if len(c.forwardHeaders) > 0 {
+		backendHeaders := catcher.getHeaders()
+		for _, name := range c.forwardHeaders {
+			if vals := backendHeaders.Values(name); len(vals) > 0 {
+				for _, v := range vals {
+					rw.Header().Add(name, v)
+				}
+			}
+		}
 	}
 
 	if len(c.forwardNginxHeaders) > 0 {
@@ -302,6 +350,12 @@ func (cc *codeCatcher) getCode() int {
 // and for which the response should be deferred to the error handler.
 func (cc *codeCatcher) isFilteredCode() bool {
 	return cc.caughtFilteredCode
+}
+
+// getHeaders returns the response headers captured from the backend response.
+// These headers are normally discarded when a filtered status code is intercepted.
+func (cc *codeCatcher) getHeaders() http.Header {
+	return cc.headerMap
 }
 
 // codeModifier forwards a response back to the client,

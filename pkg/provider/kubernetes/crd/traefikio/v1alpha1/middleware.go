@@ -107,6 +107,9 @@ type ErrorPage struct {
 	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
 	// The {url} variable can be used in order to insert the escaped request URL.
 	Query string `json:"query,omitempty"`
+	// ForwardHeaders defines an optional list of HTTP response header names from the original
+	// backend error response that should be forwarded to the final client response.
+	ForwardHeaders []string `json:"forwardHeaders,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

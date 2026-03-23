@@ -139,3 +139,68 @@ The table below lists all the available variables and their associated values.
 | `{status}`         | The response status code. It may be rewritten when using the `statusRewrites` option.      |
 | `{originalStatus}` | The original response status code, if it has been modified by the `statusRewrites` option. |
 | `{url}`            | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.                         |
+
+### `forwardHeaders`
+
+An optional list of HTTP response header names from the **original backend error response** that should be forwarded to the final client response.
+
+When the errors middleware intercepts an error status code and replaces the response body with a custom error page, the original backend's response headers are normally discarded.
+The `forwardHeaders` option allows specific headers to be preserved and sent to the client alongside the error page.
+
+This is useful when headers like `WWW-Authenticate` need to reach the browser so that it can display a login dialog, even when the error page body is replaced.
+
+!!! note "Security"
+
+    Only the headers explicitly listed in `forwardHeaders` are forwarded.
+    This whitelist approach avoids accidentally leaking backend headers such as `Set-Cookie`, `Location`, or `Content-Security-Policy` to the client.
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-errors.errors.status=401,500-599"
+  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
+  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errors.errors.forwardHeaders=WWW-Authenticate,Content-Language"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-errors
+spec:
+  errors:
+    status:
+      - "401"
+      - "500-599"
+    query: /{status}.html
+    forwardHeaders:
+      - WWW-Authenticate
+      - Content-Language
+    service:
+      name: whoami
+      port: 80
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-errors:
+      errors:
+        status:
+          - "401"
+          - "500-599"
+        service: serviceError
+        query: "/{status}.html"
+        forwardHeaders:
+          - "WWW-Authenticate"
+          - "Content-Language"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-errors.errors]
+    status = ["401","500-599"]
+    service = "serviceError"
+    query = "/{status}.html"
+    forwardHeaders = ["WWW-Authenticate", "Content-Language"]
+```

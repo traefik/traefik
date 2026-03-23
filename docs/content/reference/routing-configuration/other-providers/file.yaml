@@ -232,6 +232,9 @@ http:
           name1: 42
         service: foobar
         query: foobar
+        forwardHeaders:
+          - foobar
+          - foobar
     Middleware11:
       forwardAuth:
         address: foobar

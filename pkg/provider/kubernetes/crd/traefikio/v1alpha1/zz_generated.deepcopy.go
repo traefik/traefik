@@ -270,6 +270,11 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		}
 	}
 	in.Service.DeepCopyInto(&out.Service)
+	if in.ForwardHeaders != nil {
+		in, out := &in.ForwardHeaders, &out.ForwardHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
