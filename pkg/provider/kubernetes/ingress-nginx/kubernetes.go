@@ -1933,7 +1933,6 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 		}
 		rt.Middlewares = []string{redirectMiddlewareName}
 		rt.Service = "noop@internal"
-		rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 	}
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
