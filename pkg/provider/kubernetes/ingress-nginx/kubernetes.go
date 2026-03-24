@@ -486,7 +486,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			// If any ingress in this host enable use-regex, all paths on that host must use regex matching.
 			// Using rewrite-target annotation also implies that use-regex is true.
-			if ptr.Deref(i.IngressConfig.UseRegex, false) || !(ptr.Deref(i.IngressConfig.RewriteTarget, "") == "") {
+			if ptr.Deref(i.IngressConfig.UseRegex, false) || ptr.Deref(i.IngressConfig.RewriteTarget, "") != "" {
 				hostsWithUseRegex[rule.Host] = true
 			}
 

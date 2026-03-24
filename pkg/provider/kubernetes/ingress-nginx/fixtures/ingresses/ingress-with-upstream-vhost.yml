@@ -5,7 +5,6 @@ metadata:
   name: ingress-with-upstream-vhost
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: ""
     nginx.ingress.kubernetes.io/upstream-vhost: "upstream-host-header-value"
 
 spec:

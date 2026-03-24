@@ -1783,6 +1783,13 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-rewrite-target-whoami-80",
 							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-rule-0-path-0-retry"},
 						},
+						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("rewrite-target-no-regex.localhost") && (Path("/something") || PathPrefix("/something/"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry"},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
@@ -1792,6 +1799,11 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},
@@ -1816,9 +1828,35 @@ func TestLoadIngresses(t *testing.T) {
 								ServersTransport: "default-ingress-with-rewrite-target",
 							},
 						},
+						"default-ingress-with-rewrite-target-no-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-rewrite-target-no-regex",
+							},
+						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-rewrite-target": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-rewrite-target-no-regex": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
