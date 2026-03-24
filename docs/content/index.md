@@ -5,6 +5,10 @@ description: "Traefik Proxy, an open-source Edge Router, auto-discovers configur
 
 # What is Traefik?
 
+!!! tip "Moving from ingress-nginx?"
+    No need to start over. Traefik supports your existing ingress-nginx annotations as-is — no rewrites, no downtime.
+    See our [migration guide](./migrate/nginx-to-traefik.md) and [annotation reference](./reference/routing-configuration/kubernetes/ingress-nginx.md) to get started.
+
 ![Architecture](assets/img/traefik-architecture.png)
 
 Traefik is an [open-source](https://github.com/traefik/traefik) Application Proxy and the core of the Traefik Hub Runtime Platform.
