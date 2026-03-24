@@ -1118,6 +1118,24 @@ rewrite ^/old$ http://other.example.com/new last;
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "http://other.example.com/new",
 		},
+		{
+			desc: "rewrite with quoted replacement",
+			configurationSnippet: `
+rewrite ^/search$ "/new?" last;
+`,
+			path:          "/search?q=test",
+			expectedPath:  "/new",
+			expectedQuery: "",
+		},
+		{
+			desc: "rewrite with quoted replacement and uri variable",
+			configurationSnippet: `
+rewrite ^/(.*)$ "${uri}?" break;
+`,
+			path:          "/some/path?q=test",
+			expectedPath:  "/some/path",
+			expectedQuery: "",
+		},
 		// --- add_header always tests ---
 		{
 			desc: "add_header with always applies to 200 status",
