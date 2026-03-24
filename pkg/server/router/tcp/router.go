@@ -123,12 +123,22 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	postgres, err := isPostgres(pConn)
 	if err != nil {
-		conn.Close()
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.Debug().Err(err).Msg("Error while peeking first bytes")
+		}
+		_ = pConn.Close()
 		return
 	}
 
 	if postgres {
-		r.servePostgres(pConn)
+		if err := r.servePostgres(pConn); err != nil {
+			var opErr *net.OpError
+			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+				log.Debug().Err(err).Msg("Error while serving Postgres connection")
+			}
+		}
+		_ = pConn.Close()
 		return
 	}
 
@@ -138,22 +148,21 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
 			log.Debug().Err(err).Msg("Error while reading client hello")
 		}
-
-		conn.Close()
+		_ = pConn.Close()
 		return
 	}
 
 	// The deadline was set to avoid blocking on the initial read of the ClientHello,
 	// but now that we have it, we can remove it,
 	// and delegate this to underlying TCP server (for now only handled by HTTP Server).
-	if err := conn.SetDeadline(time.Time{}); err != nil {
+	if err := pConn.SetDeadline(time.Time{}); err != nil {
 		log.Error().Err(err).Msg("Error while setting deadline")
 	}
 
-	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
+	connData, err := tcpmuxer.NewConnData(hello.serverName, pConn, hello.protos)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while reading TCP connection data")
-		conn.Close()
+		_ = pConn.Close()
 		return
 	}
 
@@ -165,7 +174,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		case r.httpForwarder != nil:
 			r.httpForwarder.ServeTCP(pConn)
 		default:
-			conn.Close()
+			_ = pConn.Close()
 		}
 		return
 	}
@@ -217,7 +226,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	conn.Close()
+	_ = pConn.Close()
 }
 
 // AddTCPRoute defines a handler for the given rule.
@@ -349,8 +358,8 @@ func (c *peekConn) Peek(n int) ([]byte, error) {
 	return c.reader.Peek(n)
 }
 
-// PeekRead reads from the connection and accumulates the read bytes into the peeked buffer,
-// allowing them to be replayed later.
+// PeekRead reads from the connection and accumulates the read bytes into the peeked buffer, allowing them to be replayed later.
+// Note that PeekRead advances the reader, thus the next call to Peek will not return the same result as the previous one.
 func (c *peekConn) PeekRead(p []byte) (int, error) {
 	n, err := c.reader.Read(p)
 	if n > 0 {

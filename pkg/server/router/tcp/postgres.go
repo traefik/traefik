@@ -3,8 +3,7 @@ package tcp
 import (
 	"bytes"
 	"errors"
-	"io"
-	"net"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,10 +26,6 @@ func isPostgres(conn *peekConn) (bool, error) {
 	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
 		peeked, err := conn.Peek(i)
 		if err != nil {
-			var opErr *net.OpError
-			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-				log.Debug().Err(err).Msg("Error while peeking first bytes")
-			}
 			return false, err
 		}
 
@@ -43,29 +38,23 @@ func isPostgres(conn *peekConn) (bool, error) {
 
 // servePostgres serves a connection with a Postgres client negotiating a STARTTLS session.
 // It handles TCP TLS routing, after accepting to start the STARTTLS session.
-func (r *Router) servePostgres(conn *peekConn) {
-	_, err := conn.Write(PostgresStartTLSReply)
-	if err != nil {
-		_ = conn.Close()
-		return
+func (r *Router) servePostgres(conn *peekConn) error {
+	if _, err := conn.Write(PostgresStartTLSReply); err != nil {
+		return fmt.Errorf("writing PostgresStartTLSReply: %w", err)
 	}
 
 	b := make([]byte, len(PostgresStartTLSMsg))
-	_, err = conn.Read(b)
-	if err != nil {
-		_ = conn.Close()
-		return
+	if _, err := conn.Read(b); err != nil {
+		return fmt.Errorf("reading PostgresStartTLSMsg: %w", err)
 	}
 
 	hello, err := clientHelloInfo(conn)
 	if err != nil {
-		_ = conn.Close()
-		return
+		return fmt.Errorf("reading clientHello: %w", err)
 	}
 
 	if !hello.isTLS {
-		_ = conn.Close()
-		return
+		return nil
 	}
 
 	// The deadline was there to prevent hanging connections while waiting for the client,
@@ -78,15 +67,13 @@ func (r *Router) servePostgres(conn *peekConn) {
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while reading TCP connection data")
-		_ = conn.Close()
-		return
+		return nil
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, _ := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS == nil {
-		_ = conn.Close()
-		return
+		return nil
 	}
 
 	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough.
@@ -96,6 +83,7 @@ func (r *Router) servePostgres(conn *peekConn) {
 	}
 
 	handlerTCPTLS.ServeTCP(proxiedConn)
+	return nil
 }
 
 // postgresConn is a tcp.WriteCloser that will negotiate a TLS session (STARTTLS),
