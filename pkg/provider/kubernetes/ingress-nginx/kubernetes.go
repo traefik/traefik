@@ -834,7 +834,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 
 				// TLS Router middlewares
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, false, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, false, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 

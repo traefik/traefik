@@ -85,6 +85,22 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
+						"default-ingress-with-custom-headers-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-custom-headers-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        "Host(`cross-namespace.localhost`) && Path(`/`)",
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry"},
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
@@ -103,6 +119,26 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
+							},
+						},
+						"default-ingress-with-custom-headers-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Cross-Header": "cross-value"},
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},
