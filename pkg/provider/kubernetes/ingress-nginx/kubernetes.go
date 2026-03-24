@@ -852,6 +852,23 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
 					}
+
+					if !hasTLS {
+						// default TLS router
+						canaryRouterKeyTLS := canaryRouterKey + "-tls"
+						canaryRouterTLS := &dynamic.Router{
+							EntryPoints: rtTLS.EntryPoints,
+							Rule:        canaryBackend.AppendCanaryRule(rtTLS.Rule),
+							RuleSyntax:  rtTLS.RuleSyntax,
+							Service:     canaryServiceName,
+							TLS:         rtTLS.TLS,
+						}
+						conf.HTTP.Routers[canaryRouterKeyTLS] = canaryRouterTLS
+
+						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, false, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+							logger.Error().Err(err).Msg("Error applying middlewares to canary router")
+						}
+					}
 				}
 
 				if hasCanaryBackend && canaryBackend.RequiresNonCanaryRouter() {
@@ -867,6 +884,22 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
+					}
+
+					if !hasTLS {
+						nonCanaryRouterKeyTLS := nonCanaryRouterKey + "-tls"
+						nonCanaryRouterTLS := &dynamic.Router{
+							EntryPoints: rtTLS.EntryPoints,
+							Rule:        canaryBackend.AppendNonCanaryRule(rtTLS.Rule),
+							RuleSyntax:  rtTLS.RuleSyntax,
+							Service:     serviceName,
+							TLS:         rtTLS.TLS,
+						}
+						conf.HTTP.Routers[nonCanaryRouterKeyTLS] = nonCanaryRouterTLS
+
+						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, false, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+							logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
+						}
 					}
 				}
 
