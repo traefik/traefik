@@ -880,7 +880,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
 					}
-
 				}
 
 				if hasCanaryBackend && canaryBackend.RequiresNonCanaryRouter() {
@@ -914,7 +913,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
 					}
-
 				}
 
 				if namedServersTransport != nil {
@@ -1669,7 +1667,7 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 	if rt.TLS != nil {
 		key = routerName + "-tls-from-to-www-redirect"
 	}
-	
+
 	wwwRedirectRouter := &dynamic.Router{
 		EntryPoints: rt.EntryPoints,
 		Rule:        newRule,
