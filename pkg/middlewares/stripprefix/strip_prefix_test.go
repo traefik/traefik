@@ -174,6 +174,17 @@ func TestStripPrefix(t *testing.T) {
 			expectedRawPath:    "/a%2Fb",
 			expectedHeader:     "/stat",
 		},
+		{
+			desc: "encoded char in prefix segment of raw path",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api/"},
+			},
+			path:               "/ap%69/a%2Fb",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/b",
+			expectedRawPath:    "/a%2Fb",
+			expectedHeader:     "/api/",
+		},
 	}
 
 	for _, test := range testCases {
