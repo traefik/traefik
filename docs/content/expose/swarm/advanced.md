@@ -402,4 +402,4 @@ Now that you've mastered both basic and advanced Traefik features with Docker Sw
 - [Observability features](../../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
 - [TCP services](../../reference/routing-configuration/tcp/service.md) for exposing TCP services
 - [UDP services](../../reference/routing-configuration/udp/service.md) for exposing UDP services
-- [Docker provider documentation](../../reference/install-configuration/providers/docker.md) for more details about the Docker integration
+- [Docker Swarm provider documentation](../../reference/install-configuration/providers/swarm.md) for more details about the Docker Swarm integration

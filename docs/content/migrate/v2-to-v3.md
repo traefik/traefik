@@ -46,7 +46,7 @@ core:
 ```
 
 !!! note "Backward Compatibility"
-    This snippet in the install configuration makes the [v2 format](../migrate/v2-to-v3-details.md#configure-the-default-syntax-in-install-configuration "Link to configure default syntax in install config") the default rule matchers syntax.
+    This snippet in the install configuration makes the [v2 format](./v2-to-v3-details.md#configure-the-default-syntax-in-install-configuration "Link to configure default syntax in install config") the default rule matchers syntax.
 
 ### Testing Phase
 

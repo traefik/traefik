@@ -8,7 +8,7 @@ description: "Looking to contribute to Traefik Proxy? This guide will show you t
 This guide is for contributors who already have a pull request to submit.
 If you are looking for information on setting up your developer environment
 and creating code to contribute to Traefik Proxy or related projects,
-see the [development guide](https://docs.traefik.io/contributing/building-testing/).
+see the [development guide](./building-testing.md).
 
 Looking for a way to contribute to Traefik Proxy?
 Check out this list of [Priority Issues](https://github.com/traefik/traefik/labels/contributor%2Fwanted),
@@ -46,7 +46,7 @@ Read more about the [Triage process](https://github.com/traefik/contributors-gui
 Merging a PR requires the following steps to be completed before it is merged automatically.
 
 * Make sure your pull request adheres to our best practices. These include:
-    * [Following project conventions](https://github.com/traefik/traefik/blob/master/docs/content/contributing/maintainers-guidelines.md); including using the PR Template.
+    * [Following project conventions](./maintainers-guidelines.md); including using the PR Template.
     * Make small pull requests.
     * Solve only one problem at a time.
     * Comment thoroughly.

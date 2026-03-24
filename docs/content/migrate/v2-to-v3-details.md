@@ -135,7 +135,7 @@ It is now unsupported and would prevent Traefik to start.
 ##### Remediation
 
 The `http3` option should be removed from the install configuration experimental section.
-To configure `http3`, please checkout the [entrypoint configuration documentation](../reference/install-configuration/entrypoints.md#http3).
+To configure `http3`, please checkout the [entrypoint configuration documentation](../reference/install-configuration/entrypoints.md#opt-http3).
 
 ### Consul provider
 
@@ -602,7 +602,7 @@ Here are two possible transition strategies:
     using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
     This allows continued compatibility with the existing infrastructure.
 
-Please check the [OpenTelemetry Tracing provider documention](../reference/install-configuration/observability/tracing.md) for more information.
+Please check the [OpenTelemetry Tracing provider documentation](../reference/install-configuration/observability/tracing.md) for more information.
 
 #### Internal Resources Observability
 
@@ -769,7 +769,7 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 ### TCP LoadBalancer `terminationDelay` option
 
 The TCP LoadBalancer `terminationDelay` option has been deprecated.
-This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](..//reference/routing-configuration/tcp/serverstransport.md#opt-serverstransport-terminationDelay)
+This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../reference/routing-configuration/tcp/serverstransport.md#opt-serverstransport-terminationDelay)
 
 ### Kubernetes CRDs API Group `traefik.containo.us`
 

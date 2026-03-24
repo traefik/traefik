@@ -30,7 +30,7 @@ Since this configuration is specific to your infrastructure choices, we invite y
 
 !!! info ""
 
-    In the [Quick Start example](../getting-started/docker.md), the whoami application routing configuration comes from docker in the form of a label attached to the whoami container.
+    In the [Quick Start example](./docker.md), the whoami application routing configuration comes from docker in the form of a label attached to the whoami container.
 
 !!! info "HTTPS Certificates also belong to the routing configuration."
 
