@@ -35,11 +35,13 @@ copyright: 'Traefik Labs • Copyright &copy; 2016-2026'
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
   - assets/js/extra.js
+  - assets/js/banner.js
 
 extra_css:
   - assets/css/menu-icons.css
   - assets/css/code-copy.css
   - assets/css/content-width.css
+  - assets/css/banner.css
 
 plugins:
   - search
