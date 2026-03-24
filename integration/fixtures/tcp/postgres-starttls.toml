@@ -1,0 +1,32 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.tcp]
+    address = ":8093"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[tcp]
+  [tcp.routers]
+    [tcp.routers.to-postgres]
+      rule = "HostSNI(`postgres-starttls`)"
+      service = "postgres"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-postgres.tls]
+
+  [tcp.services]
+    [tcp.services.postgres.loadBalancer]
+      [[tcp.services.postgres.loadBalancer.servers]]
+        address = "{{ .PostgresAddr }}"
