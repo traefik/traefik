@@ -631,7 +631,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				rtTLS.TLS.Options = clientAuthTLSOptionName
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, rtTLS, conf, ""); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, rtTLS, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -725,7 +725,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					rtTLS.TLS.Options = clientAuthTLSOptionName
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -843,7 +843,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				p.applySSLRedirectConfiguration(routerKey, ingress.IngressConfig, hasTLS, rt, conf)
 
 				// TLS Router middlewares
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -877,7 +877,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 						}
 						conf.HTTP.Routers[canaryRouterKeyTLS] = canaryRouterTLS
 
-						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 							logger.Error().Err(err).Msg("Error applying middlewares to canary router")
 						}
 					}
@@ -912,7 +912,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 						}
 						conf.HTTP.Routers[nonCanaryRouterKeyTLS] = nonCanaryRouterTLS
 
-						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 							logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
 						}
 					}
