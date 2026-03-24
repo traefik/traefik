@@ -830,6 +830,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				conf.HTTP.Services[serviceName] = service
 				if hasCanaryBackend {
 					rt.Service = wrrServiceName
+					rtTLS.Service = wrrServiceName
 					conf.HTTP.Services[canaryServiceName] = canaryService
 					conf.HTTP.Services[wrrServiceName] = wrrService
 				}
@@ -865,22 +866,21 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					// Only apply SSL redirect on the HTTP router
 					p.applySSLRedirectConfiguration(canaryRouterKey, ingress.IngressConfig, hasTLS, canaryRouter, conf)
 
-					if !hasTLS {
-						// default TLS router
-						canaryRouterKeyTLS := canaryRouterKey + "-tls"
-						canaryRouterTLS := &dynamic.Router{
-							EntryPoints: rtTLS.EntryPoints,
-							Rule:        canaryBackend.AppendCanaryRule(rtTLS.Rule),
-							RuleSyntax:  rtTLS.RuleSyntax,
-							Service:     canaryServiceName,
-							TLS:         rtTLS.TLS,
-						}
-						conf.HTTP.Routers[canaryRouterKeyTLS] = canaryRouterTLS
-
-						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
-							logger.Error().Err(err).Msg("Error applying middlewares to canary router")
-						}
+					// default TLS router
+					canaryRouterKeyTLS := canaryRouterKey + "-tls"
+					canaryRouterTLS := &dynamic.Router{
+						EntryPoints: rtTLS.EntryPoints,
+						Rule:        canaryBackend.AppendCanaryRule(rtTLS.Rule),
+						RuleSyntax:  rtTLS.RuleSyntax,
+						Service:     canaryServiceName,
+						TLS:         rtTLS.TLS,
 					}
+					conf.HTTP.Routers[canaryRouterKeyTLS] = canaryRouterTLS
+
+					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
+					}
+
 				}
 
 				if hasCanaryBackend && canaryBackend.RequiresNonCanaryRouter() {
@@ -901,21 +901,20 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					// Only apply SSL redirect on the HTTP router
 					p.applySSLRedirectConfiguration(nonCanaryRouterKey, ingress.IngressConfig, hasTLS, nonCanaryRouter, conf)
 
-					if !hasTLS {
-						nonCanaryRouterKeyTLS := nonCanaryRouterKey + "-tls"
-						nonCanaryRouterTLS := &dynamic.Router{
-							EntryPoints: rtTLS.EntryPoints,
-							Rule:        canaryBackend.AppendNonCanaryRule(rtTLS.Rule),
-							RuleSyntax:  rtTLS.RuleSyntax,
-							Service:     serviceName,
-							TLS:         rtTLS.TLS,
-						}
-						conf.HTTP.Routers[nonCanaryRouterKeyTLS] = nonCanaryRouterTLS
-
-						if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
-							logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
-						}
+					nonCanaryRouterKeyTLS := nonCanaryRouterKey + "-tls"
+					nonCanaryRouterTLS := &dynamic.Router{
+						EntryPoints: rtTLS.EntryPoints,
+						Rule:        canaryBackend.AppendNonCanaryRule(rtTLS.Rule),
+						RuleSyntax:  rtTLS.RuleSyntax,
+						Service:     serviceName,
+						TLS:         rtTLS.TLS,
 					}
+					conf.HTTP.Routers[nonCanaryRouterKeyTLS] = nonCanaryRouterTLS
+
+					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
+					}
+
 				}
 
 				if namedServersTransport != nil {
