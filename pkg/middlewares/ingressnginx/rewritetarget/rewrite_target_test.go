@@ -18,6 +18,8 @@ func TestRewriteTarget(t *testing.T) {
 		expectedPath             string
 		expectedRawPath          string
 		expectedXForwardedPrefix string
+		expectedStatusCode       int
+		expectedRedirectURL      string
 		expectsError             bool
 	}{
 		{
@@ -140,6 +142,25 @@ func TestRewriteTarget(t *testing.T) {
 			expectedRawPath:          "",
 			expectedXForwardedPrefix: "",
 		},
+		{
+			desc: "full URL replacement issues 302 redirect",
+			path: "/some/path",
+			config: dynamic.RewriteTarget{
+				Replacement: "https://bar.example.org/some/path",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/some/path",
+		},
+		{
+			desc: "regex with full URL replacement issues 302 redirect",
+			path: "/prefix/foo",
+			config: dynamic.RewriteTarget{
+				Regex:       `(?i)/prefix(/|$)(.*)`,
+				Replacement: "https://bar.example.org/$2",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/foo",
+		},
 	}
 
 	for _, test := range testCases {
@@ -162,9 +183,25 @@ func TestRewriteTarget(t *testing.T) {
 			server := httptest.NewServer(handler)
 			defer server.Close()
 
-			resp, err := http.Get(server.URL + test.path)
+			client := &http.Client{
+				CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
+			}
+
+			resp, err := client.Get(server.URL + test.path)
 			require.NoError(t, err)
-			require.Equal(t, http.StatusOK, resp.StatusCode)
+
+			expectedStatus := test.expectedStatusCode
+			if expectedStatus == 0 {
+				expectedStatus = http.StatusOK
+			}
+			require.Equal(t, expectedStatus, resp.StatusCode)
+
+			if test.expectedRedirectURL != "" {
+				assert.Equal(t, test.expectedRedirectURL, resp.Header.Get("Location"), "Unexpected redirect location.")
+				return
+			}
 
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")

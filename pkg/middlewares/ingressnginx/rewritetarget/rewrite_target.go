@@ -64,15 +64,24 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		currentPath = req.URL.EscapedPath()
 	}
 
+	var newTarget string
 	if rt.regexp != nil {
 		if !rt.regexp.MatchString(currentPath) {
 			rt.next.ServeHTTP(rw, req)
 			return
 		}
-		req.URL.RawPath = rt.regexp.ReplaceAllString(currentPath, rt.replacement)
+		newTarget = rt.regexp.ReplaceAllString(currentPath, rt.replacement)
 	} else {
-		req.URL.RawPath = rt.replacement
+		newTarget = rt.replacement
 	}
+
+	// If the replacement resolves to an absolute URL, issue a 302 redirect.
+	if parsed, err := url.Parse(newTarget); err == nil && parsed.Scheme != "" {
+		http.Redirect(rw, req, newTarget, http.StatusFound)
+		return
+	}
+
+	req.URL.RawPath = newTarget
 
 	if rt.xForwardedPrefix != "" {
 		prefix := rt.xForwardedPrefix
