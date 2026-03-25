@@ -558,8 +558,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		if len(ingress.Spec.TLS) > 0 {
 			hasTLS = true
 			if err := p.loadCertificates(ctxIngress, ingress.Ingress, uniqCerts); err != nil {
-				logger.Warn().Err(err).Msg("Error configuring TLS")
-				// DONE: No valid TLS secret => use default cert
+				logger.Warn().Err(err).Msg("Error loading TLS certificates defaulting to default certificate")
 			}
 		}
 
@@ -613,7 +612,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
-			// Only apply SSL redirect on the HTTP router
+			// Only apply SSL redirect on the HTTP router.
 			p.applySSLRedirectConfiguration(defaultBackendName, ingress.IngressConfig, hasTLS, rt, conf)
 
 			conf.HTTP.Routers[defaultBackendName] = rt
@@ -625,10 +624,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    defaultBackendName,
-				TLS:        &dynamic.RouterTLSConfig{},
-			}
-			if clientAuthTLSOptionName != "" {
-				rtTLS.TLS.Options = clientAuthTLSOptionName
+				TLS: &dynamic.RouterTLSConfig{
+					Options: clientAuthTLSOptionName,
+				},
 			}
 
 			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, rtTLS, conf, ""); err != nil {
@@ -719,10 +717,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    key,
-					TLS:        &dynamic.RouterTLSConfig{},
-				}
-				if clientAuthTLSOptionName != "" {
-					rtTLS.TLS.Options = clientAuthTLSOptionName
+					TLS: &dynamic.RouterTLSConfig{
+						Options: clientAuthTLSOptionName,
+					},
 				}
 
 				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
@@ -817,15 +814,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    rt.Service,
-					TLS:        &dynamic.RouterTLSConfig{},
+					TLS: &dynamic.RouterTLSConfig{
+						Options: clientAuthTLSOptionName,
+					},
 				}
 
 				routerKeyTLS := routerKey + "-tls"
 				conf.HTTP.Routers[routerKeyTLS] = rtTLS
-
-				if clientAuthTLSOptionName != "" {
-					rtTLS.TLS.Options = clientAuthTLSOptionName
-				}
 
 				conf.HTTP.Services[serviceName] = service
 				if hasCanaryBackend {
@@ -835,15 +830,15 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.Services[wrrServiceName] = wrrService
 				}
 
-				// HTTP Router middlewares
+				// HTTP Router middlewares.
 				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
-				// Only apply SSL redirect on the HTTP router
+				// Only apply SSL redirect on the HTTP router.
 				p.applySSLRedirectConfiguration(routerKey, ingress.IngressConfig, hasTLS, rt, conf)
 
-				// TLS Router middlewares
+				// TLS Router middlewares.
 				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
@@ -1930,7 +1925,7 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 }
 
 func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
-	// if the ingress has a TLS section, ingress-nginx forces the HTTPS redirect by default
+	// If the ingress has a TLS section, ingress-nginx forces the HTTPS redirect by default
 	// see https://kubernetes.github.io/ingress-nginx/user-guide/tls/#default-ssl-certificate
 	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, hasTLS)
 	forceSSLRedirect := ptr.Deref(ingressConfig.ForceSSLRedirect, false)
