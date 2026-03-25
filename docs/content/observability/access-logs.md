@@ -286,6 +286,100 @@ accessLog:
 
 ## Log Rotation
 
+The rotation of the access log files can be configured with the following options.
+When any of these options are set, Traefik will automatically handle log rotation.
+
+### `maxSize`
+
+`maxSize` is the maximum size in megabytes of the access log file before it gets rotated.
+It defaults to 100 megabytes.
+
+```yaml tab="File (YAML)"
+accessLog:
+  filePath: "/path/to/access.log"
+  maxSize: 1
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  filePath = "/path/to/access.log"
+  maxSize = 1
+```
+
+```bash tab="CLI"
+--accesslog.filepath=/path/to/access.log
+--accesslog.maxsize=1
+```
+
+### `maxBackups`
+
+`maxBackups` is the maximum number of old access log files to retain.
+The default is to retain all old log files (though `maxAge` may still cause them to get deleted).
+
+```yaml tab="File (YAML)"
+accessLog:
+  filePath: "/path/to/access.log"
+  maxBackups: 3
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  filePath = "/path/to/access.log"
+  maxBackups = 3
+```
+
+```bash tab="CLI"
+--accesslog.filepath=/path/to/access.log
+--accesslog.maxbackups=3
+```
+
+### `maxAge`
+
+`maxAge` is the maximum number of days to retain old access log files based on the timestamp encoded in their filename.
+Note that a day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc.
+The default is not to remove old log files based on age.
+
+```yaml tab="File (YAML)"
+accessLog:
+  filePath: "/path/to/access.log"
+  maxAge: 3
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  filePath = "/path/to/access.log"
+  maxAge = 3
+```
+
+```bash tab="CLI"
+--accesslog.filepath=/path/to/access.log
+--accesslog.maxage=3
+```
+
+### `compress`
+
+`compress` determines if the rotated access log files should be compressed using gzip.
+The default is not to perform compression.
+
+```yaml tab="File (YAML)"
+accessLog:
+  filePath: "/path/to/access.log"
+  compress: true
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  filePath = "/path/to/access.log"
+  compress = true
+```
+
+```bash tab="CLI"
+--accesslog.filepath=/path/to/access.log
+--accesslog.compress=true
+```
+
+### USR1 Signal
+
 Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
 This allows the logs to be rotated and processed by an external program, such as `logrotate`.
 

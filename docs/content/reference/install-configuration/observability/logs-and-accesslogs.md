@@ -228,6 +228,10 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-fields-names" href="#opt-accesslog-fields-names" title="#opt-accesslog-fields-names">`accesslog.fields.names`</a> | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#json-format-fields). |  [ ]    | No      |
 | <a id="opt-accesslog-fields-headers-defaultMode" href="#opt-accesslog-fields-headers-defaultMode" title="#opt-accesslog-fields-headers-defaultMode">`accesslog.fields.headers.defaultMode`</a> | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
 | <a id="opt-accesslog-fields-headers-names" href="#opt-accesslog-fields-headers-names" title="#opt-accesslog-fields-headers-names">`accesslog.fields.headers.names`</a> | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
+| <a id="opt-accesslog-maxSize" href="#opt-accesslog-maxSize" title="#opt-accesslog-maxSize">`accesslog.maxSize`</a> | Maximum size in megabytes of the access log file before it gets rotated. | 100MB      | No      |
+| <a id="opt-accesslog-maxAge" href="#opt-accesslog-maxAge" title="#opt-accesslog-maxAge">`accesslog.maxAge`</a> | Maximum number of days to retain old access log files based on the timestamp encoded in their filename.<br /> A day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc.<br />By default files are not removed based on their age.  |   0   | No      |
+| <a id="opt-accesslog-maxBackups" href="#opt-accesslog-maxBackups" title="#opt-accesslog-maxBackups">`accesslog.maxBackups`</a> | Maximum number of old access log files to retain.<br />The default is to retain all old log files. |  0  | No      |
+| <a id="opt-accesslog-compress" href="#opt-accesslog-compress" title="#opt-accesslog-compress">`accesslog.compress`</a> | Compress access log files in gzip after rotation. | false | No      |
 
 ### OpenTelemetry
 
@@ -387,7 +391,9 @@ Below the fields displayed with the generic CLF format:
 
 ### Log Rotation
 
-Traefik close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
+Both Traefik logs and access logs support automatic file rotation using the `maxSize`, `maxAge`, `maxBackups`, and `compress` options.
+
+Traefik will also close and reopen all log files (both Traefik logs and access logs), assuming they're configured, on receipt of a USR1 signal.
 This allows the logs to be rotated and processed by an external program, such as `logrotate`.
 
 !!! warning
