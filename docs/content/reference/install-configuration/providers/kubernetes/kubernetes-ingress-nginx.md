@@ -29,7 +29,7 @@ ensure that you add/update the [RBAC](https://kubernetes.io/docs/reference/acces
 
 ```bash
 # Install RBAC for Traefik Ingress NGINX provider:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-ingress-nginx-rbac.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-ingress-nginx-rbac.yml
 ```
 
 ## Ingress Discovery
