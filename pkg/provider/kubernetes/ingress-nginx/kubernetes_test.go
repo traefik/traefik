@@ -4930,7 +4930,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,

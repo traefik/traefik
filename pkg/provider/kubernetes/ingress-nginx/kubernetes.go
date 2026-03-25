@@ -405,7 +405,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			Services: map[string]*dynamic.TCPService{},
 		},
 	}
-	
+
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
@@ -1287,8 +1287,10 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
-	// Only apply SSL redirect on the HTTP router.
-	p.applySSLRedirectConfiguration(defaultBackendName, ingressConfig, hasTLS, rt, conf)
+	// Only apply SSL redirect on HTTP routers when the ingress has a TLS section.
+	if rt.TLS == nil && hasTLS {
+		p.applySSLRedirectConfiguration(defaultBackendName, ingressConfig, rt, conf)
+	}
 
 	if err := p.applyCustomHTTPErrors(namespace, ingressName, routerKey, backend, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
@@ -1909,12 +1911,7 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 	return nil
 }
 
-func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) bool {
-	// Only apply SSL redirect on HTTP routers when the ingress has a TLS section.
-	// TLS routers should never redirect; ingresses without TLS should not redirect either.
-	if rt.TLS != nil || !hasTLS {
-		return false
-	}
+func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) bool {
 	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, false)
 	forceSSLRedirect := ptr.Deref(ingressConfig.ForceSSLRedirect, false)
 
