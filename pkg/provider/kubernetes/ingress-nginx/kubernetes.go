@@ -405,10 +405,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			Services: map[string]*dynamic.TCPService{},
 		},
 	}
-
-	// TODO:
-	// - update tests
-
+	
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
