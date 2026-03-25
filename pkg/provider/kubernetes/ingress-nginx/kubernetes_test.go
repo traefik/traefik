@@ -1990,6 +1990,14 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
 							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry"},
 						},
+						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("rewrite-target-no-regex.localhost") && (Path("/something") || PathPrefix("/something/"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
