@@ -1916,11 +1916,10 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) bool {
 	// If the ingress has a TLS section, ingress-nginx forces the HTTPS redirect by default
 	// see https://kubernetes.github.io/ingress-nginx/user-guide/tls/#default-ssl-certificate
-	var hasTLS bool
-	if rt.TLS != nil {
-		hasTLS = true
+	if rt.TLS == nil {
+		return false
 	}
-	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, hasTLS)
+	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, false)
 	forceSSLRedirect := ptr.Deref(ingressConfig.ForceSSLRedirect, false)
 
 	// If either forceSSLRedirect or sslRedirect are enabled,
