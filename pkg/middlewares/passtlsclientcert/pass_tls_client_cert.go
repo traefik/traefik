@@ -148,6 +148,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	ctx := middlewares.GetLoggerCtx(req.Context(), p.name, typeName)
 	logger := log.FromContext(ctx)
 
+	req.Header.Del(xForwardedTLSClientCert)
 	if p.pem {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates))
@@ -156,6 +157,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		}
 	}
 
+	req.Header.Del(xForwardedTLSClientCertInfo)
 	if p.info != nil {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates)

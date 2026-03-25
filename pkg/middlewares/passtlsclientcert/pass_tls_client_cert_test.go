@@ -57,9 +57,9 @@ const (
                 Certificate Sign, CRL Sign
             X509v3 Basic Constraints: critical
                 CA:TRUE, pathlen:0
-            X509v3 Subject Key Identifier: 
+            X509v3 Subject Key Identifier:
                 1E:52:A2:E8:54:D5:37:EB:D5:A8:1D:E4:C2:04:1D:37:E2:F7:70:03
-            X509v3 Authority Key Identifier: 
+            X509v3 Authority Key Identifier:
                 keyid:36:70:35:AA:F0:F6:93:B2:86:5D:32:73:F9:41:5A:3F:3B:C8:BC:8B
 
     Signature Algorithm: sha1WithRSAEncryption
@@ -177,16 +177,16 @@ WqeUSNGYV//RunTeuRDAf5OxehERb1srzBXhRZ3cZdzXbgR/
         X509v3 extensions:
             X509v3 Key Usage: critical
                 Digital Signature, Key Encipherment
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:FALSE
-            X509v3 Extended Key Usage: 
+            X509v3 Extended Key Usage:
                 TLS Web Server Authentication, TLS Web Client Authentication
-            X509v3 Subject Key Identifier: 
+            X509v3 Subject Key Identifier:
                 94:BA:73:78:A2:87:FB:58:28:28:CF:98:3B:C2:45:70:16:6E:29:2F
-            X509v3 Authority Key Identifier: 
+            X509v3 Authority Key Identifier:
                 keyid:1E:52:A2:E8:54:D5:37:EB:D5:A8:1D:E4:C2:04:1D:37:E2:F7:70:03
 
-            X509v3 Subject Alternative Name: 
+            X509v3 Subject Alternative Name:
                 DNS:*.cheese.org, DNS:*.cheese.net, DNS:*.cheese.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@cheese.org, email:test@cheese.net
     Signature Algorithm: sha1WithRSAEncryption
          76:6b:05:b0:0e:34:11:b1:83:99:91:dc:ae:1b:e2:08:15:8b:
@@ -317,6 +317,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 
 			res := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+			req.Header.Set(xForwardedTLSClientCert, "Unsanitized HEADER")
 
 			if len(test.certContents) > 0 {
 				req.TLS = buildTLSWith(test.certContents)
@@ -539,6 +540,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 
 			res := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+			req.Header.Set(xForwardedTLSClientCertInfo, "Unsanitized HEADER")
 
 			if len(test.certContents) > 0 {
 				req.TLS = buildTLSWith(test.certContents)
