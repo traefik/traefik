@@ -236,7 +236,7 @@ A value of `0` for the priority is ignored: `priority: 0` means that the default
 
 ### Provider Priority
 
-When two routes from **different providers** share the same numeric priority, Traefik uses the [`providers.priorityList`](../../../../install-configuration/providers/overview.md#provider-priority) static configuration option to determine which route takes precedence.
+When two routes from **different providers** share the same numeric priority, Traefik uses the [`providers.priorityList`](../../../install-configuration/providers/overview.md#provider-priority) install configuration option to determine which route takes precedence.
 The provider listed first in `priorityList` wins the tie.
 
 Negative priority values are supported.

@@ -448,6 +448,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-providers-nomad-throttleduration" href="#opt-providers-nomad-throttleduration" title="#opt-providers-nomad-throttleduration">providers.nomad.throttleduration</a> | Watch throttle duration. | 0 |
 | <a id="opt-providers-nomad-watch" href="#opt-providers-nomad-watch" title="#opt-providers-nomad-watch">providers.nomad.watch</a> | Watch Nomad Service events. | false |
 | <a id="opt-providers-plugin-name" href="#opt-providers-plugin-name" title="#opt-providers-plugin-name">providers.plugin._name_</a> | Plugins configuration. | |
+| <a id="opt-providers-prioritylist" href="#opt-providers-prioritylist" title="#opt-providers-prioritylist">providers.prioritylist</a> | Defines the precedence between providers if priority on routers are equal. | |
 | <a id="opt-providers-providersthrottleduration" href="#opt-providers-providersthrottleduration" title="#opt-providers-providersthrottleduration">providers.providersthrottleduration</a> | Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. | 2 |
 | <a id="opt-providers-redis" href="#opt-providers-redis" title="#opt-providers-redis">providers.redis</a> | Enables Redis provider. | false |
 | <a id="opt-providers-redis-db" href="#opt-providers-redis-db" title="#opt-providers-redis-db">providers.redis.db</a> | Database to be selected after connecting to the server. | 0 |

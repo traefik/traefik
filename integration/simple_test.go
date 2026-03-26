@@ -2696,7 +2696,6 @@ func (s *SimpleSuite) TestProviderPriorityListFileWins() {
 	// The file provider has higher priority → requests must reach the file backend.
 	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("from-file"))
 	require.NoError(s.T(), err)
-
 }
 
 // TestProviderPriorityListDockerWins mirrors TestProviderPriorityListFileWins

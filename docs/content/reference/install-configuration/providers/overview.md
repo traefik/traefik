@@ -175,23 +175,23 @@ providers:
 
     | Position | Provider name            |
     |----------|--------------------------|
-    | 1        | `kubernetesgateway`      |
-    | 2        | `kubernetescrd`          |
-    | 3        | `kubernetes`             |
-    | 4        | `kubernetesingressnginx` |
-    | 5        | `swarm`                  |
-    | 6        | `docker`                 |
-    | 7        | `file`                   |
-    | 8        | `redis`                  |
-    | 9        | `knative`                |
-    | 10       | `consul`                 |
-    | 11       | `consulcatalog`          |
-    | 12       | `nomad`                  |
-    | 13       | `etcd`                   |
-    | 14       | `ecs`                    |
-    | 15       | `http`                   |
-    | 16       | `zookeeper`              |
-    | 17       | `rest`                   |
+    | <a id="opt-1" href="#opt-1" title="#opt-1">1</a> | `kubernetesgateway`      |
+    | <a id="opt-2" href="#opt-2" title="#opt-2">2</a> | `kubernetescrd`          |
+    | <a id="opt-3" href="#opt-3" title="#opt-3">3</a> | `kubernetes`             |
+    | <a id="opt-4" href="#opt-4" title="#opt-4">4</a> | `kubernetesingressnginx` |
+    | <a id="opt-5" href="#opt-5" title="#opt-5">5</a> | `swarm`                  |
+    | <a id="opt-6" href="#opt-6" title="#opt-6">6</a> | `docker`                 |
+    | <a id="opt-7" href="#opt-7" title="#opt-7">7</a> | `file`                   |
+    | <a id="opt-8" href="#opt-8" title="#opt-8">8</a> | `redis`                  |
+    | <a id="opt-9" href="#opt-9" title="#opt-9">9</a> | `knative`                |
+    | <a id="opt-10" href="#opt-10" title="#opt-10">10</a> | `consul`                 |
+    | <a id="opt-11" href="#opt-11" title="#opt-11">11</a> | `consulcatalog`          |
+    | <a id="opt-12" href="#opt-12" title="#opt-12">12</a> | `nomad`                  |
+    | <a id="opt-13" href="#opt-13" title="#opt-13">13</a> | `etcd`                   |
+    | <a id="opt-14" href="#opt-14" title="#opt-14">14</a> | `ecs`                    |
+    | <a id="opt-15" href="#opt-15" title="#opt-15">15</a> | `http`                   |
+    | <a id="opt-16" href="#opt-16" title="#opt-16">16</a> | `zookeeper`              |
+    | <a id="opt-17" href="#opt-17" title="#opt-17">17</a> | `rest`                   |
 
 !!! note
 

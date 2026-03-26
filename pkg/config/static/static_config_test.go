@@ -51,7 +51,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "empty",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 			},
 			expected: &Configuration{
 				EntryPoints: EntryPoints{"http": &EntryPoint{
@@ -84,13 +84,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 			},
 		},
 		{
 			desc: "ACME simple",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -132,7 +132,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -148,7 +148,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DelayBeforeCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -191,7 +191,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -211,7 +211,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DisablePropagationCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -254,7 +254,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -390,9 +390,9 @@ func TestProvidersPriorityList(t *testing.T) {
 		{
 			desc: "No priority list",
 			cfg: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{PriorityList: ProviderList},
 			},
-			expected: providerList,
+			expected: ProviderList,
 		},
 		{
 			desc: "Priority list with non existing provider",

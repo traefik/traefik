@@ -236,8 +236,8 @@ func (t *Tracing) SetDefaults() {
 	t.OTLP.SetDefaults()
 }
 
-// providerList is ordered for the default priority.
-var providerList = []string{
+// ProviderList is ordered for the default priority.
+var ProviderList = []string{
 	gateway.ProviderName,
 	crd.ProviderName,
 	ingress.ProviderName,
@@ -260,7 +260,7 @@ var providerList = []string{
 // Providers contains providers configuration.
 type Providers struct {
 	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
-	PriorityList              []string        `description:"Defines the provider priority if priority on routers are equal." json:"priorityList,omitempty" toml:"priorityList,omitempty" yaml:"priorityList,omitempty" export:"true"`
+	PriorityList              []string        `description:"Defines the precedence between providers if priority on routers are equal." json:"priorityList,omitempty" toml:"priorityList,omitempty" yaml:"priorityList,omitempty" export:"true"`
 
 	Docker                 *docker.Provider               `description:"Enables Docker provider." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Swarm                  *docker.SwarmProvider          `description:"Enables Docker Swarm provider." json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -314,7 +314,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	if len(c.Providers.PriorityList) == 0 {
-		c.Providers.PriorityList = providerList
+		c.Providers.PriorityList = ProviderList
 	}
 
 	for i, providerName := range c.Providers.PriorityList {
@@ -459,7 +459,7 @@ func (c *Configuration) ValidateConfiguration() error {
 
 	if c.Providers != nil {
 		for _, providerName := range c.Providers.PriorityList {
-			if !slices.Contains(providerList, providerName) {
+			if !slices.Contains(ProviderList, providerName) {
 				return fmt.Errorf("provider %q is not a valid provider name", providerName)
 			}
 		}
