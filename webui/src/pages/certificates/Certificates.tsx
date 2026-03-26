@@ -16,24 +16,16 @@ import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 import PageTitle from 'layout/PageTitle'
 
 export const CertificateRenderRow: RenderRowType = (row: unknown) => {
-  const cert = row as {
-    name?: string
-    notAfter?: string
-    commonName: string
-    issuerOrg?: string
-    issuerCN?: string
-    status?: 'enabled' | 'disabled' | 'warning'
-  }
+  const cert = row as Certificate.Raw
   const daysLeft = cert.notAfter
     ? Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0
   const validUntil = cert.notAfter ? new Date(cert.notAfter).toLocaleDateString() : 'Unknown'
-  const certKey = cert.name || cert.commonName // Use name (certKey) if available, fallback to commonName
 
   return (
-    <ClickableRow key={cert.commonName} to={`/certificates/${encodeURIComponent(certKey)}`}>
+    <ClickableRow key={cert.name} to={`/certificates/${cert.name}`}>
       <AriaTd>
-        <ResourceStatus status={cert.status || 'disabled'} />
+        <ResourceStatus status={cert.status} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={cert.commonName} />

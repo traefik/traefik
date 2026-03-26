@@ -298,6 +298,9 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 // GetServerCertificates returns all certificates from the default store,
 // as well as the user-defined default certificate (if it exists).
 func (m *Manager) GetServerCertificates() map[string]*x509.Certificate {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
 	certificates := make(map[string]*x509.Certificate)
 
 	// The default store is the only relevant, because it is the only one configurable.
@@ -308,12 +311,15 @@ func (m *Manager) GetServerCertificates() map[string]*x509.Certificate {
 
 	// We iterate over all the certificates.
 	if defaultStore.DynamicCerts != nil && defaultStore.DynamicCerts.Get() != nil {
-		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*CertificateData) {
-			// Use Leaf if available (it should always be populated by parseCertificate)
-			if cert.Certificate.Leaf != nil {
-				hash := sha256.Sum256(cert.Certificate.Leaf.Raw)
-				fingerprint := hex.EncodeToString(hash[:])
-				certificates[fingerprint] = cert.Certificate.Leaf
+		certs, ok := defaultStore.DynamicCerts.Get().(map[string]*CertificateData)
+		if ok {
+			for _, cert := range certs {
+				// Use Leaf if available (it should always be populated by parseCertificate)
+				if cert.Certificate.Leaf != nil {
+					hash := sha256.Sum256(cert.Certificate.Leaf.Raw)
+					fingerprint := hex.EncodeToString(hash[:])
+					certificates[fingerprint] = cert.Certificate.Leaf
+				}
 			}
 		}
 	}

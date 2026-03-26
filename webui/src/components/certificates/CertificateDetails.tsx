@@ -1,8 +1,11 @@
 import { Badge, Box, Flex, Link } from '@traefiklabs/faency'
-import { useMemo } from 'react'
+import { type ReactElement, useMemo } from 'react'
 
 import CertExpiryBadge, { getCertExpiryStatus } from 'components/certificates/CertExpiryBadge'
 import DetailsCard, { ValText } from 'components/resources/DetailsCard'
+
+const isLinkableHostname = (value: string) =>
+  !value.startsWith('*.') && !/\s/.test(value) && !/^[\d.]+$/.test(value) && !value.includes(':')
 
 export const CertificateDetails = ({ certificate }: { certificate: Certificate.Info }) => {
   const validFrom = new Date(certificate.notBefore)
@@ -12,7 +15,7 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
   const issuedToItems = [
     {
       key: 'Common Name',
-      val: (
+      val: isLinkableHostname(certificate.commonName) ? (
         <Link
           variant="blue"
           href={`//${certificate.commonName}`}
@@ -22,6 +25,8 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
         >
           {certificate.commonName}
         </Link>
+      ) : (
+        <ValText>{certificate.commonName}</ValText>
       ),
     },
     {
@@ -38,12 +43,12 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
         <Box>
           {certificate.sans.map((san, idx) => (
             <Box key={idx}>
-              {san.startsWith('*.') ? (
-                <ValText>{san}</ValText>
-              ) : (
+              {isLinkableHostname(san) ? (
                 <Link variant="blue" href={`//${san}`} target="_blank" rel="noopener noreferrer">
                   {san}
                 </Link>
+              ) : (
+                <ValText>{san}</ValText>
               )}
             </Box>
           ))}
@@ -75,7 +80,7 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
     { key: 'Key Type', val: certificate.keyType || 'Unknown' },
     { key: 'Key Size', val: `${certificate.keySize || 0} bits` },
     { key: 'Signature Algorithm', val: certificate.signatureAlgorithm || 'Unknown' },
-  ].filter(Boolean) as { key: string; val: string | React.ReactElement }[]
+  ].filter(Boolean) as { key: string; val: string | ReactElement }[]
 
   const fingerprintItems = [
     { key: 'Certificate', val: certificate.certFingerprint || 'N/A' },

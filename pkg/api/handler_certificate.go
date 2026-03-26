@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
@@ -26,12 +25,6 @@ func keepCertificate(cert certificateRepresentation, criterion *searchCriterion)
 
 func (h Handler) getCertificates(rw http.ResponseWriter, request *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
-
-	if h.runtimeConfiguration == nil {
-		rw.WriteHeader(http.StatusOK)
-		fmt.Fprint(rw, "[]")
-		return
-	}
 
 	allCerts := h.extractCertificates()
 
@@ -57,20 +50,25 @@ func (h Handler) getCertificates(rw http.ResponseWriter, request *http.Request) 
 func (h Handler) getCertificate(rw http.ResponseWriter, request *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
-	certId := mux.Vars(request)["certificateID"]
+	certID := mux.Vars(request)["certificateID"]
+
+	if h.tlsManager == nil {
+		writeError(rw, fmt.Sprintf("certificate not found: %s", certID), http.StatusNotFound)
+		return
+	}
 
 	certs := h.tlsManager.GetServerCertificates()
-	x509Cert, ok := certs[certId]
+	x509Cert, ok := certs[certID]
 
 	if !ok {
-		writeError(rw, fmt.Sprintf("certificate not found: %s", certId), http.StatusNotFound)
+		writeError(rw, fmt.Sprintf("certificate not found: %s", certID), http.StatusNotFound)
 		return
 	}
 
 	cert := buildCertificateRepresentation(x509Cert)
 
 	if err := json.NewEncoder(rw).Encode(cert); err != nil {
-		log.Error().Err(err).Str("id", certId).Msg("Unable to encode certificate")
+		log.Error().Err(err).Str("id", certID).Msg("Unable to encode certificate")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -87,11 +85,6 @@ func (h Handler) extractCertificates() []certificateRepresentation {
 		rep := buildCertificateRepresentation(cert)
 		result = append(result, rep)
 	}
-
-	// Sort by commonName
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].CommonName < result[j].CommonName
-	})
 
 	return result
 }

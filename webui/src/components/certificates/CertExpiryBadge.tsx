@@ -17,11 +17,11 @@ type CertExpiryBadgeProps = {
 }
 
 const CertExpiryBadge = ({ daysLeft, size = 'large' }: CertExpiryBadgeProps) => {
-  const { variant, label } = getCertExpiryStatus(daysLeft)
+  const { variant } = getCertExpiryStatus(daysLeft)
 
   return (
     <Badge size={size} variant={variant}>
-      {daysLeft < 0 ? 'EXPIRED' : label === 'Valid' ? `${daysLeft} days` : `${daysLeft} days`}
+      {daysLeft < 0 ? 'EXPIRED' : `${daysLeft} days`}
     </Badge>
   )
 }

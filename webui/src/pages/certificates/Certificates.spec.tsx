@@ -8,7 +8,7 @@ describe('<CertificatesPage />', () => {
   it('should render the certificates list', () => {
     const pages = [
       {
-        name: 'MTI3LjAuMC4xLDo6MSxleGFtcGxlLmNvbQ==',
+        name: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
         commonName: 'example.com',
         sans: ['example.com', '127.0.0.1', '::1'],
         issuerOrg: 'Acme Co',
@@ -16,10 +16,9 @@ describe('<CertificatesPage />', () => {
         notAfter: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         notBefore: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'enabled',
-        resolver: 'letsencrypt',
       },
       {
-        name: 'd2FybmluZy5jb20sd3d3Lndhcm5pbmcuY29t',
+        name: 'b2c3d4e5f6b2c3d4e5f6b2c3d4e5f6b2c3d4e5f6b2c3d4e5f6b2c3d4e5f6b2c3',
         commonName: 'warning.com',
         sans: ['warning.com', 'www.warning.com'],
         issuerOrg: 'Warning CA',
@@ -27,17 +26,15 @@ describe('<CertificatesPage />', () => {
         notAfter: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
         notBefore: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'warning',
-        resolver: '',
       },
       {
-        name: 'ZXhwaXJlZC5jb20=',
+        name: 'c3d4e5f6c3d4e5f6c3d4e5f6c3d4e5f6c3d4e5f6c3d4e5f6c3d4e5f6c3d4e5f6',
         commonName: 'expired.com',
         sans: ['expired.com'],
         issuerOrg: 'Expired CA',
         notAfter: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         notBefore: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'disabled',
-        resolver: 'manual',
       },
     ].map(CertificateRenderRow)
     const mock = vi
@@ -114,7 +111,7 @@ describe('<CertificatesPage />', () => {
     // Test different expiry colors
     const pages = [
       {
-        name: 'Z3JlZW4=',
+        name: 'd4e5f6d4e5f6d4e5f6d4e5f6d4e5f6d4e5f6d4e5f6d4e5f6d4e5f6d4e5f6d4e5',
         commonName: 'green.com',
         sans: ['green.com'],
         issuerOrg: 'Test CA',
@@ -123,7 +120,7 @@ describe('<CertificatesPage />', () => {
         status: 'enabled',
       },
       {
-        name: 'b3JhbmdlLmNvbQ==',
+        name: 'e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6e5f6',
         commonName: 'orange.com',
         sans: ['orange.com'],
         issuerOrg: 'Test CA',

@@ -1,20 +1,6 @@
 import { useMemo } from 'react'
 import useSWR from 'swr'
 
-/**
- * Build a certificate key from domains (main + SANs)
- * Returns base64-encoded string of sorted, comma-separated domains
- * Deduplicates and lowercases domains to match backend behavior
- */
-export const buildCertKey = (main: string, sans?: string[]): string => {
-  const allDomains = [main, ...(sans || [])]
-  // Deduplicate using Set (lowercased), then sort and join
-  const uniqueDomains = Array.from(new Set(allDomains.map((d) => d.toLowerCase())))
-    .sort()
-    .join(',')
-  return btoa(uniqueDomains)
-}
-
 export const useCertificates = () => {
   const { data, error } = useSWR<Certificate.Raw[]>('/certificates')
 
@@ -36,8 +22,8 @@ export const useCertificates = () => {
   }
 }
 
-export const useCertificate = (certKey: string) => {
-  const { data, error } = useSWR<Certificate.Raw>(certKey ? `/certificates/${encodeURIComponent(certKey)}` : null)
+export const useCertificate = (certId: string) => {
+  const { data, error } = useSWR<Certificate.Raw>(certId ? `/certificates/${certId}` : null)
 
   const certificate: Certificate.Info | null = useMemo(() => {
     if (!data) return null
@@ -53,6 +39,6 @@ export const useCertificate = (certKey: string) => {
   return {
     certificate,
     error,
-    isLoading: !error && !data,
+    isLoading: !!certId && !error && !data,
   }
 }

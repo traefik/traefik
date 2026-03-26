@@ -37,7 +37,6 @@ type orderedCertificate interface {
 
 	status() string
 	issuer() string
-	resolver() string
 	validUntil() time.Time
 }
 
@@ -354,7 +353,7 @@ func sortCertificates[T orderedCertificate](values url.Values, certificates []T)
 	sortBy := values.Get(sortByParam)
 
 	direction := values.Get(directionParam)
-	if direction == ""	{
+	if direction == "" {
 		direction = ascendantSorting
 	}
 
@@ -367,9 +366,6 @@ func sortCertificates[T orderedCertificate](values url.Values, certificates []T)
 
 	case "issuer":
 		sortByFunc(direction, certificates, func(i int) string { return certificates[i].issuer() })
-
-	case "resolver":
-		sortByFunc(direction, certificates, func(i int) string { return certificates[i].resolver() })
 
 	case "validUntil":
 		sortByTime(direction, certificates, func(i int) time.Time { return certificates[i].validUntil() })

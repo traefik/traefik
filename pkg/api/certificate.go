@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// certificateRepresentation represents a certificate in the API
+// certificateRepresentation represents a certificate in the API.
 type certificateRepresentation struct {
 	Name                 string    `json:"name"` // SHA-256 fingerprint of the DER-encoded certificate.
 	SANs                 []string  `json:"sans"`
@@ -31,10 +31,9 @@ type certificateRepresentation struct {
 	CertFingerprint      string    `json:"certFingerprint"`
 	PublicKeyFingerprint string    `json:"publicKeyFingerprint"`
 	Status               string    `json:"status"`
-	Resolver             string    `json:"resolver,omitempty"`
 }
 
-// Interface methods for sort.go compatibility
+// Interface methods for sort.go compatibility.
 func (c certificateRepresentation) name() string {
 	return c.CommonName
 }
@@ -50,16 +49,12 @@ func (c certificateRepresentation) issuer() string {
 	return c.IssuerCN
 }
 
-func (c certificateRepresentation) resolver() string {
-	return c.Resolver
-}
-
 func (c certificateRepresentation) validUntil() time.Time {
 	return c.NotAfter
 }
 
-// buildCertificateRepresentation builds a certificateRepresentation from an x509 certificate
-func buildCertificateRepresentation(cert *x509.Certificate, resolver ...string) certificateRepresentation {
+// buildCertificateRepresentation builds a certificateRepresentation from an x509 certificate.
+func buildCertificateRepresentation(cert *x509.Certificate) certificateRepresentation {
 	keyType, keySize := extractKeyInfo(cert)
 	certFingerprint, pubKeyFingerprint := extractFingerprints(cert)
 	issuerOrg, issuerCN, issuerCountry := extractIssuerInfo(cert)
@@ -84,11 +79,10 @@ func buildCertificateRepresentation(cert *x509.Certificate, resolver ...string) 
 		CertFingerprint:      certFingerprint,
 		PublicKeyFingerprint: pubKeyFingerprint,
 		Status:               getCertificateStatus(cert.NotAfter),
-		Resolver:             extractResolver(resolver),
 	}
 }
 
-// extractSANs extracts Subject Alternative Names from a certificate
+// extractSANs extracts Subject Alternative Names from a certificate.
 func extractSANs(cert *x509.Certificate) []string {
 	sans := make([]string, 0, len(cert.DNSNames)+len(cert.IPAddresses))
 	sans = append(sans, cert.DNSNames...)
@@ -99,7 +93,7 @@ func extractSANs(cert *x509.Certificate) []string {
 	return sans
 }
 
-// extractKeyInfo determines the key type and size from a certificate
+// extractKeyInfo determines the key type and size from a certificate.
 func extractKeyInfo(cert *x509.Certificate) (keyType string, keySize int) {
 	keyType = "Unknown"
 	keySize = 0
@@ -116,7 +110,7 @@ func extractKeyInfo(cert *x509.Certificate) (keyType string, keySize int) {
 	return keyType, keySize
 }
 
-// extractFingerprints calculates SHA-256 fingerprints for certificate and public key
+// extractFingerprints calculates SHA-256 fingerprints for certificate and public key.
 func extractFingerprints(cert *x509.Certificate) (certFingerprint, pubKeyFingerprint string) {
 	certHash := sha256.Sum256(cert.Raw)
 	certFingerprint = hex.EncodeToString(certHash[:])
@@ -130,7 +124,7 @@ func extractFingerprints(cert *x509.Certificate) (certFingerprint, pubKeyFingerp
 	return certFingerprint, pubKeyFingerprint
 }
 
-// extractIssuerInfo extracts issuer information from a certificate
+// extractIssuerInfo extracts issuer information from a certificate.
 func extractIssuerInfo(cert *x509.Certificate) (org, cn, country string) {
 	if len(cert.Issuer.Organization) > 0 {
 		org = cert.Issuer.Organization[0]
@@ -142,7 +136,7 @@ func extractIssuerInfo(cert *x509.Certificate) (org, cn, country string) {
 	return org, cn, country
 }
 
-// extractSubjectInfo extracts subject information from a certificate
+// extractSubjectInfo extracts subject information from a certificate.
 func extractSubjectInfo(cert *x509.Certificate) (organization, country string) {
 	if len(cert.Subject.Organization) > 0 {
 		organization = cert.Subject.Organization[0]
@@ -153,26 +147,19 @@ func extractSubjectInfo(cert *x509.Certificate) (organization, country string) {
 	return organization, country
 }
 
-// formatVersion formats the X.509 version for display
+// formatVersion formats the X.509 version for display.
 func formatVersion(version int) string {
 	return fmt.Sprintf("v%d", version)
 }
 
-// extractResolver extracts the resolver name from optional parameters
-func extractResolver(resolver []string) string {
-	if len(resolver) > 0 {
-		return resolver[0]
-	}
-	return ""
-}
-
-// getCertificateStatus returns the status of a certificate based on its expiry
+// getCertificateStatus returns the status of a certificate based on its expiry.
 func getCertificateStatus(notAfter time.Time) string {
-	daysLeft := int(time.Until(notAfter).Hours() / 24)
-	if daysLeft < 0 {
+	remaining := time.Until(notAfter)
+	if remaining < 0 {
 		return "disabled"
 	}
-	if daysLeft < 30 {
+	// Show warning for certificates with validity less than 14 days left.
+	if remaining < 14*24*time.Hour {
 		return "warning"
 	}
 	return "enabled"

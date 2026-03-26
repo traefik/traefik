@@ -128,25 +128,21 @@ declare namespace Certificate {
     name: string
     commonName: string
     sans: string[]
-    issuer?: string
     issuerOrg?: string
     issuerCN?: string
     issuerCountry?: string
     organization?: string
     country?: string
-    subject?: string
-    serialNumber?: string
+    serialNumber: string
     notBefore: string
     notAfter: string
-    version?: string
-    keyType?: string
+    version: string
+    keyType: string
     keySize?: number
-    signatureAlgorithm?: string
-    certFingerprint?: string
+    signatureAlgorithm: string
+    certFingerprint: string
     publicKeyFingerprint?: string
-    status?: 'enabled' | 'disabled' | 'warning'
-    resolver?: string
-    usedBy?: string[]
+    status: 'enabled' | 'disabled' | 'warning'
   }
 
   /** Enriched certificate with computed fields */
