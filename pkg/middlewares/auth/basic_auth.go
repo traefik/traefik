@@ -99,6 +99,8 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
+		// TODO Deprecated we should add the header with canonical key.
+		req.Header.Del(b.headerField)
 		req.Header[b.headerField] = []string{user}
 	}
 
