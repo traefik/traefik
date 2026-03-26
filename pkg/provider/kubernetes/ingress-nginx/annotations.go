@@ -21,6 +21,7 @@ type IngressConfig struct {
 	AuthResponseHeaders *string `annotation:"nginx.ingress.kubernetes.io/auth-response-headers"`
 	AuthSnippet         *string `annotation:"nginx.ingress.kubernetes.io/auth-snippet"`
 	AuthMethod          *string `annotation:"nginx.ingress.kubernetes.io/auth-method"`
+	EnableGlobalAuth    *bool   `annotation:"nginx.ingress.kubernetes.io/enable-global-auth"`
 
 	AuthTLSSecret                    *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-secret"`
 	AuthTLSVerifyClient              *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-verify-client"`
