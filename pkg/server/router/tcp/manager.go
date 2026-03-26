@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"strings"
 
+	kitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -35,6 +37,7 @@ type Manager struct {
 	httpsHandlers      map[string]http.Handler
 	tlsManager         *traefiktls.Manager
 	conf               *runtime.Configuration
+	metricsRegistry    metrics.Registry
 }
 
 // NewManager Creates a new Manager.
@@ -44,6 +47,7 @@ func NewManager(conf *runtime.Configuration,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
 	tlsManager *traefiktls.Manager,
+	metricsRegistry metrics.Registry,
 ) *Manager {
 	return &Manager{
 		serviceManager:     serviceManager,
@@ -52,6 +56,7 @@ func NewManager(conf *runtime.Configuration,
 		httpsHandlers:      httpsHandlers,
 		tlsManager:         tlsManager,
 		conf:               conf,
+		metricsRegistry:    metricsRegistry,
 	}
 }
 
@@ -263,8 +268,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 // addTCPHandlers creates the TCP handlers defined in configs, and adds them to router.
 func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, router *Router) {
 	for routerName, routerConfig := range configs {
-		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
-		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
+		ctxRouter := provider.AddInContext(ctx, routerName)
+		logger := log.Ctx(ctxRouter).With().Str(logs.RouterName, routerName).Logger()
+		ctxRouter = logger.WithContext(provider.AddInContext(ctx, routerName))
 
 		if routerConfig.Priority == 0 {
 			routerConfig.Priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
@@ -321,6 +327,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if routerConfig.TLS == nil {
 			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
 
+			if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
+				gauge := m.metricsRegistry.RouterOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
+				handler = &metricsMiddleware{
+					next:                 handler,
+					openConnectionsGauge: gauge,
+				}
+			}
+
 			if err := router.muxerTCP.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -330,6 +344,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
+
+			if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
+				gauge := m.metricsRegistry.RouterOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
+				handler = &metricsMiddleware{
+					next:                 handler,
+					openConnectionsGauge: gauge,
+				}
+			}
 
 			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
@@ -392,6 +414,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			continue
 		}
 
+		if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
+			gauge := m.metricsRegistry.RouterOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
+			handler = &metricsMiddleware{
+				next:                 handler,
+				openConnectionsGauge: gauge,
+			}
+		}
+
 		handler = &tcp.TLSHandler{
 			Next:   handler,
 			Config: tlsConf,
@@ -426,4 +456,15 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
 	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
+}
+
+type metricsMiddleware struct {
+	next                 tcp.Handler
+	openConnectionsGauge kitmetrics.Gauge
+}
+
+func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
+	m.openConnectionsGauge.Add(1)
+	defer m.openConnectionsGauge.Add(-1)
+	m.next.ServeTCP(conn)
 }
