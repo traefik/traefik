@@ -196,9 +196,19 @@ func TestHostV2Matcher(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			desc:          "invalid Host matcher (non-ASCII)",
-			rule:          "Host(`🦭.com`)",
-			expectedError: true,
+			desc: "valid Host matcher (IDN unicode)",
+			rule: "Host(`ß-ä-ö-ü.de`)",
+			expected: map[string]int{
+				"https://xn------4ka0a3ivb.de":      http.StatusOK,
+				"https://xn------4ka0a3ivb.de/path": http.StatusOK,
+			},
+		},
+		{
+			desc: "valid Host matcher (IDN emoji)",
+			rule: "Host(`🦭.com`)",
+			expected: map[string]int{
+				"https://xn--9t9h.com": http.StatusOK,
+			},
 		},
 		{
 			desc: "valid Host matcher (many parameters)",
@@ -949,9 +959,12 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
-			desc:          "Non-ASCII Host",
-			rule:          "Host(`locàlhost`)",
-			expectedError: true,
+			desc: "Non-ASCII Host",
+			rule: "Host(`locàlhost`)",
+			expected: map[string]int{
+				"http://xn--loclhost-1ya/foo": http.StatusOK,
+				"http://localhost/foo":         http.StatusNotFound,
+			},
 		},
 		{
 			desc:          "Non-ASCII HostRegexp",

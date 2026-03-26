@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"golang.org/x/net/idna"
 )
 
 var httpFuncsV2 = matcherBuilderFuncs{
@@ -79,7 +80,12 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 func hostV2(tree *matchersTree, hosts ...string) error {
 	for i, host := range hosts {
 		if !IsASCII(host) {
-			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
+			// Convert internationalized domain names (IDN) to ASCII-compatible encoding (punycode).
+			ascii, err := idna.Lookup.ToASCII(host)
+			if err != nil {
+				return fmt.Errorf("invalid value %q for \"Host\" matcher, not a valid internationalized domain name: %w", host, err)
+			}
+			host = ascii
 		}
 
 		hosts[i] = strings.ToLower(host)
