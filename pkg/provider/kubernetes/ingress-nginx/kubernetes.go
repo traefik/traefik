@@ -1647,8 +1647,6 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		},
 	}
 
-	key := routerName + "-from-to-www-redirect"
-
 	wwwRedirectRouter := &dynamic.Router{
 		EntryPoints: rt.EntryPoints,
 		Rule:        newRule,
@@ -1659,7 +1657,7 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		Service:     rt.Service,
 		TLS:         rt.TLS,
 	}
-	conf.HTTP.Routers[key] = wwwRedirectRouter
+	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
