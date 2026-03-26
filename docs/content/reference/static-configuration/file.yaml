@@ -93,6 +93,7 @@ entryPoints:
         allowEncodedHash: true
       encodeQuerySemicolons: true
       sanitizePath: true
+      mergeSlashes: true
       maxHeaderBytes: 42
     http2:
       maxConcurrentStreams: 42

@@ -9,6 +9,10 @@
     address = ":8001"
     [entryPoints.web2.http]
       sanitizePath = false
+  [entryPoints.web3]
+    address = ":8002"
+    [entryPoints.web3.http]
+      mergeSlashes = false
 
 [log]
   level = "DEBUG"

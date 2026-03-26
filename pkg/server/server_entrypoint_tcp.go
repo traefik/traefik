@@ -670,7 +670,16 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// Note that the Path sanitization has to be done after the path normalization,
 	// hence the wrapping has to be done before the normalize path wrapping.
 	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
-		handler = sanitizePath(handler)
+		if configuration.HTTP.MergeSlashes != nil && *configuration.HTTP.MergeSlashes {
+			// Fast path: both enabled — use existing JoinPath-based sanitizePath.
+			handler = sanitizePath(handler)
+		} else {
+			// MergeSlashes disabled: dot-segment resolution only, preserving empty path segments.
+			// MergeSlashes is gated behind SanitizePath because merging slashes without
+			// dot-segment resolution is a nonsensical security posture — it would normalize
+			// "//" but leave "/../" unresolved.
+			handler = sanitizeDotSegments(handler)
+		}
 	}
 
 	handler = normalizePath(handler)
