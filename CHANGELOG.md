@@ -1,3 +1,27 @@
+## [v3.7.0-ea.3](https://github.com/traefik/traefik/tree/v3.7.0-ea.3) (2026-03-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.0-ea.2...v3.7.0-ea.3)
+
+**Bug fixes:**
+- **[k8s/crd]** Fix panic with Failover services in Kubernetes ([#12853](https://github.com/traefik/traefik/pull/12853) @juliens)
+- **[k8s/ingress-nginx]** Fix rewrite directive in configuration-snippet to trim quotes ([#12855](https://github.com/traefik/traefik/pull/12855) @gndz07)
+- **[k8s/ingress-nginx]** Fix rewrite-target to handle full URL ([#12854](https://github.com/traefik/traefik/pull/12854) @gndz07)
+- **[k8s/ingress-nginx]** Handle empty rewrite-target like unset rewrite-target ([#12832](https://github.com/traefik/traefik/pull/12832) @sathieu)
+- **[k8s/ingress-nginx]** Fix TLS behavior in ingress-nginx provider ([#12831](https://github.com/traefik/traefik/pull/12831) @LBF38)
+- **[k8s/ingress-nginx]** Fix auth-response-headers whitespace trimming in ingress-nginx provider ([#12856](https://github.com/traefik/traefik/pull/12856) @mmatur)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.33.0 ([#12840](https://github.com/traefik/traefik/pull/12840) @ldez)
+- **[server, tcp]** Fix postgres STARTTLS with TLS termination ([#12847](https://github.com/traefik/traefik/pull/12847) @mmatur)
+- **[api]** Fix allow colons and tildes in api.basePath validation ([#12857](https://github.com/traefik/traefik/pull/12857) @mmatur)
+- **[server]** Fix comment and unnecessary allocation in withRoutingPath ([#12880](https://github.com/traefik/traefik/pull/12880) @boinger)
+- **[grpc]** Bump google.golang.org/grpc to v1.79.3 ([#12845](https://github.com/traefik/traefik/pull/12845) @mmatur)
+- **[middleware, authentication]** Prevent duplicate user headers in basic and digest auth middleware ([#12851](https://github.com/traefik/traefik/pull/12851) @juliens)
+- **[middleware]** Fix StripPrefix and StripPrefixRegex to slice the prefix using encoded prefix length ([#12863](https://github.com/traefik/traefik/pull/12863) @gndz07)
+
+**Documentation:**
+- **[acme]** Clarify CNAME explanation in ACME Documentation ([#12818](https://github.com/traefik/traefik/pull/12818) @sheddy-traefik)
+- **[k8s/ingress-nginx]** Add ingress-nginx migration banner on documentation pages ([#12872](https://github.com/traefik/traefik/pull/12872) @gndz07)
+- **[k8s/ingress]** Improve Kubernetes Ingress Routing Documentation ([#12876](https://github.com/traefik/traefik/pull/12876) @sheddy-traefik)
+- **[k8s/ingress-nginx]** Clarify that NGINX Ingress watchNamespace watches only one namespace ([#12873](https://github.com/traefik/traefik/pull/12873) @parkerfath)
+
 ## [v3.6.12](https://github.com/traefik/traefik/tree/v3.6.12) (2026-03-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.11...v3.6.12)
 
