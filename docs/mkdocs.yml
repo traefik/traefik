@@ -52,6 +52,11 @@ plugins:
       encoding: utf-8
   - redirects:
       redirect_maps:
+        ## Getting-Started
+        'getting-started/concepts.md': 'getting-started/configuration-overview.md'
+        'getting-started/install-traefik.md': 'getting-started/index.md'
+        'getting-started/quick-start-with-kubernetes.md': 'getting-started/kubernetes.md'
+        'getting-started/quick-start.md': 'getting-started/docker.md'
         # Providers
         'providers/overview.md': 'reference/install-configuration/providers/overview.md'
         'providers/docker.md': 'reference/install-configuration/providers/docker.md'
