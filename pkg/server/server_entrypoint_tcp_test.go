@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -419,6 +420,142 @@ func Test_denyFragment(t *testing.T) {
 			handler.ServeHTTP(res, req)
 
 			assert.Equal(t, test.wantStatus, res.Code)
+		})
+	}
+}
+
+func TestRemoveDotSegments(t *testing.T) {
+	tests := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		// RFC 3986 Section 5.4 reference examples (using base path components).
+		// These are the exact test vectors from the RFC.
+		{desc: "RFC 5.4: normal /a/b/c/./../../g", input: "/a/b/c/./../../g", expected: "/a/g"},
+		{desc: "RFC 5.4: mid/content=5/../6", input: "mid/content=5/../6", expected: "mid/6"},
+		{desc: "RFC 5.4: /../../../g", input: "/../../../g", expected: "/g"},
+		{desc: "RFC 5.4: /a/b/../../../../g", input: "/a/b/../../../../g", expected: "/g"},
+		{desc: "RFC 5.4: /./g", input: "/./g", expected: "/g"},
+		{desc: "RFC 5.4: /../g", input: "/../g", expected: "/g"},
+		{desc: "RFC 5.4: /a/b/../../../g", input: "/a/b/../../../g", expected: "/g"},
+		{desc: "RFC 5.4: /a/b/c/../d", input: "/a/b/c/../d", expected: "/a/b/d"},
+		{desc: "RFC 5.4: /a/b/c/../../d", input: "/a/b/c/../../d", expected: "/a/d"},
+		{desc: "RFC 5.4: /a/b/c/../../../d", input: "/a/b/c/../../../d", expected: "/d"},
+		{desc: "RFC 5.4: /a/b/c/../../../../d", input: "/a/b/c/../../../../d", expected: "/d"},
+		{desc: "RFC 5.4: /./a/b", input: "/./a/b", expected: "/a/b"},
+
+		// Empty segment preservation (the core feature).
+		{desc: "double slash preserved", input: "/a//b", expected: "/a//b"},
+		{desc: "triple slash preserved", input: "/a///b", expected: "/a///b"},
+		{desc: "leading double slash preserved", input: "//a/b", expected: "//a/b"},
+		{desc: "trailing double slash preserved", input: "/a/b//", expected: "/a/b//"},
+
+		// Mixed dot-segments and empty segments.
+		{desc: "dotdot across empty segment", input: "/a/..//b", expected: "//b"},
+		{desc: "dot in empty segment context", input: "//a/./b", expected: "//a/b"},
+		{desc: "complex mixed", input: "/a/b/../..///c", expected: "///c"},
+		{desc: "dotdot with trailing empty", input: "/a/../b//", expected: "/b//"},
+
+		// Root escaping.
+		{desc: "root escape single", input: "/../b", expected: "/b"},
+		{desc: "root escape double", input: "/../../b", expected: "/b"},
+
+		// Trailing slash handling.
+		{desc: "trailing slash after dotdot", input: "/a/b/../", expected: "/a/"},
+		{desc: "trailing slash after dot", input: "/a/b/./", expected: "/a/b/"},
+
+		// Edge cases.
+		{desc: "empty string", input: "", expected: ""},
+		{desc: "single slash", input: "/", expected: "/"},
+		{desc: "dot only", input: "/.", expected: "/"},
+		{desc: "dotdot only", input: "/..", expected: "/"},
+		{desc: "star request-target", input: "*", expected: "*"},
+		{desc: "bare dot", input: ".", expected: ""},
+		{desc: "bare dotdot", input: "..", expected: ""},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := removeDotSegments(test.input)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestSanitizeDotSegments(t *testing.T) {
+	tests := []struct {
+		desc            string
+		path            string
+		rawPath         string
+		expectedPath    string
+		expectedRawPath string
+	}{
+		{
+			desc:            "basic dot-segment removal",
+			path:            "/a/../b",
+			expectedPath:    "/b",
+			expectedRawPath: "",
+		},
+		{
+			desc:            "preserves empty segments",
+			path:            "/a//b",
+			expectedPath:    "/a//b",
+			expectedRawPath: "",
+		},
+		{
+			desc:            "updates RawPath when set",
+			path:            "/a/../b",
+			rawPath:         "/a/../b",
+			expectedPath:    "/b",
+			expectedRawPath: "/b",
+		},
+		{
+			desc:            "preserves encoded characters in RawPath",
+			path:            "/a/../b/foo%20bar",
+			rawPath:         "/a/../b/foo%20bar",
+			expectedPath:    "/b/foo bar",
+			expectedRawPath: "/b/foo%20bar",
+		},
+		{
+			desc:            "preserves empty segments with RawPath",
+			path:            "/a//b",
+			rawPath:         "/a//b",
+			expectedPath:    "/a//b",
+			expectedRawPath: "/a//b",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var gotPath, gotRawPath, gotRequestURI string
+			handler := sanitizeDotSegments(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotPath = r.URL.Path
+				gotRawPath = r.URL.RawPath
+				gotRequestURI = r.RequestURI
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
+			if test.rawPath != "" {
+				req.URL.RawPath = test.rawPath
+				// Ensure Path reflects the decoded version of RawPath.
+				unescaped, err := url.PathUnescape(test.rawPath)
+				if err == nil {
+					req.URL.Path = unescaped
+				}
+			}
+
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			assert.Equal(t, test.expectedPath, gotPath)
+			if test.expectedRawPath != "" {
+				assert.Equal(t, test.expectedRawPath, gotRawPath)
+			}
+			assert.NotEmpty(t, gotRequestURI)
 		})
 	}
 }
