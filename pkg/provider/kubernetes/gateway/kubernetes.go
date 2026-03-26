@@ -382,9 +382,10 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 	p.loadGRPCRoutes(ctx, gatewayListeners, conf)
 
+	p.loadTLSRoutes(ctx, gatewayListeners, conf)
+
 	if p.ExperimentalChannel {
 		p.loadTCPRoutes(ctx, gatewayListeners, conf)
-		p.loadTLSRoutes(ctx, gatewayListeners, conf)
 	}
 
 	for _, gateway := range gateways {
@@ -555,8 +556,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			}
 
 			// Allowed configurations:
-			// Protocol TLS -> Passthrough -> TLSRoute/TCPRoute
-			// Protocol TLS -> Terminate -> TLSRoute/TCPRoute
+			// Protocol TLS -> Passthrough -> TLSRoute
+			// Protocol TLS -> Terminate -> TLSRoute
 			// Protocol HTTPS -> Terminate -> HTTPRoute
 			if listener.Protocol == gatev1.HTTPSProtocolType && isTLSPassthrough {
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -995,20 +996,9 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 		}, nil
 
 	case gatev1.TLSProtocolType:
-		if experimentalChannel {
-			return []gatev1.RouteGroupKind{
-				{Kind: kindTCPRoute, Group: &group},
-				{Kind: kindTLSRoute, Group: &group},
-			}, nil
-		}
-
-		return nil, []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
-		}}
+		return []gatev1.RouteGroupKind{
+			{Kind: kindTLSRoute, Group: &group},
+		}, nil
 	}
 
 	return nil, []metav1.Condition{{
@@ -1093,24 +1083,14 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 	}
 
 	trimmedH1 := strings.TrimPrefix(string(h1), "*")
-	// root domain doesn't match subdomain wildcard.
-	if trimmedH1 == string(h2) {
-		return ""
-	}
 
 	if !strings.HasSuffix(string(h2), trimmedH1) {
 		return ""
 	}
 
-	return lessWildcards(h1, h2)
-}
-
-func lessWildcards(h1, h2 gatev1.Hostname) gatev1.Hostname {
-	if strings.Count(string(h1), "*") > strings.Count(string(h2), "*") {
-		return h2
-	}
-
-	return h1
+	// h1 is a wildcard that encompasses h2, so h2 is always
+	// the more specific hostname (the correct intersection).
+	return h2
 }
 
 func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool {

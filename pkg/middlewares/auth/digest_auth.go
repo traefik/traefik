@@ -97,6 +97,8 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if d.headerField != "" {
+		// TODO Deprecated we should add the header with canonical key.
+		req.Header.Del(d.headerField)
 		req.Header[d.headerField] = []string{username}
 	}
 

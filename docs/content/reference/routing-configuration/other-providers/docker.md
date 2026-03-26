@@ -100,7 +100,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 
 #### Service definition
 
---8<-- "content/routing/providers/service-by-label.md"
+{% include-markdown "includes/service-by-label.md" %}
 
 ??? example "Automatic assignment with one Service"
 

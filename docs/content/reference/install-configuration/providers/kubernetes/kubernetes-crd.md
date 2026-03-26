@@ -7,7 +7,7 @@ Traefik provides some Kubernetes Custom Resources, such as `IngressRoute`, `Midd
 
 When using KubernetesCRD as a provider,
 Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
-Traefik Custom Resource Definitions are [listed below](#list-of-resources).
+Traefik Custom Resource Definitions are [listed below](#routing-configuration).
 
 When Traefik is installed using the Helm Chart, by default, the provider `kubernetesCRD` is enabled.
 
@@ -59,13 +59,13 @@ providers:
 | <a id="opt-providers-kubernetesCRD-token" href="#opt-providers-kubernetesCRD-token" title="#opt-providers-kubernetesCRD-token">`providers.kubernetesCRD.token`</a> | Bearer token used for the Kubernetes client configuration. | ""      | No |
 | <a id="opt-providers-kubernetesCRD-certAuthFilePath" href="#opt-providers-kubernetesCRD-certAuthFilePath" title="#opt-providers-kubernetesCRD-certAuthFilePath">`providers.kubernetesCRD.certAuthFilePath`</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | ""      | No |
 | <a id="opt-providers-kubernetesCRD-namespaces" href="#opt-providers-kubernetesCRD-namespaces" title="#opt-providers-kubernetesCRD-namespaces">`providers.kubernetesCRD.namespaces`</a> | Array of namespaces to watch.<br />If left empty, watch all namespaces. | []      | No |
-| <a id="opt-providers-kubernetesCRD-labelSelector" href="#opt-providers-kubernetesCRD-labelSelector" title="#opt-providers-kubernetesCRD-labelSelector">`providers.kubernetesCRD.labelSelector`</a> | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No |
+| <a id="opt-providers-kubernetesCRD-labelSelector" href="#opt-providers-kubernetesCRD-labelSelector" title="#opt-providers-kubernetesCRD-labelSelector">`providers.kubernetesCRD.labelSelector`</a> | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](#routing-configuration) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No |
 | <a id="opt-providers-kubernetesCRD-ingressClass" href="#opt-providers-kubernetesCRD-ingressClass" title="#opt-providers-kubernetesCRD-ingressClass">`providers.kubernetesCRD.ingressClass`</a> | Value of `spec.ingressClassName` field (or the deprecated `kubernetes.io/ingress.class` annotation) that identifies resource objects to be processed.<br />If empty, resources missing the field/annotation, having an empty value, or the value `traefik` are processed.<br />The `spec.ingressClassName` field takes precedence over the annotation. | ""      | No |
 | <a id="opt-providers-kubernetesCRD-throttleDuration" href="#opt-providers-kubernetesCRD-throttleDuration" title="#opt-providers-kubernetesCRD-throttleDuration">`providers.kubernetesCRD.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s      | No |
 | <a id="opt-providers-kubernetesCRD-allowEmptyServices" href="#opt-providers-kubernetesCRD-allowEmptyServices" title="#opt-providers-kubernetesCRD-allowEmptyServices">`providers.kubernetesCRD.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No |
 | <a id="opt-providers-kubernetesCRD-allowCrossNamespace" href="#opt-providers-kubernetesCRD-allowCrossNamespace" title="#opt-providers-kubernetesCRD-allowCrossNamespace">`providers.kubernetesCRD.allowCrossNamespace`</a> | Allows the `IngressRoutes` to reference resources in namespaces other than theirs. | false   | No |
 | <a id="opt-providers-kubernetesCRD-allowExternalNameServices" href="#opt-providers-kubernetesCRD-allowExternalNameServices" title="#opt-providers-kubernetesCRD-allowExternalNameServices">`providers.kubernetesCRD.allowExternalNameServices`</a> | Allows the `IngressRoutes` to reference ExternalName services. | false   | No |
-| <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport). | false   | No |
+| <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can be overridden in the [`Service`](../../../../reference/routing-configuration/kubernetes/crd/http/service.md#opt-nativeLB). | false   | No |
 | <a id="opt-providers-kubernetesCRD-disableClusterScopeResources" href="#opt-providers-kubernetesCRD-disableClusterScopeResources" title="#opt-providers-kubernetesCRD-disableClusterScopeResources">`providers.kubernetesCRD.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No |
 
 ### endpoint
@@ -102,9 +102,9 @@ providers:
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kubernetes-crd.md).
+Traefik CRDs are building blocks that you can assemble according to your needs.
 
-## List of Resources
+The available custom resources are in the table below:
 
 <!-- markdownlint-disable MD013 -->
 

@@ -73,6 +73,7 @@ providers:
     globalAllowedResponseHeaders:
       - "X-Custom-Header1"
       - "X-Custom-Header2"
+    strictValidatePathType: false
 ```
 
 ```toml tab="File (TOML)"
@@ -97,6 +98,7 @@ providers:
   customHTTPErrors = ["404", "503"]
   allowCrossNamespaceResources = true
   globalAllowedResponseHeaders = ["X-Custom-Header1", "X-Custom-Header2"]
+  strictValidatePathType = false
 ```
 
 ```bash tab="CLI"
@@ -116,6 +118,7 @@ providers:
 --providers.kubernetesingressnginx.customhttperrors=404,503
 --providers.kubernetesingressnginx.allowCrossNamespaceResources=true
 --providers.kubernetesingressnginx.globalAllowedResponseHeaders=X-Custom-Header1,X-Custom-Header2
+--providers.kubernetesingressnginx.strictvalidatepathtype=false
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -180,6 +183,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-globalAllowedResponseHeaders" href="#opt-providers-kubernetesIngressNGINX-globalAllowedResponseHeaders" title="#opt-providers-kubernetesIngressNGINX-globalAllowedResponseHeaders">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`globalAllowedResponseHeaders`</a> | List of allowed response headers inside the custom headers annotations. It is required to configure it for the custom headers annotations to take effect.                                                                                                                                                                                                                                                                                                                                                                                                       | []      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-httpentrypoint" href="#opt-providers-kubernetesIngressNGINX-httpentrypoint" title="#opt-providers-kubernetesIngressNGINX-httpentrypoint">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`httpentrypoint`</a> | Defines the EntryPoint to use for HTTP requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-httpsentrypoint" href="#opt-providers-kubernetesIngressNGINX-httpsentrypoint" title="#opt-providers-kubernetesIngressNGINX-httpsentrypoint">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`httpsentrypoint`</a> | Defines the EntryPoint to use for HTTPS requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ""     | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-strictValidatePathType" href="#opt-providers-kubernetesIngressNGINX-strictValidatePathType" title="#opt-providers-kubernetesIngressNGINX-strictValidatePathType">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`strictValidatePathType`</a> | Defines whether to reject the entire ingress when any path contains regex characters and pathType is Prefix or Exact.                                                                                                                                                                                                                                                                                                                                                                                                                                          | true            | No       |
 
 <!-- markdownlint-enable MD013 -->
 

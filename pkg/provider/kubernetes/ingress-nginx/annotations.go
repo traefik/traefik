@@ -19,6 +19,8 @@ type IngressConfig struct {
 	AuthURL             *string `annotation:"nginx.ingress.kubernetes.io/auth-url"`
 	AuthSignin          *string `annotation:"nginx.ingress.kubernetes.io/auth-signin"`
 	AuthResponseHeaders *string `annotation:"nginx.ingress.kubernetes.io/auth-response-headers"`
+	AuthSnippet         *string `annotation:"nginx.ingress.kubernetes.io/auth-snippet"`
+	AuthMethod          *string `annotation:"nginx.ingress.kubernetes.io/auth-method"`
 
 	AuthTLSSecret                    *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-secret"`
 	AuthTLSVerifyClient              *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-verify-client"`

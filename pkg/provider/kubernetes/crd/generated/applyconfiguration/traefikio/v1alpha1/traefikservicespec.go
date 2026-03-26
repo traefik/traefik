@@ -28,11 +28,17 @@ package v1alpha1
 
 // TraefikServiceSpecApplyConfiguration represents a declarative configuration of the TraefikServiceSpec type for use
 // with apply.
+//
+// TraefikServiceSpec defines the desired state of a TraefikService.
 type TraefikServiceSpecApplyConfiguration struct {
-	Weighted            *WeightedRoundRobinApplyConfiguration  `json:"weighted,omitempty"`
-	Mirroring           *MirroringApplyConfiguration           `json:"mirroring,omitempty"`
+	// Weighted defines the Weighted Round Robin configuration.
+	Weighted *WeightedRoundRobinApplyConfiguration `json:"weighted,omitempty"`
+	// Mirroring defines the Mirroring service configuration.
+	Mirroring *MirroringApplyConfiguration `json:"mirroring,omitempty"`
+	// HighestRandomWeight defines the highest random weight service configuration.
 	HighestRandomWeight *HighestRandomWeightApplyConfiguration `json:"highestRandomWeight,omitempty"`
-	Failover            *FailoverApplyConfiguration            `json:"failover,omitempty"`
+	// Failover defines the Failover service configuration.
+	Failover *FailoverApplyConfiguration `json:"failover,omitempty"`
 }
 
 // TraefikServiceSpecApplyConfiguration constructs a declarative configuration of the TraefikServiceSpec type for use with

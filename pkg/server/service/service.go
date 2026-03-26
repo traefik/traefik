@@ -189,11 +189,15 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 			return nil, errors.New("chain builder not defined")
 		}
 		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
+		originalLB := lb
 		var err error
 		lb, err = chain.Then(lb)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
+		}
+		if su, ok := originalLB.(healthcheck.StatusUpdater); ok {
+			lb = &statusUpdaterHandler{Handler: lb, statusUpdater: su}
 		}
 	}
 
@@ -535,6 +539,18 @@ type serverBalancer interface {
 	healthcheck.StatusSetter
 
 	AddServer(name string, handler http.Handler, server dynamic.Server)
+}
+
+// statusUpdaterHandler wraps an http.Handler while preserving the
+// healthcheck.StatusUpdater interface from the original handler.
+type statusUpdaterHandler struct {
+	http.Handler
+
+	statusUpdater healthcheck.StatusUpdater
+}
+
+func (s *statusUpdaterHandler) RegisterStatusUpdater(fn func(up bool)) error {
+	return s.statusUpdater.RegisterStatusUpdater(fn)
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {

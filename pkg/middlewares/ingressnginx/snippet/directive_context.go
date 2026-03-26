@@ -30,6 +30,8 @@ var directiveContexts = map[string][]string{
 	"deny":                     {contextServer, contextLocation, contextIf},
 	"proxy_hide_header":        {contextServer, contextLocation},
 	"expires":                  {contextServer, contextLocation, contextIfInLocation},
+	"proxy_method":             {contextServer, contextLocation},
+	"auth_request_set":         {contextServer, contextLocation},
 }
 
 // isAllowedInContext checks if the directive is allowed in the context of its parent directive.

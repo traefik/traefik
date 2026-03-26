@@ -349,6 +349,16 @@ func TestValidateConfiguration_BasePath(t *testing.T) {
 			basePath:  "/api%2Ftoto",
 			expectErr: true,
 		},
+		{
+			desc:      "valid path with colons",
+			basePath:  "/k8s/clusters/c-abcd0/api/v1/namespaces/my-ns/services/http:traefik:8080/proxy",
+			expectErr: false,
+		},
+		{
+			desc:      "valid path with tilde",
+			basePath:  "/~user/dashboard",
+			expectErr: false,
+		},
 	}
 
 	for _, test := range tests {
