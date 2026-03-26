@@ -110,6 +110,7 @@ plugins:
         'https/acme.md': 'reference/install-configuration/tls/certificate-resolvers/acme.md'
         'https/tailscale.md': 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
         'https/spiffe.md': 'reference/install-configuration/tls/spiffe.md'
+        'https/ocsp.md': 'reference/install-configuration/tls/ocsp.md'
         # Middlewares
         'middlewares/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
         # HTTP
@@ -168,6 +169,11 @@ plugins:
         "reference/dynamic-configuration/nomad.md": 'reference/routing-configuration/other-providers/nomad.md'
         'reference/dynamic-configuration/ecs.md': 'reference/routing-configuration/other-providers/ecs.md'
         'reference/dynamic-configuration/kv.md': 'reference/routing-configuration/other-providers/kv.md'
+        'reference/dynamic-configuration/kv-ref.md': 'reference/routing-configuration/other-providers/kv.md'
+        'reference/install-configuration/cli-options-list.md': 'reference/install-configuration/configuration-options.md'
+        'reference/install-configuration/observability/healthcheck/cli.md': 'reference/install-configuration/observability/healthcheck.md'
+        'reference/install-configuration/observability/healthcheck/ping.md': 'reference/install-configuration/observability/healthcheck.md'
+        'reference/install-configuration/observability/options-list.md': 'reference/install-configuration/configuration-options.md'
         ## Plugins
         'plugins/index.md': "extend/extend-traefik.md"
         ## Migration
