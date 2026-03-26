@@ -35,11 +35,13 @@ copyright: 'Traefik Labs • Copyright &copy; 2016-2026'
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
   - assets/js/extra.js
+  - assets/js/banner.js
 
 extra_css:
   - assets/css/menu-icons.css
   - assets/css/code-copy.css
   - assets/css/content-width.css
+  - assets/css/banner.css
 
 plugins:
   - search
@@ -50,6 +52,11 @@ plugins:
       encoding: utf-8
   - redirects:
       redirect_maps:
+        ## Getting-Started
+        'getting-started/concepts.md': 'getting-started/configuration-overview.md'
+        'getting-started/install-traefik.md': 'getting-started/index.md'
+        'getting-started/quick-start-with-kubernetes.md': 'getting-started/kubernetes.md'
+        'getting-started/quick-start.md': 'getting-started/docker.md'
         # Providers
         'providers/overview.md': 'reference/install-configuration/providers/overview.md'
         'providers/docker.md': 'reference/install-configuration/providers/docker.md'
@@ -392,4 +399,5 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
+      - 'Maintainer''s Guidelines': 'contributing/maintainers-guidelines.md'
   - 'FAQ': 'getting-started/faq.md'

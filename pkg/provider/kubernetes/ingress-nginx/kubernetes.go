@@ -1364,9 +1364,18 @@ func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingres
 	}
 
 	if authURL != "" {
+		var authResponseHeaders []string
+		if raw := ptr.Deref(ingressConfig.AuthResponseHeaders, ""); raw != "" {
+			for h := range strings.SplitSeq(raw, ",") {
+				if trimmed := strings.TrimSpace(h); trimmed != "" {
+					authResponseHeaders = append(authResponseHeaders, trimmed)
+				}
+			}
+		}
+
 		conf.HTTP.Middlewares[snippetMiddlewareName].Snippet.Auth = &dynamic.Auth{
 			Address:             authURL,
-			AuthResponseHeaders: strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ","),
+			AuthResponseHeaders: authResponseHeaders,
 			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
 			Method:              ptr.Deref(ingressConfig.AuthMethod, ""),
 			Snippet:             ptr.Deref(ingressConfig.AuthSnippet, ""),

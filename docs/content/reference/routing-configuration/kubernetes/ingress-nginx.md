@@ -25,7 +25,7 @@ which may lead to duplicated routers if you are also using the standard Kubernet
 **Best Practices:**
 
 - Use IngressClass to specify which Ingresses should be handled by this provider
-- Configure `watchNamespace` to limit discovery to specific namespaces
+- Configure `watchNamespace` to limit discovery to a single namespace
 - Use `watchNamespaceSelector` to target Ingresses based on namespace labels
 
 ## Routing Configuration

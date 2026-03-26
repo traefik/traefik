@@ -692,7 +692,8 @@ func TestLoadIngresses(t *testing.T) {
 							Snippet: &dynamic.Snippet{
 								Auth: &dynamic.Auth{
 									Address:             "http://whoami.default.svc/",
-									AuthResponseHeaders: []string{"X-Foo"},
+									Method:              http.MethodGet,
+									AuthResponseHeaders: []string{"X-Foo", "X-Bar"},
 									AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=foo",
 								},
 							},
@@ -701,7 +702,8 @@ func TestLoadIngresses(t *testing.T) {
 							Snippet: &dynamic.Snippet{
 								Auth: &dynamic.Auth{
 									Address:             "http://whoami.default.svc/",
-									AuthResponseHeaders: []string{"X-Foo"},
+									Method:              http.MethodGet,
+									AuthResponseHeaders: []string{"X-Foo", "X-Bar"},
 									AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=foo",
 								},
 							},

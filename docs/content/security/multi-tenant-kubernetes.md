@@ -48,7 +48,7 @@ This namespace-per-tenant topology, combined with Kubernetes `NetworkPolicy` res
 
 ## Gateway API
 
-We also encourage users to adopt [Kubernetes Gateway API](../providers/kubernetes-gateway.md), which is designed
+We also encourage users to adopt [Kubernetes Gateway API](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md), which is designed
 with multi-tenancy as a first-class concern. Gateway API provides a more expressive and role-oriented model
 for managing ingress, with built-in support for delegating route configuration to individual tenants while
 preserving infrastructure-level control for cluster operators. This tooling handles multi-tenant scenarios

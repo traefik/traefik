@@ -1,3 +1,22 @@
+## [v3.6.12](https://github.com/traefik/traefik/tree/v3.6.12) (2026-03-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.11...v3.6.12)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix auth-response-headers whitespace trimming in ingress-nginx provider ([#12856](https://github.com/traefik/traefik/pull/12856) @mmatur)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.33.0 ([#12840](https://github.com/traefik/traefik/pull/12840) @ldez)
+- **[server]** Fix comment and unnecessary allocation in withRoutingPath ([#12880](https://github.com/traefik/traefik/pull/12880) @boinger)
+- **[server, tcp]** Fix postgres STARTTLS with TLS termination ([#12847](https://github.com/traefik/traefik/pull/12847) @mmatur)
+- **[api]** Fix allow colons and tildes in api.basePath validation ([#12857](https://github.com/traefik/traefik/pull/12857) @mmatur)
+- **[grpc]** Bump google.golang.org/grpc to v1.79.3 ([#12845](https://github.com/traefik/traefik/pull/12845) @mmatur)
+- **[middleware, authentication]** Prevent duplicate user headers in basic and digest auth middleware ([#12851](https://github.com/traefik/traefik/pull/12851) @juliens)
+- **[middleware]** Fix StripPrefix and StripPrefixRegex to slice the prefix using encoded prefix length ([#12863](https://github.com/traefik/traefik/pull/12863) @gndz07)
+
+**Documentation:**
+- **[acme]** Clarify CNAME explanation in ACME Documentation ([#12818](https://github.com/traefik/traefik/pull/12818) @sheddy-traefik)
+- **[k8s/ingress-nginx]** Add ingress-nginx migration banner on documentation pages ([#12872](https://github.com/traefik/traefik/pull/12872) @gndz07)
+- **[k8s/ingress-nginx]** Clarify that NGINX Ingress watchNamespace watches only one namespace ([#12873](https://github.com/traefik/traefik/pull/12873) @parkerfath)
+- **[k8s/ingress]** Improve Kubernetes Ingress Routing Documentation ([#12876](https://github.com/traefik/traefik/pull/12876) @sheddy-traefik)
+
 ## [v3.7.0-ea.2](https://github.com/traefik/traefik/tree/v3.7.0-ea.2) (2026-03-19)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.0-ea.1...v3.7.0-ea.2)
 
@@ -45,6 +64,14 @@
 - Fix start up message format ([#12806](https://github.com/traefik/traefik/pull/12806) @mloiseleur)
 - Remove unsupported servers[n].address from TCP label examples ([#12817](https://github.com/traefik/traefik/pull/12817) @sheddy-traefik)
 - Bump mkdocs-traefiklabs to use consent mode ([#12804](https://github.com/traefik/traefik/pull/12804) @darkweaver87)
+
+## [v2.11.42](https://github.com/traefik/traefik/tree/v2.11.42) (2026-03-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.41...v2.11.42)
+
+**Bug fixes:**
+- **[grpc]** Bump google.golang.org/grpc to v1.79.3 ([#12845](https://github.com/traefik/traefik/pull/12845) @mmatur)
+- **[middleware, authentication]** Prevent duplicate user headers in basic and digest auth middleware ([#12851](https://github.com/traefik/traefik/pull/12851) @juliens)
+- **[middleware]** Fix StripPrefix and StripPrefixRegex to slice the prefix using encoded prefix length ([#12863](https://github.com/traefik/traefik/pull/12863) @gndz07)
 
 ## [v2.11.41](https://github.com/traefik/traefik/tree/v2.11.41) (2026-03-18)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.40...v2.11.41)

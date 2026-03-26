@@ -60,6 +60,7 @@ type composeService struct {
 	Volumes     []string          `yaml:"volumes"`
 	CapAdd      []string          `yaml:"cap_add"`
 	Command     []string          `yaml:"command"`
+	Entrypoint  []string          `yaml:"entrypoint"`
 	Environment map[string]string `yaml:"environment"`
 	Privileged  bool              `yaml:"privileged"`
 	Deploy      composeDeploy     `yaml:"deploy"`
@@ -232,12 +233,13 @@ func (s *BaseSuite) createComposeProject(name string) {
 
 func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts []mount.Mount) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
-		Image:    containerConfig.Image,
-		Env:      containerConfig.Environment,
-		Cmd:      containerConfig.Command,
-		Labels:   containerConfig.Labels,
-		Name:     id,
-		Networks: []string{s.network.Name},
+		Image:      containerConfig.Image,
+		Env:        containerConfig.Environment,
+		Cmd:        containerConfig.Command,
+		Entrypoint: containerConfig.Entrypoint,
+		Labels:     containerConfig.Labels,
+		Name:       id,
+		Networks:   []string{s.network.Name},
 		ConfigModifier: func(config *container.Config) {
 			config.Hostname = containerConfig.Hostname
 		},
