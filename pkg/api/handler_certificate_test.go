@@ -1,8 +1,11 @@
 package api
 
 import (
-	"encoding/base64"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -65,14 +68,11 @@ func TestHandler_Certificates(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Create a valid base64-encoded certKey for a non-existent certificate
-	// "nonexistent.com" -> base64("nonexistent.com")
-	nonExistentCertKey := base64.URLEncoding.EncodeToString([]byte("nonexistent.com"))
-
-	// Create certKey for the localhost certificate
-	// The certificate has domains: 127.0.0.1,::1,example.com (sorted)
-	// certKey is base64("127.0.0.1,::1,example.com")
-	localhostCertKey := base64.URLEncoding.EncodeToString([]byte("127.0.0.1,::1,example.com"))
+	// Compute fingerprint from the generated localhost cert PEM
+	block, _ := pem.Decode([]byte(localhostCert))
+	parsed, _ := x509.ParseCertificate(block.Bytes)
+	hash := sha256.Sum256(parsed.Raw)
+	localhostFingerprint := hex.EncodeToString(hash[:])
 
 	testCases := []struct {
 		desc     string
@@ -105,7 +105,7 @@ func TestHandler_Certificates(t *testing.T) {
 					require.Len(t, certs, 1)
 
 					cert := certs[0]
-					assert.Equal(t, "MTI3LjAuMC4xLDo6MSxleGFtcGxlLmNvbQ==", cert["name"])
+					assert.Regexp(t, `^[0-9a-f]{64}$`, cert["name"])
 					assert.Equal(t, "Acme Co", cert["issuerOrg"])
 					assert.Equal(t, "enabled", cert["status"])
 					assert.ElementsMatch(t, []interface{}{"127.0.0.1", "::1", "example.com"}, cert["sans"])
@@ -195,31 +195,23 @@ func TestHandler_Certificates(t *testing.T) {
 			},
 		},
 		{
-			desc:  "one certificate by certKey",
-			path:  "/api/certificates/" + localhostCertKey,
+			desc:  "one certificate by fingerprint",
+			path:  "/api/certificates/" + localhostFingerprint,
 			setup: certSetup{loadCerts: true},
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
 					var cert map[string]interface{}
 					require.NoError(t, json.Unmarshal(body, &cert))
-					assert.Equal(t, "MTI3LjAuMC4xLDo6MSxleGFtcGxlLmNvbQ==", cert["name"])
+					assert.Regexp(t, `^[0-9a-f]{64}$`, cert["name"])
 					assert.Equal(t, "enabled", cert["status"])
 					assert.ElementsMatch(t, []interface{}{"127.0.0.1", "::1", "example.com"}, cert["sans"])
 				},
 			},
 		},
 		{
-			desc:  "invalid certKey - not valid base64",
-			path:  "/api/certificates/not-valid-base64!@#$",
-			setup: certSetup{loadCerts: false},
-			expected: expected{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-		{
-			desc:  "valid certKey but certificate does not exist",
-			path:  "/api/certificates/" + nonExistentCertKey,
+			desc:  "certificate does not exist",
+			path:  "/api/certificates/non-existent-certificate",
 			setup: certSetup{loadCerts: false},
 			expected: expected{
 				statusCode: http.StatusNotFound,

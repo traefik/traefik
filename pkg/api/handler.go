@@ -125,7 +125,7 @@ func (h Handler) createRouter() *mux.Router {
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
 
 	apiRouter.Methods(http.MethodGet).Path("/api/certificates").HandlerFunc(h.getCertificates)
-	apiRouter.Methods(http.MethodGet).Path("/api/certificates/{certKey}").HandlerFunc(h.getCertificate)
+	apiRouter.Methods(http.MethodGet).Path("/api/certificates/{certificateID}").HandlerFunc(h.getCertificate)
 
 	version.Handler{}.Append(apiRouter)
 

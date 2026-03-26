@@ -9,7 +9,9 @@ import useSWR from 'swr'
 export const buildCertKey = (main: string, sans?: string[]): string => {
   const allDomains = [main, ...(sans || [])]
   // Deduplicate using Set (lowercased), then sort and join
-  const uniqueDomains = Array.from(new Set(allDomains.map(d => d.toLowerCase()))).sort().join(',')
+  const uniqueDomains = Array.from(new Set(allDomains.map((d) => d.toLowerCase())))
+    .sort()
+    .join(',')
   return btoa(uniqueDomains)
 }
 
@@ -19,7 +21,7 @@ export const useCertificates = () => {
   const certificates: Certificate.Info[] = useMemo(() => {
     if (!data) return []
 
-    return data.map(cert => ({
+    return data.map((cert) => ({
       ...cert,
       daysLeft: cert.notAfter
         ? Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -35,9 +37,7 @@ export const useCertificates = () => {
 }
 
 export const useCertificate = (certKey: string) => {
-  const { data, error } = useSWR<Certificate.Raw>(
-    certKey ? `/certificates/${encodeURIComponent(certKey)}` : null
-  )
+  const { data, error } = useSWR<Certificate.Raw>(certKey ? `/certificates/${encodeURIComponent(certKey)}` : null)
 
   const certificate: Certificate.Info | null = useMemo(() => {
     if (!data) return null

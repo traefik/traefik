@@ -13,7 +13,13 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
     {
       key: 'Common Name',
       val: (
-        <Link variant="blue" href={`//${certificate.commonName}`} target="_blank" rel="noopener noreferrer" css={{ fontSize: 'inherit' }}>
+        <Link
+          variant="blue"
+          href={`//${certificate.commonName}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          css={{ fontSize: 'inherit' }}
+        >
           {certificate.commonName}
         </Link>
       ),

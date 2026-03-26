@@ -5,18 +5,15 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"net/url"
 	"sort"
-	"strings"
 	"time"
 )
 
 // certificateRepresentation represents a certificate in the API
 type certificateRepresentation struct {
-	Name                 string    `json:"name"` // certKey (base64 encoded commonName + sorted SANs)
+	Name                 string    `json:"name"` // SHA-256 fingerprint of the DER-encoded certificate.
 	SANs                 []string  `json:"sans"`
 	NotAfter             time.Time `json:"notAfter"`
 	NotBefore            time.Time `json:"notBefore"`
@@ -63,15 +60,13 @@ func (c certificateRepresentation) validUntil() time.Time {
 
 // buildCertificateRepresentation builds a certificateRepresentation from an x509 certificate
 func buildCertificateRepresentation(cert *x509.Certificate, resolver ...string) certificateRepresentation {
-	domains := getDomainsFromCert(cert)
-	certKey := buildCertKey(domains)
 	keyType, keySize := extractKeyInfo(cert)
 	certFingerprint, pubKeyFingerprint := extractFingerprints(cert)
 	issuerOrg, issuerCN, issuerCountry := extractIssuerInfo(cert)
 	organization, country := extractSubjectInfo(cert)
 
 	return certificateRepresentation{
-		Name:                 certKey,
+		Name:                 certFingerprint,
 		SANs:                 extractSANs(cert),
 		NotAfter:             cert.NotAfter,
 		NotBefore:            cert.NotBefore,
@@ -108,7 +103,7 @@ func extractSANs(cert *x509.Certificate) []string {
 func extractKeyInfo(cert *x509.Certificate) (keyType string, keySize int) {
 	keyType = "Unknown"
 	keySize = 0
-	
+
 	switch pubKey := cert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		keyType = "RSA"
@@ -117,7 +112,7 @@ func extractKeyInfo(cert *x509.Certificate) (keyType string, keySize int) {
 		keyType = "ECDSA"
 		keySize = pubKey.Curve.Params().BitSize
 	}
-	
+
 	return keyType, keySize
 }
 
@@ -131,7 +126,7 @@ func extractFingerprints(cert *x509.Certificate) (certFingerprint, pubKeyFingerp
 		pubKeyHash := sha256.Sum256(pubKeyBytes)
 		pubKeyFingerprint = hex.EncodeToString(pubKeyHash[:])
 	}
-	
+
 	return certFingerprint, pubKeyFingerprint
 }
 
@@ -171,82 +166,6 @@ func extractResolver(resolver []string) string {
 	return ""
 }
 
-// getDomainsFromURLEncodedCertKey URL-decodes and then decodes the base64-encoded certKey
-func getDomainsFromURLEncodedCertKey(urlEncodedCertKey string) ([]string, error) {
-	// URL decode first (certKey may have been URL-encoded when sent in the path)
-	certKey, err := url.QueryUnescape(urlEncodedCertKey)
-	if err != nil {
-		return nil, fmt.Errorf("invalid URL encoding: %w", err)
-	}
-	
-	return getDomainsFromCertKey(certKey)
-}
-
-// getDomainsFromCertKey decodes the base64-encoded certKey and returns the list of domains
-func getDomainsFromCertKey(certKey string) ([]string, error) {
-	// Decode base64 certKey
-	decodedBytes, err := base64.URLEncoding.DecodeString(certKey)
-	if err != nil {
-		return nil, fmt.Errorf("invalid certificate key encoding: %w", err)
-	}
-	decodedKey := string(decodedBytes)
-
-	// Parse decoded key to get domains (comma-separated commonName + SANs)
-	domains := strings.Split(decodedKey, ",")
-	if len(domains) == 0 {
-		return nil, fmt.Errorf("invalid certificate key: no domains found")
-	}
-
-	// Normalize domains
-	normalized := make([]string, len(domains))
-	for i, domain := range domains {
-		normalized[i] = strings.ToLower(strings.TrimSpace(domain))
-	}
-	sort.Strings(normalized)
-
-	return normalized, nil
-}
-
-// buildCertKey creates a base64-encoded certKey from a list of domains
-// Deduplicates, lowercases, sorts, and encodes domains
-func buildCertKey(domains []string) string {
-	// Deduplicate and lowercase using map
-	domainsMap := make(map[string]bool)
-	for _, domain := range domains {
-		domainsMap[strings.ToLower(strings.TrimSpace(domain))] = true
-	}
-	
-	// Convert to sorted slice
-	unique := make([]string, 0, len(domainsMap))
-	for domain := range domainsMap {
-		unique = append(unique, domain)
-	}
-	sort.Strings(unique)
-	
-	return base64.URLEncoding.EncodeToString([]byte(strings.Join(unique, ",")))
-}
-
-// getDomainsFromCert extracts all domains (CN + SANs) from an x509 certificate
-// Returns raw domains without normalization (buildCertKey will normalize)
-func getDomainsFromCert(cert *x509.Certificate) []string {
-	domains := make([]string, 0, 1+len(cert.DNSNames)+len(cert.IPAddresses))
-	
-	// Add commonName
-	if cert.Subject.CommonName != "" {
-		domains = append(domains, cert.Subject.CommonName)
-	}
-	
-	// Add DNS SANs
-	domains = append(domains, cert.DNSNames...)
-	
-	// Add IP SANs
-	for _, ip := range cert.IPAddresses {
-		domains = append(domains, ip.String())
-	}
-	
-	return domains
-}
-
 // getCertificateStatus returns the status of a certificate based on its expiry
 func getCertificateStatus(notAfter time.Time) string {
 	daysLeft := int(time.Until(notAfter).Hours() / 24)
@@ -258,6 +177,3 @@ func getCertificateStatus(notAfter time.Time) string {
 	}
 	return "enabled"
 }
-
-// sortCertificates sorts certificates based on the given field and direction
-

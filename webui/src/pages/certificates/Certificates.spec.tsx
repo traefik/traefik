@@ -148,10 +148,10 @@ describe('<CertificatesPage />', () => {
 
     const tbody = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[1]
     expect(tbody.querySelectorAll('a[role="row"]')).toHaveLength(2)
-    
+
     // Green badge for >14 days
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('green.com')
-    
+
     // Orange badge for <14 days
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('orange.com')
   })

@@ -125,7 +125,7 @@ declare namespace Middleware {
 declare namespace Certificate {
   /** Raw API response shape */
   type Raw = {
-    name?: string
+    name: string
     commonName: string
     sans: string[]
     issuer?: string

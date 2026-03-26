@@ -2,8 +2,10 @@ package tls
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -295,8 +297,8 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 
 // GetServerCertificates returns all certificates from the default store,
 // as well as the user-defined default certificate (if it exists).
-func (m *Manager) GetServerCertificates() []*x509.Certificate {
-	var certificates []*x509.Certificate
+func (m *Manager) GetServerCertificates() map[string]*x509.Certificate {
+	certificates := make(map[string]*x509.Certificate)
 
 	// The default store is the only relevant, because it is the only one configurable.
 	defaultStore, ok := m.stores[DefaultTLSStoreName]
@@ -309,7 +311,9 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*CertificateData) {
 			// Use Leaf if available (it should always be populated by parseCertificate)
 			if cert.Certificate.Leaf != nil {
-				certificates = append(certificates, cert.Certificate.Leaf)
+				hash := sha256.Sum256(cert.Certificate.Leaf.Raw)
+				fingerprint := hex.EncodeToString(hash[:])
+				certificates[fingerprint] = cert.Certificate.Leaf
 			}
 		}
 	}
@@ -321,7 +325,9 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 				return certificates
 			}
 
-			certificates = append(certificates, defaultStore.DefaultCertificate.Certificate.Leaf)
+			hash := sha256.Sum256(defaultStore.DefaultCertificate.Certificate.Leaf.Raw)
+			fingerprint := hex.EncodeToString(hash[:])
+			certificates[fingerprint] = defaultStore.DefaultCertificate.Certificate.Leaf
 		}
 	}
 

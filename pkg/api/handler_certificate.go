@@ -57,36 +57,20 @@ func (h Handler) getCertificates(rw http.ResponseWriter, request *http.Request) 
 func (h Handler) getCertificate(rw http.ResponseWriter, request *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
-	vars := mux.Vars(request)
-	certKey := vars["certKey"]
+	certId := mux.Vars(request)["certificateID"]
 
-	// Decode certKey to get domains
-	domains, err := getDomainsFromURLEncodedCertKey(certKey)
-	if err != nil {
-		writeError(rw, err.Error(), http.StatusBadRequest)
+	certs := h.tlsManager.GetServerCertificates()
+	x509Cert, ok := certs[certId]
+
+	if !ok {
+		writeError(rw, fmt.Sprintf("certificate not found: %s", certId), http.StatusNotFound)
 		return
 	}
-
-	// Get certificate directly from store using domains
-	store := h.tlsManager.GetStore("default")
-	if store == nil {
-		writeError(rw, "TLS store not found", http.StatusNotFound)
-		return
-	}
-
-	certData := store.GetCertificate(domains)
-	if certData == nil {
-		writeError(rw, fmt.Sprintf("certificate not found: %s", certKey), http.StatusNotFound)
-		return
-	}
-
-	// Get x509 certificate from Leaf
-	x509Cert := certData.Certificate.Leaf
 
 	cert := buildCertificateRepresentation(x509Cert)
 
 	if err := json.NewEncoder(rw).Encode(cert); err != nil {
-		log.Error().Err(err).Str("certKey", certKey).Msg("Unable to encode certificate")
+		log.Error().Err(err).Str("id", certId).Msg("Unable to encode certificate")
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
