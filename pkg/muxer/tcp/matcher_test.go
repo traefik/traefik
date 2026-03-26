@@ -72,11 +72,6 @@ func Test_HostSNI(t *testing.T) {
 			buildErr: true,
 		},
 		{
-			desc:     "Invalid HostSNI matcher (globing sub domain)",
-			rule:     "HostSNI(`*.com`)",
-			buildErr: true,
-		},
-		{
 			desc:     "Invalid HostSNI matcher (non ASCII host)",
 			rule:     "HostSNI(`🦭.com`)",
 			buildErr: true,
@@ -138,6 +133,18 @@ func Test_HostSNI(t *testing.T) {
 			rule:       "HostSNI(`foo_bar.example.com`)",
 			serverName: "foo_bar.example.com",
 			match:      true,
+		},
+		{
+			desc:       "Matching hosts with subdomains with wildcard",
+			rule:       "HostSNI(`*.example.com`)",
+			serverName: "foo.example.com",
+			match:      true,
+		},
+		{
+			desc:       "Matching hosts with subdomains with wildcard",
+			rule:       "HostSNI(`*.*.example.com`)",
+			serverName: "toto.foo.example.com",
+			buildErr:   true,
 		},
 	}
 

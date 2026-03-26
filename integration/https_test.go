@@ -196,6 +196,69 @@ func (s *HTTPSSuite) TestWithTLSOptions() {
 	require.NoError(s.T(), err)
 }
 
+func (s *HTTPSSuite) TestWithTLSOptionsAndWildcard() {
+	backend := startTestServer("0", http.StatusNoContent, "")
+	defer backend.Close()
+
+	err := try.GetRequest(backend.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	file := s.adaptFile("fixtures/https/https_wildcard_tls_options.toml", struct{ BackendURL string }{backend.URL})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`*.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	tr1 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS12,
+			MinVersion:         tls.VersionTLS12,
+			ServerName:         "bar.snitest.com",
+		},
+	}
+
+	tr2 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS13,
+			MinVersion:         tls.VersionTLS13,
+			ServerName:         "foo.snitest.com",
+		},
+	}
+
+	tr3 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS11,
+			MinVersion:         tls.VersionTLS11,
+			ServerName:         "other.snitest.com",
+		},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr1.TLSClientConfig.ServerName
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr2.TLSClientConfig.ServerName
+
+	err = try.RequestWithTransport(req, 3*time.Second, tr2, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr3.TLSClientConfig.ServerName
+
+	err = try.RequestWithTransport(req, 3*time.Second, tr3, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+}
+
 // TestWithConflictingTLSOptions checks that routers with same SNI but different TLS options get fallbacked to the default TLS options.
 
 func (s *HTTPSSuite) TestWithConflictingTLSOptions() {

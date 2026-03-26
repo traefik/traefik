@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 )
 
 var httpFuncs = matcherBuilderFuncs{
@@ -83,19 +84,19 @@ func host(tree *matchersTree, hosts ...string) error {
 			return false
 		}
 
-		if reqHost == host {
+		if muxer.IsHostEqual(reqHost, host) {
 			return true
 		}
 
 		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
 		if len(flatH) > 0 {
-			return strings.EqualFold(flatH, host)
+			return muxer.IsHostEqual(flatH, host)
 		}
 
 		// Check for match on trailing period on host
 		if last := len(host) - 1; last >= 0 && host[last] == '.' {
 			h := host[:last]
-			if reqHost == h {
+			if muxer.IsHostEqual(reqHost, h) {
 				return true
 			}
 		}
@@ -103,7 +104,7 @@ func host(tree *matchersTree, hosts ...string) error {
 		// Check for match on trailing period on request
 		if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
 			h := reqHost[:last]
-			if h == host {
+			if muxer.IsHostEqual(h, host) {
 				return true
 			}
 		}

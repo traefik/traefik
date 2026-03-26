@@ -18,7 +18,7 @@ The table below lists all the available matchers:
 
 | Rule                                                        | Description                                                                                      |
 |-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`.<br /> More information [here](#hostsni-and-hostsniregexp).                          |
+| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`. Supports wildcard subdomain matching (e.g. `*.example.com`).<br /> More information [here](#hostsni-and-hostsniregexp). |
 | <a id="opt-HostSNIRegexpregexp" href="#opt-HostSNIRegexpregexp" title="#opt-HostSNIRegexpregexp">[```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
 | <a id="opt-ClientIPip" href="#opt-ClientIPip" title="#opt-ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
 | <a id="opt-ALPNprotocol" href="#opt-ALPNprotocol" title="#opt-ALPNprotocol">[```ALPN(`protocol`)```](#alpn)</a> | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
@@ -77,7 +77,20 @@ Match TCP connections sent to `example.com`:
 HostSNI(`example.com`)
 ```
 
-Match TCP connections opened on any subdomain of `example.com`:
+Match TCP connections opened on any direct subdomain of `example.com` (e.g. `foo.example.com`):
+
+```yaml
+HostSNI(`*.example.com`)
+```
+
+!!! info "Wildcard subdomain matching"
+
+    The `HostSNI` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
+    This is only available with the **v3 rule syntax** (the default). It is not supported with the deprecated v2 rule syntax.
+
+    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.
+
+Match TCP connections opened on any subdomain of `example.com` (including nested subdomains), using a regular expression:
 
 ```yaml
 HostSNIRegexp(`^.+\.example\.com$`)

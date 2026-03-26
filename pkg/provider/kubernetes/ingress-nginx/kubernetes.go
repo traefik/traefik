@@ -692,7 +692,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					EntryPoints: p.NonTLSEntryPoints,
-					Rule:        buildHostRule(rule.Host),
+					Rule:        fmt.Sprintf("Host(%q)", rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    key,
@@ -706,7 +706,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rtTLS := &dynamic.Router{
 					EntryPoints: p.TLSEntryPoints,
-					Rule:        buildHostRule(rule.Host),
+					Rule:        fmt.Sprintf("Host(%q)", rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    key,
@@ -2156,7 +2156,7 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 
 		var hostRules []string
 		for _, h := range hosts {
-			hostRules = append(hostRules, buildHostRule(h))
+			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
 		}
 
 		if len(hostRules) > 1 {
@@ -2187,15 +2187,6 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 	}
 
 	return strings.Join(rules, " && ")
-}
-
-func buildHostRule(host string) string {
-	if strings.HasPrefix(host, "*.") {
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
-	}
-
-	return fmt.Sprintf("Host(%q)", host)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.

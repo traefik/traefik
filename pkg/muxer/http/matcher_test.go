@@ -256,6 +256,16 @@ func TestHostMatcher(t *testing.T) {
 				"https://🦭.com": http.StatusNotFound,
 			},
 		},
+		{
+			desc: "wildcard matcher",
+			rule: "Host(`*.example.com`)",
+			expected: map[string]int{
+				"https://test.example.com":      http.StatusOK,
+				"https://other.example.com":     http.StatusOK,
+				"https://example.com":           http.StatusNotFound,
+				"https://test.otherexample.com": http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {

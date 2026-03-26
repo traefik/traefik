@@ -10,6 +10,7 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 )
 
 var tcpFuncs = map[string]func(*matchersTree, ...string) error{
@@ -62,7 +63,7 @@ func clientIP(tree *matchersTree, clientIP ...string) error {
 	return nil
 }
 
-var hostOrIP = regexp.MustCompile(`^[[:word:]\.\-\:]+$`)
+var hostOrIP = regexp.MustCompile(`^\*?[[:word:]\.\-\:]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
@@ -84,14 +85,14 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 			return false
 		}
 
-		if host == meta.serverName {
+		if muxer.IsHostEqual(meta.serverName, host) {
 			return true
 		}
 
 		// trim trailing period in case of FQDN
 		host = strings.TrimSuffix(host, ".")
 
-		return host == meta.serverName
+		return muxer.IsHostEqual(meta.serverName, host)
 	}
 
 	return nil
