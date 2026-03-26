@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 )
 
@@ -374,6 +375,57 @@ func TestValidateConfiguration_BasePath(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProvidersPriorityList(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		cfg           *Configuration
+		expectedError bool
+		expected      []string
+	}{
+		{
+			desc: "No priority list",
+			cfg: &Configuration{
+				Providers: &Providers{},
+			},
+			expected: providerList,
+		},
+		{
+			desc: "Priority list with non existing provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					PriorityList: []string{"unknown"},
+				},
+			},
+			expectedError: true,
+		},
+		{
+			desc: "Priority list upper case provider remove the case",
+			cfg: &Configuration{
+				Providers: &Providers{
+					PriorityList: []string{"DOCKER"},
+				},
+			},
+			expected: []string{"docker"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			test.cfg.SetEffectiveConfiguration()
+			err := test.cfg.ValidateConfiguration()
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expected, test.cfg.Providers.PriorityList)
 			}
 		})
 	}

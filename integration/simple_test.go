@@ -2656,3 +2656,83 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 	// The whoami service should have received the X-Custom-Header that was added by the service middleware
 	assert.Contains(s.T(), string(body), "X-Custom-Header: service-middleware-test")
 }
+
+// TestProviderPriorityListFileWins verifies that, when two providers define
+// routes with the same rule and auto-computed priority, the provider listed
+// first in providers.priorityList takes precedence (lower index = higher
+// provider priority).
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - priorityList     = ["file", "docker"]  → file is index 0 → wins
+func (s *SimpleSuite) TestProviderPriorityListFileWins() {
+	s.createComposeProject("provider-priority")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/provider-priority.toml", struct {
+		PriorityList string
+		FileBackend  string
+		DockerHost   string
+	}{
+		// file at index 0 → providerPriority = 2 (highest) → file wins.
+		PriorityList: `["file", "docker"]`,
+		FileBackend:  "http://127.0.0.1:9042",
+		DockerHost:   s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The file provider has higher priority → requests must reach the file backend.
+	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+
+}
+
+// TestProviderPriorityListDockerWins mirrors TestProviderPriorityListFileWins
+// but reverses the priorityList so that the Docker provider wins instead.
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - priorityList     = ["docker", "file"]  → docker is index 0 → wins
+func (s *SimpleSuite) TestProviderPriorityListDockerWins() {
+	s.createComposeProject("provider-priority")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/provider-priority.toml", struct {
+		PriorityList string
+		FileBackend  string
+		DockerHost   string
+	}{
+		// docker at index 0 → providerPriority = 2 (highest) → docker wins.
+		PriorityList: `["docker", "file"]`,
+		FileBackend:  "http://127.0.0.1:9042",
+		DockerHost:   s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The Docker provider has higher priority → requests must reach the whoami container.
+	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
+}

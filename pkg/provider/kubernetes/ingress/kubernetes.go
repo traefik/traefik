@@ -74,10 +74,13 @@ func (p *Provider) Init() error {
 	return nil
 }
 
+// ProviderName is the Kubernetes Ingress provider name.
+const ProviderName = "kubernetes"
+
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, "kubernetes").Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
 	k8sClient, err := p.newK8sClient(ctxLog)
@@ -130,7 +133,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  "kubernetes",
+							ProviderName:  ProviderName,
 							Configuration: conf,
 						}
 					}

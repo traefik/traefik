@@ -1,0 +1,7 @@
+services:
+  whoami:
+    image: traefik/whoami
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.docker-router.rule: "PathPrefix(`/`)"
+      traefik.http.routers.docker-router.entryPoints: web

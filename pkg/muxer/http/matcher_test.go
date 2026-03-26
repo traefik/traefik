@@ -72,9 +72,9 @@ func TestClientIPMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -147,9 +147,9 @@ func TestMethodMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -276,9 +276,9 @@ func TestHostMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -377,9 +377,9 @@ func TestHostRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -452,9 +452,9 @@ func TestPathMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -546,9 +546,9 @@ func TestPathRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -619,9 +619,9 @@ func TestPathPrefixMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -707,9 +707,9 @@ func TestHeaderMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -816,9 +816,9 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -906,9 +906,9 @@ func TestQueryMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -1021,9 +1021,9 @@ func TestQueryRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{})
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return

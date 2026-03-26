@@ -1,6 +1,7 @@
 package try
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -25,6 +26,7 @@ func BodyContains(values ...string) ResponseCondition {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
+		res.Body = io.NopCloser(bytes.NewBuffer(body))
 		for _, value := range values {
 			if !strings.Contains(string(body), value) {
 				return fmt.Errorf("could not find '%s' in body '%s'", value, string(body))

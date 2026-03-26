@@ -46,16 +46,11 @@ type Manager struct {
 	conf               *runtime.Configuration
 	tlsManager         *tls.Manager
 	parser             httpmuxer.SyntaxParser
+	priorityList       []string
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration,
-	serviceManager serviceManager,
-	middlewaresBuilder middlewareChainBuilder,
-	observabilityMgr *middleware.ObservabilityMgr,
-	tlsManager *tls.Manager,
-	parser httpmuxer.SyntaxParser,
-) *Manager {
+func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareChainBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager, parser httpmuxer.SyntaxParser, priorityList []string) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
 		serviceManager:     serviceManager,
@@ -64,6 +59,7 @@ func NewManager(conf *runtime.Configuration,
 		conf:               conf,
 		tlsManager:         tlsManager,
 		parser:             parser,
+		priorityList:       priorityList,
 	}
 }
 
@@ -225,7 +221,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
-	muxer := httpmuxer.NewMuxer(m.parser)
+	muxer := httpmuxer.NewMuxer(m.parser, m.priorityList)
 
 	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
 	if err != nil {
@@ -274,7 +270,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
+		var providerName string
+		parts := strings.Split(routerName, "@")
+		if len(parts) == 2 {
+			providerName = parts[1]
+		}
+
+		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName, handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -456,7 +458,7 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 
 // buildChildRoutersMuxer creates a muxer for child routers.
 func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName string, childRefs []string) (http.Handler, error) {
-	childMuxer := httpmuxer.NewMuxer(m.parser)
+	childMuxer := httpmuxer.NewMuxer(m.parser, []string{})
 
 	// Set a default handler for the child muxer (404 Not Found).
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
@@ -489,8 +491,14 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 			continue
 		}
 
+		var providerName string
+		parts := strings.Split(childName, "@")
+		if len(parts) == 2 {
+			providerName = parts[1]
+		}
+
 		// Add the child router to the muxer.
-		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, childHandler); err != nil {
+		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, providerName, childHandler); err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue

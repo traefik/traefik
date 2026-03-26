@@ -39,7 +39,8 @@ type RouterFactory struct {
 
 	cancelPrevState func()
 
-	parser httpmuxer.SyntaxParser
+	parser       httpmuxer.SyntaxParser
+	priorityList []string
 }
 
 // NewRouterFactory creates a new RouterFactory.
@@ -77,6 +78,12 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		return nil, fmt.Errorf("creating parser: %w", err)
 	}
 
+	priorityList := []string{}
+
+	if staticConfiguration.Providers != nil {
+		priorityList = staticConfiguration.Providers.PriorityList
+	}
+
 	return &RouterFactory{
 		entryPointsTCP:   entryPointsTCP,
 		entryPointsUDP:   entryPointsUDP,
@@ -87,6 +94,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		dialerManager:    dialerManager,
 		allowACMEByPass:  allowACMEByPass,
 		parser:           parser,
+		priorityList:     priorityList,
 	}, nil
 }
 
@@ -106,7 +114,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	serviceManager.SetMiddlewareChainBuilder(middlewaresBuilder)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager, f.parser)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager, f.parser, f.priorityList)
 
 	routerManager.ParseRouterTree()
 

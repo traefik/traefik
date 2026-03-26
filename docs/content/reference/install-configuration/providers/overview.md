@@ -142,6 +142,74 @@ you can do so in two different ways:
 - the generic configuration option `exposedByDefault`,
 - a finer granularity mechanism based on constraints.
 
+## Provider Priority
+
+### `providers.priorityList`
+
+_Optional_
+
+When two routers from **different providers** define the same rule with equal numeric [priority](../../routing-configuration/http/routing/rules-and-priority.md#priority-calculation), the `priorityList` option determines which provider's route takes precedence.
+
+The list is ordered from highest to lowest priority: a provider listed first wins over providers listed later.
+
+```yaml tab="File (YAML)"
+providers:
+  priorityList:
+    - kubernetescrd
+    - kubernetes
+    - file
+```
+
+```toml tab="File (TOML)"
+[providers]
+  priorityList = ["kubernetescrd", "kubernetes", "file"]
+```
+
+```bash tab="CLI"
+--providers.priorityList=kubernetescrd,kubernetes,file
+```
+
+!!! info "Default order"
+
+    When `priorityList` is not set, Traefik uses the following default order (highest priority first):
+
+    | Position | Provider name            |
+    |----------|--------------------------|
+    | 1        | `kubernetesgateway`      |
+    | 2        | `kubernetescrd`          |
+    | 3        | `kubernetes`             |
+    | 4        | `kubernetesingressnginx` |
+    | 5        | `swarm`                  |
+    | 6        | `docker`                 |
+    | 7        | `file`                   |
+    | 8        | `redis`                  |
+    | 9        | `knative`                |
+    | 10       | `consul`                 |
+    | 11       | `consulcatalog`          |
+    | 12       | `nomad`                  |
+    | 13       | `etcd`                   |
+    | 14       | `ecs`                    |
+    | 15       | `http`                   |
+    | 16       | `zookeeper`              |
+    | 17       | `rest`                   |
+
+!!! note
+
+    - `priorityList` only acts as a **tiebreaker**: it is applied only when two routes from different providers share the same numeric `priority` value. An explicit router priority always takes precedence.
+    - A provider absent from `priorityList` loses to any listed provider.
+    - Provider names are case-insensitive.
+
+## Restrict the Scope of Service Discovery
+
+By default, Traefik creates routes for all detected containers.
+
+If you want to limit the scope of the Traefik service discovery,
+i.e. disallow route creation for some containers,
+you can do so in two different ways:
+
+- the generic configuration option `exposedByDefault`,
+- a finer granularity mechanism based on constraints.
+
 ### `exposedByDefault` and `traefik.enable`
 
 List of providers that support these features:

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -235,9 +236,31 @@ func (t *Tracing) SetDefaults() {
 	t.OTLP.SetDefaults()
 }
 
+// providerList is ordered for the default priority.
+var providerList = []string{
+	gateway.ProviderName,
+	crd.ProviderName,
+	ingress.ProviderName,
+	ingressnginx.ProviderName,
+	docker.SwarmName,
+	docker.DockerName,
+	file.ProviderName,
+	redis.ProviderName,
+	knative.ProviderName,
+	consul.ProviderName,
+	consulcatalog.ProviderName,
+	nomad.ProviderName,
+	etcd.ProviderName,
+	ecs.ProviderName,
+	http.ProviderName,
+	zk.ProviderName,
+	rest.ProviderName,
+}
+
 // Providers contains providers configuration.
 type Providers struct {
 	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
+	PriorityList              []string        `description:"Defines the provider priority if priority on routers are equal." json:"priorityList,omitempty" toml:"priorityList,omitempty" yaml:"priorityList,omitempty" export:"true"`
 
 	Docker                 *docker.Provider               `description:"Enables Docker provider." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Swarm                  *docker.SwarmProvider          `description:"Enables Docker Swarm provider." json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -288,6 +311,14 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
+	}
+
+	if len(c.Providers.PriorityList) == 0 {
+		c.Providers.PriorityList = providerList
+	}
+
+	for i, providerName := range c.Providers.PriorityList {
+		c.Providers.PriorityList[i] = strings.ToLower(providerName)
 	}
 
 	if c.Providers.Docker != nil {
@@ -423,6 +454,14 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	if c.Providers != nil {
+		for _, providerName := range c.Providers.PriorityList {
+			if !slices.Contains(providerList, providerName) {
+				return fmt.Errorf("provider %q is not a valid provider name", providerName)
+			}
 		}
 	}
 
