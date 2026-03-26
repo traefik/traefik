@@ -554,12 +554,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			logger.Error().Err(err).Msg("Error while updating ingress status")
 		}
 
-		var hasTLS bool
 		if len(ingress.Spec.TLS) > 0 {
-			hasTLS = true
 			if err := p.loadCertificates(ctxIngress, ingress.Ingress, uniqCerts); err != nil {
-				logger.Error().Err(err).Msg("Error configuring TLS")
-				continue
+				logger.Warn().Err(err).Msg("Error loading TLS certificates defaulting to default certificate")
 			}
 		}
 
@@ -609,7 +606,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, hasTLS, rt, conf, ""); err != nil {
+			if err := p.applyMiddlewares(ingress, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -622,13 +619,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    defaultBackendName,
-				TLS:        &dynamic.RouterTLSConfig{},
-			}
-			if clientAuthTLSOptionName != "" {
-				rtTLS.TLS.Options = clientAuthTLSOptionName
+				TLS: &dynamic.RouterTLSConfig{
+					Options: clientAuthTLSOptionName,
+				},
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, false, rtTLS, conf, ""); err != nil {
+			if err := p.applyMiddlewares(ingress, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -701,7 +697,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key, "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, hasTLS, rt, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ingress, key, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -713,13 +709,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    key,
-					TLS:        &dynamic.RouterTLSConfig{},
-				}
-				if clientAuthTLSOptionName != "" {
-					rtTLS.TLS.Options = clientAuthTLSOptionName
+					TLS: &dynamic.RouterTLSConfig{
+						Options: clientAuthTLSOptionName,
+					},
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, ingress.IngressConfig, false, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ingress, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -801,25 +796,40 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					RuleSyntax: "default",
 					Service:    serviceName,
 				}
-				if hasTLS {
-					rt.TLS = &dynamic.RouterTLSConfig{}
-					rt.EntryPoints = p.TLSEntryPoints
 
-					if clientAuthTLSOptionName != "" {
-						rt.TLS.Options = clientAuthTLSOptionName
-					}
-				}
 				routerKey := provider.Normalize(fmt.Sprintf("%s-%s-rule-%d-path-%d", ingress.Namespace, ingress.Name, ri, pi))
 				conf.HTTP.Routers[routerKey] = rt
+
+				rtTLS := &dynamic.Router{
+					EntryPoints: p.TLSEntryPoints,
+					Rule:        rt.Rule,
+					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+					RuleSyntax: "default",
+					Service:    rt.Service,
+					TLS: &dynamic.RouterTLSConfig{
+						Options: clientAuthTLSOptionName,
+					},
+				}
+
+				routerKeyTLS := routerKey + "-tls"
+				conf.HTTP.Routers[routerKeyTLS] = rtTLS
 
 				conf.HTTP.Services[serviceName] = service
 				if hasCanaryBackend {
 					rt.Service = wrrServiceName
+					rtTLS.Service = wrrServiceName
 					conf.HTTP.Services[canaryServiceName] = canaryService
 					conf.HTTP.Services[wrrServiceName] = wrrService
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, rt, conf, serverSnippets[rule.Host]); err != nil {
+				// Middlewares are applied after checking the canary backend to get the proper service.
+
+				// HTTP Router middlewares.
+				if err := p.applyMiddlewares(ingress, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
+					logger.Error().Err(err).Msg("Error applying middlewares")
+				}
+				// TLS Router middlewares.
+				if err := p.applyMiddlewares(ingress, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -834,7 +844,22 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 					conf.HTTP.Routers[canaryRouterKey] = canaryRouter
 
-					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
+					if err := p.applyMiddlewares(ingress, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
+						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
+					}
+
+					// default TLS router
+					canaryRouterKeyTLS := canaryRouterKey + "-tls"
+					canaryRouterTLS := &dynamic.Router{
+						EntryPoints: rtTLS.EntryPoints,
+						Rule:        canaryBackend.AppendCanaryRule(rtTLS.Rule),
+						RuleSyntax:  rtTLS.RuleSyntax,
+						Service:     canaryServiceName,
+						TLS:         rtTLS.TLS,
+					}
+					conf.HTTP.Routers[canaryRouterKeyTLS] = canaryRouterTLS
+
+					if err := p.applyMiddlewares(ingress, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
 					}
 				}
@@ -850,7 +875,22 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 					conf.HTTP.Routers[nonCanaryRouterKey] = nonCanaryRouter
 
-					if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
+					if err := p.applyMiddlewares(ingress, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
+						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
+					}
+
+					// default TLS router
+					nonCanaryRouterKeyTLS := nonCanaryRouterKey + "-tls"
+					nonCanaryRouterTLS := &dynamic.Router{
+						EntryPoints: rtTLS.EntryPoints,
+						Rule:        canaryBackend.AppendNonCanaryRule(rtTLS.Rule),
+						RuleSyntax:  rtTLS.RuleSyntax,
+						Service:     serviceName,
+						TLS:         rtTLS.TLS,
+					}
+					conf.HTTP.Routers[nonCanaryRouterKeyTLS] = nonCanaryRouterTLS
+
+					if err := p.applyMiddlewares(ingress, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
 					}
 				}
@@ -1246,60 +1286,60 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
-	if err := p.applyCustomHTTPErrors(namespace, ingressName, routerKey, backend, ingressConfig, rt, conf); err != nil {
+func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
+	if p.applySSLRedirectConfiguration(ingress, routerKey, rt, conf) {
+		return nil
+	}
+
+	if err := p.applyCustomHTTPErrors(ingress.Namespace, ingress.Name, routerKey, backend, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
 	}
-	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
-	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
-	applyRedirect(routerKey, ingressConfig, rt, conf)
+	applyAppRootConfiguration(routerKey, ingress.IngressConfig, rt, conf)
+	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingress.IngressConfig, rt, conf)
+	applyRedirect(routerKey, ingress.IngressConfig, rt, conf)
 
-	// Apply SSL redirect is mandatory to be applied after all other middlewares.
-	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
-
-	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyBasicAuthConfiguration(ingress.Namespace, routerKey, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth: %w", err)
 	}
 
-	if err := p.applyBufferingConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyBufferingConfiguration(routerKey, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying buffering: %w", err)
 	}
 
-	applyAllowedSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
+	applyAllowedSourceRangeConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
-	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
+	applyCORSConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
-	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
+	applyRewriteTargetConfiguration(rulePath, routerKey, ingress.IngressConfig, rt, conf)
 
-	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
+	applyUpstreamVhost(routerKey, ingress.IngressConfig, rt, conf)
 
-	applyLimitRPMConfiguration(routerKey, ingressConfig, rt, conf)
+	applyLimitRPMConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
-	applyLimitRPSConfiguration(routerKey, ingressConfig, rt, conf)
+	applyLimitRPSConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
-	if err := p.applyAuthTLSPassCertificateToUpstream(namespace, routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyAuthTLSPassCertificateToUpstream(ingress.Namespace, routerKey, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
 	}
 
-	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyCustomHeaders(routerKey, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
-	p.applySnippetsAndAuth(routerKey, serverSnippet, ingressConfig, rt, conf)
+	p.applySnippetsAndAuth(routerKey, serverSnippet, ingress.IngressConfig, rt, conf)
 
-	p.applyRetry(routerKey, ingressConfig, rt, conf)
+	p.applyRetry(routerKey, ingress.IngressConfig, rt, conf)
 
 	if p.applyMiddlewareFunc == nil &&
-		(ptr.Deref(ingressConfig.EnableModSecurity, false) ||
-			ptr.Deref(ingressConfig.EnableOWASPCoreRules, false) ||
-			ptr.Deref(ingressConfig.ModSecuritySnippet, "") != "" ||
-			ptr.Deref(ingressConfig.ModSecurityTransactionID, "") != "") {
+		(ptr.Deref(ingress.IngressConfig.EnableModSecurity, false) ||
+			ptr.Deref(ingress.IngressConfig.EnableOWASPCoreRules, false) ||
+			ptr.Deref(ingress.IngressConfig.ModSecuritySnippet, "") != "" ||
+			ptr.Deref(ingress.IngressConfig.ModSecurityTransactionID, "") != "") {
 		return errors.New("mod-security annotations are not supported")
 	}
 
 	if p.applyMiddlewareFunc != nil {
-		err := p.applyMiddlewareFunc(routerKey, rt, conf, ingressConfig)
+		err := p.applyMiddlewareFunc(routerKey, rt, conf, ingress.IngressConfig)
 		if err != nil {
 			return fmt.Errorf("applying middleware: %w", err)
 		}
@@ -1615,6 +1655,7 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		RuleSyntax:  "default",
 		Middlewares: []string{fromToWwwRedirectMiddlewareName},
 		Service:     rt.Service,
+		TLS:         rt.TLS,
 	}
 	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
@@ -1867,48 +1908,18 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 	return nil
 }
 
-func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
-	var forceSSLRedirect bool
-	if ingressConfig.ForceSSLRedirect != nil {
-		forceSSLRedirect = *ingressConfig.ForceSSLRedirect
+func (p *Provider) applySSLRedirectConfiguration(ingress ingress, routerName string, rt *dynamic.Router, conf *dynamic.Configuration) bool {
+	// Only apply SSL redirect on HTTP routers when the ingress has a TLS section.
+	if rt.TLS != nil || ingress.Spec.TLS == nil {
+		return false
 	}
 
-	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, hasTLS)
+	sslRedirect := ptr.Deref(ingress.IngressConfig.SSLRedirect, false)
+	forceSSLRedirect := ptr.Deref(ingress.IngressConfig.ForceSSLRedirect, false)
 
-	if hasTLS {
-		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
-		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
-		httpRouter := &dynamic.Router{
-			// Only attach to entryPoint which do not activate TLS.
-			EntryPoints: p.NonTLSEntryPoints,
-			Rule:        rt.Rule,
-			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-			RuleSyntax:  "default",
-			Middlewares: rt.Middlewares,
-			Service:     rt.Service,
-		}
-		conf.HTTP.Routers[routerName+"-http"] = httpRouter
-
-		// If either forceSSLRedirect or sslRedirect are enabled,
-		// the HTTP router needs to redirect to HTTPS.
-		if forceSSLRedirect || sslRedirect {
-			redirectMiddlewareName := routerName + "-redirect-scheme"
-			conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
-				RedirectScheme: &dynamic.RedirectScheme{
-					Scheme:                 "https",
-					ForcePermanentRedirect: true,
-				},
-			}
-			httpRouter.Middlewares = []string{redirectMiddlewareName}
-			httpRouter.Service = "noop@internal"
-		}
-
-		return
-	}
-
-	// An Ingress with no TLS configuration and forceSSLRedirect annotation should always redirect on HTTPS,
-	// even if no route exists for HTTPS.
-	if forceSSLRedirect {
+	// If either forceSSLRedirect or sslRedirect are enabled,
+	// the HTTP router needs to redirect to HTTPS.
+	if forceSSLRedirect || sslRedirect {
 		redirectMiddlewareName := routerName + "-redirect-scheme"
 		conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
 			RedirectScheme: &dynamic.RedirectScheme{
@@ -1916,11 +1927,14 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 				ForcePermanentRedirect: true,
 			},
 		}
-		rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
+		rt.Middlewares = []string{redirectMiddlewareName}
+		rt.Service = "noop@internal"
+		return true
 	}
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
 	// even if sslRedirect is enabled.
+	return false
 }
 
 // discoverCanaryBackends checks if the canary ingress is matching any of the existing ingress rules,
@@ -1975,6 +1989,10 @@ func (p *Provider) discoverCanaryBackends(namespace string, canaryIngressRule ne
 
 func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if !ptr.Deref(ingressConfig.AuthTLSPassCertificateToUpstream, false) {
+		return nil
+	}
+	// Passing TLS client certificates upstream only applies to TLS routers.
+	if rt.TLS == nil {
 		return nil
 	}
 	if ingressConfig.AuthTLSSecret == nil {
