@@ -964,7 +964,7 @@ func normalizePath(h http.Handler) http.Handler {
 		var normalizedRawPathBuilder strings.Builder
 		for i := 0; i < len(rawPath); i++ {
 			if rawPath[i] != '%' {
-				normalizedRawPathBuilder.WriteString(string(rawPath[i]))
+				normalizedRawPathBuilder.WriteByte(rawPath[i])
 				continue
 			}
 
