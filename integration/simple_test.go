@@ -2698,7 +2698,7 @@ func (s *SimpleSuite) TestTCPWildcardHostSNI() {
 	backend := startTestServer("9041", http.StatusOK, "")
 	defer backend.Close()
 
-	file := s.adaptFile("fixtures/tcp/wildcard-hostsni.toml", struct {
+	file := s.adaptFile("fixtures/tcp/wildcard-hostsni-tls-options.toml", struct {
 		Backend string
 	}{
 		Backend: "127.0.0.1:9041",
