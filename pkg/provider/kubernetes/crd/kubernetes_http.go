@@ -122,14 +122,22 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			r := &dynamic.Router{
-				Middlewares:   mds,
-				Priority:      route.Priority,
-				RuleSyntax:    route.Syntax,
-				EntryPoints:   ingressRoute.Spec.EntryPoints,
-				Rule:          route.Match,
-				Service:       serviceName,
-				Observability: route.Observability,
-				ParentRefs:    parentRouterNames,
+				Middlewares: mds,
+				Priority:    route.Priority,
+				RuleSyntax:  route.Syntax,
+				EntryPoints: ingressRoute.Spec.EntryPoints,
+				Rule:        route.Match,
+				Service:     serviceName,
+				ParentRefs:  parentRouterNames,
+			}
+
+			if route.Observability != nil {
+				r.Observability = &dynamic.RouterObservabilityConfig{
+					AccessLogs:     route.Observability.AccessLogs,
+					Metrics:        route.Observability.Metrics,
+					Tracing:        route.Observability.Tracing,
+					TraceVerbosity: route.Observability.TraceVerbosity,
+				}
 			}
 
 			if ingressRoute.Spec.TLS != nil {
