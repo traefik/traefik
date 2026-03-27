@@ -139,7 +139,7 @@ func TestMirroringWithBody(t *testing.T) {
 	const numMirrors = 10
 
 	var (
-		countMirror int32
+		countMirror atomic.Int32
 		body        = []byte(`body`)
 	)
 
@@ -161,7 +161,7 @@ func TestMirroringWithBody(t *testing.T) {
 			bb, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, body, bb)
-			atomic.AddInt32(&countMirror, 1)
+			countMirror.Add(1)
 		}), 100)
 		assert.NoError(t, err)
 	}
@@ -172,15 +172,14 @@ func TestMirroringWithBody(t *testing.T) {
 
 	pool.Stop()
 
-	val := atomic.LoadInt32(&countMirror)
-	assert.Equal(t, numMirrors, int(val))
+	assert.Equal(t, numMirrors, int(countMirror.Load()))
 }
 
 func TestMirroringWithIgnoredBody(t *testing.T) {
 	const numMirrors = 10
 
 	var (
-		countMirror int32
+		countMirror atomic.Int32
 		body        = []byte(`body`)
 		emptyBody   = []byte(``)
 	)
@@ -203,7 +202,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 			bb, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, emptyBody, bb)
-			atomic.AddInt32(&countMirror, 1)
+			countMirror.Add(1)
 		}), 100)
 		assert.NoError(t, err)
 	}
@@ -214,8 +213,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 
 	pool.Stop()
 
-	val := atomic.LoadInt32(&countMirror)
-	assert.Equal(t, numMirrors, int(val))
+	assert.Equal(t, numMirrors, int(countMirror.Load()))
 }
 
 func TestCloneRequest(t *testing.T) {

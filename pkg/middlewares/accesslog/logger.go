@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -98,6 +99,17 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 	default:
 		log.Error().Msgf("Unsupported access log format: %q, defaulting to common format instead.", config.Format)
 		formatter = new(CommonLogFormatter)
+	}
+
+	if config.JSONTemplate != "" {
+		if config.Format != JSONFormat {
+			return nil, errors.New("accessLog.jsonTemplate requires format to be 'json'")
+		}
+		tmplFormatter, err := NewTemplateJSONFormatter(config.JSONTemplate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid accessLog.jsonTemplate: %w", err)
+		}
+		formatter = tmplFormatter
 	}
 
 	logger := &logrus.Logger{
@@ -460,8 +472,8 @@ func usernameIfPresent(theURL *url.URL) string {
 	return "-"
 }
 
-var requestCounter uint64 // Request ID
+var requestCounter atomic.Uint64 // Request ID
 
 func nextRequestCount() uint64 {
-	return atomic.AddUint64(&requestCounter, 1)
+	return requestCounter.Add(1)
 }

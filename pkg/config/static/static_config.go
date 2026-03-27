@@ -438,6 +438,10 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
+	if c.AccessLog != nil && c.AccessLog.JSONTemplate != "" && c.AccessLog.Format != "json" {
+		return errors.New("accessLog.jsonTemplate requires format to be 'json'")
+	}
+
 	if c.AccessLog != nil && c.AccessLog.OTLP != nil {
 		if c.Experimental == nil || !c.Experimental.OTLPLogs {
 			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP access logging")
