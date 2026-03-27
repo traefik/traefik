@@ -206,8 +206,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-bar-bar-97cb2ba265f7a5df4ab9": {
-							Rule:    `HostRegexp("^[a-zA-Z0-9-]+\\.bar$") && PathPrefix("/bar")`,
+						"testing-bar-bar-41871576e140babe40bd": {
+							Rule:    `Host("*.bar") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
 						},
 						"testing-bar-bar-605945111a3c9f84dc65": {
@@ -1161,7 +1161,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
 						"testing-foobar-com-bar": {
-							Rule:    `HostRegexp("^[a-zA-Z0-9-]+\\.foobar\\.com$") && PathPrefix("/bar")`,
+							Rule:    `Host("*.foobar.com") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
 						},
 					},
