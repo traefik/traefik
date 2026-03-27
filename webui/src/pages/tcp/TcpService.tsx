@@ -47,7 +47,7 @@ const GridTitle = styled(Text, {
 })
 
 type TcpServer = {
-  address: string
+  address?: string
   url?: string
   weight?: number
 }
