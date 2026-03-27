@@ -24,7 +24,7 @@ func keepCertificate(cert certificateRepresentation, criterion *searchCriterion)
 		criterion.searchIn(searchFields...)
 }
 
-func (h Handler) getCertificates(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getCertificates(rw http.ResponseWriter, request *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
 	allCerts := h.extractCertificates()
@@ -82,7 +82,7 @@ func (h Handler) getCertificate(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) extractCertificates() []certificateRepresentation {
+func (h *Handler) extractCertificates() []certificateRepresentation {
 	if h.tlsManager == nil {
 		return []certificateRepresentation{}
 	}

@@ -39,7 +39,7 @@ type overview struct {
 	Providers    []string       `json:"providers,omitempty"`
 }
 
-func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 	result := overview{
 		HTTP: schemeOverview{
 			Routers:     getHTTPRouterSection(h.runtimeConfiguration.Routers),

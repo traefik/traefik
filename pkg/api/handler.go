@@ -91,7 +91,7 @@ func (h *Handler) WithTLSManager(tlsManager *tls.Manager) *Handler {
 }
 
 // createRouter creates API routes and router.
-func (h Handler) createRouter() *mux.Router {
+func (h *Handler) createRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
 
 	apiRouter := router.PathPrefix(h.staticConfig.API.BasePath).Subrouter().UseEncodedPath()
@@ -137,7 +137,7 @@ func (h Handler) createRouter() *mux.Router {
 	return router
 }
 
-func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {
 	siRepr := make(map[string]*serviceInfoRepresentation, len(h.runtimeConfiguration.Services))
 	for k, v := range h.runtimeConfiguration.Services {
 		siRepr[k] = &serviceInfoRepresentation{
