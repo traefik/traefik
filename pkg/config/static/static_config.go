@@ -149,7 +149,7 @@ type TCPServersTransport struct {
 }
 
 type TCPProxyProtocol struct {
-	Version int `description:"Defines the proxy protocol version. If 0 disables proxy protocol" json:"version,omityempty" toml:"version,omitempty" yaml:"version,omitempty" file:"allowEmpty" kv:"allowEmpty" label:"allowEmpty" export:"true"`
+	Version int `description:"Defines the proxy protocol version. If 0 disables proxy protocol" json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // TLSClientConfig options to configure TLS communication between Traefik and the servers.
