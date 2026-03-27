@@ -11,6 +11,7 @@ import (
 	"github.com/docker/cli/cli/connhelper"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/errdefs"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
 	"github.com/rs/zerolog/log"
@@ -39,7 +40,11 @@ type Shared struct {
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
+		if errdefs.IsNotFound(err) {
+			log.Ctx(ctx).Debug().Err(err).Msgf("Container %s not found, it was probably removed during inspection", containerID)
+		} else {
+			log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
+		}
 		return dockerData{}
 	}
 
