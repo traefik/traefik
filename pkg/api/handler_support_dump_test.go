@@ -89,7 +89,7 @@ func TestHandler_SupportDump(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler := New(test.confStatic, &test.confDyn, nil)
+			handler := New(test.confStatic, &test.confDyn)
 			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)

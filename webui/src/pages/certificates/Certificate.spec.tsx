@@ -1,5 +1,7 @@
 import * as useCertificates from '../../hooks/use-certificates'
+
 import { Certificate } from './Certificate'
+
 import { renderWithProviders } from 'utils/test'
 
 describe('<CertificatePage />', () => {
@@ -59,6 +61,10 @@ describe('<CertificatePage />', () => {
       notBefore: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'enabled' as const,
       serialNumber: '123456',
+      version: '3',
+      keyType: 'RSA',
+      signatureAlgorithm: 'SHA256WithRSA',
+      certFingerprint: 'a1b2c3d4e5f60708090a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60',
     }
 
     vi.spyOn(useCertificates, 'useCertificate').mockImplementation(() => ({

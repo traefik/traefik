@@ -275,8 +275,8 @@ func TestRecursionService(t *testing.T) {
 	transportManager := service.NewTransportManager(nil)
 	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil)
 	tlsManager := tls.NewManager(nil)
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil, tlsManager)
 
 	dialerManager := tcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})

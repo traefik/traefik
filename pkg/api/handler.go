@@ -66,13 +66,13 @@ type Handler struct {
 // NewBuilder returns a http.Handler builder based on runtime.Configuration.
 func NewBuilder(staticConfig static.Configuration, tlsManager *tls.Manager) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
-		return New(staticConfig, configuration, tlsManager).createRouter()
+		return New(staticConfig, configuration).WithTLSManager(tlsManager).createRouter()
 	}
 }
 
 // New returns a Handler defined by staticConfig, and if provided, by runtimeConfig.
 // It finishes populating the information provided in the runtimeConfig.
-func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration, tlsManager *tls.Manager) *Handler {
+func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration) *Handler {
 	rConfig := runtimeConfig
 	if rConfig == nil {
 		rConfig = &runtime.Configuration{}
@@ -81,8 +81,13 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	return &Handler{
 		runtimeConfiguration: rConfig,
 		staticConfig:         staticConfig,
-		tlsManager:           tlsManager,
 	}
+}
+
+// WithTLSManager sets the TLS manager on the handler, enabling the certificate API endpoints.
+func (h *Handler) WithTLSManager(tlsManager *tls.Manager) *Handler {
+	h.tlsManager = tlsManager
+	return h
 }
 
 // createRouter creates API routes and router.

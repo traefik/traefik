@@ -158,8 +158,8 @@ func getCertificateStatus(notAfter time.Time) string {
 	if remaining < 0 {
 		return "disabled"
 	}
-	// Show warning for certificates with validity less than 14 days left.
-	if remaining < 14*24*time.Hour {
+	// Show warning for certificates with validity less than 30 days left.
+	if remaining < 30*24*time.Hour {
 		return "warning"
 	}
 	return "enabled"

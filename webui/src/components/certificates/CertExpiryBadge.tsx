@@ -7,7 +7,7 @@ type ExpiryStatus = {
 
 export const getCertExpiryStatus = (daysLeft: number): ExpiryStatus => {
   if (daysLeft < 0) return { variant: 'red', label: 'EXPIRED' }
-  if (daysLeft < 14) return { variant: 'orange', label: 'Expiring Soon' }
+  if (daysLeft < 30) return { variant: 'orange', label: 'Expiring Soon' }
   return { variant: 'green', label: 'Valid' }
 }
 

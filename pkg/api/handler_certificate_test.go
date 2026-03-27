@@ -557,7 +557,7 @@ func TestHandler_Certificates(t *testing.T) {
 				tlsManager.UpdateConfigs(t.Context(), nil, nil, dynamicConfigs)
 			}
 
-			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, nil, tlsManager)
+			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, nil).WithTLSManager(tlsManager)
 			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
