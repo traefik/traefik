@@ -4,8 +4,13 @@ import { type ReactElement, useMemo } from 'react'
 import CertExpiryBadge, { getCertExpiryStatus } from 'components/certificates/CertExpiryBadge'
 import DetailsCard, { ValText } from 'components/resources/DetailsCard'
 
-const isLinkableHostname = (value: string) =>
-  !value.startsWith('*.') && !/\s/.test(value) && !/^(\d{1,3}\.){3}\d{1,3}$/.test(value) && !value.includes(':')
+const isLinkableHostname = (value?: string) => {
+  if (!value) {
+    return false
+  }
+
+  return !value.startsWith('*.') && !/\s/.test(value) && !/^(\d{1,3}\.){3}\d{1,3}$/.test(value) && !value.includes(':')
+}
 
 export const CertificateDetails = ({ certificate }: { certificate: Certificate.Info }) => {
   const validFrom = new Date(certificate.notBefore)
@@ -26,7 +31,7 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
           {certificate.commonName}
         </Link>
       ) : (
-        <ValText>{certificate.commonName}</ValText>
+        <ValText>{certificate.commonName || '-'}</ValText>
       ),
     },
     {

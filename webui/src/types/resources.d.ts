@@ -126,7 +126,7 @@ declare namespace Certificate {
   /** Raw API response shape */
   type Raw = {
     name: string
-    commonName: string
+    commonName?: string
     sans: string[]
     issuerOrg?: string
     issuerCN?: string
@@ -141,7 +141,7 @@ declare namespace Certificate {
     keySize?: number
     signatureAlgorithm: string
     certFingerprint: string
-    publicKeyFingerprint?: string
+    publicKeyFingerprint: string
     status: 'enabled' | 'warning' | 'expired'
   }
 

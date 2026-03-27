@@ -5,7 +5,6 @@ import { CertificateDetails } from '../../components/certificates/CertificateDet
 import { useCertificate } from '../../hooks/use-certificates'
 
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
-import { ResourceStatus } from 'components/resources/ResourceStatus'
 import PageTitle from 'layout/PageTitle'
 import { NotFound } from 'pages/NotFound'
 
@@ -44,11 +43,8 @@ export const Certificate = () => {
 
   return (
     <>
-      <PageTitle title={`Certificate: ${certificate.commonName}`} />
-      <Flex gap={2} align="center" css={{ mb: '$4' }}>
-        <H1>{certificate.commonName}</H1>
-        <ResourceStatus status={certificate.status} />
-      </Flex>
+      <PageTitle title={`Certificate ${certificate.commonName}`} />
+      <H1 css={{ mb: '$4' }}>{certificate.commonName || 'Certificate'}</H1>
       <CertificateDetails certificate={certificate} />
     </>
   )

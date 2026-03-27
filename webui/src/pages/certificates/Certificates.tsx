@@ -27,7 +27,7 @@ export const CertificateRenderRow: RenderRowType = (row: unknown) => {
         <ResourceStatus status={cert.status} />
       </AriaTd>
       <AriaTd>
-        <TooltipText text={cert.commonName} />
+        <TooltipText text={cert.commonName || '-'} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={cert.issuerOrg || cert.issuerCN || 'Unknown'} />
