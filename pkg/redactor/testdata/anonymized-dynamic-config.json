@@ -2,12 +2,8 @@
   "http": {
     "routers": {
       "foo": {
-        "entryPoints": [
-          "foo"
-        ],
-        "middlewares": [
-          "foo"
-        ],
+        "entryPoints": ["foo"],
+        "middlewares": ["foo"],
         "service": "foo",
         "rule": "xxxx",
         "priority": 42,
@@ -17,9 +13,7 @@
           "domains": [
             {
               "main": "xxxx",
-              "sans": [
-                "xxxx"
-              ]
+              "sans": ["xxxx"]
             }
           ]
         },
@@ -102,14 +96,10 @@
           "prefix": "foo"
         },
         "stripPrefix": {
-          "prefixes": [
-            "foo"
-          ]
+          "prefixes": ["foo"]
         },
         "stripPrefixRegex": {
-          "regex": [
-            "foo"
-          ]
+          "regex": ["foo"]
         },
         "replacePath": {
           "path": "foo"
@@ -119,19 +109,13 @@
           "replacement": "foo"
         },
         "chain": {
-          "middlewares": [
-            "foo"
-          ]
+          "middlewares": ["foo"]
         },
         "ipAllowList": {
-          "sourceRange": [
-            "xxxx"
-          ],
+          "sourceRange": ["xxxx"],
           "ipStrategy": {
             "depth": 42,
-            "excludedIPs": [
-              "xxxx"
-            ]
+            "excludedIPs": ["xxxx"]
           }
         },
         "headers": {
@@ -142,29 +126,15 @@
             "foo": "bar"
           },
           "accessControlAllowCredentials": true,
-          "accessControlAllowHeaders": [
-            "foo"
-          ],
-          "accessControlAllowMethods": [
-            "foo"
-          ],
-          "accessControlAllowOriginList": [
-            "xxxx"
-          ],
-          "accessControlAllowOriginListRegex": [
-            "xxxx"
-          ],
-          "accessControlExposeHeaders": [
-            "foo"
-          ],
+          "accessControlAllowHeaders": ["foo"],
+          "accessControlAllowMethods": ["foo"],
+          "accessControlAllowOriginList": ["xxxx"],
+          "accessControlAllowOriginListRegex": ["xxxx"],
+          "accessControlExposeHeaders": ["foo"],
           "accessControlMaxAge": 42,
           "addVaryHeader": true,
-          "allowedHosts": [
-            "xxxx"
-          ],
-          "hostsProxyHeaders": [
-            "foo"
-          ],
+          "allowedHosts": ["xxxx"],
+          "hostsProxyHeaders": ["foo"],
           "stsSeconds": 42,
           "stsIncludeSubdomains": true,
           "stsPreload": true,
@@ -182,9 +152,7 @@
           "isDevelopment": true
         },
         "errors": {
-          "status": [
-            "foo"
-          ],
+          "status": ["foo"],
           "service": "foo",
           "query": "foo"
         },
@@ -195,9 +163,7 @@
           "sourceCriterion": {
             "ipStrategy": {
               "depth": 42,
-              "excludedIPs": [
-                "xxxx"
-              ]
+              "excludedIPs": ["xxxx"]
             },
             "requestHeaderName": "foo",
             "requestHost": true
@@ -214,18 +180,14 @@
           "permanent": true
         },
         "basicAuth": {
-          "users": [
-            "xxxx"
-          ],
+          "users": ["xxxx"],
           "usersFile": "xxxx",
           "realm": "xxxx",
           "removeHeader": true,
           "headerField": "foo"
         },
         "digestAuth": {
-          "users": [
-            "xxxx"
-          ],
+          "users": ["xxxx"],
           "usersFile": "xxxx",
           "removeHeader": true,
           "realm": "xxxx",
@@ -240,9 +202,7 @@
             "insecureSkipVerify": true
           },
           "trustForwardHeader": true,
-          "authResponseHeaders": [
-            "foo"
-          ],
+          "authResponseHeaders": ["foo"],
           "authResponseHeadersRegex": "foo",
           "authRequestHeaders": [
             "foo"
@@ -254,9 +214,7 @@
           "sourceCriterion": {
             "ipStrategy": {
               "depth": 42,
-              "excludedIPs": [
-                "xxxx"
-              ]
+              "excludedIPs": ["xxxx"]
             },
             "requestHeaderName": "foo",
             "requestHost": true
@@ -273,9 +231,7 @@
           "expression": "foo"
         },
         "compress": {
-          "excludedContentTypes": [
-            "foo"
-          ]
+          "excludedContentTypes": ["foo"]
         },
         "passTLSClientCert": {
           "pem": true,
@@ -319,18 +275,14 @@
     },
     "models": {
       "foo": {
-        "middlewares": [
-          "foo"
-        ],
+        "middlewares": ["foo"],
         "tls": {
           "options": "foo",
           "certResolver": "foo",
           "domains": [
             {
               "main": "xxxx",
-              "sans": [
-                "xxxx"
-              ]
+              "sans": ["xxxx"]
             }
           ]
         },
@@ -341,9 +293,7 @@
       "foo": {
         "serverName": "xxxx",
         "insecureSkipVerify": true,
-        "rootCAs": [
-          "xxxx"
-        ],
+        "rootCAs": ["xxxx"],
         "certificates": [
           {
             "certFile": "xxxx",
@@ -356,7 +306,9 @@
           "responseHeaderTimeout": "42ns",
           "idleConnTimeout": "42ns",
           "readIdleTimeout": "42ns",
-          "pingTimeout": "42ns"
+          "pingTimeout": "42ns",
+          "readTimeout": "42ns",
+          "writeTimeout": "42ns"
         }
       }
     }
@@ -364,9 +316,7 @@
   "tcp": {
     "routers": {
       "foo": {
-        "entryPoints": [
-          "foo"
-        ],
+        "entryPoints": ["foo"],
         "service": "foo",
         "rule": "xxxx",
         "tls": {
@@ -376,9 +326,7 @@
           "domains": [
             {
               "main": "xxxx",
-              "sans": [
-                "xxxx"
-              ]
+              "sans": ["xxxx"]
             }
           ]
         }
@@ -417,9 +365,7 @@
         "tls": {
           "serverName": "xxxx",
           "insecureSkipVerify": true,
-          "rootCAs": [
-            "xxxx"
-          ],
+          "rootCAs": ["xxxx"],
           "certificates": [
             {
               "certFile": "xxxx",
@@ -433,9 +379,7 @@
   "udp": {
     "routers": {
       "foo": {
-        "entryPoints": [
-          "foo"
-        ],
+        "entryPoints": ["foo"],
         "service": "foo"
       }
     },
@@ -466,21 +410,15 @@
       {
         "certFile": "xxxx",
         "keyFile": "xxxx",
-        "stores": [
-          "foo"
-        ]
+        "stores": ["foo"]
       }
     ],
     "options": {
       "foo": {
         "minVersion": "foo",
         "maxVersion": "foo",
-        "cipherSuites": [
-          "foo"
-        ],
-        "curvePreferences": [
-          "foo"
-        ],
+        "cipherSuites": ["foo"],
+        "curvePreferences": ["foo"],
         "clientAuth": {},
         "sniStrict": true
       }
