@@ -147,7 +147,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					assert.Empty(t, certs)
 				},
@@ -160,7 +161,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 
@@ -168,7 +170,7 @@ func TestHandler_Certificates(t *testing.T) {
 					assert.Regexp(t, `^[0-9a-f]{64}$`, cert["name"])
 					assert.Equal(t, "Acme Co", cert["issuerOrg"])
 					assert.Equal(t, "enabled", cert["status"])
-					assert.ElementsMatch(t, []interface{}{"127.0.0.1", "::1", "example.com"}, cert["sans"])
+					assert.ElementsMatch(t, []any{"127.0.0.1", "::1", "example.com"}, cert["sans"])
 				},
 			},
 		},
@@ -179,10 +181,11 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
-					sans := certs[0]["sans"].([]interface{})
+					sans := certs[0]["sans"].([]any)
 					assert.Contains(t, sans, "example.com")
 				},
 			},
@@ -194,7 +197,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					assert.Empty(t, certs)
 				},
@@ -207,7 +211,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 					assert.Equal(t, "enabled", certs[0]["status"])
@@ -221,7 +226,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 				},
@@ -234,7 +240,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 					assert.Equal(t, "enabled", certs[0]["status"])
@@ -248,7 +255,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					assert.Empty(t, certs)
 				},
@@ -261,11 +269,12 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var cert map[string]interface{}
+					t.Helper()
+					var cert map[string]any
 					require.NoError(t, json.Unmarshal(body, &cert))
 					assert.Regexp(t, `^[0-9a-f]{64}$`, cert["name"])
 					assert.Equal(t, "enabled", cert["status"])
-					assert.ElementsMatch(t, []interface{}{"127.0.0.1", "::1", "example.com"}, cert["sans"])
+					assert.ElementsMatch(t, []any{"127.0.0.1", "::1", "example.com"}, cert["sans"])
 				},
 			},
 		},
@@ -284,7 +293,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
@@ -307,7 +317,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
@@ -330,7 +341,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
@@ -351,7 +363,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
@@ -374,7 +387,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
@@ -392,7 +406,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
@@ -403,7 +418,7 @@ func TestHandler_Certificates(t *testing.T) {
 						certTime, err := time.Parse(time.RFC3339, notAfter)
 						require.NoError(t, err)
 						if !prevTime.IsZero() {
-							assert.True(t, !certTime.Before(prevTime))
+							assert.False(t, certTime.Before(prevTime))
 						}
 						prevTime = certTime
 					}
@@ -417,7 +432,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 					assert.Equal(t, "warning", certs[0]["status"])
@@ -432,7 +448,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 					assert.Equal(t, "disabled", certs[0]["status"])
@@ -447,7 +464,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
 					assert.Equal(t, "acme.example.org", certs[0]["commonName"])
@@ -461,7 +479,8 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					// All certificates have "Acme Co" as issuer
 					require.Len(t, certs, 4)
@@ -475,12 +494,13 @@ func TestHandler_Certificates(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				validateResponse: func(t *testing.T, body []byte) {
-					var certs []map[string]interface{}
+					t.Helper()
+					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
 					// Check the certificate with commonName set (warning.com)
-					var certWithCN map[string]interface{}
+					var certWithCN map[string]any
 					for _, c := range certs {
 						if c["commonName"] == "warning.com" {
 							certWithCN = c
@@ -499,7 +519,7 @@ func TestHandler_Certificates(t *testing.T) {
 					assert.NotEmpty(t, certWithCN["issuerOrg"])
 					assert.NotEmpty(t, certWithCN["version"])
 					assert.Equal(t, "RSA", certWithCN["keyType"])
-					assert.Equal(t, float64(2048), certWithCN["keySize"])
+					assert.InDelta(t, float64(2048), certWithCN["keySize"], 0)
 					assert.NotEmpty(t, certWithCN["signatureAlgorithm"])
 					assert.NotEmpty(t, certWithCN["certFingerprint"])
 					assert.NotEmpty(t, certWithCN["publicKeyFingerprint"])

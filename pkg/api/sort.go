@@ -15,6 +15,9 @@ const (
 const (
 	ascendantSorting  = "asc"
 	descendantSorting = "desc"
+
+	sortFieldName   = "name"
+	sortFieldStatus = "status"
 )
 
 type orderedWithName interface {
@@ -49,7 +52,7 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 	}
 
 	switch sortBy {
-	case "name":
+	case sortFieldName:
 		sortByName(direction, routers)
 
 	case "provider":
@@ -58,7 +61,7 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 	case "priority":
 		sortByFunc(direction, routers, func(i int) int { return routers[i].priority() })
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, routers, func(i int) string { return routers[i].status() })
 
 	case "rule":
@@ -179,7 +182,7 @@ func sortServices[T orderedService](values url.Values, services []T) {
 	}
 
 	switch sortBy {
-	case "name":
+	case sortFieldName:
 		sortByName(direction, services)
 
 	case "type":
@@ -191,7 +194,7 @@ func sortServices[T orderedService](values url.Values, services []T) {
 	case "provider":
 		sortByFunc(direction, services, func(i int) string { return services[i].provider() })
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, services, func(i int) string { return services[i].status() })
 
 	default:
@@ -300,7 +303,7 @@ func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
 	}
 
 	switch sortBy {
-	case "name":
+	case sortFieldName:
 		sortByName(direction, middlewares)
 
 	case "type":
@@ -309,7 +312,7 @@ func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
 	case "provider":
 		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].provider() })
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].status() })
 
 	default:
@@ -358,10 +361,10 @@ func sortCertificates[T orderedCertificate](values url.Values, certificates []T)
 	}
 
 	switch sortBy {
-	case "name", "cn":
+	case sortFieldName, "cn":
 		sortByName(direction, certificates)
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, certificates, func(i int) string { return certificates[i].status() })
 
 	case "issuer":
