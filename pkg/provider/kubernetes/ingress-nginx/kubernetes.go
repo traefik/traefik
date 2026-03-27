@@ -176,6 +176,7 @@ type Provider struct {
 	Token            types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	CertAuthFilePath string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	ThrottleDuration ptypes.Duration     `description:"Ingress refresh throttle duration." json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	GlobalAuthURL    string              `description:"URL to the service that provides authentication for all the locations. Per ingress auth-url annotation has precedence over this option." json:"globalAuthURL,omitempty" toml:"globalAuthURL,omitempty" yaml:"globalAuthURL,omitempty" export:"true"`
 
 	WatchNamespace         string `description:"Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty." json:"watchNamespace,omitempty" toml:"watchNamespace,omitempty" yaml:"watchNamespace,omitempty" export:"true"`
 	WatchNamespaceSelector string `description:"Selector selects namespaces the controller watches for updates to Kubernetes objects." json:"watchNamespaceSelector,omitempty" toml:"watchNamespaceSelector,omitempty" yaml:"watchNamespaceSelector,omitempty" export:"true"`
@@ -1350,7 +1351,13 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 
 func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	configurationSnippet := ptr.Deref(ingressConfig.ConfigurationSnippet, "")
+
+	// Use per-ingress auth-url if set; fall back to global auth URL if enabled (default true).
 	authURL := ptr.Deref(ingressConfig.AuthURL, "")
+	if authURL == "" && p.GlobalAuthURL != "" && ptr.Deref(ingressConfig.EnableGlobalAuth, true) {
+		authURL = p.GlobalAuthURL
+	}
+
 	if serverSnippet == "" && configurationSnippet == "" && authURL == "" {
 		return
 	}
