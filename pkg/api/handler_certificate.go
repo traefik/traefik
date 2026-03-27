@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
@@ -40,7 +41,15 @@ func (h Handler) getCertificates(rw http.ResponseWriter, request *http.Request) 
 
 	sortCertificates(query, results)
 
-	err := json.NewEncoder(rw).Encode(results)
+	pageInfo, err := pagination(request, len(results))
+	if err != nil {
+		writeError(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
+
+	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to encode certificates")
 		writeError(rw, err.Error(), http.StatusInternalServerError)

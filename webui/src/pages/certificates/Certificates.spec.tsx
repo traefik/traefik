@@ -34,7 +34,7 @@ describe('<CertificatesPage />', () => {
         issuerOrg: 'Expired CA',
         notAfter: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         notBefore: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'disabled',
+        status: 'expired',
       },
     ].map(CertificateRenderRow)
     const mock = vi
@@ -63,8 +63,8 @@ describe('<CertificatesPage />', () => {
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('Warning CA')
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('days')
 
-    // Third certificate (disabled/expired)
-    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('testid="disabled"')
+    // Third certificate (expired)
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('testid="expired"')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('expired.com')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('Expired CA')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('EXPIRED')

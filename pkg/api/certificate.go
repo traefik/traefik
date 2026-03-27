@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+const (
+	certStatusEnabled = "enabled"
+	certStatusWarning = "warning"
+	certStatusExpired = "expired"
+)
+
 // certificateRepresentation represents a certificate in the API.
 type certificateRepresentation struct {
 	Name                 string    `json:"name"` // SHA-256 fingerprint of the DER-encoded certificate.
@@ -156,11 +162,11 @@ func formatVersion(version int) string {
 func getCertificateStatus(notAfter time.Time) string {
 	remaining := time.Until(notAfter)
 	if remaining < 0 {
-		return "disabled"
+		return certStatusExpired
 	}
 	// Show warning for certificates with validity less than 30 days left.
 	if remaining < 30*24*time.Hour {
-		return "warning"
+		return certStatusWarning
 	}
-	return "enabled"
+	return certStatusEnabled
 }

@@ -11,16 +11,15 @@ import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
+import { computeDaysLeft } from 'hooks/use-certificates'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 import PageTitle from 'layout/PageTitle'
 
 export const CertificateRenderRow: RenderRowType = (row: unknown) => {
   const cert = row as Certificate.Raw
-  const daysLeft = cert.notAfter
-    ? Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0
-  const validUntil = cert.notAfter ? new Date(cert.notAfter).toLocaleDateString() : 'Unknown'
+  const daysLeft = computeDaysLeft(cert.notAfter)
+  const validUntil = new Date(cert.notAfter).toLocaleDateString()
 
   return (
     <ClickableRow key={cert.name} to={`/certificates/${cert.name}`}>

@@ -47,7 +47,7 @@ export const Certificate = () => {
       <PageTitle title={`Certificate: ${certificate.commonName}`} />
       <Flex gap={2} align="center" css={{ mb: '$4' }}>
         <H1>{certificate.commonName}</H1>
-        <ResourceStatus status={certificate.status || 'disabled'} />
+        <ResourceStatus status={certificate.status} />
       </Flex>
       <CertificateDetails certificate={certificate} />
     </>

@@ -5,7 +5,7 @@ import CertExpiryBadge, { getCertExpiryStatus } from 'components/certificates/Ce
 import DetailsCard, { ValText } from 'components/resources/DetailsCard'
 
 const isLinkableHostname = (value: string) =>
-  !value.startsWith('*.') && !/\s/.test(value) && !/^[\d.]+$/.test(value) && !value.includes(':')
+  !value.startsWith('*.') && !/\s/.test(value) && !/^(\d{1,3}\.){3}\d{1,3}$/.test(value) && !value.includes(':')
 
 export const CertificateDetails = ({ certificate }: { certificate: Certificate.Info }) => {
   const validFrom = new Date(certificate.notBefore)
@@ -41,8 +41,8 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
       key: 'Subject Alternative Names',
       val: (
         <Box>
-          {certificate.sans.map((san, idx) => (
-            <Box key={idx}>
+          {certificate.sans.map((san) => (
+            <Box key={san}>
               {isLinkableHostname(san) ? (
                 <Link variant="blue" href={`//${san}`} target="_blank" rel="noopener noreferrer">
                   {san}

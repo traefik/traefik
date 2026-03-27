@@ -110,7 +110,7 @@ func TestHandler_Certificates(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Certificate with disabled status (already expired)
+	// Certificate with expired status (already expired)
 	expiredCert, expiredKey, err := generateTestCertificate(
 		"expired.com",
 		[]string{"expired.com"},
@@ -249,8 +249,8 @@ func TestHandler_Certificates(t *testing.T) {
 			},
 		},
 		{
-			desc:  "certificates filtered by status - disabled",
-			path:  "/api/certificates?status=disabled",
+			desc:  "certificates filtered by status - expired",
+			path:  "/api/certificates?status=expired",
 			setup: certSetup{loadCerts: true},
 			expected: expected{
 				statusCode: http.StatusOK,
@@ -306,7 +306,7 @@ func TestHandler_Certificates(t *testing.T) {
 					}
 					assert.Equal(t, 2, statuses["enabled"])
 					assert.Equal(t, 1, statuses["warning"])
-					assert.Equal(t, 1, statuses["disabled"])
+					assert.Equal(t, 1, statuses["expired"])
 				},
 			},
 		},
@@ -368,7 +368,7 @@ func TestHandler_Certificates(t *testing.T) {
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 4)
 
-					// Verify statuses are in ascending order (disabled < enabled < warning)
+					// Verify statuses are in ascending order (enabled < expired < warning)
 					prevStatus := ""
 					for _, cert := range certs {
 						status := cert["status"].(string)
@@ -442,8 +442,8 @@ func TestHandler_Certificates(t *testing.T) {
 			},
 		},
 		{
-			desc:  "certificates filtered by status - disabled (expired)",
-			path:  "/api/certificates?status=disabled",
+			desc:  "certificates filtered by status - expired",
+			path:  "/api/certificates?status=expired",
 			setup: certSetup{loadMultipleCerts: true},
 			expected: expected{
 				statusCode: http.StatusOK,
@@ -452,7 +452,7 @@ func TestHandler_Certificates(t *testing.T) {
 					var certs []map[string]any
 					require.NoError(t, json.Unmarshal(body, &certs))
 					require.Len(t, certs, 1)
-					assert.Equal(t, "disabled", certs[0]["status"])
+					assert.Equal(t, "expired", certs[0]["status"])
 					assert.Contains(t, certs[0]["sans"], "expired.com")
 				},
 			},

@@ -1,5 +1,5 @@
 declare namespace Resource {
-  type Status = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled' | 'loading'
+  type Status = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled' | 'expired' | 'loading'
 
   type DetailsData = Router.DetailsData & Service.Details & Middleware.DetailsData
 }
@@ -142,7 +142,7 @@ declare namespace Certificate {
     signatureAlgorithm: string
     certFingerprint: string
     publicKeyFingerprint?: string
-    status: 'enabled' | 'disabled' | 'warning'
+    status: 'enabled' | 'warning' | 'expired'
   }
 
   /** Enriched certificate with computed fields */

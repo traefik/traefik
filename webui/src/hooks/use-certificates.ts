@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
 import useSWR from 'swr'
 
+export const computeDaysLeft = (notAfter: string): number =>
+  Math.floor((new Date(notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+
 export const useCertificates = () => {
   const { data, error } = useSWR<Certificate.Raw[]>('/certificates')
 
@@ -9,9 +12,7 @@ export const useCertificates = () => {
 
     return data.map((cert) => ({
       ...cert,
-      daysLeft: cert.notAfter
-        ? Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        : 0,
+      daysLeft: computeDaysLeft(cert.notAfter),
     }))
   }, [data])
 
@@ -30,9 +31,7 @@ export const useCertificate = (certId: string) => {
 
     return {
       ...data,
-      daysLeft: data.notAfter
-        ? Math.floor((new Date(data.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        : 0,
+      daysLeft: computeDaysLeft(data.notAfter),
     }
   }, [data])
 

@@ -164,7 +164,7 @@
     "signatureAlgorithm": "SHA256-RSA",
     "certFingerprint": "08192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7",
     "publicKeyFingerprint": "192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708",
-    "status": "disabled"
+    "status": "expired"
   },
   {
     "name": "f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4",

@@ -315,26 +315,31 @@ func (m *Manager) GetServerCertificates() map[string]*x509.Certificate {
 		if ok {
 			for _, cert := range certs {
 				// Use Leaf if available (it should always be populated by parseCertificate)
-				if cert.Certificate.Leaf != nil {
-					hash := sha256.Sum256(cert.Certificate.Leaf.Raw)
-					fingerprint := hex.EncodeToString(hash[:])
-					certificates[fingerprint] = cert.Certificate.Leaf
+				if cert.Certificate.Leaf == nil {
+					log.Warn().Msg("TLS: certificate Leaf is nil, skipping certificate in API response")
+					continue
 				}
+				hash := sha256.Sum256(cert.Certificate.Leaf.Raw)
+				fingerprint := hex.EncodeToString(hash[:])
+				certificates[fingerprint] = cert.Certificate.Leaf
 			}
 		}
 	}
 
 	if defaultStore.DefaultCertificate != nil {
-		if defaultStore.DefaultCertificate.Certificate.Leaf != nil {
-			// Excluding the generated Traefik default certificate.
-			if defaultStore.DefaultCertificate.Certificate.Leaf.Subject.CommonName == generate.DefaultDomain {
-				return certificates
-			}
-
-			hash := sha256.Sum256(defaultStore.DefaultCertificate.Certificate.Leaf.Raw)
-			fingerprint := hex.EncodeToString(hash[:])
-			certificates[fingerprint] = defaultStore.DefaultCertificate.Certificate.Leaf
+		if defaultStore.DefaultCertificate.Certificate.Leaf == nil {
+			log.Warn().Msg("TLS: default certificate Leaf is nil, skipping in API response")
+			return certificates
 		}
+
+		// Excluding the generated Traefik default certificate.
+		if defaultStore.DefaultCertificate.Certificate.Leaf.Subject.CommonName == generate.DefaultDomain {
+			return certificates
+		}
+
+		hash := sha256.Sum256(defaultStore.DefaultCertificate.Certificate.Leaf.Raw)
+		fingerprint := hex.EncodeToString(hash[:])
+		certificates[fingerprint] = defaultStore.DefaultCertificate.Certificate.Leaf
 	}
 
 	return certificates

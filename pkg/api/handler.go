@@ -85,9 +85,9 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 }
 
 // WithTLSManager sets the TLS manager on the handler, enabling the certificate API endpoints.
-func (h Handler) WithTLSManager(tlsManager *tls.Manager) *Handler {
+func (h *Handler) WithTLSManager(tlsManager *tls.Manager) *Handler {
 	h.tlsManager = tlsManager
-	return &h
+	return h
 }
 
 // createRouter creates API routes and router.

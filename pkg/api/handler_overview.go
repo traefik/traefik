@@ -55,7 +55,7 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 			Routers:  getUDPRouterSection(h.runtimeConfiguration.UDPRouters),
 			Services: getUDPServiceSection(h.runtimeConfiguration.UDPServices),
 		},
-		Certificates: getCertificates(h.tlsManager),
+		Certificates: getCertificatesSection(h.tlsManager),
 		Features:     getFeatures(h.staticConfig),
 		Providers:    getProviders(h.staticConfig),
 	}
@@ -289,7 +289,7 @@ func getTracing(conf static.Configuration) string {
 	return ""
 }
 
-func getCertificates(tlsManager *tls.Manager) *section {
+func getCertificatesSection(tlsManager *tls.Manager) *section {
 	if tlsManager == nil {
 		return nil
 	}
@@ -301,9 +301,9 @@ func getCertificates(tlsManager *tls.Manager) *section {
 	for _, cert := range x509Certs {
 		status := getCertificateStatus(cert.NotAfter)
 		switch status {
-		case "disabled":
+		case certStatusExpired:
 			countErrors++
-		case "warning":
+		case certStatusWarning:
 			countWarnings++
 		}
 	}
