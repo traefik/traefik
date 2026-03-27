@@ -56,7 +56,7 @@ jobs:
         run: make validate-files
 
   validate-generate:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
