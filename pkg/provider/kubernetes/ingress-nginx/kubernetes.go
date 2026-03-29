@@ -1289,6 +1289,8 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
+	applyAccessLogConfiguration(ingress.IngressConfig, rt)
+
 	if p.applySSLRedirectConfiguration(ingress, routerKey, rt, conf) {
 		return nil
 	}
@@ -1856,6 +1858,18 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig Ingre
 	}
 
 	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
+}
+
+func applyAccessLogConfiguration(ingressConfig IngressConfig, rt *dynamic.Router) {
+	if ingressConfig.EnableAccessLog == nil {
+		return
+	}
+
+	if rt.Observability == nil {
+		rt.Observability = &dynamic.RouterObservabilityConfig{}
+	}
+
+	rt.Observability.AccessLogs = ptr.To(*ingressConfig.EnableAccessLog)
 }
 
 func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {

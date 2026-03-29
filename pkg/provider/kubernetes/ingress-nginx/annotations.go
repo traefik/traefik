@@ -81,6 +81,8 @@ type IngressConfig struct {
 	CORSAllowOrigin            *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-origin"`
 	CORSMaxAge                 *int      `annotation:"nginx.ingress.kubernetes.io/cors-max-age"`
 
+	EnableAccessLog *bool `annotation:"nginx.ingress.kubernetes.io/enable-access-log"`
+
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
