@@ -4251,6 +4251,146 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "EnableAccessLog true",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-enable-access-log.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-enable-access-log-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("accesslog.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-enable-access-log-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-enable-access-log-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: ptr.To(true),
+							},
+						},
+						"default-ingress-with-enable-access-log-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("accesslog.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-enable-access-log-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-enable-access-log-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: ptr.To(true),
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-enable-access-log-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3}},
+						"default-ingress-with-enable-access-log-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3}},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-enable-access-log-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-enable-access-log",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-enable-access-log": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "EnableAccessLog false",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-disable-access-log.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-disable-access-log-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("noaccesslog.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-disable-access-log-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-disable-access-log-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: ptr.To(false),
+							},
+						},
+						"default-ingress-with-disable-access-log-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("noaccesslog.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-disable-access-log-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-disable-access-log-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs: ptr.To(false),
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-disable-access-log-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3}},
+						"default-ingress-with-disable-access-log-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3}},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-disable-access-log-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-disable-access-log",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-disable-access-log": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Permanent Redirect",
 			paths: []string{
 				"services.yml",
