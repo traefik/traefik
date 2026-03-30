@@ -58,7 +58,7 @@ const Servers = ({ data, protocol }: ServersProps) => {
             { key: 'server' as const, header: isTcp ? 'Address' : 'URL' },
             ...(isUdp ? [] : [{ key: 'weight' as const, header: 'Weight' }]),
           ]}
-          testId="servers-list"
+          testId={`${protocol}-servers-list`}
           renderCell={(key, value) => {
             if (key === 'status') {
               return (

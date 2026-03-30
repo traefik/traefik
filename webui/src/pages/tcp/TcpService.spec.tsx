@@ -101,7 +101,7 @@ describe('<TcpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('Expect')
     expect(healthCheck.innerHTML).toContain('PONG')
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
     expect(serversList.innerHTML).toContain('1')
@@ -160,7 +160,7 @@ describe('<TcpServicePage />', () => {
       { route: '/tcp/services/mock-service', withPage: true },
     )
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 

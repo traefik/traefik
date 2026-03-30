@@ -79,7 +79,7 @@ describe('<UdpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('Termination delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('udp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
@@ -137,7 +137,7 @@ describe('<UdpServicePage />', () => {
       { route: '/udp/services/mock-service', withPage: true },
     )
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('udp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 

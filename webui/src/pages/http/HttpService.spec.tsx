@@ -89,7 +89,7 @@ describe('<HttpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('Pass host header')
     expect(serviceDetails.innerHTML).toContain('True')
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('http-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
     expect(serversList.innerHTML).toContain('1')
@@ -141,7 +141,7 @@ describe('<HttpServicePage />', () => {
       { route: '/http/services/mock-service', withPage: true },
     )
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('http-servers-list')
     expect(serversList.childNodes.length).toBe(2)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
     expect(serversList.innerHTML).toContain('http://10.0.1.13:80')
@@ -259,7 +259,7 @@ describe('<HttpServicePage />', () => {
     }).toThrow('Unable to find an element by: [data-testid="health-check"]')
 
     expect(() => {
-      getByTestId('servers-list')
-    }).toThrow('Unable to find an element by: [data-testid="servers-list"]')
+      getByTestId('http-servers-list')
+    }).toThrow('Unable to find an element by: [data-testid="http-servers-list"]')
   })
 })
