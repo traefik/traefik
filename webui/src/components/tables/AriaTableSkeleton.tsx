@@ -9,7 +9,7 @@ import {
   VariantProps,
   AriaThead,
   AriaTh,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 
 type AriaTableSkeletonProps = {

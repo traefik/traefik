@@ -1,4 +1,4 @@
-import { Card, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
+import { Card, Flex, H1, Skeleton, Text } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 
 import MiddlewareDefinition from './MiddlewareDefinition'
