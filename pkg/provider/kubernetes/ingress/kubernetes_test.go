@@ -68,11 +68,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with a basic rule on one path",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -101,13 +110,21 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with annotations",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
 							Rule:        `Path("/bar")`,
 							EntryPoints: []string{"ep1", "ep2"},
 							Service:     "testing-service1-80",
-							Middlewares: []string{"md1", "md2"},
+							Middlewares: []string{"testing-kubernetes-fields", "md1", "md2"},
 							Priority:    42,
 							RuleSyntax:  "v2",
 							TLS: &dynamic.RouterTLSConfig{
@@ -167,15 +184,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with two different rules with one path",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-foo": {
-							Rule:    `PathPrefix("/foo")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/foo")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -204,15 +231,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with conflicting routers on host",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar-bar-97cb2ba265f7a5df4ab9": {
-							Rule:    `HostRegexp("^[a-zA-Z0-9-]+\\.bar$") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `HostRegexp("^[a-zA-Z0-9-]+\\.bar$") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-bar-bar-605945111a3c9f84dc65": {
-							Rule:    `Host("bar") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("bar") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -241,15 +278,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with conflicting routers on path",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-foo-bar-930f0e8b221e60bc7ab7": {
-							Rule:    `PathPrefix("/foo/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/foo/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-foo-bar-207cc2245cb31ba18e29": {
-							Rule:    `PathPrefix("/foo-bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/foo-bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -278,15 +325,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress one rule with two paths",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-foo": {
-							Rule:    `PathPrefix("/foo")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/foo")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -315,11 +372,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress one rule with one path and one host",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -348,11 +414,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with one host without path",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-example-com": {
-							Rule:    `Host("example.com")`,
-							Service: "testing-example-com-80",
+							Rule:        `Host("example.com")`,
+							Service:     "testing-example-com-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -378,15 +453,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress one rule with one host and two paths",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-traefik-tchouk-foo": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/foo")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/foo")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -415,15 +500,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress Two rules with one host and one path",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-traefik-courgette-carotte": {
-							Rule:    `Host("traefik.courgette") && PathPrefix("/carotte")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.courgette") && PathPrefix("/carotte")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -452,15 +547,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with two services",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-traefik-courgette-carotte": {
-							Rule:    `Host("traefik.courgette") && PathPrefix("/carotte")`,
-							Service: "testing-service2-8082",
+							Rule:        `Host("traefik.courgette") && PathPrefix("/carotte")`,
+							Service:     "testing-service2-8082",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -507,11 +612,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			allowEmptyServices: true,
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -619,11 +733,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with port value in backend and no pod replica",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -652,11 +775,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with port name in backend and no pod replica",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-tchouk",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-tchouk",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -685,11 +817,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with port name in backend and 2 pod replica",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-tchouk",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-tchouk",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -718,15 +859,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with two paths using same service and different port name",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-tchouk",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-tchouk",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-traefik-tchouk-foo": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/foo")`,
-							Service: "testing-service1-carotte",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/foo")`,
+							Service:     "testing-service1-carotte",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -772,11 +923,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with a named port matching subset of service pods",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-tchouk",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-tchouk",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -805,15 +965,32 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "2 ingresses in different namespace with same service name",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+						"toto-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "toto",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-tchouk",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-tchouk",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"toto-toto-traefik-tchouk-bar": {
-							Rule:    `Host("toto.traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "toto-service1-tchouk",
+							Rule:        `Host("toto.traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "toto-service1-tchouk",
+							Middlewares: []string{"toto-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -879,11 +1056,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with port invalid for one service",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-port-port": {
-							Rule:    `Host("traefik.port") && PathPrefix("/port")`,
-							Service: "testing-service1-8080",
+							Rule:        `Host("traefik.port") && PathPrefix("/port")`,
+							Service:     "testing-service1-8080",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -909,12 +1095,21 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "TLS support",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-example-com": {
-							Rule:    `Host("example.com")`,
-							Service: "testing-example-com-80",
-							TLS:     &dynamic.RouterTLSConfig{},
+							Rule:        `Host("example.com")`,
+							Service:     "testing-example-com-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
+							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -950,11 +1145,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with a basic rule on one path with https (port == 443)",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-443",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-443",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -983,11 +1187,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with a basic rule on one path with https (portname == https)",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-8443",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-8443",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1016,12 +1229,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with a basic rule on one path with https (portname starts with https)",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-8443",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-8443",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1085,11 +1306,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with default traefik ingressClass",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1158,11 +1388,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with wildcard host",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-foobar-com-bar": {
-							Rule:    `HostRegexp("^[a-zA-Z0-9-]+\\.foobar\\.com$") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `HostRegexp("^[a-zA-Z0-9-]+\\.foobar\\.com$") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1191,11 +1430,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			defaultRuleSyntax: "v2",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-foobar-com-bar": {
-							Rule:    `HostRegexp("{subdomain:[a-zA-Z0-9-]+}.foobar.com") && PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `HostRegexp("{subdomain:[a-zA-Z0-9-]+}.foobar.com") && PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1223,15 +1471,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with multiple ingressClasses",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-foo": {
-							Rule:    `PathPrefix("/foo")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/foo")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1258,11 +1516,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			ingressClass: "traefik-lb2",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-foo": {
-							Rule:    `PathPrefix("/foo")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/foo")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1288,11 +1555,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with prefix pathType",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1318,11 +1594,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with empty pathType",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `Path("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Path("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1348,11 +1633,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with exact pathType",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `Path("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Path("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1378,11 +1672,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with implementationSpecific pathType",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `Path("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `Path("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1408,11 +1711,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with ingress annotation",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1441,11 +1753,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			disableIngressClassLookup: true,
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1474,11 +1795,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			disableClusterScopeResources: true,
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1504,11 +1834,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with ingressClass",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1560,11 +1899,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with named port",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-foobar",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-foobar",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1632,11 +1980,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with endpoint conditions",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service1-80",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1673,11 +2030,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc: "Ingress with strict prefix matching",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-bar": {
-							Rule:    `(Path("/bar") || PathPrefix("/bar/"))`,
-							Service: "testing-service1-80",
+							Rule:        `(Path("/bar") || PathPrefix("/bar/"))`,
+							Service:     "testing-service1-80",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1711,12 +2077,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 
 			clientMock := newClientMock(generateTestFilename(test.desc))
 			p := Provider{
-				IngressClass:                 test.ingressClass,
-				AllowEmptyServices:           test.allowEmptyServices,
-				DisableIngressClassLookup:    test.disableIngressClassLookup,
-				DisableClusterScopeResources: test.disableClusterScopeResources,
-				DefaultRuleSyntax:            test.defaultRuleSyntax,
-				StrictPrefixMatching:         test.strictPrefixMatching,
+				IngressClass:                  test.ingressClass,
+				AllowEmptyServices:            test.allowEmptyServices,
+				DisableIngressClassLookup:     test.disableIngressClassLookup,
+				DisableClusterScopeResources:  test.disableClusterScopeResources,
+				DefaultRuleSyntax:             test.defaultRuleSyntax,
+				StrictPrefixMatching:          test.strictPrefixMatching,
+				KubernetesObservabilityFields: true,
 			}
 			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
@@ -1747,11 +2114,20 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 			allowExternalNameServices: true,
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-8080",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-8080",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1777,11 +2153,20 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 			desc: "Ingress with IPv6 endpoints",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-example-com-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "example.com",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-example-com-bar": {
-							Rule:    `PathPrefix("/bar")`,
-							Service: "testing-service-bar-8080",
+							Rule:        `PathPrefix("/bar")`,
+							Service:     "testing-service-bar-8080",
+							Middlewares: []string{"testing-example-com-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1808,11 +2193,20 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 			allowExternalNameServices: true,
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-example-com-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "example.com",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-example-com-foo": {
-							Rule:    `PathPrefix("/foo")`,
-							Service: "testing-service-foo-8080",
+							Rule:        `PathPrefix("/foo")`,
+							Service:     "testing-service-foo-8080",
+							Middlewares: []string{"testing-example-com-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1842,7 +2236,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, KubernetesObservabilityFields: true}
 			p.AllowExternalNameServices = test.allowExternalNameServices
 			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
@@ -1861,11 +2255,20 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 			desc: "Ingress with native service lb",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-8080",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-8080",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1893,7 +2296,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, KubernetesObservabilityFields: true}
 			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
@@ -1911,11 +2314,20 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 			desc: "Ingress with node port lb",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-8080",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-8080",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1954,7 +2366,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
-			p := Provider{DisableClusterScopeResources: test.clusterScopeDisabled}
+			p := Provider{DisableClusterScopeResources: test.clusterScopeDisabled, KubernetesObservabilityFields: true}
 			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
@@ -2149,11 +2561,20 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			desc: "Ingress with native service lb",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"testing-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "testing",
+								Kind:      "Ingress",
+								Name:      "",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"testing-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "testing-service1-8080",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "testing-service1-8080",
+							Middlewares: []string{"testing-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -2177,11 +2598,20 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			desc: "Ingress with native lb by default",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-global-native-lb-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "global-native-lb",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"default-global-native-lb-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "default-service1-8080",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "default-service1-8080",
+							Middlewares: []string{"default-global-native-lb-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -2205,11 +2635,20 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			desc: "Ingress with native lb by default but service has disabled nativelb",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-global-native-lb-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "global-native-lb",
+							},
+						},
+					},
 					Routers: map[string]*dynamic.Router{
 						"default-global-native-lb-traefik-tchouk-bar": {
-							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
-							Service: "default-native-disabled-svc-web",
+							Rule:        `Host("traefik.tchouk") && PathPrefix("/bar")`,
+							Service:     "default-native-disabled-svc-web",
+							Middlewares: []string{"default-global-native-lb-kubernetes-fields"},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -2241,8 +2680,9 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{
-				IngressClass:      test.ingressClass,
-				NativeLBByDefault: true,
+				IngressClass:                  test.ingressClass,
+				NativeLBByDefault:             true,
+				KubernetesObservabilityFields: true,
 			}
 			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 

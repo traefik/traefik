@@ -87,6 +87,13 @@ const (
 	OTelTraceID = "trace_id"
 	// OTelSpanID is the OTel-conformant log attribute for the span identifier.
 	OTelSpanID = "span_id"
+
+	// KubernetesNamespace is the Kubernetes namespace.
+	KubernetesNamespace = "KubernetesNamespace"
+	// KubernetesKind is the Kubernetes resource kind.
+	KubernetesKind = "KubernetesKind"
+	// KubernetesName is the Kubernetes resource name.
+	KubernetesName = "KubernetesName"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
@@ -133,6 +140,9 @@ func init() {
 	allCoreKeys[TLSClientSubject] = struct{}{}
 	allCoreKeys[OTelTraceID] = struct{}{}
 	allCoreKeys[OTelSpanID] = struct{}{}
+	allCoreKeys[KubernetesNamespace] = struct{}{}
+	allCoreKeys[KubernetesKind] = struct{}{}
+	allCoreKeys[KubernetesName] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.
