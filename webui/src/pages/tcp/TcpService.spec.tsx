@@ -220,7 +220,7 @@ describe('<TcpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
 

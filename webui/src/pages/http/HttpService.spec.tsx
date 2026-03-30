@@ -137,7 +137,7 @@ describe('<HttpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 
