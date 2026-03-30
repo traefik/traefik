@@ -1,4 +1,4 @@
-import { Box, CSS } from '@traefiklabs/faency'
+import { Box, CSS } from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiLoader } from 'react-icons/fi'
 

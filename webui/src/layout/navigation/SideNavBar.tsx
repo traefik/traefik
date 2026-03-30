@@ -10,7 +10,7 @@ import {
   Text,
   Tooltip,
   VisuallyHidden,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
 import { matchPath, useHref } from 'react-router'

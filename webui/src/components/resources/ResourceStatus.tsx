@@ -1,4 +1,4 @@
-import { Box, Flex, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, styled, Text } from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 
 import { colorByStatus, iconByStatus } from 'components/resources/Status'
