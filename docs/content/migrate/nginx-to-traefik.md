@@ -453,17 +453,15 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
     
     ```bash
     NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
-      -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+     
     echo "NGINX IP: $NGINX_IP"
     ```
     
-    **Edit and update your existing NGINX LoadBalancer service to ensure that the floating IP is not released when the loadbalancer service is deleted:**
+    **Edit your existing NGINX LoadBalancer service to ensure that the floating IP is not released when the loadbalancer service is deleted:**
     
-    ```yaml
-    service:
-      type: LoadBalancer
-      annotations:
-        loadbalancer.openstack.org/keep-floatingip: "true"
+    
+    kubectl annotate svc my-lb-svc loadbalancer.openstack.org/keep-floatingip=true
     ```
     
     The `keep-floatingip` annotation prevents the floating IP from being released when the service is deleted or modified.
