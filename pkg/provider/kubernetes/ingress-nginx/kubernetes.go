@@ -1454,6 +1454,16 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	return nil
 }
 
+func getLimitBurstMultiplier(config IngressConfig) int64 {
+	multiplier := ptr.Deref(config.LimitBurstMultiplier, defaultLimitBurstMultiplier)
+
+	if multiplier < 1 {
+		multiplier = defaultLimitBurstMultiplier
+	}
+
+	return int64(multiplier)
+}
+
 func applyLimitRPMConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	limitRPM := ptr.Deref(ingressConfig.LimitRPM, 0)
 	if limitRPM <= 0 {
@@ -1465,7 +1475,7 @@ func applyLimitRPMConfiguration(routerName string, ingressConfig IngressConfig, 
 		RateLimit: &dynamic.RateLimit{
 			Average: int64(limitRPM),
 			Period:  ptypes.Duration(time.Minute),
-			Burst:   int64(limitRPM) * defaultLimitBurstMultiplier,
+			Burst:   int64(limitRPM) * getLimitBurstMultiplier(ingressConfig),
 		},
 	}
 
@@ -1483,7 +1493,7 @@ func applyLimitRPSConfiguration(routerName string, ingressConfig IngressConfig, 
 		RateLimit: &dynamic.RateLimit{
 			Average: int64(limitRPS),
 			Period:  ptypes.Duration(time.Second),
-			Burst:   int64(limitRPS) * defaultLimitBurstMultiplier,
+			Burst:   int64(limitRPS) * getLimitBurstMultiplier(ingressConfig),
 		},
 	}
 
