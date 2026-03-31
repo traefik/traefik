@@ -468,7 +468,6 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
     
     The `keep-floatingip` annotation prevents the floating IP from being released when the service is deleted or modified.
 
-    
     **Delete the NGINX LoadBalancer service to release the floating IP**
 
     **Update `traefik-values.yaml`:**
@@ -477,7 +476,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
     service:
       type: LoadBalancer
       spec:
-        loadBalancerIP: "<your-existing-floating-ip>" 
+        loadBalancerIP: "<your-existing-floating-ip>"
     ```
 
     To learn more, see the [OVHcloud MKS Public Load Balancer annotations documentation](https://help.ovhcloud.com/csm/en-public-cloud-kubernetes-expose-applications-using-load-balancer?id=kb_article_view&sysparm_article=KB0062878#supported-annotations-features).
