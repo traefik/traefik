@@ -402,7 +402,7 @@ The following annotations are organized by category for easier navigation.
 
 | Annotation                                                                                                                                                                                                                                      | Limitations / Notes                                                                                          |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioenable-access-log" href="#opt-nginx-ingress-kubernetes-ioenable-access-log" title="#opt-nginx-ingress-kubernetes-ioenable-access-log">`nginx.ingress.kubernetes.io/enable-access-log`</a> |  |
+| <a id="opt-nginx-ingress-kubernetes-ioenable-access-log" href="#opt-nginx-ingress-kubernetes-ioenable-access-log" title="#opt-nginx-ingress-kubernetes-ioenable-access-log">`nginx.ingress.kubernetes.io/enable-access-log`</a> | Access logs must first be enabled globally in the [static configuration](../../../install-configuration/observability/logs-and-accesslogs/#access-logs) to have the same behavior as ingress-nginx, where access log is default to true. Setting this annotation to `"true"` has no effect unless access logs are globally enabled. |
 
 ### Timeout
 

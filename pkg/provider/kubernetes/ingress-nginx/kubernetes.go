@@ -1289,11 +1289,11 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
-	applyAccessLogConfiguration(ingress.IngressConfig, rt)
-
 	if p.applySSLRedirectConfiguration(ingress, routerKey, rt, conf) {
 		return nil
 	}
+
+	applyAccessLogConfiguration(ingress.IngressConfig, rt)
 
 	if err := p.applyCustomHTTPErrors(ingress.Namespace, ingress.Name, routerKey, backend, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
