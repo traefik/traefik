@@ -8,7 +8,6 @@ import (
 	"math"
 	"net"
 	"os"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -706,7 +705,7 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 		if rt.RuleSyntax == "v2" || (rt.RuleSyntax == "" && p.DefaultRuleSyntax == "v2") {
 			rules = append(rules, buildHostRuleV2(rule.Host))
 		} else {
-			rules = append(rules, buildHostRule(rule.Host))
+			rules = append(rules, fmt.Sprintf("Host(%q)", rule.Host))
 		}
 	}
 
@@ -732,15 +731,6 @@ func buildHostRuleV2(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)
 		return fmt.Sprintf("HostRegexp(%q)", host)
-	}
-
-	return fmt.Sprintf("Host(%q)", host)
-}
-
-func buildHostRule(host string) string {
-	if strings.HasPrefix(host, "*.") {
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
 	return fmt.Sprintf("Host(%q)", host)

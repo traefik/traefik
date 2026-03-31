@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
@@ -179,7 +180,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			//	# When a request for "/foo" comes, even though it won't be routed by httpRouter2,
 			//	# if its SNI is set to foo.com, myTLSOptions will be used for the TLS connection.
 			//	# Otherwise, it will fallback to the default TLS config.
-			logger.Warn().Msgf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
+			if tlsOptionsName != traefiktls.DefaultTLSConfigName {
+				logger.Warn().Msgf("No domain found in rule %v, the TLS option %s cannot be applied", routerHTTPConfig.Rule, tlsOptionsName)
+			}
 		}
 
 		// Even though the error is seemingly ignored (aside from logging it),
@@ -339,7 +342,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		}
 
 		for _, domain := range domains {
-			if httpmuxer.IsASCII(domain) {
+			if muxer.IsASCII(domain) {
 				continue
 			}
 
