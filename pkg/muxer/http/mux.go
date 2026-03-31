@@ -125,8 +125,8 @@ func getRoutingPath(req *http.Request) *string {
 	return nil
 }
 
-// withRoutingPath decodes non-allowed characters in the EscapedPath and stores it in the request context to be able to use it for routing.
-// This allows using the decoded version of the non-allowed characters in the routing rules for a better UX.
+// withRoutingPath decodes non-reserved characters in the EscapedPath and stores it in the request context to be able to use it for routing.
+// This allows using the decoded version of the non-reserved characters in the routing rules for a better UX.
 // For example, the rule PathPrefix(`/foo bar`) will match the following request path `/foo%20bar`.
 func withRoutingPath(req *http.Request) (*http.Request, error) {
 	escapedPath := req.URL.EscapedPath()
@@ -134,7 +134,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 	var routingPathBuilder strings.Builder
 	for i := 0; i < len(escapedPath); i++ {
 		if escapedPath[i] != '%' {
-			routingPathBuilder.WriteString(string(escapedPath[i]))
+			routingPathBuilder.WriteByte(escapedPath[i])
 			continue
 		}
 

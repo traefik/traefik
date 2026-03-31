@@ -609,7 +609,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 		}
 
 		caCRT, ok := configMap.Data["ca.crt"]
-		if !ok {
+		if !ok || caCRT == "" {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,

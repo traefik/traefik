@@ -58,7 +58,7 @@ const (
 )
 
 // Allowed characters in URL following RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986#section-2)
-var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.-]*$`)
+var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.:~-]*$`)
 
 // Configuration is the static configuration.
 type Configuration struct {

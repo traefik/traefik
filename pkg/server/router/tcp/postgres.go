@@ -1,11 +1,9 @@
 package tcp
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
-	"io"
-	"net"
+	"fmt"
 	"sync"
 	"time"
 
@@ -20,18 +18,14 @@ var (
 )
 
 // isPostgres determines whether the buffer contains the Postgres STARTTLS message.
-func isPostgres(br *bufio.Reader) (bool, error) {
+func isPostgres(conn *peekConn) (bool, error) {
 	// Peek the first 8 bytes individually to prevent blocking on peek
 	// if the underlying conn does not send enough bytes.
 	// It could happen if a protocol start by sending less than 8 bytes,
 	// and expect a response before proceeding.
 	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
-		peeked, err := br.Peek(i)
+		peeked, err := conn.Peek(i)
 		if err != nil {
-			var opErr *net.OpError
-			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-				log.Debug().Err(err).Msg("Error while peeking first bytes")
-			}
 			return false, err
 		}
 
@@ -44,31 +38,23 @@ func isPostgres(br *bufio.Reader) (bool, error) {
 
 // servePostgres serves a connection with a Postgres client negotiating a STARTTLS session.
 // It handles TCP TLS routing, after accepting to start the STARTTLS session.
-func (r *Router) servePostgres(conn tcp.WriteCloser) {
-	_, err := conn.Write(PostgresStartTLSReply)
-	if err != nil {
-		_ = conn.Close()
-		return
+func (r *Router) servePostgres(conn *peekConn) error {
+	if _, err := conn.Write(PostgresStartTLSReply); err != nil {
+		return fmt.Errorf("writing PostgresStartTLSReply: %w", err)
 	}
-
-	br := bufio.NewReader(conn)
 
 	b := make([]byte, len(PostgresStartTLSMsg))
-	_, err = br.Read(b)
-	if err != nil {
-		_ = conn.Close()
-		return
+	if _, err := conn.Read(b); err != nil {
+		return fmt.Errorf("reading PostgresStartTLSMsg: %w", err)
 	}
 
-	hello, err := clientHelloInfo(br)
+	hello, err := clientHelloInfo(conn)
 	if err != nil {
-		_ = conn.Close()
-		return
+		return fmt.Errorf("reading clientHello: %w", err)
 	}
 
 	if !hello.isTLS {
-		_ = conn.Close()
-		return
+		return nil
 	}
 
 	// The deadline was there to prevent hanging connections while waiting for the client,
@@ -81,24 +67,23 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while reading TCP connection data")
-		_ = conn.Close()
-		return
+		return nil
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, _ := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS == nil {
-		_ = conn.Close()
-		return
+		return nil
 	}
 
 	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough.
-	proxiedConn := r.GetConn(conn, hello.peeked)
+	var proxiedConn tcp.WriteCloser = conn
 	if _, ok := handlerTCPTLS.(*tcp.TLSHandler); !ok {
-		proxiedConn = &postgresConn{WriteCloser: proxiedConn}
+		proxiedConn = &postgresConn{WriteCloser: conn}
 	}
 
 	handlerTCPTLS.ServeTCP(proxiedConn)
+	return nil
 }
 
 // postgresConn is a tcp.WriteCloser that will negotiate a TLS session (STARTTLS),

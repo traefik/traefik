@@ -14,7 +14,7 @@ const (
 	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
-	RetryDefaultMaxRequestBodyBytes int64 = -1
+	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
 )
 
 // +k8s:deepcopy-gen=true
@@ -313,9 +313,6 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
-	// Interpolate activates variable interpolation for Address and AuthSigninURL config options.
-	// Currently, this is only used by the NGINX provider to support variable substitution.
-	Interpolate bool `json:"interpolate,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {
@@ -900,10 +897,26 @@ type URLRewrite struct {
 
 // +k8s:deepcopy-gen=true
 
+type Auth struct {
+	// Address defines the authentication server address.
+	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	// Method defines the method used for the request to the external auth.
+	Method string `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty" export:"true"`
+	// Snippet defines the snippet content.
+	Snippet string `json:"snippet,omitempty" toml:"snippet,omitempty" yaml:"snippet,omitempty" export:"true"`
+	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
+	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
+	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
+	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // Snippet holds the NGINX snippet configuration.
 type Snippet struct {
 	ServerSnippet        string `json:"serverSnippet,omitempty"`
 	ConfigurationSnippet string `json:"configurationSnippet,omitempty"`
+	Auth                 *Auth  `json:"auth,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
