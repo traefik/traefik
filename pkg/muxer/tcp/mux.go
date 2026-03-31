@@ -27,12 +27,10 @@ func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (
 		return ConnData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)
 	}
 
-	// as per https://datatracker.ietf.org/doc/html/rfc6066:
-	// > The hostname is represented as a byte string using ASCII encoding without a trailing dot.
-	// so there is no need to trim a potential trailing dot
-	serverName = types.CanonicalDomain(serverName)
-
 	return ConnData{
+		// As per https://datatracker.ietf.org/doc/html/rfc6066:
+		// > The hostname is represented as a byte string using ASCII encoding without a trailing dot.
+		// so there is no need to trim a potential trailing dot
 		serverName: types.CanonicalDomain(serverName),
 		remoteIP:   remoteIP,
 		alpnProtos: alpnProtos,

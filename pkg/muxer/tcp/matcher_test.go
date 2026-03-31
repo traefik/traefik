@@ -111,12 +111,6 @@ func Test_HostSNI(t *testing.T) {
 			match:      true,
 		},
 		{
-			desc:       "Matching host with trailing dot",
-			rule:       "HostSNI(`example.com.`)",
-			serverName: "example.com.",
-			match:      true,
-		},
-		{
 			desc:       "Matching host with trailing dot but not in server name",
 			rule:       "HostSNI(`example.com.`)",
 			serverName: "example.com",

@@ -57,9 +57,11 @@ These matchers will match the request's host in lowercase.
 !!! info "Wildcard subdomain matching"
 
     The `Host` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
-    This is only available with the **v3 rule syntax** (the default). It is not supported with the deprecated v2 rule syntax.
+    It should be preferred over the `HostRegexp` matcher as it allows attaching a TLS option and is more efficient.
 
-    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.
+    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.    
+
+    This is only available with the **v3 rule syntax** (the default).
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|

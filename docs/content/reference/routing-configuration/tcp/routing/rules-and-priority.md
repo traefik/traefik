@@ -59,6 +59,15 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
     when one wants a non-TLS router that matches all (non-TLS) requests,
     one should use the specific ```HostSNI(`*`)``` syntax.
 
+!!! info "Wildcard subdomain matching"
+
+    The `HostSNI` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
+    It should be preferred over the `HostSNIRegexp` matcher as it allows attaching a TLS option and is more efficient.
+
+    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.    
+
+    This is only available with the **v3 rule syntax** (the default).
+
 #### Examples
 
 Match all connections:
@@ -82,13 +91,6 @@ Match TCP connections opened on any direct subdomain of `example.com` (e.g. `foo
 ```yaml
 HostSNI(`*.example.com`)
 ```
-
-!!! info "Wildcard subdomain matching"
-
-    The `HostSNI` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
-    This is only available with the **v3 rule syntax** (the default). It is not supported with the deprecated v2 rule syntax.
-
-    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.
 
 Match TCP connections opened on any subdomain of `example.com` (including nested subdomains), using a regular expression:
 
