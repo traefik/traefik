@@ -76,7 +76,7 @@ func TestClientIPV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -154,7 +154,7 @@ func TestMethodV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -280,7 +280,7 @@ func TestHostV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -384,7 +384,7 @@ func TestHostRegexpV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -480,7 +480,7 @@ func TestPathV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -574,7 +574,7 @@ func TestPathPrefixV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -662,7 +662,7 @@ func TestHeadersMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -771,7 +771,7 @@ func TestHeaderRegexpV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
@@ -865,7 +865,7 @@ func TestHostRegexp(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.hostExp, "v2", 0, "", handler)
 			require.NoError(t, err)
@@ -1534,7 +1534,7 @@ func Test_addRoute(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {

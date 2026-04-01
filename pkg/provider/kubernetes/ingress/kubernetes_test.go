@@ -2465,7 +2465,7 @@ func TestStrictPrefixMatchingRule(t *testing.T) {
 			parser, err := traefikhttp.NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := traefikhttp.NewMuxer(parser, []string{})
+			muxer := traefikhttp.NewMuxer(parser, nil)
 
 			rule := buildStrictPrefixMatchingRule(tt.path)
 			err = muxer.AddRoute(rule, "", 0, "", handler)

@@ -228,7 +228,7 @@ func TestMuxer(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
@@ -632,7 +632,7 @@ func TestEmptyHost(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			require.NoError(t, err)

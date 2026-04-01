@@ -72,7 +72,7 @@ func TestClientIPMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -147,7 +147,7 @@ func TestMethodMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -276,7 +276,7 @@ func TestHostMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -377,7 +377,7 @@ func TestHostRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -452,7 +452,7 @@ func TestPathMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -546,7 +546,7 @@ func TestPathRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -619,7 +619,7 @@ func TestPathPrefixMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -707,7 +707,7 @@ func TestHeaderMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -816,7 +816,7 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -906,7 +906,7 @@ func TestQueryMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
@@ -1021,7 +1021,7 @@ func TestQueryRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser, []string{})
+			muxer := NewMuxer(parser, nil)
 
 			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {

@@ -51,18 +51,18 @@ type Router struct {
 }
 
 // NewRouter returns a new TCP router.
-func NewRouter() (*Router, error) {
-	muxTCP, err := tcpmuxer.NewMuxer()
+func NewRouter(providersPrecedence []string) (*Router, error) {
+	muxTCP, err := tcpmuxer.NewMuxer(providersPrecedence)
 	if err != nil {
 		return nil, err
 	}
 
-	muxTCPTLS, err := tcpmuxer.NewMuxer()
+	muxTCPTLS, err := tcpmuxer.NewMuxer(providersPrecedence)
 	if err != nil {
 		return nil, err
 	}
 
-	muxHTTPS, err := tcpmuxer.NewMuxer()
+	muxHTTPS, err := tcpmuxer.NewMuxer(providersPrecedence)
 	if err != nil {
 		return nil, err
 	}
@@ -230,8 +230,8 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 }
 
 // AddTCPRoute defines a handler for the given rule.
-func (r *Router) AddTCPRoute(rule string, priority int, target tcp.Handler) error {
-	return r.muxerTCP.AddRoute(rule, "", priority, target)
+func (r *Router) AddTCPRoute(rule string, priority int, providerName string, target tcp.Handler) error {
+	return r.muxerTCP.AddRoute(rule, "", priority, providerName, target)
 }
 
 // AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
@@ -274,7 +274,7 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 		}
 
 		rule := "HostSNI(`" + sniHost + "`)"
-		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
+		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), "", tcpHandler); err != nil {
 			log.Error().Err(err).Msg("Error while adding route for host")
 		}
 	}
