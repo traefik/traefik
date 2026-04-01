@@ -1311,6 +1311,11 @@ func (in *RateLimit) DeepCopyInto(out *RateLimit) {
 		*out = new(Redis)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ExcludedIPs != nil {
+		in, out := &in.ExcludedIPs, &out.ExcludedIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

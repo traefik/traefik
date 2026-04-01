@@ -102,6 +102,15 @@ func TestNewRateLimiter(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "invalid ExcludedIPs CIDR",
+			config: dynamic.RateLimit{
+				Average:     200,
+				Burst:       10,
+				ExcludedIPs: []string{"not-a-cidr"},
+			},
+			expectedError: `parsing excludedIPs: parsing CIDR trusted IPs <nil>: invalid CIDR address: not-a-cidr`,
+		},
 	}
 
 	for _, test := range testCases {
@@ -149,6 +158,78 @@ func TestNewRateLimiter(t *testing.T) {
 			}
 			if test.expectedRTL != 0 {
 				assert.InDelta(t, float64(test.expectedRTL), float64(rtl.rate), delta)
+			}
+		})
+	}
+}
+
+func TestExcludedIPs(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		remoteAddr  string
+		excludedIPs []string
+		expectPass  bool
+	}{
+		{
+			desc:        "excluded IP bypasses rate limit",
+			remoteAddr:  "10.0.0.5:1234",
+			excludedIPs: []string{"10.0.0.0/24"},
+			expectPass:  true,
+		},
+		{
+			desc:        "non-excluded IP is rate limited",
+			remoteAddr:  "192.168.1.1:1234",
+			excludedIPs: []string{"10.0.0.0/24"},
+			expectPass:  false,
+		},
+		{
+			desc:        "exact IP match bypasses rate limit",
+			remoteAddr:  "192.168.1.1:1234",
+			excludedIPs: []string{"192.168.1.1"},
+			expectPass:  true,
+		},
+		{
+			desc:        "no excluded IPs, rate limit applies",
+			remoteAddr:  "10.0.0.5:1234",
+			excludedIPs: nil,
+			expectPass:  false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// Use Average=1, Burst=1 so the second request from the same source is immediately rate limited.
+			config := dynamic.RateLimit{
+				Average:     1,
+				Burst:       1,
+				ExcludedIPs: test.excludedIPs,
+			}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			h, err := New(t.Context(), next, config, "rate-limiter")
+			require.NoError(t, err)
+
+			// Drain the initial burst with a first request.
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.RemoteAddr = test.remoteAddr
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			// The second request either bypasses (excluded) or is rate limited.
+			req2 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req2.RemoteAddr = test.remoteAddr
+			rw2 := httptest.NewRecorder()
+			h.ServeHTTP(rw2, req2)
+
+			if test.expectPass {
+				assert.Equal(t, http.StatusOK, rw2.Code)
+			} else {
+				assert.Equal(t, http.StatusTooManyRequests, rw2.Code)
 			}
 		})
 	}

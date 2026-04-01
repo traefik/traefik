@@ -623,6 +623,10 @@ type RateLimit struct {
 	// Redis stores the configuration for using Redis as a bucket in the rate-limiting algorithm.
 	// If not specified, Traefik will default to an in-memory bucket for the algorithm.
 	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
+
+	// ExcludedIPs is a list of IPs and CIDR ranges that are excluded from rate limiting.
+	// Requests from these sources bypass the rate limiter and are forwarded directly.
+	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
 }
 
 // SetDefaults sets the default values on a RateLimit.

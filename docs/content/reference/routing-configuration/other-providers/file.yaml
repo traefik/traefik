@@ -419,6 +419,9 @@ http:
           readTimeout: 42s
           writeTimeout: 42s
           dialTimeout: 42s
+        excludedIPs:
+          - foobar
+          - foobar
     Middleware20:
       redirectRegex:
         regex: foobar
