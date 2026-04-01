@@ -12243,6 +12243,16 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-limit-burst-multiplier-rule-0-path-0-limit-rps", "default-ingress-with-limit-burst-multiplier-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-limit-burst-multiplier-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-burst-multiplier",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-limit-burst-multiplier-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -12251,6 +12261,16 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-limit-burst-multiplier-rule-0-path-0-tls-limit-rps", "default-ingress-with-limit-burst-multiplier-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-limit-burst-multiplier-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-burst-multiplier",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0": {
 							EntryPoints: []string{"http"},
@@ -12258,6 +12278,16 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-limit-rps", "default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-limit-burst-multiplier-zero-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-burst-multiplier-zero",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -12266,6 +12296,16 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-tls-limit-rps", "default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-limit-burst-multiplier-zero-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-burst-multiplier-zero",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12448,6 +12488,16 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-wildcard-host-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-wildcard-host-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-wildcard-host",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-wildcard-host-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -12456,6 +12506,16 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:         &dynamic.RouterTLSConfig{},
 							Middlewares: []string{"default-ingress-with-wildcard-host-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-wildcard-host-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-wildcard-host",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12521,6 +12581,16 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-wildcard-host-tls-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-wildcard-host-tls",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-wildcard-host-tls-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -12529,6 +12599,16 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:         &dynamic.RouterTLSConfig{},
 							Middlewares: []string{"default-ingress-with-wildcard-host-tls-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-wildcard-host-tls-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-wildcard-host-tls",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
