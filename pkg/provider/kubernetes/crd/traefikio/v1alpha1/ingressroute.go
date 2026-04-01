@@ -39,7 +39,7 @@ type Route struct {
 	Kind string `json:"kind,omitempty"`
 	// Priority defines the router's priority.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#priority
-	// +kubebuilder:validation:Maximum=9223372036854774807
+	// +kubebuilder:validation:Maximum=9007199254740991
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#rulesyntax
