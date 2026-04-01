@@ -273,7 +273,9 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 			}
 		}
 
-		rule := "HostSNI(`" + sniHost + "`)"
+		rule := fmt.Sprintf(`HostSNI(%q)`, sniHost)
+		// As the hostHTTPTLSConfig contains only one TLS config per SNI,
+		// there is no conflict thus the provider name can be passed as empty as no tie-break is needed.
 		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), "", tcpHandler); err != nil {
 			log.Error().Err(err).Msg("Error while adding route for host")
 		}
