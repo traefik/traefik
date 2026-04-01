@@ -56,7 +56,7 @@ func (h *Handler) getCertificates(rw http.ResponseWriter, request *http.Request)
 	}
 }
 
-func (h Handler) getCertificate(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getCertificate(rw http.ResponseWriter, request *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
 	certID := mux.Vars(request)["certificateID"]
