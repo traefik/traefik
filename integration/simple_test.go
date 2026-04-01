@@ -2659,13 +2659,13 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 
 // TestProviderPrecedenceFileWins verifies that, when two providers define
 // routes with the same rule and auto-computed priority, the provider listed
-// first in providers.priorityList takes precedence (lower index = higher
+// first in providers.precedence takes precedence (lower index = higher
 // provider priority).
 //
 // Setup:
 //   - providers.file   → file-router   → fileBackend  (body: "from-file")
 //   - providers.docker → docker-router → whoami container
-//   - priorityList     = ["file", "docker"]  → file is index 0 → wins
+//   - precedence     = ["file", "docker"]  → file is index 0 → wins
 func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
 	s.createComposeProject("providers-precedence")
 	s.composeUp("whoami")
@@ -2675,14 +2675,13 @@ func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
 	defer fileBackend.Close()
 
 	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
-		PriorityList string
-		FileBackend  string
-		DockerHost   string
+		Precedence  string
+		FileBackend string
+		DockerHost  string
 	}{
-		// file at index 0 → providerPriority = 2 (highest) → file wins.
-		PriorityList: `["file", "docker"]`,
-		FileBackend:  "http://127.0.0.1:9042",
-		DockerHost:   s.getDockerHost(),
+		Precedence:  `["file", "docker"]`,
+		FileBackend: "http://127.0.0.1:9042",
+		DockerHost:  s.getDockerHost(),
 	})
 	s.traefikCmd(withConfigFile(file))
 
@@ -2699,12 +2698,12 @@ func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
 }
 
 // TestProviderPrecedenceDockerWins mirrors TestProviderPrecedenceFileWins
-// but reverses the priorityList so that the Docker provider wins instead.
+// but reverses the precedence so that the Docker provider wins instead.
 //
 // Setup:
 //   - providers.file   → file-router   → fileBackend  (body: "from-file")
 //   - providers.docker → docker-router → whoami container
-//   - priorityList     = ["docker", "file"]  → docker is index 0 → wins
+//   - precedence     = ["docker", "file"]  → docker is index 0 → wins
 func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
 	s.createComposeProject("providers-precedence")
 	s.composeUp("whoami")
@@ -2714,14 +2713,13 @@ func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
 	defer fileBackend.Close()
 
 	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
-		PriorityList string
-		FileBackend  string
-		DockerHost   string
+		Precedence  string
+		FileBackend string
+		DockerHost  string
 	}{
-		// docker at index 0 → providerPriority = 2 (highest) → docker wins.
-		PriorityList: `["docker", "file"]`,
-		FileBackend:  "http://127.0.0.1:9042",
-		DockerHost:   s.getDockerHost(),
+		Precedence:  `["docker", "file"]`,
+		FileBackend: "http://127.0.0.1:9042",
+		DockerHost:  s.getDockerHost(),
 	})
 	s.traefikCmd(withConfigFile(file))
 

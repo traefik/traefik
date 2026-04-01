@@ -142,19 +142,20 @@ you can do so in two different ways:
 - the generic configuration option `exposedByDefault`,
 - a finer granularity mechanism based on constraints.
 
-## Provider Priority
+## Providers Precedence
 
-### `providers.priorityList`
+### `providers.precedence`
 
 _Optional_
 
-When two routers from **different providers** define the same rule with equal numeric [priority](../../routing-configuration/http/routing/rules-and-priority.md#priority-calculation), the `priorityList` option determines which provider's route takes precedence.
+When two routers from **different providers** define the same rule with equal numeric [priority](../../routing-configuration/http/routing/rules-and-priority.md#priority-calculation), 
+the `precedence` option determines which provider's route takes precedence.
 
-The list is ordered from highest to lowest priority: a provider listed first wins over providers listed later.
+The list is ordered from highest to lowest precedence: a provider listed first wins over providers listed later.
 
 ```yaml tab="File (YAML)"
 providers:
-  priorityList:
+  precedence:
     - kubernetescrd
     - kubernetes
     - file
@@ -162,53 +163,42 @@ providers:
 
 ```toml tab="File (TOML)"
 [providers]
-  priorityList = ["kubernetescrd", "kubernetes", "file"]
+  precedence = ["kubernetescrd", "kubernetes", "file"]
 ```
 
 ```bash tab="CLI"
---providers.priorityList=kubernetescrd,kubernetes,file
+--providers.precedence=kubernetescrd,kubernetes,file
 ```
 
-!!! info "Default order"
+#### Default precedence
 
-    When `priorityList` is not set, Traefik uses the following default order (highest priority first):
+When `precedence` is not set, Traefik uses the following default order (highest precedence first):
 
-    | Position | Provider name            |
-    |----------|--------------------------|
-    | <a id="opt-1" href="#opt-1" title="#opt-1">1</a> | `kubernetesgateway`      |
-    | <a id="opt-2" href="#opt-2" title="#opt-2">2</a> | `kubernetescrd`          |
-    | <a id="opt-3" href="#opt-3" title="#opt-3">3</a> | `kubernetes`             |
-    | <a id="opt-4" href="#opt-4" title="#opt-4">4</a> | `kubernetesingressnginx` |
-    | <a id="opt-5" href="#opt-5" title="#opt-5">5</a> | `swarm`                  |
-    | <a id="opt-6" href="#opt-6" title="#opt-6">6</a> | `docker`                 |
-    | <a id="opt-7" href="#opt-7" title="#opt-7">7</a> | `file`                   |
-    | <a id="opt-8" href="#opt-8" title="#opt-8">8</a> | `redis`                  |
-    | <a id="opt-9" href="#opt-9" title="#opt-9">9</a> | `knative`                |
-    | <a id="opt-10" href="#opt-10" title="#opt-10">10</a> | `consul`                 |
-    | <a id="opt-11" href="#opt-11" title="#opt-11">11</a> | `consulcatalog`          |
-    | <a id="opt-12" href="#opt-12" title="#opt-12">12</a> | `nomad`                  |
-    | <a id="opt-13" href="#opt-13" title="#opt-13">13</a> | `etcd`                   |
-    | <a id="opt-14" href="#opt-14" title="#opt-14">14</a> | `ecs`                    |
-    | <a id="opt-15" href="#opt-15" title="#opt-15">15</a> | `http`                   |
-    | <a id="opt-16" href="#opt-16" title="#opt-16">16</a> | `zookeeper`              |
-    | <a id="opt-17" href="#opt-17" title="#opt-17">17</a> | `rest`                   |
+| Position | Provider name            |
+|----------|--------------------------|
+| <a id="opt-1" href="#opt-1" title="#opt-1">1</a> | `kubernetesgateway`      |
+| <a id="opt-2" href="#opt-2" title="#opt-2">2</a> | `kubernetescrd`          |
+| <a id="opt-3" href="#opt-3" title="#opt-3">3</a> | `kubernetes`             |
+| <a id="opt-4" href="#opt-4" title="#opt-4">4</a> | `kubernetesingressnginx` |
+| <a id="opt-5" href="#opt-5" title="#opt-5">5</a> | `swarm`                  |
+| <a id="opt-6" href="#opt-6" title="#opt-6">6</a> | `docker`                 |
+| <a id="opt-7" href="#opt-7" title="#opt-7">7</a> | `file`                   |
+| <a id="opt-8" href="#opt-8" title="#opt-8">8</a> | `redis`                  |
+| <a id="opt-9" href="#opt-9" title="#opt-9">9</a> | `knative`                |
+| <a id="opt-10" href="#opt-10" title="#opt-10">10</a> | `consul`                 |
+| <a id="opt-11" href="#opt-11" title="#opt-11">11</a> | `consulcatalog`          |
+| <a id="opt-12" href="#opt-12" title="#opt-12">12</a> | `nomad`                  |
+| <a id="opt-13" href="#opt-13" title="#opt-13">13</a> | `etcd`                   |
+| <a id="opt-14" href="#opt-14" title="#opt-14">14</a> | `ecs`                    |
+| <a id="opt-15" href="#opt-15" title="#opt-15">15</a> | `http`                   |
+| <a id="opt-16" href="#opt-16" title="#opt-16">16</a> | `zookeeper`              |
+| <a id="opt-17" href="#opt-17" title="#opt-17">17</a> | `rest`                   |
 
 !!! note
 
-    - `priorityList` only acts as a **tiebreaker**: it is applied only when two routes from different providers share the same numeric `priority` value. An explicit router priority always takes precedence.
-    - A provider absent from `priorityList` loses to any listed provider.
+    - `precedence` only acts as a **tiebreaker**: it is applied only when two routes from different providers share the same numeric `priority` value. An explicit router priority always takes precedence.
+    - A provider absent from `precedence` loses to any listed provider.
     - Provider names are case-insensitive.
-
-## Restrict the Scope of Service Discovery
-
-By default, Traefik creates routes for all detected containers.
-
-If you want to limit the scope of the Traefik service discovery,
-i.e. disallow route creation for some containers,
-you can do so in two different ways:
-
-- the generic configuration option `exposedByDefault`,
-- a finer granularity mechanism based on constraints.
 
 ### `exposedByDefault` and `traefik.enable`
 

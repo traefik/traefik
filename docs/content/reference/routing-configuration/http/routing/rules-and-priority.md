@@ -234,17 +234,18 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority: 0` means that the default rules length sorting is used.
 
-### Provider Priority
-
-When two routes from **different providers** share the same numeric priority, Traefik uses the [`providers.priorityList`](../../../install-configuration/providers/overview.md#provider-priority) install configuration option to determine which route takes precedence.
-The provider listed first in `priorityList` wins the tie.
-
 Negative priority values are supported.
 
 Traefik reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
 
 - `(MaxInt32 - 1000)` = `2147482647` for 32-bit platforms,
 - `(MaxInt64 - 1000)` = `9223372036854774807` for 64-bit platforms.
+
+!!! info "Providers Precedence"
+
+    When two routes from **different providers** share the same numeric priority,
+    Traefik uses the [`providers.precedence`](../../../install-configuration/providers/overview.md#providers-precedence) install configuration option to determine which route takes precedence.
+    The provider listed first in `precedence` wins the tie.
 
 ### Example
 
