@@ -39,8 +39,8 @@ type RouterFactory struct {
 
 	cancelPrevState func()
 
-	parser       httpmuxer.SyntaxParser
-	priorityList []string
+	parser              httpmuxer.SyntaxParser
+	providersPrecedence []string
 }
 
 // NewRouterFactory creates a new RouterFactory.
@@ -78,23 +78,22 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		return nil, fmt.Errorf("creating parser: %w", err)
 	}
 
-	priorityList := []string{}
-
+	var providersPrecedence []string
 	if staticConfiguration.Providers != nil {
-		priorityList = staticConfiguration.Providers.PriorityList
+		providersPrecedence = staticConfiguration.Providers.Precedence
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:   entryPointsTCP,
-		entryPointsUDP:   entryPointsUDP,
-		managerFactory:   managerFactory,
-		observabilityMgr: observabilityMgr,
-		tlsManager:       tlsManager,
-		pluginBuilder:    pluginBuilder,
-		dialerManager:    dialerManager,
-		allowACMEByPass:  allowACMEByPass,
-		parser:           parser,
-		priorityList:     priorityList,
+		entryPointsTCP:      entryPointsTCP,
+		entryPointsUDP:      entryPointsUDP,
+		managerFactory:      managerFactory,
+		observabilityMgr:    observabilityMgr,
+		tlsManager:          tlsManager,
+		pluginBuilder:       pluginBuilder,
+		dialerManager:       dialerManager,
+		allowACMEByPass:     allowACMEByPass,
+		parser:              parser,
+		providersPrecedence: providersPrecedence,
 	}, nil
 }
 
@@ -114,7 +113,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	serviceManager.SetMiddlewareChainBuilder(middlewaresBuilder)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager, f.parser, f.priorityList)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager, f.parser, f.providersPrecedence)
 
 	routerManager.ParseRouterTree()
 

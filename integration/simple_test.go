@@ -2657,7 +2657,7 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 	assert.Contains(s.T(), string(body), "X-Custom-Header: service-middleware-test")
 }
 
-// TestProviderPriorityListFileWins verifies that, when two providers define
+// TestProviderPrecedenceFileWins verifies that, when two providers define
 // routes with the same rule and auto-computed priority, the provider listed
 // first in providers.priorityList takes precedence (lower index = higher
 // provider priority).
@@ -2666,15 +2666,15 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 //   - providers.file   → file-router   → fileBackend  (body: "from-file")
 //   - providers.docker → docker-router → whoami container
 //   - priorityList     = ["file", "docker"]  → file is index 0 → wins
-func (s *SimpleSuite) TestProviderPriorityListFileWins() {
-	s.createComposeProject("provider-priority")
+func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
+	s.createComposeProject("providers-precedence")
 	s.composeUp("whoami")
 	defer s.composeDown()
 
 	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
 	defer fileBackend.Close()
 
-	file := s.adaptFile("fixtures/provider-priority.toml", struct {
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
 		PriorityList string
 		FileBackend  string
 		DockerHost   string
@@ -2698,22 +2698,22 @@ func (s *SimpleSuite) TestProviderPriorityListFileWins() {
 	require.NoError(s.T(), err)
 }
 
-// TestProviderPriorityListDockerWins mirrors TestProviderPriorityListFileWins
+// TestProviderPrecedenceDockerWins mirrors TestProviderPrecedenceFileWins
 // but reverses the priorityList so that the Docker provider wins instead.
 //
 // Setup:
 //   - providers.file   → file-router   → fileBackend  (body: "from-file")
 //   - providers.docker → docker-router → whoami container
 //   - priorityList     = ["docker", "file"]  → docker is index 0 → wins
-func (s *SimpleSuite) TestProviderPriorityListDockerWins() {
-	s.createComposeProject("provider-priority")
+func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
+	s.createComposeProject("providers-precedence")
 	s.composeUp("whoami")
 	defer s.composeDown()
 
 	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
 	defer fileBackend.Close()
 
-	file := s.adaptFile("fixtures/provider-priority.toml", struct {
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
 		PriorityList string
 		FileBackend  string
 		DockerHost   string

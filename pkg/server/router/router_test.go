@@ -905,7 +905,7 @@ func BenchmarkService(b *testing.B) {
 	}
 }
 
-func TestProviderPriorityList(t *testing.T) {
+func TestProvidersPrecedence(t *testing.T) {
 	// Each provider gets its own service with a fake URL whose host encodes the
 	// provider label. labellingProxyBuilder writes the host back as the X-From
 	// response header so the test can identify which backend was selected.
@@ -923,15 +923,15 @@ func TestProviderPriorityList(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc          string
-		priorityList  []string
-		routersConfig map[string]*dynamic.Router
-		serviceConfig map[string]*dynamic.Service
-		expectedFrom  string
+		desc                string
+		providersPrecedence []string
+		routersConfig       map[string]*dynamic.Router
+		serviceConfig       map[string]*dynamic.Service
+		expectedFrom        string
 	}{
 		{
-			desc:         "kubernetescrd beats kubernetes when listed after it",
-			priorityList: []string{"kubernetescrd", "kubernetes"},
+			desc:                "kubernetescrd beats kubernetes when listed after it",
+			providersPrecedence: []string{"kubernetescrd", "kubernetes"},
 			routersConfig: map[string]*dynamic.Router{
 				// Service names are bare; the manager qualifies them with the
 				// provider extracted from the router key (@kubernetes / @kubernetescrd).
@@ -953,8 +953,8 @@ func TestProviderPriorityList(t *testing.T) {
 			expectedFrom: "kubernetescrd",
 		},
 		{
-			desc:         "kubernetes beats kubernetescrd when listed after it",
-			priorityList: []string{"kubernetes", "kubernetescrd"},
+			desc:                "kubernetes beats kubernetescrd when listed after it",
+			providersPrecedence: []string{"kubernetes", "kubernetescrd"},
 			routersConfig: map[string]*dynamic.Router{
 				"router@kubernetes": {
 					EntryPoints: []string{"web"},
@@ -974,8 +974,8 @@ func TestProviderPriorityList(t *testing.T) {
 			expectedFrom: "kubernetes",
 		},
 		{
-			desc:         "higher numeric priority wins regardless of priorityList",
-			priorityList: []string{"kubernetescrd", "kubernetes"},
+			desc:                "higher numeric priority wins regardless of providersPrecedence",
+			providersPrecedence: []string{"kubernetescrd", "kubernetes"},
 			routersConfig: map[string]*dynamic.Router{
 				"router@kubernetes": {
 					EntryPoints: []string{"web"},
@@ -997,8 +997,8 @@ func TestProviderPriorityList(t *testing.T) {
 			expectedFrom: "kubernetes",
 		},
 		{
-			desc:         "provider not in priorityList loses to any listed provider",
-			priorityList: []string{"kubernetes"},
+			desc:                "provider not in providersPrecedence loses to any listed provider",
+			providersPrecedence: []string{"kubernetes"},
 			routersConfig: map[string]*dynamic.Router{
 				"router@file": {
 					EntryPoints: []string{"web"},
@@ -1041,7 +1041,7 @@ func TestProviderPriorityList(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, test.priorityList)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, test.providersPrecedence)
 			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
 
 			w := httptest.NewRecorder()

@@ -39,27 +39,34 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers     map[string]http.Handler
-	serviceManager     serviceManager
-	observabilityMgr   *middleware.ObservabilityMgr
-	middlewaresBuilder middlewareChainBuilder
-	conf               *runtime.Configuration
-	tlsManager         *tls.Manager
-	parser             httpmuxer.SyntaxParser
-	priorityList       []string
+	routerHandlers      map[string]http.Handler
+	serviceManager      serviceManager
+	observabilityMgr    *middleware.ObservabilityMgr
+	middlewaresBuilder  middlewareChainBuilder
+	conf                *runtime.Configuration
+	tlsManager          *tls.Manager
+	parser              httpmuxer.SyntaxParser
+	providersPrecedence []string
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareChainBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager, parser httpmuxer.SyntaxParser, priorityList []string) *Manager {
+func NewManager(conf *runtime.Configuration,
+	serviceManager serviceManager,
+	middlewaresBuilder middlewareChainBuilder,
+	observabilityMgr *middleware.ObservabilityMgr,
+	tlsManager *tls.Manager,
+	parser httpmuxer.SyntaxParser,
+	providersPrecedence []string,
+) *Manager {
 	return &Manager{
-		routerHandlers:     make(map[string]http.Handler),
-		serviceManager:     serviceManager,
-		observabilityMgr:   observabilityMgr,
-		middlewaresBuilder: middlewaresBuilder,
-		conf:               conf,
-		tlsManager:         tlsManager,
-		parser:             parser,
-		priorityList:       priorityList,
+		routerHandlers:      make(map[string]http.Handler),
+		serviceManager:      serviceManager,
+		observabilityMgr:    observabilityMgr,
+		middlewaresBuilder:  middlewaresBuilder,
+		conf:                conf,
+		tlsManager:          tlsManager,
+		parser:              parser,
+		providersPrecedence: providersPrecedence,
 	}
 }
 
@@ -221,7 +228,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
-	muxer := httpmuxer.NewMuxer(m.parser, m.priorityList)
+	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
 	if err != nil {
@@ -270,13 +277,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		var providerName string
-		parts := strings.Split(routerName, "@")
-		if len(parts) == 2 {
-			providerName = parts[1]
-		}
-
-		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName, handler); err != nil {
+		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -458,7 +459,7 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 
 // buildChildRoutersMuxer creates a muxer for child routers.
 func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName string, childRefs []string) (http.Handler, error) {
-	childMuxer := httpmuxer.NewMuxer(m.parser, []string{})
+	childMuxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	// Set a default handler for the child muxer (404 Not Found).
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
@@ -491,14 +492,8 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 			continue
 		}
 
-		var providerName string
-		parts := strings.Split(childName, "@")
-		if len(parts) == 2 {
-			providerName = parts[1]
-		}
-
 		// Add the child router to the muxer.
-		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, providerName, childHandler); err != nil {
+		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, providerName(childName), childHandler); err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -513,4 +508,12 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 	}
 
 	return childMuxer, nil
+}
+
+func providerName(routerName string) string {
+	parts := strings.Split(routerName, "@")
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return ""
 }

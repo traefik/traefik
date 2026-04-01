@@ -14,7 +14,7 @@
   insecure = true
 
 [providers]
-  priorityList = {{ .PriorityList }}
+  precedence = {{ .Precedence }}
 
   [providers.file]
     filename = "{{ .SelfFilename }}"

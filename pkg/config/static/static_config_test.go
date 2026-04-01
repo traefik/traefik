@@ -51,7 +51,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "empty",
 			conf: &Configuration{
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 			},
 			expected: &Configuration{
 				EntryPoints: EntryPoints{"http": &EntryPoint{
@@ -84,13 +84,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 			},
 		},
 		{
 			desc: "ACME simple",
 			conf: &Configuration{
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -132,7 +132,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -148,7 +148,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DelayBeforeCheck",
 			conf: &Configuration{
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -191,7 +191,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -211,7 +211,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DisablePropagationCheck",
 			conf: &Configuration{
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -254,7 +254,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{PriorityList: ProviderList},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -380,7 +380,7 @@ func TestValidateConfiguration_BasePath(t *testing.T) {
 	}
 }
 
-func TestProvidersPriorityList(t *testing.T) {
+func TestProvidersPrecedence(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		cfg           *Configuration
@@ -388,26 +388,28 @@ func TestProvidersPriorityList(t *testing.T) {
 		expected      []string
 	}{
 		{
-			desc: "No priority list",
-			cfg: &Configuration{
-				Providers: &Providers{PriorityList: ProviderList},
-			},
-			expected: ProviderList,
-		},
-		{
-			desc: "Priority list with non existing provider",
+			desc: "No precedence",
 			cfg: &Configuration{
 				Providers: &Providers{
-					PriorityList: []string{"unknown"},
+					Precedence: providerNames,
+				},
+			},
+			expected: providerNames,
+		},
+		{
+			desc: "Precedence with non existing provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"unknown"},
 				},
 			},
 			expectedError: true,
 		},
 		{
-			desc: "Priority list upper case provider remove the case",
+			desc: "Precedence with upper case provider",
 			cfg: &Configuration{
 				Providers: &Providers{
-					PriorityList: []string{"DOCKER"},
+					Precedence: []string{"DOCKER"},
 				},
 			},
 			expected: []string{"docker"},
@@ -424,8 +426,7 @@ func TestProvidersPriorityList(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-
-				assert.Equal(t, test.expected, test.cfg.Providers.PriorityList)
+				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
 			}
 		})
 	}

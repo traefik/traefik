@@ -25,20 +25,20 @@ type MatcherFunc func(*http.Request) bool
 type Muxer struct {
 	routes routes
 
-	parser         SyntaxParser
-	defaultHandler http.Handler
-	priorityList   []string
+	parser              SyntaxParser
+	defaultHandler      http.Handler
+	providersPrecedence []string
 }
 
 // NewMuxer returns a new muxer instance.
-func NewMuxer(parser SyntaxParser, priorityList []string) *Muxer {
-	priorityList = slices.Clone(priorityList)
-	slices.Reverse(priorityList)
+func NewMuxer(parser SyntaxParser, providersPrecedence []string) *Muxer {
+	providersPrecedence = slices.Clone(providersPrecedence)
+	slices.Reverse(providersPrecedence)
 
 	return &Muxer{
-		parser:         parser,
-		defaultHandler: http.NotFoundHandler(),
-		priorityList:   priorityList,
+		parser:              parser,
+		defaultHandler:      http.NotFoundHandler(),
+		providersPrecedence: providersPrecedence,
 	}
 }
 
@@ -87,7 +87,7 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, providerName 
 		handler:          handler,
 		matchers:         matchers,
 		priority:         priority,
-		providerPriority: slices.Index(m.priorityList, providerName),
+		providerPriority: slices.Index(m.providersPrecedence, providerName),
 	})
 
 	sort.Sort(m.routes)
@@ -228,7 +228,7 @@ type route struct {
 	// priority is used to disambiguate between two (or more) rules that would all match for a given request.
 	// Computed from the matching rule length, if not user-set.
 	priority int
-
+	// providerPriority is used to disambiguate between two (or more) rules that would all match for a given request and have the same priority.
 	providerPriority int
 }
 
