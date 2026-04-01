@@ -8932,7 +8932,6 @@ func Test_makeListenerSetStatus(t *testing.T) {
 
 			var acceptedCond, programmedCond *metav1.Condition
 			for _, c := range status.Conditions {
-				c := c
 				switch c.Type {
 				case string(gatev1.ListenerSetConditionAccepted):
 					acceptedCond = &c

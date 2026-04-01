@@ -144,7 +144,7 @@ type gatewayListener struct {
 // routeKeySegment returns the segment used in route keys to distinguish between
 // Gateway-sourced and ListenerSet-sourced listeners.
 // For Gateway-sourced listeners: "gw-<namespace>-<name>"
-// For ListenerSet-sourced listeners: "ls-<namespace>-<name>"
+// For ListenerSet-sourced listeners: "ls-<namespace>-<name>".
 func (l gatewayListener) routeKeySegment() string {
 	source := l.Source
 	if source == "" {

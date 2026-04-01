@@ -776,29 +776,6 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 	return nil
 }
 
-// lookupNamespace returns the lookup namespace listenerKey for the given namespace.
-// When listening on all namespaces, it returns the client-go identifier ("")
-// for all-namespaces. Otherwise, it returns the given namespace.
-// The distinction is necessary because we index all informers on the special
-// identifier iff all-namespaces are requested but receive specific namespace
-// identifiers from the Kubernetes API, so we have to bridge this gap.
-func (c *clientWrapper) lookupNamespace(namespace string) string {
-	if c.isNamespaceAll {
-		return metav1.NamespaceAll
-	}
-	return namespace
-}
-
-// isWatchedNamespace checks to ensure that the namespace is being watched before we request
-// it to ensure we don't panic by requesting an out-of-watch object.
-func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
-	if c.isNamespaceAll {
-		return true
-	}
-
-	return slices.Contains(c.watchedNamespaces, namespace)
-}
-
 func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) error {
 	if !c.isWatchedNamespace(listenerSet.Namespace) {
 		return fmt.Errorf("cannot update ListenerSet status %s/%s: namespace is not within watched namespaces", listenerSet.Namespace, listenerSet.Name)
@@ -832,6 +809,29 @@ func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet
 	}
 
 	return nil
+}
+
+// lookupNamespace returns the lookup namespace listenerKey for the given namespace.
+// When listening on all namespaces, it returns the client-go identifier ("")
+// for all-namespaces. Otherwise, it returns the given namespace.
+// The distinction is necessary because we index all informers on the special
+// identifier iff all-namespaces are requested but receive specific namespace
+// identifiers from the Kubernetes API, so we have to bridge this gap.
+func (c *clientWrapper) lookupNamespace(namespace string) string {
+	if c.isNamespaceAll {
+		return metav1.NamespaceAll
+	}
+	return namespace
+}
+
+// isWatchedNamespace checks to ensure that the namespace is being watched before we request
+// it to ensure we don't panic by requesting an out-of-watch object.
+func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
+	if c.isNamespaceAll {
+		return true
+	}
+
+	return slices.Contains(c.watchedNamespaces, namespace)
 }
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
