@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Link } from '@traefiklabs/faency'
+import { Badge, Box, Flex, Link } from '@traefik-labs/faency'
 import { type ReactElement, useMemo } from 'react'
 
 import CertExpiryBadge, { getCertExpiryStatus } from 'components/certificates/CertExpiryBadge'

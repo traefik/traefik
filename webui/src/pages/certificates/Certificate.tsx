@@ -1,4 +1,4 @@
-import { Box, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
+import { Box, Flex, H1, Skeleton, Text } from '@traefik-labs/faency'
 import { useParams } from 'react-router-dom'
 
 import { CertificateDetails } from '../../components/certificates/CertificateDetails'
