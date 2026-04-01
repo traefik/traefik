@@ -258,6 +258,8 @@ type ForwardAuth struct {
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
+	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty" toml:"maxResponseBodySize,omitempty" yaml:"maxResponseBodySize,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -329,7 +331,7 @@ type Headers struct {
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
 	// +kubebuilder:validation:Minimum=0
-	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
+	STSSeconds *int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
 	// STSPreload defines whether the preload flag is appended to the Strict-Transport-Security header.
@@ -405,7 +407,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		(h.SSLForceHost != nil && *h.SSLForceHost) ||
 		(h.SSLHost != nil && *h.SSLHost != "") ||
 		len(h.SSLProxyHeaders) != 0 ||
-		h.STSSeconds != 0 ||
+		h.STSSeconds != nil ||
 		h.STSIncludeSubdomains ||
 		h.STSPreload ||
 		h.ForceSTSHeader ||

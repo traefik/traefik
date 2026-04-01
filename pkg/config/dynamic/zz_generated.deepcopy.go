@@ -373,6 +373,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.MaxResponseBodySize != nil {
+		in, out := &in.MaxResponseBodySize, &out.MaxResponseBodySize
+		*out = new(int64)
+		**out = **in
+	}
 	if in.AddAuthCookiesToResponse != nil {
 		in, out := &in.AddAuthCookiesToResponse, &out.AddAuthCookiesToResponse
 		*out = make([]string, len(*in))
@@ -654,6 +659,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		for key, val := range *in {
 			(*out)[key] = val
 		}
+	}
+	if in.STSSeconds != nil {
+		in, out := &in.STSSeconds, &out.STSSeconds
+		*out = new(int64)
+		**out = **in
 	}
 	if in.FeaturePolicy != nil {
 		in, out := &in.FeaturePolicy, &out.FeaturePolicy

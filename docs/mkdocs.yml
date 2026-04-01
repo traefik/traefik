@@ -35,11 +35,13 @@ copyright: 'Traefik Labs • Copyright &copy; 2016-2026'
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
   - assets/js/extra.js
+  - assets/js/banner.js
 
 extra_css:
   - assets/css/menu-icons.css
   - assets/css/code-copy.css
   - assets/css/content-width.css
+  - assets/css/banner.css
 
 plugins:
   - search
@@ -50,6 +52,11 @@ plugins:
       encoding: utf-8
   - redirects:
       redirect_maps:
+        ## Getting-Started
+        'getting-started/concepts.md': 'getting-started/configuration-overview.md'
+        'getting-started/install-traefik.md': 'getting-started/index.md'
+        'getting-started/quick-start-with-kubernetes.md': 'getting-started/kubernetes.md'
+        'getting-started/quick-start.md': 'getting-started/docker.md'
         # Providers
         'providers/overview.md': 'reference/install-configuration/providers/overview.md'
         'providers/docker.md': 'reference/install-configuration/providers/docker.md'
@@ -103,6 +110,7 @@ plugins:
         'https/acme.md': 'reference/install-configuration/tls/certificate-resolvers/acme.md'
         'https/tailscale.md': 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
         'https/spiffe.md': 'reference/install-configuration/tls/spiffe.md'
+        'https/ocsp.md': 'reference/install-configuration/tls/ocsp.md'
         # Middlewares
         'middlewares/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
         # HTTP
@@ -161,6 +169,11 @@ plugins:
         "reference/dynamic-configuration/nomad.md": 'reference/routing-configuration/other-providers/nomad.md'
         'reference/dynamic-configuration/ecs.md': 'reference/routing-configuration/other-providers/ecs.md'
         'reference/dynamic-configuration/kv.md': 'reference/routing-configuration/other-providers/kv.md'
+        'reference/dynamic-configuration/kv-ref.md': 'reference/routing-configuration/other-providers/kv.md'
+        'reference/install-configuration/cli-options-list.md': 'reference/install-configuration/configuration-options.md'
+        'reference/install-configuration/observability/healthcheck/cli.md': 'reference/install-configuration/observability/healthcheck.md'
+        'reference/install-configuration/observability/healthcheck/ping.md': 'reference/install-configuration/observability/healthcheck.md'
+        'reference/install-configuration/observability/options-list.md': 'reference/install-configuration/configuration-options.md'
         ## Plugins
         'plugins/index.md': "extend/extend-traefik.md"
         ## Migration
@@ -391,4 +404,5 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
+      - 'Maintainer''s Guidelines': 'contributing/maintainers-guidelines.md'
   - 'FAQ': 'getting-started/faq.md'

@@ -50,8 +50,6 @@ tcp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.tcp.services.my-service.loadBalancer.servers[0].address=xx.xx.xx.xx:xx"
-  - "traefik.tcp.services.my-service.loadBalancer.servers[1].address=xx.xx.xx.xx:xx"
   - "traefik.tcp.services.my-service.loadBalancer.healthCheck.send=PING"
   - "traefik.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG"
   - "traefik.tcp.services.my-service.loadBalancer.healthCheck.interval=10s"
@@ -62,8 +60,6 @@ labels:
 ```json tab="Tags"
 {
   "Tags": [
-    "traefik.tcp.services.my-service.loadBalancer.servers[0].address=xx.xx.xx.xx:xx",
-    "traefik.tcp.services.my-service.loadBalancer.servers[1].address=xx.xx.xx.xx:xx",
     "traefik.tcp.services.my-service.loadBalancer.healthCheck.send=PING",
     "traefik.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG",
     "traefik.tcp.services.my-service.loadBalancer.healthCheck.interval=10s",

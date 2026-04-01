@@ -51,210 +51,39 @@ spec:
 
 ### On Ingress
 
-??? info "`traefik.ingress.kubernetes.io/router.entrypoints`"
-
-    See [entry points](../../install-configuration/entrypoints.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.middlewares`"
-
-    See [middlewares overview](../http/middlewares/overview.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.middlewares: auth@file,default-prefix@kubernetescrd
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.priority`"
-
-    See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.priority: "42"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.rulesyntax`"
-
-    !!! warning
-
-        RuleSyntax option is deprecated and will be removed in the next major version.
-        Please do not use this field and rewrite the router rules to use the v3 syntax.
-
-    See [rule syntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.pathmatcher`"
-
-    Overrides the default router rule type used for a path.
-    Only path-related matcher name should be specified: `Path`, `PathPrefix` or `PathRegexp`.
-
-    Default `PathPrefix`
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.pathmatcher: Path
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.tls`"
-
-    <!-- See [tls](../http/tls/tls-certificates.md) for more information. -->
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.tls.certresolver`"
-
-    <!-- See [certResolver](.) for more information. -->
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.tls.certresolver: myresolver
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.tls.domains.n.main`"
-
-    <!-- See [domains](.) for more information. -->
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: example.org
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.tls.domains.n.sans`"
-
-    <!-- See [domains](.) for more information. -->
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: test.example.org,dev.example.org
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.tls.options`"
-
-    See [options](../kubernetes/crd/tls/tlsoption.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.tls.options: foobar@file
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
-
-    See [here](../http/routing/observability.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.observability.accesslogs: true
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
-
-    See [here](../http/routing/observability.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.observability.metrics: true
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
-
-    See [here](../http/routing/observability.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/router.observability.tracing: true
-    ```
+| Annotation | Description | Value |
+|------------|-------------|-------|
+| <a id="opt-traefik-ingress-kubernetes-iorouter-entrypoints" href="#opt-traefik-ingress-kubernetes-iorouter-entrypoints" title="#opt-traefik-ingress-kubernetes-iorouter-entrypoints">`traefik.ingress.kubernetes.io/router.entrypoints`</a> | See [entry points](../../install-configuration/entrypoints.md) for more information. | `ep1,ep2` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-middlewares" href="#opt-traefik-ingress-kubernetes-iorouter-middlewares" title="#opt-traefik-ingress-kubernetes-iorouter-middlewares">`traefik.ingress.kubernetes.io/router.middlewares`</a> | See [middlewares overview](../http/middlewares/overview.md) for more information. | `auth@file,default-prefix@kubernetescrd` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-priority" href="#opt-traefik-ingress-kubernetes-iorouter-priority" title="#opt-traefik-ingress-kubernetes-iorouter-priority">`traefik.ingress.kubernetes.io/router.priority`</a> | See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information. | `"42"` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-rulesyntax" href="#opt-traefik-ingress-kubernetes-iorouter-rulesyntax" title="#opt-traefik-ingress-kubernetes-iorouter-rulesyntax">`traefik.ingress.kubernetes.io/router.rulesyntax`</a> | See [rule syntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.<br/>**Deprecated:** RuleSyntax option is deprecated and will be removed in the next major version.<br/>Please do not use this field and rewrite the router rules to use the v3 syntax. | `"v2"` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-pathmatcher" href="#opt-traefik-ingress-kubernetes-iorouter-pathmatcher" title="#opt-traefik-ingress-kubernetes-iorouter-pathmatcher">`traefik.ingress.kubernetes.io/router.pathmatcher`</a> | Overrides the default router rule type used for a path.<br/>Only path-related matcher name should be specified: `Path`, `PathPrefix` or `PathRegexp`.<br/>Default: `PathPrefix` | `Path` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-tls" href="#opt-traefik-ingress-kubernetes-iorouter-tls" title="#opt-traefik-ingress-kubernetes-iorouter-tls">`traefik.ingress.kubernetes.io/router.tls`</a> | Enables TLS for the router. | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-tls-certresolver" href="#opt-traefik-ingress-kubernetes-iorouter-tls-certresolver" title="#opt-traefik-ingress-kubernetes-iorouter-tls-certresolver">`traefik.ingress.kubernetes.io/router.tls.certresolver`</a> | Specifies the certificate resolver to use for TLS certificates. | `myresolver` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-tls-domains-n-main" href="#opt-traefik-ingress-kubernetes-iorouter-tls-domains-n-main" title="#opt-traefik-ingress-kubernetes-iorouter-tls-domains-n-main">`traefik.ingress.kubernetes.io/router.tls.domains.n.main`</a> | Defines the main domain for TLS certificate (where n is the domain index). | `example.org` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-tls-domains-n-sans" href="#opt-traefik-ingress-kubernetes-iorouter-tls-domains-n-sans" title="#opt-traefik-ingress-kubernetes-iorouter-tls-domains-n-sans">`traefik.ingress.kubernetes.io/router.tls.domains.n.sans`</a> | Defines the Subject Alternative Names (SANs) for TLS certificate (where n is the domain index). | `test.example.org,dev.example.org` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-tls-options" href="#opt-traefik-ingress-kubernetes-iorouter-tls-options" title="#opt-traefik-ingress-kubernetes-iorouter-tls-options">`traefik.ingress.kubernetes.io/router.tls.options`</a> | See [TLS options](../kubernetes/crd/tls/tlsoption.md) for more information. | `foobar@file` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-observability-accesslogs" href="#opt-traefik-ingress-kubernetes-iorouter-observability-accesslogs" title="#opt-traefik-ingress-kubernetes-iorouter-observability-accesslogs">`traefik.ingress.kubernetes.io/router.observability.accesslogs`</a> | Controls whether the router produces access logs.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-observability-metrics" href="#opt-traefik-ingress-kubernetes-iorouter-observability-metrics" title="#opt-traefik-ingress-kubernetes-iorouter-observability-metrics">`traefik.ingress.kubernetes.io/router.observability.metrics`</a> | Controls whether the router produces metrics.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-observability-tracing" href="#opt-traefik-ingress-kubernetes-iorouter-observability-tracing" title="#opt-traefik-ingress-kubernetes-iorouter-observability-tracing">`traefik.ingress.kubernetes.io/router.observability.tracing`</a> | Controls whether the router produces traces.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
 
 ### On Service
 
-??? info "`traefik.ingress.kubernetes.io/service.nativelb`"
-
-    Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
-    The Kubernetes Service itself does load-balance to the pods.
-    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
-    By default, NativeLB is false.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.nativelb: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.nodeportlb`"
-
-    Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
-    It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
-    By default, NodePortLB is false.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.nodeportlb: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
-
-    Overrides the default scheme.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.serversscheme: h2c
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.serverstransport`"
-
-    See [ServersTransport](../kubernetes/crd/http/serverstransport.md) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.passhostheader`"
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.passhostheader: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
-
-    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.name`"
-
-    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.secure`"
-
-    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.samesite`"
-
-    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.samesite: "none"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`"
-
-    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
-    ```
-
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`"
-
-    See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
-    ```
+| Annotation | Description | Value |
+|------------|-------------|-------|
+| <a id="opt-traefik-ingress-kubernetes-ioservice-nativelb" href="#opt-traefik-ingress-kubernetes-ioservice-nativelb" title="#opt-traefik-ingress-kubernetes-ioservice-nativelb">`traefik.ingress.kubernetes.io/service.nativelb`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.<br/>The Kubernetes Service itself does load-balance to the pods.<br/>Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.<br/>Default: `false` | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-nodeportlb" href="#opt-traefik-ingress-kubernetes-ioservice-nodeportlb" title="#opt-traefik-ingress-kubernetes-ioservice-nodeportlb">`traefik.ingress.kubernetes.io/service.nodeportlb`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.<br/>It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.<br/>Default: `false` | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-serversscheme" href="#opt-traefik-ingress-kubernetes-ioservice-serversscheme" title="#opt-traefik-ingress-kubernetes-ioservice-serversscheme">`traefik.ingress.kubernetes.io/service.serversscheme`</a> | Overrides the default scheme. | `h2c` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-serverstransport" href="#opt-traefik-ingress-kubernetes-ioservice-serverstransport" title="#opt-traefik-ingress-kubernetes-ioservice-serverstransport">`traefik.ingress.kubernetes.io/service.serverstransport`</a> | See [ServersTransport](../kubernetes/crd/http/serverstransport.md) for more information. | `foobar@file` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-passhostheader" href="#opt-traefik-ingress-kubernetes-ioservice-passhostheader" title="#opt-traefik-ingress-kubernetes-ioservice-passhostheader">`traefik.ingress.kubernetes.io/service.passhostheader`</a> | Controls whether to forward the Host header to the backend. | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie">`traefik.ingress.kubernetes.io/service.sticky.cookie`</a> | Enables sticky sessions using cookies.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-name" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-name" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-name">`traefik.ingress.kubernetes.io/service.sticky.cookie.name`</a> | Defines the cookie name for sticky sessions.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `foobar` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-secure" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-secure" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-secure">`traefik.ingress.kubernetes.io/service.sticky.cookie.secure`</a> | Sets the Secure flag on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-samesite" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-samesite" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-samesite">`traefik.ingress.kubernetes.io/service.sticky.cookie.samesite`</a> | Sets the SameSite attribute on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `"none"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-domain" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-domain" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-domain">`traefik.ingress.kubernetes.io/service.sticky.cookie.domain`</a> | Sets the Domain attribute on the sticky session cookie, defining the host to which the cookie will be sent.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `"foo.com"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-httponly" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-httponly" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-httponly">`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`</a> | Sets the HttpOnly flag on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `"true"` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage">`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`</a> | Sets the Max-Age attribute (in seconds) on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `42` |
+| <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path">`traefik.ingress.kubernetes.io/service.sticky.cookie.path`</a> | Sets the Path attribute on the sticky session cookie, defining the path that must exist in the requested URL.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `/foobar` |
 
 ## TLS
 

@@ -3,8 +3,10 @@ package auth
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
@@ -27,6 +29,7 @@ type basicAuth struct {
 	removeHeader bool
 	name         string
 
+	notFoundSecret    string
 	checkSecret       func(password, secret string) bool
 	singleflightGroup *singleflight.Group
 }
@@ -40,12 +43,18 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		return nil, err
 	}
 
+	// To prevent timing attacks, we need to compute a hash even if the user is not found.
+	// We assume it to be safe only when the users hashes are all from the same algorithm,
+	// so we can pick the first one as a random hash to compute.
+	notFoundSecret := users[slices.Collect(maps.Values(users))[0]]
+
 	ba := &basicAuth{
 		next:              next,
 		users:             users,
 		headerField:       authConfig.HeaderField,
 		removeHeader:      authConfig.RemoveHeader,
 		name:              name,
+		notFoundSecret:    notFoundSecret,
 		checkSecret:       goauth.CheckSecret,
 		singleflightGroup: new(singleflight.Group),
 	}
@@ -68,8 +77,9 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), b.name, typeNameBasic)
 
 	user, password, ok := req.BasicAuth()
+	var authenticated bool
 	if ok {
-		ok = b.checkPassword(user, password)
+		authenticated = b.checkPassword(user, password)
 	}
 
 	logData := accesslog.GetLogData(req)
@@ -77,7 +87,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logData.Core[accesslog.ClientUsername] = user
 	}
 
-	if !ok {
+	if !authenticated {
 		logger.Debug().Msg("Authentication failed")
 		observability.SetStatusErrorf(req.Context(), "Authentication failed")
 
@@ -89,6 +99,8 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
+		// TODO Deprecated we should add the header with canonical key.
+		req.Header.Del(b.headerField)
 		req.Header[b.headerField] = []string{user}
 	}
 
@@ -101,19 +113,21 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (b *basicAuth) checkPassword(user, password string) bool {
 	secret := b.auth.Secrets(user, b.auth.Realm)
-	if secret == "" {
-		return false
-	}
 
 	key := password + secret
 	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
+		if secret == "" {
+			_ = b.checkSecret(password, b.notFoundSecret)
+			return false, nil
+		}
+
 		return b.checkSecret(password, secret), nil
 	})
 
 	return match.(bool)
 }
 
-func (b *basicAuth) secretBasic(user, realm string) string {
+func (b *basicAuth) secretBasic(user, _ string) string {
 	if secret, ok := b.users[user]; ok {
 		return secret
 	}

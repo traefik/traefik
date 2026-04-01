@@ -1,3 +1,119 @@
+## [v3.6.12](https://github.com/traefik/traefik/tree/v3.6.12) (2026-03-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.11...v3.6.12)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix auth-response-headers whitespace trimming in ingress-nginx provider ([#12856](https://github.com/traefik/traefik/pull/12856) @mmatur)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.33.0 ([#12840](https://github.com/traefik/traefik/pull/12840) @ldez)
+- **[server]** Fix comment and unnecessary allocation in withRoutingPath ([#12880](https://github.com/traefik/traefik/pull/12880) @boinger)
+- **[server, tcp]** Fix postgres STARTTLS with TLS termination ([#12847](https://github.com/traefik/traefik/pull/12847) @mmatur)
+- **[api]** Fix allow colons and tildes in api.basePath validation ([#12857](https://github.com/traefik/traefik/pull/12857) @mmatur)
+- **[grpc]** Bump google.golang.org/grpc to v1.79.3 ([#12845](https://github.com/traefik/traefik/pull/12845) @mmatur)
+- **[middleware, authentication]** Prevent duplicate user headers in basic and digest auth middleware ([#12851](https://github.com/traefik/traefik/pull/12851) @juliens)
+- **[middleware]** Fix StripPrefix and StripPrefixRegex to slice the prefix using encoded prefix length ([#12863](https://github.com/traefik/traefik/pull/12863) @gndz07)
+
+**Documentation:**
+- **[acme]** Clarify CNAME explanation in ACME Documentation ([#12818](https://github.com/traefik/traefik/pull/12818) @sheddy-traefik)
+- **[k8s/ingress-nginx]** Add ingress-nginx migration banner on documentation pages ([#12872](https://github.com/traefik/traefik/pull/12872) @gndz07)
+- **[k8s/ingress-nginx]** Clarify that NGINX Ingress watchNamespace watches only one namespace ([#12873](https://github.com/traefik/traefik/pull/12873) @parkerfath)
+- **[k8s/ingress]** Improve Kubernetes Ingress Routing Documentation ([#12876](https://github.com/traefik/traefik/pull/12876) @sheddy-traefik)
+
+## [v3.6.11](https://github.com/traefik/traefik/tree/v3.6.11) (2026-03-19)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.10...v3.6.11)
+
+**Bug fixes:**
+- **[logs, otel]** Add OTel-conformant trace context attributes to access logs ([#12801](https://github.com/traefik/traefik/pull/12801) @mmatur)
+- **[k8s/gatewayapi]** Fix incorrect hostname matching between listener and route ([#12599](https://github.com/traefik/traefik/pull/12599) @TheColorman)
+- **[k8s/ingress]** Fix ingress router's rule ([#12808](https://github.com/traefik/traefik/pull/12808) @gndz07)
+- **[webui]** Remove AGPL license in code ([#12799](https://github.com/traefik/traefik/pull/12799) @Desel72)
+- **[k8s/ingress-nginx]** Fix proxy-ssl-verify annotation ([#12825](https://github.com/traefik/traefik/pull/12825) @LBF38)
+- **[http]** Add maxResponseBodySize configuration on HTTP provider ([#12788](https://github.com/traefik/traefik/pull/12788) @gndz07)
+- **[tls]** Support fragmented TLS client hello ([#12787](https://github.com/traefik/traefik/pull/12787) @rtribotte)
+- **[middleware, authentication]** Make basic auth check timing constant ([#12803](https://github.com/traefik/traefik/pull/12803) @rtribotte)
+
+**Documentation:**
+- **[k8s]** Improve the multi tenant security note ([#12822](https://github.com/traefik/traefik/pull/12822) @nmengin)
+- Fix unnecessary escaping of pipe in regexp examples ([#12784](https://github.com/traefik/traefik/pull/12784) @diegmonti)
+- Add vulnerability submission quality guidelines ([#12807](https://github.com/traefik/traefik/pull/12807) @emilevauge)
+- Fix start up message format ([#12806](https://github.com/traefik/traefik/pull/12806) @mloiseleur)
+- Remove unsupported servers[n].address from TCP label examples ([#12817](https://github.com/traefik/traefik/pull/12817) @sheddy-traefik)
+- Bump mkdocs-traefiklabs to use consent mode ([#12804](https://github.com/traefik/traefik/pull/12804) @darkweaver87)
+
+## [v2.11.42](https://github.com/traefik/traefik/tree/v2.11.42) (2026-03-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.41...v2.11.42)
+
+**Bug fixes:**
+- **[grpc]** Bump google.golang.org/grpc to v1.79.3 ([#12845](https://github.com/traefik/traefik/pull/12845) @mmatur)
+- **[middleware, authentication]** Prevent duplicate user headers in basic and digest auth middleware ([#12851](https://github.com/traefik/traefik/pull/12851) @juliens)
+- **[middleware]** Fix StripPrefix and StripPrefixRegex to slice the prefix using encoded prefix length ([#12863](https://github.com/traefik/traefik/pull/12863) @gndz07)
+
+## [v2.11.41](https://github.com/traefik/traefik/tree/v2.11.41) (2026-03-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.40...v2.11.41)
+
+**Bug fixes:**
+- **[http]** Add maxResponseBodySize configuration on HTTP provider ([#12788](https://github.com/traefik/traefik/pull/12788) @gndz07)
+- **[tls]** Support fragmented TLS client hello ([#12787](https://github.com/traefik/traefik/pull/12787) @rtribotte)
+- **[middleware, authentication]** Make basic auth check timing constant ([#12803](https://github.com/traefik/traefik/pull/12803) @rtribotte)
+
+**Documentation:**
+- Bump mkdocs-traefiklabs to use consent mode ([#12804](https://github.com/traefik/traefik/pull/12804) @darkweaver87)
+
+## [v3.6.10](https://github.com/traefik/traefik/tree/v3.6.10) (2026-03-06)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.9...v3.6.10)
+
+  **Bug fixes:**
+- **[docker]** Bump Docker and OpenTelemetry dependencies ([#12761](https://github.com/traefik/traefik/pull/12761) by [mmatur](https://github.com/mmatur))
+- **[fastproxy]** Bump github.com/valyala/fasthttp to v1.69.0 ([#12763](https://github.com/traefik/traefik/pull/12763) by [kevinpollet](https://github.com/kevinpollet))
+- **[healthcheck, grpc]** Remove path parsing with grpc healthcheck ([#12760](https://github.com/traefik/traefik/pull/12760) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/gatewayapi]** Fix Gateway API router's rules ([#12753](https://github.com/traefik/traefik/pull/12753) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Fix HasSecureHeadersDefined returning false when stsSeconds is 0 ([#12684](https://github.com/traefik/traefik/pull/12684) by [veeceey](https://github.com/veeceey))
+- **[otel]** Bump go.opentelemetry.io/otel dependencies ([#12754](https://github.com/traefik/traefik/pull/12754) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Bump golang.org/x/net to v0.51.0 ([#12756](https://github.com/traefik/traefik/pull/12756) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Fix priority display in dashboard and ACME bypass redirect ([#12740](https://github.com/traefik/traefik/pull/12740) by [mmatur](https://github.com/mmatur))
+- **[webui]** Fix basePath validation for dashboard template ([#12729](https://github.com/traefik/traefik/pull/12729) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- **[middleware]** Correct documentation for Digest auth ([#12651](https://github.com/traefik/traefik/pull/12651) by [Zash](https://github.com/Zash))
+- Add missing `.http` to TOML table names ([#12713](https://github.com/traefik/traefik/pull/12713) by [Darsstar](https://github.com/Darsstar))
+- Fix incorrect TOML example in entrypoints docs ([#12711](https://github.com/traefik/traefik/pull/12711) by [mfmfuyu](https://github.com/mfmfuyu))
+- Fix API basepath option documentation ([#12744](https://github.com/traefik/traefik/pull/12744) by [nmengin](https://github.com/nmengin))
+
+## [v2.11.40](https://github.com/traefik/traefik/tree/v2.11.40) (2026-03-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.38...v2.11.40)
+
+**Bug fixes:**
+- **[docker]** Bump Docker and OpenTelemetry dependencies ([#12761](https://github.com/traefik/traefik/pull/12761) by [mmatur](https://github.com/mmatur))
+- **[server]** Bump golang.org/x/net to v0.51.0 ([#12756](https://github.com/traefik/traefik/pull/12756) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.39](https://github.com/traefik/traefik/tree/v2.11.39) (2026-03-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.38...v2.11.39)
+
+Release canceled.
+
+## [v3.6.9](https://github.com/traefik/traefik/tree/v3.6.9) (2026-02-23)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.8...v3.6.9)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.32.0 ([#12702](https://github.com/traefik/traefik/pull/12702) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix case sensitivity on x-forwarded headers for Connection ([#12690](https://github.com/traefik/traefik/pull/12690) by [LBF38](https://github.com/LBF38))
+- **[middleware, authentication]** Handle empty/missing User-Agent header ([#12545](https://github.com/traefik/traefik/pull/12545) by [a-stangl](https://github.com/a-stangl))
+- **[middleware, authentication]** Add maxResponseBodySize configuration to forwardAuth middleware ([#12694](https://github.com/traefik/traefik/pull/12694) by [gndz07](https://github.com/gndz07))
+- **[server]** Fix TLS handshake error handling ([#12692](https://github.com/traefik/traefik/pull/12692) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[docker]** Update docker in-depth setup guide ([#12682](https://github.com/traefik/traefik/pull/12682) by [mdevino](https://github.com/mdevino))
+- **[k8s]** Make labelSelector option casing more consistent ([#12658](https://github.com/traefik/traefik/pull/12658) by [holysoles](https://github.com/holysoles))
+- **[k8s/ingress-nginx]** Add temporary note to advertise the incoming NGINX annotations ([#12699](https://github.com/traefik/traefik/pull/12699) by [nmengin](https://github.com/nmengin))
+- Increased content width in documentation ([#12632](https://github.com/traefik/traefik/pull/12632) by [tobiasge](https://github.com/tobiasge))
+- Correct encoded characters allowance in entrypoints.md ([#12679](https://github.com/traefik/traefik/pull/12679) by [Apflkuacha](https://github.com/Apflkuacha))
+
+## [v2.11.38](https://github.com/traefik/traefik/tree/v2.11.38) (2026-02-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.37...v2.11.38)
+
+**Bug fixes:**
+- **[middleware]** Fix case sensitivity on x-forwarded headers for Connection ([#12690](https://github.com/traefik/traefik/pull/12690) by [LBF38](https://github.com/LBF38))
+- **[middleware, authentication]** Add maxResponseBodySize configuration to forwardAuth middleware ([#12694](https://github.com/traefik/traefik/pull/12694) by [gndz07](https://github.com/gndz07))
+- **[server]** Fix TLS handshake error handling ([#12692](https://github.com/traefik/traefik/pull/12692) by [juliens](https://github.com/juliens))
+
 ## [v3.6.8](https://github.com/traefik/traefik/tree/v3.6.8) (2026-02-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.7...v3.6.8)
 

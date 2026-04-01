@@ -27,10 +27,10 @@ const RouterPanel = ({ data }: Props) => (
           <ProviderName css={{ ml: '$2' }}>{data.provider}</ProviderName>
         </ItemBlock>
       )}
-      {data.priority && (
+      {(data.priorityStr || data.priority) && (
         <ItemBlock title="Priority">
-          <Tooltip label={data.priority.toString()} action="copy">
-            <Text css={{ overflowWrap: 'break-word' }}>{data.priority.toString()}</Text>
+          <Tooltip label={data.priorityStr ?? data.priority?.toString() ?? ''} action="copy">
+            <Text css={{ overflowWrap: 'break-word' }}>{data.priorityStr ?? data.priority?.toString()}</Text>
           </Tooltip>
         </ItemBlock>
       )}

@@ -59,7 +59,7 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 			req.URL.Path = ensureLeadingSlash(strings.Replace(req.URL.Path, prefix, "", 1))
 			if req.URL.RawPath != "" {
-				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[len(prefix):])
+				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[encodedPrefixLen(req.URL.RawPath, prefix):])
 			}
 
 			req.RequestURI = req.URL.RequestURI()
@@ -69,6 +69,22 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	}
 
 	s.next.ServeHTTP(rw, req)
+}
+
+// encodedPrefixLen returns the number of bytes in rawPath that correspond to
+// the decoded prefix, advancing 3 bytes per %XX sequence and 1 byte otherwise.
+func encodedPrefixLen(rawPath, decodedPrefix string) int {
+	decoded := 0
+	i := 0
+	for i < len(rawPath) && decoded < len(decodedPrefix) {
+		if rawPath[i] == '%' && i+2 < len(rawPath) {
+			i += 3
+		} else {
+			i++
+		}
+		decoded++
+	}
+	return i
 }
 
 func ensureLeadingSlash(str string) string {

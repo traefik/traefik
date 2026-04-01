@@ -232,7 +232,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		// Add the default backend service router to the configuration.
 		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
-			Rule: "PathPrefix(`/`)",
+			Rule: `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -240,7 +240,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		}
 
 		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
-			Rule: "PathPrefix(`/`)",
+			Rule: `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -309,7 +309,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -323,7 +323,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			conf.HTTP.Routers[defaultBackendName] = rt
 
 			rtTLS := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -386,7 +386,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host), "-")
 
 				conf.TCP.Routers[routerKey] = &dynamic.TCPRouter{
-					Rule: fmt.Sprintf("HostSNI(`%s`)", rule.Host),
+					Rule: fmt.Sprintf("HostSNI(%q)", rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -511,7 +511,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
+			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on",
 		},
 	}
 
@@ -1004,7 +1004,14 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 		return errors.New("empty auth-url found in ingress annotations")
 	}
 
-	authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
+	var authResponseHeaders []string
+	if raw := ptr.Deref(ingressConfig.AuthResponseHeaders, ""); raw != "" {
+		for h := range strings.SplitSeq(raw, ",") {
+			if trimmed := strings.TrimSpace(h); trimmed != "" {
+				authResponseHeaders = append(authResponseHeaders, trimmed)
+			}
+		}
+	}
 
 	forwardMiddlewareName := routerName + "-forward-auth"
 	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
@@ -1063,10 +1070,10 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 
 		switch pathType {
 		case netv1.PathTypeExact:
-			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
+			rules = append(rules, fmt.Sprintf("Path(%q)", pa.Path))
 		case netv1.PathTypePrefix:
 			if ptr.Deref(config.UseRegex, false) {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", fmt.Sprintf("^%s", pa.Path)))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
@@ -1079,10 +1086,10 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
+		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
-	return fmt.Sprintf("Host(`%s`)", host)
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
@@ -1093,11 +1100,11 @@ func buildHostRule(host string) string {
 // Kubernetes Ingress API.
 func buildPrefixRule(path string) string {
 	if path == "/" {
-		return "PathPrefix(`/`)"
+		return `PathPrefix("/")`
 	}
 
 	path = strings.TrimSuffix(path, "/")
-	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
+	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, fmt.Sprintf("%s/", path))
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {

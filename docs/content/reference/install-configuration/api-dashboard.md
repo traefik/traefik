@@ -170,11 +170,11 @@ enabling the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob
 | Field      | Description  | Default | Required |
 |:-----------|:---------------------------------|:--------|:---------|
 | <a id="opt-api" href="#opt-api" title="#opt-api">`api`</a> | Enable api/dashboard. When set to `true`, its sub option `api.dashboard` is also set to true.| false     | No      |
-| <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed. | / | No |
+| <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed.<br/>Please note that this option is incompatible with the [insecure mode](#opt-api-insecure). | / | No |
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | false      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disabledashboardad" href="#opt-api-disabledashboardad" title="#opt-api-disabledashboardad">`api.disabledashboardad`</a> | Disable the advertisement from the dashboard. | false      | No      |
-| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.| false      | No      |
+| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basepath).| false      | No      |
 
 ## Endpoints
 
@@ -222,21 +222,21 @@ The dashboard is available by default on the path  `/dashboard/`.
 
 !!! note
 
-    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
-    - There is also a redirect from the path `/` to `/dashboard/`.
+    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
+	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
 As mentioned above in the [Security](#security) section, it is important to secure access to both the dashboard and the API.
 You need to define a routing configuration within Traefik.
 This involves setting up a router attached to the service `api@internal`, which allows you to:
 
-- Implement security features using [middlewares](../../middlewares/overview.md), such as authentication ([basicAuth](../../middlewares/http/basicauth.md), [digestAuth](../../middlewares/http/digestauth.md),
-  [forwardAuth](../../middlewares/http/forwardauth.md)) or [allowlisting](../../middlewares/http/ipallowlist.md).
+- Implement security features using [middlewares](../../reference/routing-configuration/http/middlewares/overview.md), such as authentication ([basicAuth](../../reference/routing-configuration/http/middlewares/basicauth.md), [digestAuth](../../reference/routing-configuration/http/middlewares/digestauth.md),
+  [forwardAuth](../../reference/routing-configuration/http/middlewares/forwardauth.md)) or [allowlisting](../../reference/routing-configuration/http/middlewares/ipallowlist.md).
 
 - Define a [router rule](#dashboard-router-rule) for accessing the dashboard through Traefik.
 
 ### Dashboard Router Rule
 
-To ensure proper access to the dashboard, the [router rule](../../routing/routers/index.md#rule) you define must match requests intended for the `/api` and `/dashboard` paths. 
+To ensure proper access to the dashboard, the [router rule](../../reference/routing-configuration/http/routing/rules-and-priority.md#rules) you define must match requests intended for the `/api` and `/dashboard` paths. 
 We recommend using either a *Host-based rule* to match all requests on the desired domain or explicitly defining a rule that includes both path prefixes. 
 Here are some examples:
 

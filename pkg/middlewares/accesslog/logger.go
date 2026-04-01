@@ -207,6 +207,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		if spanContext.HasTraceID() && spanContext.HasSpanID() {
 			logDataTable.Core[TraceID] = spanContext.TraceID().String()
 			logDataTable.Core[SpanID] = spanContext.SpanID().String()
+			logDataTable.Core[OTelTraceID] = spanContext.TraceID().String()
+			logDataTable.Core[OTelSpanID] = spanContext.SpanID().String()
 		}
 	}
 

@@ -967,6 +967,10 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 	}
 	forwardAuth.SetDefaults()
 
+	if auth.MaxResponseBodySize != nil {
+		forwardAuth.MaxResponseBodySize = auth.MaxResponseBodySize
+	}
+
 	if auth.MaxBodySize != nil {
 		forwardAuth.MaxBodySize = auth.MaxBodySize
 	}

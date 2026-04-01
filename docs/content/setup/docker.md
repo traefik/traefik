@@ -59,12 +59,12 @@ tls:
       keyFile:  /certs/local.key
 ```
 
-In the same folder as the `dynamic/tls.yaml` file, create a `docker-compose.yaml` file and include the following:
+In your project root folder (the parent folder to the `dynamic/tls.yaml` file), create a `docker-compose.yaml` file and include the following:
 
 ```yaml
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.6
     container_name: traefik
     restart: unless-stopped
     security_opt:
@@ -77,7 +77,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro

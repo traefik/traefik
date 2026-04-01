@@ -14,10 +14,8 @@ func containerJSON(ops ...func(*containertypes.InspectResponse)) containertypes.
 			HostConfig: &containertypes.HostConfig{},
 			State:      &containertypes.State{},
 		},
-		Config: &containertypes.Config{},
-		NetworkSettings: &containertypes.NetworkSettings{
-			NetworkSettingsBase: containertypes.NetworkSettingsBase{},
-		},
+		Config:          &containertypes.Config{},
+		NetworkSettings: &containertypes.NetworkSettings{},
 	}
 
 	for _, op := range ops {
@@ -41,7 +39,7 @@ func networkMode(mode string) func(*containertypes.InspectResponse) {
 
 func ports(portMap nat.PortMap) func(*containertypes.InspectResponse) {
 	return func(c *containertypes.InspectResponse) {
-		c.NetworkSettings.NetworkSettingsBase.Ports = portMap
+		c.NetworkSettings.Ports = portMap
 	}
 }
 
