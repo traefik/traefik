@@ -32,6 +32,9 @@ type Muxer struct {
 
 // NewMuxer returns a new muxer instance.
 func NewMuxer(parser SyntaxParser, priorityList []string) *Muxer {
+	priorityList = slices.Clone(priorityList)
+	slices.Reverse(priorityList)
+
 	return &Muxer{
 		parser:         parser,
 		defaultHandler: http.NotFoundHandler(),
@@ -80,17 +83,11 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, providerName 
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
-	providerPriority := -1
-
-	if idx := slices.Index(m.priorityList, providerName); idx != -1 {
-		providerPriority = len(m.priorityList) - idx
-	}
-
 	m.routes = append(m.routes, &route{
 		handler:          handler,
 		matchers:         matchers,
 		priority:         priority,
-		providerPriority: providerPriority,
+		providerPriority: slices.Index(m.priorityList, providerName),
 	})
 
 	sort.Sort(m.routes)
