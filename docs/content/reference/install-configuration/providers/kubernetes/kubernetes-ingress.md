@@ -58,11 +58,12 @@ which in turn creates the resulting routers, services, handlers, etc.
 | <a id="opt-providers-kubernetesIngress-ingressEndpoint-hostname" href="#opt-providers-kubernetesIngress-ingressEndpoint-hostname" title="#opt-providers-kubernetesIngress-ingressEndpoint-hostname">`providers.kubernetesIngress.`<br />`ingressEndpoint.hostname`</a> | Hostname used for Kubernetes Ingress endpoints.  | ""      | No       |
 | <a id="opt-providers-kubernetesIngress-ingressEndpoint-ip" href="#opt-providers-kubernetesIngress-ingressEndpoint-ip" title="#opt-providers-kubernetesIngress-ingressEndpoint-ip">`providers.kubernetesIngress.`<br />`ingressEndpoint.ip`</a> | This IP will get copied to the Ingress `status.loadbalancer.ip`, and currently only supports one IP value (IPv4 or IPv6). | ""      | No       |
 | <a id="opt-providers-kubernetesIngress-ingressEndpoint-publishedService" href="#opt-providers-kubernetesIngress-ingressEndpoint-publishedService" title="#opt-providers-kubernetesIngress-ingressEndpoint-publishedService">`providers.kubernetesIngress.`<br />`ingressEndpoint.publishedService`</a> | The Kubernetes service to copy status from.<br />More information [here](#ingressendpointpublishedservice). | ""      | No       |
+| <a id="opt-providers-kubernetesIngress-reportNodeInternalIPs" href="#opt-providers-kubernetesIngress-reportNodeInternalIPs" title="#opt-providers-kubernetesIngress-reportNodeInternalIPs">`providers.kubernetesIngress.reportNodeInternalIPs`</a> | Report node internal IPs in Ingress status.<br />Incompatible with `ingressEndpoint` and `disableClusterScopeResources`.<br />More information [here](#reportnodeinternalips). | false   | No       |
 | <a id="opt-providers-kubernetesIngress-throttleDuration" href="#opt-providers-kubernetesIngress-throttleDuration" title="#opt-providers-kubernetesIngress-throttleDuration">`providers.kubernetesIngress.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.  | 0s      | No       |
 | <a id="opt-providers-kubernetesIngress-allowEmptyServices" href="#opt-providers-kubernetesIngress-allowEmptyServices" title="#opt-providers-kubernetesIngress-allowEmptyServices">`providers.kubernetesIngress.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No       |
 | <a id="opt-providers-kubernetesIngress-allowExternalNameServices" href="#opt-providers-kubernetesIngress-allowExternalNameServices" title="#opt-providers-kubernetesIngress-allowExternalNameServices">`providers.kubernetesIngress.allowExternalNameServices`</a> | Allows the `Ingress` to reference ExternalName services.   | false   | No       |
 | <a id="opt-providers-kubernetesIngress-nativeLBByDefault" href="#opt-providers-kubernetesIngress-nativeLBByDefault" title="#opt-providers-kubernetesIngress-nativeLBByDefault">`providers.kubernetesIngress.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `Ingress` by default.<br />It can be overridden in the [`Service`](../../../../reference/routing-configuration/kubernetes/crd/http/service.md#opt-nativeLB)         | false   | No       |
-| <a id="opt-providers-kubernetesIngress-disableClusterScopeResources" href="#opt-providers-kubernetesIngress-disableClusterScopeResources" title="#opt-providers-kubernetesIngress-disableClusterScopeResources">`providers.kubernetesIngress.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No       |
+| <a id="opt-providers-kubernetesIngress-disableClusterScopeResources" href="#opt-providers-kubernetesIngress-disableClusterScopeResources" title="#opt-providers-kubernetesIngress-disableClusterScopeResources">`providers.kubernetesIngress.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services and is incompatible with `reportNodeInternalIPs`. | false   | No       |
 | <a id="opt-providers-kubernetesIngress-strictPrefixMatching" href="#opt-providers-kubernetesIngress-strictPrefixMatching" title="#opt-providers-kubernetesIngress-strictPrefixMatching">`providers.kubernetesIngress.strictPrefixMatching`</a> | Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). For example, a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.                           | false   | No       |
 
 <!-- markdownlint-enable MD013 -->
@@ -135,6 +136,31 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesingress.ingressendpoint.publishedservice=namespace/foo-service
+```
+
+### `reportNodeInternalIPs`
+
+When set to `true`, Traefik reports the internal IPs of all nodes in the cluster into the `status.loadBalancer.ingress` field of each managed Ingress resource.
+
+This is the equivalent of ingress-nginx's `--report-node-internal-ip-address` flag and is the recommended approach for bare-metal Kubernetes deployments where Traefik runs as a DaemonSet without a cloud LoadBalancer or MetalLB.
+
+This option requires cluster-scope access to Node resources and is mutually exclusive with `ingressEndpoint` and `disableClusterScopeResources`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    reportNodeInternalIPs: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  reportNodeInternalIPs = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.reportnodeinternalips=true
 ```
 
 ## Routing Configuration

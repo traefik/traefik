@@ -49,6 +49,7 @@ type Provider struct {
 	LabelSelector             string              `description:"Kubernetes Ingress label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass              string              `description:"Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	IngressEndpoint           *EndpointIngress    `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty" export:"true"`
+	ReportNodeInternalIPs     bool                `description:"Report node internal IPs in Ingress status." json:"reportNodeInternalIPs,omitempty" toml:"reportNodeInternalIPs,omitempty" yaml:"reportNodeInternalIPs,omitempty" export:"true"`
 	ThrottleDuration          ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
@@ -72,6 +73,14 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	if p.ReportNodeInternalIPs && p.IngressEndpoint != nil {
+		return errors.New("reportNodeInternalIPs and ingressEndpoint are mutually exclusive")
+	}
+
+	if p.ReportNodeInternalIPs && p.DisableClusterScopeResources {
+		return errors.New("reportNodeInternalIPs and disableClusterScopeResources are mutually exclusive")
+	}
+
 	return nil
 }
 
@@ -406,6 +415,34 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 }
 
 func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {
+	if p.ReportNodeInternalIPs {
+		nodes, nodesExists, err := k8sClient.GetNodes()
+		if err != nil {
+			return fmt.Errorf("getting nodes: %w", err)
+		}
+
+		if !nodesExists || len(nodes) == 0 {
+			return errors.New("no nodes found")
+		}
+
+		var ingressStatus []netv1.IngressLoadBalancerIngress
+		for _, node := range nodes {
+			for _, address := range node.Status.Addresses {
+				if address.Type == corev1.NodeInternalIP {
+					ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+						IP: address.Address,
+					})
+				}
+			}
+		}
+
+		if len(ingressStatus) == 0 {
+			return errors.New("no nodes with internal IP address found")
+		}
+
+		return k8sClient.UpdateIngressStatus(ing, ingressStatus)
+	}
+
 	// Only process if an EndpointIngress has been configured.
 	if p.IngressEndpoint == nil {
 		return nil

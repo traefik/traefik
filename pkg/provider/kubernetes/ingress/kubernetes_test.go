@@ -2379,6 +2379,114 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	return k8sObjects
 }
 
+func TestProviderInit(t *testing.T) {
+	p := Provider{
+		ReportNodeInternalIPs: true,
+		IngressEndpoint:       &EndpointIngress{IP: "1.2.3.4"},
+	}
+	assert.EqualError(t, p.Init(), "reportNodeInternalIPs and ingressEndpoint are mutually exclusive")
+
+	p2 := Provider{
+		ReportNodeInternalIPs:        true,
+		DisableClusterScopeResources: true,
+	}
+	assert.EqualError(t, p2.Init(), "reportNodeInternalIPs and disableClusterScopeResources are mutually exclusive")
+
+	p3 := Provider{ReportNodeInternalIPs: true}
+	assert.NoError(t, p3.Init())
+}
+
+func TestIngressEndpointReportNodeInternalIPs(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		expected []netv1.IngressLoadBalancerIngress
+	}{
+		{
+			desc: "Node Internal IP",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{IP: "10.0.0.1"},
+				{IP: "10.0.0.2"},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects := readResources(t, []string{generateTestFilename("Node Internal IP")})
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+
+			client := newClientImpl(kubeClient)
+
+			stopCh := make(chan struct{})
+			eventCh, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				ReportNodeInternalIPs: true,
+			}
+			p.loadConfigurationFromIngresses(t.Context(), client)
+
+			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			assert.ElementsMatch(t, test.expected, ingress.Status.LoadBalancer.Ingress)
+		})
+	}
+}
+
+func TestUpdateIngressStatusReportNodeInternalIPsErrors(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		client      clientMock
+		expectedErr string
+	}{
+		{
+			desc:        "GetNodes API error",
+			client:      clientMock{apiNodesError: errors.New("api nodes error")},
+			expectedErr: "getting nodes: api nodes error",
+		},
+		{
+			desc: "no nodes found",
+			client: clientMock{
+				nodes: []*corev1.Node{},
+			},
+			expectedErr: "no nodes found",
+		},
+		{
+			desc: "nodes exist but none have an internal IP",
+			client: clientMock{
+				nodes: []*corev1.Node{
+					{
+						Status: corev1.NodeStatus{
+							Addresses: []corev1.NodeAddress{
+								{Type: corev1.NodeExternalIP, Address: "1.2.3.4"},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "no nodes with internal IP address found",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{ReportNodeInternalIPs: true}
+			err := p.updateIngressStatus(&netv1.Ingress{}, test.client)
+			assert.EqualError(t, err, test.expectedErr)
+		})
+	}
+}
+
 func TestStrictPrefixMatchingRule(t *testing.T) {
 	tests := []struct {
 		path        string
