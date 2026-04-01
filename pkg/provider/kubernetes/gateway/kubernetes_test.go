@@ -7942,7 +7942,7 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 	}
 }
 
-func Test_gatewayAddresses(t *testing.T) {
+func Test_resolveStatusAddress(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		statusAddress *StatusAddress
@@ -8027,6 +8027,24 @@ func Test_gatewayAddresses(t *testing.T) {
 			paths:   []string{"services.yml"},
 			wantErr: require.NoError,
 		},
+		{
+			desc: "partial service ref: name only",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Name: "some-service",
+				},
+			},
+			wantErr: require.Error,
+		},
+		{
+			desc: "partial service ref: namespace only",
+			statusAddress: &StatusAddress{
+				Service: ServiceRef{
+					Namespace: "default",
+				},
+			},
+			wantErr: require.Error,
+		},
 	}
 
 	for _, test := range testCases {
@@ -8053,7 +8071,167 @@ func Test_gatewayAddresses(t *testing.T) {
 				client:        client,
 			}
 
-			got, err := p.gatewayAddresses()
+			got, err := p.resolveStatusAddress(test.statusAddress)
+			test.wantErr(t, err)
+
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func Test_gatewayStatusAddresses(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		staticAddr        *StatusAddress
+		gatewayAnnotation map[string]string
+		paths             []string
+		wantErr           require.ErrorAssertionFunc
+		want              []gatev1.GatewayStatusAddress
+	}{
+		{
+			desc:              "no annotations, returns nil for caller to handle fallback",
+			staticAddr:        &StatusAddress{IP: "1.2.3.4"},
+			gatewayAnnotation: nil,
+			wantErr:           require.NoError,
+			want:              nil,
+		},
+		{
+			desc:       "annotation IP overrides static config",
+			staticAddr: &StatusAddress{IP: "1.2.3.4"},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.ip": "5.6.7.8",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{Type: ptr.To(gatev1.IPAddressType), Value: "5.6.7.8"},
+			},
+		},
+		{
+			desc:       "annotation hostname overrides static config",
+			staticAddr: &StatusAddress{IP: "1.2.3.4"},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.hostname": "internal.example.com",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{Type: ptr.To(gatev1.HostnameAddressType), Value: "internal.example.com"},
+			},
+		},
+		{
+			desc:       "annotation service overrides static config",
+			staticAddr: &StatusAddress{IP: "1.2.3.4"},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.service.name":      "status-address",
+				"traefik.io/statusaddress.service.namespace": "default",
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{Type: ptr.To(gatev1.HostnameAddressType), Value: "foo.bar"},
+				{Type: ptr.To(gatev1.IPAddressType), Value: "1.2.3.4"},
+			},
+		},
+		{
+			desc:       "annotation service not found falls back to error",
+			staticAddr: &StatusAddress{IP: "10.0.0.1"},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.service.name":      "does-not-exist",
+				"traefik.io/statusaddress.service.namespace": "default",
+			},
+			wantErr: require.Error,
+		},
+		{
+			desc:              "no annotations, no static config",
+			staticAddr:        nil,
+			gatewayAnnotation: nil,
+			wantErr:           require.NoError,
+			want:              nil,
+		},
+		{
+			desc: "unrelated annotations only, returns nil",
+			staticAddr: &StatusAddress{
+				Hostname: "default.example.com",
+			},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/service.nativelb": "true",
+			},
+			wantErr: require.NoError,
+			want:    nil,
+		},
+		{
+			desc:              "no annotations, returns nil regardless of static config",
+			staticAddr:        &StatusAddress{},
+			gatewayAnnotation: nil,
+			wantErr:           require.NoError,
+			want:              nil,
+		},
+		{
+			desc:       "IP and hostname annotations, IP takes precedence",
+			staticAddr: nil,
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.ip":       "10.0.0.1",
+				"traefik.io/statusaddress.hostname": "example.com",
+			},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{Type: ptr.To(gatev1.IPAddressType), Value: "10.0.0.1"},
+			},
+		},
+		{
+			desc:       "annotation with service name only defaults namespace to gateway",
+			staticAddr: &StatusAddress{IP: "1.2.3.4"},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.service.name": "status-address",
+			},
+			paths:   []string{"services.yml"},
+			wantErr: require.NoError,
+			want: []gatev1.GatewayStatusAddress{
+				{Type: ptr.To(gatev1.HostnameAddressType), Value: "foo.bar"},
+				{Type: ptr.To(gatev1.IPAddressType), Value: "1.2.3.4"},
+			},
+		},
+		{
+			desc:       "empty annotation value overrides default with error",
+			staticAddr: &StatusAddress{IP: "1.2.3.4"},
+			gatewayAnnotation: map[string]string{
+				"traefik.io/statusaddress.ip": "",
+			},
+			wantErr: require.Error,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				<-eventCh
+			}
+
+			p := Provider{
+				StatusAddress: test.staticAddr,
+				client:        client,
+			}
+
+			gw := &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "test-gateway",
+					Namespace:   "default",
+					Annotations: test.gatewayAnnotation,
+				},
+			}
+
+			got, err := p.gatewayStatusAddresses(gw)
 			test.wantErr(t, err)
 
 			assert.Equal(t, test.want, got)

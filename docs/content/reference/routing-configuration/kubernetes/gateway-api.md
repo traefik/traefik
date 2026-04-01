@@ -734,6 +734,61 @@ Once everything is deployed, sending the WHO command should return the following
     IP: fe80::d873:20ff:fef5:be86
     ```
 
+## Per-Gateway Status Addresses
+
+By default, Traefik copies the same status addresses (configured via `statusAddress`) to all `Gateway` resources it manages.
+When running multiple `Gateway` objects backed by different `Service` resources (e.g. internal and public), each `Gateway` needs its own address in `.status.addresses` so that tools like external-dns can resolve the correct IP per `Gateway`.
+
+It is possible to override the static `statusAddress` configuration on a per-`Gateway` basis using annotations.
+
+The following annotations are supported on `Gateway` resources:
+
+| Annotation | Description |
+|:-----------|:------------|
+| `traefik.io/statusaddress.ip` | IP address to use for this Gateway's status. |
+| `traefik.io/statusaddress.hostname` | Hostname to use for this Gateway's status. |
+| `traefik.io/statusaddress.service.name` | Kubernetes Service name to copy status addresses from. |
+| `traefik.io/statusaddress.service.namespace` | Kubernetes Service namespace to copy status addresses from. |
+
+When `service.name` is set, the `LoadBalancer` ingress addresses of the referenced `Service` are copied to the `Gateway` status, the same way the static `statusAddress.publishedService` option works.
+If `service.namespace` is omitted, it defaults to the `Gateway`'s own namespace.
+Cross-namespace service references require a [`ReferenceGrant`](https://gateway-api.sigs.k8s.io/api-types/referencegrant/) in the target namespace.
+
+If no status address annotations are present on a `Gateway`, the static `statusAddress` configuration is used as a fallback.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: internal-gateway
+  namespace: default
+  annotations:
+    traefik.io/statusaddress.service.name: traefik-internal
+    traefik.io/statusaddress.service.namespace: traefik-system
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      port: 8443
+      protocol: HTTPS
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: default
+  annotations:
+    traefik.io/statusaddress.service.name: traefik-public
+    traefik.io/statusaddress.service.namespace: traefik-system
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      port: 8444
+      protocol: HTTPS
+```
+
 ## Native Load Balancing
 
 By default, Traefik sends the traffic directly to the pod IPs and reuses the established connections to the backends for performance purposes.

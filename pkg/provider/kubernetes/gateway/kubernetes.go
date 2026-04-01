@@ -311,7 +311,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		TLS: &dynamic.TLSConfiguration{},
 	}
 
-	addresses, err := p.gatewayAddresses()
+	defaultAddresses, err := p.resolveStatusAddress(p.StatusAddress)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to get Gateway status addresses")
 		return nil
@@ -399,6 +399,15 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			if listener.GWName == gateway.Name && listener.GWNamespace == gateway.Namespace {
 				listeners = append(listeners, listener)
 			}
+		}
+
+		addresses, err := p.gatewayStatusAddresses(gateway)
+		if err != nil {
+			logger.Error().Err(err).Msg("Unable to get Gateway status addresses")
+			continue
+		}
+		if addresses == nil {
+			addresses = defaultAddresses
 		}
 
 		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
@@ -745,28 +754,61 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	return gatewayStatus, nil
 }
 
-func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
-	if p.StatusAddress == nil {
+// gatewayStatusAddresses resolves status addresses from Gateway annotations.
+// Returns nil, nil when no statusaddress annotations are present.
+func (p *Provider) gatewayStatusAddresses(gateway *gatev1.Gateway) ([]gatev1.GatewayStatusAddress, error) {
+	sa, err := parseGatewayAnnotations(gateway.Annotations)
+	if err != nil {
+		return nil, fmt.Errorf("parsing Gateway annotations: %w", err)
+	}
+
+	if sa == nil {
 		return nil, nil
 	}
 
-	if p.StatusAddress.IP != "" {
+	if sa.Service.Name != "" && sa.Service.Namespace == "" {
+		sa.Service.Namespace = gateway.Namespace
+	}
+
+	// Annotation-sourced service references require a ReferenceGrant for
+	// cross-namespace access (static config is operator-controlled and exempt).
+	if sa.Service.Name != "" && sa.Service.Namespace != gateway.Namespace {
+		if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, kindService, sa.Service.Name, sa.Service.Namespace); err != nil {
+			return nil, fmt.Errorf("cross-namespace service reference from Gateway %s/%s to Service %s/%s: %w",
+				gateway.Namespace, gateway.Name, sa.Service.Namespace, sa.Service.Name, err)
+		}
+	}
+
+	return p.resolveStatusAddress(sa)
+}
+
+// resolveStatusAddress resolves a StatusAddress configuration to Gateway API
+// status addresses.
+func (p *Provider) resolveStatusAddress(sa *StatusAddress) ([]gatev1.GatewayStatusAddress, error) {
+	if sa == nil {
+		return nil, nil
+	}
+
+	if sa.IP != "" {
 		return []gatev1.GatewayStatusAddress{{
 			Type:  ptr.To(gatev1.IPAddressType),
-			Value: p.StatusAddress.IP,
+			Value: sa.IP,
 		}}, nil
 	}
 
-	if p.StatusAddress.Hostname != "" {
+	if sa.Hostname != "" {
 		return []gatev1.GatewayStatusAddress{{
 			Type:  ptr.To(gatev1.HostnameAddressType),
-			Value: p.StatusAddress.Hostname,
+			Value: sa.Hostname,
 		}}, nil
 	}
 
-	svcRef := p.StatusAddress.Service
-	if svcRef.Name != "" && svcRef.Namespace != "" {
-		svc, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
+	if sa.Service.Name != "" || sa.Service.Namespace != "" {
+		if sa.Service.Name == "" || sa.Service.Namespace == "" {
+			return nil, errors.New("statusAddress service requires both name and namespace")
+		}
+
+		svc, err := p.client.GetService(sa.Service.Namespace, sa.Service.Name)
 		if err != nil {
 			return nil, fmt.Errorf("getting service: %w", err)
 		}

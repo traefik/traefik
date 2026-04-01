@@ -19,6 +19,11 @@ type Service struct {
 	NativeLB *bool `json:"nativeLB"`
 }
 
+// GatewayConfig is the gateway's root configuration from annotations.
+type GatewayConfig struct {
+	StatusAddress StatusAddress `json:"statusaddress"`
+}
+
 func parseServiceAnnotations(annotations map[string]string) (ServiceConfig, error) {
 	var svcConf ServiceConfig
 
@@ -32,6 +37,33 @@ func parseServiceAnnotations(annotations map[string]string) (ServiceConfig, erro
 	}
 
 	return svcConf, nil
+}
+
+// parseGatewayAnnotations parses Gateway annotations for per-Gateway status
+// address overrides. Returns nil when no statusaddress annotations are present.
+func parseGatewayAnnotations(annotations map[string]string) (*StatusAddress, error) {
+	labels := convertAnnotations(annotations)
+	if len(labels) == 0 {
+		return nil, nil
+	}
+
+	hasStatusAddr := false
+	for key := range labels {
+		if strings.HasPrefix(key, "traefik.statusaddress.") {
+			hasStatusAddr = true
+			break
+		}
+	}
+	if !hasStatusAddr {
+		return nil, nil
+	}
+
+	var gwConf GatewayConfig
+	if err := label.Decode(labels, &gwConf, "traefik.statusaddress."); err != nil {
+		return nil, fmt.Errorf("decoding labels: %w", err)
+	}
+
+	return &gwConf.StatusAddress, nil
 }
 
 func convertAnnotations(annotations map[string]string) map[string]string {
