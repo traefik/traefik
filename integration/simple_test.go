@@ -2675,13 +2675,13 @@ func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
 	defer fileBackend.Close()
 
 	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
-		Precedence  string
-		FileBackend string
-		DockerHost  string
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
 	}{
-		Precedence:  `["file", "docker"]`,
-		FileBackend: "http://127.0.0.1:9042",
-		DockerHost:  s.getDockerHost(),
+		Precedence:         `["file", "docker"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
 	})
 	s.traefikCmd(withConfigFile(file))
 
@@ -2693,7 +2693,11 @@ func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
 	require.NoError(s.T(), err)
 
 	// The file provider has higher priority → requests must reach the file backend.
-	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("from-file"))
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("from-file"))
 	require.NoError(s.T(), err)
 }
 
@@ -2713,13 +2717,13 @@ func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
 	defer fileBackend.Close()
 
 	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
-		Precedence  string
-		FileBackend string
-		DockerHost  string
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
 	}{
-		Precedence:  `["docker", "file"]`,
-		FileBackend: "http://127.0.0.1:9042",
-		DockerHost:  s.getDockerHost(),
+		Precedence:         `["docker", "file"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
 	})
 	s.traefikCmd(withConfigFile(file))
 
@@ -2730,6 +2734,10 @@ func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
 	require.NoError(s.T(), err)
 
 	// The Docker provider has higher priority → requests must reach the whoami container.
-	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("Hostname:"))
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("Hostname:"))
 	require.NoError(s.T(), err)
 }

@@ -27,11 +27,22 @@
 
 [http.routers]
   [http.routers.file-router]
-    rule = "PathPrefix(`/`)"
+    rule = "PathPrefix(`/http`)"
     service = "file-service"
     entryPoints = ["web"]
 
 [http.services]
   [http.services.file-service.loadBalancer]
     [[http.services.file-service.loadBalancer.servers]]
-      url = "{{ .FileBackend }}"
+      url = "http://{{ .FileBackendAddress }}"
+
+[tcp.routers]
+  [tcp.routers.file-router]
+    rule = "HostSNI(`*`)"
+    service = "file-service"
+    entryPoints = ["web"]
+
+[tcp.services]
+  [tcp.services.file-service.loadBalancer]
+    [[tcp.services.file-service.loadBalancer.servers]]
+      address = "{{ .FileBackendAddress }}"
