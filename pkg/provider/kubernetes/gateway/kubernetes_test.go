@@ -801,10 +801,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3": {
 							EntryPoints: []string{"websecure"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
-							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-wrr",
+							Rule:        "Host(\"foo.com\") && Path(\"/bar\")",
 							Priority:    100008,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -812,7 +812,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -861,7 +861,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "HTTPRoute with multiple certificateRefs, one missing (partial failure)",
+			desc:  "HTTPRoute with multiple certificateRefs, one missing",
 			paths: []string{"services.yml", "httproute/with_multiple_certificaterefs_one_missing.yml"},
 			entryPoints: map[string]Entrypoint{"websecure": {
 				Address: ":443",
@@ -878,58 +878,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06": {
-							EntryPoints: []string{"websecure"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
-							Rule:        "Host(`foo.com`) && Path(`/bar`)",
-							Priority:    100008,
-							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-whoami-http-80",
-										Weight: ptr.To(1),
-									},
-								},
-							},
-						},
-						"default-whoami-http-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Strategy: dynamic.BalancerStrategyWRR,
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								PassHostHeader: ptr.To(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
-					},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Certificates: []*tls.CertAndStores{
-						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
-						},
-					},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{

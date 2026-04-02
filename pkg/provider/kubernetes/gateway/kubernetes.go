@@ -428,7 +428,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 }
 
 func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) []gatewayListener {
-	tlsConfigs := make(map[string]*tls.CertAndStores)
+	tlsCerts := make(map[string]*tls.CertAndStores)
 	allocatedListeners := make(map[string]struct{})
 	gatewayListeners := make([]gatewayListener, len(gateway.Spec.Listeners))
 
@@ -575,7 +575,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 			if !isTLSPassthrough {
 				if len(listener.TLS.CertificateRefs) == 0 {
-					// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
+					// update "ResolvedRefs" status true with the "InvalidCertificateRef" reason.
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -588,18 +588,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					continue
 				}
 
-				// Iterate over all certificateRefs to support multiple certificates for SNI routing.
-				// The Gateway API specification allows up to 64 certificate references per listener.
-				validCertsCount := 0
+				listenerTLSCerts := make(map[string]*tls.CertAndStores)
+				var certErrors []error
 				for _, certificateRef := range listener.TLS.CertificateRefs {
 					if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" ||
 						certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
-						// Log error and continue to next reference instead of failing the entire listener
-						log.Ctx(ctx).Error().
-							Str("listener", string(listener.Name)).
-							Str("group", groupToString(certificateRef.Group)).
-							Str("kind", kindToString(certificateRef.Kind)).
-							Msg("Skipping unsupported TLS CertificateRef group/kind")
+						certErrors = append(certErrors, fmt.Errorf("unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)))
 						continue
 					}
 
@@ -609,36 +603,23 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					}
 
 					if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
-						// Log error and continue to next reference
-						log.Ctx(ctx).Error().
-							Err(err).
-							Str("listener", string(listener.Name)).
-							Str("namespace", certificateNamespace).
-							Str("name", string(certificateRef.Name)).
-							Msg("Skipping CertificateRef: reference not permitted")
+						certErrors = append(certErrors, fmt.Errorf("loading CertificateRef %s/%s: %w", certificateNamespace, certificateRef.Name, err))
 						continue
 					}
 
 					configKey := certificateNamespace + "/" + string(certificateRef.Name)
-					if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
-						tlsConf, err := p.getTLS(certificateRef.Name, certificateNamespace)
+					if _, tlsExists := listenerTLSCerts[configKey]; !tlsExists {
+						tlsCert, err := p.getTLSCert(certificateRef.Name, certificateNamespace)
 						if err != nil {
-							// Log error and continue to next reference
-							log.Ctx(ctx).Error().
-								Err(err).
-								Str("listener", string(listener.Name)).
-								Str("namespace", certificateNamespace).
-								Str("name", string(certificateRef.Name)).
-								Msg("Skipping CertificateRef: error retrieving certificate")
+							certErrors = append(certErrors, fmt.Errorf("retrieving certificate: %w", err))
 							continue
 						}
-						tlsConfigs[configKey] = tlsConf
+						listenerTLSCerts[configKey] = tlsCert
 					}
-					validCertsCount++
 				}
 
-				// If no valid certificates were loaded for this listener, fail the listener
-				if validCertsCount == 0 {
+				// If no valid certificates were loaded for this listener, fail the listener.
+				if len(certErrors) > 0 {
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
 						metav1.Condition{
 							Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -646,7 +627,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 							ObservedGeneration: gateway.Generation,
 							LastTransitionTime: metav1.Now(),
 							Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
-							Message:            "No valid TLS CertificateRefs could be loaded",
+							Message:            fmt.Sprintf("Invalid CertificateRefs couldn't be loaded: %s", errors.Join(certErrors...)),
 						},
 						metav1.Condition{
 							Type:               string(gatev1.ListenerConditionProgrammed),
@@ -654,11 +635,18 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 							ObservedGeneration: gateway.Generation,
 							LastTransitionTime: metav1.Now(),
 							Reason:             string(gatev1.ListenerReasonInvalid),
-							Message:            "No valid TLS CertificateRefs could be loaded",
+							Message:            fmt.Sprintf("Invalid CertificateRefs couldn't be loaded: %s", errors.Join(certErrors...)),
 						},
 					)
 
 					continue
+				}
+
+				// Only copy if the certificate TLS config is not already known.
+				for key, listenerTLSCert := range listenerTLSCerts {
+					if _, ok := tlsCerts[key]; !ok {
+						tlsCerts[key] = listenerTLSCert
+					}
 				}
 			}
 		}
@@ -666,8 +654,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		gatewayListeners[i].Attached = true
 	}
 
-	if len(tlsConfigs) > 0 {
-		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
+	if len(tlsCerts) > 0 {
+		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsCerts)...)
 	}
 
 	return gatewayListeners
@@ -838,7 +826,7 @@ func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, 
 	return nil
 }
 
-func (p *Provider) getTLS(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
+func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
 	secret, err := p.client.GetSecret(namespace, string(secretName))
 	if err != nil {
 		return nil, fmt.Errorf("getting secret: %w", err)
