@@ -596,9 +596,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 			}
 		}
 
-		caCRT := ""
-		var crtMissing bool
-
+		var caCRT string
 		switch caCertRef.Kind {
 		case "ConfigMap":
 			configmap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
@@ -612,7 +610,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 					Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
 				}
 			}
-			caCRT, crtMissing = configmap.Data["ca.crt"]
+			caCRT = configmap.Data["ca.crt"]
 		case "Secret":
 			secret, err := p.client.GetSecret(namespace, string(caCertRef.Name))
 			if err != nil {
@@ -625,12 +623,10 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 					Message:            fmt.Sprintf("getting secret %s/%s: %s", namespace, string(caCertRef.Name), err),
 				}
 			}
-			var crt []byte
-			crt, crtMissing = secret.Data["ca.crt"]
-			caCRT = string(crt)
+			caCRT = string(secret.Data["ca.crt"])
 		}
 
-		if !crtMissing || caCRT == "" {
+		if caCRT == "" {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
