@@ -3,6 +3,7 @@ package tcp
 import (
 	"fmt"
 	"net"
+	"slices"
 	"sort"
 	"strings"
 
@@ -39,13 +40,15 @@ func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (
 
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
-	routes   routes
-	parser   predicate.Parser
-	parserV2 predicate.Parser
+	routes routes
+
+	parser              predicate.Parser
+	parserV2            predicate.Parser
+	providersPrecedence []string
 }
 
 // NewMuxer returns a TCP muxer.
-func NewMuxer() (*Muxer, error) {
+func NewMuxer(providersPrecedence []string) (*Muxer, error) {
 	var matcherNames []string
 	for matcherName := range tcpFuncs {
 		matcherNames = append(matcherNames, matcherName)
@@ -66,9 +69,13 @@ func NewMuxer() (*Muxer, error) {
 		return nil, fmt.Errorf("error while creating v2 rules parser: %w", err)
 	}
 
+	providersPrecedence = slices.Clone(providersPrecedence)
+	slices.Reverse(providersPrecedence)
+
 	return &Muxer{
-		parser:   parser,
-		parserV2: parserV2,
+		parser:              parser,
+		parserV2:            parserV2,
+		providersPrecedence: providersPrecedence,
 	}, nil
 }
 
@@ -118,7 +125,7 @@ func GetRulePriority(rule string) int {
 
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
-func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler tcp.Handler) error {
+func (m *Muxer) AddRoute(rule string, syntax string, priority int, providerName string, handler tcp.Handler) error {
 	var parse any
 	var err error
 	var matcherFuncs map[string]func(*matchersTree, ...string) error
@@ -159,10 +166,11 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler tcp.H
 	}
 
 	newRoute := &route{
-		handler:  handler,
-		matchers: matchers,
-		catchAll: catchAll,
-		priority: priority,
+		handler:          handler,
+		matchers:         matchers,
+		catchAll:         catchAll,
+		priority:         priority,
+		providerPriority: slices.Index(m.providersPrecedence, providerName),
 	}
 	m.routes = append(m.routes, newRoute)
 
@@ -215,7 +223,10 @@ func (r routes) Len() int { return len(r) }
 func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 
 // Less implements sort.Interface.
-func (r routes) Less(i, j int) bool { return r[i].priority > r[j].priority }
+func (r routes) Less(i, j int) bool {
+	return r[i].priority > r[j].priority ||
+		(r[i].priority == r[j].priority && r[i].providerPriority > r[j].providerPriority)
+}
 
 // route holds the matchers to match TCP route,
 // and the handler that will serve the connection.
@@ -230,6 +241,8 @@ type route struct {
 	// all match for a given request.
 	// Computed from the matching rule length, if not user-set.
 	priority int
+	// providerPriority is used to disambiguate between two (or more) rules that would all match for a given request and have the same priority.
+	providerPriority int
 }
 
 // matchersTree represents the matchers tree structure.

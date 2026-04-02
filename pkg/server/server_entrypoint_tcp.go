@@ -187,7 +187,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("building listener: %w", err)
 	}
 
-	rt, err := tcprouter.NewRouter()
+	rt, err := tcprouter.NewRouter(nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating TCP router: %w", err)
 	}
