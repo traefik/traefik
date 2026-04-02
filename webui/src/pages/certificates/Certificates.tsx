@@ -29,6 +29,11 @@ export const CertificateRenderRow: RenderRowType = (row: unknown) => {
       <AriaTd>
         <TooltipText text={cert.commonName || '-'} />
       </AriaTd>
+      <AriaTd css={{ maxWidth: '240px' }}>
+        <Text css={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+          {cert.sans?.length > 0 ? cert.sans.join(', ') : '-'}
+        </Text>
+      </AriaTd>
       <AriaTd>
         <TooltipText text={cert.issuerOrg || cert.issuerCN || 'Unknown'} />
       </AriaTd>
@@ -64,6 +69,7 @@ export const CertificatesRender = ({
           <AriaTr>
             <SortableTh label="Status" isSortable sortByValue="status" css={{ width: '36px' }} />
             <SortableTh label="Common Name" isSortable sortByValue="cn" />
+            <SortableTh label="SANs" css={{ maxWidth: '240px' }} />
             <SortableTh label="Issuer" isSortable sortByValue="issuer" />
             <SortableTh label="Valid Until" isSortable sortByValue="validUntil" css={{ width: '100px' }} />
             <SortableTh label="Expiry" css={{ width: '100px' }} />
