@@ -1293,6 +1293,8 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 		return nil
 	}
 
+	applyAccessLogConfiguration(ingress.IngressConfig, rt)
+
 	if err := p.applyCustomHTTPErrors(ingress.Namespace, ingress.Name, routerKey, backend, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
 	}
@@ -1856,6 +1858,18 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig Ingre
 	}
 
 	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
+}
+
+func applyAccessLogConfiguration(ingressConfig IngressConfig, rt *dynamic.Router) {
+	if ingressConfig.EnableAccessLog == nil {
+		return
+	}
+
+	if rt.Observability == nil {
+		rt.Observability = &dynamic.RouterObservabilityConfig{}
+	}
+
+	rt.Observability.AccessLogs = ptr.To(*ingressConfig.EnableAccessLog)
 }
 
 func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
