@@ -185,6 +185,35 @@ helm upgrade --install traefik traefik/traefik \
   --values traefik-values.yaml
 ```
 
+??? note "Hostname retention install values {: #hostname-retention-install-values }"
+
+    If you plan to use the [LoadBalancer Hostname Retention](#loadbalancer-hostname-retention) approach, two changes are required:
+
+    1. Install Traefik in the **same namespace** as NGINX (not its own namespace)
+    2. **Disable** Service creation so no new LoadBalancer is provisioned
+
+    ```yaml tab="traefik-values.yaml"
+    providers:
+      kubernetesIngressNginx:
+        enabled: true
+
+    service:
+      enabled: false
+    ```
+
+    ```bash
+    helm upgrade --install traefik traefik/traefik \
+      --namespace ingress-nginx \
+      -f traefik-values.yaml
+    ```
+
+    Verify that Traefik pods are running and **no new LoadBalancer Service** was created:
+
+    ```bash
+    kubectl get pods -n ingress-nginx -l app.kubernetes.io/name=traefik
+    kubectl get svc -n ingress-nginx
+    ```
+
 ### Verify Both Controllers Are Running
 
 ```bash
@@ -246,6 +275,16 @@ Check Traefik logs to confirm it discovered your Ingress resources:
 ```bash
 kubectl logs -n traefik deployment/traefik | grep -i "ingress"
 ```
+
+??? note "If using [Hostname Retention](#loadbalancer-hostname-retention)"
+
+    Traefik was installed without a Service, so there is no Traefik LoadBalancer to test against. Use port-forwarding to verify that Traefik can serve your Ingress resources:
+
+    ```bash
+    kubectl port-forward -n ingress-nginx svc/traefik 9080:80 &
+    curl -H "Host: your-app.example.com" http://localhost:9080
+    kill %1
+    ```
 
 ---
 
@@ -531,6 +570,164 @@ kubectl get svc -n traefik traefik
     ```
 
     With multiple replicas spread across nodes and a PodDisruptionBudget, at least one pod is always running during upgrades and node maintenance.
+
+### LoadBalancer Hostname Retention
+
+Some cloud providers (notably AWS with Classic or Network Load Balancers) assign a **hostname** rather than a static IP to LoadBalancer Services. Since hostnames are tied to the LoadBalancer resource, releasing the Service means losing the hostname — and all DNS records pointing to it.
+
+The **orphan and adopt** approach migrates traffic to Traefik without releasing the LoadBalancer, preserving the hostname throughout. This approach requires two changes to [Step 1](#step-1-install-traefik-alongside-nginx):
+
+- Traefik must be installed in the **same namespace** as NGINX (Kubernetes Services cannot move across namespaces without being deleted and recreated, which releases the LoadBalancer)
+- Traefik's Service must be **disabled** so no new LoadBalancer is created
+
+See the [install values diff](#hostname-retention-install-values) in Step 1 for the exact configuration.
+
+Once Traefik is installed and [verified](#step-2-verify-traefik-is-handling-traffic), follow the steps below to orphan the NGINX Service, re-point it at Traefik, and adopt it into the Traefik Helm release. After adoption, proceed to [Step 4](#step-4-uninstall-ingress-nginx-controller) to uninstall NGINX — the adopted Service will survive the uninstall.
+
+#### Orphan the NGINX LoadBalancer Service
+
+Remove Helm ownership metadata from the existing NGINX Service so `helm uninstall` will leave it behind.
+
+```bash
+NGINX_NS="ingress-nginx"
+NGINX_SVC="ingress-nginx-controller"
+
+# Remove Helm annotations
+kubectl annotate svc ${NGINX_SVC} -n ${NGINX_NS} \
+  meta.helm.sh/release-name- \
+  meta.helm.sh/release-namespace-
+
+# Remove Helm managed-by label
+kubectl label svc ${NGINX_SVC} -n ${NGINX_NS} \
+  app.kubernetes.io/managed-by-
+```
+
+Validate:
+
+```bash
+# Confirm Helm annotations are removed
+kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} -o yaml | grep -A5 "annotations"
+
+# Confirm managed-by label is removed (should return empty)
+kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}'
+```
+
+#### Patch the Service Selector to Traefik
+
+Patch the Service selector so the existing LoadBalancer sends traffic to Traefik pods. **This is the cutover moment** — traffic now flows to Traefik. The LoadBalancer hostname and DNS remain unchanged.
+
+```bash
+# Patch selector to target Traefik pods
+kubectl patch svc ${NGINX_SVC} -n ${NGINX_NS} --type='json' \
+  -p='[
+    {"op": "replace", "path": "/spec/selector", "value": {"app.kubernetes.io/name": "traefik", "app.kubernetes.io/instance": "traefik"}}
+  ]'
+```
+
+Validate immediately:
+
+```bash
+# Confirm endpoints are now Traefik pod IPs
+kubectl get endpoints ${NGINX_SVC} -n ${NGINX_NS}
+
+# Confirm hostname is unchanged
+kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+
+!!! note "Rollback"
+
+    If something is wrong, patch the selector back to the NGINX labels. NGINX pods are still running at this point:
+
+    ```bash
+    kubectl patch svc ${NGINX_SVC} -n ${NGINX_NS} --type='json' \
+      -p='[
+        {"op": "replace", "path": "/spec/selector", "value": {"app.kubernetes.io/name": "ingress-nginx", "app.kubernetes.io/component": "controller"}}
+      ]'
+    ```
+
+#### Adopt the Service into the Traefik Helm Release
+
+**Add Traefik Helm ownership metadata:**
+
+```bash
+TRAEFIK_RELEASE="traefik"
+
+kubectl annotate svc ${NGINX_SVC} -n ${NGINX_NS} \
+  meta.helm.sh/release-name=${TRAEFIK_RELEASE} \
+  meta.helm.sh/release-namespace=${NGINX_NS}
+
+kubectl label svc ${NGINX_SVC} -n ${NGINX_NS} \
+  app.kubernetes.io/managed-by=Helm
+```
+
+**Align Traefik Helm values with the live Service:**
+
+Inspect the live Service and make sure your Traefik values match:
+
+```bash
+kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} -o yaml
+```
+
+Update `traefik-values.yaml` to re-enable the Service and match the live state:
+
+```yaml tab="traefik-values.yaml"
+providers:
+  kubernetesIngressNginx:
+    enabled: true
+
+service:
+  enabled: true
+  type: LoadBalancer
+  annotations:
+    # Copy all cloud provider LB annotations from the live Service, e.g.:
+    # AWS: service.beta.kubernetes.io/aws-load-balancer-type, etc.
+  spec:
+    externalTrafficPolicy: Local  # or Cluster — match the current setting
+```
+
+**Diff before upgrading:**
+
+Before running the actual upgrade, compare the templated Service against the live one to make sure nothing will be lost:
+
+```bash
+# Render the Service that Helm would create
+helm template traefik traefik/traefik \
+  --namespace ingress-nginx \
+  -f traefik-values.yaml \
+  --show-only templates/service.yaml > /tmp/traefik-svc-template.yaml
+
+# Dump the live Service
+kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} -o yaml > /tmp/traefik-svc-live.yaml
+
+# Diff them — focus on spec and annotations
+diff /tmp/traefik-svc-live.yaml /tmp/traefik-svc-template.yaml
+```
+
+Review the diff. If annotations or spec fields are missing from the template, update `traefik-values.yaml` and re-run the diff until the Service definition matches.
+
+**Run Helm upgrade:**
+
+```bash
+helm upgrade traefik traefik/traefik \
+  --namespace ingress-nginx \
+  -f traefik-values.yaml
+```
+
+Helm will recognize the Service via the ownership annotations and manage it going forward. If values match the live state, no changes will be applied to the Service.
+
+Validate:
+
+```bash
+# Confirm Service is now part of the Traefik release
+helm get manifest traefik -n ingress-nginx | grep "kind: Service" -A 20
+
+# Confirm hostname is still intact
+kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+
+Once adoption is complete, proceed to [Step 4: Uninstall Ingress NGINX Controller](#step-4-uninstall-ingress-nginx-controller) to remove NGINX. The LoadBalancer Service is now owned by the Traefik Helm release and will survive the uninstall.
 
 ---
 
