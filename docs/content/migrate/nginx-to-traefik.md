@@ -185,7 +185,9 @@ helm upgrade --install traefik traefik/traefik \
   --values traefik-values.yaml
 ```
 
-??? note "Hostname retention install values {: #hostname-retention-install-values }"
+<span id="hostname-retention-install-values"></span>
+
+??? note "Hostname retention install values"
 
     If you plan to use the [LoadBalancer Hostname Retention](#loadbalancer-hostname-retention) approach, two changes are required:
 
@@ -371,7 +373,7 @@ For more control over traffic distribution, use an external load balancer (like 
 **Example weight progression:**
 
 | Phase | NGINX Weight | Traefik Weight | Duration |
-|-------|-------------|----------------|----------|
+| ----- | ----------- | -------------- | -------- |
 | Initial | 100% | 0% | - |
 | Start | 90% | 10% | 1 hour |
 | Increase | 50% | 50% | 2 hour |
