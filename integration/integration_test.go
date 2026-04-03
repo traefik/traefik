@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	stdlog "log"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,11 +23,11 @@ import (
 	"text/template"
 	"time"
 
-	// TODO(thaJeztah) Using legacy docker/docker types until testcontainers-go is updated.
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	dockernetwork "github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -98,7 +99,7 @@ func (s *BaseSuite) SetupSuite() {
 		Driver: "default",
 		Config: []dockernetwork.IPAMConfig{
 			{
-				Subnet: "172.31.42.0/24",
+				Subnet: netip.MustParsePrefix("172.31.42.0/24"),
 			},
 		},
 	}))
@@ -151,12 +152,12 @@ func isDockerDesktop(t *testing.T) bool {
 		t.Fatalf("failed to create docker client: %s", err)
 	}
 
-	info, err := cli.Info(t.Context())
+	res, err := cli.Info(t.Context(), client.InfoOptions{})
 	if err != nil {
 		t.Fatalf("failed to get docker info: %s", err)
 	}
 
-	return info.OperatingSystem == "Docker Desktop"
+	return res.Info.OperatingSystem == "Docker Desktop"
 }
 
 func (s *BaseSuite) TearDownSuite() {
