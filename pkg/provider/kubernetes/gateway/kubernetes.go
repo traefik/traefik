@@ -529,30 +529,22 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 		// TLS
 		if listener.Protocol == gatev1.HTTPSProtocolType || listener.Protocol == gatev1.TLSProtocolType {
-			if listener.TLS == nil || (len(listener.TLS.CertificateRefs) == 0 && listener.TLS.Mode != nil && *listener.TLS.Mode != gatev1.TLSModePassthrough) {
-				// update "Detached" status with "UnsupportedProtocol" reason
+			if listener.TLS == nil {
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
-					Message: fmt.Sprintf("No TLS configuration for Gateway Listener %s:%d and protocol %q",
-						listener.Name, listener.Port, listener.Protocol),
+					Message:            fmt.Sprintf("No TLS configuration for Gateway Listener %s:%d and protocol %q", listener.Name, listener.Port, listener.Protocol),
 				})
-
 				continue
 			}
 
-			var tlsModeType gatev1.TLSModeType
-			if listener.TLS.Mode != nil {
-				tlsModeType = *listener.TLS.Mode
-			}
-
-			isTLSPassthrough := tlsModeType == gatev1.TLSModePassthrough
+			tlsMode := ptr.Deref(listener.TLS.Mode, gatev1.TLSModeTerminate)
+			isTLSPassthrough := tlsMode == gatev1.TLSModePassthrough
 
 			if isTLSPassthrough && len(listener.TLS.CertificateRefs) > 0 {
-				// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.GatewayTLSConfig
 				log.Ctx(ctx).Warn().Msg("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
 			}
 
@@ -560,7 +552,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			// Protocol TLS -> Passthrough -> TLSRoute
 			// Protocol TLS -> Terminate -> TLSRoute
 			// Protocol HTTPS -> Terminate -> HTTPRoute
-			if listener.Protocol == gatev1.HTTPSProtocolType && isTLSPassthrough {
+			if isTLSPassthrough && listener.Protocol == gatev1.HTTPSProtocolType {
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionFalse,
@@ -569,13 +561,11 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 					Message:            "HTTPS protocol is not supported with TLS mode Passthrough",
 				})
-
 				continue
 			}
 
 			if !isTLSPassthrough {
 				if len(listener.TLS.CertificateRefs) == 0 {
-					// update "ResolvedRefs" status true with the "InvalidCertificateRef" reason.
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -584,26 +574,34 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
 						Message:            "One TLS CertificateRef is required in Terminate mode",
 					})
-
 					continue
 				}
 
+				var errCertConditions []metav1.Condition
 				listenerTLSCerts := make(map[string]*tls.CertAndStores)
-				var certErrors []error
 				for _, certificateRef := range listener.TLS.CertificateRefs {
-					if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" ||
-						certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
-						certErrors = append(certErrors, fmt.Errorf("unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)))
+					if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" || certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
+						errCertConditions = append(errCertConditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: gateway.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+							Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)),
+						})
 						continue
 					}
 
-					certificateNamespace := gateway.Namespace
-					if certificateRef.Namespace != nil && string(*certificateRef.Namespace) != gateway.Namespace {
-						certificateNamespace = string(*certificateRef.Namespace)
-					}
-
+					certificateNamespace := string(ptr.Deref(certificateRef.Namespace, gatev1.Namespace(gateway.Namespace)))
 					if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
-						certErrors = append(certErrors, fmt.Errorf("loading CertificateRef %s/%s: %w", certificateNamespace, certificateRef.Name, err))
+						errCertConditions = append(errCertConditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: gateway.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+							Message:            fmt.Sprintf("Cannot reference CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
+						})
 						continue
 					}
 
@@ -611,34 +609,30 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					if _, tlsExists := listenerTLSCerts[configKey]; !tlsExists {
 						tlsCert, err := p.getTLSCert(certificateRef.Name, certificateNamespace)
 						if err != nil {
-							certErrors = append(certErrors, fmt.Errorf("retrieving certificate: %w", err))
+							errCertConditions = append(errCertConditions, metav1.Condition{
+								Type:               string(gatev1.ListenerConditionResolvedRefs),
+								Status:             metav1.ConditionFalse,
+								ObservedGeneration: gateway.Generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+								Message:            fmt.Sprintf("Cannot load CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
+							})
 							continue
 						}
 						listenerTLSCerts[configKey] = tlsCert
 					}
 				}
 
-				// If no valid certificates were loaded for this listener, fail the listener.
-				if len(certErrors) > 0 {
-					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
-						metav1.Condition{
-							Type:               string(gatev1.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: gateway.Generation,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
-							Message:            fmt.Sprintf("Invalid CertificateRefs couldn't be loaded: %s", errors.Join(certErrors...)),
-						},
-						metav1.Condition{
-							Type:               string(gatev1.ListenerConditionProgrammed),
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: gateway.Generation,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1.ListenerReasonInvalid),
-							Message:            fmt.Sprintf("Invalid CertificateRefs couldn't be loaded: %s", errors.Join(certErrors...)),
-						},
-					)
-
+				if len(errCertConditions) > 0 {
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, errCertConditions...)
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionProgrammed),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: gateway.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.ListenerReasonInvalid),
+						Message:            "Invalid CertificateRefs",
+					})
 					continue
 				}
 

@@ -113,7 +113,6 @@ data:
 ### Multiple TLS Certificates
 
 Traefik supports multiple secret `certificateRefs` per Gateway listener.
-
 If one of the certificates is invalid or cannot be loaded, the listener will be considered invalid and will not be able to serve traffic until the issue is resolved.
 
 For example, the following `Gateway` listener references two different certificates:
