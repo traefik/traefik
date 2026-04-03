@@ -369,6 +369,8 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                                                      |
 
+The client IP extraction depth used by the generated IP allow list middleware can be configured globally with the provider option [`ipAllowListDepth`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-ipAllowListDepth).
+
 ### Rate Limiting
 
 | Annotation                                                                                                                                                                                      | Limitations / Notes                                                                                       |

@@ -116,6 +116,7 @@ type Provider struct {
 
 	AllowCrossNamespaceResources bool     `description:"Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces." json:"allowCrossNamespaceResources,omitempty" toml:"allowCrossNamespaceResources,omitempty" yaml:"allowCrossNamespaceResources,omitempty" export:"true"`
 	GlobalAllowedResponseHeaders []string `description:"List of allowed response headers inside the custom headers annotations." json:"globalAllowedResponseHeaders,omitempty" toml:"globalAllowedResponseHeaders,omitempty" yaml:"globalAllowedResponseHeaders,omitempty" export:"true"`
+	IPAllowListDepth             int      `description:"Defines the IP strategy depth for the generated IPAllowList middlewares from allowlist/whitelist source range annotations. 0 means disabled." json:"ipAllowListDepth,omitempty" toml:"ipAllowListDepth,omitempty" yaml:"ipAllowListDepth,omitempty" export:"true"`
 
 	AllowSnippetAnnotations bool `description:"Enables to parse and add -snippet annotations/directives." json:"allowSnippetAnnotations,omitempty" toml:"allowSnippetAnnotations,omitempty" yaml:"allowSnippetAnnotations,omitempty" export:"true"`
 

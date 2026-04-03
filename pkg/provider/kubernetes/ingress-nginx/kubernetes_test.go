@@ -30,6 +30,7 @@ func TestLoadIngresses(t *testing.T) {
 		defaultBackendServiceNamespace string
 		allowCrossNamespaceResources   bool
 		globalAllowedResponseHeaders   []string
+		ipAllowListDepth               int
 		allowSnippetAnnotations        bool
 		globalAuthURL                  string
 		strictValidatePathType         *bool
@@ -6248,6 +6249,99 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 						},
+						"default-ingress-with-allowlist-single-ip-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-allowlist-single-ip",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-allowlist-single-ip": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:             "AllowlistSourceRange with global IPAllowListDepth",
+			ipAllowListDepth: 2,
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-allowlist-single-ip.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.20.1"},
+								IPStrategy: &dynamic.IPStrategy{
+									Depth: 2,
+								},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.20.1"},
+								IPStrategy: &dynamic.IPStrategy{
+									Depth: 2,
+								},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
 						"default-ingress-with-allowlist-single-ip-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
@@ -15012,6 +15106,7 @@ func TestLoadIngresses(t *testing.T) {
 				NonTLSEntryPoints:              []string{"http"},
 				TLSEntryPoints:                 []string{"https"},
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
+				IPAllowListDepth:               test.ipAllowListDepth,
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 				GlobalAuthURL:                  test.globalAuthURL,
 			}
