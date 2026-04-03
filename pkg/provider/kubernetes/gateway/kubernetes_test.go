@@ -2356,6 +2356,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							RootCAs: []types.FileOrContent{
 								"CA1",
 								"CA2",
+								"CA1-secret",
+								"CA2-secret",
 							},
 						},
 					},
