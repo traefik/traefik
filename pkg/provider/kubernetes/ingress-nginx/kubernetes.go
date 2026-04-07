@@ -615,7 +615,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Ingress: &dynamic.KubernetesIngressMetadata{
 						Namespace:   ingress.Namespace,
 						IngressName: ingress.Name,
-						ServiceName: p.defaultBackendServiceName,
+						ServiceName: ingress.Spec.DefaultBackend.Service.Name,
 						ServicePort: portString(ingress.Spec.DefaultBackend.Service.Port),
 					},
 				},
