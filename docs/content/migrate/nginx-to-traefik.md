@@ -104,6 +104,7 @@ Before starting the migration, ensure you have:
 - **Helm**
 - **Cluster admin permissions** to create RBAC resources
 - **Backup of critical configurations** (Ingress resources, ConfigMaps, Secrets)
+- **`helm.sh/resource-policy: keep`** set on the NGINX IngressClass (and Service if using [hostname retention](#option-c-loadbalancer-hostname-retention-orphan--adopt)) — see [Preserve the IngressClass and Service](#preserve-the-ingressclass-and-service)
 
 !!! tip "Backup Recommendations"
 
@@ -141,17 +142,16 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
 
 ## Step 1: Install Traefik Alongside NGINX
 
-??? info "Install Ingress NGINX Controller"
+??? info "Testing this guide without an existing NGINX installation"
 
-    If you have not installed Ingress NGINX Controller yet, you can set up a fresh Ingress NGINX Controller installation following the instructions below:
-
-    ### Install Ingress NGINX Controller
+    If you want to try this migration guide in a test environment, you can install a fresh Ingress NGINX Controller:
 
     ```bash
     helm upgrade --install ingress-nginx ingress-nginx \
       --repo https://kubernetes.github.io/ingress-nginx \
       --namespace ingress-nginx --create-namespace
     ```
+
 Install Traefik with the Kubernetes Ingress NGINX provider enabled. Both controllers will serve the same Ingress resources simultaneously.
 
 ### Add Traefik Helm Repository
@@ -163,31 +163,58 @@ helm repo update
 
 ### Install Traefik
 
-```bash
-helm upgrade --install traefik traefik/traefik \
-  --namespace traefik --create-namespace \
-  --set providers.kubernetesIngressNginx.enabled=true
-```
+Choose the install configuration based on your migration strategy:
 
-Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) for more configuration:
+- **Standard** — Traefik gets its own namespace and LoadBalancer. Traffic is shifted via DNS.
+- **Hostname retention** — Traefik is installed in the same namespace as NGINX with matching port names. Use this if your cloud provider assigns hostnames (not IPs) to LoadBalancer Services (e.g., AWS). See [LoadBalancer Hostname Retention](#option-c-loadbalancer-hostname-retention-orphan--adopt) for the full migration flow.
 
-```yaml tab="traefik-values.yaml"
-...
+```yaml tab="Standard"
 providers:
   kubernetesIngressNginx:
     enabled: true
- ...
 ```
 
-```bash
+```yaml tab="Hostname Retention"
+providers:
+  kubernetesIngressNginx:
+    enabled: true
+
+# Match NGINX port names so no targetPort patching is needed at traffic split
+ports:
+  web: null
+  websecure: null
+  http:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+  https:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    http:
+      tls:
+        enabled: true
+
+service:
+  enabled: true
+```
+
+```bash tab="Standard"
 helm upgrade --install traefik traefik/traefik \
   --namespace traefik --create-namespace \
-  --values traefik-values.yaml
+  -f traefik-values.yaml
 ```
 
-??? note "Hostname retention"
-
-    If your cloud provider assigns hostnames (not IPs) to LoadBalancer Services (e.g., AWS), see the [LoadBalancer Hostname Retention](#loadbalancer-hostname-retention) section for a specialized approach that preserves the hostname throughout the migration.
+```bash tab="Hostname Retention"
+# Install in the SAME namespace as NGINX
+helm upgrade --install traefik traefik/traefik \
+  --namespace ingress-nginx \
+  -f traefik-values.yaml
+```
 
 ### Verify Both Controllers Are Running
 
@@ -195,12 +222,12 @@ helm upgrade --install traefik traefik/traefik \
 # Check NGINX pods
 kubectl get pods -n ingress-nginx
 
-# Check Traefik pods
-kubectl get pods -n traefik
+# Check Traefik pods (TRAEFIK_NS is "traefik" for standard, "ingress-nginx" for hostname retention)
+kubectl get pods -n ${TRAEFIK_NS} -l app.kubernetes.io/name=traefik
 
 # Check both services have LoadBalancer IPs
 kubectl get svc -n ingress-nginx ingress-nginx-controller
-kubectl get svc -n traefik traefik
+kubectl get svc -n ${TRAEFIK_NS} traefik
 ```
 
 At this point, both NGINX and Traefik are running and can serve the same Ingress resources. Traffic is still flowing only through NGINX since DNS points to the NGINX LoadBalancer.
@@ -211,25 +238,25 @@ At this point, both NGINX and Traefik are running and can serve the same Ingress
 
 Before adding Traefik to DNS, verify it correctly serves your Ingress resources.
 
-### Test via Traefik's LoadBalancer IP
+### Test via Traefik's LoadBalancer IP or Hostname
 
-Get Traefik's LoadBalancer IP and use `--resolve` to test without changing DNS:
+Get Traefik's LoadBalancer IP or hostname and use `--connect-to` to test without changing DNS:
 
 ```bash
-# Get LoadBalancer IPs
-NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
-TRAEFIK_IP=$(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
-echo -e "Nginx IP: $NGINX_IP\nTraefik IP: $TRAEFIK_IP"
+# Get LoadBalancer IPs/hostnames (TRAEFIK_NS is "traefik" for standard, "ingress-nginx" for hostname retention)
+NGINX_LB=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+TRAEFIK_LB=$(kubectl get svc -n ${TRAEFIK_NS} traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+echo -e "NGINX LB: $NGINX_LB\nTraefik LB: $TRAEFIK_LB"
 
 # Test HTTP for both
 FQDN=myapp.example.com
 # Observe HTTPS redirections:
-curl --connect-to "${FQDN}:80:${NGINX_IP}:80" "http://${FQDN}" -D -
-curl --connect-to "${FQDN}:80:${TRAEFIK_IP}:80" "http://${FQDN}" -D - # note X-Forwarded-Server which should be traefik
+curl --connect-to "${FQDN}:80:${NGINX_LB}:80" "http://${FQDN}" -D -
+curl --connect-to "${FQDN}:80:${TRAEFIK_LB}:80" "http://${FQDN}" -D - # note X-Forwarded-Server which should be traefik
 
 # Test HTTPS
-curl --connect-to "${FQDN}:443:${NGINX_IP}:443" "https://${FQDN}"
-curl --connect-to "${FQDN}:443:${TRAEFIK_IP}:443" "https://${FQDN}"
+curl --connect-to "${FQDN}:443:${NGINX_LB}:443" "https://${FQDN}"
+curl --connect-to "${FQDN}:443:${TRAEFIK_LB}:443" "https://${FQDN}"
 ```
 
 !!! warning "TLS Certificates During Migration"
@@ -248,7 +275,7 @@ curl --connect-to "${FQDN}:443:${TRAEFIK_IP}:443" "https://${FQDN}"
 Check Traefik logs to confirm it discovered your Ingress resources:
 
 ```bash
-kubectl logs -n traefik deployment/traefik | grep -i "ingress"
+kubectl logs -n ${TRAEFIK_NS} deployment/traefik | grep -i "ingress"
 ```
 
 ---
@@ -268,7 +295,7 @@ Add the Traefik LoadBalancer IP to your DNS records alongside NGINX. This allows
 echo $(kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
 
 # Traefik LoadBalancer
-echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+echo $(kubectl get svc -n ${TRAEFIK_NS} traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
 ```
 
 **Progressive DNS migration:**
@@ -300,7 +327,7 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
               enabled: false  # Disable to prevent status updates
         ```
 
-    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname
+    2. **Test Traefik** using its [LoadBalancer](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname
 
     3. **Switch DNS via NGINX** - Configure NGINX to publish Traefik's service address:
 
@@ -495,18 +522,18 @@ Once DNS is pointing to Traefik and your values are configured with the target I
 
 ```bash
 # Ensure Traefik is already receiving traffic via its current LoadBalancer
-kubectl get svc -n traefik traefik
+kubectl get svc -n ${TRAEFIK_NS} traefik
 
 # Delete NGINX LoadBalancer service to release the IP
 kubectl delete svc -n ingress-nginx ingress-nginx-controller
 
 # Upgrade Traefik to claim the released IP
 helm upgrade traefik traefik/traefik \
-  --namespace traefik \
+  --namespace ${TRAEFIK_NS} \
   --values traefik-values.yaml
 
 # Verify Traefik now has the old NGINX IP
-kubectl get svc -n traefik traefik
+kubectl get svc -n ${TRAEFIK_NS} traefik
 ```
 
 !!! tip "Zero Downtime During Helm Upgrade"
@@ -536,54 +563,19 @@ kubectl get svc -n traefik traefik
 
     With multiple replicas spread across nodes and a PodDisruptionBudget, at least one pod is always running during upgrades and node maintenance.
 
-### LoadBalancer Hostname Retention
+### Option C: LoadBalancer Hostname Retention (Orphan & Adopt)
 
 Some cloud providers (notably AWS with Classic or Network Load Balancers) assign a **hostname** rather than a static IP to LoadBalancer Services. Since hostnames are tied to the LoadBalancer resource, releasing the Service means losing the hostname — and all DNS records pointing to it.
 
 The **orphan and adopt** approach migrates traffic to Traefik without releasing the LoadBalancer, preserving the hostname throughout.
 
-#### Prerequisites: Preserve Resources on Uninstall
+!!! warning "Prerequisites"
 
-The NGINX LoadBalancer Service and IngressClass must survive `helm uninstall`. Follow the instructions in [Preserve the IngressClass and Service](#preserve-the-ingressclass-and-service) to set `helm.sh/resource-policy: keep` on **both** the Service and the IngressClass before proceeding.
+    Before proceeding, ensure `helm.sh/resource-policy: keep` is set on **both** the NGINX Service and IngressClass. See [Preserve the IngressClass and Service](#preserve-the-ingressclass-and-service) in Step 4.
 
-#### Step 1: Install Traefik with Its Own LoadBalancer
+#### Step 1: Install and Verify Traefik
 
-Install Traefik in the **same namespace** as NGINX with its own Service enabled. This gives you a real LoadBalancer endpoint to test against. The port names must match NGINX's (`http`/`https` instead of Traefik's default `web`/`websecure`) to avoid targetPort mismatches later.
-
-```yaml tab="traefik-values.yaml"
-providers:
-  kubernetesIngressNginx:
-    enabled: true
-
-# Match NGINX port names so no targetPort patching is needed at traffic split
-ports:
-  web: null
-  websecure: null
-  http:
-    port: 8000
-    expose:
-      default: true
-    exposedPort: 80
-    protocol: TCP
-  https:
-    port: 8443
-    expose:
-      default: true
-    exposedPort: 443
-    protocol: TCP
-    http:
-      tls:
-        enabled: true
-
-service:
-  enabled: true
-```
-
-```bash
-helm upgrade --install traefik traefik/traefik \
-  --namespace ingress-nginx \
-  -f traefik-values.yaml
-```
+Install Traefik using the **Hostname Retention** configuration from [Step 1: Install Traefik Alongside NGINX](#step-1-install-traefik-alongside-nginx). This installs Traefik in the same namespace as NGINX with its own LoadBalancer and matching port names.
 
 Verify Traefik is working by testing through its own LoadBalancer:
 
@@ -596,7 +588,7 @@ curl -H "Host: your-app.example.com" http://${TRAEFIK_LB}
 
 #### Step 2: Split Traffic — Both Controllers Serve Simultaneously
 
-Once Traefik is verified, upgrade it so its pod labels match the NGINX Service selector. This causes the existing NGINX LoadBalancer Service to send traffic to **both** NGINX and Traefik pods automatically — no `kubectl patch` needed. Traefik's own Service is disabled in this step since traffic now flows through NGINX's LoadBalancer.
+Once Traefik is verified, upgrade it so its pod labels match the NGINX Service selector. This causes the existing NGINX LoadBalancer Service to send traffic to **both** NGINX and Traefik pods automatically. Traefik's own Service is disabled in this step since traffic now flows through NGINX's LoadBalancer.
 
 ```yaml tab="traefik-values-split-traffic.yaml"
 # Match NGINX pod labels so the existing Service selector picks up Traefik pods
@@ -665,7 +657,13 @@ kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} \
 
 Traefik's pods match the NGINX Service selector (from Step 2), so traffic continues flowing through Traefik after NGINX is removed.
 
-Follow [Step 4: Uninstall Ingress NGINX Controller](#step-4-uninstall-ingress-nginx-controller) to remove NGINX. The Service and IngressClass will survive the uninstall via `helm.sh/resource-policy: keep` (set in the [prerequisites](#prerequisites-preserve-resources-on-uninstall)). Also confirm the LoadBalancer Service survived:
+Uninstall NGINX. The Service and IngressClass will survive via `helm.sh/resource-policy: keep` (set in the [prerequisites](#preserve-the-ingressclass-and-service)).
+
+```bash
+helm uninstall ingress-nginx -n ingress-nginx
+```
+
+Confirm the LoadBalancer Service survived:
 
 ```bash
 # Service should still exist with hostname intact
@@ -673,7 +671,7 @@ kubectl get svc ${NGINX_SVC} -n ${NGINX_NS} \
   -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 
 # Traefik should still be serving traffic
-curl -H "Host: your-app.example.com" http://<LB_HOSTNAME>
+curl -H "Host: your-app.example.com" http://${LB_HOSTNAME}
 ```
 
 #### Step 4: Adopt the Service into the Traefik Helm Release
@@ -775,7 +773,7 @@ Once NGINX is no longer receiving traffic, remove it from your cluster. Before u
           helm.sh/resource-policy: keep
     ```
 
-    The `service` annotation is only needed if you are using the [hostname retention](#loadbalancer-hostname-retention) approach. The `ingressClassResource` annotation is always required.
+    The `service` annotation is only needed if you are using the [hostname retention](#option-c-loadbalancer-hostname-retention-orphan--adopt) approach. The `ingressClassResource` annotation is always required.
 
     If you didn't set these at install time, run a `helm upgrade` before uninstalling:
 
@@ -841,6 +839,7 @@ If you added the `helm.sh/resource-policy: keep` annotation, you should see:
 ```text
 These resources were kept due to the resource policy:
 [IngressClass] nginx
+[Service] ingress-nginx-controller  # Only if hostname retention was used
 
 release "ingress-nginx" uninstalled
 ```
@@ -854,6 +853,10 @@ kubectl get ingressclass nginx
 In case, the ingressClass is somehow deleted, you can recreate it using the commands in [Preserve the IngressClass and Service](#preserve-the-ingressclass-and-service).
 
 ### Clean Up NGINX Namespace
+
+!!! warning "Hostname Retention Users"
+
+    Do **not** delete the `ingress-nginx` namespace if you used the [hostname retention](#option-c-loadbalancer-hostname-retention-orphan--adopt) approach — Traefik is running in that namespace.
 
 ```bash
 kubectl delete namespace ingress-nginx
@@ -877,7 +880,7 @@ Refer to the [dedicated documentation](../reference/install-configuration/api-da
     kubectl get ingressclass nginx
 
     # Check Traefik provider configuration
-    kubectl logs -n traefik deployment/traefik | grep -i "nginx\|ingress"
+    kubectl logs -n ${TRAEFIK_NS} deployment/traefik | grep -i "nginx\|ingress"
 
     # Verify Ingress has correct ingressClassName
     kubectl get ingress <name> -o yaml | grep ingressClassName
@@ -907,10 +910,10 @@ Refer to the [dedicated documentation](../reference/install-configuration/api-da
 
     ```bash
       # Check service status
-      kubectl describe svc -n traefik traefik
+      kubectl describe svc -n ${TRAEFIK_NS} traefik
 
       # Check for events
-      kubectl get events -n traefik --sort-by='.lastTimestamp'
+      kubectl get events -n ${TRAEFIK_NS} --sort-by='.lastTimestamp'
     ```
 
 ---
