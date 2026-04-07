@@ -133,14 +133,37 @@ metadata:
 spec:
 ```
 
+## Restrict the Scope of Service Discovery
+
 By default, Traefik creates routes for all detected containers.
 
 If you want to limit the scope of the Traefik service discovery,
 i.e. disallow route creation for some containers,
 you can do so in two different ways:
 
-- the generic configuration option `exposedByDefault`,
-- a finer granularity mechanism based on constraints.
+1. With [Consul Catalog](./hashicorp/consul-catalog.md#opt-providers-consulCatalog-exposedByDefault),
+ [Docker](./docker.md#opt-providers-docker-exposedByDefault),
+ [ECS](./others/ecs.md#opt-providers-ecs-exposedByDefault),
+ [Nomad](./hashicorp/nomad.md#opt-providers-nomad-exposedByDefault) and
+ [Swarm](./swarm.md#opt-providers-swarm-exposedByDefault)
+ providers, you can set `exposedByDefault` to `false` and add a label `traefik.enable=true`
+ on containers you want to expose
+
+2. Use a finer-grained mechanism based on label selector or constraints.
+
+!!! info "The following providers support constraints"
+
+    - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
+    - [Docker](./docker.md#constraints)
+    - [ECS](./others/ecs.md#constraints)
+    - [Nomad](./hashicorp/nomad.md#constraints)
+    - [Swarm](./swarm.md#constraints)
+
+!!! info "The following providers support label selectors"
+
+    - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelselector)
+    - [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-labelselector)
+    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
 
 ## Providers Precedence
 
@@ -148,7 +171,7 @@ you can do so in two different ways:
 
 _Optional_
 
-When two routers from **different providers** define the same rule with equal numeric [priority](../../routing-configuration/http/routing/rules-and-priority.md#priority-calculation), 
+When two routers from **different providers** define the same rule with equal numeric [priority](../../routing-configuration/http/routing/rules-and-priority.md#priority-calculation),
 the `precedence` option determines which provider's route takes precedence.
 
 The list is ordered from highest to lowest precedence: a provider listed first wins over providers listed later.
@@ -199,23 +222,5 @@ When `precedence` is not set, Traefik uses the following default order (highest 
     - `precedence` only acts as a **tiebreaker**: it is applied only when two routes from different providers share the same numeric `priority` value. An explicit router priority always takes precedence.
     - A provider absent from `precedence` loses to any listed provider.
     - Provider names are case-insensitive.
-
-### `exposedByDefault` and `traefik.enable`
-
-List of providers that support these features:
-
-- [Docker](./docker.md#configuration-options)
-- [ECS](./others/ecs.md#configuration-options)
-- [Consul Catalog](./hashicorp/consul-catalog.md#configuration-options)
-- [Nomad](./hashicorp/nomad.md#configuration-options)
-
-### Constraints
-
-List of providers that support constraints:
-
-- [Docker](./docker.md#constraints)
-- [ECS](./others/ecs.md#constraints)
-- [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
-- [Nomad](./hashicorp/nomad.md#constraints)
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}

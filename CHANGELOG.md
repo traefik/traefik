@@ -1,3 +1,18 @@
+## [v3.6.13](https://github.com/traefik/traefik/tree/v3.6.13) (2026-04-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.12...v3.6.13)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress v1.18.4 and fix TestNegotiation ([#12937](https://github.com/traefik/traefik/pull/12937) @thaJeztah)
+
+**Documentation:**
+- **[docker]** Fix docker-compose.yaml location in Docker setup page ([#12860](https://github.com/traefik/traefik/pull/12860) @ScottA38)
+- **[docker, consul, ecs, k8s]** Fix documentation on how to restrict the scope of service discovery ([#12645](https://github.com/traefik/traefik/pull/12645) @mloiseleur)
+- **[k8s/ingress-nginx]** Add OVHcloud (OpenStack Octavia) to Cloud-Specific IP Management ([#12759](https://github.com/traefik/traefik/pull/12759) @antonin-a)
+- **[k8s/ingress-nginx]** Clarify IngressClass selection logic ([#12926](https://github.com/traefik/traefik/pull/12926) @kevinpollet)
+- Add missing redirects for Getting started ([#12886](https://github.com/traefik/traefik/pull/12886) @nmengin)
+- Add redirects for deleted pages ([#12889](https://github.com/traefik/traefik/pull/12889) @sheddy-traefik)
+- Fix default value of http.sanitizePath ([#12904](https://github.com/traefik/traefik/pull/12904) @iTob191)
+
 ## [v3.7.0-ea.3](https://github.com/traefik/traefik/tree/v3.7.0-ea.3) (2026-03-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.0-ea.2...v3.7.0-ea.3)
 
