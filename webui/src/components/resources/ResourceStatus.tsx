@@ -51,6 +51,11 @@ export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) 
       icon: iconByStatus.disabled,
       label: 'Error',
     },
+    expired: {
+      color: colorByStatus.expired,
+      icon: iconByStatus.expired,
+      label: 'Expired',
+    },
     loading: {
       color: colorByStatus.loading,
       icon: iconByStatus.loading,
