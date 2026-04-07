@@ -1,3 +1,31 @@
+## [v3.7.0-rc.1](https://github.com/traefik/traefik/tree/v3.7.0-rc.1) (2026-04-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.0-ea.3...v3.7.0-rc.1)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix rewrite-target annotation handling with empty path and non-regex path ([#12905](https://github.com/traefik/traefik/pull/12905) @LBF38)
+- **[middleware]** Bump github.com/klauspost/compress v1.18.4 ([#12937](https://github.com/traefik/traefik/pull/12937) @thaJeztah)
+
+**Enhancement:**
+- **[webui]** Display server weight in service detail view ([#12325](https://github.com/traefik/traefik/pull/12325) @murataslan1)
+- **[webui, tls]** Add certificates menu and overview ([#12628](https://github.com/traefik/traefik/pull/12628) @holomekc)
+- **[provider]** Add providers routing precedence configuration ([#12895](https://github.com/traefik/traefik/pull/12895) @juliens)
+- **[k8s/ingress-nginx]** Support NGINX global auth annotation ([#12893](https://github.com/traefik/traefik/pull/12893) @foxcool)
+- **[k8s/ingress-nginx]** Add limit-burst-multiplier annotation support ([#12899](https://github.com/traefik/traefik/pull/12899) @amazon7737)
+- **[k8s/ingress-nginx, k8s/ingress, rules]** Add wildcard host in Host and HostSNI matchers ([#12884](https://github.com/traefik/traefik/pull/12884) @juliens)
+- **[k8s/gatewayapi]** Support multiple certificateRefs on gateway listeners ([#12590](https://github.com/traefik/traefik/pull/12590) @mortennordbye)
+- **[k8s/gatewayapi]** Add secret support for BackendTLSPolicy caCertificateRefs ([#12927](https://github.com/traefik/traefik/pull/12927) @kevinpollet)
+- **[accesslogs, k8s/ingress-nginx]** Support nginx.ingress.kubernetes.io/enable-access-log annotation ([#12908](https://github.com/traefik/traefik/pull/12908) @ris-tlp)
+- **[accesslogs, k8s/ingress-nginx, k8s/ingress]** Add Kubernetes Ingress logs fields ([#12913](https://github.com/traefik/traefik/pull/12913) @rtribotte)
+
+**Documentation:**
+- **[docker]** Fix docker-compose.yaml location in Docker setup page ([#12860](https://github.com/traefik/traefik/pull/12860) @ScottA38)
+- **[docker, consul, ecs, k8s]** Fix documentation on how to restrict the scope of service discovery ([#12645](https://github.com/traefik/traefik/pull/12645) @mloiseleur)
+- **[k8s/gatewayapi]** Update gateway-api link in getting-started to v1.5.1 ([#12930](https://github.com/traefik/traefik/pull/12930) @isayme)
+- **[k8s/ingress-nginx]** Add OVHcloud (OpenStack Octavia) to Cloud-Specific IP Management ([#12759](https://github.com/traefik/traefik/pull/12759) @antonin-a)
+- **[k8s/ingress-nginx]** Clarify IngressClass selection logic ([#12926](https://github.com/traefik/traefik/pull/12926) @kevinpollet)
+- Add redirects for deleted pages ([#12889](https://github.com/traefik/traefik/pull/12889) @sheddy-traefik)
+- Fix default value of http.sanitizePath ([#12904](https://github.com/traefik/traefik/pull/12904) @iTob191)
+
 ## [v3.6.13](https://github.com/traefik/traefik/tree/v3.6.13) (2026-04-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.12...v3.6.13)
 
