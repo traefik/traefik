@@ -161,6 +161,16 @@ func TestRewriteTarget(t *testing.T) {
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://bar.example.org/foo",
 		},
+		{
+			desc: "regex with full URL replacement - multiple paths, no regex",
+			path: "/foo/a/b/c",
+			config: dynamic.RewriteTarget{
+				Regex:       "",
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/",
+		},
 	}
 
 	for _, test := range testCases {
