@@ -250,7 +250,7 @@ To use the Gateway API:
 Install the Gateway API CRDs in your cluster:
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
 ```
 
 Create an HTTPRoute. This configuration:
