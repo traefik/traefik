@@ -1,4 +1,4 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'

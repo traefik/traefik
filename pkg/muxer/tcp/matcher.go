@@ -5,11 +5,11 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"unicode"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 )
 
 var tcpFuncs = map[string]func(*matchersTree, ...string) error{
@@ -62,36 +62,31 @@ func clientIP(tree *matchersTree, clientIP ...string) error {
 	return nil
 }
 
-var hostOrIP = regexp.MustCompile(`^[[:word:]\.\-\:]+$`)
+var hostOrIP = regexp.MustCompile(`^(\*\.)?[[:word:]\.\-\:]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
-	host := hosts[0]
+	hostExpr := hosts[0]
 
-	if host == "*" {
+	if hostExpr == "*" {
 		// Since a HostSNI(`*`) rule has been provided as catchAll for non-TLS TCP,
 		// it allows matching with an empty serverName.
 		tree.matcher = func(meta ConnData) bool { return true }
 		return nil
 	}
 
-	if !hostOrIP.MatchString(host) {
-		return fmt.Errorf("invalid value for HostSNI matcher, %q is not a valid hostname", host)
+	if !hostOrIP.MatchString(hostExpr) {
+		return fmt.Errorf("invalid value for HostSNI matcher, %q is not a valid hostname", hostExpr)
 	}
+
+	hostExpr = strings.TrimSuffix(hostExpr, ".")
 
 	tree.matcher = func(meta ConnData) bool {
 		if meta.serverName == "" {
 			return false
 		}
 
-		if host == meta.serverName {
-			return true
-		}
-
-		// trim trailing period in case of FQDN
-		host = strings.TrimSuffix(host, ".")
-
-		return host == meta.serverName
+		return muxer.DomainMatchHostExpression(meta.serverName, hostExpr)
 	}
 
 	return nil
@@ -101,7 +96,7 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 	template := templates[0]
 
-	if !isASCII(template) {
+	if !muxer.IsASCII(template) {
 		return fmt.Errorf("invalid value for HostSNIRegexp matcher, %q is not a valid hostname", template)
 	}
 
@@ -115,15 +110,4 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 	}
 
 	return nil
-}
-
-// isASCII checks if the given string contains only ASCII characters.
-func isASCII(s string) bool {
-	for i := range len(s) {
-		if s[i] > unicode.MaxASCII {
-			return false
-		}
-	}
-
-	return true
 }

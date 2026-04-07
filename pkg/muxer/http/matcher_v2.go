@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 )
 
 var httpFuncsV2 = matcherBuilderFuncs{
@@ -78,7 +79,7 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 
 func hostV2(tree *matchersTree, hosts ...string) error {
 	for i, host := range hosts {
-		if !IsASCII(host) {
+		if !muxer.IsASCII(host) {
 			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
 		}
 
@@ -86,7 +87,7 @@ func hostV2(tree *matchersTree, hosts ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		reqHost := requestdecorator.GetCanonizedHost(req.Context())
+		reqHost := requestdecorator.GetCanonicalHost(req.Context())
 		if len(reqHost) == 0 {
 			// If the request is an HTTP/1.0 request, then a Host may not be defined.
 			if req.ProtoAtLeast(1, 1) {
@@ -206,7 +207,7 @@ func hostRegexpV2(tree *matchersTree, hosts ...string) error {
 	router := mux.NewRouter()
 
 	for _, host := range hosts {
-		if !IsASCII(host) {
+		if !muxer.IsASCII(host) {
 			return fmt.Errorf("invalid value %q for HostRegexp matcher, non-ASCII characters are not allowed", host)
 		}
 

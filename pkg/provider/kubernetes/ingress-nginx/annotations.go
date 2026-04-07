@@ -81,11 +81,14 @@ type IngressConfig struct {
 	CORSAllowOrigin            *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-origin"`
 	CORSMaxAge                 *int      `annotation:"nginx.ingress.kubernetes.io/cors-max-age"`
 
+	EnableAccessLog *bool `annotation:"nginx.ingress.kubernetes.io/enable-access-log"`
+
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
-	LimitRPM *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
-	LimitRPS *int `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
+	LimitRPM             *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
+	LimitRPS             *int `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
+	LimitBurstMultiplier *int `annotation:"nginx.ingress.kubernetes.io/limit-burst-multiplier"`
 
 	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
