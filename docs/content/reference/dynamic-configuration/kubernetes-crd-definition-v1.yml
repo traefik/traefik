@@ -339,6 +339,9 @@ spec:
                                     - none
                                     - lax
                                     - strict
+                                    - None
+                                    - Lax
+                                    - Strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie
@@ -1307,6 +1310,9 @@ spec:
                                 - none
                                 - lax
                                 - strict
+                                - None
+                                - Lax
+                                - Strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -3036,6 +3042,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3365,6 +3374,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3514,6 +3526,9 @@ spec:
                             - none
                             - lax
                             - strict
+                            - None
+                            - Lax
+                            - Strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -3748,6 +3763,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3818,6 +3836,9 @@ spec:
                             - none
                             - lax
                             - strict
+                            - None
+                            - Lax
+                            - Strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
