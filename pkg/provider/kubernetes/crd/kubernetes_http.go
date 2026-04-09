@@ -122,14 +122,22 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			r := &dynamic.Router{
-				Middlewares:   mds,
-				Priority:      route.Priority,
-				RuleSyntax:    route.Syntax,
-				EntryPoints:   ingressRoute.Spec.EntryPoints,
-				Rule:          route.Match,
-				Service:       serviceName,
-				Observability: route.Observability,
-				ParentRefs:    parentRouterNames,
+				Middlewares: mds,
+				Priority:    route.Priority,
+				RuleSyntax:  route.Syntax,
+				EntryPoints: ingressRoute.Spec.EntryPoints,
+				Rule:        route.Match,
+				Service:     serviceName,
+				ParentRefs:  parentRouterNames,
+			}
+
+			if route.Observability != nil {
+				r.Observability = &dynamic.RouterObservabilityConfig{
+					AccessLogs:     route.Observability.AccessLogs,
+					Metrics:        route.Observability.Metrics,
+					Tracing:        route.Observability.Tracing,
+					TraceVerbosity: route.Observability.TraceVerbosity,
+				}
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -178,7 +186,7 @@ func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []tra
 	for _, mi := range middlewares {
 		name := mi.Name
 
-		if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
+		if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+ProviderName) {
 			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
 			// if the provider namespace kubernetescrd is used,
 			// we don't allow this format to avoid cross namespace references.
@@ -521,7 +529,7 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 		return "", nil
 	}
 
-	if !c.allowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
+	if !c.allowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+ProviderName) {
 		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
 		// if the provider namespace kubernetescrd is used,
 		// we don't allow this format to avoid cross namespace references.
@@ -543,7 +551,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	}
 
 	// If the service uses explicitly the provider suffix
-	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
+	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+ProviderName)
 	service, exists, err := c.client.GetService(namespace, sanitizedName)
 	if err != nil {
 		return nil, err
@@ -799,7 +807,7 @@ func fullServiceName(ctx context.Context, namespace string, service traefikv1alp
 	}
 
 	name, pName := splitSvcNameProvider(service.Name)
-	if pName == providerName {
+	if pName == ProviderName {
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 

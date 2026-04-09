@@ -70,6 +70,12 @@ spec:
       - group: core
         kind: ConfigMap
         name: ca-file-2
+      - group: ""
+        kind: Secret
+        name: ca-file
+      - group: core
+        kind: Secret
+        name: ca-file-2
 
 ---
 apiVersion: v1
@@ -88,3 +94,21 @@ metadata:
   namespace: default
 data:
   ca.crt: "CA2"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ca-file
+  namespace: default
+data:
+  ca.crt: Q0ExLXNlY3JldA==
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ca-file-2
+  namespace: default
+data:
+  ca.crt: Q0EyLXNlY3JldA==

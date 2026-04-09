@@ -27,47 +27,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-type applyRouter func(conf *runtime.Configuration)
-
-type checkRouter func(addr string, timeout time.Duration) error
-
-type httpForwarder struct {
-	net.Listener
-
-	connChan chan net.Conn
-	errChan  chan error
-}
-
-func newHTTPForwarder(ln net.Listener) *httpForwarder {
-	return &httpForwarder{
-		Listener: ln,
-		connChan: make(chan net.Conn),
-		errChan:  make(chan error),
-	}
-}
-
-// Close closes the Listener.
-func (h *httpForwarder) Close() error {
-	h.errChan <- http.ErrServerClosed
-
-	return nil
-}
-
-// ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
-	h.connChan <- conn
-}
-
-// Accept retrieves a served connection in ServeTCP.
-func (h *httpForwarder) Accept() (net.Conn, error) {
-	select {
-	case conn := <-h.connChan:
-		return conn, nil
-	case err := <-h.errChan:
-		return nil, err
-	}
-}
-
 // Test_Routing aims to settle the behavior between routers of different types on the same TCP entryPoint.
 // It has been introduced as a regression test following a fix on the v2.7 TCP Muxer.
 //
@@ -202,7 +161,7 @@ func Test_Routing(t *testing.T) {
 	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
-		nil, nil, tlsManager)
+		nil, nil, tlsManager, nil)
 
 	type checkCase struct {
 		checkRouter
@@ -701,7 +660,7 @@ func Test_Routing(t *testing.T) {
 }
 
 func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
-	router, err := NewRouter()
+	router, err := NewRouter(nil)
 	require.NoError(t, err)
 
 	router.httpsTLSConfig = &tls.Config{}
@@ -756,6 +715,272 @@ func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("Error: Timeout waiting for acmeTLSALPNHandler to close the connection")
 	}
+}
+
+// Test_clientHelloInfo_oversizedRecordLength verifies that clientHelloInfo
+// does not block or allocate excessive memory when a client sends a TLS
+// record header with a maliciously large record length (up to 0xFFFF).
+//
+// Without the fix, clientHelloInfo allocates a ~65KB bufio.Reader and blocks
+// on Peek(65540), waiting for bytes that never arrive (until readTimeout).
+// With the fix, records exceeding the TLS maximum plaintext size (16384)
+// are rejected immediately.
+func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		recLen uint16
+	}{
+		{
+			desc:   "max uint16 record length (0xFFFF)",
+			recLen: 0xFFFF,
+		},
+		{
+			desc:   "just above TLS maximum (18433)",
+			recLen: 18433,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			serverConn, clientConn := net.Pipe()
+			defer serverConn.Close()
+			defer clientConn.Close()
+
+			type result struct {
+				hello *clientHello
+				err   error
+			}
+			resultCh := make(chan result, 1)
+
+			go func() {
+				pConn := &peekConn{reader: bufio.NewReader(serverConn)}
+				hello, err := clientHelloInfo(pConn)
+				resultCh <- result{hello, err}
+			}()
+
+			// Send a TLS record header with an oversized record length.
+			// Only the 5-byte header is sent; the client then stalls.
+			hdr := []byte{
+				0x16,       // Content Type: Handshake
+				0x03, 0x03, // Version: TLS 1.2
+				byte(test.recLen >> 8),   // Length high byte
+				byte(test.recLen & 0xFF), // Length low byte
+			}
+			_, err := clientConn.Write(hdr)
+			require.NoError(t, err)
+
+			// Without the fix, clientHelloInfo blocks on Peek(recLen+5)
+			// since only 5 bytes are available. The test would time out.
+			// With the fix, it returns immediately.
+			select {
+			case r := <-resultCh:
+				require.Error(t, r.err)
+			case <-time.After(5 * time.Second):
+				t.Fatal("clientHelloInfo blocked on oversized TLS record length — recLen is not capped")
+			}
+		})
+	}
+}
+
+// Test_clientHelloInfo_tlsRecordFragmentation documents a known limitation:
+// clientHelloInfo only reads a single TLS record. When a ClientHello handshake
+// message is split across multiple TLS records (RFC 5246 §6.2.1), the SNI cannot
+// be extracted, leaving serverName empty and allowing SNI-based routing to be bypassed.
+func Test_clientHelloInfo_tlsRecordFragmentation(t *testing.T) {
+	serverName := "foo.example.com"
+	record := buildClientHelloRecord(t, serverName)
+
+	const hdrLen = 5
+	payload := record[hdrLen:]
+
+	ver1, ver2 := record[1], record[2]
+
+	var recordsData bytes.Buffer
+	for _, part := range [][]byte{payload[:len(serverName)/2], payload[len(serverName)/2:]} {
+		recordsData.WriteByte(0x16)
+		recordsData.WriteByte(ver1)
+		recordsData.WriteByte(ver2)
+		recordsData.WriteByte(byte(len(part) >> 8))
+		recordsData.WriteByte(byte(len(part)))
+		recordsData.Write(part)
+	}
+
+	serverConn, clientConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = serverConn.Close()
+		_ = clientConn.Close()
+	})
+
+	type result struct {
+		hello *clientHello
+		err   error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		pConn := &peekConn{reader: bufio.NewReader(serverConn)}
+		hello, err := clientHelloInfo(pConn)
+		resultCh <- result{hello, err}
+	}()
+
+	_, err := clientConn.Write(recordsData.Bytes())
+	require.NoError(t, err)
+	_ = clientConn.Close()
+
+	select {
+	case r := <-resultCh:
+		require.NoError(t, r.err)
+		require.NotNil(t, r.hello)
+		assert.True(t, r.hello.isTLS)
+		assert.Equal(t, serverName, r.hello.serverName)
+	case <-time.After(5 * time.Second):
+		t.Fatal("clientHelloInfo blocked")
+	}
+}
+
+func TestPostgresTLSTermination(t *testing.T) {
+	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
+	require.NoError(t, err)
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	router, err := NewRouter(nil)
+	require.NoError(t, err)
+
+	// Register a TCPTLS route (TLS termination, not passthrough) with a TLSHandler.
+	// The TLSHandler wraps the actual handler, performing the TLS handshake.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", &tcp2.TLSHandler{
+		Config: tlsConf,
+		Next: tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+			_, _ = conn.Write([]byte("OK"))
+			_ = conn.Close()
+		}),
+	})
+	require.NoError(t, err)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+
+		tcpConn := conn.(*net.TCPConn)
+		router.ServeTCP(tcpConn)
+	}()
+
+	clientConn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.Close() })
+
+	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
+	_, err = clientConn.Write(PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	// Step 2: Client receives PostgresStartTLSReply ('S').
+	reply := make([]byte, 1)
+	_, err = io.ReadFull(clientConn, reply)
+	require.NoError(t, err)
+	require.Equal(t, PostgresStartTLSReply, reply)
+
+	// Step 3: Client performs TLS handshake.
+	tlsClient := tls.Client(clientConn, &tls.Config{
+		ServerName:         "test.localhost",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(t, tlsClient.Handshake())
+	t.Cleanup(func() { _ = tlsClient.Close() })
+
+	// Step 4: Read the response from the handler through the TLS connection.
+	buf := make([]byte, 256)
+	n, err := tlsClient.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, "OK", string(buf[:n]))
+}
+
+func TestPostgresTLSPassthrough(t *testing.T) {
+	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
+	require.NoError(t, err)
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	router, err := NewRouter(nil)
+	require.NoError(t, err)
+
+	// Register a TCPTLS route (TLS passthrough) with a tcp.Handler.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		// First we should receive the PostgresStartTLSMsg.
+		buf := make([]byte, len(PostgresStartTLSMsg))
+		_, err := conn.Read(buf)
+		require.NoError(t, err)
+		assert.Equal(t, PostgresStartTLSMsg, buf)
+
+		// Next we should answer with the PostgresStartTLSReply.
+		_, err = conn.Write(PostgresStartTLSReply)
+		require.NoError(t, err)
+
+		// Then we should do the TLS handshake.
+		tlsConn := tls.Server(conn, tlsConf)
+		require.NoError(t, tlsConn.Handshake())
+
+		// Finally we write the response through the TLS connection.
+		_, err = tlsConn.Write([]byte("OK"))
+		require.NoError(t, err)
+	}))
+	require.NoError(t, err)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+
+		tcpConn := conn.(*net.TCPConn)
+		router.ServeTCP(tcpConn)
+	}()
+
+	clientConn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.Close() })
+
+	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
+	_, err = clientConn.Write(PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	// Step 2: Client receives PostgresStartTLSReply ('S').
+	reply := make([]byte, 1)
+	_, err = io.ReadFull(clientConn, reply)
+	require.NoError(t, err)
+	require.Equal(t, PostgresStartTLSReply, reply)
+
+	// Step 3: Client performs TLS handshake.
+	tlsClient := tls.Client(clientConn, &tls.Config{
+		ServerName:         "test.localhost",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(t, tlsClient.Handshake())
+	t.Cleanup(func() { _ = tlsClient.Close() })
+
+	// Step 4: Read the response from the handler through the TLS connection.
+	buf := make([]byte, 256)
+	n, err := tlsClient.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, "OK", string(buf[:n]))
 }
 
 // routerTCPCatchAll configures a TCP CatchAll No TLS - HostSNI(`*`) router.
@@ -1084,129 +1309,6 @@ func checkHTTPSTLS12(addr string, timeout time.Duration) error {
 	return checkHTTPS(addr, timeout, tls.VersionTLS12)
 }
 
-// Test_clientHelloInfo_oversizedRecordLength verifies that clientHelloInfo
-// does not block or allocate excessive memory when a client sends a TLS
-// record header with a maliciously large record length (up to 0xFFFF).
-//
-// Without the fix, clientHelloInfo allocates a ~65KB bufio.Reader and blocks
-// on Peek(65540), waiting for bytes that never arrive (until readTimeout).
-// With the fix, records exceeding the TLS maximum plaintext size (16384)
-// are rejected immediately.
-func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
-	testCases := []struct {
-		desc   string
-		recLen uint16
-	}{
-		{
-			desc:   "max uint16 record length (0xFFFF)",
-			recLen: 0xFFFF,
-		},
-		{
-			desc:   "just above TLS maximum (18433)",
-			recLen: 18433,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			serverConn, clientConn := net.Pipe()
-			defer serverConn.Close()
-			defer clientConn.Close()
-
-			type result struct {
-				hello *clientHello
-				err   error
-			}
-			resultCh := make(chan result, 1)
-
-			go func() {
-				pConn := &peekConn{reader: bufio.NewReader(serverConn)}
-				hello, err := clientHelloInfo(pConn)
-				resultCh <- result{hello, err}
-			}()
-
-			// Send a TLS record header with an oversized record length.
-			// Only the 5-byte header is sent; the client then stalls.
-			hdr := []byte{
-				0x16,       // Content Type: Handshake
-				0x03, 0x03, // Version: TLS 1.2
-				byte(test.recLen >> 8),   // Length high byte
-				byte(test.recLen & 0xFF), // Length low byte
-			}
-			_, err := clientConn.Write(hdr)
-			require.NoError(t, err)
-
-			// Without the fix, clientHelloInfo blocks on Peek(recLen+5)
-			// since only 5 bytes are available. The test would time out.
-			// With the fix, it returns immediately.
-			select {
-			case r := <-resultCh:
-				require.Error(t, r.err)
-			case <-time.After(5 * time.Second):
-				t.Fatal("clientHelloInfo blocked on oversized TLS record length — recLen is not capped")
-			}
-		})
-	}
-}
-
-// Test_clientHelloInfo_tlsRecordFragmentation documents a known limitation:
-// clientHelloInfo only reads a single TLS record. When a ClientHello handshake
-// message is split across multiple TLS records (RFC 5246 §6.2.1), the SNI cannot
-// be extracted, leaving serverName empty and allowing SNI-based routing to be bypassed.
-func Test_clientHelloInfo_tlsRecordFragmentation(t *testing.T) {
-	serverName := "foo.example.com"
-	record := buildClientHelloRecord(t, serverName)
-
-	const hdrLen = 5
-	payload := record[hdrLen:]
-
-	ver1, ver2 := record[1], record[2]
-
-	var recordsData bytes.Buffer
-	for _, part := range [][]byte{payload[:len(serverName)/2], payload[len(serverName)/2:]} {
-		recordsData.WriteByte(0x16)
-		recordsData.WriteByte(ver1)
-		recordsData.WriteByte(ver2)
-		recordsData.WriteByte(byte(len(part) >> 8))
-		recordsData.WriteByte(byte(len(part)))
-		recordsData.Write(part)
-	}
-
-	serverConn, clientConn := net.Pipe()
-	t.Cleanup(func() {
-		_ = serverConn.Close()
-		_ = clientConn.Close()
-	})
-
-	type result struct {
-		hello *clientHello
-		err   error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		pConn := &peekConn{reader: bufio.NewReader(serverConn)}
-		hello, err := clientHelloInfo(pConn)
-		resultCh <- result{hello, err}
-	}()
-
-	_, err := clientConn.Write(recordsData.Bytes())
-	require.NoError(t, err)
-	_ = clientConn.Close()
-
-	select {
-	case r := <-resultCh:
-		require.NoError(t, r.err)
-		require.NotNil(t, r.hello)
-		assert.True(t, r.hello.isTLS)
-		assert.Equal(t, serverName, r.hello.serverName)
-	case <-time.After(5 * time.Second):
-		t.Fatal("clientHelloInfo blocked")
-	}
-}
-
 // buildClientHelloRecord captures a real TLS ClientHello record from Go's TLS stack
 // for the given serverName.
 // It returns the raw record bytes and the byte offset of the SNI value within those bytes.
@@ -1237,145 +1339,43 @@ func buildClientHelloRecord(t *testing.T, serverName string) []byte {
 	return record
 }
 
-func TestPostgresTLSTermination(t *testing.T) {
-	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
-	require.NoError(t, err)
+type applyRouter func(conf *runtime.Configuration)
 
-	cert, err := tls.X509KeyPair(certPEM, keyPEM)
-	require.NoError(t, err)
+type checkRouter func(addr string, timeout time.Duration) error
 
-	tlsConf := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
+type httpForwarder struct {
+	net.Listener
 
-	router, err := NewRouter()
-	require.NoError(t, err)
-
-	// Register a TCPTLS route (TLS termination, not passthrough) with a TLSHandler.
-	// The TLSHandler wraps the actual handler, performing the TLS handshake.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, &tcp2.TLSHandler{
-		Config: tlsConf,
-		Next: tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-			_, _ = conn.Write([]byte("OK"))
-			_ = conn.Close()
-		}),
-	})
-	require.NoError(t, err)
-
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ln.Close() })
-
-	go func() {
-		conn, err := ln.Accept()
-		require.NoError(t, err)
-
-		tcpConn := conn.(*net.TCPConn)
-		router.ServeTCP(tcpConn)
-	}()
-
-	clientConn, err := net.Dial("tcp", ln.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = clientConn.Close() })
-
-	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
-	_, err = clientConn.Write(PostgresStartTLSMsg)
-	require.NoError(t, err)
-
-	// Step 2: Client receives PostgresStartTLSReply ('S').
-	reply := make([]byte, 1)
-	_, err = io.ReadFull(clientConn, reply)
-	require.NoError(t, err)
-	require.Equal(t, PostgresStartTLSReply, reply)
-
-	// Step 3: Client performs TLS handshake.
-	tlsClient := tls.Client(clientConn, &tls.Config{
-		ServerName:         "test.localhost",
-		InsecureSkipVerify: true,
-	})
-	require.NoError(t, tlsClient.Handshake())
-	t.Cleanup(func() { _ = tlsClient.Close() })
-
-	// Step 4: Read the response from the handler through the TLS connection.
-	buf := make([]byte, 256)
-	n, err := tlsClient.Read(buf)
-	require.NoError(t, err)
-	assert.Equal(t, "OK", string(buf[:n]))
+	connChan chan net.Conn
+	errChan  chan error
 }
 
-func TestPostgresTLSPassthrough(t *testing.T) {
-	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
-	require.NoError(t, err)
-
-	cert, err := tls.X509KeyPair(certPEM, keyPEM)
-	require.NoError(t, err)
-
-	tlsConf := &tls.Config{
-		Certificates: []tls.Certificate{cert},
+func newHTTPForwarder(ln net.Listener) *httpForwarder {
+	return &httpForwarder{
+		Listener: ln,
+		connChan: make(chan net.Conn),
+		errChan:  make(chan error),
 	}
+}
 
-	router, err := NewRouter()
-	require.NoError(t, err)
+// Close closes the Listener.
+func (h *httpForwarder) Close() error {
+	h.errChan <- http.ErrServerClosed
 
-	// Register a TCPTLS route (TLS passthrough) with a tcp.Handler.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-		// First we should receive the PostgresStartTLSMsg.
-		buf := make([]byte, len(PostgresStartTLSMsg))
-		_, err := conn.Read(buf)
-		require.NoError(t, err)
-		assert.Equal(t, PostgresStartTLSMsg, buf)
+	return nil
+}
 
-		// Next we should answer with the PostgresStartTLSReply.
-		_, err = conn.Write(PostgresStartTLSReply)
-		require.NoError(t, err)
+// ServeTCP uses the connection to serve it later in "Accept".
+func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
+	h.connChan <- conn
+}
 
-		// Then we should do the TLS handshake.
-		tlsConn := tls.Server(conn, tlsConf)
-		require.NoError(t, tlsConn.Handshake())
-
-		// Finally we write the response through the TLS connection.
-		_, err = tlsConn.Write([]byte("OK"))
-		require.NoError(t, err)
-	}))
-	require.NoError(t, err)
-
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ln.Close() })
-
-	go func() {
-		conn, err := ln.Accept()
-		require.NoError(t, err)
-
-		tcpConn := conn.(*net.TCPConn)
-		router.ServeTCP(tcpConn)
-	}()
-
-	clientConn, err := net.Dial("tcp", ln.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = clientConn.Close() })
-
-	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
-	_, err = clientConn.Write(PostgresStartTLSMsg)
-	require.NoError(t, err)
-
-	// Step 2: Client receives PostgresStartTLSReply ('S').
-	reply := make([]byte, 1)
-	_, err = io.ReadFull(clientConn, reply)
-	require.NoError(t, err)
-	require.Equal(t, PostgresStartTLSReply, reply)
-
-	// Step 3: Client performs TLS handshake.
-	tlsClient := tls.Client(clientConn, &tls.Config{
-		ServerName:         "test.localhost",
-		InsecureSkipVerify: true,
-	})
-	require.NoError(t, tlsClient.Handshake())
-	t.Cleanup(func() { _ = tlsClient.Close() })
-
-	// Step 4: Read the response from the handler through the TLS connection.
-	buf := make([]byte, 256)
-	n, err := tlsClient.Read(buf)
-	require.NoError(t, err)
-	assert.Equal(t, "OK", string(buf[:n]))
+// Accept retrieves a served connection in ServeTCP.
+func (h *httpForwarder) Accept() (net.Conn, error) {
+	select {
+	case conn := <-h.connChan:
+		return conn, nil
+	case err := <-h.errChan:
+		return nil, err
+	}
 }

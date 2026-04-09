@@ -44,7 +44,8 @@ const (
 )
 
 const (
-	providerName               = "kubernetescrd"
+	// ProviderName is the Kubernetes CRD provider name.
+	ProviderName               = "kubernetescrd"
 	providerNamespaceSeparator = "@"
 )
 
@@ -76,7 +77,7 @@ func (p *Provider) Init() error {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
 	k8sClient, err := p.newK8sClient(ctxLog)
@@ -131,7 +132,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  providerName,
+							ProviderName:  ProviderName,
 							Configuration: conf,
 						}
 					}
@@ -166,7 +167,7 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
 		}
 
-		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+		return makeID(namespace, name) + providerNamespaceSeparator + ProviderName, nil, nil
 	})
 
 	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
@@ -174,7 +175,7 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
 		}
 
-		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+		return makeID(namespace, name) + providerNamespaceSeparator + ProviderName, nil, nil
 	})
 }
 
