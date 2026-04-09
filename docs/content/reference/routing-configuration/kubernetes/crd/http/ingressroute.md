@@ -5,7 +5,7 @@ description: "An IngressRoute is a Traefik CRD is in charge of connecting incomi
 
 `IngressRoute` is the CRD implementation of a [Traefik HTTP router](../../../http/routing/rules-and-priority.md).
 
-Before creating `IngressRoute` objects, you need to apply the Traefik Kubernetes CRDs such as [Definitions](/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml), [Resources](/docs/content/reference/dynamic-configuration/kubernetes-crd-resource.yml), and [RBAC](/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml) to your Kubernetes cluster.
+Before creating `IngressRoute` objects, you need to apply the Traefik Kubernetes CRDs such as [Definitions](/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml) and [RBAC](/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml) to your Kubernetes cluster.
 
 This registers the `IngressRoute` kind and other Traefik-specific resources.
 
