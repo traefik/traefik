@@ -336,7 +336,7 @@ When set to a negative number, the cookie expires immediately.
 By default, the affinity cookie is created without those flags.
 One however can change that through configuration.
 
-`SameSite` can be `none`, `lax`, `strict` (or their RFC-standard capitalized forms `None`, `Lax`, `Strict`) or empty. Values are case-insensitive.
+`SameSite` can be `none`, `lax`, `strict` or empty. Values are case-insensitive.
 
 #### Domain
 
