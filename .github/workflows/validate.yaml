@@ -32,7 +32,7 @@ jobs:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
 
   validate:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
