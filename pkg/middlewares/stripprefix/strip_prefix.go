@@ -44,9 +44,9 @@ func (s *stripPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, prefix := range s.prefixes {
 		if strings.HasPrefix(req.URL.Path, prefix) {
-			req.URL.Path = s.getPrefixStripped(req.URL.Path, prefix)
+			req.URL.Path = s.getPathStripped(req.URL.Path, prefix)
 			if req.URL.RawPath != "" {
-				req.URL.RawPath = s.getPrefixStripped(req.URL.RawPath, prefix)
+				req.URL.RawPath = s.getRawPathStripped(req.URL.RawPath, prefix)
 			}
 			s.serveRequest(rw, req, strings.TrimSpace(prefix))
 			return
@@ -61,7 +61,7 @@ func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, pr
 	s.next.ServeHTTP(rw, req)
 }
 
-func (s *stripPrefix) getPrefixStripped(urlPath, prefix string) string {
+func (s *stripPrefix) getPathStripped(urlPath, prefix string) string {
 	if s.forceSlash {
 		// Only for compatibility reason with the previous behavior,
 		// but the previous behavior is wrong.
@@ -70,6 +70,33 @@ func (s *stripPrefix) getPrefixStripped(urlPath, prefix string) string {
 	}
 
 	return ensureLeadingSlash(strings.TrimPrefix(urlPath, prefix))
+}
+
+func (s *stripPrefix) getRawPathStripped(rawPath, prefix string) string {
+	if s.forceSlash {
+		// Only for compatibility reason with the previous behavior,
+		// but the previous behavior is wrong.
+		// This needs to be removed in the next breaking version.
+		return "/" + strings.TrimPrefix(rawPath[encodedPrefixLen(rawPath, prefix):], "/")
+	}
+
+	return ensureLeadingSlash(rawPath[encodedPrefixLen(rawPath, prefix):])
+}
+
+// encodedPrefixLen returns the number of bytes in rawPath that correspond to
+// the decoded prefix, advancing 3 bytes per %XX sequence and 1 byte otherwise.
+func encodedPrefixLen(rawPath, decodedPrefix string) int {
+	decoded := 0
+	i := 0
+	for i < len(rawPath) && decoded < len(decodedPrefix) {
+		if rawPath[i] == '%' && i+2 < len(rawPath) {
+			i += 3
+		} else {
+			i++
+		}
+		decoded++
+	}
+	return i
 }
 
 func ensureLeadingSlash(str string) string {
