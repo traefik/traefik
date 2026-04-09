@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.56.13
 	github.com/aws/smithy-go v1.24.0
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/containerd/errdefs v1.0.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/docker/cli v29.2.1+incompatible
@@ -178,7 +179,6 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
-	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v1.0.0-rc.1 // indirect
