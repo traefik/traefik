@@ -132,10 +132,85 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
 
 **Migration Flow:**
 
-1. Install Traefik alongside NGINX (both serving traffic in parallel)
-2. Add Traefik LoadBalancer to DNS (if you choose DNS option; cf. step 3)
-3. Progressively shift traffic from NGINX to Traefik
-4. Remove NGINX from DNS, preserve the IngressClass, and uninstall
+- **Step 0** - Review your ingress-nginx ConfigMap and translate cluster-wide defaults to Traefik
+- **Step 1** - Install Traefik alongside NGINX
+- **Step 2** - Verify Traefik is handling traffic
+- **Step 3** - Progressively shift traffic from NGINX to Traefik
+- **Step 4** - Remove NGINX from DNS, preserve the IngressClass, and uninstall
+
+---
+
+## Step 0: Migrate Your Global ConfigMap Settings
+
+Before you install Traefik, review the global defaults currently set in the `ingress-nginx` ConfigMap.
+In ingress-nginx, the controller ConfigMap acts as a cluster-wide configuration layer.
+In Traefik, the same behavior is split across:
+
+- the `providers.kubernetesIngressNGINX` static configuration for ingress-nginx compatibility defaults
+- entryPoints for listener behavior such as HTTP-to-HTTPS redirection and PROXY protocol
+- dynamic `tls.options` and HTTP middlewares for TLS policy, HSTS, and other header behavior
+- Traefik access log configuration for request logging
+
+Start by exporting the ConfigMap you use today and reviewing the keys you have customized:
+
+```bash
+kubectl get configmap ingress-nginx-controller -n ingress-nginx -o yaml
+```
+
+If your ingress-nginx controller uses a different namespace or ConfigMap name, adjust the command accordingly.
+
+!!! tip "Convert NGINX units before copying values"
+
+    Several ingress-nginx ConfigMap keys use NGINX-style values such as `16k`, `1m`, or `30s`.
+    In Traefik, the matching `providers.kubernetesIngressNGINX` options below expect:
+
+    - raw byte values for body-size and buffer settings
+    - integer seconds for `proxyConnectTimeout` and `proxyNextUpstreamTimeout`
+    - booleans for `proxyRequestBuffering` and `proxyBuffering`
+
+### ConfigMap to Traefik Mapping
+
+| ingress-nginx ConfigMap key | Traefik equivalent | Notes |
+|---|---|---|
+| `proxy-connect-timeout` | `providers.kubernetesIngressNGINX.proxyConnectTimeout` | Use integer seconds. |
+| `proxy-request-buffering` | `providers.kubernetesIngressNGINX.proxyRequestBuffering` | Translate `on` / `off` to `true` / `false`. ingress-nginx enables request buffering by default, while Traefik defaults to `false`. |
+| `client-body-buffer-size` | `providers.kubernetesIngressNGINX.clientBodyBufferSize` | Convert values such as `16k` to bytes. |
+| `proxy-buffering` | `providers.kubernetesIngressNGINX.proxyBuffering` | Translate `on` / `off` to `true` / `false`. |
+| `proxy-body-size` | `providers.kubernetesIngressNGINX.proxyBodySize` | Convert values such as `1m` to bytes. |
+| `proxy-buffer-size` | `providers.kubernetesIngressNGINX.proxyBufferSize` | Convert values such as `8k` to bytes. |
+| `proxy-buffers-number` | `providers.kubernetesIngressNGINX.proxyBuffersNumber` | Keep the integer value. |
+| `proxy-next-upstream` | `providers.kubernetesIngressNGINX.proxyNextUpstream` | Use a space-separated list of retry conditions such as `error timeout http_502`. |
+| `proxy-next-upstream-timeout` | `providers.kubernetesIngressNGINX.proxyNextUpstreamTimeout` | Use integer seconds. |
+| `proxy-next-upstream-tries` | `providers.kubernetesIngressNGINX.proxyNextUpstreamTries` | Keep the integer value. |
+| `custom-http-errors` | `providers.kubernetesIngressNGINX.customHTTPErrors` | Also configure `providers.kubernetesIngressNGINX.defaultBackendService` if you want a global error page service. |
+| `global-allowed-response-headers` | `providers.kubernetesIngressNGINX.globalAllowedResponseHeaders` | Required for `nginx.ingress.kubernetes.io/custom-headers` annotations to take effect. |
+| `allow-cross-namespace-resources` | `providers.kubernetesIngressNGINX.allowCrossNamespaceResources` | Use when migrated ingresses must reference supported resources in other namespaces. |
+| `strict-validate-path-type` | `providers.kubernetesIngressNGINX.strictValidatePathType` | Traefik v3.7 defaults this option to `true`. |
+| `ssl-redirect` / `force-ssl-redirect` | `nginx.ingress.kubernetes.io/ssl-redirect` and `nginx.ingress.kubernetes.io/force-ssl-redirect` annotations, or cluster-wide [entryPoint redirection](../reference/install-configuration/entrypoints.md#configuration-example) | Traefik translates the annotations when they are present. For a global default, configure HTTP-to-HTTPS redirection on the `web` entryPoint and set `providers.kubernetesIngressNGINX.httpEntryPoint` / `httpsEntryPoint` if you need explicit entryPoint selection. |
+| `ssl-protocols` / `ssl-ciphers` | [TLS options](../reference/routing-configuration/http/tls/tls-options.md) | Apply them globally through an entryPoint TLS option, or per Ingress via `traefik.ingress.kubernetes.io/router.tls.options`. |
+| `hsts`, `hsts-max-age`, `hsts-include-subdomains`, `hsts-preload` | [Headers middleware](../reference/routing-configuration/http/middlewares/headers.md) | Use `stsSeconds`, `stsIncludeSubdomains`, `stsPreload`, and `forceSTSHeader`. Attach the middleware on an entryPoint for a cluster-wide default. |
+| `use-proxy-protocol` | [EntryPoint `proxyProtocol` configuration](../reference/install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) | Configure it on every entryPoint that sits behind a load balancer speaking PROXY protocol. |
+| `access-log-path` | `accessLog.filePath` | Static configuration. |
+| `log-format-upstream` | `accessLog.format` | Use Traefik's built-in `common`, `genericCLF`, or `json` formats. Custom NGINX log format strings do not have a 1:1 equivalent. |
+
+### ConfigMap Keys Without a Direct Equivalent
+
+Some ingress-nginx ConfigMap keys are NGINX-specific and can be dropped during migration because Traefik does not expose raw NGINX internals.
+Common examples include:
+
+- worker tuning such as `worker-processes`, `worker-cpu-affinity`, and Lua shared dict settings
+- snippet-style keys such as `main-snippet`, `http-snippet`, `server-snippet`, `location-snippet`, and `stream-snippet`
+- custom NGINX log format templates beyond Traefik's built-in access log formats
+
+When you find one of these keys, translate the underlying intent rather than trying to copy the directive verbatim.
+
+### Reference Pages
+
+- [Kubernetes Ingress NGINX provider configuration](../reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md)
+- [Traefik TLS Options](../reference/routing-configuration/http/tls/tls-options.md)
+- [Traefik Headers Middleware](../reference/routing-configuration/http/middlewares/headers.md)
+- [Traefik EntryPoints configuration](../reference/install-configuration/entrypoints.md)
+- [ingress-nginx ConfigMap reference](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
 
 ---
 
@@ -311,7 +386,7 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 
     4. **Verify traffic flows through Traefik** - At this point, you can still rollback by removing the `pathOverride`
 
-    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-5-uninstall-nginx-ingress-controller)
+    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-4-uninstall-ingress-nginx-controller)
 
 ### Option B: External Load Balancer with Weighted Traffic
 
