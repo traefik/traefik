@@ -150,10 +150,11 @@ type TLSConfig struct {
 
 // ForwardedHeaders Trust client forwarding headers.
 type ForwardedHeaders struct {
-	Insecure               bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	TrustedIPs             []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
-	Connection             []string `description:"List of Connection headers that are allowed to pass through the middleware chain before being removed." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
-	NotAppendXForwardedFor bool     `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Insecure                   bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	TrustedIPs                 []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
+	Connection                 []string `description:"List of Connection headers that are allowed to pass through the middleware chain before being removed." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
+	NotAppendXForwardedFor     bool     `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	AddXForwardedSchemeHeaders bool     `description:"Add the X-Forwarded-Scheme and X-Scheme headers." json:"addXForwardedSchemeHeaders,omitempty" toml:"addXForwardedSchemeHeaders,omitempty" yaml:"addXForwardedSchemeHeaders,omitempty" export:"true"`
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration.

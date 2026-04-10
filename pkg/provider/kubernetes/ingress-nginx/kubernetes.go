@@ -1298,11 +1298,6 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingress.IngressConfig, rt, conf)
 	applyRedirect(routerKey, ingress.IngressConfig, rt, conf)
 
-	// Only injected into TLS routers when the ingress has a TLS section.
-	if rt.TLS != nil && len(ingress.Spec.TLS) > 0 {
-		applyXForwardedSchemeHeaders(routerKey, rt, conf)
-	}
-
 	if err := p.applyBasicAuthConfiguration(ingress.Namespace, routerKey, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth: %w", err)
 	}
@@ -1949,23 +1944,6 @@ func (p *Provider) applySSLRedirectConfiguration(ingress ingress, routerName str
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
 	// even if sslRedirect is enabled.
 	return false
-}
-
-// applyXForwardedSchemeHeaders injects X-Forwarded-Scheme and X-Scheme headers with the value
-// "https" into backend requests when TLS is terminating at Traefik.
-// This matches ingress-nginx behaviour and ensures apps like Spring Security can construct
-// correct HTTPS redirect URIs during OIDC/OAuth2 login.
-func applyXForwardedSchemeHeaders(routerName string, rt *dynamic.Router, conf *dynamic.Configuration) {
-	schemeHeadersMiddlewareName := routerName + "-scheme-headers"
-	conf.HTTP.Middlewares[schemeHeadersMiddlewareName] = &dynamic.Middleware{
-		Headers: &dynamic.Headers{
-			CustomRequestHeaders: map[string]string{
-				"X-Forwarded-Scheme": "https",
-				"X-Scheme":           "https",
-			},
-		},
-	}
-	rt.Middlewares = append(rt.Middlewares, schemeHeadersMiddlewareName)
 }
 
 // discoverCanaryBackends checks if the canary ingress is matching any of the existing ingress rules,

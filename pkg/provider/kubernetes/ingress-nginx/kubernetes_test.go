@@ -499,7 +499,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
-							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-tls-scheme-headers", "default-ingress-with-no-annotation-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-no-annotation-whoami-80",
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0": {
@@ -511,14 +511,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-no-annotation-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
-							},
-						},
 						"default-ingress-with-no-annotation-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -902,7 +894,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
-							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-tls-scheme-headers", "default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0": {
@@ -924,7 +916,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("withoutsslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
-							Middlewares: []string{"default-ingress-without-ssl-redirect-rule-0-path-0-tls-scheme-headers", "default-ingress-without-ssl-redirect-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-without-ssl-redirect-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0": {
@@ -944,22 +936,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-ssl-redirect-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
-							},
-						},
-						"default-ingress-without-ssl-redirect-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
-							},
-						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -4829,7 +4805,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-scheme-headers", "default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-secret-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-ingress-with-auth-tls-secret-default-ca-secret",
@@ -4844,14 +4820,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
-							},
-						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -4949,7 +4917,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-scheme-headers", "default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-verify-client-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-ingress-with-auth-tls-verify-client-default-ca-secret",
@@ -4964,14 +4932,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
-							},
-						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -6724,7 +6684,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-pass-certificate-to-upstream.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-scheme-headers", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-ingress-with-auth-tls-pass-certificate-to-upstream-default-ca-secret",
@@ -6739,14 +6699,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
-							},
-						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -8989,7 +8941,6 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-canary-middlewares-and-tls-whoami-80-wrr",
 							Middlewares: []string{
 								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root",
-								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-scheme-headers",
 								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{},
@@ -9001,7 +8952,6 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-canary-middlewares-and-tls-whoami-80-canary",
 							Middlewares: []string{
 								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root",
-								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-scheme-headers",
 								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{},
@@ -9018,14 +8968,6 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/$`,
 								Replacement: "$1/foo",
-							},
-						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry": {
@@ -9048,14 +8990,6 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/$`,
 								Replacement: "$1/foo",
-							},
-						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-scheme-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Forwarded-Scheme": "https",
-									"X-Scheme":           "https",
-								},
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry": {
