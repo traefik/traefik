@@ -137,8 +137,11 @@ func forwardedPort(req *http.Request) string {
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		for _, h := range xHeaders {
-			unsafeHeader(r.Header).Del(h)
+		// Strip X headers and their underscore variants.
+		for key := range r.Header {
+			if isXHeader(key) {
+				delete(r.Header, key)
+			}
 		}
 	}
 
@@ -219,7 +222,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
 				// A proxy or gateway MUST ... and then remove the Connection header field itself
 				// (or replace it with the intermediary's own connection options for the forwarded message).
-				if slices.Contains(xHeaders, key) {
+				if isXHeader(key) {
 					continue
 				}
 
@@ -245,6 +248,26 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 	}
 
 	unsafeHeader(req.Header).Del(connection)
+}
+
+// isXHeader reports whether the header key matches an X-Forwarded header managed by Traefik.
+// It also considers underscore variants of those headers.
+func isXHeader(key string) bool {
+	if len(key) == 0 {
+		return false
+	}
+
+	if slices.Contains(xHeaders, key) {
+		return true
+	}
+
+	// The header key is assumed to be canonicalized by the go server, so we can only check for the "X" prefix.
+	if key[0] == 'X' && strings.Contains(key, "_") {
+		normalized := http.CanonicalHeaderKey(strings.ReplaceAll(key, "_", "-"))
+		return slices.Contains(xHeaders, normalized)
+	}
+
+	return false
 }
 
 // unsafeHeader allows to manage Header values.
