@@ -11,8 +11,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // ConfigurationWatcher watches configuration changes.
@@ -121,7 +119,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 					continue
 				}
 
-				if isEmptyConfiguration(configMsg.Configuration) {
+				if configMsg.Configuration.IsEmpty() {
 					logger.Debug().Msg("Skipping empty configuration")
 					continue
 				}
@@ -190,68 +188,17 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 	if logger.GetLevel() > zerolog.DebugLevel {
 		return
 	}
-
-	copyConf := configMsg.Configuration.DeepCopy()
-	if copyConf.TLS != nil {
-		copyConf.TLS.Certificates = nil
-
-		if copyConf.TLS.Options != nil {
-			cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
-			for name, option := range copyConf.TLS.Options {
-				option.ClientAuth.CAFiles = []types.FileOrContent{}
-				cleanedOptions[name] = option
-			}
-
-			copyConf.TLS.Options = cleanedOptions
-		}
-
-		for k := range copyConf.TLS.Stores {
-			st := copyConf.TLS.Stores[k]
-			st.DefaultCertificate = nil
-			copyConf.TLS.Stores[k] = st
-		}
-	}
-
-	if copyConf.HTTP != nil {
-		for _, transport := range copyConf.HTTP.ServersTransports {
-			transport.Certificates = tls.Certificates{}
-			transport.RootCAs = []types.FileOrContent{}
-		}
-	}
-
-	if copyConf.TCP != nil {
-		for _, transport := range copyConf.TCP.ServersTransports {
-			if transport.TLS != nil {
-				transport.TLS.Certificates = tls.Certificates{}
-				transport.TLS.RootCAs = []types.FileOrContent{}
-			}
-		}
-	}
-
-	jsonConf, err := json.Marshal(copyConf)
+	sanitizedConfiguration := configMsg.Configuration.GetSanitizedConfigurationTLS()
+	summary := configMsg.Configuration.SummaryTLS()
+	jsonConf, err := json.Marshal(sanitizedConfiguration)
 	if err != nil {
 		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
-		logger.Debug().Msgf("Configuration received: [struct] %#v", copyConf)
-	} else {
-		logger.Debug().RawJSON("config", jsonConf).Msg("Configuration received")
+		logger.Debug().Msgf("Configuration received: [struct] %#v", sanitizedConfiguration)
+		return
 	}
-}
-
-func isEmptyConfiguration(conf *dynamic.Configuration) bool {
-	if conf.TCP == nil {
-		conf.TCP = &dynamic.TCPConfiguration{}
+	evt := logger.Debug().RawJSON("config", jsonConf)
+	if summary != nil {
+		evt = evt.Any("tls_summary", summary)
 	}
-	if conf.HTTP == nil {
-		conf.HTTP = &dynamic.HTTPConfiguration{}
-	}
-	if conf.UDP == nil {
-		conf.UDP = &dynamic.UDPConfiguration{}
-	}
-
-	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
-	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
-	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
-	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
-
-	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
+	evt.Msg("Configuration received (TLS redacted)")
 }
