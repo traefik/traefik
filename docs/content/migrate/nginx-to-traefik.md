@@ -92,6 +92,12 @@ For a complete list of supported annotations and behavioral differences, see the
 
     The Kubernetes Ingress NGINX provider requires **Traefik v3.6.2 or later**.
 
+!!! info "Legacy Scheme Headers"
+
+    If your applications still depend on ingress-nginx's legacy `X-Forwarded-Scheme` or `X-Scheme` headers,
+    enable `entryPoints.<name>.forwardedHeaders.addXForwardedSchemeHeaders=true` on the entrypoints that receive this traffic.
+    This keeps `X-Forwarded-Proto` unchanged and restores the compatibility headers at the entrypoint level for every provider.
+
 ---
 
 ## Prerequisites

@@ -15,6 +15,7 @@ import (
 
 const (
 	xForwardedProto             = "X-Forwarded-Proto"
+	xForwardedScheme            = "X-Forwarded-Scheme"
 	xForwardedFor               = "X-Forwarded-For"
 	xForwardedHost              = "X-Forwarded-Host"
 	xForwardedPort              = "X-Forwarded-Port"
@@ -24,6 +25,7 @@ const (
 	xForwardedPrefix            = "X-Forwarded-Prefix"
 	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
 	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
+	xScheme                     = "X-Scheme"
 	xRealIP                     = "X-Real-Ip"
 	connection                  = "Connection"
 	upgrade                     = "Upgrade"
@@ -31,6 +33,7 @@ const (
 
 var xHeaders = []string{
 	xForwardedProto,
+	xForwardedScheme,
 	xForwardedFor,
 	xForwardedHost,
 	xForwardedPort,
@@ -40,6 +43,7 @@ var xHeaders = []string{
 	xForwardedPrefix,
 	xForwardedTLSClientCert,
 	xForwardedTLSClientCertInfo,
+	xScheme,
 	xRealIP,
 }
 
@@ -48,17 +52,18 @@ var xHeaders = []string{
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure               bool
-	trustedIPs             []string
-	connectionHeaders      []string
-	notAppendXForwardedFor bool
-	ipChecker              *ip.Checker
-	next                   http.Handler
-	hostname               string
+	insecure                   bool
+	trustedIPs                 []string
+	connectionHeaders          []string
+	notAppendXForwardedFor     bool
+	addXForwardedSchemeHeaders bool
+	ipChecker                  *ip.Checker
+	next                       http.Handler
+	hostname                   string
 }
 
 // NewXForwarded creates a new XForwarded.
-func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, notAppendXForwardedFor bool, next http.Handler) (*XForwarded, error) {
+func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, notAppendXForwardedFor bool, addXForwardedSchemeHeaders bool, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
 	if len(trustedIPs) > 0 {
 		var err error
@@ -79,13 +84,14 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}
 
 	return &XForwarded{
-		insecure:               insecure,
-		trustedIPs:             trustedIPs,
-		connectionHeaders:      canonicalConnectionHeaders,
-		notAppendXForwardedFor: notAppendXForwardedFor,
-		ipChecker:              ipChecker,
-		next:                   next,
-		hostname:               hostname,
+		insecure:                   insecure,
+		trustedIPs:                 trustedIPs,
+		connectionHeaders:          canonicalConnectionHeaders,
+		notAppendXForwardedFor:     notAppendXForwardedFor,
+		addXForwardedSchemeHeaders: addXForwardedSchemeHeaders,
+		ipChecker:                  ipChecker,
+		next:                       next,
+		hostname:                   hostname,
 	}, nil
 }
 
@@ -194,6 +200,14 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 	if xfPort := unsafeHeader(outreq.Header).Get(xForwardedPort); xfPort == "" {
 		unsafeHeader(outreq.Header).Set(xForwardedPort, forwardedPort(outreq))
+	}
+
+	if x.addXForwardedSchemeHeaders {
+		scheme := unsafeHeader(outreq.Header).Get(xForwardedProto)
+		if scheme != "" {
+			unsafeHeader(outreq.Header).Set(xForwardedScheme, scheme)
+			unsafeHeader(outreq.Header).Set(xScheme, scheme)
+		}
 	}
 
 	if xfHost := unsafeHeader(outreq.Header).Get(xForwardedHost); xfHost == "" && outreq.Host != "" {

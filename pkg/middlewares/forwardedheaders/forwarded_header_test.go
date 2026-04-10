@@ -17,6 +17,7 @@ func TestServeHTTP(t *testing.T) {
 		insecure          bool
 		trustedIps        []string
 		connectionHeaders []string
+		addSchemeHeaders  bool
 		incomingHeaders   map[string][]string
 		remoteAddr        string
 		expectedHeaders   map[string]string
@@ -217,11 +218,31 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc:             "xForwardedScheme headers with tls",
+			tls:              true,
+			addSchemeHeaders: true,
+			expectedHeaders: map[string]string{
+				xForwardedProto:  "https",
+				xForwardedScheme: "https",
+				xScheme:          "https",
+			},
+		},
+		{
 			desc:      "xForwardedProto with websocket",
 			tls:       false,
 			websocket: true,
 			expectedHeaders: map[string]string{
 				xForwardedProto: "ws",
+			},
+		},
+		{
+			desc:             "xForwardedScheme headers with websocket",
+			websocket:        true,
+			addSchemeHeaders: true,
+			expectedHeaders: map[string]string{
+				xForwardedProto:  "ws",
+				xForwardedScheme: "ws",
+				xScheme:          "ws",
 			},
 		},
 		{
@@ -233,6 +254,17 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc:             "xForwardedScheme headers with websocket and tls",
+			tls:              true,
+			websocket:        true,
+			addSchemeHeaders: true,
+			expectedHeaders: map[string]string{
+				xForwardedProto:  "wss",
+				xForwardedScheme: "wss",
+				xScheme:          "wss",
+			},
+		},
+		{
 			desc:      "xForwardedProto with websocket and tls and already x-forwarded-proto with wss",
 			tls:       true,
 			websocket: true,
@@ -241,6 +273,21 @@ func TestServeHTTP(t *testing.T) {
 			},
 			expectedHeaders: map[string]string{
 				xForwardedProto: "wss",
+			},
+		},
+		{
+			desc:             "xForwardedScheme headers overwrite trusted values",
+			insecure:         true,
+			addSchemeHeaders: true,
+			incomingHeaders: map[string][]string{
+				xForwardedProto:  {"https"},
+				xForwardedScheme: {"external-https"},
+				xScheme:          {"external-https"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:  "https",
+				xForwardedScheme: "https",
+				xScheme:          "https",
 			},
 		},
 		{
@@ -613,7 +660,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders, false,
+			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders, false, test.addSchemeHeaders,
 				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
 
@@ -752,7 +799,7 @@ func TestConnection(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, false, nil)
+			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, false, false, nil)
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)
