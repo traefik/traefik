@@ -47,13 +47,21 @@
 				"web"
 			],
 			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"rule": "Host(\"whoami.test.https\") \u0026\u0026 PathPrefix(\"/whoami\")",
 			"priority": 50,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "test.ingress.https",
+						"serviceName": "whoami",
+						"servicePort": "http"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -65,13 +73,21 @@
 				"web"
 			],
 			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"rule": "Host(\"whoami.test\") \u0026\u0026 PathPrefix(\"/whoami\")",
 			"priority": 44,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "test.ingress",
+						"serviceName": "whoami",
+						"servicePort": "http"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -83,13 +99,21 @@
 				"web"
 			],
 			"service": "default-whoami-80",
-			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
+			"rule": "Host(\"whoami.test.drop\") \u0026\u0026 PathPrefix(\"/drop\")",
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "whoami-drop-route",
+						"serviceName": "whoami",
+						"servicePort": "80"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -101,13 +125,21 @@
 				"web"
 			],
 			"service": "default-whoami-80",
-			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
+			"rule": "Host(\"whoami.test.keep\") \u0026\u0026 PathPrefix(\"/keep\")",
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "whoami-keep-route",
+						"serviceName": "whoami",
+						"servicePort": "80"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [

@@ -168,11 +168,32 @@ type RouterObservabilityConfig struct {
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
 	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+
+	// Metadata holds the metadata for this router.
+	// Metadata cannot be user-defined for now.
+	Metadata *ObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
 	r.TraceVerbosity = otypes.MinimalVerbosity
+}
+
+// +k8s:deepcopy-gen=true
+
+// ObservabilityMetadata holds the observability metadata configuration.
+type ObservabilityMetadata struct {
+	Ingress *KubernetesIngressMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// KubernetesIngressMetadata holds the Kubernetes Ingress metadata.
+type KubernetesIngressMetadata struct {
+	Namespace   string `json:"namespace,omitempty"`
+	IngressName string `json:"ingressName,omitempty"`
+	ServiceName string `json:"serviceName,omitempty"`
+	ServicePort string `json:"servicePort,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -373,6 +394,10 @@ type ServersLoadBalancer struct {
 	PassHostHeader     *bool                     `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
 	ResponseForwarding *ResponseForwarding       `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
+	// NginxUpstreamHashBy enables the customization of the hashing key.
+	// It can be set to a specific text value, a NGINX variable or a combination of both.
+	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // Merge merges the other load balancer into this one.
@@ -534,6 +559,10 @@ type ForwardingTimeouts struct {
 	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself." json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
 	ReadIdleTimeout       ptypes.Duration `description:"The timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection. If zero, no health check is performed." json:"readIdleTimeout,omitempty" toml:"readIdleTimeout,omitempty" yaml:"readIdleTimeout,omitempty" export:"true"`
 	PingTimeout           ptypes.Duration `description:"The timeout after which the HTTP/2 connection will be closed if a response to ping is not received." json:"pingTimeout,omitempty" toml:"pingTimeout,omitempty" yaml:"pingTimeout,omitempty" export:"true"`
+
+	// related to NGINX provider
+	ReadTimeout  ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
+	WriteTimeout ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
 }
 
 // SetDefaults sets the default values.

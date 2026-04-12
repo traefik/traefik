@@ -13,7 +13,7 @@ Configuration in Traefik can refer to two different things:
 - The install (startup) configuration (formerly known as the _static configuration_)
 - The routing configuration (formerly known as the _dynamic configuration_)
 
-Elements in the _install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
+Elements in the _install configuration_ set up connections to [providers](../reference/install-configuration/providers/overview.md) and define the [entrypoints](../reference/install-configuration/entrypoints.md) Traefik will listen to (these elements don't change often).
 
 The _routing configuration_ contains everything that defines how the requests are handled by your system.
 This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.
@@ -24,13 +24,13 @@ This configuration can change and is seamlessly hot-reloaded, without any reques
 
 ## The Routing Configuration
 
-Traefik gets its _routing configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
+Traefik gets its _routing configuration_ from [providers](../reference/install-configuration/providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
 
-Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../routing/overview.md).
+Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../reference/routing-configuration/dynamic-configuration-methods.md).
 
 !!! info ""
 
-    In the [Quick Start example](../getting-started/docker.md), the whoami application routing configuration comes from docker in the form of a label attached to the whoami container.
+    In the [Quick Start example](./docker.md), the whoami application routing configuration comes from docker in the form of a label attached to the whoami container.
 
 !!! info "HTTPS Certificates also belong to the routing configuration."
 
@@ -77,7 +77,7 @@ traefik --help
 # or
 
 docker run traefik[:version] --help
-# ex: docker run traefik:v3.6 --help
+# ex: docker run traefik:v3.7 --help
 ```
 
 Check the [CLI reference](../reference/install-configuration/configuration-options.md "Link to CLI reference overview") for an overview about all available arguments.
@@ -90,6 +90,6 @@ All available environment variables can be found in the [install configuration e
 
 All the configuration options are documented in their related section.
 
-You can browse the available features in the menu, the [providers](../providers/overview.md), or the [routing section](../routing/overview.md) to see them in action.
+You can browse the available features in the menu, the [providers](../reference/install-configuration/providers/overview.md), or the [routing section](../reference/routing-configuration/dynamic-configuration-methods.md) to see them in action.
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -37,8 +37,8 @@ entryPoints:
   [entryPoints.web]
     address = ":80"
     [entryPoints.web.http]
-      [entryPoints.web.http.redirections]
-        entryPoint = "websecure"
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
         scheme = "https"
         permanent = true
     [entryPoints.web.observability]
@@ -48,10 +48,9 @@ entryPoints:
       
   [entryPoints.websecure]
     address = ":443"
-    [entryPoints.websecure.tls]
-    [entryPoints.websecure.middlewares]
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+    [entryPoints.websecure.http]
+      middlewares = ["auth@kubernetescrd", "strip@kubernetescrd"]
+      [entryPoints.websecure.http.tls]
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -67,9 +66,9 @@ ports:
       - auth@kubernetescrd
       - strip@kubernetescrd
 additionalArguments:
-  - --entryPoints.web.http.redirections.to=websecure
-  - --entryPoints.web.http.redirections.scheme=https
-  - --entryPoints.web.http.redirections.permanent=true
+  - --entryPoints.web.http.redirections.entryPoint.to=websecure
+  - --entryPoints.web.http.redirections.entryPoint.scheme=https
+  - --entryPoints.web.http.redirections.entryPoint.permanent=true
   - --entryPoints.web.observability.accessLogs=false
   - --entryPoints.web.observability.metrics=false
   - --entryPoints.web.observability.tracing=false
@@ -88,13 +87,15 @@ additionalArguments:
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------|:---------|
 | <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Define the port, and optionally the hostname, on which to listen for incoming connections and packets.<br /> It also defines the protocol to use (TCP or UDP).<br /> If no protocol is specified, the default is TCP. The format is:`[host]:port[/tcp\|/udp]                                                                                                                                                                                                                                                                                                                                                                                                                        | -                       | Yes      |
 | <a id="opt-asDefault" href="#opt-asDefault" title="#opt-asDefault">`asDefault`</a> | Mark the `entryPoint` to be in the list of default `entryPoints`.<br /> `entryPoints`in this list are used (by default) on HTTP and TCP routers that do not define their own `entryPoints` option.<br /> More information [here](#asdefault).                                                                                                                                                                                                                                                                                                                                                                                                                                       | false                   | No       |
-| <a id="opt-forwardedHeaders-trustedIPs" href="#opt-forwardedHeaders-trustedIPs" title="#opt-forwardedHeaders-trustedIPs">`forwardedHeaders.trustedIPs`</a> | Set the IPs or CIDR from where Traefik trusts the forwarded headers information (`X-Forwarded-*`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | -                       | No       |
-| <a id="opt-forwardedHeaders-insecure" href="#opt-forwardedHeaders-insecure" title="#opt-forwardedHeaders-insecure">`forwardedHeaders.insecure`</a> | Set the insecure mode to always trust the forwarded headers information (`X-Forwarded-*`).<br />We recommend to use this option only for tests purposes, not in production.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
+| <a id="opt-allowACMEByPass" href="#opt-allowACMEByPass" title="#opt-allowACMEByPass">`allowACMEByPass`</a> | Enables handling of ACME TLS and HTTP challenges with custom routers instead of the internal ACME router.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | false                   | No       |
+| <a id="opt-forwardedHeaders-connection" href="#opt-forwardedHeaders-connection" title="#opt-forwardedHeaders-connection">`forwardedHeaders.`<br />`connection`</a> | List of Connection headers that are allowed to pass through the middleware chain before being removed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
+| <a id="opt-forwardedHeaders-insecure" href="#opt-forwardedHeaders-insecure" title="#opt-forwardedHeaders-insecure">`forwardedHeaders.`<br />`insecure`</a> | Set the insecure mode to always trust the forwarded headers information (`X-Forwarded-*`).<br />We recommend to use this option only for tests purposes, not in production.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
+| <a id="opt-forwardedHeaders-trustedIPs" href="#opt-forwardedHeaders-trustedIPs" title="#opt-forwardedHeaders-trustedIPs">`forwardedHeaders.`<br />`trustedIPs`</a> | Set the IPs or CIDR from where Traefik trusts the forwarded headers information (`X-Forwarded-*`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | -                       | No       |
 | <a id="opt-forwardedHeaders-notAppendXForwardedFor" href="#opt-forwardedHeaders-notAppendXForwardedFor" title="#opt-forwardedHeaders-notAppendXForwardedFor">`forwardedHeaders.`<br />`notAppendXForwardedFor`</a> | When set to `true`, Traefik will not append the client's `RemoteAddr` to the `X-Forwarded-For` header. The existing header is preserved as-is. If no `X-Forwarded-For` header exists, none will be added.                                                                                                                                                                                                                                                                                                                                    | false                   | No       |
 | <a id="opt-http-redirections-entryPoint-to" href="#opt-http-redirections-entryPoint-to" title="#opt-http-redirections-entryPoint-to">`http.redirections.`<br />`entryPoint.to`</a> | The target element to enable (permanent) redirecting of all incoming requests on an entry point to another one. <br /> The target element can be an entry point name (ex: `websecure`), or a port (`:443`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | -                       | Yes      |
 | <a id="opt-http-redirections-entryPoint-scheme" href="#opt-http-redirections-entryPoint-scheme" title="#opt-http-redirections-entryPoint-scheme">`http.redirections.`<br />`entryPoint.scheme`</a> | The target scheme to use for (permanent) redirection of all incoming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | https                   | No       |
 | <a id="opt-http-redirections-entryPoint-permanent" href="#opt-http-redirections-entryPoint-permanent" title="#opt-http-redirections-entryPoint-permanent">`http.redirections.`<br />`entryPoint.permanent`</a> | Enable permanent redirecting of all incoming requests on an entry point to another one changing the scheme. <br /> The target element, it can be an entry point name (ex: `websecure`), or a port (`:443`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
-| <a id="opt-http-redirections-entryPoint-priority" href="#opt-http-redirections-entryPoint-priority" title="#opt-http-redirections-entryPoint-priority">`http.redirections.`<br />`entryPoint.priority`</a> | Default priority applied to the routers attached to the `entryPoint`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | MaxInt32-1 (2147483646) | No       |
+| <a id="opt-http-redirections-entryPoint-priority" href="#opt-http-redirections-entryPoint-priority" title="#opt-http-redirections-entryPoint-priority">`http.redirections.`<br />`entryPoint.priority`</a> | Default priority applied to the routers attached to the `entryPoint`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | MaxInt-1 (`2147483646` on 32-bit, `9223372036854775806` on 64-bit) | No       |
 | <a id="opt-http-encodedCharacters" href="#opt-http-encodedCharacters" title="#opt-http-encodedCharacters">`http.encodedCharacters`</a> | Defines which encoded characters are allowed in the request path. More information [here](#encoded-characters).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | false                   | No       |
 | <a id="opt-http-encodedCharacters-allowEncodedSlash" href="#opt-http-encodedCharacters-allowEncodedSlash" title="#opt-http-encodedCharacters-allowEncodedSlash">`http.encodedCharacters.`<br />`allowEncodedSlash`</a> | Defines whether requests with encoded slash characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | true                    | No       |
 | <a id="opt-http-encodedCharacters-allowEncodedBackSlash" href="#opt-http-encodedCharacters-allowEncodedBackSlash" title="#opt-http-encodedCharacters-allowEncodedBackSlash">`http.encodedCharacters.`<br />`allowEncodedBackSlash`</a> | Defines whether requests with encoded back slash characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true                    | No       |
@@ -104,23 +105,23 @@ additionalArguments:
 | <a id="opt-http-encodedCharacters-allowEncodedQuestionMark" href="#opt-http-encodedCharacters-allowEncodedQuestionMark" title="#opt-http-encodedCharacters-allowEncodedQuestionMark">`http.encodedCharacters.`<br />`allowEncodedQuestionMark`</a> | Defines whether requests with encoded question mark characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | true                    | No       |
 | <a id="opt-http-encodedCharacters-allowEncodedHash" href="#opt-http-encodedCharacters-allowEncodedHash" title="#opt-http-encodedCharacters-allowEncodedHash">`http.encodedCharacters.`<br />`allowEncodedHash`</a> | Defines whether requests with encoded hash characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | true                    | No       |
 | <a id="opt-http-encodeQuerySemicolons" href="#opt-http-encodeQuerySemicolons" title="#opt-http-encodeQuerySemicolons">`http.encodeQuerySemicolons`</a> | Enable query semicolons encoding. <br /> Use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Traefik. <br /> When using this option, the non-encoded semicolons characters in query will be transmitted encoded to the backend.<br /> More information [here](#encodequerysemicolons).                                                                                                                                                                                                                                                                                                                                               | false                   | No       |
-| <a id="opt-http-sanitizePath" href="#opt-http-sanitizePath" title="#opt-http-sanitizePath">`http.sanitizePath`</a> | Defines whether to enable the request path sanitization.<br /> More information [here](#sanitizepath).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | false                   | No       |
+| <a id="opt-http-sanitizePath" href="#opt-http-sanitizePath" title="#opt-http-sanitizePath">`http.sanitizePath`</a> | Defines whether to enable the request path sanitization.<br /> More information [here](#sanitizepath).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | true                    | No       |
 | <a id="opt-http-maxHeaderBytes" href="#opt-http-maxHeaderBytes" title="#opt-http-maxHeaderBytes">`http.maxHeaderBytes`</a> | Set the maximum size of request headers in bytes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | 1048576                 | No       |
 | <a id="opt-http-middlewares" href="#opt-http-middlewares" title="#opt-http-middlewares">`http.middlewares`</a> | Set the list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point. <br />More information [here](#httpmiddlewares).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | -                       | No       |
 | <a id="opt-http-tls" href="#opt-http-tls" title="#opt-http-tls">`http.tls`</a> | Enable TLS on every router attached to the `entryPoint`. <br /> If no certificate are set, a default self-signed certificate is generated by Traefik. <br /> We recommend to not use self signed certificates in production.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | -                       | No       |
-| <a id="opt-http-tls-options" href="#opt-http-tls-options" title="#opt-http-tls-options">`http.tls.options`</a> | Apply TLS options on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../../routing/providers/kubernetes-crd.md#kind-tlsoption).                                                                                                                                                                                                                                                                                                                                                                                                                                                   | -                       | No       |
-| <a id="opt-http-tls-certResolver" href="#opt-http-tls-certResolver" title="#opt-http-tls-certResolver">`http.tls.certResolver`</a> | Apply a certificate resolver on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../install-configuration/tls/certificate-resolvers/overview.md).                                                                                                                                                                                                                                                                                                                                                                                                                                  | -                       | No       |
-| <a id="opt-http2-maxConcurrentStreams" href="#opt-http2-maxConcurrentStreams" title="#opt-http2-maxConcurrentStreams">`http2.maxConcurrentStreams`</a> | Set the number of concurrent streams per connection that each client is allowed to initiate. <br /> The value must be greater than zero.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | 250                     | No       |
-| <a id="opt-http2-maxDecoderHeaderTableSize" href="#opt-http2-maxDecoderHeaderTableSize" title="#opt-http2-maxDecoderHeaderTableSize">`http2.maxDecoderHeaderTableSize`</a> | Set the maximum size of the decoder header compression table. This controls the maximum size of the header cache that the server is willing to maintain so the client does not need to repeatedly send the same header across requests in the same http2 connection. <br /> This value is only a maximum, the other end of the connection can use a lower size.                                                                                                                                                                                                                                                                                                                     | 4096                    | No       |
-| <a id="opt-http2-maxEncoderHeaderTableSize" href="#opt-http2-maxEncoderHeaderTableSize" title="#opt-http2-maxEncoderHeaderTableSize">`http2.maxEncoderHeaderTableSize`</a> | Set the maximum size of the encoder header compression table. This controls the maximum size of the header cache that the server is willing to maintain when sending headers to the client, allowing the server to reduce the amount of duplicate headers it is sending in responses. <br /> This value is only a maximum, the other end of the connection can use a lower size.                                                                                                                                                                                                                                                                                                    | 4096                    | No       |
+| <a id="opt-http-tls-options" href="#opt-http-tls-options" title="#opt-http-tls-options">`http.tls.options`</a> | Apply TLS options on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](../../reference/routing-configuration/http/tls/tls-options.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                   | -                       | No       |
+| <a id="opt-http-tls-certResolver" href="#opt-http-tls-certResolver" title="#opt-http-tls-certResolver">`http.tls.certResolver`</a> | Apply a certificate resolver on every router attached to the `entryPoint`. <br /> The TLS options can be overidden per router. <br /> More information in the [dedicated section](./tls/certificate-resolvers/overview.md).                                                                                                                                                                                                                                                                                                                                                                                                                                  | -                       | No       |
+| <a id="opt-http2-maxConcurrentStreams" href="#opt-http2-maxConcurrentStreams" title="#opt-http2-maxConcurrentStreams">`http2.`<br />`maxConcurrentStreams`</a> | Set the number of concurrent streams per connection that each client is allowed to initiate. <br /> The value must be greater than zero.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | 250                     | No       |
+| <a id="opt-http2-maxDecoderHeaderTableSize" href="#opt-http2-maxDecoderHeaderTableSize" title="#opt-http2-maxDecoderHeaderTableSize">`http2.`<br />`maxDecoderHeaderTableSize`</a> | Set the maximum size of the decoder header compression table. This controls the maximum size of the header cache that the server is willing to maintain so the client does not need to repeatedly send the same header across requests in the same http2 connection. <br /> This value is only a maximum, the other end of the connection can use a lower size.                                                                                                                                                                                                                                                                                                                     | 4096                    | No       |
+| <a id="opt-http2-maxEncoderHeaderTableSize" href="#opt-http2-maxEncoderHeaderTableSize" title="#opt-http2-maxEncoderHeaderTableSize">`http2.`<br />`maxEncoderHeaderTableSize`</a> | Set the maximum size of the encoder header compression table. This controls the maximum size of the header cache that the server is willing to maintain when sending headers to the client, allowing the server to reduce the amount of duplicate headers it is sending in responses. <br /> This value is only a maximum, the other end of the connection can use a lower size.                                                                                                                                                                                                                                                                                                    | 4096                    | No       |
 | <a id="opt-http3" href="#opt-http3" title="#opt-http3">`http3`</a> | Enable HTTP/3 protocol on the `entryPoint`. <br /> HTTP/3 requires a TCP `entryPoint`. as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP. In most scenarios, this `entryPoint` is the same as the one used for TLS traffic.<br /> More information [here](#http3).                                                                                                                                                                                                                                                                                                                                                                                         | -                       | No       |
 | <a id="opt-http3-advertisedPort" href="#opt-http3-advertisedPort" title="#opt-http3-advertisedPort">`http3.advertisedPort`</a> | Set the UDP port to advertise as the HTTP/3 authority. <br /> It defaults to the entryPoint's address port. <br /> It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Traefik is listening.                                                                                                                                                                                                                                                                                                                                                                                                            | -                       | No       |
-| <a id="opt-observability-accessLogs" href="#opt-observability-accessLogs" title="#opt-observability-accessLogs">`observability.accessLogs`</a> | Defines whether a router attached to this EntryPoint produces access-logs by default. Nonetheless, a router defining its own observability configuration will opt-out from this default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | true                    | No       |
-| <a id="opt-observability-metrics" href="#opt-observability-metrics" title="#opt-observability-metrics">`observability.metrics`</a> | Defines whether a router attached to this EntryPoint produces metrics by default. Nonetheless, a router defining its own observability configuration will opt-out from this default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true                    | No       |
-| <a id="opt-observability-tracing" href="#opt-observability-tracing" title="#opt-observability-tracing">`observability.tracing`</a> | Defines whether a router attached to this EntryPoint produces traces by default. Nonetheless, a router defining its own observability configuration will opt-out from this default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | true                    | No       |
-| <a id="opt-observability-traceVerbosity" href="#opt-observability-traceVerbosity" title="#opt-observability-traceVerbosity">`observability.traceVerbosity`</a> | Defines the tracing verbosity level for routers attached to this EntryPoint. Possible values: `minimal` (default), `detailed`. Routers can override this value in their own observability configuration. <br /> More information [here](#traceverbosity).                                                                                                                                                                                                                                                                                                                                                                                                                           | minimal                 | No       |
-| <a id="opt-proxyProtocol-trustedIPs" href="#opt-proxyProtocol-trustedIPs" title="#opt-proxyProtocol-trustedIPs">`proxyProtocol.trustedIPs`</a> | Enable PROXY protocol with Trusted IPs. <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br /> More information [here](#proxyprotocol-and-load-balancers).                                                                                                                                                                                               | -                       | No       |
-| <a id="opt-proxyProtocol-insecure" href="#opt-proxyProtocol-insecure" title="#opt-proxyProtocol-insecure">`proxyProtocol.insecure`</a> | Enable PROXY protocol trusting every incoming connection. <br /> Every remote client address will be replaced (`trustedIPs`) won't have any effect). <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br />We recommend to use this option only for tests purposes, not in production.<br /> More information [here](#proxyprotocol-and-load-balancers). | -                       | No       |
+| <a id="opt-observability-accessLogs" href="#opt-observability-accessLogs" title="#opt-observability-accessLogs">`observability.`<br />`accessLogs`</a> | Defines whether a router attached to this EntryPoint produces access-logs by default. Nonetheless, a router defining its own observability configuration will opt-out from this default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | true                    | No       |
+| <a id="opt-observability-metrics" href="#opt-observability-metrics" title="#opt-observability-metrics">`observability.`<br />`metrics`</a> | Defines whether a router attached to this EntryPoint produces metrics by default. Nonetheless, a router defining its own observability configuration will opt-out from this default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true                    | No       |
+| <a id="opt-observability-tracing" href="#opt-observability-tracing" title="#opt-observability-tracing">`observability.`<br />`tracing`</a> | Defines whether a router attached to this EntryPoint produces traces by default. Nonetheless, a router defining its own observability configuration will opt-out from this default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | true                    | No       |
+| <a id="opt-observability-traceVerbosity" href="#opt-observability-traceVerbosity" title="#opt-observability-traceVerbosity">`observability.`<br />`traceVerbosity`</a> | Defines the tracing verbosity level for routers attached to this EntryPoint. Possible values: `minimal` (default), `detailed`. Routers can override this value in their own observability configuration. <br /> More information [here](#traceverbosity).                                                                                                                                                                                                                                                                                                                                                                                                                           | minimal                 | No       |
+| <a id="opt-proxyProtocol-trustedIPs" href="#opt-proxyProtocol-trustedIPs" title="#opt-proxyProtocol-trustedIPs">`proxyProtocol.`<br />`trustedIPs`</a> | Enable PROXY protocol with Trusted IPs. <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br /> More information [here](#proxyprotocol-and-load-balancers).                                                                                                                                                                                               | -                       | No       |
+| <a id="opt-proxyProtocol-insecure" href="#opt-proxyProtocol-insecure" title="#opt-proxyProtocol-insecure">`proxyProtocol.`<br />`insecure`</a> | Enable PROXY protocol trusting every incoming connection. <br /> Every remote client address will be replaced (`trustedIPs`) won't have any effect). <br /> Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2. <br /> If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers. <br /> If the PROXY protocol header is passed, then the version is determined automatically.<br />We recommend to use this option only for tests purposes, not in production.<br /> More information [here](#proxyprotocol-and-load-balancers). | -                       | No       |
 | <a id="opt-reusePort" href="#opt-reusePort" title="#opt-reusePort">`reusePort`</a> | Enable `entryPoints` from the same or different processes listening on the same TCP/UDP port by utilizing the `SO_REUSEPORT` socket option. <br /> It also allows the kernel to act like a load balancer to distribute incoming connections between entry points.<br /> More information [here](#reuseport).                                                                                                                                                                                                                                                                                                                                                                        | false                   | No       |
 | <a id="opt-transport-respondingTimeouts-readTimeout" href="#opt-transport-respondingTimeouts-readTimeout" title="#opt-transport-respondingTimeouts-readTimeout">`transport.`<br />`respondingTimeouts.`<br />`readTimeout`</a> | Set the timeouts for incoming requests to the Traefik instance. This is the maximum duration for reading the entire request, including the body. Setting them has no effect for UDP `entryPoints`.<br /> If zero, no timeout exists. <br />Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).<br />If no units are provided, the value is parsed assuming seconds.                                                                                                                                                                                                                                | 60s (seconds)           | No       |
 | <a id="opt-transport-respondingTimeouts-writeTimeout" href="#opt-transport-respondingTimeouts-writeTimeout" title="#opt-transport-respondingTimeouts-writeTimeout">`transport.`<br />`respondingTimeouts.`<br />`writeTimeout`</a> | Maximum duration before timing out writes of the response. <br /> It covers the time from the end of the request header read to the end of the response write. <br /> If zero, no timeout exists. <br />Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).<br />If no units are provided, the value is parsed assuming seconds.                                                                                                                                                                                                                                                                   | 0s (seconds)            | No       |
@@ -146,16 +147,63 @@ The `asDefault` option has no effect on UDP entryPoints.
 When a UDP router does not define the entryPoints option, it is attached to all
 available UDP entryPoints.
 
+### allowACMEByPass
+
+By default, Traefik creates an internal router with the highest possible priority (`MaxInt`) to handle
+ACME HTTP and TLS challenges. This ensures that certificate challenges always succeed,
+but it also prevents any user-defined router from intercepting challenge requests on the same entrypoint.
+
+When `allowACMEByPass` is set to `true` on an entrypoint:
+
+- The internal ACME HTTP challenge router is created **without** an explicit high priority,
+  allowing user-defined routers to handle challenge requests instead.
+- The TLS-ALPN challenge passthrough is enabled on the entrypoint,
+  allowing user-defined TLS routers to handle TLS challenges.
+
+This is useful when you need custom handling of ACME challenges,
+for example when using a dedicated service to solve HTTP-01 or TLS-ALPN-01 challenges.
+
+!!! note
+
+    When no TLS challenge resolver is configured, `allowACMEByPass` is implicitly enabled
+    for TLS passthrough on all entrypoints.
+
+!!! note
+
+    When `allowACMEByPass` is enabled and the entrypoint has an HTTP redirect configured
+    (via `http.redirections.entryPoint`), the redirect router automatically excludes
+    the ACME challenge path (`/.well-known/acme-challenge/`).
+    This allows user-defined ACME challenge routers to handle challenge requests
+    without being overridden by the redirect.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  web:
+    address: ":80"
+    allowACMEByPass: true
+```
+
+```toml tab="File (TOML)"
+[entryPoints.web]
+  address = ":80"
+  allowACMEByPass = true
+```
+
+```bash tab="CLI"
+--entryPoints.web.address=:80
+--entryPoints.web.allowACMEByPass=true
+```
+
 ### http.middlewares
 
-- You can attach a list of [middlewares](../../middlewares/http/overview.md)
+- You can attach a list of [middlewares](../../reference/routing-configuration/http/middlewares/overview.md)
 to each entryPoint.
 - The middlewares will take effect only if the rule matches, and before forwarding
 the request to the service.
 - Middlewares are applied in the same order as their declaration.
 - Middlewares are applied by default to every router exposed through the EntryPoint
-(the Middlewares declared on the [IngressRoute](../../routing/routers/index.md#middlewares)
-or the [Ingress](../../routing/providers/kubernetes-ingress.md#on-ingress)
+(the Middlewares declared on the [IngressRoute](../../reference/routing-configuration/kubernetes/crd/http/ingressroute.md#middleware)
+or the [Ingress](../../reference/routing-configuration/kubernetes/ingress.md#on-ingress)
 are applied after the ones declared on the Entrypoint)
 - The option allows attaching a list of middleware using the format 
 `middlewarename@providername` as described in the example below:
@@ -233,7 +281,7 @@ By default, Traefik do not reject requests with path containing certain encoded 
     When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
     it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.
 
-Here is the list of the encoded characters that are rejected by default:
+Here is the list of the encoded characters that are allowed by default:
 
 | Encoded Character                                                                  | Character               |
 |------------------------------------------------------------------------------------|-------------------------|
@@ -244,6 +292,105 @@ Here is the list of the encoded characters that are rejected by default:
 | <a id="opt-25" href="#opt-25" title="#opt-25">`%25`</a> | `%` (percent)           |
 | <a id="opt-3f-or-3F" href="#opt-3f-or-3F" title="#opt-3f-or-3F">`%3f` or `%3F`</a> | `?` (question mark)     |
 | <a id="opt-23" href="#opt-23" title="#opt-23">`%23`</a> | `#` (hash)              |
+
+
+### Forwarded Headers
+
+You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
+
+??? info "`forwardedHeaders.trustedIPs`"
+
+    Trusting Forwarded Headers from specific IPs.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        forwardedHeaders:
+          trustedIPs:
+            - "127.0.0.1/32"
+            - "192.168.1.7"
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.forwardedHeaders]
+          trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.forwardedHeaders.trustedIPs=127.0.0.1/32,192.168.1.7
+    ```
+
+??? info "`forwardedHeaders.insecure`"
+
+    Insecure Mode (Always Trusting Forwarded Headers).
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        forwardedHeaders:
+          insecure: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.forwardedHeaders]
+          insecure = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.forwardedHeaders.insecure
+    ```
+
+??? info "`forwardedHeaders.connection`"
+    
+    As per RFC7230, Traefik respects the Connection options from the client request.
+    By doing so, it removes any header field(s) listed in the request Connection header and the Connection header field itself when empty.
+    The removal happens as soon as the request is handled by Traefik,
+    thus the removed headers are not available when the request passes through the middleware chain.
+    The `connection` option lists the Connection headers allowed to passthrough the middleware chain before their removal.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        forwardedHeaders:
+          connection:
+            - foobar
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.forwardedHeaders]
+          connection = ["foobar"]
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.forwardedHeaders.connection=foobar
+    ```
 
 ### HTTP3
 

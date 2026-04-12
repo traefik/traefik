@@ -16,7 +16,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -56,6 +55,7 @@ type forwardAuth struct {
 	client                   http.Client
 	trustForwardHeader       bool
 	authRequestHeaders       []string
+	maxResponseBodySize      int64
 	addAuthCookiesToResponse map[string]struct{}
 	headerField              string
 	forwardBody              bool
@@ -63,7 +63,6 @@ type forwardAuth struct {
 	preserveLocationHeader   bool
 	preserveRequestMethod    bool
 	authSigninURL            string
-	interpolate              bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -90,13 +89,19 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		preserveLocationHeader:   config.PreserveLocationHeader,
 		preserveRequestMethod:    config.PreserveRequestMethod,
 		authSigninURL:            config.AuthSigninURL,
-		interpolate:              config.Interpolate,
 	}
 
 	if config.MaxBodySize != nil {
 		fa.maxBodySize = *config.MaxBodySize
 	} else if fa.forwardBody {
 		logger.Warn().Msgf("ForwardAuth 'maxBodySize' is not configured with 'forwardBody: true', allowing unlimited request body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
+	}
+
+	if config.MaxResponseBodySize != nil {
+		fa.maxResponseBodySize = *config.MaxResponseBodySize
+	} else {
+		fa.maxResponseBodySize = -1
+		logger.Warn().Msg("ForwardAuth 'maxResponseBodySize' is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	// Ensure our request client does not follow redirects
@@ -147,20 +152,15 @@ func (fa *forwardAuth) GetTracingInformation() (string, string) {
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	address := fa.address
-	if fa.interpolate {
-		address = ingressnginx.ReplaceVariables(address, req)
-	}
-
 	forwardReqMethod := http.MethodGet
 	if fa.preserveRequestMethod {
 		forwardReqMethod = req.Method
 	}
 
-	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, address, nil)
+	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, fa.address, nil)
 	if err != nil {
-		logger.Debug().Err(err).Msgf("Error calling %s", address)
-		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", address, err)
+		logger.Debug().Err(err).Msgf("Error calling %s", fa.address)
+		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -207,8 +207,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		logger.Error().Err(forwardErr).Msgf("Error calling %s", address)
-		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", address, forwardErr)
+		logger.Error().Err(forwardErr).Msgf("Error calling %s", fa.address)
+		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
 		statusCode := http.StatusInternalServerError
 		if errors.Is(forwardErr, context.Canceled) {
@@ -220,10 +220,17 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer forwardResponse.Body.Close()
 
-	body, readError := io.ReadAll(forwardResponse.Body)
+	body, readError := fa.readResponseBodyBytes(forwardResponse)
 	if readError != nil {
-		logger.Debug().Err(readError).Msgf("Error reading body %s", address)
-		observability.SetStatusErrorf(req.Context(), "Error reading body %s. Cause: %s", address, readError)
+		if errors.Is(readError, errResponseBodyTooLarge) {
+			logger.Debug().Msgf("Response body is too large, maxResponseBodySize: %d", fa.maxResponseBodySize)
+
+			observability.SetStatusErrorf(req.Context(), "Response body is too large, maxResponseBodySize: %d", fa.maxResponseBodySize)
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		logger.Debug().Err(readError).Msgf("Error reading body %s", fa.address)
+		observability.SetStatusErrorf(req.Context(), "Error reading body %s. Cause: %s", fa.address, readError)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -248,31 +255,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if fa.authSigninURL != "" && forwardResponse.StatusCode == http.StatusUnauthorized {
 		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
 
-		signinURL := fa.authSigninURL
-		if fa.interpolate {
-			// If the signin URL doesn't contain "rd=" parameter,
-			// add it with the original request URL to match the NGINX behavior.
-			if !strings.Contains(signinURL, "rd=") {
-				suffix := "rd=$scheme://$host$escaped_request_uri"
-				if !strings.Contains(signinURL, "?") {
-					signinURL += "?" + suffix
-				} else {
-					signinURL += "&" + suffix
-				}
-			}
-
-			signinURL = ingressnginx.ReplaceVariables(signinURL, req)
-		}
-
 		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
-		http.Redirect(rw, req, signinURL, http.StatusFound)
+		http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
 		return
 	}
 
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
-		logger.Debug().Msgf("Remote error %s. StatusCode: %d", address, forwardResponse.StatusCode)
+		logger.Debug().Msgf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
@@ -280,8 +271,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		redirectURL, err := fa.redirectURL(forwardResponse)
 		if err != nil {
 			if !errors.Is(err, http.ErrNoLocation) {
-				logger.Debug().Err(err).Msgf("Error reading response location header %s", address)
-				observability.SetStatusErrorf(req.Context(), "Error reading response location header %s. Cause: %s", address, err)
+				logger.Debug().Err(err).Msgf("Error reading response location header %s", fa.address)
+				observability.SetStatusErrorf(req.Context(), "Error reading response location header %s. Cause: %s", fa.address, err)
 
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
@@ -387,6 +378,27 @@ func (fa *forwardAuth) readBodyBytes(req *http.Request) ([]byte, error) {
 		return body[:n], nil
 	}
 	return nil, errBodyTooLarge
+}
+
+var errResponseBodyTooLarge = errors.New("response body too large")
+
+func (fa *forwardAuth) readResponseBodyBytes(res *http.Response) ([]byte, error) {
+	if fa.maxResponseBodySize < 0 {
+		return io.ReadAll(res.Body)
+	}
+
+	body := make([]byte, fa.maxResponseBodySize+1)
+	n, err := io.ReadFull(res.Body, body)
+	if errors.Is(err, io.EOF) {
+		return nil, nil
+	}
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, fmt.Errorf("reading response body bytes: %w", err)
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return body[:n], nil
+	}
+	return nil, errResponseBodyTooLarge
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {

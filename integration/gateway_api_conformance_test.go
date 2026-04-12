@@ -80,7 +80,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 
 	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.4.0.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.5.1.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),

@@ -585,38 +585,55 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || caCertRef.Kind != "ConfigMap" {
+		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != "ConfigMap" && caCertRef.Kind != "Secret") {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps are supported",
+				Message:            "Only ConfigMaps and Secrets are supported",
 			}
 		}
 
-		configMap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
-		if err != nil {
+		var caCRT string
+		switch caCertRef.Kind {
+		case "ConfigMap":
+			configmap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
+				}
+			}
+			caCRT = configmap.Data["ca.crt"]
+		case "Secret":
+			secret, err := p.client.GetSecret(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting secret %s/%s: %s", namespace, string(caCertRef.Name), err),
+				}
+			}
+			caCRT = string(secret.Data["ca.crt"])
+		}
+
+		if caCRT == "" {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-				Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
-			}
-		}
-
-		caCRT, ok := configMap.Data["ca.crt"]
-		if !ok {
-			return nil, metav1.Condition{
-				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: policy.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-				Message:            fmt.Sprintf("configmap %s/%s does not have a ca.crt", namespace, string(caCertRef.Name)),
+				Message:            fmt.Sprintf("%s %s/%s does not have a ca.crt", caCertRef.Kind, namespace, string(caCertRef.Name)),
 			}
 		}
 
@@ -645,12 +662,12 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 
 		wildcard := strings.Count(host, "*")
 		if wildcard == 0 {
-			rules = append(rules, fmt.Sprintf("Host(`%s`)", host))
+			rules = append(rules, fmt.Sprintf("Host(%q)", host))
 			continue
 		}
 
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
-		rules = append(rules, fmt.Sprintf("HostRegexp(`^%s$`)", host))
+		rules = append(rules, fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host)))
 	}
 
 	switch len(rules) {
@@ -688,7 +705,7 @@ func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (s
 	priority += pathPriority
 
 	if match.Method != nil {
-		matchRules = append(matchRules, fmt.Sprintf("Method(`%s`)", *match.Method))
+		matchRules = append(matchRules, fmt.Sprintf("Method(%q)", *match.Method))
 		priority += 1000
 	}
 
@@ -719,23 +736,23 @@ func buildPathRule(pathMatch gatev1.HTTPPathMatch) (string, int) {
 
 	switch pathType {
 	case gatev1.PathMatchExact:
-		return fmt.Sprintf("Path(`%s`)", pathValue), 100000
+		return fmt.Sprintf("Path(%q)", pathValue), 100000
 
 	case gatev1.PathMatchPathPrefix:
 		// PathPrefix(`/`) rule is a catch-all,
 		// here we ensure it would be evaluated last.
 		if pathValue == "/" {
-			return "PathPrefix(`/`)", 1
+			return `PathPrefix("/")`, 1
 		}
 
 		pv := strings.TrimSuffix(pathValue, "/")
-		return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", pv), 10000 + len(pathValue)*100
+		return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", pv, fmt.Sprintf("%s/", pv)), 10000 + len(pathValue)*100
 
 	case gatev1.PathMatchRegularExpression:
-		return fmt.Sprintf("PathRegexp(`%s`)", pathValue), 10000 + len(pathValue)*100
+		return fmt.Sprintf("PathRegexp(%q)", pathValue), 10000 + len(pathValue)*100
 
 	default:
-		return "PathPrefix(`/`)", 1
+		return `PathPrefix("/")`, 1
 	}
 }
 
@@ -748,9 +765,9 @@ func buildHeaderRules(headers []gatev1.HTTPHeaderMatch) ([]string, int) {
 		typ := ptr.Deref(header.Type, gatev1.HeaderMatchExact)
 		switch typ {
 		case gatev1.HeaderMatchExact:
-			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
+			rules = append(rules, fmt.Sprintf("Header(%q,%q)", header.Name, header.Value))
 		case gatev1.HeaderMatchRegularExpression:
-			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
+			rules = append(rules, fmt.Sprintf("HeaderRegexp(%q,%q)", header.Name, header.Value))
 		}
 		priority += 100
 	}
@@ -767,9 +784,9 @@ func buildQueryParamRules(queryParams []gatev1.HTTPQueryParamMatch) ([]string, i
 		typ := ptr.Deref(qp.Type, gatev1.QueryParamMatchExact)
 		switch typ {
 		case gatev1.QueryParamMatchExact:
-			rules = append(rules, fmt.Sprintf("Query(`%s`,`%s`)", qp.Name, qp.Value))
+			rules = append(rules, fmt.Sprintf("Query(%q,%q)", qp.Name, qp.Value))
 		case gatev1.QueryParamMatchRegularExpression:
-			rules = append(rules, fmt.Sprintf("QueryRegexp(`%s`,`%s`)", qp.Name, qp.Value))
+			rules = append(rules, fmt.Sprintf("QueryRegexp(%q,%q)", qp.Name, qp.Value))
 		}
 		priority += 10
 	}

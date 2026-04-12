@@ -20,13 +20,13 @@ enabling seamless integration between Traefik's networking capabilities and Knat
 1. Install/update the Knative CRDs.
 
     ```bash
-    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.19.0/serving-crds.yaml
+    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.20.0/serving-crds.yaml
     ```
 
 2. Install the Knative Serving core components.
 
     ```bash
-    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.19.0/serving-core.yaml
+    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.20.0/serving-core.yaml
     ```
 
 3. Update the config-network configuration to use the Traefik ingress class.
@@ -50,7 +50,7 @@ enabling seamless integration between Traefik's networking capabilities and Knat
 5. Install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-knative-rbac.yml).
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
     ```
 
 ## Configuration Example

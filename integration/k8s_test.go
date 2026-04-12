@@ -7,12 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,6 +18,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
 )
@@ -27,7 +27,11 @@ import (
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
 
 // K8sSuite tests suite.
-type K8sSuite struct{ BaseSuite }
+type K8sSuite struct {
+	BaseSuite
+
+	k3sContainer *k3s.K3sContainer
+}
 
 func TestK8sSuite(t *testing.T) {
 	suite.Run(t, new(K8sSuite))
@@ -36,47 +40,45 @@ func TestK8sSuite(t *testing.T) {
 func (s *K8sSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
-	s.createComposeProject("k8s")
-	s.composeUp()
-
-	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
+	manifests, err := filepath.Glob("./fixtures/k8s/*.yml")
 	require.NoError(s.T(), err)
 
-	err = try.Do(60*time.Second, func() error {
-		_, err := os.Stat(abs)
-		return err
-	})
+	opts := make([]testcontainers.ContainerCustomizer, 0, len(manifests))
+	for _, m := range manifests {
+		opts = append(opts, k3s.WithManifest(m))
+	}
+
+	s.k3sContainer, err = k3s.Run(s.T().Context(), k3sImage, opts...)
 	require.NoError(s.T(), err)
 
-	data, err := os.ReadFile(abs)
+	kubeConfigYaml, err := s.k3sContainer.GetKubeConfig(s.T().Context())
 	require.NoError(s.T(), err)
 
-	content := strings.ReplaceAll(string(data), "https://server:6443", fmt.Sprintf("https://%s", net.JoinHostPort(s.getComposeServiceIP("server"), "6443")))
-
-	err = os.WriteFile(abs, []byte(content), 0o644)
+	kubeconfigPath := filepath.Join(s.T().TempDir(), "kubeconfig.yaml")
+	err = os.WriteFile(kubeconfigPath, kubeConfigYaml, 0o644)
 	require.NoError(s.T(), err)
 
-	err = os.Setenv("KUBECONFIG", abs)
+	err = os.Setenv("KUBECONFIG", kubeconfigPath)
 	require.NoError(s.T(), err)
 }
 
 func (s *K8sSuite) TearDownSuite() {
-	s.BaseSuite.TearDownSuite()
+	if s.k3sContainer != nil {
+		if s.T().Failed() || *showLog {
+			k3sLogs, err := s.k3sContainer.Logs(s.T().Context())
+			if err == nil {
+				if res, err := io.ReadAll(k3sLogs); err == nil {
+					s.T().Log(string(res))
+				}
+			}
+		}
 
-	generatedFiles := []string{
-		"./fixtures/k8s/config.skip/kubeconfig.yaml",
-		"./fixtures/k8s/config.skip/k3s.log",
-		"./fixtures/k8s/coredns.yaml",
-		"./fixtures/k8s/rolebindings.yaml",
-		"./fixtures/k8s/traefik.yaml",
-		"./fixtures/k8s/ccm.yaml",
-	}
-
-	for _, filename := range generatedFiles {
-		if err := os.Remove(filename); err != nil {
+		if err := s.k3sContainer.Terminate(s.T().Context()); err != nil {
 			log.Warn().Err(err).Send()
 		}
 	}
+
+	s.BaseSuite.TearDownSuite()
 }
 
 func (s *K8sSuite) TestIngressConfiguration() {
@@ -109,13 +111,13 @@ func (s *K8sSuite) TestGatewayConfiguration() {
 	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
 }
 
-func (s *K8sSuite) TestIngressclass() {
+func (s *K8sSuite) TestIngressClass() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
 
 	s.testConfiguration("testdata/rawdata-ingressclass.json", "8080")
 }
 
-func (s *K8sSuite) TestDisableIngressclassLookup() {
+func (s *K8sSuite) TestDisableIngressClassLookup() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
 
 	s.testConfiguration("testdata/rawdata-ingressclass-disabled.json", "8080")

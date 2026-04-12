@@ -32,7 +32,8 @@ import (
 )
 
 const (
-	providerName            = "knative"
+	// ProviderName is the Knative provider name.
+	ProviderName            = "knative"
 	traefikIngressClassName = "traefik.ingress.networking.knative.dev"
 )
 
@@ -61,7 +62,7 @@ type Provider struct {
 
 // Init the provider.
 func (p *Provider) Init() error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 
 	// Initializes Kubernetes client.
 	var err error
@@ -75,7 +76,7 @@ func (p *Provider) Init() error {
 
 // Provide allows the knative provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -117,7 +118,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  providerName,
+							ProviderName:  ProviderName,
 							Configuration: conf,
 						}
 					}
@@ -452,7 +453,7 @@ func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.Head
 	if len(hosts) > 0 {
 		var hostRules []string
 		for _, host := range hosts {
-			hostRules = append(hostRules, fmt.Sprintf("Host(`%v`)", host))
+			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", host))
 		}
 		operands = append(operands, fmt.Sprintf("(%s)", strings.Join(hostRules, " || ")))
 	}
@@ -463,13 +464,13 @@ func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.Head
 
 		var headerRules []string
 		for _, key := range headerKeys {
-			headerRules = append(headerRules, fmt.Sprintf("Header(`%s`,`%s`)", key, headers[key].Exact))
+			headerRules = append(headerRules, fmt.Sprintf("Header(%q,%q)", key, headers[key].Exact))
 		}
 		operands = append(operands, fmt.Sprintf("(%s)", strings.Join(headerRules, " && ")))
 	}
 
 	if len(path) > 0 {
-		operands = append(operands, fmt.Sprintf("PathPrefix(`%s`)", path))
+		operands = append(operands, fmt.Sprintf("PathPrefix(%q)", path))
 	}
 
 	return strings.Join(operands, " && ")
