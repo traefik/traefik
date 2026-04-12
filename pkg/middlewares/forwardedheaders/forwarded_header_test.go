@@ -583,6 +583,72 @@ func TestServeHTTP(t *testing.T) {
 				"Foo": "bar",
 			},
 		},
+		{
+			desc:       "Forwarded header generated from scratch (IPv4)",
+			insecure:   true,
+			remoteAddr: "192.168.1.5:4444",
+			incomingHeaders: map[string][]string{
+				xForwardedProto: {"https"},
+				xForwardedHost:  {"example.com"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "https",
+				xForwardedHost:  "example.com",
+				forwarded:       `for=192.168.1.5;proto=https;host="example.com"`,
+			},
+		},
+		{
+			desc:       "Forwarded header generated from scratch (IPv6)",
+			insecure:   true,
+			remoteAddr: "[2001:db8:cafe::17]:4444",
+			incomingHeaders: map[string][]string{
+				xForwardedProto: {"http"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "http",
+				forwarded:       `for="[2001:db8:cafe::17]";proto=http`,
+			},
+		},
+		{
+			desc:       "Forwarded header appended when receiving trusted Forwarded",
+			insecure:   true,
+			remoteAddr: "10.0.0.2:4444",
+			incomingHeaders: map[string][]string{
+				forwarded:       {"for=10.0.0.1;proto=https"},
+				xForwardedProto: {"http"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "http",
+				forwarded:       `for=10.0.0.1;proto=https, for=10.0.0.2;proto=http`,
+			},
+		},
+		{
+			desc:       "Forwarded header stripped and synthesized when receiving untrusted Forwarded",
+			insecure:   false,
+			trustedIps: []string{"192.168.1.1"},
+			remoteAddr: "10.0.0.2:4444", // untrusted!
+			incomingHeaders: map[string][]string{
+				forwarded:       {"for=10.0.0.1;proto=https"},
+				xForwardedProto: {"https"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "http", // stripped and replaced with default
+				forwarded:       `for=10.0.0.2;proto=http`,
+			},
+		},
+		{
+			desc:       "Forwarded header escapes quotes in host to prevent injection",
+			insecure:   true,
+			remoteAddr: "192.168.1.5:4444",
+			incomingHeaders: map[string][]string{
+				xForwardedProto: {"https"},
+				xForwardedHost:  {`example.com";for="6.6.6.6`},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "https",
+				forwarded:       `for=192.168.1.5;proto=https;host="example.com\";for=\"6.6.6.6"`,
+			},
+		},
 	}
 
 	for _, test := range testCases {
