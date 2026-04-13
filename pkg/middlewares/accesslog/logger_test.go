@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
@@ -452,7 +453,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 func TestCommonLogger(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -464,7 +465,7 @@ func TestCommonLogger(t *testing.T) {
 func TestCommonLoggerWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	// wait a bit for the buffer to be written in the file.
 	time.Sleep(50 * time.Millisecond)
@@ -479,7 +480,7 @@ func TestCommonLoggerWithBufferingSize(t *testing.T) {
 func TestLoggerGenericCLF(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -491,7 +492,7 @@ func TestLoggerGenericCLF(t *testing.T) {
 func TestLoggerGenericCLFWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat, BufferingSize: 1024}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	// wait a bit for the buffer to be written in the file.
 	time.Sleep(50 * time.Millisecond)
@@ -541,6 +542,7 @@ func TestLoggerJSON(t *testing.T) {
 		config   *otypes.AccessLog
 		tls      bool
 		tracing  bool
+		metadata bool
 		expected map[string]func(t *testing.T, value any)
 	}{
 		{
@@ -624,6 +626,50 @@ func TestLoggerJSON(t *testing.T) {
 				SpanID:                    assertString("0100000000000000"),
 				OTelTraceID:               assertString("01000000000000000000000000000000"),
 				OTelSpanID:                assertString("0100000000000000"),
+			},
+		},
+		{
+			desc: "default config with metadata",
+			config: &otypes.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+			},
+			metadata: true,
+			expected: map[string]func(t *testing.T, value any){
+				RequestContentSize:         assertFloat64(0),
+				RequestHost:                assertString(testHostname),
+				RequestAddr:                assertString(testHostname),
+				RequestMethod:              assertString(testMethod),
+				RequestPath:                assertString(testPath),
+				RequestProtocol:            assertString(testProto),
+				RequestScheme:              assertString(testScheme),
+				RequestPort:                assertString("-"),
+				DownstreamStatus:           assertFloat64(float64(testStatus)),
+				DownstreamContentSize:      assertFloat64(float64(len(testContent))),
+				OriginContentSize:          assertFloat64(float64(len(testContent))),
+				OriginStatus:               assertFloat64(float64(testStatus)),
+				RequestRefererHeader:       assertString(testReferer),
+				RequestUserAgentHeader:     assertString(testUserAgent),
+				RouterName:                 assertString(testRouterName),
+				ServiceURL:                 assertString(testServiceName),
+				ClientUsername:             assertString(testUsername),
+				ClientHost:                 assertString(testHostname),
+				ClientPort:                 assertString(strconv.Itoa(testPort)),
+				ClientAddr:                 assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
+				"level":                    assertString("info"),
+				"msg":                      assertString(""),
+				"downstream_Content-Type":  assertString("text/plain; charset=utf-8"),
+				RequestCount:               assertFloat64NotZero(),
+				Duration:                   assertFloat64NotZero(),
+				Overhead:                   assertFloat64NotZero(),
+				RetryAttempts:              assertFloat64(float64(testRetryAttempts)),
+				"time":                     assertNotEmpty(),
+				"StartLocal":               assertNotEmpty(),
+				"StartUTC":                 assertNotEmpty(),
+				KubernetesIngressNamespace: assertString("test-namespace"),
+				KubernetesIngressName:      assertString("test-ingress"),
+				KubernetesServiceName:      assertString("test-service"),
+				KubernetesServicePort:      assertString("test-port"),
 			},
 		},
 		{
@@ -788,9 +834,9 @@ func TestLoggerJSON(t *testing.T) {
 
 			test.config.FilePath = logFilePath
 			if test.tls {
-				doLoggingTLS(t, test.config, test.tracing)
+				doLoggingTLS(t, test.config, test.tracing, test.metadata)
 			} else {
-				doLogging(t, test.config, test.tracing)
+				doLogging(t, test.config, test.tracing, test.metadata)
 			}
 
 			logData, err := os.ReadFile(logFilePath)
@@ -1062,7 +1108,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			file, restoreStdout := captureStdout(t)
 			defer restoreStdout()
 
-			doLogging(t, test.config, false)
+			doLogging(t, test.config, false, false)
 
 			written, err := os.ReadFile(file.Name())
 			require.NoError(t, err, "unable to read captured stdout from file")
@@ -1150,7 +1196,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	return file, restoreStdout
 }
 
-func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing bool) {
+func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing, metadata bool) {
 	t.Helper()
 	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
@@ -1199,9 +1245,22 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing 
 
 	// Injection of the observability variables in the request context.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return observability.WithObservabilityHandler(next, observability.Observability{
+		obs := observability.Observability{
 			AccessLogsEnabled: true,
-		}), nil
+		}
+
+		if metadata {
+			obs.Metadata = &dynamic.ObservabilityMetadata{
+				Ingress: &dynamic.KubernetesIngressMetadata{
+					Namespace:   "test-namespace",
+					IngressName: "test-ingress",
+					ServiceName: "test-service",
+					ServicePort: "test-port",
+				},
+			}
+		}
+
+		return observability.WithObservabilityHandler(next, obs), nil
 	})
 
 	chain = chain.Append(logger.AliceConstructor())
@@ -1211,16 +1270,16 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing 
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 }
 
-func doLoggingTLS(t *testing.T, config *otypes.AccessLog, tracing bool) {
+func doLoggingTLS(t *testing.T, config *otypes.AccessLog, tracing, metadata bool) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, true, tracing)
+	doLoggingTLSOpt(t, config, true, tracing, metadata)
 }
 
-func doLogging(t *testing.T, config *otypes.AccessLog, tracing bool) {
+func doLogging(t *testing.T, config *otypes.AccessLog, tracing, metadata bool) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, false, tracing)
+	doLoggingTLSOpt(t, config, false, tracing, metadata)
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {

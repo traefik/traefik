@@ -1,4 +1,4 @@
-import { globalCss, Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
+import { globalCss, Box, darkTheme, FaencyProvider, lightTheme } from '@traefik-labs/faency'
 import { Suspense, useContext, useEffect } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import { HashRouter, Navigate, Route, Routes as RouterRoutes, useLocation } from 'react-router-dom'
@@ -10,7 +10,7 @@ import fetch from './libs/fetch'
 import { VersionProvider } from 'contexts/version'
 import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
-import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
+import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages, CertificatesPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
 import { HubDemoContext, HubDemoProvider } from 'pages/hub-demo/demoNavContext'
 
@@ -48,6 +48,8 @@ export const Routes = () => {
               </ErrorSuspenseWrapper>
             }
           />
+          <Route path="/certificates" element={<CertificatesPages.Certificates />} />
+          <Route path="/certificates/:name" element={<CertificatesPages.Certificate />} />
           <Route path="/http/routers" element={<HTTPPages.HttpRouters />} />
           <Route path="/http/services" element={<HTTPPages.HttpServices />} />
           <Route path="/http/middlewares" element={<HTTPPages.HttpMiddlewares />} />

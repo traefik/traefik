@@ -1,0 +1,66 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-access-log-enabled
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: accesslog-enabled.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-access-log-disabled
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/enable-access-log: "false"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: accesslog-disabled.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-access-log-default
+  namespace: default
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: accesslog-default.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

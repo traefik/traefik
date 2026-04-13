@@ -2656,3 +2656,88 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 	// The whoami service should have received the X-Custom-Header that was added by the service middleware
 	assert.Contains(s.T(), string(body), "X-Custom-Header: service-middleware-test")
 }
+
+// TestProviderPrecedenceFileWins verifies that, when two providers define
+// routes with the same rule and auto-computed priority, the provider listed
+// first in providers.precedence takes precedence (lower index = higher
+// provider priority).
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - precedence     = ["file", "docker"]  → file is index 0 → wins
+func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
+	s.createComposeProject("providers-precedence")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
+	}{
+		Precedence:         `["file", "docker"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The file provider has higher priority → requests must reach the file backend.
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+}
+
+// TestProviderPrecedenceDockerWins mirrors TestProviderPrecedenceFileWins
+// but reverses the precedence so that the Docker provider wins instead.
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - precedence     = ["docker", "file"]  → docker is index 0 → wins
+func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
+	s.createComposeProject("providers-precedence")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
+	}{
+		Precedence:         `["docker", "file"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The Docker provider has higher priority → requests must reach the whoami container.
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
+}
