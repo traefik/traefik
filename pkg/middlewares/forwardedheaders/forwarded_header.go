@@ -9,14 +9,60 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders/xheaders"
 	"golang.org/x/net/http/httpguts"
 )
 
 const (
-	connection = "Connection"
-	upgrade    = "Upgrade"
+	xForwardedProto             = "X-Forwarded-Proto"
+	xForwardedFor               = "X-Forwarded-For"
+	xForwardedHost              = "X-Forwarded-Host"
+	xForwardedPort              = "X-Forwarded-Port"
+	xForwardedServer            = "X-Forwarded-Server"
+	xForwardedURI               = "X-Forwarded-Uri"
+	xForwardedMethod            = "X-Forwarded-Method"
+	xForwardedPrefix            = "X-Forwarded-Prefix"
+	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
+	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
+	xRealIP                     = "X-Real-Ip"
+	connection                  = "Connection"
+	upgrade                     = "Upgrade"
 )
+
+// xHeadersSet contains the canonical X-headers managed by Traefik. Used by
+// isManagedXHeader to detect both the canonical form and underscore variants
+// that Go's HTTP server preserves (e.g. X_Forwarded_Proto).
+var xHeadersSet = map[string]struct{}{
+	xForwardedProto:             {},
+	xForwardedFor:               {},
+	xForwardedHost:              {},
+	xForwardedPort:              {},
+	xForwardedServer:            {},
+	xForwardedURI:               {},
+	xForwardedMethod:            {},
+	xForwardedPrefix:            {},
+	xForwardedTLSClientCert:     {},
+	xForwardedTLSClientCertInfo: {},
+	xRealIP:                     {},
+}
+
+// isManagedXHeader reports whether key matches one of Traefik's X-headers,
+// treating '_' as '-'. Every managed header starts with 'X', so a byte check
+// skips most headers without any map work; the underscore branch is only
+// reached for the rare attacker-injected variants.
+func isManagedXHeader(key string) bool {
+	if len(key) == 0 || (key[0] != 'X' && key[0] != 'x') {
+		return false
+	}
+	if _, ok := xHeadersSet[key]; ok {
+		return true
+	}
+	if strings.IndexByte(key, '_') < 0 {
+		return false
+	}
+	canonical := http.CanonicalHeaderKey(strings.ReplaceAll(key, "_", "-"))
+	_, ok := xHeadersSet[canonical]
+	return ok
+}
 
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
 // and other relevant headers for a reverse-proxy.
@@ -99,7 +145,7 @@ func forwardedPort(req *http.Request) string {
 		return port
 	}
 
-	if unsafeHeader(req.Header).Get(xheaders.ForwardedProto) == "https" || unsafeHeader(req.Header).Get(xheaders.ForwardedProto) == "wss" {
+	if unsafeHeader(req.Header).Get(xForwardedProto) == "https" || unsafeHeader(req.Header).Get(xForwardedProto) == "wss" {
 		return "443"
 	}
 
@@ -113,9 +159,13 @@ func forwardedPort(req *http.Request) string {
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		// Strip X headers and their underscore variants.
-		for key := range xHeadersMap {
-			delete(r.Header, key)
+		// Strip X-Forwarded headers and their underscore variants
+		// (e.g. X_Forwarded_Proto), which Go's HTTP server preserves
+		// alongside the canonical dash form.
+		for key := range r.Header {
+			if isManagedXHeader(key) {
+				delete(r.Header, key)
+			}
 		}
 	}
 
@@ -137,47 +187,47 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
 		clientIP = removeIPv6Zone(clientIP)
 
-		if unsafeHeader(outreq.Header).Get(xheaders.RealIP) == "" {
-			unsafeHeader(outreq.Header).Set(xheaders.RealIP, clientIP)
+		if unsafeHeader(outreq.Header).Get(xRealIP) == "" {
+			unsafeHeader(outreq.Header).Set(xRealIP, clientIP)
 		}
 	}
 
-	xfProto := unsafeHeader(outreq.Header).Get(xheaders.ForwardedProto)
+	xfProto := unsafeHeader(outreq.Header).Get(xForwardedProto)
 	if xfProto == "" {
 		// TODO: is this expected to set the X-Forwarded-Proto header value to
 		// ws(s) as the underlying request used to upgrade the connection is
 		// made over HTTP(S)?
 		if isWebsocketRequest(outreq) {
 			if outreq.TLS != nil {
-				unsafeHeader(outreq.Header).Set(xheaders.ForwardedProto, "wss")
+				unsafeHeader(outreq.Header).Set(xForwardedProto, "wss")
 			} else {
-				unsafeHeader(outreq.Header).Set(xheaders.ForwardedProto, "ws")
+				unsafeHeader(outreq.Header).Set(xForwardedProto, "ws")
 			}
 		} else {
 			if outreq.TLS != nil {
-				unsafeHeader(outreq.Header).Set(xheaders.ForwardedProto, "https")
+				unsafeHeader(outreq.Header).Set(xForwardedProto, "https")
 			} else {
-				unsafeHeader(outreq.Header).Set(xheaders.ForwardedProto, "http")
+				unsafeHeader(outreq.Header).Set(xForwardedProto, "http")
 			}
 		}
 	}
 
-	if xfPort := unsafeHeader(outreq.Header).Get(xheaders.ForwardedPort); xfPort == "" {
-		unsafeHeader(outreq.Header).Set(xheaders.ForwardedPort, forwardedPort(outreq))
+	if xfPort := unsafeHeader(outreq.Header).Get(xForwardedPort); xfPort == "" {
+		unsafeHeader(outreq.Header).Set(xForwardedPort, forwardedPort(outreq))
 	}
 
-	if xfHost := unsafeHeader(outreq.Header).Get(xheaders.ForwardedHost); xfHost == "" && outreq.Host != "" {
-		unsafeHeader(outreq.Header).Set(xheaders.ForwardedHost, outreq.Host)
+	if xfHost := unsafeHeader(outreq.Header).Get(xForwardedHost); xfHost == "" && outreq.Host != "" {
+		unsafeHeader(outreq.Header).Set(xForwardedHost, outreq.Host)
 	}
 
 	// Per https://www.rfc-editor.org/rfc/rfc2616#section-4.2, the Forwarded IPs list is in
 	// the same order as the values in the X-Forwarded-For header(s).
-	if xffs := unsafeHeader(outreq.Header).Values(xheaders.ForwardedFor); len(xffs) > 0 {
-		unsafeHeader(outreq.Header).Set(xheaders.ForwardedFor, strings.Join(xffs, ", "))
+	if xffs := unsafeHeader(outreq.Header).Values(xForwardedFor); len(xffs) > 0 {
+		unsafeHeader(outreq.Header).Set(xForwardedFor, strings.Join(xffs, ", "))
 	}
 
 	if x.hostname != "" {
-		unsafeHeader(outreq.Header).Set(xheaders.ForwardedServer, x.hostname)
+		unsafeHeader(outreq.Header).Set(xForwardedServer, x.hostname)
 	}
 }
 
@@ -196,7 +246,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
 				// A proxy or gateway MUST ... and then remove the Connection header field itself
 				// (or replace it with the intermediary's own connection options for the forwarded message).
-				if _, ok := xHeadersMap[key]; ok {
+				if isManagedXHeader(key) {
 					continue
 				}
 
