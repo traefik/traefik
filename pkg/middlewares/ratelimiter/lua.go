@@ -2,7 +2,9 @@ package ratelimiter
 
 import (
 	"context"
-
+	"os"
+	"strings"
+	
 	"github.com/redis/go-redis/v9"
 )
 
@@ -63,4 +65,24 @@ redis.call('expire', key, ttl)
 
 return {tostring(true), tostring(wait_duration),tostring(tokens)}`
 
-var AllowTokenBucketScript = redis.NewScript(AllowTokenBucketRaw)
+// isFIPSMode reports whether the process is running in FIPS 140-3 mode.
+// In FIPS mode, crypto/sha1 is blocked, so we cannot compute script
+// hashes client-side and must rely on the Redis server to do it.
+func isFIPSMode() bool {
+	gd := os.Getenv("GODEBUG")
+	return strings.Contains(gd, "fips140=only") || strings.Contains(gd, "fips140=on")
+}
+
+// newAllowTokenBucketScript creates the rate limiter Lua script.
+// In FIPS mode it uses NewScriptServerSHA, which avoids client-side
+// SHA-1 by having Redis compute the script digest via SCRIPT LOAD.
+// In non-FIPS mode it uses the standard NewScript path for backward
+// compatibility.
+func newAllowTokenBucketScript() *redis.Script {
+	if isFIPSMode() {
+		return redis.NewScriptServerSHA(AllowTokenBucketRaw)
+	}
+	return redis.NewScript(AllowTokenBucketRaw)
+}
+
+var AllowTokenBucketScript = newAllowTokenBucketScript()
