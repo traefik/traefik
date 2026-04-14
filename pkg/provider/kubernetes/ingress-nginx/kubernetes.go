@@ -68,6 +68,8 @@ const (
 
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-timeout
 	defaultUpstreamKeepaliveTimeout = 60
+
+	unavailableService = "unavailable-service"
 )
 
 var (
@@ -78,6 +80,10 @@ var (
 	// The same regexp used in ingress-nginx:https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
 	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 )
+
+type unavailableError struct {
+	error
+}
 
 type backendAddress struct {
 	Address string
@@ -408,6 +414,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		},
 	}
 
+	// add the unavailable service by default, to be used by routers where the middlewares return an error.
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+	svc := &dynamic.Service{LoadBalancer: lb}
+	conf.HTTP.Services[unavailableService] = svc
+
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
@@ -635,8 +647,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			if err := p.applyMiddlewares(ingress, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
-				if strings.Contains(err.Error(), "custom headers") {
-					unavailableService(rt, conf)
+				var unavailableErr *unavailableError
+				if errors.As(err, &unavailableErr) {
+					rt.Service = unavailableService
 				}
 			}
 
@@ -657,8 +670,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			if err := p.applyMiddlewares(ingress, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
-				if strings.Contains(err.Error(), "custom headers") {
-					unavailableService(rtTLS, conf)
+				var unavailableErr *unavailableError
+				if errors.As(err, &unavailableErr) {
+					rtTLS.Service = unavailableService
 				}
 			}
 
@@ -731,8 +745,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				if err := p.applyMiddlewares(ingress, key, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
-					if strings.Contains(err.Error(), "custom headers") {
-						unavailableService(rt, conf)
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rt.Service = unavailableService
 					}
 				}
 
@@ -752,8 +767,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				if err := p.applyMiddlewares(ingress, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
-					if strings.Contains(err.Error(), "custom headers") {
-						unavailableService(rtTLS, conf)
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rtTLS.Service = unavailableService
 					}
 				}
 
@@ -875,15 +891,17 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				// HTTP Router middlewares.
 				if err := p.applyMiddlewares(ingress, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
-					if strings.Contains(err.Error(), "custom headers") {
-						unavailableService(rt, conf)
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rt.Service = unavailableService
 					}
 				}
 				// TLS Router middlewares.
 				if err := p.applyMiddlewares(ingress, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
-					if strings.Contains(err.Error(), "custom headers") {
-						unavailableService(rtTLS, conf)
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rtTLS.Service = unavailableService
 					}
 				}
 
@@ -900,8 +918,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
-						if strings.Contains(err.Error(), "custom headers") {
-							unavailableService(canaryRouter, conf)
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							canaryRouter.Service = unavailableService
 						}
 					}
 
@@ -919,8 +938,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
-						if strings.Contains(err.Error(), "custom headers") {
-							unavailableService(canaryRouterTLS, conf)
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							canaryRouterTLS.Service = unavailableService
 						}
 					}
 				}
@@ -938,8 +958,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
-						if strings.Contains(err.Error(), "custom headers") {
-							unavailableService(nonCanaryRouter, conf)
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							nonCanaryRouter.Service = unavailableService
 						}
 					}
 
@@ -957,8 +978,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
-						if strings.Contains(err.Error(), "custom headers") {
-							unavailableService(nonCanaryRouterTLS, conf)
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							nonCanaryRouterTLS.Service = unavailableService
 						}
 					}
 				}
@@ -977,15 +999,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	}
 
 	return conf
-}
-
-func unavailableService(router *dynamic.Router, conf *dynamic.Configuration) {
-	const svcName = "unavailable-service"
-	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
-	svc := &dynamic.Service{LoadBalancer: lb}
-	conf.HTTP.Services[svcName] = svc
-	router.Service = svcName
 }
 
 func (p *Provider) isIngressValid(ingress ingress) error {
@@ -1400,7 +1413,7 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 	}
 
 	if err := p.applyCustomHeaders(ingress.Namespace, routerKey, ingress.IngressConfig, rt, conf); err != nil {
-		return fmt.Errorf("applying custom headers: %w", err)
+		return &unavailableError{fmt.Errorf("applying custom headers: %w", err)}
 	}
 
 	p.applySnippetsAndAuth(routerKey, serverSnippet, ingress.IngressConfig, rt, conf)
