@@ -279,13 +279,19 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		chain, err := createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain, p.AllowCrossNamespace)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading chain middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
 			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
 			ReplacePath:       middleware.Spec.ReplacePath,
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
-			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			Chain:             chain,
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			IPAllowList:       middleware.Spec.IPAllowList,
 			Headers:           middleware.Spec.Headers,
@@ -854,9 +860,9 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
-func createChainMiddleware(ctx context.Context, namespace string, chain *traefikv1alpha1.Chain) *dynamic.Chain {
+func createChainMiddleware(ctx context.Context, parentNamespace string, chain *traefikv1alpha1.Chain, allowCrossNamespace bool) (*dynamic.Chain, error) {
 	if chain == nil {
-		return nil
+		return nil, nil
 	}
 
 	var mds []string
@@ -870,13 +876,19 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *traefik
 			continue
 		}
 
-		ns := mi.Namespace
-		if len(ns) == 0 {
-			ns = namespace
+		ns := parentNamespace
+		if len(mi.Namespace) > 0 {
+			if !isNamespaceAllowed(allowCrossNamespace, parentNamespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the chain namespace %s", mi.Namespace, mi.Name, parentNamespace)
+			}
+
+			ns = mi.Namespace
 		}
+
 		mds = append(mds, makeID(ns, mi.Name))
 	}
-	return &dynamic.Chain{Middlewares: mds}
+
+	return &dynamic.Chain{Middlewares: mds}, nil
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
