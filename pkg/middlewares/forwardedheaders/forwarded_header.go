@@ -50,7 +50,7 @@ var xHeadersSet = map[string]struct{}{
 // skips most headers without any map work; the underscore branch is only
 // reached for the rare attacker-injected variants.
 func isManagedXHeader(key string) bool {
-	if len(key) == 0 || (key[0] != 'X' && key[0] != 'x') {
+	if len(key) == 0 || key[0] != 'X' {
 		return false
 	}
 	if _, ok := xHeadersSet[key]; ok {
