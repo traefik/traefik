@@ -1417,7 +1417,7 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingress.IngressConfig, rt, conf)
 
-	applyUpstreamVhost(routerKey, ingress.IngressConfig, rt, conf)
+	applyUpstreamVhost(routerKey, rulePath, ingress, backend, rt, conf)
 
 	applyLimitRPMConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
@@ -1948,15 +1948,35 @@ func applyCORSConfiguration(routerName string, ingressConfig IngressConfig, rt *
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
 }
 
-func applyUpstreamVhost(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.UpstreamVhost == nil {
+func applyUpstreamVhost(routerName, rulePath string, ingress ingress, backend *netv1.IngressBackend, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingress.IngressConfig.UpstreamVhost == nil {
 		return
+	}
+
+	// ingress-nginx exposes per-location variables (set at the NGINX location scope)
+	// to upstream-vhost: $namespace, $ingress_name, $service_name, $service_port,
+	// $location_path. They are static at config-build time, so we pass them through
+	// the interpolator's custom vars map. Request-time variables ($host, $http_*, ...)
+	// are resolved per request by the middleware itself via ingressnginx.ReplaceVariables.
+	vars := map[string]string{
+		"$namespace":     ingress.Namespace,
+		"$ingress_name":  ingress.Name,
+		"$location_path": rulePath,
+	}
+	if backend != nil && backend.Service != nil {
+		vars["$service_name"] = backend.Service.Name
+		if backend.Service.Port.Number != 0 {
+			vars["$service_port"] = strconv.Itoa(int(backend.Service.Port.Number))
+		} else if backend.Service.Port.Name != "" {
+			vars["$service_port"] = backend.Service.Port.Name
+		}
 	}
 
 	vHostMiddlewareName := routerName + "-vhost"
 	conf.HTTP.Middlewares[vHostMiddlewareName] = &dynamic.Middleware{
-		Headers: &dynamic.Headers{
-			CustomRequestHeaders: map[string]string{"Host": *ingressConfig.UpstreamVhost},
+		UpstreamVhost: &dynamic.UpstreamVhost{
+			Vhost: *ingress.IngressConfig.UpstreamVhost,
+			Vars:  vars,
 		},
 	}
 
