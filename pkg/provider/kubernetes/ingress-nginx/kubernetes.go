@@ -147,7 +147,7 @@ func (c canaryBackend) AppendCanaryRule(rule string) string {
 	}
 
 	if c.Cookie != "" {
-		cookieRule := fmt.Sprintf(`HeaderRegexp("Cookie", %q)`, fmt.Sprintf("(^|;\\s*)%s=always(;|$)", c.Cookie))
+		cookieRule := fmt.Sprintf(`HeaderRegexp("Cookie", %q)`, fmt.Sprintf("(^|;\\s*)%s=always(;|$)", regexp.QuoteMeta(c.Cookie)))
 		if c.Header != "" && c.HeaderValue == "" && c.HeaderPattern == "" {
 			cookieRule = fmt.Sprintf("(%s && !%s)", cookieRule, fmt.Sprintf(`Header(%q, "never")`, c.Header))
 		}
@@ -165,7 +165,7 @@ func (c canaryBackend) AppendNonCanaryRule(rule string) string {
 		rules = append(rules, fmt.Sprintf(`Header(%q, "never")`, c.Header))
 	}
 	if c.Cookie != "" {
-		rules = append(rules, fmt.Sprintf(`HeaderRegexp("Cookie", %q)`, fmt.Sprintf("(^|;\\s*)%s=never(;|$)", c.Cookie)))
+		rules = append(rules, fmt.Sprintf(`HeaderRegexp("Cookie", %q)`, fmt.Sprintf("(^|;\\s*)%s=never(;|$)", regexp.QuoteMeta(c.Cookie))))
 	}
 
 	return fmt.Sprintf("(%s) && (%s)", rule, strings.Join(rules, " || "))

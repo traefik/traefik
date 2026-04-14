@@ -11070,7 +11070,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary": {
 							EntryPoints: []string{"http"},
-							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (HeaderRegexp("Cookie", "(^|;\\s*)foo=always(;|$)"))`,
+							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (HeaderRegexp("Cookie", "(^|;\\s*)foo\\.bar=always(;|$)"))`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-canary-by-cookie-whoami-80-canary",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -11105,7 +11105,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (HeaderRegexp("Cookie", "(^|;\\s*)foo=always(;|$)"))`,
+							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (HeaderRegexp("Cookie", "(^|;\\s*)foo\\.bar=always(;|$)"))`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-canary-by-cookie-whoami-80-canary",
 							Observability: &dynamic.RouterObservabilityConfig{
