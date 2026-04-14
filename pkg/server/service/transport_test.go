@@ -489,41 +489,70 @@ func TestMinMaxCipherSuites(t *testing.T) {
 	assert.Contains(t, logged, "CipherSuite MinVersion, VersionTLS12, above or equal to the MaxVersion, VersionTLS10. Falling back to default MaxVersion and MinVersion")
 }
 
-func TestEmptyCipherSuites(t *testing.T) {
-	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}))
+func TestNoCipherSuitesUsesDefaults(t *testing.T) {
+	// The server is pinned to TLS 1.2 and a single cipher from Go's default
+	// list, so the handshake only succeeds if the client falls back to the
+	// default cipher list instead of an empty one.
+	testCases := []struct {
+		desc         string
+		transport    *dynamic.ServersTransport
+		serverCipher uint16
+	}{
+		{
+			desc: "no cipher config with ServerName and RootCAs",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		{
+			desc: "only InsecureSkipVerify",
+			transport: &dynamic.ServersTransport{
+				InsecureSkipVerify: true,
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+		{
+			desc: "invalid cipher name falls back to defaults",
+			transport: &dynamic.ServersTransport{
+				InsecureSkipVerify: true,
+				CipherSuites:       []string{"TLS_NOT_A_REAL_CIPHER"},
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
 
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	require.NoError(t, err)
 
-	srv.TLS = &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		MaxVersion:   tls.VersionTLS12,
-		MinVersion:   tls.VersionTLS11,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		},
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+
+			srv.TLS = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+				MaxVersion:   tls.VersionTLS12,
+				CipherSuites: []uint16{test.serverCipher},
+			}
+			srv.StartTLS()
+			defer srv.Close()
+
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"test": test.transport})
+
+			tr, err := transportManager.GetRoundTripper("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+			resp, err := client.Get(srv.URL)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+		})
 	}
-	srv.StartTLS()
-
-	transportManager := NewTransportManager(nil)
-
-	dynamicConf := map[string]*dynamic.ServersTransport{
-		"test": {
-			ServerName: "example.com",
-			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-		},
-	}
-
-	transportManager.Update(dynamicConf)
-	tr, err := transportManager.GetRoundTripper("test")
-	require.NoError(t, err)
-	client := http.Client{Transport: tr}
-	_, err = client.Get(srv.URL)
-	require.Error(t, err)
-
-	assert.ErrorContains(t, err, "remote error: tls: handshake failure")
 }
 
 func TestMTLS(t *testing.T) {

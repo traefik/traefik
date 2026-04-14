@@ -174,17 +174,18 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
 
-		cipherSuites := make([]uint16, 0)
-		if cfg.CipherSuites != nil {
-			for _, cipher := range cfg.CipherSuites {
-				if cipherID, exists := traefiktls.CipherSuites[cipher]; exists {
-					cipherSuites = append(cipherSuites, cipherID)
-				} else {
-					log.Error().Msgf("Invalid cipher: %v, falling back to default CipherSuite.", cipher)
-					cipherSuites = nil
-					break
-				}
+		// crypto/tls treats a nil CipherSuites as "use the defaults" but an
+		// empty non-nil slice as "offer no TLS 1.0–1.2 cipher", so this must
+		// stay nil until at least one valid cipher is appended.
+		var cipherSuites []uint16
+		for _, cipher := range cfg.CipherSuites {
+			cipherID, exists := traefiktls.CipherSuites[cipher]
+			if !exists {
+				log.Error().Msgf("Invalid cipher: %v, falling back to default CipherSuite.", cipher)
+				cipherSuites = nil
+				break
 			}
+			cipherSuites = append(cipherSuites, cipherID)
 		}
 
 		var minVersion uint16
