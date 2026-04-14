@@ -5079,7 +5079,10 @@ func TestCrossNamespace(t *testing.T) {
 							Service:     "default-test-crossnamespace-route-4932ffbbcd99474df323",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/chain`)",
 							Priority:    12,
-							Middlewares: []string{"default-test-chain"},
+							Middlewares: []string{
+								"default-test-chain",
+								"default-test-chain-cross-provider",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5167,7 +5170,10 @@ func TestCrossNamespace(t *testing.T) {
 							Service:     "default-test-crossnamespace-route-4932ffbbcd99474df323",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/chain`)",
 							Priority:    12,
-							Middlewares: []string{"default-test-chain"},
+							Middlewares: []string{
+								"default-test-chain",
+								"default-test-chain-cross-provider",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5187,6 +5193,11 @@ func TestCrossNamespace(t *testing.T) {
 						"default-test-chain": {
 							Chain: &dynamic.Chain{
 								Middlewares: []string{"cross-ns-stripprefix"},
+							},
+						},
+						"default-test-chain-cross-provider": {
+							Chain: &dynamic.Chain{
+								Middlewares: []string{"other-middleware@kubernetescrd"},
 							},
 						},
 					},

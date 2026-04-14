@@ -46,6 +46,7 @@ spec:
       port: 80
     middlewares:
     - name: test-chain
+    - name: test-chain-cross-provider
 
 ---
 apiVersion: traefik.io/v1alpha1
@@ -71,6 +72,18 @@ spec:
     middlewares:
       - name: stripprefix
         namespace: cross-ns
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-chain-cross-provider
+  namespace: default
+
+spec:
+  chain:
+    middlewares:
+      - name: other-middleware@kubernetescrd
 
 ---
 apiVersion: traefik.io/v1alpha1
