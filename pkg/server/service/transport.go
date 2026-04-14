@@ -68,11 +68,15 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 			continue
 		}
 
-		var err error
-
-		var tlsConfig *tls.Config
-		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
-			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", configName)
+		tlsConfig, err := t.createTLSConfig(newConfig)
+		if err != nil {
+			// Fail closed: an invalid TLS configuration must not silently
+			// degrade to defaults, so the transport is removed and lookups
+			// will return "not found".
+			log.Error().Err(err).Msgf("Skipping HTTP Transport %s: invalid TLS configuration", configName)
+			delete(t.roundTrippers, configName)
+			delete(t.tlsConfigs, configName)
+			continue
 		}
 		t.tlsConfigs[configName] = tlsConfig
 
@@ -88,11 +92,10 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 			continue
 		}
 
-		var err error
-
-		var tlsConfig *tls.Config
-		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
-			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", newConfigName)
+		tlsConfig, err := t.createTLSConfig(newConfig)
+		if err != nil {
+			log.Error().Err(err).Msgf("Skipping HTTP Transport %s: invalid TLS configuration", newConfigName)
+			continue
 		}
 		t.tlsConfigs[newConfigName] = tlsConfig
 
@@ -176,42 +179,39 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 
 		// crypto/tls treats a nil CipherSuites as "use the defaults" but an
 		// empty non-nil slice as "offer no TLS 1.0–1.2 cipher", so this must
-		// stay nil until at least one valid cipher is appended.
+		// stay nil until at least one valid cipher is appended. An invalid
+		// cipher is rejected outright (consistent with TLSOption handling in
+		// pkg/tls/tlsmanager.go) to avoid silently weakening the configured
+		// TLS policy.
 		var cipherSuites []uint16
 		for _, cipher := range cfg.CipherSuites {
 			cipherID, exists := traefiktls.CipherSuites[cipher]
 			if !exists {
-				log.Error().Msgf("Invalid cipher: %v, falling back to default CipherSuite.", cipher)
-				cipherSuites = nil
-				break
+				return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
 			}
 			cipherSuites = append(cipherSuites, cipherID)
 		}
 
 		var minVersion uint16
 		if cfg.MinVersion != "" {
-			if value, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
-				minVersion = value
-			} else {
-				log.Error().Msgf("Invalid TLS minimum version: %s", cfg.MinVersion)
+			value, exists := traefiktls.MinVersion[cfg.MinVersion]
+			if !exists {
+				return nil, fmt.Errorf("invalid TLS minimum version: %s", cfg.MinVersion)
 			}
+			minVersion = value
 		}
 
 		var maxVersion uint16
 		if cfg.MaxVersion != "" {
-			if value, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
-				maxVersion = value
-			} else {
-				log.Error().Msgf("Invalid TLS maximum version: %s", cfg.MaxVersion)
+			value, exists := traefiktls.MaxVersion[cfg.MaxVersion]
+			if !exists {
+				return nil, fmt.Errorf("invalid TLS maximum version: %s", cfg.MaxVersion)
 			}
+			maxVersion = value
 		}
 
-		if cfg.MinVersion != "" && cfg.MaxVersion != "" {
-			if minVersion >= maxVersion {
-				log.Error().Msgf("CipherSuite MinVersion, %s, above or equal to the MaxVersion, %s. Falling back to default MaxVersion and MinVersion", cfg.MinVersion, cfg.MaxVersion)
-				minVersion = tls.VersionTLS12
-				maxVersion = 0
-			}
+		if cfg.MinVersion != "" && cfg.MaxVersion != "" && minVersion >= maxVersion {
+			return nil, fmt.Errorf("TLS minimum version %s is above or equal to the maximum version %s", cfg.MinVersion, cfg.MaxVersion)
 		}
 
 		config = &tls.Config{
