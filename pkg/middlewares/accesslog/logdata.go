@@ -94,10 +94,17 @@ const (
 	KubernetesIngressNamespace = "KubernetesIngressNamespace"
 	// KubernetesIngressName is the name of the Kubernetes Ingress resource the router handles.
 	KubernetesIngressName = "KubernetesIngressName"
-	// KubernetesServiceName is the name of the Kubernetes service associated with Ingress the router handles.
+	// KubernetesServiceName is the name of the Kubernetes Service associated with the Ingress or IngressRoute the router handles.
 	KubernetesServiceName = "KubernetesServiceName"
-	// KubernetesServicePort is the port of the Kubernetes service associated with Ingress the router handles.
+	// KubernetesServicePort is the port of the Kubernetes Service associated with the Ingress or IngressRoute the router handles.
 	KubernetesServicePort = "KubernetesServicePort"
+
+	// Kubernetes IngressRoute fields.
+
+	// KubernetesIngressRouteNamespace is the namespace of the Kubernetes IngressRoute CRD the router handles.
+	KubernetesIngressRouteNamespace = "KubernetesIngressRouteNamespace"
+	// KubernetesIngressRouteName is the name of the Kubernetes IngressRoute CRD the router handles.
+	KubernetesIngressRouteName = "KubernetesIngressRouteName"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.

@@ -129,15 +129,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:        route.Match,
 				Service:     serviceName,
 				ParentRefs:  parentRouterNames,
+				Observability: &dynamic.RouterObservabilityConfig{
+					Metadata: &dynamic.ObservabilityMetadata{
+						IngressRoute: buildIngressRouteMetadata(ingressRoute, route),
+					},
+				},
 			}
 
 			if route.Observability != nil {
-				r.Observability = &dynamic.RouterObservabilityConfig{
-					AccessLogs:     route.Observability.AccessLogs,
-					Metrics:        route.Observability.Metrics,
-					Tracing:        route.Observability.Tracing,
-					TraceVerbosity: route.Observability.TraceVerbosity,
-				}
+				r.Observability.AccessLogs = route.Observability.AccessLogs
+				r.Observability.Metrics = route.Observability.Metrics
+				r.Observability.Tracing = route.Observability.Tracing
+				r.Observability.TraceVerbosity = route.Observability.TraceVerbosity
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -178,6 +181,27 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	}
 
 	return conf
+}
+
+// buildIngressRouteMetadata returns the Kubernetes IngressRoute metadata attached
+// to generated routers so that access logs can expose the referenced IngressRoute
+// name and namespace, as well as the backing Kubernetes Service reference when
+// the route targets a single service.
+func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute, route traefikv1alpha1.Route) *dynamic.KubernetesIngressRouteMetadata {
+	md := &dynamic.KubernetesIngressRouteMetadata{
+		Namespace:        ingressRoute.Namespace,
+		IngressRouteName: ingressRoute.Name,
+	}
+
+	if len(route.Services) == 1 {
+		svc := route.Services[0]
+		if svc.Kind == "" || svc.Kind == "Service" {
+			md.ServiceName = svc.Name
+			md.ServicePort = svc.Port.String()
+		}
+	}
+
+	return md
 }
 
 func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []traefikv1alpha1.MiddlewareRef, allowCrossNamespace bool) ([]string, error) {

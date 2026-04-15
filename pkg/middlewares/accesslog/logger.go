@@ -211,6 +211,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 			logDataTable.Core[KubernetesServiceName] = metadata.Ingress.ServiceName
 			logDataTable.Core[KubernetesServicePort] = metadata.Ingress.ServicePort
 		}
+		if metadata.IngressRoute != nil {
+			logDataTable.Core[KubernetesIngressRouteNamespace] = metadata.IngressRoute.Namespace
+			logDataTable.Core[KubernetesIngressRouteName] = metadata.IngressRoute.IngressRouteName
+			logDataTable.Core[KubernetesServiceName] = metadata.IngressRoute.ServiceName
+			logDataTable.Core[KubernetesServicePort] = metadata.IngressRoute.ServicePort
+		}
 	}
 
 	if span := trace.SpanFromContext(req.Context()); span != nil {

@@ -1510,6 +1510,14 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1867,6 +1875,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 								AccessLogs: pointer(true),
 								Tracing:    pointer(true),
 								Metrics:    pointer(true),
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
 							},
 						},
 					},
@@ -1918,6 +1934,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
 							Middlewares: []string{"default-stripprefix", "default-ratelimit", "foo-addprefix"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test2.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1991,6 +2017,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/will-be-limited`)",
 							Priority:    12,
 							Middlewares: []string{"default-ratelimit"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test2.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2070,6 +2106,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
 							Middlewares: []string{"default-multiple-hyphens"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test2.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2127,6 +2173,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
 							Middlewares: []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test2.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2185,12 +2241,32 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Priority:    14,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-route-77c62dfe9517144aeeaa": {
 							EntryPoints: []string{"web"},
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2257,6 +2333,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2336,6 +2420,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-wrr1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2445,6 +2537,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2586,6 +2686,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-wrr1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2658,6 +2766,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-wrr1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2758,6 +2874,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "external-svc",
+										ServicePort:      "443",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2810,6 +2936,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2944,6 +3078,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3135,6 +3277,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-mirror1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3208,6 +3358,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-mirror1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3301,6 +3459,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-weighted",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -3366,6 +3532,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-hrw1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3439,6 +3613,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-failover1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3511,6 +3693,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-failover1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3603,6 +3793,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-failover1",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3678,6 +3876,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3804,6 +4010,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-02719a68b11e915a4b23",
 							Rule:        "/prefix",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3862,6 +4078,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3937,6 +4163,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3990,6 +4226,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-route-default-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
@@ -3998,6 +4244,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route.default",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
 							},
 						},
 					},
@@ -4090,6 +4346,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4165,6 +4431,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "myns-foo",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4237,6 +4513,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
 							},
 						},
 					},
@@ -4314,6 +4600,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-unknown",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
 							},
 						},
 					},
@@ -4393,6 +4689,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "unknown-foo",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4442,6 +4748,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4490,6 +4806,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoamitls",
+										ServicePort:      "443",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4538,6 +4864,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami3",
+										ServicePort:      "8443",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4587,6 +4923,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4636,6 +4982,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4685,6 +5041,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4995,6 +5361,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5052,6 +5428,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5114,6 +5500,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5165,6 +5561,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-route-default-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
@@ -5172,6 +5578,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route.default",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5238,6 +5654,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "external-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5282,6 +5708,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "external-svc-with-http",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5326,6 +5762,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "external-svc-with-https",
+										ServicePort:      "443",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5433,6 +5879,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5534,6 +5988,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami-without-endpointslice-endpoints",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5575,6 +6039,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami-svc-multiple-endpointaddresses",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5632,6 +6106,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami-svc-duplicated-endpointaddresses",
+										ServicePort:      "8080",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5688,6 +6172,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5780,11 +6272,27 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"web"},
 							Service:     "default-test2-route-840425136fbd5d85a4ad",
 							Rule:        "Host(`k8s-service`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test2.route",
+									},
+								},
+							},
 						},
 						"default-test2-route-4f06607bbc69f34a4db5": {
 							EntryPoints: []string{"web"},
 							Service:     "default-test2-route-4f06607bbc69f34a4db5",
 							Rule:        "Host(`traefik-service`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test2.route",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5953,11 +6461,29 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-parent-single-3c07cfffe8e5f876a01e": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`parent.example.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "parent-single",
+									},
+								},
+							},
 						},
 						"default-child-single-2bba0a3de1b50b70a519": {
 							Service:    "default-child-single-2bba0a3de1b50b70a519",
 							Rule:       "Path(`/api`)",
 							ParentRefs: []string{"default-parent-single-3c07cfffe8e5f876a01e"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "child-single",
+										ServiceName:      "child-service",
+										ServicePort:      "9000",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -6004,15 +6530,41 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-parent-multi-4aac0d541c2b669a2d5d": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`api.example.com`) && PathPrefix(`/v1`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "parent-multi",
+									},
+								},
+							},
 						},
 						"default-parent-multi-0af1ca0a94f5b87a125e": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`api.example.com`) && PathPrefix(`/v2`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "parent-multi",
+									},
+								},
+							},
 						},
 						"default-child-multi-routes-b0479051e6a353d66211": {
 							Service:    "default-child-multi-routes-b0479051e6a353d66211",
 							Rule:       "Path(`/users`)",
 							ParentRefs: []string{"default-parent-multi-4aac0d541c2b669a2d5d", "default-parent-multi-0af1ca0a94f5b87a125e"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "child-multi-routes",
+										ServiceName:      "users-service",
+										ServicePort:      "9000",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -6059,15 +6611,41 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-parent-a-629990b524bf9a1a8d27": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`a.example.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "parent-a",
+									},
+								},
+							},
 						},
 						"default-parent-b-add617f9b95cff009054": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`b.example.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "parent-b",
+									},
+								},
+							},
 						},
 						"default-child-multi-parents-8013b5025acddd1761d1": {
 							Service:    "default-child-multi-parents-8013b5025acddd1761d1",
 							Rule:       "Path(`/shared`)",
 							ParentRefs: []string{"default-parent-a-629990b524bf9a1a8d27", "default-parent-b-add617f9b95cff009054"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "child-multi-parents",
+										ServiceName:      "shared-service",
+										ServicePort:      "9000",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -6138,11 +6716,29 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"ns-a-parent-cross-74575ab54671a3ede28c": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`cross.example.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "ns-a",
+										IngressRouteName: "parent-cross",
+									},
+								},
+							},
 						},
 						"ns-b-child-cross-allowed-0bad04de665623bf2362": {
 							Service:    "ns-b-child-cross-allowed-0bad04de665623bf2362",
 							Rule:       "Path(`/cross`)",
 							ParentRefs: []string{"ns-a-parent-cross-74575ab54671a3ede28c"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "ns-b",
+										IngressRouteName: "child-cross-allowed",
+										ServiceName:      "cross-service",
+										ServicePort:      "9000",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -6190,6 +6786,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"ns-a-parent-cross-74575ab54671a3ede28c": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`cross.example.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "ns-a",
+										IngressRouteName: "parent-cross",
+									},
+								},
+							},
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -6218,11 +6822,29 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-parent-default-9b8ab283eeed3eb66561": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`default.example.com`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "parent-default",
+									},
+								},
+							},
 						},
 						"default-child-same-9234eba1edcfbd8a7723": {
 							Service:    "default-child-same-9234eba1edcfbd8a7723",
 							Rule:       "Path(`/same`)",
 							ParentRefs: []string{"default-parent-default-9b8ab283eeed3eb66561"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "child-same",
+										ServiceName:      "same-service",
+										ServicePort:      "9000",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -6271,6 +6893,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test-route-55869f6407935ccfa805",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/leasttime`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami2",
+										ServicePort:      "8080",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -6357,6 +6989,16 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 					Service:     "default-test-route-6b204d94623b3df4370c",
 					Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 					Priority:    12,
+					Observability: &dynamic.RouterObservabilityConfig{
+						Metadata: &dynamic.ObservabilityMetadata{
+							IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+								Namespace:        "default",
+								IngressRouteName: "test.route",
+								ServiceName:      "whoami-svc-multiple-endpointslices",
+								ServicePort:      "8080",
+							},
+						},
+					},
 				},
 			},
 			Middlewares: map[string]*dynamic.Middleware{},
@@ -7404,6 +8046,16 @@ func TestCrossNamespace(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bir`)",
 							Priority:    12,
 							Middlewares: []string{"default-test-errorpage"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test-crossnamespace.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
 							EntryPoints: []string{"foo"},
@@ -7489,6 +8141,16 @@ func TestCrossNamespace(t *testing.T) {
 							Middlewares: []string{
 								"cross-ns-stripprefix",
 							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test-crossnamespace.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
 							EntryPoints: []string{"foo"},
@@ -7496,6 +8158,16 @@ func TestCrossNamespace(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bir`)",
 							Priority:    12,
 							Middlewares: []string{"default-test-errorpage"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test-crossnamespace.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-crossnamespace-route-a1963878aac7331b7950": {
 							EntryPoints: []string{"foo"},
@@ -7503,6 +8175,16 @@ func TestCrossNamespace(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bur`)",
 							Priority:    12,
 							Middlewares: []string{"cross-ns-stripprefix@kubernetescrd"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test-crossnamespace.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
 							EntryPoints: []string{"foo"},
@@ -7653,11 +8335,29 @@ func TestCrossNamespace(t *testing.T) {
 							Service:     "default-cross-ns-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "cross-ns-route",
+									},
+								},
+							},
 						},
 						"default-cross-ns-route-1bc3efa892379bb93c6e": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-cross-ns-route-1bc3efa892379bb93c6e",
 							Rule:        "Host(`bar.com`) && PathPrefix(`/foo`)",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "cross-ns-route",
+										ServiceName:      "whoami-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -7889,6 +8589,16 @@ func TestCrossNamespace(t *testing.T) {
 							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -7986,6 +8696,16 @@ func TestCrossNamespace(t *testing.T) {
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "cross-ns-tls-options-cn",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "whoami",
+										ServicePort:      "80",
+									},
+								},
 							},
 						},
 					},
@@ -8670,6 +9390,16 @@ func TestExternalNameService(t *testing.T) {
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "external-svc-with-http",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -8938,6 +9668,16 @@ func TestNativeLB(t *testing.T) {
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "native-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9120,6 +9860,16 @@ func TestNodePortLB(t *testing.T) {
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "nodeport-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9564,6 +10314,16 @@ func TestGlobalNativeLB(t *testing.T) {
 							Service:     "default-global-native-lb-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "global-native-lb",
+										ServiceName:      "native-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9607,6 +10367,16 @@ func TestGlobalNativeLB(t *testing.T) {
 							Service:  "default-test-route-native-disabled-6f97418635c7e18853da",
 							Rule:     "Host(`foo.com`)",
 							Priority: 0,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route.native-disabled",
+										ServiceName:      "native-disabled-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9653,6 +10423,16 @@ func TestGlobalNativeLB(t *testing.T) {
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									IngressRoute: &dynamic.KubernetesIngressRouteMetadata{
+										Namespace:        "default",
+										IngressRouteName: "test.route",
+										ServiceName:      "native-svc",
+										ServicePort:      "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
