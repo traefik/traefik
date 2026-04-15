@@ -1,0 +1,44 @@
+---
+description: Governance rules for traefik — quality gates, security, conventions
+globs:
+  - "**/*.go"
+alwaysApply: true
+---
+
+# Governance — traefik
+
+> Generated from governance.md by crag. Regenerate: `crag compile --target cursor`
+
+**Stack:** go, docker
+
+## Quality Gates
+
+Run these checks in order before committing:
+### Lint
+- `go vet ./...`
+- `golangci-lint run`
+- `make lint`
+- `make fmt`
+
+### Test
+- `go test ./...`
+- `make test`
+- `make validate`
+
+### Ci (inferred from workflow)
+- `make binary`
+- `make generate binary`
+- `make multi-arch-image-experimental-${GITHUB_REF##*/}`
+- `yarn tsc`
+- `yarn lint`
+- `yarn build`
+- `make test-gateway-api-conformance`
+- `make binary-linux-amd64`
+## Security
+
+- No hardcoded secrets — grep for sk_live, AKIA, password= before commit
+
+## Conventions
+
+- Follow project commit conventions
+- Runtimes: go
