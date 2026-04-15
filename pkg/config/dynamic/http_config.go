@@ -184,7 +184,8 @@ func (r *RouterObservabilityConfig) SetDefaults() {
 
 // ObservabilityMetadata holds the observability metadata configuration.
 type ObservabilityMetadata struct {
-	Ingress *KubernetesIngressMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+	Ingress      *KubernetesIngressMetadata      `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+	IngressRoute *KubernetesIngressRouteMetadata `json:"ingressRoute,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -195,6 +196,16 @@ type KubernetesIngressMetadata struct {
 	IngressName string `json:"ingressName,omitempty"`
 	ServiceName string `json:"serviceName,omitempty"`
 	ServicePort string `json:"servicePort,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// KubernetesIngressRouteMetadata holds the Kubernetes IngressRoute CRD metadata.
+type KubernetesIngressRouteMetadata struct {
+	Namespace        string `json:"namespace,omitempty"`
+	IngressRouteName string `json:"ingressRouteName,omitempty"`
+	ServiceName      string `json:"serviceName,omitempty"`
+	ServicePort      string `json:"servicePort,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
