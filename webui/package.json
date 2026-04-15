@@ -101,5 +101,8 @@
       "public"
     ]
   },
-  "packageManager": "yarn@4.9.1"
+  "packageManager": "yarn@4.9.1",
+  "resolutions": {
+    "form-data": "4.0.4"
+  }
 }
