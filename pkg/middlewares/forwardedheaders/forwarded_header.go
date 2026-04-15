@@ -143,6 +143,19 @@ func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for _, h := range xHeaders {
 			unsafeHeader(r.Header).Del(h)
 		}
+		// Also strip any non-canonical variants (e.g. underscore-separated "X_Forwarded_Proto")
+		// that Go's net/http does not fold into the canonical form and that some
+		// downstream stacks (CGI/WSGI/nginx) treat as equivalent to their dashed
+		// counterparts, which would otherwise allow spoofing the managed X-Forwarded-* headers.
+		for name := range r.Header {
+			if name == http.CanonicalHeaderKey(name) {
+				continue
+			}
+			canonical := http.CanonicalHeaderKey(strings.ReplaceAll(name, "_", "-"))
+			if slices.Contains(xHeaders, canonical) {
+				delete(r.Header, name)
+			}
+		}
 	}
 
 	x.rewrite(r)

@@ -171,6 +171,34 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc:       "insecure false strips underscore-separated X-Forwarded-* variants",
+			insecure:   false,
+			remoteAddr: "10.0.1.101:80",
+			incomingHeaders: map[string][]string{
+				"X_Forwarded_Proto": {"https"},
+				"X_Forwarded_Host":  {"attacker.example"},
+				"X_Forwarded_For":   {"1.2.3.4"},
+				"X_Real_Ip":         {"1.2.3.4"},
+			},
+			expectedHeaders: map[string]string{
+				"X_Forwarded_Proto": "",
+				"X_Forwarded_Host":  "",
+				"X_Forwarded_For":   "",
+				"X_Real_Ip":         "",
+			},
+		},
+		{
+			desc:       "insecure true keeps underscore-separated X-Forwarded-* variants",
+			insecure:   true,
+			remoteAddr: "10.0.1.101:80",
+			incomingHeaders: map[string][]string{
+				"X_Forwarded_Proto": {"https"},
+			},
+			expectedHeaders: map[string]string{
+				"X_Forwarded_Proto": "https",
+			},
+		},
+		{
 			desc:     "xForwardedFor with multiple header(s) values",
 			insecure: true,
 			incomingHeaders: map[string][]string{
