@@ -65,9 +65,15 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[encodedPrefixLen(req.URL.RawPath, prefix):])
 			}
 
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			if req.URL.Path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
 			req.RequestURI = req.URL.RequestURI()
-			s.next.ServeHTTP(rw, req)
-			return
+			break
 		}
 	}
 

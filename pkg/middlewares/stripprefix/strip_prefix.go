@@ -43,21 +43,26 @@ func (s *stripPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, prefix := range s.prefixes {
+		prefix = strings.TrimSpace(prefix)
+
 		if strings.HasPrefix(req.URL.Path, prefix) {
 			req.URL.Path = s.getPathStripped(req.URL.Path, prefix)
 			if req.URL.RawPath != "" {
 				req.URL.RawPath = s.getRawPathStripped(req.URL.RawPath, prefix)
 			}
-			s.serveRequest(rw, req, strings.TrimSpace(prefix))
-			return
+
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			if req.URL.Path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
+			req.Header.Add(ForwardedPrefixHeader, prefix)
+			req.RequestURI = req.URL.RequestURI()
+			break
 		}
 	}
-	s.next.ServeHTTP(rw, req)
-}
-
-func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, prefix string) {
-	req.Header.Add(ForwardedPrefixHeader, prefix)
-	req.RequestURI = req.URL.RequestURI()
 	s.next.ServeHTTP(rw, req)
 }
 

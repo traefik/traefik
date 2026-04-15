@@ -185,6 +185,40 @@ func TestStripPrefix(t *testing.T) {
 			expectedRawPath:    "/a%2Fb",
 			expectedHeader:     "/api/",
 		},
+		{
+			desc: "dot in the path not stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api./foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/foo",
+			expectedRawPath:    "",
+			expectedHeader:     "/api",
+		},
+		{
+			desc: "multiple dots in the path not stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api../foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/foo",
+			expectedRawPath:    "",
+			expectedHeader:     "/api",
+		},
+		{
+			desc: "multiple dots in the path not stripped by the prefix with forceSlash",
+			config: dynamic.StripPrefix{
+				Prefixes:   []string{"/api"},
+				ForceSlash: true,
+			},
+			path:               "/api../foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/foo",
+			expectedRawPath:    "",
+			expectedHeader:     "/api",
+		},
 	}
 
 	for _, test := range testCases {
