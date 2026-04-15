@@ -55,7 +55,7 @@ accessLog:
     names:
       ClientUsername: drop
     headers:
-      defaultMode: keep
+      defaultmode: keep
       names:
         User-Agent: redact
         Content-Type: keep
@@ -70,7 +70,7 @@ accessLog:
     [accessLog.fields.names]
       ClientUsername = "drop"
     [accessLog.fields.headers]
-      defaultMode = "keep"
+      defaultmode = "keep"
       [accessLog.fields.headers.names]
         "User-Agent" = "redact"
         "Content-Type" = "keep"
@@ -91,7 +91,7 @@ logs:
       names:
         ClientUsername: drop
       headers:
-        defaultMode: keep
+        defaultmode: keep
         names:
           User-Agent: redact
           Content-Type: keep
