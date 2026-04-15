@@ -5074,6 +5074,16 @@ func TestCrossNamespace(t *testing.T) {
 							Priority:    12,
 							Middlewares: []string{"default-test-errorpage"},
 						},
+						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-4932ffbbcd99474df323",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/chain`)",
+							Priority:    12,
+							Middlewares: []string{
+								"default-test-chain",
+								"default-test-chain-cross-provider",
+							},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
@@ -5085,6 +5095,19 @@ func TestCrossNamespace(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+							},
+						},
+						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -5142,6 +5165,16 @@ func TestCrossNamespace(t *testing.T) {
 							Priority:    12,
 							Middlewares: []string{"cross-ns-stripprefix@kubernetescrd"},
 						},
+						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-4932ffbbcd99474df323",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/chain`)",
+							Priority:    12,
+							Middlewares: []string{
+								"default-test-chain",
+								"default-test-chain-cross-provider",
+							},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
@@ -5155,6 +5188,16 @@ func TestCrossNamespace(t *testing.T) {
 								Status:  []string{"500-599"},
 								Service: "default-test-errorpage-errorpage-service",
 								Query:   "/{status}.html",
+							},
+						},
+						"default-test-chain": {
+							Chain: &dynamic.Chain{
+								Middlewares: []string{"cross-ns-stripprefix"},
+							},
+						},
+						"default-test-chain-cross-provider": {
+							Chain: &dynamic.Chain{
+								Middlewares: []string{"other-middleware@kubernetescrd"},
 							},
 						},
 					},
@@ -5199,6 +5242,19 @@ func TestCrossNamespace(t *testing.T) {
 							},
 						},
 						"default-test-crossnamespace-route-a1963878aac7331b7950": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+							},
+						},
+						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
