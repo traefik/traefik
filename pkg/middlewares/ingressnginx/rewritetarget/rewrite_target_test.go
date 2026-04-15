@@ -217,7 +217,7 @@ func TestRewriteTarget(t *testing.T) {
 			if expectedStatus == 0 {
 				expectedStatus = http.StatusOK
 			}
-			require.Equal(t, expectedStatus, resp.StatusCode)
+			assert.Equal(t, expectedStatus, resp.StatusCode)
 
 			if test.expectedRedirectURL != "" {
 				assert.Equal(t, test.expectedRedirectURL, resp.Header.Get("Location"), "Unexpected redirect location.")

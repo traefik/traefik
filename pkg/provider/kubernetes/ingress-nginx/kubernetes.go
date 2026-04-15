@@ -1669,9 +1669,16 @@ func (p *Provider) applyCustomHeaders(namespace, routerName string, ingressConfi
 	return nil
 }
 
+// To validate full URL in rewrite target.
+var urlSchemeRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*://`)
+
+func isFullURL(value string) bool {
+	return urlSchemeRegex.MatchString(value)
+}
+
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	rewrite := ptr.Deref(ingressConfig.RewriteTarget, "")
-	if rewrite == "" {
+	if rewrite == "" || rulePath == "" {
 		return
 	}
 
@@ -1682,9 +1689,19 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 
 	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 	regex := rulePath
+	isFullURLRewrite := isFullURL(rewrite)
+	hasCaptureGroup := strings.Contains(regex, "(")
+
 	if regex != "" {
 		// Location modifier regex on ingress-nginx is case-insensitive.
 		regex = "(?i)" + regex
+	}
+
+	// When rewrite-target is a full URL and there's no capture group,
+	// append .* to match the entire path and avoid leaking unmatched suffix.
+	// See https://github.com/traefik/traefik/issues/12931
+	if isFullURLRewrite && !hasCaptureGroup {
+		regex += ".*"
 	}
 
 	// The usage of rewrite-target annotation implies the usage of regex.
