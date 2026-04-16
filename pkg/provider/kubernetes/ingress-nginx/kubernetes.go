@@ -35,6 +35,9 @@ const (
 	// ProviderName is the Kubernetes Ingress NGINX provider name.
 	ProviderName = "kubernetesingressnginx"
 
+	// unavailableServiceName is the name of a Traefik service returning a 503 Service Unavailable.
+	unavailableServiceName = "unavailable-service"
+
 	// NGINX default values.
 	annotationIngressClass = "kubernetes.io/ingress.class"
 
@@ -78,6 +81,10 @@ var (
 	// The same regexp used in ingress-nginx:https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
 	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 )
+
+type unavailableError struct {
+	error
+}
 
 type backendAddress struct {
 	Address string
@@ -408,6 +415,16 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		},
 	}
 
+	// Add the unavailable service by default.
+	// This service should be used by routers to return a 503 Service Unavailable to be aligned with ingress-nginx behavior.
+	// For example, this service is used when there is a configuration error in the custom-headers middleware.
+	var lb dynamic.ServersLoadBalancer
+	lb.SetDefaults()
+
+	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{
+		LoadBalancer: &lb,
+	}
+
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
@@ -635,6 +652,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			if err := p.applyMiddlewares(ingress, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
+
+				var unavailableErr *unavailableError
+				if errors.As(err, &unavailableErr) {
+					rt.Service = unavailableServiceName
+				}
 			}
 
 			conf.HTTP.Routers[defaultBackendName] = rt
@@ -654,6 +676,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			if err := p.applyMiddlewares(ingress, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
+
+				var unavailableErr *unavailableError
+				if errors.As(err, &unavailableErr) {
+					rtTLS.Service = unavailableServiceName
+				}
 			}
 
 			conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
@@ -725,6 +752,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				if err := p.applyMiddlewares(ingress, key, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
+
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rt.Service = unavailableServiceName
+					}
 				}
 
 				conf.HTTP.Routers[key] = rt
@@ -743,6 +775,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				if err := p.applyMiddlewares(ingress, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
+
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rtTLS.Service = unavailableServiceName
+					}
 				}
 
 				conf.HTTP.Routers[key+"-tls"] = rtTLS
@@ -863,10 +900,20 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				// HTTP Router middlewares.
 				if err := p.applyMiddlewares(ingress, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
+
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rt.Service = unavailableServiceName
+					}
 				}
 				// TLS Router middlewares.
 				if err := p.applyMiddlewares(ingress, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
+
+					var unavailableErr *unavailableError
+					if errors.As(err, &unavailableErr) {
+						rtTLS.Service = unavailableServiceName
+					}
 				}
 
 				if hasCanaryBackend && canaryBackend.RequiresCanaryRouter() {
@@ -882,6 +929,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
+
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							canaryRouter.Service = unavailableServiceName
+						}
 					}
 
 					// default TLS router
@@ -898,6 +950,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
+
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							canaryRouterTLS.Service = unavailableServiceName
+						}
 					}
 				}
 
@@ -914,6 +971,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
+
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							nonCanaryRouter.Service = unavailableServiceName
+						}
 					}
 
 					// default TLS router
@@ -930,6 +992,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 					if err := p.applyMiddlewares(ingress, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
+
+						var unavailableErr *unavailableError
+						if errors.As(err, &unavailableErr) {
+							nonCanaryRouterTLS.Service = unavailableServiceName
+						}
 					}
 				}
 
@@ -1360,8 +1427,8 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
 	}
 
-	if err := p.applyCustomHeaders(routerKey, ingress.IngressConfig, rt, conf); err != nil {
-		return fmt.Errorf("applying custom headers: %w", err)
+	if err := p.applyCustomHeaders(ingress.Namespace, routerKey, ingress.IngressConfig, rt, conf); err != nil {
+		return &unavailableError{fmt.Errorf("applying custom headers: %w", err)}
 	}
 
 	p.applySnippetsAndAuth(routerKey, serverSnippet, ingress.IngressConfig, rt, conf)
@@ -1579,7 +1646,7 @@ func applyRedirect(routerName string, ingressConfig IngressConfig, rt *dynamic.R
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 }
 
-func (p *Provider) applyCustomHeaders(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHeaders(namespace, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
 	if customHeaders == "" {
 		return nil
@@ -1595,6 +1662,10 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig IngressCo
 	// even if allowCrossNamespaceResources is supposed to have the same behavior for all cross-namespace resources.
 	configMapNamespace := customHeadersParts[0]
 	configMapName := customHeadersParts[1]
+
+	if !p.AllowCrossNamespaceResources && configMapNamespace != namespace {
+		return fmt.Errorf("cross-namespace custom-headers is not allowed: configMap %s/%s is not from ingress namespace %q", configMapName, configMapNamespace, namespace)
+	}
 
 	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
 	if err != nil {
