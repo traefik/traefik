@@ -30,6 +30,9 @@ type ConfigurationWatcher struct {
 
 	configurationTransformers []func(context.Context, dynamic.Configurations) dynamic.Configurations
 
+	expectedProviderCount int
+	readyCallback         func()
+
 	routinesPool *safe.Pool
 }
 
@@ -61,6 +64,14 @@ func (c *ConfigurationWatcher) Start() {
 func (c *ConfigurationWatcher) Stop() {
 	close(c.allProvidersConfigs)
 	close(c.newConfigs)
+}
+
+// SetReadinessTracking configures the watcher to invoke readyCallback once all
+// expectedCount providers have emitted at least one configuration message.
+// If expectedCount is 0 or readyCallback is nil, readiness tracking is disabled.
+func (c *ConfigurationWatcher) SetReadinessTracking(expectedCount int, readyCallback func()) {
+	c.expectedProviderCount = expectedCount
+	c.readyCallback = readyCallback
 }
 
 // AddListener adds a new listener function used when new configuration is provided.
@@ -156,6 +167,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 // It waits for the required provider's configuration before applying any configs.
 func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 	var lastConfigurations dynamic.Configurations
+	var readyTriggered bool
 	for {
 		select {
 		case <-ctx.Done():
@@ -182,6 +194,12 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 			}
 
 			lastConfigurations = newConfigs
+
+			if !readyTriggered && c.readyCallback != nil && c.expectedProviderCount > 0 &&
+				len(newConfigs) >= c.expectedProviderCount {
+				readyTriggered = true
+				c.readyCallback()
+			}
 		}
 	}
 }
