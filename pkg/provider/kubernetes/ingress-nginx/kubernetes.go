@@ -1089,7 +1089,6 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
 	if err != nil {
 		log.Error().Str("serviceName", backend.Service.Name).Str("servicePort", backend.Service.Port.String()).Err(fmt.Errorf("getting backend addresses: %w", err)).Msg("Cannot build service, defaulting to 503 Service Unavailable")
-		// this is an unavailable service, as it is the case for every service not available/not buildable.
 		return &dynamic.Service{LoadBalancer: lb}
 	}
 
