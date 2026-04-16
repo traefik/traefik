@@ -10,37 +10,37 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 )
 
-const typeName = "UpstreamVhost"
+const typeName = "UpstreamVHost"
 
-type upstreamVhost struct {
-	next  http.Handler
-	vhost string
-	vars  map[string]string
+type upstreamVHost struct {
 	name  string
+	next  http.Handler
+	vHost string
+	vars  map[string]string
 }
 
 // New creates a new upstream-vhost middleware that rewrites req.Host from a
 // template, resolving NGINX variables at request time.
-func New(ctx context.Context, next http.Handler, config dynamic.UpstreamVhost, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.UpstreamVHost, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
-	if config.Vhost == "" {
-		return nil, errors.New("vhost cannot be empty")
+	if config.VHost == "" {
+		return nil, errors.New("vHost cannot be empty")
 	}
 
-	return &upstreamVhost{
-		next:  next,
-		vhost: config.Vhost,
-		vars:  config.Vars,
+	return &upstreamVHost{
 		name:  name,
+		next:  next,
+		vHost: config.VHost,
+		vars:  config.Vars,
 	}, nil
 }
 
-func (u *upstreamVhost) GetTracingInformation() (string, string) {
+func (u *upstreamVHost) GetTracingInformation() (string, string) {
 	return u.name, typeName
 }
 
-func (u *upstreamVhost) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	req.Host = ingressnginx.ReplaceVariables(u.vhost, req, nil, u.vars)
+func (u *upstreamVHost) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	req.Host = ingressnginx.ReplaceVariables(u.vHost, req, nil, u.vars)
 	u.next.ServeHTTP(rw, req)
 }

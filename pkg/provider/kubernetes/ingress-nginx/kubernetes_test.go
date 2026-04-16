@@ -2401,8 +2401,8 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-upstream-vhost-rule-0-path-0-vhost": {
-							UpstreamVhost: &dynamic.UpstreamVhost{
-								Vhost: "upstream-host-header-value",
+							UpstreamVHost: &dynamic.UpstreamVHost{
+								VHost: "upstream-host-header-value",
 								Vars: map[string]string{
 									"$namespace":     "default",
 									"$ingress_name":  "ingress-with-upstream-vhost",
@@ -2413,8 +2413,8 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-upstream-vhost-rule-0-path-0-tls-vhost": {
-							UpstreamVhost: &dynamic.UpstreamVhost{
-								Vhost: "upstream-host-header-value",
+							UpstreamVHost: &dynamic.UpstreamVHost{
+								VHost: "upstream-host-header-value",
 								Vars: map[string]string{
 									"$namespace":     "default",
 									"$ingress_name":  "ingress-with-upstream-vhost",

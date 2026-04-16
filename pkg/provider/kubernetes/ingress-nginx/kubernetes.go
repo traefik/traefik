@@ -78,8 +78,10 @@ var (
 
 	headerRegexp      = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
 	headerValueRegexp = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
-	// The same regexp used in ingress-nginx:https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
+	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
 	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
+	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/parser/validators.go#L77
+	regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
 )
 
 type unavailableError struct {
@@ -1417,7 +1419,7 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingress.IngressConfig, rt, conf)
 
-	applyUpstreamVhost(routerKey, rulePath, ingress, backend, rt, conf)
+	applyUpstreamVHost(routerKey, rulePath, ingress, backend, rt, conf)
 
 	applyLimitRPMConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
@@ -1696,9 +1698,6 @@ func (p *Provider) applyCustomHeaders(namespace, routerName string, ingressConfi
 	return nil
 }
 
-// Validation identical to ingress-nginx.
-var regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
-
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	rewrite := ptr.Deref(ingressConfig.RewriteTarget, "")
 	if rewrite == "" {
@@ -1948,8 +1947,8 @@ func applyCORSConfiguration(routerName string, ingressConfig IngressConfig, rt *
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
 }
 
-func applyUpstreamVhost(routerName, rulePath string, ingress ingress, backend *netv1.IngressBackend, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingress.IngressConfig.UpstreamVhost == nil {
+func applyUpstreamVHost(routerName, rulePath string, ingress ingress, backend *netv1.IngressBackend, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingress.IngressConfig.UpstreamVHost == nil {
 		return
 	}
 
@@ -1965,17 +1964,13 @@ func applyUpstreamVhost(routerName, rulePath string, ingress ingress, backend *n
 	}
 	if backend != nil && backend.Service != nil {
 		vars["$service_name"] = backend.Service.Name
-		if backend.Service.Port.Number != 0 {
-			vars["$service_port"] = strconv.Itoa(int(backend.Service.Port.Number))
-		} else if backend.Service.Port.Name != "" {
-			vars["$service_port"] = backend.Service.Port.Name
-		}
+		vars["$service_port"] = portString(backend.Service.Port)
 	}
 
 	vHostMiddlewareName := routerName + "-vhost"
 	conf.HTTP.Middlewares[vHostMiddlewareName] = &dynamic.Middleware{
-		UpstreamVhost: &dynamic.UpstreamVhost{
-			Vhost: *ingress.IngressConfig.UpstreamVhost,
+		UpstreamVHost: &dynamic.UpstreamVHost{
+			VHost: *ingress.IngressConfig.UpstreamVHost,
 			Vars:  vars,
 		},
 	}

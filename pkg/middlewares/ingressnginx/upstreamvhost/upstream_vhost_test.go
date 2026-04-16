@@ -13,30 +13,30 @@ import (
 func TestUpstreamVhost(t *testing.T) {
 	testCases := []struct {
 		desc         string
-		config       dynamic.UpstreamVhost
+		config       dynamic.UpstreamVHost
 		reqHost      string
 		expectedHost string
 		expectsError bool
 	}{
 		{
 			desc: "empty vhost",
-			config: dynamic.UpstreamVhost{
-				Vhost: "",
+			config: dynamic.UpstreamVHost{
+				VHost: "",
 			},
 			expectsError: true,
 		},
 		{
 			desc: "static vhost",
-			config: dynamic.UpstreamVhost{
-				Vhost: "backend.internal",
+			config: dynamic.UpstreamVHost{
+				VHost: "backend.internal",
 			},
 			reqHost:      "site.example.com",
 			expectedHost: "backend.internal",
 		},
 		{
 			desc: "provider-supplied $service_name and $namespace",
-			config: dynamic.UpstreamVhost{
-				Vhost: "$service_name.$namespace",
+			config: dynamic.UpstreamVHost{
+				VHost: "$service_name.$namespace",
 				Vars: map[string]string{
 					"$service_name": "my-app",
 					"$namespace":    "foo",
@@ -47,16 +47,16 @@ func TestUpstreamVhost(t *testing.T) {
 		},
 		{
 			desc: "request-time $host",
-			config: dynamic.UpstreamVhost{
-				Vhost: "$host",
+			config: dynamic.UpstreamVHost{
+				VHost: "$host",
 			},
 			reqHost:      "Site.Example.com:8080",
 			expectedHost: "site.example.com",
 		},
 		{
 			desc: "mix of static and request-time variables",
-			config: dynamic.UpstreamVhost{
-				Vhost: "$service_name.$namespace.svc.cluster.local",
+			config: dynamic.UpstreamVHost{
+				VHost: "$service_name.$namespace.svc.cluster.local",
 				Vars: map[string]string{
 					"$service_name": "my-app",
 					"$namespace":    "foo",
@@ -67,8 +67,8 @@ func TestUpstreamVhost(t *testing.T) {
 		},
 		{
 			desc: "unknown variable left as-is",
-			config: dynamic.UpstreamVhost{
-				Vhost: "$does_not_exist",
+			config: dynamic.UpstreamVHost{
+				VHost: "$does_not_exist",
 			},
 			reqHost:      "site.example.com",
 			expectedHost: "$does_not_exist",

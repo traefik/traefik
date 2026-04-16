@@ -352,13 +352,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// UpstreamVhost
-	if config.UpstreamVhost != nil {
+	// UpstreamVHost
+	if config.UpstreamVHost != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return upstreamvhost.New(ctx, next, *config.UpstreamVhost, middlewareName)
+			return upstreamvhost.New(ctx, next, *config.UpstreamVHost, middlewareName)
 		}
 	}
 
