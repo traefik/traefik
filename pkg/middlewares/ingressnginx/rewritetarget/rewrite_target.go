@@ -28,7 +28,9 @@ type rewriteTarget struct {
 	replacement      string
 	xForwardedPrefix string
 	name             string
-	redirectAbsolute bool
+	// absoluteURLRedirect  is true when the replacement template is an absolute URL,
+	// indicating the operator explicitly configured a redirect to an external destination.
+	absoluteURLRedirect bool
 }
 
 // New creates a new rewrite target middleware.
@@ -47,7 +49,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RewriteTarget, n
 	}
 
 	if parsed, err := url.Parse(mw.replacement); err == nil && parsed.Scheme != "" {
-		mw.redirectAbsolute = true
+		mw.absoluteURLRedirect = true
 	}
 
 	if config.Regex != "" {
@@ -84,7 +86,7 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Only issue a 302 redirect if the replacement template itself is an absolute URL.
 	// Prevent user-controlled capture group content from injecting an absolute URL redirect.
-	if rt.redirectAbsolute {
+	if rt.absoluteURLRedirect {
 		http.Redirect(rw, req, newTarget, http.StatusFound)
 		return
 	}
