@@ -670,7 +670,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// Note that the Path sanitization has to be done after the path normalization,
 	// hence the wrapping has to be done before the normalize path wrapping.
 	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
-		handler = sanitizePath(handler)
+		handler = sanitizePath(handler, configuration.HTTP.RedirectSanitizedPath)
 	}
 
 	handler = normalizePath(handler)
@@ -800,7 +800,8 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 
 // sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
 // It cleans the request URL Path and RawPath, and updates the request URI.
-func sanitizePath(h http.Handler) http.Handler {
+// When redirect is true, it returns a 301/308 redirect instead of silently rewriting the path.
+func sanitizePath(h http.Handler, redirect bool) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
@@ -810,6 +811,20 @@ func sanitizePath(h http.Handler) http.Handler {
 
 		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
 		r2.RequestURI = r2.URL.RequestURI()
+
+    // If redirect is enabled and the path changed, return a redirect response.
+    if redirect && req.URL.RequestURI() != r2.RequestURI {
+			rw.Header().Set("Location", r2.RequestURI)
+
+			status := http.StatusMovedPermanently
+
+			if req.Method != http.MethodGet {
+				status = http.StatusPermanentRedirect
+			}
+
+			rw.WriteHeader(status)
+			return
+		}
 
 		h.ServeHTTP(rw, r2)
 	})
