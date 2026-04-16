@@ -171,6 +171,17 @@ func TestRewriteTarget(t *testing.T) {
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://bar.example.org/",
 		},
+		{
+			desc: "path with an absolute redirect URL in the capture group should not issue a 302 redirect",
+			path: "/prefix/http://evil.com/malicious",
+			config: dynamic.RewriteTarget{
+				Regex:       `^/prefix/(.*)`,
+				Replacement: "$1",
+			},
+			expectedPath:       "http://evil.com/malicious",
+			expectedRawPath:    "http://evil.com/malicious",
+			expectedStatusCode: http.StatusOK,
+		},
 	}
 
 	for _, test := range testCases {
