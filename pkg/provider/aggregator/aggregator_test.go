@@ -125,3 +125,42 @@ func (m *mockNamespacedProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool)
 func (m *mockNamespacedProvider) Init() error {
 	return nil
 }
+
+func TestProviderAggregator_ProviderCount(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		agg      ProviderAggregator
+		expected int
+	}{
+		{
+			desc:     "empty aggregator",
+			agg:      ProviderAggregator{},
+			expected: 0,
+		},
+		{
+			desc: "only internal",
+			agg: ProviderAggregator{
+				internalProvider: &providerMock{"internal"},
+			},
+			expected: 1,
+		},
+		{
+			desc: "file + internal + regular providers",
+			agg: ProviderAggregator{
+				internalProvider: &providerMock{"internal"},
+				fileProvider:     &providerMock{"file"},
+				providers: []provider.Provider{
+					&providerMock{"docker"},
+					&providerMock{"kubernetes"},
+				},
+			},
+			expected: 4,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			assert.Equal(t, test.expected, test.agg.ProviderCount())
+		})
+	}
+}

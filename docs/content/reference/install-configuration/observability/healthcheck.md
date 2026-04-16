@@ -1,11 +1,11 @@
 ---
 title: "Traefik Health Check Documentation"
-description: "In Traefik Proxy, CLI & Ping lets you check the health of your Traefik instances. Read the technical documentation for configuration examples and options."
+description: "In Traefik Proxy, CLI, Ping & Ready let you check the health and readiness of your Traefik instances. Read the technical documentation for configuration examples and options."
 ---
 
-# CLI & Ping
+# CLI, Ping & Ready
 
-Checking the Health of your Traefik Instances
+Checking the Health and Readiness of your Traefik Instances
 {: .subtitle }
 
 ## CLI
@@ -84,4 +84,65 @@ ping:
 
 ```bash tab="CLI"
 --ping.terminatingStatusCode=204
+```
+
+## Ready
+
+The `/ready` readiness-check URL is enabled with the command-line `--ready` or config file option `[ready]`.
+
+Unlike `/ping`, which returns `200 OK` as soon as the Traefik process is alive and the entrypoint is bound,
+`/ready` returns `200 OK` only after **all enabled providers have completed their initial configuration load**
+and routes have been applied. Before that, it returns `503 Service Unavailable`.
+
+This is useful in Kubernetes environments where pods should not receive traffic until all routes
+from providers (Ingress, CRD, Gateway API, etc.) are compiled and ready to serve.
+
+The entryPoint where `/ready` is active can be customized with the `entryPoint` option,
+whose default value is `traefik` (port `8080`).
+
+| Path    | Method        | Description                                                                                         |
+|---------|---------------|-----------------------------------------------------------------------------------------------------|
+| <a id="opt-ready" href="#opt-ready" title="#opt-ready">`/ready`</a> | `GET`, `HEAD` | An endpoint to check for Traefik readiness. Returns `200` only when all providers have loaded their initial configuration. |
+
+### Configuration Example
+
+To enable the ready handler:
+
+```yaml tab="File (YAML)"
+ready: {}
+```
+
+```toml tab="File (TOML)"
+[ready]
+```
+
+```bash tab="CLI"
+--ready=true
+```
+
+### Configuration Options
+
+| Field | Description                                               | Default              | Required |
+|:------|:----------------------------------------------------------|:---------------------|:---------|
+| <a id="opt-ready-entryPoint" href="#opt-ready-entryPoint" title="#opt-ready-entryPoint">`ready.entryPoint`</a> | Enables `/ready` on a dedicated EntryPoint. | traefik  | No   |
+| <a id="opt-ready-manualRouting" href="#opt-ready-manualRouting" title="#opt-ready-manualRouting">`ready.manualRouting`</a> | Disables the default internal router in order to allow one to create a custom router for the `ready@internal` service when set to `true`. | false | No   |
+| <a id="opt-ready-terminatingStatusCode" href="#opt-ready-terminatingStatusCode" title="#opt-ready-terminatingStatusCode">`ready.terminatingStatusCode`</a> | Defines the status code for the ready handler during a graceful shut down. | 503 | No   |
+
+### Kubernetes Usage Example
+
+Use `/ready` as a `readinessProbe` and `/ping` as a `livenessProbe`:
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 0
+  periodSeconds: 5
+livenessProbe:
+  httpGet:
+    path: /ping
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
 ```
