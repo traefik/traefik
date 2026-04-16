@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	// providerName is the name of this provider.
-	providerName = "nomad"
+	// ProviderName is the Nomad provider name.
+	ProviderName = "nomad"
 
 	// defaultTemplateRule is the default template for the default rule.
 	defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
@@ -68,7 +68,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
-			name:          providerName,
+			name:          ProviderName,
 		}}
 	}
 
@@ -76,7 +76,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	for _, namespace := range p.Namespaces {
 		providers = append(providers, &Provider{
 			Configuration: p.Configuration,
-			name:          providerName + "-" + namespace,
+			name:          ProviderName + "-" + namespace,
 			namespace:     namespace,
 		})
 	}
@@ -169,7 +169,7 @@ func (p *Provider) Init() error {
 
 	// In case they didn't initialize Provider with BuildProviders
 	if p.name == "" {
-		p.name = providerName
+		p.name = ProviderName
 	}
 
 	return nil

@@ -281,12 +281,6 @@ func matchDomain(serverName, certDomain string) bool {
 	}
 
 	labels := strings.Split(serverName, ".")
-	for i := range labels {
-		labels[i] = "*"
-		candidate := strings.Join(labels, ".")
-		if certDomain == candidate {
-			return true
-		}
-	}
-	return false
+	labels[0] = "*"
+	return certDomain == strings.Join(labels, ".")
 }

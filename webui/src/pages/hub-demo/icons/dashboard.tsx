@@ -1,4 +1,4 @@
-import { Flex } from '@traefiklabs/faency'
+import { Flex } from '@traefik-labs/faency'
 
 import { CustomIconProps } from 'components/icons'
 
