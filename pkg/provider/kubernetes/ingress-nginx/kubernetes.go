@@ -430,11 +430,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
-		svc, err := p.buildService(p.defaultBackendServiceNamespace, ib, nil, IngressConfig{})
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("Cannot build default backend service")
-			return conf
-		}
+		svc := p.buildService(p.defaultBackendServiceNamespace, ib, nil, IngressConfig{})
 
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
@@ -619,15 +615,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		var defaultBackendService *dynamic.Service
 		var defaultBackendObs *dynamic.RouterObservabilityConfig
 		if ingress.Spec.DefaultBackend != nil && ingress.Spec.DefaultBackend.Service != nil {
-			var err error
-			defaultBackendService, err = p.buildService(ingress.Namespace, *ingress.Spec.DefaultBackend, &namedServersTransport, ingress.IngressConfig)
-			if err != nil {
-				logger.Error().
-					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
-					Str("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
-					Err(err).
-					Msg("Cannot create default backend service")
-			}
+			defaultBackendService = p.buildService(ingress.Namespace, *ingress.Spec.DefaultBackend, &namedServersTransport, ingress.IngressConfig)
 
 			defaultBackendObs = &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
@@ -819,15 +807,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				// TODO: if no service, do not add middlewares and 503.
 				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
-				service, err := p.buildService(ingress.Namespace, pa.Backend, &namedServersTransport, ingress.IngressConfig)
-				if err != nil {
-					logger.Error().
-						Str("serviceName", pa.Backend.Service.Name).
-						Str("servicePort", pa.Backend.Service.Port.String()).
-						Err(err).
-						Msg("Cannot create service")
-					continue
-				}
+				service := p.buildService(ingress.Namespace, pa.Backend, &namedServersTransport, ingress.IngressConfig)
 
 				// Retrieve the Canary backend corresponding to the service, and if one exists we are building a WRR,
 				// corresponding to the canary configuration.
@@ -840,15 +820,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				canaryBackend, hasCanaryBackend := canaryBackends[canaryBackendKey(ingress.Namespace, *pa.Backend.Service)]
 				if hasCanaryBackend {
 					canaryServiceName = serviceName + "-canary"
-					canaryService, err = p.buildService(ingress.Namespace, *canaryBackend.IngressBackend, &namedServersTransport, ingress.IngressConfig)
-					if err != nil {
-						logger.Error().
-							Str("serviceName", canaryBackend.IngressBackend.Service.Name).
-							Str("servicePort", canaryBackend.IngressBackend.Service.Port.String()).
-							Err(err).
-							Msg("Cannot create canary service")
-						continue
-					}
+					canaryService = p.buildService(ingress.Namespace, *canaryBackend.IngressBackend, &namedServersTransport, ingress.IngressConfig)
 
 					wrrServiceName = serviceName + "-wrr"
 					wrrService = &dynamic.Service{
@@ -1110,14 +1082,16 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	return nst, nil
 }
 
-func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg IngressConfig) (*dynamic.Service, error) {
-	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("getting backend addresses: %w", err)
-	}
-
+func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg IngressConfig) *dynamic.Service {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
+
+	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
+	if err != nil {
+		log.Error().Str("serviceName", backend.Service.Name).Str("servicePort", backend.Service.Port.String()).Err(fmt.Errorf("getting backend addresses: %w", err)).Msg("Cannot build service, defaulting to 503 Service Unavailable")
+		// this is an unavailable service, as it is the case for every service not available/not buildable.
+		return &dynamic.Service{LoadBalancer: lb}
+	}
 
 	lb.Sticky = buildSticky(cfg, "")
 
@@ -1138,7 +1112,7 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		})
 	}
 
-	return svc, nil
+	return svc
 }
 
 func (p *Provider) buildPassthroughService(namespace string, backend netv1.IngressBackend, cfg IngressConfig) (*dynamic.TCPService, error) {
@@ -1515,10 +1489,7 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	serviceName := defaultBackendName
 	if defaultBackend := ptr.Deref(config.DefaultBackend, ""); defaultBackend != "" {
 		backend := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}}
-		service, err := p.buildService(namespace, backend, nil, config)
-		if err != nil {
-			return err
-		}
+		service := p.buildService(namespace, backend, nil, config)
 
 		serviceName = fmt.Sprintf("default-backend-%s", routerName)
 		conf.HTTP.Services[serviceName] = service
