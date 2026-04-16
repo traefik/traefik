@@ -60,6 +60,7 @@ type Middleware struct {
 	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -930,4 +931,18 @@ type RewriteTarget struct {
 	Replacement string `json:"replacement,omitempty"`
 	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
 	XForwardedPrefix string `json:"xForwardedPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// UpstreamVHost holds the upstream-vhost middleware configuration used by the ingress-nginx provider.
+// It rewrites the request Host header from a template that may embed NGINX variables
+// (e.g. $host, $service_name, $namespace) which are resolved at request time.
+type UpstreamVHost struct {
+	// VHost is the Host header template. It may contain NGINX variables such as
+	// $host, $http_*, or provider-supplied variables like $service_name and $namespace.
+	VHost string `json:"vHost,omitempty"`
+	// Vars holds provider-resolved custom variables, keyed with their leading "$".
+	// For example: {"$service_name": "my-app", "$namespace": "foo"}.
+	Vars map[string]string `json:"vars,omitempty"`
 }

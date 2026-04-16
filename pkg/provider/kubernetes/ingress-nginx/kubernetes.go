@@ -78,8 +78,10 @@ var (
 
 	headerRegexp      = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
 	headerValueRegexp = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
-	// The same regexp used in ingress-nginx:https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
+	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
 	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
+	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/parser/validators.go#L77
+	regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
 )
 
 type unavailableError struct {
@@ -1417,7 +1419,7 @@ func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHo
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingress.IngressConfig, rt, conf)
 
-	applyUpstreamVhost(routerKey, ingress.IngressConfig, rt, conf)
+	applyUpstreamVHost(routerKey, rulePath, ingress, backend, rt, conf)
 
 	applyLimitRPMConfiguration(routerKey, ingress.IngressConfig, rt, conf)
 
@@ -1696,9 +1698,6 @@ func (p *Provider) applyCustomHeaders(namespace, routerName string, ingressConfi
 	return nil
 }
 
-// Validation identical to ingress-nginx.
-var regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
-
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	rewrite := ptr.Deref(ingressConfig.RewriteTarget, "")
 	if rewrite == "" {
@@ -1948,15 +1947,31 @@ func applyCORSConfiguration(routerName string, ingressConfig IngressConfig, rt *
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
 }
 
-func applyUpstreamVhost(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.UpstreamVhost == nil {
+func applyUpstreamVHost(routerName, rulePath string, ingress ingress, backend *netv1.IngressBackend, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingress.IngressConfig.UpstreamVHost == nil {
 		return
+	}
+
+	// ingress-nginx exposes per-location variables (set at the NGINX location scope)
+	// to upstream-vhost: $namespace, $ingress_name, $service_name, $service_port,
+	// $location_path. They are static at config-build time, so we pass them through
+	// the interpolator's custom vars map. Request-time variables ($host, $http_*, ...)
+	// are resolved per request by the middleware itself via ingressnginx.ReplaceVariables.
+	vars := map[string]string{
+		"$namespace":     ingress.Namespace,
+		"$ingress_name":  ingress.Name,
+		"$location_path": rulePath,
+	}
+	if backend != nil && backend.Service != nil {
+		vars["$service_name"] = backend.Service.Name
+		vars["$service_port"] = portString(backend.Service.Port)
 	}
 
 	vHostMiddlewareName := routerName + "-vhost"
 	conf.HTTP.Middlewares[vHostMiddlewareName] = &dynamic.Middleware{
-		Headers: &dynamic.Headers{
-			CustomRequestHeaders: map[string]string{"Host": *ingressConfig.UpstreamVhost},
+		UpstreamVHost: &dynamic.UpstreamVHost{
+			VHost: *ingress.IngressConfig.UpstreamVHost,
+			Vars:  vars,
 		},
 	}
 
