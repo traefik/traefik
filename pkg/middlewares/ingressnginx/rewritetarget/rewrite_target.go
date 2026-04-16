@@ -28,7 +28,7 @@ type rewriteTarget struct {
 	replacement      string
 	xForwardedPrefix string
 	name             string
-	// absoluteURLRedirect  is true when the replacement template is an absolute URL,
+	// absoluteURLRedirect is true when the replacement template is an absolute URL,
 	// indicating the operator explicitly configured a redirect to an external destination.
 	absoluteURLRedirect bool
 }
