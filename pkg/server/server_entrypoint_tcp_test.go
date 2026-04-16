@@ -454,7 +454,7 @@ func TestSanitizePath(t *testing.T) {
 			clean := sanitizePath(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				callCount++
 				assert.Equal(t, test.expected, r.URL.Path)
-			}))
+			}), false)
 
 			request := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
 			clean.ServeHTTP(httptest.NewRecorder(), request)
@@ -462,6 +462,99 @@ func TestSanitizePath(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 	}
+}
+
+func TestSanitizePathRedirect(t *testing.T) {
+  tests := []struct {
+    desc           string
+    path           string
+    method         string
+    expectedPath   string
+    expectedStatus int
+    expectRedirect bool
+  }{
+    {
+      desc:           "clean path no redirect",
+      path:           "/foo/bar",
+      method:         http.MethodGet,
+      expectedPath:   "/foo/bar",
+      expectedStatus: http.StatusOK,
+      expectRedirect: false,
+    },
+    {
+      desc:           "double dot redirect GET",
+      path:           "/foo/../bar",
+      method:         http.MethodGet,
+      expectedPath:   "/bar",
+      expectedStatus: http.StatusMovedPermanently,
+      expectRedirect: true,
+    },
+    {
+      desc:           "single dot redirect GET",
+      path:           "/foo/./bar",
+      method:         http.MethodGet,
+      expectedPath:   "/foo/bar",
+      expectedStatus: http.StatusMovedPermanently,
+      expectRedirect: true,
+    },
+    {
+      desc:           "double slash redirect GET",
+      path:           "/foo//bar",
+      method:         http.MethodGet,
+      expectedPath:   "/foo/bar",
+      expectedStatus: http.StatusMovedPermanently,
+      expectRedirect: true,
+    },
+    {
+      desc:           "double dot redirect POST",
+      path:           "/foo/../bar",
+      method:         http.MethodPost,
+      expectedPath:   "/bar",
+      expectedStatus: http.StatusPermanentRedirect,
+      expectRedirect: true,
+    },
+    {
+      desc:           "complex path redirect",
+      path:           "/a/../b/./c//d",
+      method:         http.MethodGet,
+      expectedPath:   "/b/c/d",
+      expectedStatus: http.StatusMovedPermanently,
+      expectRedirect: true,
+    },
+    {
+      desc:           "path with query string redirect",
+      path:           "/foo/../bar?query=value",
+      method:         http.MethodGet,
+      expectedPath:   "/bar?query=value",
+      expectedStatus: http.StatusMovedPermanently,
+      expectRedirect: true,
+    },
+  }
+
+  for _, test := range tests {
+    t.Run(test.desc, func(t *testing.T) {
+      t.Parallel()
+
+      var callCount int
+      handler := sanitizePath(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        callCount++
+        w.WriteHeader(http.StatusOK)
+      }), true)
+
+      request := httptest.NewRequest(test.method, "http://foo"+test.path, http.NoBody)
+      recorder := httptest.NewRecorder()
+      handler.ServeHTTP(recorder, request)
+
+      if test.expectRedirect {
+        assert.Equal(t, test.expectedStatus, recorder.Code)
+        assert.Equal(t, test.expectedPath, recorder.Header().Get("Location"))
+        assert.Equal(t, 0, callCount)
+      } else {
+        assert.Equal(t, http.StatusOK, recorder.Code)
+        assert.Equal(t, 1, callCount)
+      }
+    })
+  }
 }
 
 func TestNormalizePath(t *testing.T) {
