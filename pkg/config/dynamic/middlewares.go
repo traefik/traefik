@@ -715,7 +715,7 @@ type RedirectScheme struct {
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 	// ForcePermanentRedirect is an internal field (not exposed in configuration).
 	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
-	// Used by the provider ingress-ngin.
+	// Used by the provider ingress-nginx.
 	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
