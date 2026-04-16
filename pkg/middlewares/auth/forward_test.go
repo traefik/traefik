@@ -372,6 +372,7 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Host":         "foo.bar",
 				"X-Forwarded-Uri":          "/path?q=1",
 				"X-Forwarded-Method":       "GET",
+				"X-Forwarded-Port":         "80",
 				forward.ProxyAuthenticate:  "ProxyAuthenticate",
 				forward.ProxyAuthorization: "ProxyAuthorization",
 			},
@@ -393,6 +394,7 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Host":   "foo.bar",
 				"X-Forwarded-Uri":    "/path?q=1",
 				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Port":   "80",
 			},
 			checkForUnexpectedHeaders: true,
 		},
@@ -413,6 +415,209 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Host":   "foo.bar",
 				"X-Forwarded-Uri":    "/path?q=1",
 				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Port":   "80",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "We keep authRequestHeaders and XForwarded if trusted",
+			headers: map[string]string{
+				"X-CustomHeader":  "CustomHeader",
+				"X-Forwarded-Uri": "/path?q=2",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+			},
+			trustForwardHeader: true,
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=2",
+				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Port":   "80",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "We remove X-Forwarded and X_forwarded header when xforwarded not trusted",
+			headers: map[string]string{
+				"X-CustomHeader":    "CustomHeader",
+				"X_forwarded_for":   "127.0.0.1",
+				"X-Forwarded-Proto": "xxx",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Port":   "80",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			if test.emptyHost {
+				req.Host = ""
+			}
+
+			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
+
+			writeHeader(req, forwardReq, test.trustForwardHeader, test.authRequestHeaders)
+
+			actualHeaders := forwardReq.Header
+
+			expectedHeaders := test.expectedHeaders
+			for key, value := range expectedHeaders {
+				assert.Equal(t, value, actualHeaders.Get(key))
+				actualHeaders.Del(key)
+			}
+			if test.checkForUnexpectedHeaders {
+				for key := range actualHeaders {
+					assert.Fail(t, "Unexpected header found", key)
+				}
+			}
+		})
+	}
+}
+
+func Test_oldWriteHeader(t *testing.T) {
+	testCases := []struct {
+		name                      string
+		headers                   map[string]string
+		authRequestHeaders        []string
+		emptyHost                 bool
+		expectedHeaders           map[string]string
+		checkForUnexpectedHeaders bool
+	}{
+		{
+			name: "not trust Forward Header",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+			},
+			expectedHeaders: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "foo.bar",
+			},
+		},
+		{
+			name: "not trust Forward Header with empty Host",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+			},
+			emptyHost: true,
+			expectedHeaders: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "",
+			},
+		},
+		{
+			name: "not trust Forward Header with forward requested URI",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+				"X-Forwarded-Uri":  "/forward?q=1",
+			},
+			expectedHeaders: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "foo.bar",
+				"X-Forwarded-Uri":  "/path?q=1",
+			},
+		},
+		{
+			name: "not trust Forward Header with forward request Method",
+			headers: map[string]string{
+				"X-Forwarded-Method": "OPTIONS",
+			},
+			expectedHeaders: map[string]string{
+				"X-Forwarded-Method": "GET",
+			},
+		},
+		{
+			name: "remove hop-by-hop headers",
+			headers: map[string]string{
+				forward.Connection:         "Connection",
+				forward.KeepAlive:          "KeepAlive",
+				forward.ProxyAuthenticate:  "ProxyAuthenticate",
+				forward.ProxyAuthorization: "ProxyAuthorization",
+				forward.Te:                 "Te",
+				forward.Trailers:           "Trailers",
+				forward.TransferEncoding:   "TransferEncoding",
+				forward.Upgrade:            "Upgrade",
+				"X-CustomHeader":           "CustomHeader",
+			},
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":           "CustomHeader",
+				"X-Forwarded-Proto":        "http",
+				"X-Forwarded-Host":         "foo.bar",
+				"X-Forwarded-Uri":          "/path?q=1",
+				"X-Forwarded-Method":       "GET",
+				forward.ProxyAuthenticate:  "ProxyAuthenticate",
+				forward.ProxyAuthorization: "ProxyAuthorization",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "filter forward request headers",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Content-Type":   "multipart/form-data; boundary=---123456",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+			},
+			expectedHeaders: map[string]string{
+				"x-customHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "filter forward request headers doesn't add new headers",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Content-Type":   "multipart/form-data; boundary=---123456",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+				"X-Non-Exists-Header",
+			},
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+
+		{
+			name: "We keep X-Forwarded-Prefix for non-breaking",
+			headers: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Prefix": "foo.bar",
+			},
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Prefix": "foo.bar",
 			},
 			checkForUnexpectedHeaders: true,
 		},
@@ -431,7 +636,7 @@ func Test_writeHeader(t *testing.T) {
 
 			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
 
-			writeHeader(req, forwardReq, test.trustForwardHeader, test.authRequestHeaders)
+			oldWriteHeader(req, forwardReq, test.authRequestHeaders)
 
 			actualHeaders := forwardReq.Header
 

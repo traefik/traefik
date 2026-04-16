@@ -283,7 +283,7 @@ func init() {
 						Key:                "cert.pem",
 						InsecureSkipVerify: true,
 					},
-					TrustForwardHeader:       true,
+					TrustForwardHeader:       pointer(true),
 					AuthResponseHeaders:      []string{"foo"},
 					AuthResponseHeadersRegex: "foo",
 					AuthRequestHeaders:       []string{"foo"},

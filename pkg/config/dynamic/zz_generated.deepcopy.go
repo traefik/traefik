@@ -314,6 +314,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = new(types.ClientTLS)
 		**out = **in
 	}
+	if in.TrustForwardHeader != nil {
+		in, out := &in.TrustForwardHeader, &out.TrustForwardHeader
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AuthResponseHeaders != nil {
 		in, out := &in.AuthResponseHeaders, &out.AuthResponseHeaders
 		*out = make([]string, len(*in))

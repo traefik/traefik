@@ -397,8 +397,8 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 	return false
 }
 
-var requestCounter uint64 // Request ID
+var requestCounter atomic.Uint64 // Request ID
 
 func nextRequestCount() uint64 {
-	return atomic.AddUint64(&requestCounter, 1)
+	return requestCounter.Add(1)
 }
