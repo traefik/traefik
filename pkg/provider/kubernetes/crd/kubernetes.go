@@ -23,6 +23,7 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -34,6 +35,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -252,24 +254,28 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading basic auth middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
 		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading digest auth middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
 		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading forward auth middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
 		errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
@@ -282,24 +288,34 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading plugins middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
 		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
 		retry, err := createRetryMiddleware(middleware.Spec.Retry)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading retry middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
 		circuitBreaker, err := createCircuitBreakerMiddleware(middleware.Spec.CircuitBreaker)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading circuit breaker middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
+			continue
+		}
+
+		if err := validateIPAllowList(middleware.Spec); err != nil {
+			logger.Error().Err(err).Msg("Error validating ipAllowList middleware")
+			writeMiddlewareStatus(ctx, client, middleware, err)
 			continue
 		}
 
@@ -331,6 +347,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			GrpcWeb:           middleware.Spec.GrpcWeb,
 			Plugin:            plugin,
 		}
+
+		writeMiddlewareStatus(ctx, client, middleware, nil)
 	}
 
 	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
@@ -1637,4 +1655,50 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace string) bool {
 	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
 	return allowCrossNamespace || parentNamespace == namespace
+}
+
+// validateIPAllowList checks that all sourceRange entries in ipAllowList and ipWhiteList are valid IPs or CIDRs.
+func validateIPAllowList(spec traefikv1alpha1.MiddlewareSpec) error {
+	if spec.IPAllowList != nil && len(spec.IPAllowList.SourceRange) > 0 {
+		if _, err := ip.NewChecker(spec.IPAllowList.SourceRange); err != nil {
+			return fmt.Errorf("ipAllowList sourceRange: %w", err)
+		}
+	}
+	if spec.IPWhiteList != nil && len(spec.IPWhiteList.SourceRange) > 0 {
+		if _, err := ip.NewChecker(spec.IPWhiteList.SourceRange); err != nil {
+			return fmt.Errorf("ipWhiteList sourceRange: %w", err)
+		}
+	}
+	return nil
+}
+
+// writeMiddlewareStatus updates the status condition on the Middleware CRD object.
+// A nil err sets condition Valid=True; a non-nil err sets Valid=False with the error message.
+func writeMiddlewareStatus(ctx context.Context, client Client, middleware *traefikv1alpha1.Middleware, validationErr error) {
+	condition := metav1.Condition{
+		Type:               "Valid",
+		ObservedGeneration: middleware.Generation,
+		LastTransitionTime: metav1.Now(),
+	}
+
+	if validationErr == nil {
+		condition.Status = metav1.ConditionTrue
+		condition.Reason = "Valid"
+		condition.Message = "Middleware configuration is valid"
+	} else {
+		condition.Status = metav1.ConditionFalse
+		condition.Reason = "InvalidConfiguration"
+		condition.Message = validationErr.Error()
+	}
+
+	status := traefikv1alpha1.MiddlewareStatus{
+		Conditions: []metav1.Condition{condition},
+	}
+
+	if err := client.UpdateMiddlewareStatus(ctx, middleware.Namespace, middleware.Name, status); err != nil {
+		log.Ctx(ctx).Error().Err(err).
+			Str("namespace", middleware.Namespace).
+			Str("name", middleware.Name).
+			Msg("Failed to update Middleware status")
+	}
 }

@@ -10,6 +10,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // Middleware is the CRD implementation of a Traefik Middleware.
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/
@@ -19,7 +20,18 @@ type Middleware struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec MiddlewareSpec `json:"spec"`
+	Spec   MiddlewareSpec   `json:"spec"`
+	Status MiddlewareStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// MiddlewareStatus defines the observed state of a Middleware.
+type MiddlewareStatus struct {
+	// Conditions defines the current state of the Middleware.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

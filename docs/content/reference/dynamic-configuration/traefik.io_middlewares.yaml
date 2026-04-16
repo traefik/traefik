@@ -947,6 +947,7 @@ spec:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation).
                     items:
+                      pattern: ^((\d{1,3}\.){3}\d{1,3}(/\d{1,2})?|[0-9a-fA-F:]+(/\d{1,3})?)$
                       type: string
                     type: array
                 type: object
@@ -980,6 +981,7 @@ spec:
                     description: SourceRange defines the set of allowed IPs (or ranges
                       of allowed IPs by using CIDR notation). Required.
                     items:
+                      pattern: ^((\d{1,3}\.){3}\d{1,3}(/\d{1,2})?|[0-9a-fA-F:]+(/\d{1,3})?)$
                       type: string
                     type: array
                 type: object
@@ -1401,9 +1403,67 @@ spec:
                     type: array
                 type: object
             type: object
+          status:
+            description: MiddlewareStatus defines the observed state of a Middleware.
+            properties:
+              conditions:
+                description: Conditions defines the current state of the Middleware.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time the condition
+                        transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message is a human readable message indicating
+                        details about the transition.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: ObservedGeneration represents the .metadata.generation
+                        that the condition was set based upon.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: Reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$|^$
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: Type of condition in CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
         required:
         - metadata
         - spec
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
