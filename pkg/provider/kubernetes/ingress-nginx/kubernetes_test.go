@@ -67,7 +67,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Service unavailable in http",
+			desc: "Service unavailable in HTTP",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -163,7 +163,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Service unavailable in http with redirect annotation",
+			desc: "Service unavailable in HTTP with redirect annotation",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
