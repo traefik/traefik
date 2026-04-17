@@ -29,8 +29,14 @@ type stripPrefix struct {
 // New creates a new strip prefix middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, name string) (http.Handler, error) {
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+
+	prefixes := make([]string, len(config.Prefixes))
+	for i, p := range config.Prefixes {
+		prefixes[i] = strings.TrimSpace(p)
+	}
+
 	return &stripPrefix{
-		prefixes:   config.Prefixes,
+		prefixes:   prefixes,
 		forceSlash: config.ForceSlash,
 		next:       next,
 		name:       name,
@@ -48,16 +54,19 @@ func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.RawPath != "" {
 				req.URL.RawPath = s.getRawPathStripped(req.URL.RawPath, prefix)
 			}
-			s.serveRequest(rw, req, strings.TrimSpace(prefix))
-			return
+
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			if req.URL.Path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
+			req.Header.Add(ForwardedPrefixHeader, prefix)
+			req.RequestURI = req.URL.RequestURI()
+			break
 		}
 	}
-	s.next.ServeHTTP(rw, req)
-}
-
-func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, prefix string) {
-	req.Header.Add(ForwardedPrefixHeader, prefix)
-	req.RequestURI = req.URL.RequestURI()
 	s.next.ServeHTTP(rw, req)
 }
 

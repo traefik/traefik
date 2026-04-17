@@ -44,7 +44,7 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	// To prevent timing attacks, we need to compute a hash even if the user is not found.
 	// We assume it to be safe only when the users hashes are all from the same algorithm,
 	// so we can pick the first one as a random hash to compute.
-	notFoundSecret := users[slices.Collect(maps.Values(users))[0]]
+	notFoundSecret := slices.Collect(maps.Values(users))[0]
 
 	ba := &basicAuth{
 		next:           next,

@@ -50,6 +50,8 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
 				xForwardedPrefix:            {"/prefix"},
+				"X_forwarded_proto":         {"https"},
+				"X_forwarded_for":           {"10.0.0.1"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -58,6 +60,8 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
 				xForwardedPrefix:            "/prefix",
+				"X_forwarded_proto":         "https",
+				"X_forwarded_for":           "10.0.0.1",
 			},
 		},
 		{
@@ -72,6 +76,9 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
 				xForwardedPrefix:            {"/prefix"},
+				"X_forwarded_proto":         {"https"},
+				"X_forwarded_for":           {"10.0.0.1"},
+				"X_forwarded_host":          {"evil.example"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "",
@@ -80,6 +87,9 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCert:     "",
 				xForwardedTLSClientCertInfo: "",
 				xForwardedPrefix:            "",
+				"X_forwarded_proto":         "",
+				"X_forwarded_for":           "",
+				"X_forwarded_host":          "",
 			},
 		},
 		{
@@ -94,6 +104,8 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCert:     {"Cert"},
 				xForwardedTLSClientCertInfo: {"CertInfo"},
 				xForwardedPrefix:            {"/prefix"},
+				"X_forwarded_proto":         {"https"},
+				"X_forwarded_for":           {"10.0.0.1"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedFor:               "10.0.1.0, 10.0.1.12",
@@ -102,6 +114,8 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCert:     "Cert",
 				xForwardedTLSClientCertInfo: "CertInfo",
 				xForwardedPrefix:            "/prefix",
+				"X_forwarded_proto":         "https",
+				"X_forwarded_for":           "10.0.0.1",
 			},
 		},
 		{
@@ -298,6 +312,7 @@ func TestServeHTTP(t *testing.T) {
 					xForwardedTLSClientCertInfo,
 					xForwardedPrefix,
 					xRealIP,
+					"X_forwarded_proto",
 				},
 				xForwardedProto:             {"foo"},
 				xForwardedFor:               {"foo"},
@@ -309,6 +324,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCertInfo: {"foo"},
 				xForwardedPrefix:            {"foo"},
 				xRealIP:                     {"foo"},
+				"X_forwarded_proto":         {"spoofed"},
 			},
 			expectedHeaders: map[string]string{
 				xForwardedProto:             "http",
@@ -321,6 +337,7 @@ func TestServeHTTP(t *testing.T) {
 				xForwardedTLSClientCertInfo: "",
 				xForwardedPrefix:            "",
 				xRealIP:                     "",
+				"X_forwarded_proto":         "",
 				connection:                  "",
 			},
 		},
@@ -581,6 +598,19 @@ func TestServeHTTP(t *testing.T) {
 			expectedHeaders: map[string]string{
 				"Bar": "",
 				"Foo": "bar",
+			},
+		},
+		{
+			desc:       "insecure false preserves non-matching underscore headers",
+			insecure:   false,
+			remoteAddr: "10.0.1.101:80",
+			incomingHeaders: map[string][]string{
+				"X_custom_header":   {"value"},
+				"X_forwarded_proto": {"spoofed"},
+			},
+			expectedHeaders: map[string]string{
+				"X_custom_header":   "value",
+				"X_forwarded_proto": "",
 			},
 		},
 	}

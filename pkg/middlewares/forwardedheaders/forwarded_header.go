@@ -28,18 +28,40 @@ const (
 	upgrade                     = "Upgrade"
 )
 
-var xHeaders = []string{
-	xForwardedProto,
-	xForwardedFor,
-	xForwardedHost,
-	xForwardedPort,
-	xForwardedServer,
-	xForwardedURI,
-	xForwardedMethod,
-	xForwardedPrefix,
-	xForwardedTLSClientCert,
-	xForwardedTLSClientCertInfo,
-	xRealIP,
+// xHeadersSet contains the canonical X-headers managed by Traefik. Used by
+// isManagedXHeader to detect both the canonical form and underscore variants
+// that Go's HTTP server preserves (e.g. X_Forwarded_Proto).
+var xHeadersSet = map[string]struct{}{
+	xForwardedProto:             {},
+	xForwardedFor:               {},
+	xForwardedHost:              {},
+	xForwardedPort:              {},
+	xForwardedServer:            {},
+	xForwardedURI:               {},
+	xForwardedMethod:            {},
+	xForwardedPrefix:            {},
+	xForwardedTLSClientCert:     {},
+	xForwardedTLSClientCertInfo: {},
+	xRealIP:                     {},
+}
+
+// isManagedXHeader reports whether key matches one of Traefik's X-headers,
+// treating '_' as '-'. Every managed header starts with 'X', so a byte check
+// skips most headers without any map work; the underscore branch is only
+// reached for the rare attacker-injected variants.
+func isManagedXHeader(key string) bool {
+	if len(key) == 0 || key[0] != 'X' {
+		return false
+	}
+	if _, ok := xHeadersSet[key]; ok {
+		return true
+	}
+	if strings.IndexByte(key, '_') < 0 {
+		return false
+	}
+	canonical := http.CanonicalHeaderKey(strings.ReplaceAll(key, "_", "-"))
+	_, ok := xHeadersSet[canonical]
+	return ok
 }
 
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
@@ -137,8 +159,13 @@ func forwardedPort(req *http.Request) string {
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		for _, h := range xHeaders {
-			unsafeHeader(r.Header).Del(h)
+		// Strip X-Forwarded headers and their underscore variants
+		// (e.g. X_Forwarded_Proto), which Go's HTTP server preserves
+		// alongside the canonical dash form.
+		for key := range r.Header {
+			if isManagedXHeader(key) {
+				delete(r.Header, key)
+			}
 		}
 	}
 
@@ -219,7 +246,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
 				// A proxy or gateway MUST ... and then remove the Connection header field itself
 				// (or replace it with the intermediary's own connection options for the forwarded message).
-				if slices.Contains(xHeaders, key) {
+				if isManagedXHeader(key) {
 					continue
 				}
 
