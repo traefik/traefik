@@ -1190,11 +1190,6 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("service port not found")
 	}
 
-	// If the default backend has no endpoints,
-	// and if there is no default-backend-service configured,
-	// the fallback with Ingress NGINX is to serve a 404,
-	// but here, we will later build an empty server load-balancer which serves a 503.
-	// TODO: make the built service return a 404.
 	return p.getBackendAddressesFromEndpointSlices(namespace, defaultBackend, portName)
 }
 
