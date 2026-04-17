@@ -19,7 +19,7 @@ require (
 	github.com/containerd/errdefs v1.0.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.5.0
-	github.com/docker/cli v29.2.1+incompatible
+	github.com/docker/cli v29.4.0+incompatible
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/fatih/structs v1.1.0
@@ -28,7 +28,8 @@ require (
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
-	github.com/google/go-github/v28 v28.1.1
+	github.com/google/go-containerregistry v0.21.5
+	github.com/google/go-github/v72 v72.0.0
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/hashicorp/consul/api v1.26.1
@@ -59,7 +60,7 @@ require (
 	github.com/quic-go/quic-go v0.59.0
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/rs/zerolog v1.33.0
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spiffe/go-spiffe/v2 v2.6.0
 	github.com/stealthrocket/wasi-go v0.8.0
 	github.com/stealthrocket/wazergo v0.19.1
@@ -188,6 +189,7 @@ require (
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v1.0.0-rc.1 // indirect
+	github.com/containerd/stargz-snapshotter/estargz v0.18.2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -197,6 +199,7 @@ require (
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dnsimple/dnsimple-go/v4 v4.0.0 // indirect
+	github.com/docker/docker-credential-helpers v0.9.3 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
@@ -371,6 +374,7 @@ require (
 	github.com/ucloud/ucloud-sdk-go v0.22.61 // indirect
 	github.com/ultradns/ultradns-go-sdk v1.8.1-20250722213956-faef419 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/vbatts/tar-split v0.12.2 // indirect
 	github.com/vinyldns/go-vinyldns v0.9.17 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.241 // indirect
 	github.com/vultr/govultr/v3 v3.30.0 // indirect
