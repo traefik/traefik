@@ -585,6 +585,15 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
 
+		if svcConfig.Service.Strategy != "" {
+			switch svcConfig.Service.Strategy {
+			case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C, dynamic.BalancerStrategyHRW, dynamic.BalancerStrategyLeastTime:
+				svc.LoadBalancer.Strategy = svcConfig.Service.Strategy
+			default:
+				return nil, fmt.Errorf("load-balancer strategy %s is not supported", svcConfig.Service.Strategy)
+			}
+		}
+
 		if svcConfig.Service.NativeLB != nil {
 			nativeLB = *svcConfig.Service.NativeLB
 		}
