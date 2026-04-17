@@ -430,11 +430,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	// We configure the default backend when it is configured at the provider level.
 	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
-		svc, err := p.buildService(p.defaultBackendServiceNamespace, ib, nil, IngressConfig{})
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("Cannot build default backend service")
-			return conf
-		}
+		svc := p.buildService(ctx, p.defaultBackendServiceNamespace, ib, nil, IngressConfig{})
 
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
@@ -619,15 +615,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		var defaultBackendService *dynamic.Service
 		var defaultBackendObs *dynamic.RouterObservabilityConfig
 		if ingress.Spec.DefaultBackend != nil && ingress.Spec.DefaultBackend.Service != nil {
-			var err error
-			defaultBackendService, err = p.buildService(ingress.Namespace, *ingress.Spec.DefaultBackend, &namedServersTransport, ingress.IngressConfig)
-			if err != nil {
-				logger.Error().
-					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
-					Str("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
-					Err(err).
-					Msg("Cannot create default backend service")
-			}
+			defaultBackendService = p.buildService(ctxIngress, ingress.Namespace, *ingress.Spec.DefaultBackend, &namedServersTransport, ingress.IngressConfig)
 
 			defaultBackendObs = &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
@@ -652,7 +640,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Observability: defaultBackendObs,
 			}
 
-			if err := p.applyMiddlewares(ingress, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, ""); err != nil {
+			if err := p.applyMiddlewares(ctxIngress, ingress, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 
 				var unavailableErr *unavailableError
@@ -676,7 +664,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Observability: defaultBackendObs,
 			}
 
-			if err := p.applyMiddlewares(ingress, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, ""); err != nil {
+			if err := p.applyMiddlewares(ctxIngress, ingress, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, ""); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 
 				var unavailableErr *unavailableError
@@ -752,7 +740,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Observability: defaultBackendObs,
 				}
 
-				if err := p.applyMiddlewares(ingress, key, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ctxIngress, ingress, key, "", "", ingress.Spec.DefaultBackend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 
 					var unavailableErr *unavailableError
@@ -775,7 +763,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Observability: defaultBackendObs,
 				}
 
-				if err := p.applyMiddlewares(ingress, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ctxIngress, ingress, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 
 					var unavailableErr *unavailableError
@@ -819,15 +807,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				// TODO: if no service, do not add middlewares and 503.
 				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
-				service, err := p.buildService(ingress.Namespace, pa.Backend, &namedServersTransport, ingress.IngressConfig)
-				if err != nil {
-					logger.Error().
-						Str("serviceName", pa.Backend.Service.Name).
-						Str("servicePort", pa.Backend.Service.Port.String()).
-						Err(err).
-						Msg("Cannot create service")
-					continue
-				}
+				service := p.buildService(ctxIngress, ingress.Namespace, pa.Backend, &namedServersTransport, ingress.IngressConfig)
 
 				// Retrieve the Canary backend corresponding to the service, and if one exists we are building a WRR,
 				// corresponding to the canary configuration.
@@ -840,15 +820,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				canaryBackend, hasCanaryBackend := canaryBackends[canaryBackendKey(ingress.Namespace, *pa.Backend.Service)]
 				if hasCanaryBackend {
 					canaryServiceName = serviceName + "-canary"
-					canaryService, err = p.buildService(ingress.Namespace, *canaryBackend.IngressBackend, &namedServersTransport, ingress.IngressConfig)
-					if err != nil {
-						logger.Error().
-							Str("serviceName", canaryBackend.IngressBackend.Service.Name).
-							Str("servicePort", canaryBackend.IngressBackend.Service.Port.String()).
-							Err(err).
-							Msg("Cannot create canary service")
-						continue
-					}
+					canaryService = p.buildService(ctxIngress, ingress.Namespace, *canaryBackend.IngressBackend, &namedServersTransport, ingress.IngressConfig)
 
 					wrrServiceName = serviceName + "-wrr"
 					wrrService = &dynamic.Service{
@@ -900,7 +872,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				// Middlewares are applied after checking the canary backend to get the proper service.
 
 				// HTTP Router middlewares.
-				if err := p.applyMiddlewares(ingress, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ctxIngress, ingress, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 
 					var unavailableErr *unavailableError
@@ -909,7 +881,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 				}
 				// TLS Router middlewares.
-				if err := p.applyMiddlewares(ingress, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ctxIngress, ingress, routerKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, rtTLS, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 
 					var unavailableErr *unavailableError
@@ -929,7 +901,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 					conf.HTTP.Routers[canaryRouterKey] = canaryRouter
 
-					if err := p.applyMiddlewares(ingress, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
+					if err := p.applyMiddlewares(ctxIngress, ingress, canaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
 
 						var unavailableErr *unavailableError
@@ -950,7 +922,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 					conf.HTTP.Routers[canaryRouterKeyTLS] = canaryRouterTLS
 
-					if err := p.applyMiddlewares(ingress, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+					if err := p.applyMiddlewares(ctxIngress, ingress, canaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, canaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to canary router")
 
 						var unavailableErr *unavailableError
@@ -971,7 +943,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 					conf.HTTP.Routers[nonCanaryRouterKey] = nonCanaryRouter
 
-					if err := p.applyMiddlewares(ingress, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
+					if err := p.applyMiddlewares(ctxIngress, ingress, nonCanaryRouterKey, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouter, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
 
 						var unavailableErr *unavailableError
@@ -992,7 +964,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					}
 					conf.HTTP.Routers[nonCanaryRouterKeyTLS] = nonCanaryRouterTLS
 
-					if err := p.applyMiddlewares(ingress, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
+					if err := p.applyMiddlewares(ctxIngress, ingress, nonCanaryRouterKeyTLS, pa.Path, rule.Host, &pa.Backend, hosts, nonCanaryRouterTLS, conf, serverSnippets[rule.Host]); err != nil {
 						logger.Error().Err(err).Msg("Error applying middlewares to non canary router")
 
 						var unavailableErr *unavailableError
@@ -1110,14 +1082,21 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	return nst, nil
 }
 
-func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg IngressConfig) (*dynamic.Service, error) {
-	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("getting backend addresses: %w", err)
-	}
-
+func (p *Provider) buildService(ctx context.Context, namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg IngressConfig) *dynamic.Service {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
+
+	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
+	if err != nil {
+		log.Ctx(ctx).
+			Error().
+			Str("serviceName", backend.Service.Name).
+			Str("servicePort", backend.Service.Port.String()).
+			Err(err).
+			Msg("Cannot build service, defaulting to 503 Service Unavailable")
+
+		return &dynamic.Service{LoadBalancer: lb}
+	}
 
 	lb.Sticky = buildSticky(cfg, "")
 
@@ -1138,7 +1117,7 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		})
 	}
 
-	return svc, nil
+	return svc
 }
 
 func (p *Provider) buildPassthroughService(namespace string, backend netv1.IngressBackend, cfg IngressConfig) (*dynamic.TCPService, error) {
@@ -1217,11 +1196,6 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("service port not found")
 	}
 
-	// If the default backend has no endpoints,
-	// and if there is no default-backend-service configured,
-	// the fallback with Ingress NGINX is to serve a 404,
-	// but here, we will later build an empty server load-balancer which serves a 503.
-	// TODO: make the built service return a 404.
 	return p.getBackendAddressesFromEndpointSlices(namespace, defaultBackend, portName)
 }
 
@@ -1391,14 +1365,14 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(ingress ingress, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
+func (p *Provider) applyMiddlewares(ctx context.Context, ingress ingress, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
 	if p.applySSLRedirectConfiguration(ingress, routerKey, rt, conf) {
 		return nil
 	}
 
 	applyAccessLogConfiguration(ingress.IngressConfig, rt)
 
-	if err := p.applyCustomHTTPErrors(ingress.Namespace, ingress.Name, routerKey, backend, ingress.IngressConfig, rt, conf); err != nil {
+	if err := p.applyCustomHTTPErrors(ctx, ingress.Namespace, ingress.Name, routerKey, backend, ingress.IngressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
 	}
 	applyAppRootConfiguration(routerKey, ingress.IngressConfig, rt, conf)
@@ -1498,7 +1472,7 @@ func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingres
 	rt.Middlewares = append(rt.Middlewares, snippetMiddlewareName)
 }
 
-func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHTTPErrors(ctx context.Context, namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHTTPErrors := ptr.Deref(config.CustomHTTPErrors, p.CustomHTTPErrors)
 	if len(customHTTPErrors) == 0 {
 		return nil
@@ -1515,10 +1489,7 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	serviceName := defaultBackendName
 	if defaultBackend := ptr.Deref(config.DefaultBackend, ""); defaultBackend != "" {
 		backend := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}}
-		service, err := p.buildService(namespace, backend, nil, config)
-		if err != nil {
-			return err
-		}
+		service := p.buildService(ctx, namespace, backend, nil, config)
 
 		serviceName = fmt.Sprintf("default-backend-%s", routerName)
 		conf.HTTP.Services[serviceName] = service
