@@ -23,9 +23,9 @@ import (
 	"github.com/vulcand/oxy/v2/utils"
 )
 
-const (
-	forwardedTypeName = "ForwardedAuthType"
-)
+const forwardedTypeName = "ForwardedAuthType"
+
+var errResponseBodyTooLarge = errors.New("response body too large")
 
 // hopHeaders Hop-by-hop headers to be removed in the authentication request.
 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
@@ -99,6 +99,12 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.authResponseHeadersRegex = re
 	}
 
+	if config.TrustForwardHeader == nil {
+		logger.Warn("TrustForwardHeader is not set: this creates an inconsistent security behavior where some X-Forwarded headers (e.g. X-Forwarded-For, X-Forwarded-Proto) are removed but others (e.g. X-Forwarded-Prefix) are forwarded untouched. Set it to false to remove all X-Forwarded headers, or true to trust them all.")
+	} else if *config.TrustForwardHeader && len(fa.authRequestHeaders) > 0 {
+		fa.authRequestHeaders = append(fa.authRequestHeaders, slices.Collect(maps.Keys(forwardedheaders.XHeadersSet))...)
+	}
+
 	return fa, nil
 }
 
@@ -126,7 +132,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if fa.trustForwardHeader != nil {
 		writeHeader(req, forwardReq, *fa.trustForwardHeader, fa.authRequestHeaders)
 	} else {
-		logger.Warn("TrustForwardHeader is not set: this creates an inconsistent security behavior where some X-Forwarded headers (e.g. X-Forwarded-For, X-Forwarded-Proto) are removed but others (e.g. X-Forwarded-Prefix) are forwarded untouched. Set it to false to remove all X-Forwarded headers, or true to trust them all.")
 		oldWriteHeader(req, forwardReq, fa.authRequestHeaders)
 	}
 
@@ -215,8 +220,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fa.next.ServeHTTP(rw, req)
 }
 
-var errResponseBodyTooLarge = errors.New("response body too large")
-
 func (fa *forwardAuth) readResponseBodyBytes(res *http.Response) ([]byte, error) {
 	if fa.maxResponseBodySize < 0 {
 		return io.ReadAll(res.Body)
@@ -242,11 +245,7 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	RemoveConnectionHeaders(forwardReq)
 	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
 
-	if trustForwardHeader {
-		if len(allowedHeaders) > 0 {
-			allowedHeaders = append(allowedHeaders, slices.Collect(maps.Keys(forwardedheaders.XHeadersSet))...)
-		}
-	} else {
+	if !trustForwardHeader {
 		forwardedheaders.DeleteXForwardedHeaders(forwardReq.Header)
 	}
 
@@ -283,6 +282,31 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	}
 }
 
+// oldWriteHeader is the legacy implementation of writeHeader, which is used when TrustForwardHeader is not set (old false behavior).
+// It is kept to avoid breaking existing configurations that rely on the previous behavior.
+func oldWriteHeader(req, forwardReq *http.Request, allowedHeaders []string) {
+	utils.CopyHeaders(forwardReq.Header, req.Header)
+
+	RemoveConnectionHeaders(forwardReq)
+	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
+
+	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
+
+	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+		forwardReq.Header.Set(forwardedheaders.XForwardedFor, clientIP)
+	}
+
+	proto := "http"
+	if req.TLS != nil {
+		proto = "https"
+	}
+	forwardReq.Header.Set(forwardedheaders.XForwardedProto, proto)
+
+	forwardReq.Header.Set(forwardedheaders.XForwardedMethod, req.Method)
+	forwardReq.Header.Set(forwardedheaders.XForwardedHost, req.Host)
+	forwardReq.Header.Set(forwardedheaders.XForwardedURI, req.URL.RequestURI())
+}
+
 func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
 	if len(allowedHeaders) == 0 {
 		return forwardRequestHeaders
@@ -290,9 +314,8 @@ func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeade
 
 	filteredHeaders := http.Header{}
 	for _, headerName := range allowedHeaders {
-		values := forwardRequestHeaders.Values(headerName)
-		if len(values) > 0 {
-			filteredHeaders[http.CanonicalHeaderKey(headerName)] = append([]string(nil), values...)
+		if values := forwardRequestHeaders.Values(headerName); len(values) > 0 {
+			filteredHeaders[http.CanonicalHeaderKey(headerName)] = values
 		}
 	}
 
@@ -317,27 +340,4 @@ func forwardedPort(req *http.Request) string {
 	}
 
 	return "80"
-}
-
-func oldWriteHeader(req, forwardReq *http.Request, allowedHeaders []string) {
-	utils.CopyHeaders(forwardReq.Header, req.Header)
-
-	RemoveConnectionHeaders(forwardReq)
-	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
-
-	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
-
-	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		forwardReq.Header.Set(forwardedheaders.XForwardedFor, clientIP)
-	}
-
-	proto := "http"
-	if req.TLS != nil {
-		proto = "https"
-	}
-	forwardReq.Header.Set(forwardedheaders.XForwardedProto, proto)
-
-	forwardReq.Header.Set(forwardedheaders.XForwardedMethod, req.Method)
-	forwardReq.Header.Set(forwardedheaders.XForwardedHost, req.Host)
-	forwardReq.Header.Set(forwardedheaders.XForwardedURI, req.URL.RequestURI())
 }

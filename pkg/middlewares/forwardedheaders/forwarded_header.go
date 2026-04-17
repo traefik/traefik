@@ -108,65 +108,6 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}, nil
 }
 
-// removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
-// like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
-func removeIPv6Zone(clientIP string) string {
-	if before, _, found := strings.Cut(clientIP, "%"); found {
-		return before
-	}
-	return clientIP
-}
-
-// isWebsocketRequest returns whether the specified HTTP request is a websocket handshake request.
-func isWebsocketRequest(req *http.Request) bool {
-	containsHeader := func(name, value string) bool {
-		h := unsafeHeader(req.Header).Get(name)
-		for {
-			before, after, found := strings.Cut(h, ",")
-			if strings.EqualFold(value, strings.TrimSpace(before)) {
-				return true
-			}
-			if !found {
-				return false
-			}
-			h = after
-		}
-	}
-
-	return containsHeader(connection, "upgrade") && containsHeader(upgrade, "websocket")
-}
-
-func forwardedPort(req *http.Request) string {
-	if req == nil {
-		return ""
-	}
-
-	if _, port, err := net.SplitHostPort(req.Host); err == nil && port != "" {
-		return port
-	}
-
-	if unsafeHeader(req.Header).Get(XForwardedProto) == "https" || unsafeHeader(req.Header).Get(XForwardedProto) == "wss" {
-		return "443"
-	}
-
-	if req.TLS != nil {
-		return "443"
-	}
-
-	return "80"
-}
-
-// DeleteXForwardedHeaders Strip X-Forwarded headers and their underscore variants
-// (e.g. X_Forwarded_Proto), which Go's HTTP server preserves
-// alongside the canonical dash form.
-func DeleteXForwardedHeaders(headers http.Header) {
-	for key := range headers {
-		if isManagedXHeader(key) {
-			delete(headers, key)
-		}
-	}
-}
-
 // ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
@@ -276,6 +217,65 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 	}
 
 	unsafeHeader(req.Header).Del(connection)
+}
+
+// DeleteXForwardedHeaders Strip X-Forwarded headers and their underscore variants
+// (e.g. X_Forwarded_Proto), which Go's HTTP server preserves
+// alongside the canonical dash form.
+func DeleteXForwardedHeaders(headers http.Header) {
+	for key := range headers {
+		if isManagedXHeader(key) {
+			delete(headers, key)
+		}
+	}
+}
+
+// removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
+// like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
+func removeIPv6Zone(clientIP string) string {
+	if before, _, found := strings.Cut(clientIP, "%"); found {
+		return before
+	}
+	return clientIP
+}
+
+// isWebsocketRequest returns whether the specified HTTP request is a websocket handshake request.
+func isWebsocketRequest(req *http.Request) bool {
+	containsHeader := func(name, value string) bool {
+		h := unsafeHeader(req.Header).Get(name)
+		for {
+			before, after, found := strings.Cut(h, ",")
+			if strings.EqualFold(value, strings.TrimSpace(before)) {
+				return true
+			}
+			if !found {
+				return false
+			}
+			h = after
+		}
+	}
+
+	return containsHeader(connection, "upgrade") && containsHeader(upgrade, "websocket")
+}
+
+func forwardedPort(req *http.Request) string {
+	if req == nil {
+		return ""
+	}
+
+	if _, port, err := net.SplitHostPort(req.Host); err == nil && port != "" {
+		return port
+	}
+
+	if unsafeHeader(req.Header).Get(XForwardedProto) == "https" || unsafeHeader(req.Header).Get(XForwardedProto) == "wss" {
+		return "443"
+	}
+
+	if req.TLS != nil {
+		return "443"
+	}
+
+	return "80"
 }
 
 // unsafeHeader allows to manage Header values.
