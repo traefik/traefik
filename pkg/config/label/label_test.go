@@ -539,7 +539,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							Key:                "foobar",
 							InsecureSkipVerify: true,
 						},
-						TrustForwardHeader: true,
+						TrustForwardHeader: pointer(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"fiibar",
@@ -1053,7 +1053,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Key:                "foobar",
 							InsecureSkipVerify: true,
 						},
-						TrustForwardHeader: true,
+						TrustForwardHeader: pointer(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"fiibar",

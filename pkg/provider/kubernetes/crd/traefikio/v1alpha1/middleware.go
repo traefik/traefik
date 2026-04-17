@@ -144,7 +144,7 @@ type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
-	TrustForwardHeader bool `json:"trustForwardHeader,omitempty"`
+	TrustForwardHeader *bool `json:"trustForwardHeader,omitempty"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.

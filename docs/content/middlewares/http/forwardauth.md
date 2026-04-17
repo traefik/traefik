@@ -130,6 +130,22 @@ http:
 
 ### `trustForwardHeader`
 
+!!! warning
+
+    If `trustForwardHeader` is not explicitly set, Traefik will log a warning at startup and use a legacy behavior where some `X-Forwarded-*` headers (e.g. `X-Forwarded-For`, `X-Forwarded-Proto`) are removed but others (e.g. `X-Forwarded-Prefix`) are forwarded untouched.
+    To silence this warning, explicitly set `trustForwardHeader` to `true` or `false`.
+
+!!! tip "Recommended configuration"
+
+    The recommended approach is to configure trusted IPs at the [EntryPoint level](../../routing/entrypoints.md#forwarded-headers) using `forwardedHeaders.trustedIPs`, and set `trustForwardHeader: true` on this middleware.
+
+    With this setup, the EntryPoint is responsible for sanitizing incoming `X-Forwarded-*` headers:
+    it strips any such headers sent by untrusted clients and only preserves those coming from trusted upstream proxies.
+    By the time the ForwardAuth middleware processes the request, all `X-Forwarded-*` headers are guaranteed to be trustworthy,
+    including those intentionally added by other middlewares in the chain — for example, the `X-Forwarded-Prefix` header set by the [StripPrefix](stripprefix.md) middleware.
+
+    Setting `trustForwardHeader: true` on this middleware then simply tells ForwardAuth to forward all those (already sanitized) headers to the authentication server.
+
 Set the `trustForwardHeader` option to `true` to trust all `X-Forwarded-*` headers.
 
 ```yaml tab="Docker"
