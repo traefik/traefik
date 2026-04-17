@@ -2964,7 +2964,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("x-forwarded-prefix.localhost") && Path("/")`,
+							Rule:        `Host("x-forwarded-prefix.localhost") && PathRegexp("(?i)^/")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-whoami-80",
@@ -3015,7 +3015,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("x-forwarded-prefix.localhost") && Path("/")`,
+							Rule:        `Host("x-forwarded-prefix.localhost") && PathRegexp("(?i)^/")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-tls-rewrite-target", "default-ingress-with-x-forwarded-prefix-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-whoami-80",
@@ -3898,7 +3898,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("rewrite-target-no-regex.localhost") && Path("/original")`,
+							Rule:        `Host("rewrite-target-no-regex.localhost") && PathRegexp("(?i)^/original")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -3918,7 +3918,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("rewrite-target-no-regex.localhost") && Path("/original")`,
+							Rule:        `Host("rewrite-target-no-regex.localhost") && PathRegexp("(?i)^/original")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{

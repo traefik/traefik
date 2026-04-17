@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"slices"
@@ -1669,13 +1670,6 @@ func (p *Provider) applyCustomHeaders(namespace, routerName string, ingressConfi
 	return nil
 }
 
-// To validate full URL in rewrite target.
-var urlSchemeRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*://`)
-
-func isFullURL(value string) bool {
-	return urlSchemeRegex.MatchString(value)
-}
-
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	rewrite := ptr.Deref(ingressConfig.RewriteTarget, "")
 	if rewrite == "" || rulePath == "" {
@@ -1689,7 +1683,6 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 
 	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 	regex := rulePath
-	isFullURLRewrite := isFullURL(rewrite)
 	hasCaptureGroup := strings.Contains(regex, "(")
 
 	if regex != "" {
@@ -1700,7 +1693,7 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	// When rewrite-target is a full URL and there's no capture group,
 	// append .* to match the entire path and avoid leaking unmatched suffix.
 	// See https://github.com/traefik/traefik/issues/12931
-	if isFullURLRewrite && !hasCaptureGroup {
+	if parsed, err := url.Parse(rulePath); err == nil && parsed.Scheme != "" && !hasCaptureGroup {
 		regex += ".*"
 	}
 
@@ -2321,6 +2314,11 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 	if len(pa.Path) > 0 {
 		pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
 		if pathType == netv1.PathTypeImplementationSpecific {
+			pathType = netv1.PathTypePrefix
+		}
+
+		// When rewrite-target annotation is on the ingress, we should match the whole request path.
+		if pathType == netv1.PathTypeExact && config.RewriteTarget != nil {
 			pathType = netv1.PathTypePrefix
 		}
 
