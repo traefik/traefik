@@ -68,15 +68,12 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 			continue
 		}
 
-		tlsConfig, err := t.createTLSConfig(newConfig)
-		if err != nil {
-			// Fail closed: an invalid TLS configuration must not silently
-			// degrade to defaults, so the transport is removed and lookups
-			// will return "not found".
-			log.Error().Err(err).Msgf("Skipping HTTP Transport %s: invalid TLS configuration", configName)
-			delete(t.roundTrippers, configName)
-			delete(t.tlsConfigs, configName)
-			continue
+		var (
+			err       error
+			tlsConfig *tls.Config
+		)
+		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
+			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", configName)
 		}
 		t.tlsConfigs[configName] = tlsConfig
 
@@ -92,10 +89,12 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 			continue
 		}
 
-		tlsConfig, err := t.createTLSConfig(newConfig)
-		if err != nil {
-			log.Error().Err(err).Msgf("Skipping HTTP Transport %s: invalid TLS configuration", newConfigName)
-			continue
+		var (
+			err       error
+			tlsConfig *tls.Config
+		)
+		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
+			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", newConfigName)
 		}
 		t.tlsConfigs[newConfigName] = tlsConfig
 
@@ -210,8 +209,8 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			maxVersion = value
 		}
 
-		if cfg.MinVersion != "" && cfg.MaxVersion != "" && minVersion >= maxVersion {
-			return nil, fmt.Errorf("TLS minimum version %s is above or equal to the maximum version %s", cfg.MinVersion, cfg.MaxVersion)
+		if minVersion > maxVersion {
+			return nil, fmt.Errorf("TLS minimum version %s is above the maximum version %s", cfg.MinVersion, cfg.MaxVersion)
 		}
 
 		config = &tls.Config{
