@@ -812,8 +812,8 @@ func sanitizePath(h http.Handler, redirect bool) http.Handler {
 		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
 		r2.RequestURI = r2.URL.RequestURI()
 
-    // If redirect is enabled and the path changed, return a redirect response.
-    if redirect && req.URL.RequestURI() != r2.RequestURI {
+		// If redirect is enabled and the path changed, return a redirect response.
+		if redirect && req.URL.RequestURI() != r2.RequestURI {
 			rw.Header().Set("Location", r2.RequestURI)
 
 			status := http.StatusMovedPermanently
