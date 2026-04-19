@@ -33,6 +33,27 @@ func (m *mockDownloader) Check(ctx context.Context, pName, pVersion, hash string
 	return nil
 }
 
+// writeValidPluginArchive writes a minimal but structurally valid zip archive at
+// archivePath, suitable for InstallPlugin's unzip step in tests.
+func writeValidPluginArchive(t *testing.T, archivePath string) {
+	t.Helper()
+
+	err := os.MkdirAll(filepath.Dir(archivePath), 0o755)
+	require.NoError(t, err)
+
+	file, err := os.Create(archivePath)
+	require.NoError(t, err)
+	defer file.Close()
+
+	writer := zipa.NewWriter(file)
+	defer writer.Close()
+
+	fileWriter, err := writer.Create("test-module-v1.0.0/main.go")
+	require.NoError(t, err)
+	_, err = fileWriter.Write([]byte("package main\n\nfunc main() {}\n"))
+	require.NoError(t, err)
+}
+
 func TestPluginManager_ReadManifest(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
@@ -297,6 +318,51 @@ func TestPluginManager_InstallPlugin(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "unable to unzip plugin",
+		},
+		{
+			name: "download fails but cached archive is reused",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "", assert.AnError
+			},
+			checkFunc: func(ctx context.Context, pName, pVersion, hash string) error {
+				return assert.AnError
+			},
+			setupArchive: writeValidPluginArchive,
+			expectError:  false,
+		},
+		{
+			name: "integrity check failure after a successful download stays fatal",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "test-hash", nil
+			},
+			checkFunc: func(ctx context.Context, pName, pVersion, hash string) error {
+				return assert.AnError
+			},
+			setupArchive: writeValidPluginArchive,
+			expectError:  true,
+			errorMsg:     "unable to check archive integrity",
+		},
+		{
+			name: "pinned hash still enforced when falling back to cached archive",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+				Hash:       "a-hash-that-will-not-match-the-archive-contents",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "", assert.AnError
+			},
+			setupArchive: writeValidPluginArchive,
+			expectError:  true,
+			errorMsg:     "invalid hash for plugin",
 		},
 	}
 
