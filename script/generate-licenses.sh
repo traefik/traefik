@@ -125,11 +125,14 @@ echo "Merged SBOM: $(jq '.components | length' "${WORK_DIR}/sbom/${REPO_NAME}.cd
 
 # ─── Copy merged SBOM to output and run assimilis ───
 
-rm -rf "${OUT_DIR}/sbom"
-mkdir -p "${OUT_DIR}/sbom" "${OUT_DIR}/licenses/custom"
+rm -rf "${OUT_DIR}"
+mkdir -p "${OUT_DIR}" "${OUT_DIR}/sbom" "${OUT_DIR}/licenses/custom"
 cp "${WORK_DIR}/sbom/${REPO_NAME}.cdx.json" "${OUT_DIR}/sbom/${REPO_NAME}.cdx.json"
 
+python_site_packages=$(find "${WORK_DIR}/venv/lib" -maxdepth 2 -name "site-packages" -type d 2>/dev/null | head -1)
+
 echo "Generating attributions..."
-assimilis --repo-name "${REPO_NAME}" --output-dir "${OUT_DIR}"
+assimilis --repo-name "${REPO_NAME}" --output-dir "${OUT_DIR}" \
+    --python-site-packages-dir "${python_site_packages}"
 
 echo "Done. Attribution files are in ${OUT_DIR}/."
