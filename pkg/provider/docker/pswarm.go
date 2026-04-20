@@ -22,7 +22,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
-const swarmName = "swarm"
+// SwarmName is the swarm provider name.
+const SwarmName = "swarm"
 
 var _ provider.Provider = (*SwarmProvider)(nil)
 
@@ -57,7 +58,7 @@ func (p *SwarmProvider) Init() error {
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, swarmName).Logger()
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, SwarmName).Logger()
 		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
@@ -65,7 +66,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 			ctx, cancel := context.WithCancel(ctxLog)
 			defer cancel()
 
-			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, swarmName).Logger().WithContext(ctx)
+			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, SwarmName).Logger().WithContext(ctx)
 
 			dockerClient, err := p.createClient(ctx)
 			if err != nil {
@@ -92,7 +93,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 
 			configuration := builder.build(ctxLog, dockerDataList)
 			configurationChan <- dynamic.Message{
-				ProviderName:  swarmName,
+				ProviderName:  SwarmName,
 				Configuration: configuration,
 			}
 			if p.Watch {
@@ -102,7 +103,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 				ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
 
 				pool.GoCtx(func(ctx context.Context) {
-					logger := log.Ctx(ctx).With().Str(logs.ProviderName, swarmName).Logger()
+					logger := log.Ctx(ctx).With().Str(logs.ProviderName, SwarmName).Logger()
 					ctx = logger.WithContext(ctx)
 
 					defer close(errChan)
@@ -119,7 +120,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 							configuration := builder.build(ctx, services)
 							if configuration != nil {
 								configurationChan <- dynamic.Message{
-									ProviderName:  swarmName,
+									ProviderName:  SwarmName,
 									Configuration: configuration,
 								}
 							}

@@ -2,8 +2,10 @@ package tls
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -295,8 +297,11 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 
 // GetServerCertificates returns all certificates from the default store,
 // as well as the user-defined default certificate (if it exists).
-func (m *Manager) GetServerCertificates() []*x509.Certificate {
-	var certificates []*x509.Certificate
+func (m *Manager) GetServerCertificates() map[string]*x509.Certificate {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	certificates := make(map[string]*x509.Certificate)
 
 	// The default store is the only relevant, because it is the only one configurable.
 	defaultStore, ok := m.stores[DefaultTLSStoreName]
@@ -306,28 +311,35 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 
 	// We iterate over all the certificates.
 	if defaultStore.DynamicCerts != nil && defaultStore.DynamicCerts.Get() != nil {
-		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*CertificateData) {
-			x509Cert, err := x509.ParseCertificate(cert.Certificate.Certificate[0])
-			if err != nil {
-				continue
+		certs, ok := defaultStore.DynamicCerts.Get().(map[string]*CertificateData)
+		if ok {
+			for _, cert := range certs {
+				// Use Leaf if available (it should always be populated by parseCertificate)
+				if cert.Certificate.Leaf == nil {
+					log.Warn().Msg("TLS: certificate Leaf is nil, skipping certificate in API response")
+					continue
+				}
+				hash := sha256.Sum256(cert.Certificate.Leaf.Raw)
+				fingerprint := hex.EncodeToString(hash[:])
+				certificates[fingerprint] = cert.Certificate.Leaf
 			}
-
-			certificates = append(certificates, x509Cert)
 		}
 	}
 
 	if defaultStore.DefaultCertificate != nil {
-		x509Cert, err := x509.ParseCertificate(defaultStore.DefaultCertificate.Certificate.Certificate[0])
-		if err != nil {
+		if defaultStore.DefaultCertificate.Certificate.Leaf == nil {
+			log.Warn().Msg("TLS: default certificate Leaf is nil, skipping in API response")
 			return certificates
 		}
 
 		// Excluding the generated Traefik default certificate.
-		if x509Cert.Subject.CommonName == generate.DefaultDomain {
+		if defaultStore.DefaultCertificate.Certificate.Leaf.Subject.CommonName == generate.DefaultDomain {
 			return certificates
 		}
 
-		certificates = append(certificates, x509Cert)
+		hash := sha256.Sum256(defaultStore.DefaultCertificate.Certificate.Leaf.Raw)
+		fingerprint := hex.EncodeToString(hash[:])
+		certificates[fingerprint] = defaultStore.DefaultCertificate.Certificate.Leaf
 	}
 
 	return certificates

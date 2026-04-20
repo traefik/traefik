@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 )
 
@@ -50,7 +51,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "empty",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 			},
 			expected: &Configuration{
 				EntryPoints: EntryPoints{"http": &EntryPoint{
@@ -83,13 +84,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 			},
 		},
 		{
 			desc: "ACME simple",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -131,7 +132,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -147,7 +148,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DelayBeforeCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -190,7 +191,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -210,7 +211,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DisablePropagationCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -253,7 +254,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -374,6 +375,58 @@ func TestValidateConfiguration_BasePath(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProvidersPrecedence(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		cfg           *Configuration
+		expectedError bool
+		expected      []string
+	}{
+		{
+			desc: "No precedence",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: providerNames,
+				},
+			},
+			expected: providerNames,
+		},
+		{
+			desc: "Precedence with non existing provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"unknown"},
+				},
+			},
+			expectedError: true,
+		},
+		{
+			desc: "Precedence with upper case provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"DOCKER"},
+				},
+			},
+			expected: []string{"docker"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			test.cfg.SetEffectiveConfiguration()
+			err := test.cfg.ValidateConfiguration()
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
 			}
 		})
 	}

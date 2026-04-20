@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Text } from '@traefiklabs/faency'
+import { Badge, Box, Flex, Text } from '@traefik-labs/faency'
 import { useContext, useState } from 'react'
 import { BsChevronRight } from 'react-icons/bs'
 

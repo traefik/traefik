@@ -29,6 +29,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
+// ProviderName is the ECS provider name.
+const ProviderName = "ecs"
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints      string `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
@@ -107,7 +110,7 @@ func (p *Provider) Init() error {
 // Provide configuration to traefik from ECS.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, "ecs").Logger()
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, ProviderName).Logger()
 		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {

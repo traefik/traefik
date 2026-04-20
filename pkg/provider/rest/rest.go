@@ -13,6 +13,9 @@ import (
 	"github.com/unrolled/render"
 )
 
+// ProviderName is the REST provider name.
+const ProviderName = "rest"
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that provides a Rest API.
@@ -40,7 +43,7 @@ func (p *Provider) CreateRouter() *mux.Router {
 
 func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	if vars["provider"] != "rest" {
+	if vars["provider"] != ProviderName {
 		http.Error(rw, "Only 'rest' provider can be updated through the REST API", http.StatusBadRequest)
 		return
 	}
@@ -53,7 +56,7 @@ func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: configuration}
+	p.configurationChan <- dynamic.Message{ProviderName: ProviderName, Configuration: configuration}
 	if err := templatesRenderer.JSON(rw, http.StatusOK, configuration); err != nil {
 		log.Error().Err(err).Send()
 	}

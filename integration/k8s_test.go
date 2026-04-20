@@ -111,13 +111,13 @@ func (s *K8sSuite) TestGatewayConfiguration() {
 	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
 }
 
-func (s *K8sSuite) TestIngressclass() {
+func (s *K8sSuite) TestIngressClass() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
 
 	s.testConfiguration("testdata/rawdata-ingressclass.json", "8080")
 }
 
-func (s *K8sSuite) TestDisableIngressclassLookup() {
+func (s *K8sSuite) TestDisableIngressClassLookup() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
 
 	s.testConfiguration("testdata/rawdata-ingressclass-disabled.json", "8080")

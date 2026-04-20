@@ -1,0 +1,64 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.websecure]
+    address = ":4443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  # Wildcard router covering all *.snitest.com subdomains with TLS option "foo" (minTLS12).
+  [http.routers.wildcard]
+    service = "service1"
+    rule = "Host(`*.snitest.com`)"
+    [http.routers.wildcard.tls]
+      options = "foo"
+
+  # foo.snitest.com uses TLS option "bar" (minTLS13)
+  [http.routers.bar]
+    service = "service1"
+    rule = "Host(`foo.snitest.com`)"
+    [http.routers.bar.tls]
+      options = "bar"
+
+# minTLS11
+[http.routers.other]
+  service = "service1"
+  rule = "Host(`other.snitest.com`)"
+  [http.routers.other.tls]
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "{{ .BackendURL }}"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/wildcard.snitest.com.cert"
+  keyFile = "fixtures/https/wildcard.snitest.com.key"
+
+[tls.options]
+  [tls.options.foo]
+    minVersion = "VersionTLS12"
+    maxVersion = "VersionTLS12"
+
+
+  [tls.options.bar]
+    minVersion = "VersionTLS13"
+    maxVersion = "VersionTLS13"
+
+  [tls.options.default]
+    minVersion = "VersionTLS11"
+    maxVersion = "VersionTLS11"

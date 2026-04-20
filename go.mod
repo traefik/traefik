@@ -39,7 +39,7 @@ require (
 	github.com/huandu/xstrings v1.5.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
-	github.com/klauspost/compress v1.18.2
+	github.com/klauspost/compress v1.18.5
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.3
 	github.com/kvtools/redis v1.2.0

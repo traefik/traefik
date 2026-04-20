@@ -19,6 +19,8 @@ const (
 	xForwardedPrefixHeader = "X-Forwarded-Prefix"
 )
 
+var replacementRegex = regexp.MustCompile(`\$[0-9]+`)
+
 // RewriteTarget is a middleware used to replace the path of a URL request.
 type rewriteTarget struct {
 	next             http.Handler
@@ -72,7 +74,7 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		newTarget = rt.regexp.ReplaceAllString(currentPath, rt.replacement)
 	} else {
-		newTarget = rt.replacement
+		newTarget = replacementRegex.ReplaceAllString(rt.replacement, "")
 	}
 
 	// If the replacement resolves to an absolute URL, issue a 302 redirect.

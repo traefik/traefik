@@ -26,7 +26,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-const providerName = "file"
+// ProviderName is the file provider name.
+const ProviderName = "file"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -52,7 +53,7 @@ func (p *Provider) Init() error {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 
 	if p.Watch {
 		var watchItems []string
@@ -174,7 +175,7 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 
 	// Process events
 	pool.GoCtx(func(ctx context.Context) {
-		logger := log.With().Str(logs.ProviderName, providerName).Logger()
+		logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 		defer watcher.Close()
 		for {
 			select {
@@ -218,7 +219,7 @@ func (p *Provider) applyConfiguration(configurationChan chan<- dynamic.Message) 
 // buildConfiguration loads configuration either from file or a directory
 // specified by 'Filename'/'Directory' and returns a 'Configuration' object.
 func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
-	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
+	ctx := log.With().Str(logs.ProviderName, ProviderName).Logger().WithContext(context.Background())
 
 	if len(p.Directory) > 0 {
 		configurations, err := p.collectFileConfigs(ctx, p.Directory, "")

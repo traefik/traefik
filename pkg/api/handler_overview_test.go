@@ -232,6 +232,7 @@ func TestHandler_Overview(t *testing.T) {
 				Global: &static.Global{},
 				API:    &static.API{},
 				Providers: &static.Providers{
+					Precedence:        []string{"foo"},
 					Docker:            &docker.Provider{},
 					Swarm:             &docker.SwarmProvider{},
 					File:              &file.Provider{},

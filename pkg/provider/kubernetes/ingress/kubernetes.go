@@ -8,7 +8,6 @@ import (
 	"math"
 	"net"
 	"os"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -75,10 +74,13 @@ func (p *Provider) Init() error {
 	return nil
 }
 
+// ProviderName is the Kubernetes Ingress provider name.
+const ProviderName = "kubernetes"
+
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, "kubernetes").Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
 	k8sClient, err := p.newK8sClient(ctxLog)
@@ -131,7 +133,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  "kubernetes",
+							ProviderName:  ProviderName,
 							Configuration: conf,
 						}
 					}
@@ -304,13 +306,29 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    "default-backend",
+				Observability: &dynamic.RouterObservabilityConfig{
+					Metadata: &dynamic.ObservabilityMetadata{
+						Ingress: &dynamic.KubernetesIngressMetadata{
+							Namespace:   ingress.Namespace,
+							IngressName: ingress.Name,
+							ServiceName: ingress.Spec.DefaultBackend.Service.Name,
+							ServicePort: portString(ingress.Spec.DefaultBackend.Service.Port),
+						},
+					},
+				},
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
-				rt.Observability = rtConfig.Router.Observability
+
+				if rtConfig.Router.Observability != nil {
+					rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
+					rt.Observability.Metrics = rtConfig.Router.Observability.Metrics
+					rt.Observability.Tracing = rtConfig.Router.Observability.Tracing
+					rt.Observability.TraceVerbosity = rtConfig.Router.Observability.TraceVerbosity
+				}
 			}
 
 			p.applyRouterTransform(ctxIngress, rt, ingress)
@@ -356,16 +374,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				portString := pa.Backend.Service.Port.Name
-
-				if len(pa.Backend.Service.Port.Name) == 0 {
-					portString = strconv.Itoa(int(pa.Backend.Service.Port.Number))
-				}
-
-				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				conf.HTTP.Services[serviceName] = service
 
-				rt := p.loadRouter(rule, pa, rtConfig, serviceName)
+				rt := p.loadRouter(ingress, rule, pa, rtConfig, serviceName)
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
@@ -687,9 +699,19 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	return svc, nil
 }
 
-func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
 	rt := &dynamic.Router{
 		Service: serviceName,
+		Observability: &dynamic.RouterObservabilityConfig{
+			Metadata: &dynamic.ObservabilityMetadata{
+				Ingress: &dynamic.KubernetesIngressMetadata{
+					Namespace:   ingress.Namespace,
+					IngressName: ingress.Name,
+					ServiceName: pa.Backend.Service.Name,
+					ServicePort: portString(pa.Backend.Service.Port),
+				},
+			},
+		},
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {
@@ -698,7 +720,13 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
 		rt.TLS = rtConfig.Router.TLS
-		rt.Observability = rtConfig.Router.Observability
+
+		if rtConfig.Router.Observability != nil {
+			rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
+			rt.Observability.Metrics = rtConfig.Router.Observability.Metrics
+			rt.Observability.Tracing = rtConfig.Router.Observability.Tracing
+			rt.Observability.TraceVerbosity = rtConfig.Router.Observability.TraceVerbosity
+		}
 	}
 
 	var rules []string
@@ -706,7 +734,7 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 		if rt.RuleSyntax == "v2" || (rt.RuleSyntax == "" && p.DefaultRuleSyntax == "v2") {
 			rules = append(rules, buildHostRuleV2(rule.Host))
 		} else {
-			rules = append(rules, buildHostRule(rule.Host))
+			rules = append(rules, fmt.Sprintf("Host(%q)", rule.Host))
 		}
 	}
 
@@ -732,15 +760,6 @@ func buildHostRuleV2(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)
 		return fmt.Sprintf("HostRegexp(%q)", host)
-	}
-
-	return fmt.Sprintf("Host(%q)", host)
-}
-
-func buildHostRule(host string) string {
-	if strings.HasPrefix(host, "*.") {
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
 	return fmt.Sprintf("Host(%q)", host)
@@ -934,4 +953,11 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func portString(port netv1.ServiceBackendPort) string {
+	if port.Name == "" {
+		return strconv.Itoa(int(port.Number))
+	}
+	return port.Name
 }
