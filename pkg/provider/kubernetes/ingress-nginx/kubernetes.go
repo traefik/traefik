@@ -8,7 +8,6 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"slices"
@@ -1672,7 +1671,7 @@ func (p *Provider) applyCustomHeaders(namespace, routerName string, ingressConfi
 
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	rewrite := ptr.Deref(ingressConfig.RewriteTarget, "")
-	if rewrite == "" || rulePath == "" {
+	if rewrite == "" {
 		return
 	}
 
@@ -1681,25 +1680,9 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 		return
 	}
 
-	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
-	regex := rulePath
-	hasCaptureGroup := strings.Contains(regex, "(")
-
-	if regex != "" {
-		// Location modifier regex on ingress-nginx is case-insensitive.
-		regex = "(?i)" + regex
-	}
-
-	// When rewrite-target is a full URL and there's no capture group,
-	// append .* to match the entire path and avoid leaking unmatched suffix.
-	// See https://github.com/traefik/traefik/issues/12931
-	if parsed, err := url.Parse(rulePath); err == nil && parsed.Scheme != "" && !hasCaptureGroup {
-		regex += ".*"
-	}
-
 	// The usage of rewrite-target annotation implies the usage of regex.
 	rewriteTarget := &dynamic.RewriteTarget{
-		Regex:       regex,
+		Regex:       rulePath,
 		Replacement: rewrite,
 	}
 
@@ -1711,6 +1694,7 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 		}
 	}
 
+	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 	conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
 		RewriteTarget: rewriteTarget,
 	}
@@ -2314,11 +2298,6 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 	if len(pa.Path) > 0 {
 		pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
 		if pathType == netv1.PathTypeImplementationSpecific {
-			pathType = netv1.PathTypePrefix
-		}
-
-		// When rewrite-target annotation is on the ingress, we should match the whole request path.
-		if pathType == netv1.PathTypeExact && config.RewriteTarget != nil {
 			pathType = netv1.PathTypePrefix
 		}
 

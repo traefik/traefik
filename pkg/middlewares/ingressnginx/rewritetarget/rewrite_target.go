@@ -15,19 +15,22 @@ import (
 )
 
 const (
-	typeName               = "RewriteTarget"
-	xForwardedPrefixHeader = "X-Forwarded-Prefix"
+	typeName         = "RewriteTarget"
+	xForwardedPrefix = "X-Forwarded-Prefix"
 )
 
+// This regex is used to remove the capture groups when no regex is provided,
+// as the replacement string may contain capture group references like $1, $2, etc.
+// that should be ignored in this case.
 var replacementRegex = regexp.MustCompile(`\$[0-9]+`)
 
-// RewriteTarget is a middleware used to replace the path of a URL request.
+// rewriteTarget is a middleware used to replace the path of a URL request.
 type rewriteTarget struct {
+	name             string
 	next             http.Handler
 	regexp           *regexp.Regexp
 	replacement      string
 	xForwardedPrefix string
-	name             string
 	// absoluteURLRedirect is true when the replacement template is an absolute URL,
 	// indicating the operator explicitly configured a redirect to an external destination.
 	absoluteURLRedirect bool
@@ -41,26 +44,38 @@ func New(ctx context.Context, next http.Handler, config dynamic.RewriteTarget, n
 		return nil, errors.New("replacement cannot be empty")
 	}
 
-	mw := &rewriteTarget{
-		next:             next,
-		replacement:      strings.TrimSpace(config.Replacement),
-		xForwardedPrefix: config.XForwardedPrefix,
-		name:             name,
+	var absoluteURLRedirect bool
+	if parsed, err := url.Parse(config.Replacement); err == nil && parsed.Scheme != "" {
+		absoluteURLRedirect = true
 	}
 
-	if parsed, err := url.Parse(mw.replacement); err == nil && parsed.Scheme != "" {
-		mw.absoluteURLRedirect = true
-	}
-
+	var re *regexp.Regexp
 	if config.Regex != "" {
-		exp, err := regexp.Compile(strings.TrimSpace(config.Regex))
+		var err error
+		re, err = regexp.Compile("(?i)" + strings.TrimSpace(config.Regex)) // regex on ingress-nginx are case-insensitive.
 		if err != nil {
 			return nil, fmt.Errorf("compiling regular expression %s: %w", config.Regex, err)
 		}
-		mw.regexp = exp
+
+		// When rewrite-target is a full URL and there's no capture group,
+		// append .* to match the entire path and avoid leaking unmatched suffix.
+		// See https://github.com/traefik/traefik/issues/12931
+		if re.NumSubexp() == 0 && absoluteURLRedirect {
+			re, err = regexp.Compile("(?i)" + strings.TrimSpace(config.Regex) + ".*")
+			if err != nil {
+				return nil, fmt.Errorf("compiling regular expression for absolute URL %s: %w", config.Regex, err)
+			}
+		}
 	}
 
-	return mw, nil
+	return &rewriteTarget{
+		name:                name,
+		next:                next,
+		regexp:              re,
+		replacement:         strings.TrimSpace(config.Replacement),
+		xForwardedPrefix:    config.XForwardedPrefix,
+		absoluteURLRedirect: absoluteURLRedirect,
+	}, nil
 }
 
 func (rt *rewriteTarget) GetTracingInformation() (string, string) {
@@ -68,20 +83,30 @@ func (rt *rewriteTarget) GetTracingInformation() (string, string) {
 }
 
 func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), rt.name, typeName)
+
 	currentPath := req.URL.RawPath
 	if currentPath == "" {
 		currentPath = req.URL.EscapedPath()
 	}
 
+	// regexp doex not match, nothing to rewrite.
+	if rt.regexp != nil && !rt.regexp.MatchString(currentPath) {
+		rt.next.ServeHTTP(rw, req)
+		return
+	}
+
 	var newTarget string
 	if rt.regexp != nil {
-		if !rt.regexp.MatchString(currentPath) {
-			rt.next.ServeHTTP(rw, req)
-			return
-		}
 		newTarget = rt.regexp.ReplaceAllString(currentPath, rt.replacement)
 	} else {
 		newTarget = replacementRegex.ReplaceAllString(rt.replacement, "")
+	}
+
+	// Same as ingress-nginx when the new target is empty we reply with an error.
+	if newTarget == "" {
+		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	// Only issue a 302 redirect if the replacement template itself is an absolute URL.
@@ -91,24 +116,24 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	req.URL.RawPath = newTarget
-
 	if rt.xForwardedPrefix != "" {
 		prefix := rt.xForwardedPrefix
 		if rt.regexp != nil {
 			prefix = rt.regexp.ReplaceAllString(currentPath, rt.xForwardedPrefix)
 		}
-		req.Header.Set(xForwardedPrefixHeader, prefix)
+		req.Header.Set(xForwardedPrefix, prefix)
 	}
 
-	// as replacement can introduce escaped characters
+	// As replacement can introduce escaped characters
 	// Path must remain an unescaped version of RawPath
 	// Doesn't handle multiple times encoded replacement (`/` => `%2F` => `%252F` => ...)
+	req.URL.RawPath = newTarget
+
 	var err error
 	req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 	if err != nil {
-		middlewares.GetLogger(context.Background(), rt.name, typeName).Error().Msgf("Unable to unescape url raw path %q: %v", req.URL.RawPath, err)
-		observability.SetStatusErrorf(req.Context(), "Unable to unescape url raw path %q: %v", req.URL.RawPath, err)
+		logger.Error().Msgf("Unable to unescape URL RawPath %q: %v", req.URL.RawPath, err)
+		observability.SetStatusErrorf(req.Context(), "Unable to unescape URL RawPath %q: %v", req.URL.RawPath, err)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
