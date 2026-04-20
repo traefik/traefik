@@ -56,7 +56,7 @@ spec:
 | Field      | Description     | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address. | "" | Yes      |
-| <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers. | false | No      |
+| <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers. <br/>More information [here](#trustforwardheader)| false | No      |
 | <a id="opt-authResponseHeaders" href="#opt-authResponseHeaders" title="#opt-authResponseHeaders">`authResponseHeaders`</a> | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers. | [] | No      |
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex). | "" | No      |
 | <a id="opt-authRequestHeaders" href="#opt-authRequestHeaders" title="#opt-authRequestHeaders">`authRequestHeaders`</a> | List of the headers to copy from the request to the authentication server. <br /> It allows filtering headers that should not be passed to the authentication server. <br /> If not set or empty, then all request headers are passed. | [] | No      |
@@ -126,6 +126,28 @@ If left unset, the request body size is unrestricted which can have performance 
 
     It is strongly recommended to set this option to a suitable value.
     Not setting it (or setting it to `-1`) allows unlimited response body sizes which can lead to DoS attacks and memory exhaustion.
+
+### trustforwardheader
+
+### `trustForwardHeader`
+
+!!! warning
+
+    If `trustForwardHeader` is not explicitly set, Traefik will log a warning at startup and use a legacy behavior where some `X-Forwarded-*` headers (e.g. `X-Forwarded-For`, `X-Forwarded-Proto`) are removed but others (e.g. `X-Forwarded-Prefix`) are forwarded untouched.
+    To silence this warning, explicitly set `trustForwardHeader` to `true` or `false`.
+
+!!! tip "Recommended configuration"
+
+    The recommended approach is to configure trusted IPs at the [EntryPoint level](../../../install-configuration/entrypoints.md#forwarded-headers) using `forwardedHeaders.trustedIPs`, and set `trustForwardHeader: true` on this middleware.
+
+    With this setup, the EntryPoint is responsible for sanitizing incoming `X-Forwarded-*` headers:
+    it strips any such headers sent by untrusted clients and only preserves those coming from trusted upstream proxies.
+    By the time the ForwardAuth middleware processes the request, all `X-Forwarded-*` headers are guaranteed to be trustworthy,
+    including those intentionally added by other middlewares in the chain — for example, the `X-Forwarded-Prefix` header set by the [StripPrefix](stripprefix.md) middleware.
+
+    Setting `trustForwardHeader: true` on this middleware then simply tells ForwardAuth to forward all those (already sanitized) headers to the authentication server.
+
+Set the `trustForwardHeader` option to `true` to trust all `X-Forwarded-*` headers.
 
 ## Forward-Request Headers
 

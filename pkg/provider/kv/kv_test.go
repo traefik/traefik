@@ -437,7 +437,7 @@ func Test_buildConfiguration(t *testing.T) {
 							InsecureSkipVerify: true,
 							CAOptional:         pointer(true),
 						},
-						TrustForwardHeader: true,
+						TrustForwardHeader: pointer(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"foobar",
