@@ -3071,14 +3071,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)/(prefix)/(sub)/(.*)",
+								Regex:            "/(prefix)/(sub)/(.*)",
 								Replacement:      "/$3",
 								XForwardedPrefix: "/$1/$2",
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)/(prefix)/(sub)/(.*)",
+								Regex:            "/(prefix)/(sub)/(.*)",
 								Replacement:      "/$3",
 								XForwardedPrefix: "/$1/$2",
 							},
@@ -3095,14 +3095,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)/",
+								Regex:            "/",
 								Replacement:      "/path",
 								XForwardedPrefix: "x-forwarded-prefix-header-value",
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)/",
+								Regex:            "/",
 								Replacement:      "/path",
 								XForwardedPrefix: "x-forwarded-prefix-header-value",
 							},
@@ -3119,14 +3119,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)/(something)(/.+)",
+								Regex:            "/(something)(/.+)",
 								Replacement:      "$2",
 								XForwardedPrefix: "$1",
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "(?i)/(something)(/.+)",
+								Regex:            "/(something)(/.+)",
 								Replacement:      "$2",
 								XForwardedPrefix: "$1",
 							},
@@ -3782,13 +3782,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
@@ -3941,13 +3941,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/original",
+								Regex:       "/original",
 								Replacement: "/rewritten",
 							},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/original",
+								Regex:       "/original",
 								Replacement: "/rewritten",
 							},
 						},
@@ -4093,13 +4093,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
@@ -4265,13 +4265,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
@@ -4402,13 +4402,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},
 						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "(?i)/something(/|$)(.*)",
+								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
 						},

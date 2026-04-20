@@ -1680,16 +1680,9 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 		return
 	}
 
-	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
-	regex := rulePath
-	if regex != "" {
-		// Location modifier regex on ingress-nginx is case-insensitive.
-		regex = "(?i)" + regex
-	}
-
 	// The usage of rewrite-target annotation implies the usage of regex.
 	rewriteTarget := &dynamic.RewriteTarget{
-		Regex:       regex,
+		Regex:       rulePath,
 		Replacement: rewrite,
 	}
 
@@ -1701,6 +1694,7 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 		}
 	}
 
+	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 	conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
 		RewriteTarget: rewriteTarget,
 	}

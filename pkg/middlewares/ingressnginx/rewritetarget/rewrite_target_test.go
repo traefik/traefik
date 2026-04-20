@@ -30,6 +30,14 @@ func TestRewriteTarget(t *testing.T) {
 			expectsError: true,
 		},
 		{
+			desc: "invalid regex",
+			config: dynamic.RewriteTarget{
+				Regex:       `^(?err)/invalid/regexp/([^/]+)$`,
+				Replacement: "/valid/$1",
+			},
+			expectsError: true,
+		},
+		{
 			desc: "plain replacement",
 			path: "/foo/bar",
 			config: dynamic.RewriteTarget{
@@ -97,14 +105,6 @@ func TestRewriteTarget(t *testing.T) {
 			},
 			expectedPath:    "/foo/bar",
 			expectedRawPath: "",
-		},
-		{
-			desc: "invalid regex",
-			config: dynamic.RewriteTarget{
-				Regex:       `^(?err)/invalid/regexp/([^/]+)$`,
-				Replacement: "/valid/$1",
-			},
-			expectsError: true,
 		},
 		{
 			desc: "regex with x-forwarded-prefix capture group",
@@ -182,6 +182,16 @@ func TestRewriteTarget(t *testing.T) {
 			expectedRawPath:    "http://evil.com/malicious",
 			expectedStatusCode: http.StatusOK,
 		},
+		{
+			desc: "regex with full URL replacement with no capture groups",
+			path: "/foo/a/b/c",
+			config: dynamic.RewriteTarget{
+				Regex:       "/foo",
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/",
+		},
 	}
 
 	for _, test := range testCases {
@@ -190,7 +200,7 @@ func TestRewriteTarget(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
 				actualRawPath = r.URL.RawPath
-				actualXForwardedPrefix = r.Header.Get(xForwardedPrefixHeader)
+				actualXForwardedPrefix = r.Header.Get(xForwardedPrefix)
 				requestURI = r.RequestURI
 			})
 
@@ -217,7 +227,7 @@ func TestRewriteTarget(t *testing.T) {
 			if expectedStatus == 0 {
 				expectedStatus = http.StatusOK
 			}
-			require.Equal(t, expectedStatus, resp.StatusCode)
+			assert.Equal(t, expectedStatus, resp.StatusCode)
 
 			if test.expectedRedirectURL != "" {
 				assert.Equal(t, test.expectedRedirectURL, resp.Header.Get("Location"), "Unexpected redirect location.")
@@ -226,7 +236,7 @@ func TestRewriteTarget(t *testing.T) {
 
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
-			assert.Equal(t, test.expectedXForwardedPrefix, actualXForwardedPrefix, "Unexpected %s header.", xForwardedPrefixHeader)
+			assert.Equal(t, test.expectedXForwardedPrefix, actualXForwardedPrefix, "Unexpected %s header.", xForwardedPrefix)
 
 			if actualRawPath == "" {
 				assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
