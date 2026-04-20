@@ -16,6 +16,8 @@ Services configure how to reach the actual endpoints that will eventually handle
 
 The WRR is able to load balance the requests between multiple services based on weights. The WRR `TraefikService` allows you to load balance the traffic between Kubernetes Services and other instances of `TraefikService` (another WRR service -, or a mirroring service).
 
+Each child in the `weighted.services` list can declare its own `middlewares`. See [Per-Child Middlewares](#per-child-middlewares).
+
 ### Configuration Example
 
 ```yaml tab="IngressRoute"
@@ -235,6 +237,8 @@ The HRW (Highest Random Weight) load balancer uses consistent hashing to ensure 
 
 This is particularly useful for maintaining session affinity without requiring sticky cookies, as clients will consistently reach the same backend service based on their IP address.
 
+Each child in the `highestRandomWeight.services` list can declare its own `middlewares`. See [Per-Child Middlewares](#per-child-middlewares).
+
 ### Configuration Example
 
 ```yaml tab="IngressRoute"
@@ -279,11 +283,6 @@ spec:
         namespace: apps
         port: 80
         weight: 20
-      # Another TraefikService
-      - name: wrr1
-        namespace: apps
-        kind: TraefikService
-        weight: 15
 ```
 
 ```yaml tab="Kubernetes Services"
@@ -382,6 +381,8 @@ The mirroring `TraefikService` allows you to reference Kubernetes Services and o
 
 Please note that by default the whole request is buffered in memory while it is being mirrored.
 See the `maxBodySize` option in the example below for how to modify this behavior.
+
+Both the main service and each `mirrors` child can declare their own `middlewares`. See [Per-Child Middlewares](#per-child-middlewares).
 
 ### Configuration Example
 
@@ -517,6 +518,8 @@ The failover service forwards all requests to a fallback service when the main s
 
     HealthCheck on a Failover service can be defined currently only with the [File provider](../../../../install-configuration/providers/others/file.md).
 
+Both the `service` (main) and `fallback` children can declare their own `middlewares`. See [Per-Child Middlewares](#per-child-middlewares).
+
 ### Configuration Examples
 
 ```yaml tab="IngressRoute"
@@ -648,3 +651,81 @@ The exhaustive list of the service options is described in the [`Service`](./ser
 | <a id="opt-fallback" href="#opt-fallback" title="#opt-fallback">`fallback`</a> | Fallback service to use when the main service returns matching error status codes. Provides the same options as a [`Service`](./service.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                                                                      | Yes      |
 | <a id="opt-errors-status" href="#opt-errors-status" title="#opt-errors-status">`errors.status`</a> | List of HTTP status code ranges for which the fallback service should be used.<br />Each entry can be a single code (e.g. `"429"`) or a range (e.g. `"500-503"`).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                      | No       |
 | <a id="opt-errors-maxRequestBodyBytes" href="#opt-errors-maxRequestBodyBytes" title="#opt-errors-maxRequestBodyBytes">`errors.`<br />`maxRequestBodyBytes`</a> | Maximum size allowed for the body of the request.<br />If the body is larger, the request is not replayed to the fallback service.<br />-1 means unlimited size.                                                                                                                                                                                                                                                                                                                                                                                                                                                    | -1                                                                   | No       |
+
+## Per-Child Middlewares
+
+Every child reference inside a `TraefikService` composite — `weighted`, `highestRandomWeight`, `mirroring`, or `failover` — can declare its own `middlewares`. The chain is applied only to traffic routed through that child's edge, not to the callee as a whole. This works for both `kind: Service` and `kind: TraefikService` children.
+
+The example below shows a mirroring setup. Production traffic goes to `api-prod`; a full copy is sent to `api-mirror` for regression testing or offline analytics. A `mirror-header` middleware is attached only to the mirror edge so `api-mirror` can tell mirrored requests from real ones — and avoid, for example, sending real emails or charging real cards. The main service never sees that header.
+
+```yaml tab="Kubernetes CRD"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: api
+  namespace: apps
+
+spec:
+  mirroring:
+    name: api-prod
+    port: 80
+    mirrors:
+      - name: api-mirror
+        port: 80
+        percent: 100
+        middlewares:
+          - name: mirror-header
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: mirror-header
+  namespace: apps
+
+spec:
+  headers:
+    customRequestHeaders:
+      X-Mirror-Traffic: "true"
+```
+
+```yaml tab="File (YAML)"
+http:
+  services:
+    api:
+      mirroring:
+        service: api-prod
+        mirrors:
+          - name: api-mirror
+            percent: 100
+            middlewares:
+              - mirror-header
+
+  middlewares:
+    mirror-header:
+      headers:
+        customRequestHeaders:
+          X-Mirror-Traffic: "true"
+```
+
+```toml tab="File (TOML)"
+[http.services.api.mirroring]
+  service = "api-prod"
+  [[http.services.api.mirroring.mirrors]]
+    name        = "api-mirror"
+    percent     = 100
+    middlewares = ["mirror-header"]
+
+[http.middlewares.mirror-header.headers]
+  [http.middlewares.mirror-header.headers.customRequestHeaders]
+    X-Mirror-Traffic = "true"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.services.api.mirroring.service=api-prod"
+  - "traefik.http.services.api.mirroring.mirrors[0].name=api-mirror"
+  - "traefik.http.services.api.mirroring.mirrors[0].percent=100"
+  - "traefik.http.services.api.mirroring.mirrors[0].middlewares=mirror-header"
+  - "traefik.http.middlewares.mirror-header.headers.customRequestHeaders.X-Mirror-Traffic=true"
+```

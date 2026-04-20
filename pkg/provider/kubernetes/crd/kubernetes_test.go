@@ -3345,6 +3345,320 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "weighted TraefikService entry with middleware",
+			paths: []string{"services.yml", "with_weighted_traefik_service_middleware.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-outer-weighted",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/tobestripped"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-outer-weighted": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:        "default-inner-weighted",
+										Weight:      pointer(1),
+										Middlewares: []string{"default-stripprefix"},
+									},
+								},
+							},
+						},
+						"default-inner-weighted": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "hrw TraefikService entry with middleware",
+			paths: []string{"services.yml", "with_hrw_traefik_service_middleware.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-outer-hrw",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/tobestripped"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-outer-hrw": {
+							HighestRandomWeight: &dynamic.HighestRandomWeight{
+								Services: []dynamic.HRWService{
+									{
+										Name:        "default-inner-hrw",
+										Weight:      pointer(1),
+										Middlewares: []string{"default-stripprefix"},
+									},
+								},
+							},
+						},
+						"default-inner-hrw": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "mirroring TraefikService with middlewares",
+			paths: []string{"services.yml", "with_mirroring_traefik_service_middleware.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-outer-mirroring",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-stripprefix-main": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/mainstrip"},
+							},
+						},
+						"default-stripprefix-mirror": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/mirrorstrip"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-outer-mirroring": {
+							Mirroring: &dynamic.Mirroring{
+								Service:     "default-inner-main",
+								Middlewares: []string{"default-stripprefix-main"},
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:        "default-inner-mirror",
+										Percent:     50,
+										Middlewares: []string{"default-stripprefix-mirror"},
+									},
+								},
+							},
+						},
+						"default-inner-main": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-inner-mirror": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "failover TraefikService with middlewares",
+			paths: []string{"services.yml", "with_failover_traefik_service_middleware.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-outer-failover",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-stripprefix-main": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/mainstrip"},
+							},
+						},
+						"default-stripprefix-fallback": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/fallbackstrip"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-outer-failover": {
+							Failover: &dynamic.Failover{
+								Service:             "default-inner-main",
+								Middlewares:         []string{"default-stripprefix-main"},
+								Fallback:            "default-inner-fallback",
+								FallbackMiddlewares: []string{"default-stripprefix-fallback"},
+								Errors:              &dynamic.FailoverError{},
+							},
+						},
+						"default-inner-main": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-inner-fallback": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
 			desc:  "one kube services in a highest random weight",
 			paths: []string{"with_highest_random_weight.yml"},
 			expected: &dynamic.Configuration{
@@ -8517,6 +8831,142 @@ func TestCrossNamespace(t *testing.T) {
 					Routers:           map[string]*dynamic.Router{},
 					Middlewares:       map[string]*dynamic.Middleware{},
 					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "HTTP weighted TraefikService entry middleware cross namespace allowed",
+			paths:               []string{"services.yml", "with_weighted_traefik_service_middleware_cross_namespace.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-outer-weighted",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"cross-ns-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/stripit"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-outer-weighted": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:        "default-inner-weighted",
+										Weight:      pointer(1),
+										Middlewares: []string{"cross-ns-stripprefix"},
+									},
+								},
+							},
+						},
+						"default-inner-weighted": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			// When allowCrossNamespace is false, the outer weighted TraefikService fails to
+			// build because its entry references a middleware in another namespace, so it
+			// is dropped from conf.HTTP.Services. The router still references it (broken
+			// pointer), mirroring how other cross-namespace failures are surfaced.
+			desc:  "HTTP weighted TraefikService entry middleware cross namespace disallowed",
+			paths: []string{"services.yml", "with_weighted_traefik_service_middleware_cross_namespace.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-outer-weighted",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"cross-ns-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/stripit"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-inner-weighted": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: pointer(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},

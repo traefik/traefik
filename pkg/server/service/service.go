@@ -183,22 +183,10 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, sErr
 	}
 
-	if len(conf.Middlewares) > 0 {
-		if m.middlewareChainBuilder == nil {
-			// This should happen only in tests.
-			return nil, errors.New("chain builder not defined")
-		}
-		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
-		originalLB := lb
-		var err error
-		lb, err = chain.Then(lb)
-		if err != nil {
-			conf.AddError(err, true)
-			return nil, err
-		}
-		if su, ok := originalLB.(healthcheck.StatusUpdater); ok {
-			lb = &statusUpdaterHandler{Handler: lb, statusUpdater: su}
-		}
+	lb, err := m.wrapMiddlewares(ctx, lb, conf.Middlewares)
+	if err != nil {
+		conf.AddError(err, true)
+		return nil, err
 	}
 
 	m.services[serviceName] = lb
@@ -217,6 +205,11 @@ func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName str
 	serviceHandler, err := m.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
+	}
+
+	serviceHandler, err = m.wrapMiddlewares(ctx, serviceHandler, config.Middlewares)
+	if err != nil {
+		return nil, fmt.Errorf("building middleware chain for %v in %v: %w", config.Service, serviceName, err)
 	}
 
 	updater, implementUpdater := serviceHandler.(healthcheck.StatusUpdater)
@@ -242,6 +235,11 @@ func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName str
 	fallbackHandler, err := m.BuildHTTP(ctx, config.Fallback)
 	if err != nil {
 		return nil, err
+	}
+
+	fallbackHandler, err = m.wrapMiddlewares(ctx, fallbackHandler, config.FallbackMiddlewares)
+	if err != nil {
+		return nil, fmt.Errorf("building middleware chain for %v in %v: %w", config.Fallback, serviceName, err)
 	}
 
 	f.SetFallbackHandler(fallbackHandler)
@@ -271,6 +269,11 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
+	serviceHandler, err = m.wrapMiddlewares(ctx, serviceHandler, config.Middlewares)
+	if err != nil {
+		return nil, fmt.Errorf("building middleware chain for %v: %w", config.Service, err)
+	}
+
 	mirrorBody := dynamic.MirroringDefaultMirrorBody
 	if config.MirrorBody != nil {
 		mirrorBody = *config.MirrorBody
@@ -285,6 +288,11 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
 			return nil, err
+		}
+
+		mirrorHandler, err = m.wrapMiddlewares(ctx, mirrorHandler, mirrorConfig.Middlewares)
+		if err != nil {
+			return nil, fmt.Errorf("building middleware chain for %v: %w", mirrorConfig.Name, err)
 		}
 
 		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
@@ -306,6 +314,11 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		serviceHandler, err := m.getServiceHandler(ctx, service)
 		if err != nil {
 			return nil, err
+		}
+
+		serviceHandler, err = m.wrapMiddlewares(ctx, serviceHandler, service.Middlewares)
+		if err != nil {
+			return nil, fmt.Errorf("building middleware chain for %v in %v: %w", service.Name, serviceName, err)
 		}
 
 		balancer.Add(service.Name, serviceHandler, service.Weight, false)
@@ -381,6 +394,11 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
 			return nil, err
+		}
+
+		serviceHandler, err = m.wrapMiddlewares(ctx, serviceHandler, service.Middlewares)
+		if err != nil {
+			return nil, fmt.Errorf("building middleware chain for %v in %v: %w", service.Name, serviceName, err)
 		}
 
 		balancer.Add(service.Name, serviceHandler, service.Weight, false)
@@ -551,6 +569,27 @@ type statusUpdaterHandler struct {
 
 func (s *statusUpdaterHandler) RegisterStatusUpdater(fn func(up bool)) error {
 	return s.statusUpdater.RegisterStatusUpdater(fn)
+}
+
+// wrapMiddlewares wraps handler with the middleware chain built from names.
+// When handler implements healthcheck.StatusUpdater, the wrapper preserves
+// that interface so balancer healthchecks can still register status callbacks.
+func (m *Manager) wrapMiddlewares(ctx context.Context, handler http.Handler, names []string) (http.Handler, error) {
+	if len(names) == 0 {
+		return handler, nil
+	}
+	if m.middlewareChainBuilder == nil {
+		return nil, errors.New("chain builder not defined")
+	}
+	chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, names)
+	wrapped, err := chain.Then(handler)
+	if err != nil {
+		return nil, err
+	}
+	if su, ok := handler.(healthcheck.StatusUpdater); ok {
+		return &statusUpdaterHandler{Handler: wrapped, statusUpdater: su}, nil
+	}
+	return wrapped, nil
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {
