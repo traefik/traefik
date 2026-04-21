@@ -77,7 +77,7 @@ require (
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
 	github.com/valyala/fasthttp v1.69.0
-	github.com/vulcand/oxy/v2 v2.0.3
+	github.com/vulcand/oxy/v2 v2.0.4
 	github.com/vulcand/predicate v1.3.0
 	github.com/yuin/gopher-lua v1.1.1
 	go.opentelemetry.io/collector/pdata v1.41.0
