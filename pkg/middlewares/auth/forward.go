@@ -92,14 +92,14 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	if config.MaxBodySize != nil {
 		fa.maxBodySize = *config.MaxBodySize
 	} else if fa.forwardBody {
-		logger.Warn().Msgf("ForwardAuth 'maxBodySize' is not configured with 'forwardBody: true', allowing unlimited request body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
+		logger.Warn().Msgf("maxBodySize is not configured with 'forwardBody: true', allowing unlimited request body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	if config.MaxResponseBodySize != nil {
 		fa.maxResponseBodySize = *config.MaxResponseBodySize
 	} else {
 		fa.maxResponseBodySize = -1
-		logger.Warn().Msg("ForwardAuth 'maxResponseBodySize' is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
+		logger.Warn().Msg("maxResponseBodySize is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	// Ensure our request client does not follow redirects
@@ -112,7 +112,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 
 	if config.TLS != nil {
 		if config.TLS.CAOptional != nil {
-			logger.Warn().Msg("CAOptional option is deprecated, TLS client authentication is a server side option, please remove any usage of this option.")
+			logger.Warn().Msg("tls.CAOptional option is deprecated, TLS client authentication is a server side option, please remove any usage of this option.")
 		}
 
 		clientTLS := &types.ClientTLS{
@@ -141,7 +141,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	}
 
 	if config.TrustForwardHeader == nil {
-		logger.Warn().Msg("TrustForwardHeader is not set: this creates an inconsistent security behavior where some X-Forwarded headers (e.g. X-Forwarded-For, X-Forwarded-Proto) are removed but others (e.g. X-Forwarded-Prefix) are forwarded untouched. Set it to false to remove all X-Forwarded headers, or true to trust them all.")
+		logger.Warn().Msg("trustForwardHeader is not configured: this creates an inconsistent security behavior where some X-Forwarded headers (e.g. X-Forwarded-For, X-Forwarded-Proto) are removed but others (e.g. X-Forwarded-Prefix) are forwarded untouched. Please set it to false to remove all X-Forwarded headers, or true to trust them all.")
 	} else if *config.TrustForwardHeader && len(fa.authRequestHeaders) > 0 {
 		fa.authRequestHeaders = append(fa.authRequestHeaders, slices.Collect(maps.Keys(forwardedheaders.XHeadersSet))...)
 	}
