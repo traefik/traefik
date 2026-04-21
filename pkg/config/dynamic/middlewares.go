@@ -249,6 +249,8 @@ type ForwardAuth struct {
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+	//
+	// Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
 	TrustForwardHeader *bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
