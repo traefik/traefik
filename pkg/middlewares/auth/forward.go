@@ -69,7 +69,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.maxResponseBodySize = *config.MaxResponseBodySize
 	} else {
 		fa.maxResponseBodySize = -1
-		logger.Warn("ForwardAuth 'maxResponseBodySize' is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
+		logger.Warn("maxResponseBodySize is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	// Ensure our request client does not follow redirects
@@ -100,7 +100,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	}
 
 	if config.TrustForwardHeader == nil {
-		logger.Warn("TrustForwardHeader is not set: this creates an inconsistent security behavior where some X-Forwarded headers (e.g. X-Forwarded-For, X-Forwarded-Proto) are removed but others (e.g. X-Forwarded-Prefix) are forwarded untouched. Set it to false to remove all X-Forwarded headers, or true to trust them all.")
+		logger.Warn("trustForwardHeader is not configured: this creates an inconsistent security behavior where some X-Forwarded headers (e.g. X-Forwarded-For, X-Forwarded-Proto) are removed but others (e.g. X-Forwarded-Prefix) are forwarded untouched. Please set it to false to remove all X-Forwarded headers, or true to trust them all.")
 	} else if *config.TrustForwardHeader && len(fa.authRequestHeaders) > 0 {
 		fa.authRequestHeaders = append(fa.authRequestHeaders, slices.Collect(maps.Keys(forwardedheaders.XHeadersSet))...)
 	}
