@@ -614,6 +614,7 @@ spec:
                   trustForwardHeader:
                     description: |-
                       TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+
                       Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
                     type: boolean
                 type: object
