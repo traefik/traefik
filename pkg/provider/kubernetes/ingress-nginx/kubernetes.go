@@ -479,11 +479,42 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		canaryIngresses []ingress
 	)
 
+	// Sort the ingresses by creation timestamps, to help to decide when two ingresses have the same server-alias value.
+	listedIngresses := p.k8sClient.ListIngresses()
+	slices.SortStableFunc(listedIngresses, func(a, b *netv1.Ingress) int {
+		ta, tb := a.CreationTimestamp.Time, b.CreationTimestamp.Time
+
+		if !ta.Equal(tb) {
+			if ta.Before(tb) {
+				return -1
+			}
+			return 1
+		}
+
+		// When the timestamp is exactly the same, fallback to descending namespace/name lexicographic order.
+		// The same fallback and debug log with ingress-nginx.
+		// Ref: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/store/store.go#L1102-L1115.
+		ia, ib := a.Namespace+"/"+a.Name, b.Namespace+"/"+b.Name
+		log.Ctx(ctx).Debug().
+			Str("ingress_a", ia).
+			Str("ingress_b", ib).
+			Msg("Ingresses have identical CreationTimestamp, falling back to lexicographic ordering")
+
+		if ia > ib {
+			return -1
+		}
+		return 1
+	})
+
 	hosts := make(map[string]bool)
 	hostsWithUseRegex := make(map[string]bool)
 	serverSnippets := make(map[string]string)
 	ingressPaths := make(map[string]ingressPath) // indexed by namespace+host+path+pathType.
-	for _, ing := range p.k8sClient.ListIngresses() {
+	// Build a map of claimed server-aliases: the first ingress (by creation time) to
+	// declare an alias owns it; any later ingress that repeats the same alias is denied.
+	claimedAliases := make(map[string]string)
+
+	for _, ing := range listedIngresses {
 		if !p.shouldProcessIngress(ing, ingressClasses) {
 			continue
 		}
@@ -540,6 +571,16 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 						HTTPIngressPath: pa,
 						IngressConfig:   i.IngressConfig,
 					}
+				}
+			}
+		}
+
+		if i.IngressConfig.ServerAlias != nil {
+			key := i.Namespace + "/" + i.Name
+			for _, alias := range *i.IngressConfig.ServerAlias {
+				serverAlias := strings.ToLower(alias)
+				if _, exist := claimedAliases[serverAlias]; !exist {
+					claimedAliases[serverAlias] = key
 				}
 			}
 		}
@@ -836,7 +877,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					EntryPoints: p.NonTLSEntryPoints,
-					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts, hostsWithUseRegex),
+					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts, hostsWithUseRegex, claimedAliases, ingress.Namespace+"/"+ingress.Name),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax:    "default",
 					Service:       serviceName,
@@ -2267,16 +2308,22 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	return users, nil
 }
 
-func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool, hostsWithUseRegex map[string]bool) string {
+func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool, hostsWithUseRegex map[string]bool, claimedAliases map[string]string, ingressKey string) string {
 	var rules []string
 	if host != "" {
 		hosts := []string{host}
 		if config.ServerAlias != nil {
 			for _, alias := range *config.ServerAlias {
-				if _, ok := allHosts[strings.ToLower(alias)]; ok {
+				serverAlias := strings.ToLower(alias)
+				if _, ok := allHosts[serverAlias]; ok {
 					log.Ctx(ctx).Debug().
 						Str("alias", alias).
 						Msg("Skipping server-alias because it is already defined as a host in another Ingress")
+					continue
+				}
+				if owner, ok := claimedAliases[serverAlias]; ok && owner != ingressKey {
+					log.Ctx(ctx).Debug().Str("alias", alias).Str("ingress", ingressKey).
+						Msgf("Skipping server-alias because it is already claimed by %s Ingress", owner)
 					continue
 				}
 				hosts = append(hosts, alias)
