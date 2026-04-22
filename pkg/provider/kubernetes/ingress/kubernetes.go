@@ -459,7 +459,7 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 			})
 		}
 
-		for _, ip := range service.Spec.ExternalIPs {
+		for _, ip := range service.Spec.ClusterIPs {
 			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
 				IP:    ip,
 				Ports: ports,
