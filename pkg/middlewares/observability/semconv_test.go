@@ -1,6 +1,8 @@
 package observability
 
 import (
+	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,11 +23,15 @@ func TestSemConvServerMetrics(t *testing.T) {
 	tests := []struct {
 		desc           string
 		statusCode     int
+		host           string
+		httpRoute      string
+		localAddr      net.Addr
 		wantAttributes attribute.Set
 	}{
 		{
 			desc:       "not found status",
 			statusCode: http.StatusNotFound,
+			host:       "www.test.com",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("error.type").String("404"),
 				attribute.Key("http.request.method").String("GET"),
@@ -39,6 +45,7 @@ func TestSemConvServerMetrics(t *testing.T) {
 		{
 			desc:       "created status",
 			statusCode: http.StatusCreated,
+			host:       "www.test.com",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("http.request.method").String("GET"),
 				attribute.Key("http.response.status_code").Int(201),
@@ -46,6 +53,69 @@ func TestSemConvServerMetrics(t *testing.T) {
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
 				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:       "with http.route and server.port from Host header",
+			statusCode: http.StatusOK,
+			host:       "example.com:443",
+			httpRoute:  "/api/banking",
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("http.route").String("/api/banking"),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("example.com:443"),
+				attribute.Key("server.port").Int(443),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:       "default HTTPS port 443 from local address",
+			statusCode: http.StatusOK,
+			host:       "example.com",
+			localAddr:  &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 443},
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("example.com"),
+				attribute.Key("server.port").Int(443),
+				attribute.Key("url.scheme").String("https"),
+			),
+		},
+		{
+			desc:       "default HTTP port 80 from local address",
+			statusCode: http.StatusOK,
+			host:       "example.com",
+			localAddr:  &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 80},
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("example.com"),
+				attribute.Key("server.port").Int(80),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:       "non-standard port 8443 from local address with http.route",
+			statusCode: http.StatusOK,
+			host:       "api.example.com",
+			httpRoute:  "/v1/users",
+			localAddr:  &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8443},
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("http.route").String("/v1/users"),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("api.example.com"),
+				attribute.Key("server.port").Int(8443),
+				attribute.Key("url.scheme").String("https"),
 			),
 		},
 	}
@@ -68,11 +138,31 @@ func TestSemConvServerMetrics(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
+			req := httptest.NewRequest(http.MethodGet, "http://"+test.host+"/search?q=Opentelemetry", nil)
 			rw := httptest.NewRecorder()
+			req.Host = test.host
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
-			req.Header.Set("X-Forwarded-Proto", "http")
+
+			// Set X-Forwarded-Proto based on the local address port or default to http.
+			scheme := "http"
+			if test.localAddr != nil {
+				ctx := context.WithValue(req.Context(), http.LocalAddrContextKey, test.localAddr)
+				req = req.WithContext(ctx)
+
+				// Determine scheme based on port for the test.
+				if tcpAddr, ok := test.localAddr.(*net.TCPAddr); ok {
+					if tcpAddr.Port == 443 || tcpAddr.Port == 8443 {
+						scheme = "https"
+					}
+				}
+			}
+			req.Header.Set("X-Forwarded-Proto", scheme)
+
+			// Inject http.route into context if provided.
+			if test.httpRoute != "" {
+				req = req.WithContext(WithHTTPRoute(req.Context(), test.httpRoute))
+			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(test.statusCode)
