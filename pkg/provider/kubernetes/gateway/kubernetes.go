@@ -869,8 +869,9 @@ func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *g
 }
 
 type backendAddress struct {
-	IP   string
-	Port int32
+	IP     string
+	Port   int32
+	Weight *int
 }
 
 func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
@@ -926,6 +927,23 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, errors.New("endpointslices not found")
 	}
 
+	// Determine local zone from node labels, to honor EndpointSlice topology hints.
+	preferredZone := ""
+	nodeName := firstNonEmpty(os.Getenv("KUBERNETES_NODE_NAME"), os.Getenv("NODE_NAME"))
+	if nodeName != "" {
+		nodes, nodesExists, nodesErr := p.client.GetNodes()
+		if nodesErr == nil && nodesExists {
+			for _, n := range nodes {
+				if n.Name == nodeName {
+					if z, ok := n.Labels[corev1.LabelTopologyZone]; ok {
+						preferredZone = z
+					}
+					break
+				}
+			}
+		}
+	}
+
 	uniqAddresses := map[string]struct{}{}
 	backendServers := make([]backendAddress, 0)
 	for _, endpointSlice := range endpointSlices {
@@ -940,9 +958,25 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 			continue
 		}
 
+		var (
+			weightPreferred = 100
+			weightOther     = 0
+		)
 		for _, endpoint := range endpointSlice.Endpoints {
 			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
 				continue
+			}
+
+			hasForZonesHint := false
+			matchPreferred := false
+			if preferredZone != "" && endpoint.Hints != nil && endpoint.Hints.ForZones != nil {
+				hasForZonesHint = true
+				for _, z := range endpoint.Hints.ForZones {
+					if z.Name == preferredZone {
+						matchPreferred = true
+						break
+					}
+				}
 			}
 
 			for _, address := range endpoint.Addresses {
@@ -951,15 +985,46 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 				}
 
 				uniqAddresses[address] = struct{}{}
-				backendServers = append(backendServers, backendAddress{
+				ba := backendAddress{
 					IP:   address,
 					Port: port,
-				})
+				}
+				if hasForZonesHint {
+					if matchPreferred {
+						ba.Weight = &weightPreferred
+					} else {
+						ba.Weight = &weightOther
+					}
+				}
+				backendServers = append(backendServers, ba)
 			}
 		}
 	}
 
+	// Remove the weights if they all are 0.
+	minWeight := 0
+	for _, ba := range backendServers {
+		if ba.Weight != nil {
+			minWeight = max(minWeight, *ba.Weight)
+		}
+	}
+	if minWeight == 0 {
+		for i := range backendServers {
+			backendServers[i].Weight = nil
+		}
+	}
+
 	return backendServers, *svcPort, nil
+}
+
+// firstNonEmpty returns the first non-empty string from the inputs.
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {

@@ -659,6 +659,25 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
+	// Determine local zone to honor topology-aware routing hints, when available.
+	preferredZone := ""
+	if !p.DisableClusterScopeResources {
+		nodeName := firstNonEmpty(os.Getenv("KUBERNETES_NODE_NAME"), os.Getenv("NODE_NAME"))
+		if nodeName != "" {
+			nodes, nodesExists, nodesErr := client.GetNodes()
+			if nodesErr == nil && nodesExists {
+				for _, n := range nodes {
+					if n.Name == nodeName {
+						if z, ok := n.Labels[corev1.LabelTopologyZone]; ok {
+							preferredZone = z
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
 	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
 		var port int32
@@ -674,6 +693,10 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
+		var (
+			weightPreferred = 100
+			weightOther     = 0
+		)
 		for _, endpoint := range endpointSlice.Endpoints {
 			// The Serving condition allows to track if the Pod can receive traffic.
 			// It is set to true when the Pod is Ready or Terminating.
@@ -682,21 +705,64 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 				continue
 			}
 
+			hasForZonesHint := false
+			matchPreferred := false
+			if preferredZone != "" && endpoint.Hints != nil && endpoint.Hints.ForZones != nil {
+				hasForZonesHint = true
+				for _, z := range endpoint.Hints.ForZones {
+					if z.Name == preferredZone {
+						matchPreferred = true
+						break
+					}
+				}
+			}
+
 			for _, address := range endpoint.Addresses {
 				if _, ok := addresses[address]; ok {
 					continue
 				}
 
 				addresses[address] = struct{}{}
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+				server := dynamic.Server{
 					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
 					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false),
-				})
+				}
+				if hasForZonesHint {
+					if matchPreferred {
+						server.Weight = &weightPreferred
+					} else {
+						server.Weight = &weightOther
+					}
+				}
+				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, server)
 			}
 		}
 	}
 
+	// Remove the weights if they all are 0.
+	minWeight := 0
+	for _, server := range svc.LoadBalancer.Servers {
+		if server.Weight != nil {
+			minWeight = max(minWeight, *server.Weight)
+		}
+	}
+	if minWeight == 0 {
+		for i := range svc.LoadBalancer.Servers {
+			svc.LoadBalancer.Servers[i].Weight = nil
+		}
+	}
+
 	return svc, nil
+}
+
+// firstNonEmpty returns the first non-empty string from the inputs.
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
