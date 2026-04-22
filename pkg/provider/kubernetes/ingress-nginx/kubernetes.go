@@ -2087,13 +2087,16 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 }
 
 func (p *Provider) applySSLRedirectConfiguration(ingress ingress, routerName string, rt *dynamic.Router, conf *dynamic.Configuration) bool {
-	// Only apply SSL redirect on HTTP routers when the ingress has a TLS section.
-	if rt.TLS != nil || ingress.Spec.TLS == nil {
+	// Only apply SSL redirect on HTTP routers.
+	if rt.TLS != nil {
 		return false
 	}
 
-	sslRedirect := ptr.Deref(ingress.IngressConfig.SSLRedirect, false)
+	// force-ssl-redirect redirects to HTTPS regardless of whether the Ingress has a TLS block.
 	forceSSLRedirect := ptr.Deref(ingress.IngressConfig.ForceSSLRedirect, false)
+	// When an Ingress has a TLS block, by default SSL redirect should be applied.
+	// When an Ingress does not have a TLS block, SSL redirect should not be applied.
+	sslRedirect := ingress.Spec.TLS != nil && ptr.Deref(ingress.IngressConfig.SSLRedirect, true)
 
 	// If either forceSSLRedirect or sslRedirect are enabled,
 	// the HTTP router needs to redirect to HTTPS.
@@ -2110,8 +2113,6 @@ func (p *Provider) applySSLRedirectConfiguration(ingress ingress, routerName str
 		return true
 	}
 
-	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
-	// even if sslRedirect is enabled.
 	return false
 }
 
