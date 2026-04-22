@@ -192,6 +192,34 @@ func TestRewriteTarget(t *testing.T) {
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://bar.example.org/",
 		},
+		{
+			desc: "full URL replacement preserves incoming query",
+			path: "/some/path?foo=bar&baz=qux",
+			config: dynamic.RewriteTarget{
+				Replacement: "https://bar.example.org/some/path",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/some/path?foo=bar&baz=qux",
+		},
+		{
+			desc: "full URL replacement keeps rewrite-supplied query over request query",
+			path: "/some/path?foo=bar",
+			config: dynamic.RewriteTarget{
+				Replacement: "https://bar.example.org/some/path?tenant=acme",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/some/path?tenant=acme",
+		},
+		{
+			desc: "regex with full URL replacement and capture group preserves incoming query",
+			path: "/report/view/foo/bar?tenant=acme&id=42",
+			config: dynamic.RewriteTarget{
+				Regex:       `^/report/view/(.*)`,
+				Replacement: "https://portal.example.org/site/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://portal.example.org/site/foo/bar?tenant=acme&id=42",
+		},
 	}
 
 	for _, test := range testCases {
