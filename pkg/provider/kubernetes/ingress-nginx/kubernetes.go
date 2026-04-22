@@ -489,12 +489,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		// The same fallback and debug log with ingress-nginx.
 		// Ref: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/store/store.go#L1102-L1115.
 		if ta.Equal(&tb) {
-			ia := fmt.Sprintf("%v/%v", listedIngresses[a].Namespace, listedIngresses[a].Name)
-			ib := fmt.Sprintf("%v/%v", listedIngresses[b].Namespace, listedIngresses[b].Name)
+			ia := listedIngresses[a].Namespace + "/" + listedIngresses[a].Name
+			ib := listedIngresses[b].Namespace + "/" + listedIngresses[b].Name
 			log.Ctx(ctx).Debug().
 				Str("ingress_a", ia).
 				Str("ingress_b", ib).
-				Msg("Ingresses have identical CreationTimestamp, falling back to lexicographic ordering")
+				Msg("Ingresses have identical CreationTimestamp, falling back to descending namespace/name lexicographic order")
 			return ia > ib
 		}
 
