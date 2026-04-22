@@ -61,7 +61,7 @@ func Test_defaultRule(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -120,7 +120,7 @@ func Test_defaultRule(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -170,7 +170,7 @@ func Test_defaultRule(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -226,7 +226,7 @@ func Test_defaultRule(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -304,7 +304,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -372,7 +372,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://192.168.1.101:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -386,7 +386,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://192.168.1.102:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -454,7 +454,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -519,7 +519,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -587,7 +587,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -644,7 +644,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -702,7 +702,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -788,7 +788,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -851,7 +851,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -904,7 +904,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -918,7 +918,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1102,7 +1102,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1158,7 +1158,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1241,7 +1241,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1311,7 +1311,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1375,7 +1375,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1444,7 +1444,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1501,7 +1501,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1559,7 +1559,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "h2c://127.0.0.1:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1616,7 +1616,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://1.2.3.4:5678",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1675,7 +1675,7 @@ func Test_buildConfig(t *testing.T) {
 										PreservePath: true,
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1801,7 +1801,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1815,7 +1815,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2015,7 +2015,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2083,7 +2083,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2496,7 +2496,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2588,7 +2588,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2806,7 +2806,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2820,7 +2820,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.2:80",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3040,7 +3040,7 @@ func Test_buildConfig(t *testing.T) {
 										URL: "http://127.0.0.1:9999",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3127,7 +3127,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
 								Servers:        nil,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3472,5 +3472,3 @@ func extractNamespacesFromProvider(providers []*Provider) []string {
 	}
 	return res
 }
-
-func pointer[T any](v T) *T { return &v }

@@ -31,8 +31,6 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-func pointer[T any](v T) *T { return &v }
-
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
 		desc                         string
@@ -79,7 +77,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -125,9 +123,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Options: "foobar",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs:     pointer(true),
-								Tracing:        pointer(true),
-								Metrics:        pointer(true),
+								AccessLogs:     new(true),
+								Tracing:        new(true),
+								Metrics:        new(true),
 								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
@@ -136,7 +134,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -145,7 +143,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										Name:     "foobar",
 										Secure:   true,
 										HTTPOnly: true,
-										Path:     pointer("/"),
+										Path:     new("/"),
 									},
 								},
 								Servers: []dynamic.Server{
@@ -182,7 +180,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -219,7 +217,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -256,7 +254,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -293,7 +291,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -326,7 +324,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -359,7 +357,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -393,7 +391,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -430,7 +428,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -467,7 +465,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -484,7 +482,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service2-8082": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -518,7 +516,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -597,7 +595,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -630,7 +628,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -663,7 +661,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -696,7 +694,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -733,7 +731,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -750,7 +748,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-carotte": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -783,7 +781,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -820,7 +818,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -837,7 +835,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"toto-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -890,7 +888,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -921,7 +919,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -961,7 +959,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -994,7 +992,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1028,7 +1026,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1063,7 +1061,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1096,7 +1094,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1169,7 +1167,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1202,7 +1200,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1238,7 +1236,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1269,7 +1267,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1299,7 +1297,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1329,7 +1327,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1359,7 +1357,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1389,7 +1387,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1419,7 +1417,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1452,7 +1450,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1485,7 +1483,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1515,7 +1513,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1571,7 +1569,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-foobar": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1613,7 +1611,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1643,7 +1641,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1684,7 +1682,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1758,7 +1756,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1793,7 +1791,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 										URL: "http://[2001:0db8:3c4d:0015:0000:0000:1a2f:1a2b]:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1824,7 +1822,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 										URL: "http://[2001:0db8:3c4d:0015:0000:0000:1a2f:2a3b]:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1873,7 +1871,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
@@ -1923,7 +1921,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://172.16.4.4:32456",
@@ -2161,7 +2159,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
@@ -2189,7 +2187,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
@@ -2217,7 +2215,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.20:8080",

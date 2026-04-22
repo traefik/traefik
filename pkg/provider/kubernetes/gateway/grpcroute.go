@@ -158,7 +158,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 									Code: codes.Unavailable,
 									Msg:  "Service Unavailable",
 								},
-								Weight: ptr.To(1),
+								Weight: new(1),
 							},
 						},
 					},
@@ -190,7 +190,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
 		svcName, svc, errCondition := p.loadGRPCBackendRef(route, backendRef)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
