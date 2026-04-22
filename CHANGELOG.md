@@ -1,3 +1,14 @@
+## [v2.11.43](https://github.com/traefik/traefik/tree/v2.11.43) (2026-04-22)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.42...v2.11.43)
+
+**Bug fixes:**
+- **[middleware, authentication]** Remove map lookup making the basic auth notFoundSecret empty ([#12960](https://github.com/traefik/traefik/pull/12960) @rtribotte)
+- **[middleware, authentication]** Fix trustForwardHeader on forward auth middleware ([#12994](https://github.com/traefik/traefik/pull/12994) @juliens)
+- **[middleware, authentication]** Cleanup and make ForwardAuth logs consistent ([#13013](https://github.com/traefik/traefik/pull/13013) @kevinpollet)
+- **[middleware]** Remove untrusted X headers with underscores ([#12961](https://github.com/traefik/traefik/pull/12961) @rtribotte)
+- **[middleware]** Sanitize the request URL after stripping the prefix ([#12990](https://github.com/traefik/traefik/pull/12990) @kevinpollet)
+- **[k8s/crd, k8s]** Honor allowCrossNamespace with chain middleware CRD ([#12976](https://github.com/traefik/traefik/pull/12976) @rtribotte)
+
 ## [v2.11.42](https://github.com/traefik/traefik/tree/v2.11.42) (2026-03-26)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.41...v2.11.42)
 
