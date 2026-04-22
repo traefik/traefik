@@ -32,6 +32,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/nomad"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	"github.com/traefik/traefik/v3/pkg/ready"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -94,6 +95,7 @@ type Configuration struct {
 	API     *API            `description:"Enable api/dashboard." json:"api,omitempty" toml:"api,omitempty" yaml:"api,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Metrics *otypes.Metrics `description:"Enable a metrics exporter." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
 	Ping    *ping.Handler   `description:"Enable ping." json:"ping,omitempty" toml:"ping,omitempty" yaml:"ping,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Ready   *ready.Handler  `description:"Enable ready endpoint that reports once all providers have loaded." json:"ready,omitempty" toml:"ready,omitempty" yaml:"ready,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Log       *otypes.TraefikLog `description:"Traefik log settings." json:"log,omitempty" toml:"log,omitempty" yaml:"log,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	AccessLog *otypes.AccessLog  `description:"Access log settings." json:"accessLog,omitempty" toml:"accessLog,omitempty" yaml:"accessLog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -305,6 +307,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	// Creates the internal traefik entry point if needed
 	if (c.API != nil && c.API.Insecure) ||
 		(c.Ping != nil && !c.Ping.ManualRouting && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
+		(c.Ready != nil && !c.Ready.ManualRouting && c.Ready.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Metrics != nil && c.Metrics.Prometheus != nil && !c.Metrics.Prometheus.ManualRouting && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Providers != nil && c.Providers.Rest != nil && c.Providers.Rest.Insecure) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
