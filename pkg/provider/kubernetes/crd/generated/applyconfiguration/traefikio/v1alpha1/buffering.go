@@ -52,7 +52,7 @@ type BufferingApplyConfiguration struct {
 	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
 	RetryExpression *string `json:"retryExpression,omitempty"`
 	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
-	// MaxRequestBodyBytes is still enforced via the Content-Length header when the request body is not buffered.
+	// When true, MaxRequestBodyBytes is not enforced.
 	// Default: false.
 	DisableRequestBuffer *bool `json:"disableRequestBuffer,omitempty"`
 	// DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
