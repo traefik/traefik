@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/healthcheck/tcphealthcheckmode"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
@@ -25,6 +28,7 @@ type TCPHealthCheckTarget struct {
 type ServiceTCPHealthChecker struct {
 	balancer StatusSetter
 	info     *runtime.TCPServiceInfo
+	client   *http.Client
 
 	config            *dynamic.TCPServerHealthCheck
 	interval          time.Duration
@@ -37,7 +41,7 @@ type ServiceTCPHealthChecker struct {
 	serviceName string
 }
 
-func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHealthCheck, service StatusSetter, info *runtime.TCPServiceInfo, targets []TCPHealthCheckTarget, serviceName string) *ServiceTCPHealthChecker {
+func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHealthCheck, service StatusSetter, info *runtime.TCPServiceInfo, targets []TCPHealthCheckTarget, serviceName string, client *http.Client) *ServiceTCPHealthChecker {
 	logger := log.Ctx(ctx)
 	interval := time.Duration(config.Interval)
 	if interval <= 0 {
@@ -83,6 +87,7 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 	return &ServiceTCPHealthChecker{
 		balancer:          service,
 		info:              info,
+		client:            client,
 		config:            config,
 		interval:          interval,
 		unhealthyInterval: unhealthyInterval,
@@ -134,18 +139,35 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 
 				up := true
 
-				if err := thc.executeHealthCheck(ctx, thc.config, target); err != nil {
-					// The context is canceled when the dynamic configuration is refreshed.
-					if errors.Is(err, context.Canceled) {
-						return
+				if thc.config.Mode == tcphealthcheckmode.ModeHttp {
+
+					if err := thc.CheckHealthHttp(ctx, &url.URL{Host: target.Address}); err != nil {
+						// The context is canceled when the dynamic configuration is refreshed.
+						if errors.Is(err, context.Canceled) {
+							return
+						}
+
+						log.Ctx(ctx).Warn().
+							Str("targetAddress", target.Address).
+							Err(err).
+							Msg("Health check failed.")
+
+						up = false
 					}
+				} else {
+					if err := thc.executeHealthCheck(ctx, thc.config, target); err != nil {
+						// The context is canceled when the dynamic configuration is refreshed.
+						if errors.Is(err, context.Canceled) {
+							return
+						}
 
-					log.Ctx(ctx).Warn().
-						Str("targetAddress", target.Address).
-						Err(err).
-						Msg("Health check failed.")
+						log.Ctx(ctx).Warn().
+							Str("targetAddress", target.Address).
+							Err(err).
+							Msg("Health check failed.")
 
-					up = false
+						up = false
+					}
 				}
 
 				thc.balancer.SetStatus(ctx, target.Address, up)
@@ -160,8 +182,6 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 				}
 
 				thc.info.UpdateServerStatus(target.Address, statusStr)
-
-				// TODO: add a TCP server up metric (like for HTTP).
 			}
 		}
 	}
@@ -169,6 +189,7 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 
 func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *TCPHealthCheckTarget) error {
 	addr := target.Address
+
 	if config.Port != 0 {
 		host, _, err := net.SplitHostPort(target.Address)
 		if err != nil {
@@ -209,4 +230,58 @@ func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, conf
 	}
 
 	return nil
+}
+
+// checkHealthHTTP returns an error with a meaningful description if the health check failed.
+// Dedicated to TCP servers.
+func (thc *ServiceTCPHealthChecker) CheckHealthHttp(ctx context.Context, target *url.URL) error {
+
+	config := thc.config.HttpHealthCheck
+
+	if config == nil {
+		return errors.New("HTTP health check configuration is missing")
+	}
+
+	req, err := thc.newRequest(ctx, target)
+	if err != nil {
+		return fmt.Errorf("create HTTP request: %w", err)
+	}
+
+	resp, err := thc.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	if config.Status == 0 && (resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest) {
+		return fmt.Errorf("received error status code: %v", resp.StatusCode)
+	}
+
+	if config.Status != 0 && config.Status != resp.StatusCode {
+		return fmt.Errorf("received error status code: %v expected status code: %v", resp.StatusCode, config.Status)
+	}
+
+	return nil
+}
+
+func (thc *ServiceTCPHealthChecker) newRequest(ctx context.Context, target *url.URL) (*http.Request, error) {
+
+	u := *target
+
+	config := thc.config.HttpHealthCheck
+	u.Scheme = "http"
+
+	if config.Port != 0 {
+		u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(config.Port))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, config.Method, u.String(), http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.URL.Path = config.Path
+
+	return req, nil
 }
