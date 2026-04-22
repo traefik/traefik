@@ -91,7 +91,7 @@ type IngressConfig struct {
 	LimitBurstMultiplier *int `annotation:"nginx.ingress.kubernetes.io/limit-burst-multiplier"`
 
 	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
-	UpstreamVhost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	UpstreamVHost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 	XForwardedPrefix *string `annotation:"nginx.ingress.kubernetes.io/x-forwarded-prefix"`
 
 	CustomHTTPErrors *[]string `annotation:"nginx.ingress.kubernetes.io/custom-http-errors"`

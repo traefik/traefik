@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -150,7 +151,7 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 }
 
 func convertSameSite(sameSite string) http.SameSite {
-	switch sameSite {
+	switch strings.ToLower(sameSite) {
 	case "none":
 		return http.SameSiteNoneMode
 	case "lax":
