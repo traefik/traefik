@@ -670,7 +670,16 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// Note that the Path sanitization has to be done after the path normalization,
 	// hence the wrapping has to be done before the normalize path wrapping.
 	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
-		handler = sanitizePath(handler)
+		if configuration.HTTP.MergeSlashes != nil && *configuration.HTTP.MergeSlashes {
+			// Fast path: both enabled — use existing JoinPath-based sanitizePath.
+			handler = sanitizePath(handler)
+		} else {
+			// MergeSlashes disabled: dot-segment resolution only, preserving empty path segments.
+			// MergeSlashes is gated behind SanitizePath because merging slashes without
+			// dot-segment resolution is a nonsensical security posture — it would normalize
+			// "//" but leave "/../" unresolved.
+			handler = sanitizeDotSegments(handler)
+		}
 	}
 
 	handler = normalizePath(handler)
@@ -798,8 +807,109 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 	})
 }
 
+// removeDotSegments resolves "." and ".." segments in a path per RFC 3986 Section 5.2.4.
+// Unlike path.Clean or URL.JoinPath, it preserves empty path segments (consecutive slashes).
+func removeDotSegments(p string) string {
+	if p == "" || p == "*" {
+		return p
+	}
+
+	var out []byte
+	i := 0
+	n := len(p)
+
+	for i < n {
+		// A: If the input starts with "../" or "./" remove that prefix.
+		if i+3 <= n && p[i:i+3] == "../" {
+			i += 3
+			continue
+		}
+		if i+2 <= n && p[i:i+2] == "./" {
+			i += 2
+			continue
+		}
+
+		// B: If the input starts with "/./" or "/." (end), replace with "/".
+		if i+3 <= n && p[i:i+3] == "/./" {
+			i += 2
+			continue
+		}
+		if p[i:] == "/." {
+			out = append(out, '/')
+			i += 2
+			continue
+		}
+
+		// C: If the input starts with "/../" or "/.." (end),
+		// replace with "/" and remove the last output segment.
+		if i+4 <= n && p[i:i+4] == "/../" {
+			i += 3
+			out = removeDotLastSegment(out)
+			continue
+		}
+		if p[i:] == "/.." {
+			out = removeDotLastSegment(out)
+			out = append(out, '/')
+			i += 3
+			continue
+		}
+
+		// D: If the input is just "." or "..", consume it.
+		if p[i:] == "." || p[i:] == ".." {
+			break
+		}
+
+		// E: Move the first path segment (including initial "/" if any) to output.
+		if p[i] == '/' {
+			out = append(out, '/')
+			i++
+		}
+		for i < n && p[i] != '/' {
+			out = append(out, p[i])
+			i++
+		}
+	}
+
+	return string(out)
+}
+
+// removeDotLastSegment removes the last segment from the output buffer,
+// including its preceding "/" if present.
+func removeDotLastSegment(out []byte) []byte {
+	j := len(out) - 1
+	for j >= 0 && out[j] != '/' {
+		j--
+	}
+	if j >= 0 {
+		out = out[:j]
+	}
+	return out
+}
+
+// sanitizeDotSegments removes ".." and "." segments from the URL path per RFC 3986 Section 5.2.4,
+// preserving empty path segments (consecutive slashes).
+// It updates the request URL Path, RawPath, and RequestURI.
+func sanitizeDotSegments(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		r2 := new(http.Request)
+		*r2 = *req
+		r2.URL = new(url.URL)
+		*r2.URL = *req.URL
+
+		r2.URL.Path = removeDotSegments(r2.URL.Path)
+		if r2.URL.RawPath != "" {
+			r2.URL.RawPath = removeDotSegments(r2.URL.RawPath)
+		}
+
+		r2.RequestURI = r2.URL.RequestURI()
+
+		h.ServeHTTP(rw, r2)
+	})
+}
+
 // sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
 // It cleans the request URL Path and RawPath, and updates the request URI.
+// This is the fast path used when both SanitizePath and MergeSlashes are enabled (the default).
 func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
@@ -854,7 +964,7 @@ func normalizePath(h http.Handler) http.Handler {
 		var normalizedRawPathBuilder strings.Builder
 		for i := 0; i < len(rawPath); i++ {
 			if rawPath[i] != '%' {
-				normalizedRawPathBuilder.WriteString(string(rawPath[i]))
+				normalizedRawPathBuilder.WriteByte(rawPath[i])
 				continue
 			}
 

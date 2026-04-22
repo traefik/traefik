@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"golang.org/x/net/http2"
+	"k8s.io/utils/ptr"
 )
 
 func TestShutdownHijacked(t *testing.T) {
@@ -423,6 +425,142 @@ func Test_denyFragment(t *testing.T) {
 	}
 }
 
+func TestRemoveDotSegments(t *testing.T) {
+	tests := []struct {
+		desc     string
+		input    string
+		expected string
+	}{
+		// RFC 3986 Section 5.4 reference examples (using base path components).
+		// These are the exact test vectors from the RFC.
+		{desc: "RFC 5.4: normal /a/b/c/./../../g", input: "/a/b/c/./../../g", expected: "/a/g"},
+		{desc: "RFC 5.4: mid/content=5/../6", input: "mid/content=5/../6", expected: "mid/6"},
+		{desc: "RFC 5.4: /../../../g", input: "/../../../g", expected: "/g"},
+		{desc: "RFC 5.4: /a/b/../../../../g", input: "/a/b/../../../../g", expected: "/g"},
+		{desc: "RFC 5.4: /./g", input: "/./g", expected: "/g"},
+		{desc: "RFC 5.4: /../g", input: "/../g", expected: "/g"},
+		{desc: "RFC 5.4: /a/b/../../../g", input: "/a/b/../../../g", expected: "/g"},
+		{desc: "RFC 5.4: /a/b/c/../d", input: "/a/b/c/../d", expected: "/a/b/d"},
+		{desc: "RFC 5.4: /a/b/c/../../d", input: "/a/b/c/../../d", expected: "/a/d"},
+		{desc: "RFC 5.4: /a/b/c/../../../d", input: "/a/b/c/../../../d", expected: "/d"},
+		{desc: "RFC 5.4: /a/b/c/../../../../d", input: "/a/b/c/../../../../d", expected: "/d"},
+		{desc: "RFC 5.4: /./a/b", input: "/./a/b", expected: "/a/b"},
+
+		// Empty segment preservation (the core feature).
+		{desc: "double slash preserved", input: "/a//b", expected: "/a//b"},
+		{desc: "triple slash preserved", input: "/a///b", expected: "/a///b"},
+		{desc: "leading double slash preserved", input: "//a/b", expected: "//a/b"},
+		{desc: "trailing double slash preserved", input: "/a/b//", expected: "/a/b//"},
+
+		// Mixed dot-segments and empty segments.
+		{desc: "dotdot across empty segment", input: "/a/..//b", expected: "//b"},
+		{desc: "dot in empty segment context", input: "//a/./b", expected: "//a/b"},
+		{desc: "complex mixed", input: "/a/b/../..///c", expected: "///c"},
+		{desc: "dotdot with trailing empty", input: "/a/../b//", expected: "/b//"},
+
+		// Root escaping.
+		{desc: "root escape single", input: "/../b", expected: "/b"},
+		{desc: "root escape double", input: "/../../b", expected: "/b"},
+
+		// Trailing slash handling.
+		{desc: "trailing slash after dotdot", input: "/a/b/../", expected: "/a/"},
+		{desc: "trailing slash after dot", input: "/a/b/./", expected: "/a/b/"},
+
+		// Edge cases.
+		{desc: "empty string", input: "", expected: ""},
+		{desc: "single slash", input: "/", expected: "/"},
+		{desc: "dot only", input: "/.", expected: "/"},
+		{desc: "dotdot only", input: "/..", expected: "/"},
+		{desc: "star request-target", input: "*", expected: "*"},
+		{desc: "bare dot", input: ".", expected: ""},
+		{desc: "bare dotdot", input: "..", expected: ""},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := removeDotSegments(test.input)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestSanitizeDotSegments(t *testing.T) {
+	tests := []struct {
+		desc            string
+		path            string
+		rawPath         string
+		expectedPath    string
+		expectedRawPath string
+	}{
+		{
+			desc:            "basic dot-segment removal",
+			path:            "/a/../b",
+			expectedPath:    "/b",
+			expectedRawPath: "",
+		},
+		{
+			desc:            "preserves empty segments",
+			path:            "/a//b",
+			expectedPath:    "/a//b",
+			expectedRawPath: "",
+		},
+		{
+			desc:            "updates RawPath when set",
+			path:            "/a/../b",
+			rawPath:         "/a/../b",
+			expectedPath:    "/b",
+			expectedRawPath: "/b",
+		},
+		{
+			desc:            "preserves encoded characters in RawPath",
+			path:            "/a/../b/foo%20bar",
+			rawPath:         "/a/../b/foo%20bar",
+			expectedPath:    "/b/foo bar",
+			expectedRawPath: "/b/foo%20bar",
+		},
+		{
+			desc:            "preserves empty segments with RawPath",
+			path:            "/a//b",
+			rawPath:         "/a//b",
+			expectedPath:    "/a//b",
+			expectedRawPath: "/a//b",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var gotPath, gotRawPath, gotRequestURI string
+			handler := sanitizeDotSegments(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotPath = r.URL.Path
+				gotRawPath = r.URL.RawPath
+				gotRequestURI = r.RequestURI
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
+			if test.rawPath != "" {
+				req.URL.RawPath = test.rawPath
+				// Ensure Path reflects the decoded version of RawPath.
+				unescaped, err := url.PathUnescape(test.rawPath)
+				if err == nil {
+					req.URL.Path = unescaped
+				}
+			}
+
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			assert.Equal(t, test.expectedPath, gotPath)
+			if test.expectedRawPath != "" {
+				assert.Equal(t, test.expectedRawPath, gotRawPath)
+			}
+			assert.NotEmpty(t, gotRequestURI)
+		})
+	}
+}
+
 func TestSanitizePath(t *testing.T) {
 	tests := []struct {
 		path     string
@@ -687,6 +825,182 @@ func TestPathOperations(t *testing.T) {
 			assert.Equal(t, test.expectedStatus, res.StatusCode)
 			assert.Equal(t, test.expectedPath, res.Header.Get("Path"))
 			assert.Equal(t, test.expectedRaw, res.Header.Get("RawPath"))
+		})
+	}
+}
+
+// TestPathOperationsMergeSlashesDisabled tests the behavior when MergeSlashes is disabled
+// but SanitizePath is enabled — dot-segments should be resolved while empty path segments are preserved.
+func TestPathOperationsMergeSlashesDisabled(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = ln.Close()
+	})
+
+	configuration := &static.EntryPoint{}
+	configuration.SetDefaults()
+	configuration.HTTP.MergeSlashes = ptr.To(false)
+
+	configuration.HTTP.EncodedCharacters = &static.EncodedCharacters{
+		AllowEncodedSlash:   true,
+		AllowEncodedPercent: true,
+	}
+
+	server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+	require.NoError(t, err)
+
+	server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Path", r.URL.Path)
+		w.Header().Set("RawPath", r.URL.EscapedPath())
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	go func() {
+		_ = server.Server.Serve(ln)
+	}()
+
+	client := http.Client{
+		Transport: &http.Transport{
+			ResponseHeaderTimeout: 1 * time.Second,
+		},
+	}
+
+	tests := []struct {
+		desc           string
+		rawPath        string
+		expectedPath   string
+		expectedRaw    string
+		expectedStatus int
+	}{
+		{
+			desc:           "double slashes preserved",
+			rawPath:        "/a//b",
+			expectedPath:   "/a//b",
+			expectedRaw:    "/a//b",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "dot-segments still resolved",
+			rawPath:        "/a/../b",
+			expectedPath:   "/b",
+			expectedRaw:    "/b",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "dot-segments resolved with double slashes preserved",
+			rawPath:        "/a/..//b",
+			expectedPath:   "//b",
+			expectedRaw:    "//b",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "traversal attempt still blocked",
+			rawPath:        "/../../secret",
+			expectedPath:   "/secret",
+			expectedRaw:    "/secret",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "encoded traversal still resolved",
+			rawPath:        "/a/%2E%2E/%2E%2E/b/",
+			expectedPath:   "/b/",
+			expectedRaw:    "/b/",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "triple slashes preserved with normalization",
+			rawPath:        "/a/../b/%41%42%43///",
+			expectedPath:   "/b/ABC///",
+			expectedRaw:    "/b/ABC///",
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req, err := http.NewRequest(http.MethodGet, "http://"+ln.Addr().String()+test.rawPath, http.NoBody)
+			require.NoError(t, err)
+
+			res, err := client.Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+			assert.Equal(t, test.expectedPath, res.Header.Get("Path"))
+			assert.Equal(t, test.expectedRaw, res.Header.Get("RawPath"))
+		})
+	}
+}
+
+// TestSanitizePathConfigMatrix tests all 4 combinations of SanitizePath x MergeSlashes.
+func TestSanitizePathConfigMatrix(t *testing.T) {
+	tests := []struct {
+		desc         string
+		sanitize     bool
+		merge        bool
+		inputPath    string
+		expectedPath string
+	}{
+		// SanitizePath=true, MergeSlashes=true (default) — full sanitization.
+		{desc: "both true: dotdot resolved", sanitize: true, merge: true, inputPath: "/a/../b", expectedPath: "/b"},
+		{desc: "both true: slashes merged", sanitize: true, merge: true, inputPath: "/a//b", expectedPath: "/a/b"},
+
+		// SanitizePath=true, MergeSlashes=false — dot-segments only.
+		{desc: "sanitize only: dotdot resolved", sanitize: true, merge: false, inputPath: "/a/../b", expectedPath: "/b"},
+		{desc: "sanitize only: slashes preserved", sanitize: true, merge: false, inputPath: "/a//b", expectedPath: "/a//b"},
+
+		// SanitizePath=false, MergeSlashes=true — no processing (MergeSlashes gated behind SanitizePath).
+		{desc: "sanitize false merge true: no change dotdot", sanitize: false, merge: true, inputPath: "/a/../b", expectedPath: "/a/../b"},
+		{desc: "sanitize false merge true: no change slashes", sanitize: false, merge: true, inputPath: "/a//b", expectedPath: "/a//b"},
+
+		// SanitizePath=false, MergeSlashes=false — no processing.
+		{desc: "both false: no change dotdot", sanitize: false, merge: false, inputPath: "/a/../b", expectedPath: "/a/../b"},
+		{desc: "both false: no change slashes", sanitize: false, merge: false, inputPath: "/a//b", expectedPath: "/a//b"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = ln.Close()
+			})
+
+			configuration := &static.EntryPoint{}
+			configuration.SetDefaults()
+			configuration.HTTP.SanitizePath = ptr.To(test.sanitize)
+			configuration.HTTP.MergeSlashes = ptr.To(test.merge)
+
+			server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+			require.NoError(t, err)
+
+			server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Path", r.URL.Path)
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			go func() {
+				_ = server.Server.Serve(ln)
+			}()
+
+			client := http.Client{
+				Transport: &http.Transport{
+					ResponseHeaderTimeout: 1 * time.Second,
+				},
+			}
+
+			req, err := http.NewRequest(http.MethodGet, "http://"+ln.Addr().String()+test.inputPath, http.NoBody)
+			require.NoError(t, err)
+
+			res, err := client.Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, test.expectedPath, res.Header.Get("Path"))
 		})
 	}
 }

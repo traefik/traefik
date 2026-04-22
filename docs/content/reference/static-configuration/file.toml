@@ -54,6 +54,7 @@
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true
       sanitizePath = true
+      mergeSlashes = true
       maxHeaderBytes = 42
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
