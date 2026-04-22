@@ -112,6 +112,15 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Only issue a 302 redirect if the replacement template itself is an absolute URL.
 	// Prevent user-controlled capture group content from injecting an absolute URL redirect.
 	if rt.absoluteURLRedirect {
+		// Carry the incoming query string through the redirect so an
+		// absolute-URL rewrite behaves like ingress-nginx, which preserves
+		// query parameters on rewrite-target redirects. Only fill it in
+		// when the rewrite itself didn't supply one, matching the nginx
+		// precedence of rewrite-set query over request query.
+		if parsed.RawQuery == "" && req.URL.RawQuery != "" {
+			parsed.RawQuery = req.URL.RawQuery
+			newTarget = parsed.String()
+		}
 		http.Redirect(rw, req, newTarget, http.StatusFound)
 		return
 	}
