@@ -151,9 +151,12 @@ func (d *DialerManager) Build(config *dynamic.TCPServersLoadBalancer, isTLS bool
 	}
 	proxyProtocol := config.ProxyProtocol
 
+	if st.ProxyProtocol != nil {
+		proxyProtocol = st.ProxyProtocol
+	}
+
 	if config.ServersTransport != "" {
 		terminationDelay = st.TerminationDelay
-		proxyProtocol = st.ProxyProtocol
 	}
 
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {

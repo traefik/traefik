@@ -445,5 +445,11 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 		}
 	}
 
+	if i.staticCfg.TCPServersTransport.ProxyProtocol != nil {
+		st.ProxyProtocol = &dynamic.ProxyProtocol{
+			Version: i.staticCfg.TCPServersTransport.ProxyProtocol.Version,
+		}
+	}
+
 	cfg.TCP.ServersTransports["default"] = st
 }
