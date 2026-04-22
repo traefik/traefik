@@ -4,10 +4,9 @@ import (
 	"strconv"
 	"testing"
 
-	containertypes "github.com/docker/docker/api/types/container"
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
-	"github.com/docker/go-connections/nat"
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,16 +25,16 @@ func Test_getPort_docker(t *testing.T) {
 		},
 		{
 			desc: "binding, no server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"80/tcp": {},
+			container: containerJSON(ports(networktypes.PortMap{
+				networktypes.MustParsePort("80/tcp"): {},
 			})),
 			expected: "80",
 		},
 		{
 			desc: "binding, multiple ports, no server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"80/tcp":  {},
-				"443/tcp": {},
+			container: containerJSON(ports(networktypes.PortMap{
+				networktypes.MustParsePort("80/tcp"):  {},
+				networktypes.MustParsePort("443/tcp"): {},
 			})),
 			expected: "80",
 		},
@@ -48,17 +47,17 @@ func Test_getPort_docker(t *testing.T) {
 		{
 			desc: "binding, server port label",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": {},
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("80/tcp"): {},
 				})),
 			serverPort: "8080",
 			expected:   "8080",
 		},
 		{
 			desc: "binding, multiple ports, server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"8080/tcp": {},
-				"80/tcp":   {},
+			container: containerJSON(ports(networktypes.PortMap{
+				networktypes.MustParsePort("8080/tcp"): {},
+				networktypes.MustParsePort("80/tcp"):   {},
 			})),
 			serverPort: "8080",
 			expected:   "8080",
