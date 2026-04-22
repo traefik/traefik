@@ -1,6 +1,8 @@
 package crd
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -22,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -51,6 +54,7 @@ type Client interface {
 	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetNodes() ([]*corev1.Node, bool, error)
 	GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error)
+	UpdateMiddlewareStatus(ctx context.Context, namespace, name string, status traefikv1alpha1.MiddlewareStatus) error
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -521,6 +525,16 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, ns)
+}
+
+// UpdateMiddlewareStatus patches the status subresource of a Middleware CRD object.
+func (c *clientWrapper) UpdateMiddlewareStatus(ctx context.Context, namespace, name string, status traefikv1alpha1.MiddlewareStatus) error {
+	patch, err := json.Marshal(map[string]any{"status": status})
+	if err != nil {
+		return fmt.Errorf("marshaling middleware status: %w", err)
+	}
+	_, err = c.csCrd.TraefikV1alpha1().Middlewares(namespace).Patch(ctx, name, k8stypes.MergePatchType, patch, metav1.PatchOptions{}, "status")
+	return err
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return
