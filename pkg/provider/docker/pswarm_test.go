@@ -13,11 +13,12 @@ import (
 
 func TestListTasks(t *testing.T) {
 	testCases := []struct {
-		service       swarmtypes.Service
-		tasks         []swarmtypes.Task
-		isGlobalSVC   bool
-		expectedTasks []string
-		networks      map[string]*networktypes.Summary
+		service            swarmtypes.Service
+		tasks              []swarmtypes.Task
+		isGlobalSVC        bool
+		allowEmptyServices bool
+		expectedTasks      []string
+		networks           map[string]*networktypes.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -47,10 +48,37 @@ func TestListTasks(t *testing.T) {
 					taskStatus(taskState(swarmtypes.TaskStateFailed)),
 				),
 			},
-			isGlobalSVC: false,
+			isGlobalSVC:        false,
+			allowEmptyServices: false,
 			expectedTasks: []string{
 				"container.1",
 				"container.4",
+			},
+			networks: map[string]*networktypes.Summary{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+		{
+			service:            swarmService(serviceName("empty-service")),
+			tasks:              []swarmtypes.Task{},
+			isGlobalSVC:        false,
+			allowEmptyServices: false,
+			expectedTasks:      []string{},
+			networks: map[string]*networktypes.Summary{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+		{
+			service:            swarmService(serviceName("empty-service")),
+			tasks:              []swarmtypes.Task{},
+			isGlobalSVC:        false,
+			allowEmptyServices: true,
+			expectedTasks: []string{
+				"empty-service",
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
@@ -71,7 +99,7 @@ func TestListTasks(t *testing.T) {
 			require.NoError(t, err)
 
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
-			taskDockerData, _ := listTasks(t.Context(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
+			taskDockerData, _ := listTasks(t.Context(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC, test.allowEmptyServices)
 
 			if len(test.expectedTasks) != len(taskDockerData) {
 				t.Errorf("expected tasks %v, got %v", test.expectedTasks, taskDockerData)
