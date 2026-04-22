@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -481,29 +482,23 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	// Sort the ingresses by creation timestamps, to help to decide when two ingresses have the same server-alias value.
 	listedIngresses := p.k8sClient.ListIngresses()
-	slices.SortStableFunc(listedIngresses, func(a, b *netv1.Ingress) int {
-		ta, tb := a.CreationTimestamp.Time, b.CreationTimestamp.Time
-
-		if !ta.Equal(tb) {
-			if ta.Before(tb) {
-				return -1
-			}
-			return 1
-		}
+	sort.SliceStable(listedIngresses, func(a, b int) bool {
+		ta, tb := listedIngresses[a].CreationTimestamp, listedIngresses[b].CreationTimestamp
 
 		// When the timestamp is exactly the same, fallback to descending namespace/name lexicographic order.
 		// The same fallback and debug log with ingress-nginx.
 		// Ref: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/store/store.go#L1102-L1115.
-		ia, ib := a.Namespace+"/"+a.Name, b.Namespace+"/"+b.Name
-		log.Ctx(ctx).Debug().
-			Str("ingress_a", ia).
-			Str("ingress_b", ib).
-			Msg("Ingresses have identical CreationTimestamp, falling back to lexicographic ordering")
-
-		if ia > ib {
-			return -1
+		if ta.Equal(&tb) {
+			ia := fmt.Sprintf("%v/%v", listedIngresses[a].Namespace, listedIngresses[a].Name)
+			ib := fmt.Sprintf("%v/%v", listedIngresses[b].Namespace, listedIngresses[b].Name)
+			log.Ctx(ctx).Debug().
+				Str("ingress_a", ia).
+				Str("ingress_b", ib).
+				Msg("Ingresses have identical CreationTimestamp, falling back to lexicographic ordering")
+			return ia > ib
 		}
-		return 1
+
+		return ta.Before(&tb)
 	})
 
 	hosts := make(map[string]bool)
@@ -575,13 +570,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			}
 		}
 
-		if i.IngressConfig.ServerAlias != nil {
-			key := i.Namespace + "/" + i.Name
-			for _, alias := range *i.IngressConfig.ServerAlias {
-				serverAlias := strings.ToLower(alias)
-				if _, exist := claimedAliases[serverAlias]; !exist {
-					claimedAliases[serverAlias] = key
-				}
+		for _, alias := range ptr.Deref(i.IngressConfig.ServerAlias, nil) {
+			serverAlias := strings.ToLower(alias)
+			if _, exist := claimedAliases[serverAlias]; !exist {
+				claimedAliases[serverAlias] = i.Namespace + "/" + i.Name
 			}
 		}
 
