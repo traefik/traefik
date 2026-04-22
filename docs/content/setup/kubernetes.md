@@ -153,9 +153,9 @@ ingressClass:
 # Providers tell Traefik where to find routing configuration.
 providers:
   kubernetesIngress:
-     enabled: false
+    enabled: false
   kubernetesGateway:
-     enabled: true
+    enabled: true
 
 ## Gateway Listeners
 gateway:

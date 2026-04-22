@@ -60,6 +60,7 @@ type Middleware struct {
 	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -287,7 +288,9 @@ type ForwardAuth struct {
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
-	TrustForwardHeader bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
+	//
+	// Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
+	TrustForwardHeader *bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
@@ -715,7 +718,7 @@ type RedirectScheme struct {
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 	// ForcePermanentRedirect is an internal field (not exposed in configuration).
 	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
-	// Used by the provider ingress-ngin.
+	// Used by the provider ingress-nginx.
 	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
@@ -930,4 +933,18 @@ type RewriteTarget struct {
 	Replacement string `json:"replacement,omitempty"`
 	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
 	XForwardedPrefix string `json:"xForwardedPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// UpstreamVHost holds the upstream-vhost middleware configuration used by the ingress-nginx provider.
+// It rewrites the request Host header from a template that may embed NGINX variables
+// (e.g. $host, $service_name, $namespace) which are resolved at request time.
+type UpstreamVHost struct {
+	// VHost is the Host header template. It may contain NGINX variables such as
+	// $host, $http_*, or provider-supplied variables like $service_name and $namespace.
+	VHost string `json:"vHost,omitempty"`
+	// Vars holds provider-resolved custom variables, keyed with their leading "$".
+	// For example: {"$service_name": "my-app", "$namespace": "foo"}.
+	Vars map[string]string `json:"vars,omitempty"`
 }
