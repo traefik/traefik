@@ -869,7 +869,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					EntryPoints: p.NonTLSEntryPoints,
-					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts, hostsWithUseRegex, claimedAliases, ingress.Namespace+"/"+ingress.Name),
+					Rule:        buildRule(ctxIngress, ingress, rule.Host, pa, hosts, hostsWithUseRegex, claimedAliases),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax:    "default",
 					Service:       serviceName,
@@ -2300,26 +2300,27 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	return users, nil
 }
 
-func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool, hostsWithUseRegex map[string]bool, claimedAliases map[string]string, ingressKey string) string {
+func buildRule(ctx context.Context, ingress ingress, host string, pa netv1.HTTPIngressPath, allHosts map[string]bool, hostsWithUseRegex map[string]bool, claimedAliases map[string]string) string {
 	var rules []string
 	if host != "" {
 		hosts := []string{host}
-		if config.ServerAlias != nil {
-			for _, alias := range *config.ServerAlias {
-				serverAlias := strings.ToLower(alias)
-				if _, ok := allHosts[serverAlias]; ok {
-					log.Ctx(ctx).Debug().
-						Str("alias", alias).
-						Msg("Skipping server-alias because it is already defined as a host in another Ingress")
-					continue
-				}
-				if owner, ok := claimedAliases[serverAlias]; ok && owner != ingressKey {
-					log.Ctx(ctx).Debug().Str("alias", alias).Str("ingress", ingressKey).
-						Msgf("Skipping server-alias because it is already claimed by %s Ingress", owner)
-					continue
-				}
-				hosts = append(hosts, alias)
+		for _, alias := range ptr.Deref(ingress.IngressConfig.ServerAlias, nil) {
+			serverAlias := strings.ToLower(alias)
+			if _, ok := allHosts[serverAlias]; ok {
+				log.Ctx(ctx).Debug().
+					Str("alias", alias).
+					Msg("Skipping server-alias because it is already defined as a host in another Ingress")
+				continue
 			}
+			ingressKey := ingress.Namespace + "/" + ingress.Name
+			if owner, ok := claimedAliases[serverAlias]; ok && owner != ingressKey {
+				log.Ctx(ctx).Debug().
+					Str("alias", alias).
+					Str("ingress", ingressKey).
+					Msgf("Skipping server-alias because it is already claimed by %s Ingress", owner)
+				continue
+			}
+			hosts = append(hosts, alias)
 		}
 
 		var hostRules []string
