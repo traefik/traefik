@@ -958,7 +958,7 @@ spec:
                   disableRequestBuffer:
                     description: |-
                       DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
-                      MaxRequestBodyBytes is still enforced via the Content-Length header when the request body is not buffered.
+                      When true, MaxRequestBodyBytes is not enforced.
                       Default: false.
                     type: boolean
                   disableResponseBuffer:
