@@ -81,6 +81,15 @@ type Buffering struct {
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
 	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
+	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
+	// MaxRequestBodyBytes is still enforced via the Content-Length header when the request body is not buffered.
+	// Default: false.
+	DisableRequestBuffer bool `json:"disableRequestBuffer,omitempty" toml:"disableRequestBuffer,omitempty" yaml:"disableRequestBuffer,omitempty" export:"true"`
+	// DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
+	// This is required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll watch endpoints.
+	// When true, MaxResponseBodyBytes is not enforced.
+	// Default: false.
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"disableResponseBuffer,omitempty" yaml:"disableResponseBuffer,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

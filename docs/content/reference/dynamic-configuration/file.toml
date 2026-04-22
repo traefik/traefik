@@ -161,6 +161,8 @@
         maxResponseBodyBytes = 42
         memResponseBodyBytes = 42
         retryExpression = "foobar"
+        disableRequestBuffer = true
+        disableResponseBuffer = true
     [http.middlewares.Middleware04]
       [http.middlewares.Middleware04.chain]
         middlewares = ["foobar", "foobar"]
