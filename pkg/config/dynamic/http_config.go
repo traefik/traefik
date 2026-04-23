@@ -353,6 +353,11 @@ type Cookie struct {
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
 	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
 
+	// ChangeOnFailure controls whether the sticky session cookie is cleared when the upstream returns a 5xx error,
+	// allowing subsequent requests to be routed to a different backend.
+	// This option is exposed only for the Ingress NGINX provider.
+	ChangeOnFailure bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
 	// Expires defines the number of seconds to add to the current time to calculate the expiration date of the cookie.
 	// This option is exposed only for the Ingress NGINX provider.
 	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`

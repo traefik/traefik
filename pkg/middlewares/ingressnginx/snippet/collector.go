@@ -176,6 +176,8 @@ func buildCollectableAction(d config.IDirective) (CollectableAction, error) {
 		return createMoreClearHeadersCollectable(d)
 	case "proxy_hide_header":
 		return createProxyHideHeaderCollectable(d)
+	case "proxy_cookie_flags":
+		return createProxyCookieFlagsCollectable(d)
 	case "expires":
 		return createExpiresCollectable(d)
 
@@ -442,6 +444,18 @@ func createMoreClearHeadersCollectable(d config.IDirective) (CollectableAction, 
 
 func createProxyHideHeaderCollectable(d config.IDirective) (CollectableAction, error) {
 	act, err := createProxyHideHeaderAction(d)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (bool, error) {
+		pc.HeaderFilterAdditive = append(pc.HeaderFilterAdditive, act)
+		return false, nil
+	}, nil
+}
+
+func createProxyCookieFlagsCollectable(d config.IDirective) (CollectableAction, error) {
+	act, err := createProxyCookieFlagsAction(d)
 	if err != nil {
 		return nil, err
 	}

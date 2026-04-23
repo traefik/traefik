@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -390,6 +391,45 @@ func TestBalancerStickyFallback(t *testing.T) {
 	recorder4 := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder4, req4)
 	assert.Equal(t, fallbackServer, recorder4.Header().Get("server"))
+}
+
+func TestBalancerStickyChangeOnFailure(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{
+			Name:            "test",
+			ChangeOnFailure: true,
+		},
+	}, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusInternalServerError)
+	}), pointer(1), false)
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), pointer(1), false)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	// Raw cookie values are accepted for backward compatibility and rewritten.
+	req.AddCookie(&http.Cookie{Name: "test", Value: "first"})
+
+	balancer.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	setCookies := recorder.Header().Values("Set-Cookie")
+	assert.NotEmpty(t, setCookies)
+
+	hasDeletionCookie := false
+	for _, c := range setCookies {
+		if c != "" && strings.Contains(c, "test=") && strings.Contains(c, "Max-Age=0") {
+			hasDeletionCookie = true
+		}
+	}
+	assert.True(t, hasDeletionCookie, "expected sticky cookie to be cleared on 5xx response")
 }
 
 // TestBalancerStickyFenced tests that sticky sessions persist to fenced servers (graceful shutdown)

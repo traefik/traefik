@@ -229,6 +229,49 @@ func TestRetryShouldNotLooseHeadersOnWrite(t *testing.T) {
 	assert.Equal(t, "bar", headerValue)
 }
 
+func TestRetryRemovesExpiredCookieBetweenAttempts(t *testing.T) {
+	attempt := 0
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		shouldRetry := ContextShouldRetry(req.Context())
+		require.NotNil(t, shouldRetry)
+
+		switch attempt {
+		case 0:
+			cookie, err := req.Cookie("sticky")
+			require.NoError(t, err)
+			assert.Equal(t, "server-a", cookie.Value)
+
+			shouldRetry(true)
+			http.SetCookie(rw, &http.Cookie{
+				Name:   "sticky",
+				MaxAge: -1,
+				Path:   "/",
+			})
+			rw.WriteHeader(http.StatusBadGateway)
+		default:
+			_, err := req.Cookie("sticky")
+			require.ErrorIs(t, err, http.ErrNoCookie)
+
+			shouldRetry(false)
+			rw.WriteHeader(http.StatusOK)
+		}
+
+		attempt++
+	})
+
+	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 2}, &countingRetryListener{}, "traefikTest")
+	require.NoError(t, err)
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://test", http.NoBody)
+	req.AddCookie(&http.Cookie{Name: "sticky", Value: "server-a"})
+
+	retry.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, 2, attempt)
+}
+
 func TestRetryWithFlush(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)

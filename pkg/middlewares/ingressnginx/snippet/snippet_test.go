@@ -2045,3 +2045,63 @@ func TestForwardAuthAddress_interpolation(t *testing.T) {
 
 	assert.True(t, authSrvCalled)
 }
+
+func Test_ProxyCookieFlags(t *testing.T) {
+	t.Run("adds secure and httponly on matching cookies", func(t *testing.T) {
+		t.Parallel()
+
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Set-Cookie", "session=abc; Path=/")
+			w.Header().Add("Set-Cookie", "lang=pl; Path=/")
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler, err := New(t.Context(), next, &dynamic.Snippet{
+			ConfigurationSnippet: `proxy_cookie_flags ~ secure httponly;`,
+		}, "test-snippet")
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "http://example.com/test", nil)
+		rw := httptest.NewRecorder()
+
+		handler.ServeHTTP(rw, req)
+
+		setCookies := rw.Header().Values("Set-Cookie")
+		require.Len(t, setCookies, 2)
+		for _, c := range setCookies {
+			assert.Contains(t, c, "Secure")
+			assert.Contains(t, c, "HttpOnly")
+		}
+	})
+
+	t.Run("applies regex target and can unset/set flags", func(t *testing.T) {
+		t.Parallel()
+
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Set-Cookie", "session=abc; Path=/; Secure")
+			w.Header().Add("Set-Cookie", "lang=pl; Path=/; Secure")
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler, err := New(t.Context(), next, &dynamic.Snippet{
+			ConfigurationSnippet: `proxy_cookie_flags ~^session nosecure samesite=lax;`,
+		}, "test-snippet")
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "http://example.com/test", nil)
+		rw := httptest.NewRecorder()
+
+		handler.ServeHTTP(rw, req)
+
+		setCookies := rw.Header().Values("Set-Cookie")
+		require.Len(t, setCookies, 2)
+
+		assert.Contains(t, setCookies[0], "session=abc")
+		assert.NotContains(t, setCookies[0], "Secure")
+		assert.Contains(t, setCookies[0], "SameSite=lax")
+
+		assert.Contains(t, setCookies[1], "lang=pl")
+		assert.Contains(t, setCookies[1], "Secure")
+		assert.NotContains(t, setCookies[1], "SameSite=lax")
+	})
+}

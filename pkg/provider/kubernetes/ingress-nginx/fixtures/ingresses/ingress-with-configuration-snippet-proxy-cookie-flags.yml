@@ -1,0 +1,23 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-configuration-snippet-proxy-cookie-flags
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_cookie_flags ~ secure httponly;
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: snippet.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
