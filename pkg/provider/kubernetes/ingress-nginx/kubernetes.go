@@ -2516,14 +2516,15 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 
 	return &dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
-			Name:     name,
-			Secure:   ptr.Deref(cfg.SessionCookieSecure, false),
-			HTTPOnly: true, // Default value in Nginx.
-			SameSite: strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
-			MaxAge:   ptr.Deref(cfg.SessionCookieMaxAge, 0),
-			Expires:  ptr.Deref(cfg.SessionCookieExpires, 0),
-			Path:     ptr.To(ptr.Deref(cfg.SessionCookiePath, "/")),
-			Domain:   ptr.Deref(cfg.SessionCookieDomain, ""),
+			Name:            name,
+			Secure:          ptr.Deref(cfg.SessionCookieSecure, false),
+			HTTPOnly:        true, // Default value in Nginx.
+			SameSite:        strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
+			MaxAge:          ptr.Deref(cfg.SessionCookieMaxAge, 0),
+			Expires:         ptr.Deref(cfg.SessionCookieExpires, 0),
+			Path:            ptr.To(ptr.Deref(cfg.SessionCookiePath, "/")),
+			Domain:          ptr.Deref(cfg.SessionCookieDomain, ""),
+			ChangeOnFailure: ptr.Deref(cfg.SessionCookieChangeOnFailure, false),
 		},
 	}
 }

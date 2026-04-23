@@ -24,14 +24,15 @@ type NamedHandler struct {
 
 // stickyCookie represents a sticky cookie.
 type stickyCookie struct {
-	name     string
-	secure   bool
-	httpOnly bool
-	sameSite http.SameSite
-	maxAge   int
-	expires  time.Time
-	path     string
-	domain   string
+	name            string
+	secure          bool
+	httpOnly        bool
+	sameSite        http.SameSite
+	maxAge          int
+	expires         time.Time
+	path            string
+	domain          string
+	changeOnFailure bool
 }
 
 // Sticky ensures that client consistently interacts with the same HTTP handler by adding a sticky cookie to the response.
@@ -51,13 +52,14 @@ type Sticky struct {
 // NewSticky creates a new Sticky instance.
 func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 	cookie := &stickyCookie{
-		name:     cookieConfig.Name,
-		secure:   cookieConfig.Secure,
-		httpOnly: cookieConfig.HTTPOnly,
-		sameSite: convertSameSite(cookieConfig.SameSite),
-		maxAge:   cookieConfig.MaxAge,
-		path:     "/",
-		domain:   cookieConfig.Domain,
+		name:            cookieConfig.Name,
+		secure:          cookieConfig.Secure,
+		httpOnly:        cookieConfig.HTTPOnly,
+		sameSite:        convertSameSite(cookieConfig.SameSite),
+		maxAge:          cookieConfig.MaxAge,
+		path:            "/",
+		domain:          cookieConfig.Domain,
+		changeOnFailure: cookieConfig.ChangeOnFailure,
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
@@ -148,6 +150,26 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 	http.SetCookie(rw, cookie)
 
 	return nil
+}
+
+// ChangeOnFailure returns whether the sticky cookie should be cleared when a backend returns a 5xx error.
+func (s *Sticky) ChangeOnFailure() bool {
+	return s.cookie.changeOnFailure
+}
+
+// ClearStickyCookie writes an expired cookie to invalidate the sticky session,
+// causing the next request to be routed to a different backend.
+func (s *Sticky) ClearStickyCookie(rw http.ResponseWriter) {
+	http.SetCookie(rw, &http.Cookie{
+		Name:     s.cookie.name,
+		Value:    "",
+		Path:     s.cookie.path,
+		Domain:   s.cookie.domain,
+		HttpOnly: s.cookie.httpOnly,
+		Secure:   s.cookie.secure,
+		SameSite: s.cookie.sameSite,
+		MaxAge:   -1,
+	})
 }
 
 func convertSameSite(sameSite string) http.SameSite {

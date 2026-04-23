@@ -141,6 +141,38 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
 
+func TestSticky_ChangeOnFailure(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{Name: "test", ChangeOnFailure: true})
+	assert.True(t, sticky.ChangeOnFailure())
+
+	sticky = NewSticky(dynamic.Cookie{Name: "test", ChangeOnFailure: false})
+	assert.False(t, sticky.ChangeOnFailure())
+}
+
+func TestSticky_ClearStickyCookie(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{
+		Name:     "test",
+		Secure:   true,
+		HTTPOnly: true,
+		SameSite: "none",
+		Path:     pointer("/foo"),
+		Domain:   "foo.com",
+	})
+
+	res := httptest.NewRecorder()
+	sticky.ClearStickyCookie(res)
+
+	setCookies := res.Header().Values("Set-Cookie")
+	require.NotEmpty(t, setCookies)
+
+	assert.Contains(t, setCookies[0], "test=")
+	assert.Contains(t, setCookies[0], "Max-Age=0")
+	assert.Contains(t, setCookies[0], "Path=/foo")
+	assert.Contains(t, setCookies[0], "Domain=foo.com")
+	assert.Contains(t, setCookies[0], "HttpOnly")
+	assert.Contains(t, setCookies[0], "Secure")
+}
+
 func TestConvertSameSite_CaseInsensitive(t *testing.T) {
 	tests := []struct {
 		input    string

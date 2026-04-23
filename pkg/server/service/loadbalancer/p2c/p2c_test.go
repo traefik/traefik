@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -142,6 +143,46 @@ func TestSticky_Fallback(t *testing.T) {
 
 	assert.Equal(t, 0, recorder.save["first"])
 	assert.Equal(t, 3, recorder.save["second"])
+}
+
+func TestSticky_ChangeOnFailure(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{
+			Name:            "test",
+			ChangeOnFailure: true,
+		},
+	}, false)
+	balancer.rand = &mockRand{vals: []int{0, 1}}
+
+	balancer.AddServer("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusInternalServerError)
+	}), dynamic.Server{})
+
+	balancer.AddServer("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	// Raw cookie values are accepted for backward compatibility and rewritten.
+	req.AddCookie(&http.Cookie{Name: "test", Value: "first"})
+
+	balancer.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	setCookies := recorder.Header().Values("Set-Cookie")
+	assert.NotEmpty(t, setCookies)
+
+	hasDeletionCookie := false
+	for _, c := range setCookies {
+		if c != "" && strings.Contains(c, "test=") && strings.Contains(c, "Max-Age=0") {
+			hasDeletionCookie = true
+		}
+	}
+	assert.True(t, hasDeletionCookie, "expected sticky cookie to be cleared on 5xx response")
 }
 
 // TestSticky_Fenced checks that fenced node receive traffic if their sticky cookie matches.

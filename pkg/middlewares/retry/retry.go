@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -175,6 +176,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	initialCtx := req.Context()
 	tracer := tracing.TracerFromContext(initialCtx)
+	cookiesToRemove := make(map[string]struct{})
 
 	var currentSpan trace.Span
 	operation := func() error {
@@ -212,6 +214,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if reusableReq != nil {
 			req = reusableReq.Clone(req.Context())
 		}
+		removeCookiesFromRequest(req, cookiesToRemove)
 
 		retryReq := req
 		if !r.disableRetryOnNetworkError {
@@ -223,6 +226,15 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
+
+		// Keep request cookies in sync with cookie invalidation returned by failed attempts.
+		// This allows follow-up retry attempts to avoid stale stickiness decisions.
+		expiredCookieNames := extractExpiredCookieNames(retryResponseWriter.Header().Values("Set-Cookie"))
+		if len(expiredCookieNames) > 0 {
+			for name := range expiredCookieNames {
+				cookiesToRemove[name] = struct{}{}
+			}
+		}
 
 		if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
 			return nil
@@ -371,4 +383,51 @@ func (r *responseWriter) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+func extractExpiredCookieNames(setCookieHeaders []string) map[string]struct{} {
+	expired := make(map[string]struct{})
+
+	for _, raw := range setCookieHeaders {
+		if !strings.Contains(strings.ToLower(raw), "max-age=0") {
+			continue
+		}
+
+		nameValue := strings.SplitN(raw, ";", 2)
+		parts := strings.SplitN(strings.TrimSpace(nameValue[0]), "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			continue
+		}
+
+		expired[parts[0]] = struct{}{}
+	}
+
+	return expired
+}
+
+func removeCookiesFromRequest(req *http.Request, names map[string]struct{}) {
+	if len(names) == 0 {
+		return
+	}
+
+	cookies := req.Cookies()
+	if len(cookies) == 0 {
+		return
+	}
+
+	filtered := make([]string, 0, len(cookies))
+	for _, cookie := range cookies {
+		if _, exists := names[cookie.Name]; exists {
+			continue
+		}
+
+		filtered = append(filtered, cookie.Name+"="+cookie.Value)
+	}
+
+	if len(filtered) == 0 {
+		req.Header.Del("Cookie")
+		return
+	}
+
+	req.Header.Set("Cookie", strings.Join(filtered, "; "))
 }

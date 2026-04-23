@@ -198,7 +198,15 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 					}
 				}
 
-				h.ServeHTTP(rw, req)
+				if b.sticky.ChangeOnFailure() {
+					srw := loadbalancer.NewStatusRecordingResponseWriter(rw)
+					h.ServeHTTP(srw, req)
+					if srw.IsServerError() {
+						b.sticky.ClearStickyCookie(rw)
+					}
+				} else {
+					h.ServeHTTP(rw, req)
+				}
 				return
 			}
 		}
@@ -232,7 +240,16 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		},
 	}
 	traceCtx := httptrace.WithClientTrace(req.Context(), trace)
-	server.ServeHTTP(rw, req.WithContext(traceCtx))
+
+	if b.sticky != nil && b.sticky.ChangeOnFailure() {
+		srw := loadbalancer.NewStatusRecordingResponseWriter(rw)
+		server.ServeHTTP(srw, req.WithContext(traceCtx))
+		if srw.IsServerError() {
+			b.sticky.ClearStickyCookie(rw)
+		}
+	} else {
+		server.ServeHTTP(rw, req.WithContext(traceCtx))
+	}
 }
 
 // AddServer adds a handler with a server.

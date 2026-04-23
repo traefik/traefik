@@ -74,7 +74,7 @@ func New(ctx context.Context, next http.Handler, config *dynamic.Snippet, name s
 
 	parserOptions := []parser.Option{
 		parser.WithSkipComments(),
-		parser.WithCustomDirectives("more_set_headers", "more_set_input_headers", "more_clear_headers", "more_clear_input_headers", "proxy_hide_header"),
+		parser.WithCustomDirectives("more_set_headers", "more_set_input_headers", "more_clear_headers", "more_clear_input_headers", "proxy_hide_header", "proxy_cookie_flags"),
 	}
 
 	var serverActions *SnippetActions

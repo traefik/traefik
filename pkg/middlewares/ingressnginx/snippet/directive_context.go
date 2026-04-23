@@ -29,6 +29,7 @@ var directiveContexts = map[string][]string{
 	"allow":                    {contextServer, contextLocation, contextIf},
 	"deny":                     {contextServer, contextLocation, contextIf},
 	"proxy_hide_header":        {contextServer, contextLocation},
+	"proxy_cookie_flags":       {contextServer, contextLocation},
 	"expires":                  {contextServer, contextLocation, contextIfInLocation},
 	"proxy_method":             {contextServer, contextLocation},
 	"auth_request_set":         {contextServer, contextLocation},

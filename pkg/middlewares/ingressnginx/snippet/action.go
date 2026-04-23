@@ -409,8 +409,6 @@ func createProxySetHeaderAction(d config.IDirective) (action, error) {
 }
 
 // createProxyHideHeaderAction hides the specified header from the upstream response.
-// It registers a deferred hook on the response writer to delete the header when
-// the response status is being written.
 func createProxyHideHeaderAction(d config.IDirective) (action, error) {
 	params := d.GetParameters()
 	if len(params) == 0 {
@@ -424,9 +422,145 @@ func createProxyHideHeaderAction(d config.IDirective) (action, error) {
 			wrapper.onWriteHeader = append(wrapper.onWriteHeader, func(_ int, h http.Header) {
 				h.Del(headerName)
 			})
+			return false, nil
 		}
+
+		// Fallback for non-snippet wrappers.
+		rw.Header().Del(headerName)
 		return false, nil
 	}, nil
+}
+
+// createProxyCookieFlagsAction adds or removes flags on Set-Cookie response headers matching the given cookie pattern.
+// Syntax: proxy_cookie_flags name flag1 [flag2 ...];
+// The name may be a literal cookie name, a regex prefixed with "~", or "*" / "~.*" to match all cookies.
+// Supported flags: secure, nosecure, httponly, nohttponly, samesite=strict|lax|none, nosamesite.
+func createProxyCookieFlagsAction(d config.IDirective) (action, error) {
+	params := d.GetParameters()
+	if len(params) < 2 {
+		return nil, errors.New("proxy_cookie_flags directive requires at least 2 parameters (name and flag)")
+	}
+
+	nameParam := trimQuote(params[0].String())
+
+	// Build a matcher for the cookie name.
+	var matchName func(name string) bool
+	if nameParam == "*" {
+		matchName = func(_ string) bool { return true }
+	} else if pattern, ok := strings.CutPrefix(nameParam, "~"); ok {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("proxy_cookie_flags: compiling cookie name regex %q: %w", pattern, err)
+		}
+		matchName = re.MatchString
+	} else {
+		lit := nameParam
+		matchName = func(name string) bool { return name == lit }
+	}
+
+	// Collect flags from remaining parameters.
+	type flagOp struct {
+		set   bool
+		clear bool
+		name  string
+		value string // for samesite=value
+	}
+
+	var ops []flagOp
+	for i := 1; i < len(params); i++ {
+		flag := strings.ToLower(trimQuote(params[i].String()))
+		switch {
+		case flag == "secure":
+			ops = append(ops, flagOp{set: true, name: "Secure"})
+		case flag == "nosecure":
+			ops = append(ops, flagOp{clear: true, name: "Secure"})
+		case flag == "httponly":
+			ops = append(ops, flagOp{set: true, name: "HttpOnly"})
+		case flag == "nohttponly":
+			ops = append(ops, flagOp{clear: true, name: "HttpOnly"})
+		case strings.HasPrefix(flag, "samesite="):
+			sameSiteVal := strings.TrimPrefix(flag, "samesite=")
+			ops = append(ops, flagOp{set: true, name: "SameSite", value: sameSiteVal})
+		case flag == "nosamesite":
+			ops = append(ops, flagOp{clear: true, name: "SameSite"})
+		default:
+			return nil, fmt.Errorf("proxy_cookie_flags: unsupported flag %q", params[i].String())
+		}
+	}
+
+	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
+		cookies := rw.Header()["Set-Cookie"]
+		if len(cookies) == 0 {
+			return false, nil
+		}
+
+		for i, raw := range cookies {
+			// Parse "name=value; attr1; attr2=val" to extract the cookie name.
+			parts := strings.SplitN(raw, ";", 2)
+			nameVal := strings.SplitN(strings.TrimSpace(parts[0]), "=", 2)
+			if len(nameVal) == 0 {
+				continue
+			}
+			cookieName := strings.TrimSpace(nameVal[0])
+			if !matchName(cookieName) {
+				continue
+			}
+			// Apply each flag operation.
+			for _, op := range ops {
+				raw = applyCookieFlag(raw, op.name, op.value, op.set)
+			}
+			cookies[i] = raw
+		}
+
+		return false, nil
+	}, nil
+}
+
+// applyCookieFlag adds or removes a flag in a raw Set-Cookie string.
+// If set=true, the flag is added (or updated for SameSite). If set=false, it is removed.
+func applyCookieFlag(raw, flag, value string, set bool) string {
+	flagLower := strings.ToLower(flag)
+
+	// Split into parts delimited by ";".
+	parts := strings.Split(raw, ";")
+	result := make([]string, 0, len(parts))
+
+	found := false
+	for i, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		trimmedLower := strings.ToLower(trimmed)
+
+		isMatch := trimmedLower == flagLower ||
+			strings.HasPrefix(trimmedLower, flagLower+"=")
+
+		if isMatch {
+			found = true
+			if set {
+				// Replace with the updated value.
+				if value != "" {
+					parts[i] = " " + flag + "=" + value
+				} else {
+					parts[i] = " " + flag
+				}
+			}
+			// When clearing, skip appending.
+			if !set {
+				continue
+			}
+		}
+
+		result = append(result, parts[i])
+	}
+
+	if !found && set {
+		if value != "" {
+			result = append(result, " "+flag+"="+value)
+		} else {
+			result = append(result, " "+flag)
+		}
+	}
+
+	return strings.Join(result, ";")
 }
 
 // createAccessAction creates an action for the allow or deny directive.
