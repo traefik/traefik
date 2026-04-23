@@ -1039,8 +1039,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-no-annotation-whoami-80",
+							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -1054,9 +1054,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-no-annotation-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0-tls-retry": {
@@ -1985,8 +1986,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-ssl-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -2037,8 +2038,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("forcesslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -2070,9 +2071,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-ssl-redirect-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry": {
@@ -2090,9 +2092,10 @@ func TestLoadIngresses(t *testing.T) {
 								Attempts: 3,
 							},
 						},
-						"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-tls-retry": {
@@ -7534,8 +7537,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-auth-tls-secret-whoami-80",
+							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -7549,9 +7552,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-auth-tls-secret-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-auth-tls-secret-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry": {
@@ -7675,8 +7679,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-auth-tls-verify-client-whoami-80",
+							Middlewares: []string{"default-ingress-with-auth-tls-verify-client-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -7690,9 +7694,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-retry": {
@@ -10010,8 +10015,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-pass-certificate-to-upstream.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -10032,9 +10037,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 
-						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry": {
@@ -13178,7 +13184,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("production.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-canary-middlewares-and-tls-whoami-80-wrr",
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -13189,13 +13195,13 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root", "default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-redirect-scheme"},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary": {
 							EntryPoints: []string{"http"},
 							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (Header("Foo", "always"))`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-canary-middlewares-and-tls-whoami-80-canary",
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -13206,7 +13212,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-app-root", "default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry"},
+							Middlewares: []string{"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-redirect-scheme"},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -13252,10 +13258,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
@@ -13264,31 +13270,21 @@ func TestLoadIngresses(t *testing.T) {
 								Replacement: "$1/foo",
 							},
 						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
-						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},
 						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
 								Replacement: "$1/foo",
-							},
-						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-retry": {
@@ -14121,8 +14117,8 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("*.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-wildcard-host-tls-whoami-80",
+							Middlewares: []string{"default-ingress-with-wildcard-host-tls-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -14154,9 +14150,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
+						"default-ingress-with-wildcard-host-tls-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-wildcard-host-tls-rule-0-path-0-tls-retry": {
