@@ -10,7 +10,8 @@ set -euo pipefail
 #   - jq: Merges individual SBOMs into one
 #   - assimilis: Generates human-readable attribution files from the merged SBOM
 
-ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-v1.0.2}"
+# ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-v1.0.2}"
+ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-v0.2.0}"
 CYCLONEDX_GOMOD_VERSION="${CYCLONEDX_GOMOD_VERSION:-v1.10.0}"
 CYCLONEDX_PY_VERSION="${CYCLONEDX_PY_VERSION:-v8.7.0}"
 REPO_NAME="${REPO_NAME:-traefik}"
@@ -29,7 +30,8 @@ fi
 
 if ! command -v assimilis &>/dev/null; then
     echo "Installing assimilis ${ASSIMILIS_VERSION}..."
-    GOBIN=/tmp/assimilis go install "github.com/traefik/assimilis/cmd@${ASSIMILIS_VERSION}"
+    # GOBIN=/tmp/assimilis go install "github.com/traefik/assimilis/cmd@${ASSIMILIS_VERSION}"
+    GOBIN=/tmp/assimilis go install "github.com/bpsoraggi/assimilis/cmd@${ASSIMILIS_VERSION}"
     mv /tmp/assimilis/cmd "$(go env GOPATH)/bin/assimilis"
 fi
 
@@ -62,7 +64,7 @@ fi
 
 # ─── Prepare output directory ───
 
-OUT_DIR="licenses"
+OUT_DIR="third_party"
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
@@ -125,7 +127,7 @@ echo "Merged SBOM: $(jq '.components | length' "${WORK_DIR}/sbom/${REPO_NAME}.cd
 
 # ─── Copy merged SBOM to output and run assimilis ───
 
-rm -rf "${OUT_DIR}"
+# rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}" "${OUT_DIR}/sbom" "${OUT_DIR}/licenses/custom"
 cp "${WORK_DIR}/sbom/${REPO_NAME}.cdx.json" "${OUT_DIR}/sbom/${REPO_NAME}.cdx.json"
 
