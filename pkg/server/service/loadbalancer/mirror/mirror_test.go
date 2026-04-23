@@ -172,7 +172,8 @@ func TestMirroringWithBody(t *testing.T) {
 
 	pool.Stop()
 
-	assert.Equal(t, numMirrors, int(countMirror.Load()))
+	val := countMirror.Load()
+	assert.Equal(t, numMirrors, int(val))
 }
 
 func TestMirroringWithIgnoredBody(t *testing.T) {
@@ -213,7 +214,8 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 
 	pool.Stop()
 
-	assert.Equal(t, numMirrors, int(countMirror.Load()))
+	val := countMirror.Load()
+	assert.Equal(t, numMirrors, int(val))
 }
 
 func TestCloneRequest(t *testing.T) {
