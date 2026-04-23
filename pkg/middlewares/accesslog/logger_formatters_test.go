@@ -1,13 +1,21 @@
 package accesslog
 
 import (
+	"context"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 func TestCommonLogFormatter_Format(t *testing.T) {
@@ -250,4 +258,160 @@ func Test_toLog(t *testing.T) {
 			assert.Equal(t, test.expectedLog, lg)
 		})
 	}
+}
+
+func TestNewTemplateJSONFormatter_InvalidTemplate(t *testing.T) {
+	_, err := NewTemplateJSONFormatter(`{{ .Unclosed`)
+	require.Error(t, err)
+}
+
+func TestTemplateJSONFormatter_Format(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`{"status":{{ index . "DownstreamStatus" }},"method":"{{ index . "RequestMethod" }}"}`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{
+		Logger: logrus.New(),
+		Data: logrus.Fields{
+			DownstreamStatus: 200,
+			RequestMethod:    "GET",
+		},
+	}
+
+	out, err := f.Format(entry)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"status":200,"method":"GET"}`, strings.TrimSuffix(string(out), "\n"))
+}
+
+func TestTemplateJSONFormatter_FormatIncludesBuiltins(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`{"level":"{{ index . "level" }}","msg":"{{ index . "msg" }}"}`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{
+		Logger:  logrus.New(),
+		Level:   logrus.InfoLevel,
+		Message: "hello",
+		Data:    logrus.Fields{},
+	}
+
+	out, err := f.Format(entry)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"level":"info","msg":"hello"}`, strings.TrimSuffix(string(out), "\n"))
+}
+
+func TestTemplateJSONFormatter_AutoEscape(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`{"path":"{{ index . "RequestPath" }}"}`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{
+		Logger: logrus.New(),
+		Data:   logrus.Fields{RequestPath: `/foo"bar\baz`},
+	}
+
+	out, err := f.Format(entry)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"path":"/foo\"bar\\baz"}`, strings.TrimSuffix(string(out), "\n"))
+}
+
+func TestTemplateJSONFormatter_JSONHelper_SafeEscaping(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`{"path":{{ json (index . "RequestPath") }}}`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{
+		Logger: logrus.New(),
+		Data:   logrus.Fields{RequestPath: `/foo"bar\baz`},
+	}
+
+	out, err := f.Format(entry)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"path":"/foo\"bar\\baz"}`, strings.TrimSuffix(string(out), "\n"))
+}
+
+func TestTemplateJSONFormatter_InvalidJSONOutput(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`not json at all`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{Logger: logrus.New(), Data: logrus.Fields{}}
+	_, err = f.Format(entry)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid JSON")
+}
+
+func TestTemplateJSONFormatter_NilField(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`{"v":{{ json (index . "Field") }}}`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{
+		Logger: logrus.New(),
+		Data:   logrus.Fields{"Field": nil},
+	}
+
+	out, err := f.Format(entry)
+	require.NoError(t, err)
+	assert.Equal(t, `{"v":null}`+"\n", string(out))
+}
+
+func TestTemplateJSONFormatter_MissingField(t *testing.T) {
+	f, err := NewTemplateJSONFormatter(`{"v":{{ json (index . "NoSuchField") }}}`)
+	require.NoError(t, err)
+
+	entry := &logrus.Entry{Logger: logrus.New(), Data: logrus.Fields{}}
+
+	out, err := f.Format(entry)
+	require.NoError(t, err)
+	// missing map key → nil → JSON null
+	assert.Equal(t, `{"v":null}`+"\n", string(out))
+}
+
+func TestNewHandler_JSONTemplateInvalidFails(t *testing.T) {
+	config := &otypes.AccessLog{
+		Format:       JSONFormat,
+		JSONTemplate: `{{ .Unclosed`,
+	}
+	_, err := NewHandler(context.Background(), config)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid accessLog.jsonTemplate")
+}
+
+func TestNewHandler_JSONTemplateWrongFormatFails(t *testing.T) {
+	config := &otypes.AccessLog{
+		Format:       CommonFormat,
+		JSONTemplate: `{"status":{{ index . "DownstreamStatus" }}}`,
+	}
+	_, err := NewHandler(context.Background(), config)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "jsonTemplate requires format")
+}
+
+func TestHandler_JSONTemplateOutput(t *testing.T) {
+	logFile := t.TempDir() + "/access.log"
+	config := &otypes.AccessLog{
+		FilePath:     logFile,
+		Format:       JSONFormat,
+		JSONTemplate: `{"s":{{ index . "DownstreamStatus" }},"m":"{{ index . "RequestMethod" }}"}`,
+	}
+	h, err := NewHandler(context.Background(), config)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = h.Close() })
+
+	chain := alice.New()
+	chain = chain.Append(capture.Wrap)
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+	chain = chain.Append(h.AliceConstructor())
+	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	raw, err := os.ReadFile(logFile)
+	require.NoError(t, err)
+	content := string(raw)
+	assert.Contains(t, content, `"s":200`, "expected status 200 in output: %s", content)
+	assert.Contains(t, content, `"m":"GET"`, "expected method GET in output: %s", content)
 }

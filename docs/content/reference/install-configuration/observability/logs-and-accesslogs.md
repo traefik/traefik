@@ -228,6 +228,74 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-fields-names" href="#opt-accesslog-fields-names" title="#opt-accesslog-fields-names">`accesslog.fields.names`</a> | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#json-format-fields). |  [ ]    | No      |
 | <a id="opt-accesslog-fields-headers-defaultMode" href="#opt-accesslog-fields-headers-defaultMode" title="#opt-accesslog-fields-headers-defaultMode">`accesslog.fields.headers.defaultMode`</a> | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
 | <a id="opt-accesslog-fields-headers-names" href="#opt-accesslog-fields-headers-names" title="#opt-accesslog-fields-headers-names">`accesslog.fields.headers.names`</a> | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
+| <a id="opt-accesslog-jsonTemplate" href="#opt-accesslog-jsonTemplate" title="#opt-accesslog-jsonTemplate">`accesslog.jsonTemplate`</a> | Go [`text/template`](https://pkg.go.dev/text/template) string for fully custom JSON access log output. Requires `format` to be `json` (Traefik fails at startup otherwise). The template is compiled at startup; an invalid template or non-JSON output causes Traefik to fail with an error. See [JSON Template](#json-template) for details. | "" | No |
+
+### JSON Template
+
+A [Go `text/template`](https://pkg.go.dev/text/template) string that controls the field names and output order of each JSON access log line.
+Fields are accessed with `{{ index . "FieldName" }}` using the names from the [JSON format fields](#json-format-fields) table.
+Method calls on values work as expected (e.g. `(index . "Duration").Milliseconds`, `(index . "StartUTC").Format "2006-01-02T15:04:05Z07:00"`).
+
+In addition to the [JSON format fields](#json-format-fields), the following built-in keys are available:
+
+| Key     | Type        | Description                                |
+|---------|-------------|--------------------------------------------|
+| <a id="opt-time" href="#opt-time" title="#opt-time">`time`</a> | `time.Time` | Timestamp of the log entry                 |
+| <a id="opt-level" href="#opt-level" title="#opt-level">`level`</a> | `string`    | Log level (always `"info"` for access logs)|
+| <a id="opt-msg" href="#opt-msg" title="#opt-msg">`msg`</a> | `string`    | Log message (empty string for access logs) |
+
+#### Safe String Embedding
+
+All string fields **auto-escape** their content when rendered, so embedding them inside JSON string literals in the template is safe without any helper:
+
+```
+"path":"{{ index . "RequestPath" }}"
+```
+
+If `RequestPath` is `/foo"bar`, this automatically produces `"path":"/foo\"bar"`.
+No extra function call needed.
+
+#### `json` Template Function
+
+The `json` function encodes any value as a complete, self-contained JSON value (including surrounding quotes for strings):
+
+```
+{{ json (index . "RequestPath") }}
+```
+
+It is most useful for non-string types where you want the JSON-correct representation (e.g. `null` for absent/nil fields instead of an empty string, numbers without quotes).
+For strings, it produces the same safe output as embedding inside `"..."` and also handles the surrounding quotes for you.
+
+!!! warning "You are responsible for valid JSON structure"
+    Auto-escaping protects string *content*, but it cannot enforce the surrounding JSON structure of your template.
+    If the rendered output is not valid JSON, the log line is dropped with an error and nothing is written.
+    Validate your template with representative inputs before deploying to production.
+
+```yaml tab="File (YAML)"
+accessLog:
+  format: json
+  jsonTemplate: >-
+    {"time":"{{ (index . "StartUTC").Format "2006-01-02T15:04:05Z07:00" }}",
+     "status":{{ index . "DownstreamStatus" }},
+     "method":"{{ index . "RequestMethod" }}",
+     "path":"{{ index . "RequestPath" }}",
+     "client_ip":"{{ index . "ClientHost" }}",
+     "duration_ms":{{ (index . "Duration").Milliseconds }}}
+```
+
+```toml tab="File (TOML)"
+[accessLog]
+  format = "json"
+  jsonTemplate = """{"time":"{{ (index . "StartUTC").Format "2006-01-02T15:04:05Z07:00" }}","status":{{ index . "DownstreamStatus" }},"method":"{{ index . "RequestMethod" }}","path":"{{ index . "RequestPath" }}","client_ip":"{{ index . "ClientHost" }}","duration_ms":{{ (index . "Duration").Milliseconds }}}"""
+```
+
+```sh tab="CLI"
+--accesslog.format=json
+--accesslog.jsontemplate={"time":"{{ (index . "StartUTC").Format "2006-01-02T15:04:05Z07:00" }}","status":{{ index . "DownstreamStatus" }},"method":"{{ index . "RequestMethod" }}","path":"{{ index . "RequestPath" }}"}
+```
+
+!!! warning
+    Only active when `accesslog.format` is `json`. Setting it with any other format causes Traefik to fail at startup.
 
 ### OpenTelemetry
 

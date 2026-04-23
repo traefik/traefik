@@ -20,6 +20,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-accesslog-filters-retryattempts" href="#opt-accesslog-filters-retryattempts" title="#opt-accesslog-filters-retryattempts">accesslog.filters.retryattempts</a> | Keep access logs when at least one retry happened. | false |
 | <a id="opt-accesslog-filters-statuscodes" href="#opt-accesslog-filters-statuscodes" title="#opt-accesslog-filters-statuscodes">accesslog.filters.statuscodes</a> | Keep access logs with status codes in the specified range. | |
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">accesslog.format</a> | Access log format: json, common, or genericCLF | common |
+| <a id="opt-accesslog-jsontemplate" href="#opt-accesslog-jsontemplate" title="#opt-accesslog-jsontemplate">accesslog.jsontemplate</a> | Go text/template string for custom JSON access log output. Only used when format is 'json'. | |
 | <a id="opt-accesslog-otlp" href="#opt-accesslog-otlp" title="#opt-accesslog-otlp">accesslog.otlp</a> | Settings for OpenTelemetry. | false |
 | <a id="opt-accesslog-otlp-grpc" href="#opt-accesslog-otlp-grpc" title="#opt-accesslog-otlp-grpc">accesslog.otlp.grpc</a> | gRPC configuration for the OpenTelemetry collector. | false |
 | <a id="opt-accesslog-otlp-grpc-endpoint" href="#opt-accesslog-otlp-grpc-endpoint" title="#opt-accesslog-otlp-grpc-endpoint">accesslog.otlp.grpc.endpoint</a> | Sets the gRPC endpoint (host:port) of the collector. | localhost:4317 |
