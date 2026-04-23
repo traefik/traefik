@@ -38,7 +38,8 @@ type rateLimiter struct {
 	next          http.Handler
 	logger        *zerolog.Logger
 
-	limiter limiter
+	limiter       limiter
+	healthTracker *healthTracker
 }
 
 // New returns a rate limiter middleware.
@@ -112,6 +113,29 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		}
 	}
 
+	// Initialize health tracker with configuration
+	// Only create health tracker if ALL three resilience parameters are configured
+	var healthTracker *healthTracker
+	hasBackoffTimeout := config.UnhealthyLimiterBackoffTimeout != nil
+	hasBackoffDuration := config.UnhealthyLimiterBackoffDuration != nil
+	hasBackoffThreshold := config.UnhealthyLimiterBackoffThreshold != nil
+
+	if hasBackoffTimeout && hasBackoffDuration && hasBackoffThreshold {
+		// All three parameters provided, create health tracker
+		backoffTimeout := time.Duration(*config.UnhealthyLimiterBackoffTimeout)
+		backoffDuration := time.Duration(*config.UnhealthyLimiterBackoffDuration)
+		backoffThreshold := *config.UnhealthyLimiterBackoffThreshold
+
+		healthTracker = newHealthTracker(backoffTimeout, backoffDuration, backoffThreshold, logger)
+	} else if hasBackoffTimeout || hasBackoffDuration || hasBackoffThreshold {
+		// Only some parameters provided, warn and don't create health tracker
+		logger.Warn().
+			Bool("hasBackoffTimeout", hasBackoffTimeout).
+			Bool("hasBackoffDuration", hasBackoffDuration).
+			Bool("hasBackoffThreshold", hasBackoffThreshold).
+			Msg("Resilience parameters must all be provided together. Health tracker not created.")
+	}
+
 	return &rateLimiter{
 		logger:        logger,
 		name:          name,
@@ -120,6 +144,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		next:          next,
 		sourceMatcher: sourceMatcher,
 		limiter:       limiter,
+		healthTracker: healthTracker,
 	}, nil
 }
 
@@ -142,6 +167,13 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
+	// Check if the limiter is currently shut down due to health issues
+	if rl.healthTracker != nil && rl.healthTracker.isShutdownNow() {
+		// If shut down, bypass rate limiting and let the request through
+		rl.next.ServeHTTP(rw, req)
+		return
+	}
+
 	// Each rate limiter has its own source space,
 	// ensuring independence between rate limiters,
 	// i.e., rate limit rules are only applied based on traffic
@@ -151,6 +183,19 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
 		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
+
+		// If health tracker is configured, record the failure and check if this should trigger a shutdown
+		if rl.healthTracker != nil {
+			shouldShutdown := rl.healthTracker.recordFailure()
+
+			// If this failure triggers a shutdown, let the current request through
+			if shouldShutdown {
+				rl.next.ServeHTTP(rw, req)
+				return
+			}
+		}
+
+		// Otherwise, return 500 as before (default behavior)
 		http.Error(rw, "Could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
