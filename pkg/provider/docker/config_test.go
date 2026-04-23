@@ -3903,6 +3903,60 @@ func TestDynConfBuilder_build(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "TCP service with explicit address label",
+			containers: []dockerData{
+				{
+					ServiceName: "test-service",
+					Name:        "test-container",
+					Labels: map[string]string{
+						"traefik.tcp.services.s1.loadbalancer.server.address": "1.2.3.4:5678",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "172.17.0.2",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"s1": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "1.2.3.4:5678",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
