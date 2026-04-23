@@ -93,7 +93,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			loadBalancer.Add(server.Address, handler, nil)
+			loadBalancer.Add(server.Address, handler, server.Weight)
 
 			// Servers are considered UP by default.
 			conf.UpdateServerStatus(server.Address, runtime.StatusUp)
