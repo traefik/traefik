@@ -668,6 +668,7 @@ func TestLoggerJSON(t *testing.T) {
 				"StartUTC":                 assertNotEmpty(),
 				KubernetesIngressNamespace: assertString("test-namespace"),
 				KubernetesIngressName:      assertString("test-ingress"),
+				KubernetesServiceNamespace: assertString("test-namespace"),
 				KubernetesServiceName:      assertString("test-service"),
 				KubernetesServicePort:      assertString("test-port"),
 			},
@@ -1251,17 +1252,36 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing,
 
 		if metadata {
 			obs.Metadata = &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesIngressMetadata{
-					Namespace:   "test-namespace",
-					IngressName: "test-ingress",
-					ServiceName: "test-service",
-					ServicePort: "test-port",
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: "test-namespace",
+					Name:      "test-ingress",
 				},
 			}
 		}
 
 		return observability.WithObservabilityHandler(next, obs), nil
 	})
+
+	if metadata {
+		// Seed the per-request service observability state and publish the
+		// leaf service metadata, mirroring what pkg/server/service does at
+		// runtime when a Kubernetes-backed service handles the request.
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				ctx := observability.WithServiceObservabilityState(r.Context())
+				state := observability.GetServiceObservabilityState(ctx)
+				state.Metadata = &dynamic.ServiceObservabilityMetadata{
+					Kubernetes: &dynamic.KubernetesServiceMetadata{
+						Namespace: "test-namespace",
+						Name:      "test-service",
+						Port:      "test-port",
+					},
+				}
+				next.ServeHTTP(rw, r.WithContext(ctx))
+			}), nil
+		})
+	}
 
 	chain = chain.Append(logger.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))

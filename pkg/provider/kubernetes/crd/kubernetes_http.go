@@ -131,7 +131,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				ParentRefs:  parentRouterNames,
 				Observability: &dynamic.RouterObservabilityConfig{
 					Metadata: &dynamic.ObservabilityMetadata{
-						IngressRoute: buildIngressRouteMetadata(ingressRoute, route),
+						Ingress: buildIngressRouteMetadata(ingressRoute),
 					},
 				},
 			}
@@ -183,25 +183,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-// buildIngressRouteMetadata returns the Kubernetes IngressRoute metadata attached
-// to generated routers so that access logs can expose the referenced IngressRoute
-// name and namespace, as well as the backing Kubernetes Service reference when
-// the route targets a single service.
-func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute, route traefikv1alpha1.Route) *dynamic.KubernetesIngressRouteMetadata {
-	md := &dynamic.KubernetesIngressRouteMetadata{
-		Namespace:        ingressRoute.Namespace,
-		IngressRouteName: ingressRoute.Name,
+// buildIngressRouteMetadata returns the IngressRoute identity attached to
+// generated routers so that access logs can expose the originating IngressRoute
+// kind, name and namespace. The backing Kubernetes Service identity is
+// intentionally not carried here: under multi-service routes, TraefikService
+// weighted/mirroring/HRW/failover, the actual backend is only known per request
+// and is stamped at runtime from the leaf Service.Observability.
+func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dynamic.KubernetesMetadata {
+	return &dynamic.KubernetesMetadata{
+		Kind:      "IngressRoute",
+		Namespace: ingressRoute.Namespace,
+		Name:      ingressRoute.Name,
 	}
-
-	if len(route.Services) == 1 {
-		svc := route.Services[0]
-		if svc.Kind == "" || svc.Kind == "Service" {
-			md.ServiceName = svc.Name
-			md.ServicePort = svc.Port.String()
-		}
-	}
-
-	return md
 }
 
 func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []traefikv1alpha1.MiddlewareRef, allowCrossNamespace bool) ([]string, error) {
@@ -536,7 +529,18 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 		return nil, err
 	}
 
-	service := &dynamic.Service{LoadBalancer: lb}
+	service := &dynamic.Service{
+		LoadBalancer: lb,
+		Observability: &dynamic.ServiceObservabilityConfig{
+			Metadata: &dynamic.ServiceObservabilityMetadata{
+				Kubernetes: &dynamic.KubernetesServiceMetadata{
+					Namespace: namespace,
+					Name:      svc.Name,
+					Port:      svc.Port.String(),
+				},
+			},
+		},
+	}
 	if len(svc.Middlewares) > 0 {
 		mds, err := makeMiddlewareKeys(ctx, namespace, svc.Middlewares, c.allowCrossNamespace)
 		if err != nil {

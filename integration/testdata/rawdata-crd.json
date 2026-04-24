@@ -13,9 +13,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "default",
-						"ingressRouteName": "api.route"
+						"name": "api.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -40,11 +41,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "default",
-						"ingressRouteName": "test.route",
-						"serviceName": "whoami",
-						"servicePort": "80"
+						"name": "test.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -69,11 +69,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "default",
-						"ingressRouteName": "test2.route",
-						"serviceName": "whoami",
-						"servicePort": "80"
+						"name": "test2.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -95,9 +94,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "default",
-						"ingressRouteName": "test3.route"
+						"name": "test3.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -119,9 +119,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "default",
-						"ingressRouteName": "test4.route"
+						"name": "test4.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -143,11 +144,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "default",
-						"ingressRouteName": "testst.route",
-						"serviceName": "whoami",
-						"servicePort": "80"
+						"name": "testst.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -169,9 +169,10 @@
 				"tracing": true,
 				"traceVerbosity": "minimal",
 				"metadata": {
-					"ingressRoute": {
+					"ingress": {
 						"namespace": "other-ns",
-						"ingressRouteName": "test6.route"
+						"name": "test6.route",
+						"kind": "IngressRoute"
 					}
 				}
 			},
@@ -256,7 +257,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
 						"url": "http://10.42.0.4:80"
@@ -266,6 +267,15 @@
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
+				}
+			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
 				}
 			},
 			"status": "enabled",
@@ -273,15 +283,15 @@
 				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.4:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
 						"url": "http://10.42.0.4:80"
@@ -293,20 +303,29 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.4:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
 						"url": "http://10.42.0.4:80"
@@ -319,20 +338,29 @@
 				},
 				"serversTransport": "default-mytransport@kubernetescrd"
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.4:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-whoami-80@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
 						"url": "http://10.42.0.4:80"
@@ -344,10 +372,19 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.4:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-wrr1@kubernetescrd": {
@@ -419,17 +456,17 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.7:8080"
 					},
 					{
-						"address": "10.42.0.2:8080"
+						"address": "10.42.0.9:8080"
 					}
 				]
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.2:8080": "UP",
-				"10.42.0.5:8080": "UP"
+				"10.42.0.7:8080": "UP",
+				"10.42.0.9:8080": "UP"
 			}
 		},
 		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
@@ -478,7 +515,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.10:8090"
+						"address": "10.42.0.2:8090"
 					},
 					{
 						"address": "10.42.0.6:8090"

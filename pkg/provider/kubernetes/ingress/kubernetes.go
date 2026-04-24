@@ -308,11 +308,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				Service:    "default-backend",
 				Observability: &dynamic.RouterObservabilityConfig{
 					Metadata: &dynamic.ObservabilityMetadata{
-						Ingress: &dynamic.KubernetesIngressMetadata{
-							Namespace:   ingress.Namespace,
-							IngressName: ingress.Name,
-							ServiceName: ingress.Spec.DefaultBackend.Service.Name,
-							ServicePort: portString(ingress.Spec.DefaultBackend.Service.Port),
+						Ingress: &dynamic.KubernetesMetadata{
+							Kind:      "Ingress",
+							Namespace: ingress.Namespace,
+							Name:      ingress.Name,
 						},
 					},
 				},
@@ -564,7 +563,18 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	svc := &dynamic.Service{LoadBalancer: lb}
+	svc := &dynamic.Service{
+		LoadBalancer: lb,
+		Observability: &dynamic.ServiceObservabilityConfig{
+			Metadata: &dynamic.ServiceObservabilityMetadata{
+				Kubernetes: &dynamic.KubernetesServiceMetadata{
+					Namespace: namespace,
+					Name:      backend.Service.Name,
+					Port:      portString(backend.Service.Port),
+				},
+			},
+		},
+	}
 
 	svcConfig, err := parseServiceConfig(service.Annotations)
 	if err != nil {
@@ -704,11 +714,10 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 		Service: serviceName,
 		Observability: &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesIngressMetadata{
-					Namespace:   ingress.Namespace,
-					IngressName: ingress.Name,
-					ServiceName: pa.Backend.Service.Name,
-					ServicePort: portString(pa.Backend.Service.Port),
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: ingress.Namespace,
+					Name:      ingress.Name,
 				},
 			},
 		},
