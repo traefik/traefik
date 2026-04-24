@@ -2211,14 +2211,6 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 }
 
 func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
-	// When request buffering is explicitly disabled,
-	// NGINX streams the body directly to the upstream without keeping a copy,
-	// making retry impossible once the body has started being sent.
-	// So we can just skip the retry middleware setup in that case.
-	if ingressConfig.ProxyRequestBuffering != nil && *ingressConfig.ProxyRequestBuffering != "on" {
-		return nil
-	}
-
 	attempts := ptr.Deref(ingressConfig.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
 	// Safeguard to deactivate retry when the value is less than 0.
 	if attempts < 0 {
@@ -2282,6 +2274,20 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 		}
 	}
 	if len(statusCodes) > 0 {
+		disableRequestBuffering := !p.ProxyRequestBuffering
+		if ingressConfig.ProxyRequestBuffering != nil {
+			// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+			disableRequestBuffering = *ingressConfig.ProxyRequestBuffering != "on"
+		}
+
+		// When request buffering is explicitly disabled,
+		// NGINX streams the body directly to the upstream without keeping a copy,
+		// making retry impossible once the body has started being sent.
+		// So we can just skip the retry middleware setup in that case.
+		if disableRequestBuffering {
+			return nil
+		}
+
 		retryConfig.Status = statusCodes
 	}
 

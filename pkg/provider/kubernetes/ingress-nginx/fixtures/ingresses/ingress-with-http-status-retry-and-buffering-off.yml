@@ -2,10 +2,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-with-proxy-body-size-zero-retry
+  name: ingress-with-http-status-retry-and-buffering-off
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "error http_502"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
 
 spec:
   ingressClassName: nginx
