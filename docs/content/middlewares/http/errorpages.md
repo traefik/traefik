@@ -160,6 +160,6 @@ The table below lists all the available variables and their associated values.
 Defines the list of original request headers forwarded to the error page service.
 
 By default (`errorRequestHeaders` not set), all request headers — including authentication material such as `Authorization` and `Cookie` — are forwarded.
-If the error page service is a separate trust domain, use this option to restrict which headers cross the service boundary.
+If the error page service is in a separate trust domain, use this option to restrict which headers cross the service boundary.
 
 Set to an explicit list to forward only those headers, or set to an empty list (`errorRequestHeaders: []`) to forward no headers.
