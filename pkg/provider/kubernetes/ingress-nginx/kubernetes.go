@@ -2259,6 +2259,12 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 		}
 	}
 
+	if maxRequestBodyBytes == 0 {
+		// Zero value means no limit with ingress-nginx.
+		// With the retry middleware, the equivalent configuration is a negative value.
+		maxRequestBodyBytes = -1
+	}
+
 	retryConfig.MaxRequestBodyBytes = &maxRequestBodyBytes
 
 	// Disable network error retry if no error nor timeout present on the configuration.
