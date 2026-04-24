@@ -94,9 +94,18 @@ const (
 	KubernetesIngressNamespace = "KubernetesIngressNamespace"
 	// KubernetesIngressName is the name of the Kubernetes Ingress resource the router handles.
 	KubernetesIngressName = "KubernetesIngressName"
-	// KubernetesServiceName is the name of the Kubernetes Service associated with the Ingress or IngressRoute the router handles.
+
+	// Kubernetes Service fields.
+
+	// KubernetesServiceNamespace is the namespace of the Kubernetes Service that handled the request.
+	// Stamped per request from the leaf load balancer, so it reflects the actual backend chosen
+	// by the load balancing strategy under multi-service routes or TraefikService fan-out.
+	KubernetesServiceNamespace = "KubernetesServiceNamespace"
+	// KubernetesServiceName is the name of the Kubernetes Service that handled the request.
+	// See KubernetesServiceNamespace for the per-request semantics.
 	KubernetesServiceName = "KubernetesServiceName"
-	// KubernetesServicePort is the port of the Kubernetes Service associated with the Ingress or IngressRoute the router handles.
+	// KubernetesServicePort is the port of the Kubernetes Service that handled the request.
+	// See KubernetesServiceNamespace for the per-request semantics.
 	KubernetesServicePort = "KubernetesServicePort"
 
 	// Kubernetes IngressRoute fields.

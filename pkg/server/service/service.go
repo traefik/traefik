@@ -123,7 +123,11 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	value := reflect.ValueOf(*conf.Service)
 	var count int
 	for i := range value.NumField() {
-		if value.Type().Field(i).Name != "Middlewares" && !value.Field(i).IsNil() {
+		name := value.Type().Field(i).Name
+		if name == "Middlewares" || name == "Observability" {
+			continue
+		}
+		if !value.Field(i).IsNil() {
 			count++
 		}
 	}
@@ -200,6 +204,12 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 			lb = &statusUpdaterHandler{Handler: lb, statusUpdater: su}
 		}
 	}
+
+	// Publish the service-level observability metadata to the per-request state
+	// container when this service is reached. No-op for services without metadata
+	// (Weighted/Mirroring/etc.), a published value for leaves with a backend
+	// identity (e.g. the Kubernetes Service name/namespace/port).
+	lb = observability.NewServiceMetadataHandler(conf.Observability, lb)
 
 	m.services[serviceName] = lb
 	return m.services[serviceName], nil
