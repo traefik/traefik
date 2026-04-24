@@ -23,6 +23,7 @@ func TestHandler(t *testing.T) {
 		backendCode         int
 		backendErrorHandler http.HandlerFunc
 		validate            func(t *testing.T, recorder *httptest.ResponseRecorder)
+		requestHeaders      map[string]string
 	}{
 		{
 			desc:        "no error",
@@ -154,6 +155,60 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "My 503 page.")
 			},
 		},
+		{
+			desc:      "forward all headers by default",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), "trace-abc")
+				assert.Contains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc:      "forward only allowlisted headers",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{"X-Request-Id"}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), "trace-abc")
+				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc:      "forward no headers",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.NotContains(t, recorder.Body.String(), "trace-abc")
+				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -174,6 +229,9 @@ func TestHandler(t *testing.T) {
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
+			for k, v := range test.requestHeaders {
+				req.Header.Set(k, v)
+			}
 
 			recorder := httptest.NewRecorder()
 			errorPageHandler.ServeHTTP(recorder, req)

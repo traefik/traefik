@@ -24,6 +24,7 @@ labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
   - "traefik.http.middlewares.test-errors.errors.service=serviceError"
   - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errors.errors.errorRequestHeaders=X-Request-Id,Cookie"
 ```
 
 ```yaml tab="Kubernetes"
@@ -42,6 +43,9 @@ spec:
     service:
       name: whoami
       port: 80
+    errorRequestHeaders:
+      - "X-Request-Id"
+      - "Cookie"
 ```
 
 ```yaml tab="Consul Catalog"
@@ -49,13 +53,15 @@ spec:
 - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
 - "traefik.http.middlewares.test-errors.errors.service=serviceError"
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+- "traefik.http.middlewares.test-errors.errors.errorRequestHeaders=X-Request-Id,Cookie"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-errors.errors.status": "500,501,503,505-599",
   "traefik.http.middlewares.test-errors.errors.service": "serviceError",
-  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html"
+  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html",
+  "traefik.http.middlewares.test-errors.errors.errorRequestHeaders": "X-Request-Id,Cookie"
 }
 ```
 
@@ -65,6 +71,7 @@ labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
   - "traefik.http.middlewares.test-errors.errors.service=serviceError"
   - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errors.errors.errorRequestHeaders=X-Request-Id,Cookie"
 ```
 
 ```yaml tab="File (YAML)"
@@ -80,6 +87,9 @@ http:
           - "505-599"
         service: serviceError
         query: "/{status}.html"
+        errorRequestHeaders:
+          - "X-Request-Id"
+          - "Cookie"
 
   services:
     # ... definition of error-handler-service and my-service
@@ -92,6 +102,7 @@ http:
     status = ["500","501","503","505-599"]
     service = "serviceError"
     query = "/{status}.html"
+    errorRequestHeaders = ["X-Request-Id","Cookie"]
 
 [http.services]
   # ... definition of error-handler-service and my-service
@@ -143,3 +154,12 @@ The table below lists all the available variables and their associated values.
 |------------|--------------------------------------------------------------------|
 | `{status}` | The response status code.                                          |
 | `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
+
+### `errorRequestHeaders`
+
+Defines the list of original request headers forwarded to the error page service.
+
+By default (`errorRequestHeaders` not set), all request headers — including authentication material such as `Authorization` and `Cookie` — are forwarded.
+If the error page service is in a separate trust domain, use this option to restrict which headers cross the service boundary.
+
+Set to an explicit list to forward only those headers, or set to an empty list (`errorRequestHeaders: []`) to forward no headers.
