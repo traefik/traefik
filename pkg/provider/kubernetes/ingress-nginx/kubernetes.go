@@ -2254,8 +2254,7 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 	maxRequestBodyBytes := p.ProxyBodySize
 	if proxyBodySize := ptr.Deref(ingressConfig.ProxyBodySize, ""); proxyBodySize != "" {
 		var err error
-		maxRequestBodyBytes, err = nginxSizeToBytes(proxyBodySize)
-		if err != nil {
+		if maxRequestBodyBytes, err = nginxSizeToBytes(proxyBodySize); err != nil {
 			return fmt.Errorf("proxy-body-size annotation has invalid value: %w", err)
 		}
 	}
