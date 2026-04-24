@@ -31,11 +31,11 @@ type Metadata struct {
 }
 
 type Component struct {
-	Type    string    `json:"type"`
-	Name    string    `json:"name"`
-	Version string    `json:"version"`
-	PURL    string    `json:"purl"`
-	Hashes  []Hash    `json:"hashes,omitempty"`
+	Type    string `json:"type"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	PURL    string `json:"purl"`
+	Hashes  []Hash `json:"hashes,omitempty"`
 }
 
 type Hash struct {
