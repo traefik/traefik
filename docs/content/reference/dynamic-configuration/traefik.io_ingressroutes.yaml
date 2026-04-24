@@ -363,6 +363,9 @@ spec:
                                     - none
                                     - lax
                                     - strict
+                                    - None
+                                    - Lax
+                                    - Strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie

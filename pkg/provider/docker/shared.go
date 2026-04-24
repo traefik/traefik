@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/containerd/errdefs"
 	"github.com/docker/cli/cli/connhelper"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -39,7 +40,11 @@ type Shared struct {
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
+		if errdefs.IsNotFound(err) {
+			log.Ctx(ctx).Debug().Err(err).Msgf("Failed to inspect container %s", containerID)
+		} else {
+			log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
+		}
 		return dockerData{}
 	}
 

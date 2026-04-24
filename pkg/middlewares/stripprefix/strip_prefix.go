@@ -36,8 +36,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, nam
 	// Handle default value (here because of deprecation and the removal of setDefault).
 	forceSlash := config.ForceSlash != nil && *config.ForceSlash
 
+	prefixes := make([]string, len(config.Prefixes))
+	for i, p := range config.Prefixes {
+		prefixes[i] = strings.TrimSpace(p)
+	}
+
 	return &stripPrefix{
-		prefixes:   config.Prefixes,
+		prefixes:   prefixes,
 		next:       next,
 		name:       name,
 		forceSlash: forceSlash,
@@ -55,16 +60,19 @@ func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.RawPath != "" {
 				req.URL.RawPath = s.getRawPathStripped(req.URL.RawPath, prefix)
 			}
-			s.serveRequest(rw, req, strings.TrimSpace(prefix))
-			return
+
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			if req.URL.Path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
+			req.Header.Add(ForwardedPrefixHeader, prefix)
+			req.RequestURI = req.URL.RequestURI()
+			break
 		}
 	}
-	s.next.ServeHTTP(rw, req)
-}
-
-func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, prefix string) {
-	req.Header.Add(ForwardedPrefixHeader, prefix)
-	req.RequestURI = req.URL.RequestURI()
 	s.next.ServeHTTP(rw, req)
 }
 

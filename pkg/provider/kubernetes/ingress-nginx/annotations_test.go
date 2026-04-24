@@ -64,7 +64,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				ProxyMaxTempFileSize:  ptr.To("100m"),
 				LimitRPM:              ptr.To(120),
 				XForwardedPrefix:      ptr.To("/test"),
-				UpstreamVhost:         ptr.To("upstream-vhost"),
+				UpstreamVHost:         ptr.To("upstream-vhost"),
 			},
 		},
 		{
