@@ -3,12 +3,14 @@ package service
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
 	"net/textproto"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
@@ -734,15 +737,20 @@ func TestGetServiceHandler_HealthCheck(t *testing.T) {
 	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
 
 	testCases := []struct {
-		desc           string
-		withMiddleware bool
+		desc                       string
+		withServiceMiddleware      bool
+		withChildServiceMiddleware bool
 	}{
 		{
-			desc: "without service middleware",
+			desc: "without middleware",
 		},
 		{
-			desc:           "with service middleware",
-			withMiddleware: true,
+			desc:                  "with service middleware",
+			withServiceMiddleware: true,
+		},
+		{
+			desc:                       "with child service middleware",
+			withChildServiceMiddleware: true,
 		},
 	}
 
@@ -763,8 +771,13 @@ func TestGetServiceHandler_HealthCheck(t *testing.T) {
 					},
 				},
 			}
-			if test.withMiddleware {
+			if test.withServiceMiddleware {
 				childSvc.Middlewares = []string{"add-header@file"}
+			}
+
+			wrrChild := dynamic.WRRService{Name: "child@file", Weight: pointer(1)}
+			if test.withChildServiceMiddleware {
+				wrrChild.Middlewares = []string{"add-header@file"}
 			}
 
 			configs := map[string]*runtime.ServiceInfo{
@@ -772,7 +785,7 @@ func TestGetServiceHandler_HealthCheck(t *testing.T) {
 				"wrr@file": {
 					Service: &dynamic.Service{
 						Weighted: &dynamic.WeightedRoundRobin{
-							Services:    []dynamic.WRRService{{Name: "child@file", Weight: pointer(1)}},
+							Services:    []dynamic.WRRService{wrrChild},
 							HealthCheck: &dynamic.HealthCheck{},
 						},
 					},
@@ -780,7 +793,7 @@ func TestGetServiceHandler_HealthCheck(t *testing.T) {
 			}
 
 			manager := NewManager(configs, nil, nil, &transportManagerMock{}, pb)
-			if test.withMiddleware {
+			if test.withServiceMiddleware || test.withChildServiceMiddleware {
 				manager.SetMiddlewareChainBuilder(&noopMiddlewareChainBuilder{})
 			}
 
@@ -799,6 +812,216 @@ func (n *noopMiddlewareChainBuilder) BuildMiddlewareChain(_ context.Context, _ [
 		return http.HandlerFunc(next.ServeHTTP), nil
 	})
 	return &chain
+}
+
+// requestHeaderMiddlewareChainBuilder sets X-Middleware on the *request* per
+// middleware name, so the upstream backend can observe which chain ran.
+type requestHeaderMiddlewareChainBuilder struct{}
+
+func (r *requestHeaderMiddlewareChainBuilder) BuildMiddlewareChain(_ context.Context, names []string) *alice.Chain {
+	chain := alice.New()
+	for _, name := range names {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				req.Header.Set("X-Middleware", name)
+				next.ServeHTTP(rw, req)
+			}), nil
+		})
+	}
+	return &chain
+}
+
+func TestGetWRRServiceHandler_WithChildServiceMiddleware(t *testing.T) {
+	newBackend := func(expected string) *httptest.Server {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, expected, r.Header.Get("X-Middleware"))
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(srv.Close)
+		return srv
+	}
+
+	backendA := newBackend("mw-a")
+	backendB := newBackend("mw-b")
+
+	configs := map[string]*runtime.ServiceInfo{
+		"child-a@file": {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: backendA.URL}}}}},
+		"child-b@file": {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: backendB.URL}}}}},
+		"wrr@file": {
+			Service: &dynamic.Service{
+				Weighted: &dynamic.WeightedRoundRobin{
+					Services: []dynamic.WRRService{
+						{Name: "child-a@file", Weight: pointer(1), Middlewares: []string{"mw-a"}},
+						{Name: "child-b@file", Weight: pointer(1), Middlewares: []string{"mw-b"}},
+					},
+				},
+			},
+		},
+	}
+
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	manager := NewManager(configs, nil, nil, &transportManagerMock{}, pb)
+	manager.SetMiddlewareChainBuilder(&requestHeaderMiddlewareChainBuilder{})
+
+	handler, err := manager.BuildHTTP(t.Context(), "wrr@file")
+	require.NoError(t, err)
+
+	// 8 calls makes missing a child statistically negligible (2 * 0.5^8 ≈ 0.78%).
+	for range 8 {
+		req := testhelpers.MustNewRequest(http.MethodGet, "http://test.example.com/", nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+	}
+}
+
+func TestGetHRWServiceHandler_WithChildServiceMiddleware(t *testing.T) {
+	newBackend := func(expected string) *httptest.Server {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, expected, r.Header.Get("X-Middleware"))
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(srv.Close)
+		return srv
+	}
+
+	backendA := newBackend("mw-a")
+	backendB := newBackend("mw-b")
+
+	configs := map[string]*runtime.ServiceInfo{
+		"child-a@file": {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: backendA.URL}}}}},
+		"child-b@file": {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: backendB.URL}}}}},
+		"hrw@file": {
+			Service: &dynamic.Service{
+				HighestRandomWeight: &dynamic.HighestRandomWeight{
+					Services: []dynamic.HRWService{
+						{Name: "child-a@file", Weight: pointer(1), Middlewares: []string{"mw-a"}},
+						{Name: "child-b@file", Weight: pointer(1), Middlewares: []string{"mw-b"}},
+					},
+				},
+			},
+		},
+	}
+
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	manager := NewManager(configs, nil, nil, &transportManagerMock{}, pb)
+	manager.SetMiddlewareChainBuilder(&requestHeaderMiddlewareChainBuilder{})
+
+	handler, err := manager.BuildHTTP(t.Context(), "hrw@file")
+	require.NoError(t, err)
+
+	// HRW is deterministic per client IP; varying RemoteAddr across calls covers both children.
+	for i := range 16 {
+		req := testhelpers.MustNewRequest(http.MethodGet, "http://test.example.com/", nil)
+		req.RemoteAddr = fmt.Sprintf("10.0.0.%d:1234", i+1)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+	}
+}
+
+func TestGetMirrorServiceHandler_WithChildServiceMiddleware(t *testing.T) {
+	newBackend := func(expected string) *httptest.Server {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, expected, r.Header.Get("X-Middleware"))
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(srv.Close)
+		return srv
+	}
+
+	mainBackend := newBackend("mw-main")
+	mirrorBackend := newBackend("mw-mirror")
+
+	configs := map[string]*runtime.ServiceInfo{
+		"main@file":   {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: mainBackend.URL}}}}},
+		"mirror@file": {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: mirrorBackend.URL}}}}},
+		"mirroring@file": {
+			Service: &dynamic.Service{
+				Mirroring: &dynamic.Mirroring{
+					Service:     "main@file",
+					Middlewares: []string{"mw-main"},
+					Mirrors: []dynamic.MirrorService{
+						{Name: "mirror@file", Percent: 100, Middlewares: []string{"mw-mirror"}},
+					},
+				},
+			},
+		},
+	}
+
+	pool := safe.NewPool(t.Context())
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	manager := NewManager(configs, nil, pool, &transportManagerMock{}, pb)
+	manager.SetMiddlewareChainBuilder(&requestHeaderMiddlewareChainBuilder{})
+
+	handler, err := manager.BuildHTTP(t.Context(), "mirroring@file")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://test.example.com/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// Wait for the mirror goroutine to run its request through the mirror backend.
+	pool.Stop()
+}
+
+func TestGetFailoverServiceHandler_WithChildServiceMiddleware(t *testing.T) {
+	var mainStatus atomic.Int32
+	mainStatus.Store(http.StatusOK)
+
+	var gotService, gotFallback string
+	serviceBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotService = r.Header.Get("X-Middleware")
+		w.WriteHeader(int(mainStatus.Load()))
+	}))
+	t.Cleanup(serviceBackend.Close)
+
+	fallbackBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotFallback = r.Header.Get("X-Middleware")
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(fallbackBackend.Close)
+
+	configs := map[string]*runtime.ServiceInfo{
+		"service@file":  {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: serviceBackend.URL}}}}},
+		"fallback@file": {Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: fallbackBackend.URL}}}}},
+		"failover@file": {
+			Service: &dynamic.Service{
+				Failover: &dynamic.Failover{
+					Service:             "service@file",
+					Middlewares:         []string{"mw-service"},
+					Fallback:            "fallback@file",
+					FallbackMiddlewares: []string{"mw-fallback"},
+					Errors: &dynamic.FailoverError{
+						Status: []string{"500-599"},
+					},
+				},
+			},
+		},
+	}
+
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	manager := NewManager(configs, nil, nil, &transportManagerMock{}, pb)
+	manager.SetMiddlewareChainBuilder(&requestHeaderMiddlewareChainBuilder{})
+
+	handler, err := manager.BuildHTTP(t.Context(), "failover@file")
+	require.NoError(t, err)
+
+	// Main service healthy: the service-edge middleware is applied.
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://test.example.com/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "mw-service", gotService)
+
+	// Main service fails: failover triggers on the configured status range, fallback-edge middleware is applied.
+	mainStatus.Store(http.StatusInternalServerError)
+	req = testhelpers.MustNewRequest(http.MethodGet, "http://test.example.com/", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "mw-fallback", gotFallback)
 }
 
 type internalHandler struct{}

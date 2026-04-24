@@ -54,7 +54,9 @@
     [http.services.Service01]
       [http.services.Service01.failover]
         service = "foobar"
+        middlewares = ["foobar", "foobar"]
         fallback = "foobar"
+        fallbackMiddlewares = ["foobar", "foobar"]
         [http.services.Service01.failover.healthCheck]
         [http.services.Service01.failover.errors]
           maxRequestBodyBytes = 42
@@ -65,10 +67,12 @@
         [[http.services.Service02.highestRandomWeight.services]]
           name = "foobar"
           weight = 42
+          middlewares = ["foobar", "foobar"]
 
         [[http.services.Service02.highestRandomWeight.services]]
           name = "foobar"
           weight = 42
+          middlewares = ["foobar", "foobar"]
         [http.services.Service02.highestRandomWeight.healthCheck]
     [http.services.Service03]
       [http.services.Service03.loadBalancer]
@@ -119,16 +123,19 @@
     [http.services.Service05]
       [http.services.Service05.mirroring]
         service = "foobar"
+        middlewares = ["foobar", "foobar"]
         mirrorBody = true
         maxBodySize = 42
 
         [[http.services.Service05.mirroring.mirrors]]
           name = "foobar"
           percent = 42
+          middlewares = ["foobar", "foobar"]
 
         [[http.services.Service05.mirroring.mirrors]]
           name = "foobar"
           percent = 42
+          middlewares = ["foobar", "foobar"]
         [http.services.Service05.mirroring.healthCheck]
     [http.services.Service06]
       [http.services.Service06.weighted]
@@ -136,10 +143,12 @@
         [[http.services.Service06.weighted.services]]
           name = "foobar"
           weight = 42
+          middlewares = ["foobar", "foobar"]
 
         [[http.services.Service06.weighted.services]]
           name = "foobar"
           weight = 42
+          middlewares = ["foobar", "foobar"]
         [http.services.Service06.weighted.sticky]
           [http.services.Service06.weighted.sticky.cookie]
             name = "foobar"
