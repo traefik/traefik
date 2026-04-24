@@ -14241,6 +14241,288 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "External name service",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-external-name.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-external-name-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-external-name-external-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-1-retry"},
+							Service:     "default-ingress-with-external-name-external-http",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "http",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-1-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-http",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "http",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-2-retry"},
+							Service:     "default-ingress-with-external-name-external-3000",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "3000",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-2-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-3000",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "3000",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-3-retry"},
+							Service:     "default-ingress-with-external-name-external-foo",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "foo",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-3-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-foo",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "foo",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-external-name-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-external-name-external-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:8080",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"default-ingress-with-external-name-external-3000": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:3000",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"default-ingress-with-external-name-external-http": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:8080",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"default-ingress-with-external-name-external-foo": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:0",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-external-name": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
