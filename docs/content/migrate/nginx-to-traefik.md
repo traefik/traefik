@@ -50,8 +50,9 @@ spec:
                 name: whoami
                 port:
                   number: 80
+```
 
----
+```yaml tab="Service & Deployment"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -154,10 +155,10 @@ In Traefik, the same behavior is split across:
 Start by exporting the ConfigMap you use today and reviewing the keys you have customized:
 
 ```bash
-kubectl get configmap ingress-nginx-controller -n ingress-nginx -o yaml
+kubectl get configmap --all-namespaces -l app.kubernetes.io/name=ingress-nginx,app.kubernetes.io/component=controller -o yaml
 ```
 
-If your ingress-nginx controller uses a different namespace or ConfigMap name, adjust the command accordingly.
+This label selector locates the controller ConfigMap regardless of the namespace or release name you used when installing ingress-nginx.
 
 !!! tip "Convert NGINX units before copying values"
 
@@ -170,22 +171,22 @@ If your ingress-nginx controller uses a different namespace or ConfigMap name, a
 
 ### ConfigMap to Traefik Mapping
 
-| ingress-nginx ConfigMap key | Traefik equivalent | Notes |
+| ingress-nginx ConfigMap key | Traefik equivalent <br/> (provider options) | Notes |
 |---|---|---|
-| `proxy-connect-timeout` | `providers.kubernetesIngressNGINX.proxyConnectTimeout` | Use integer seconds. |
-| `proxy-request-buffering` | `providers.kubernetesIngressNGINX.proxyRequestBuffering` | Translate `on` / `off` to `true` / `false`. ingress-nginx enables request buffering by default, while Traefik defaults to `false`. |
-| `client-body-buffer-size` | `providers.kubernetesIngressNGINX.clientBodyBufferSize` | Convert values such as `16k` to bytes. |
-| `proxy-buffering` | `providers.kubernetesIngressNGINX.proxyBuffering` | Translate `on` / `off` to `true` / `false`. |
-| `proxy-body-size` | `providers.kubernetesIngressNGINX.proxyBodySize` | Convert values such as `1m` to bytes. |
-| `proxy-buffer-size` | `providers.kubernetesIngressNGINX.proxyBufferSize` | Convert values such as `8k` to bytes. |
-| `proxy-buffers-number` | `providers.kubernetesIngressNGINX.proxyBuffersNumber` | Keep the integer value. |
-| `proxy-next-upstream` | `providers.kubernetesIngressNGINX.proxyNextUpstream` | Use a space-separated list of retry conditions such as `error timeout http_502`. |
-| `proxy-next-upstream-timeout` | `providers.kubernetesIngressNGINX.proxyNextUpstreamTimeout` | Use integer seconds. |
-| `proxy-next-upstream-tries` | `providers.kubernetesIngressNGINX.proxyNextUpstreamTries` | Keep the integer value. |
-| `custom-http-errors` | `providers.kubernetesIngressNGINX.customHTTPErrors` | Also configure `providers.kubernetesIngressNGINX.defaultBackendService` if you want a global error page service. |
-| `global-allowed-response-headers` | `providers.kubernetesIngressNGINX.globalAllowedResponseHeaders` | Required for `nginx.ingress.kubernetes.io/custom-headers` annotations to take effect. |
-| `allow-cross-namespace-resources` | `providers.kubernetesIngressNGINX.allowCrossNamespaceResources` | Use when migrated ingresses must reference supported resources in other namespaces. |
-| `strict-validate-path-type` | `providers.kubernetesIngressNGINX.strictValidatePathType` | Traefik v3.7 defaults this option to `true`. |
+| `proxy-connect-timeout` | `proxyConnectTimeout` | Use integer seconds. |
+| `proxy-request-buffering` | `proxyRequestBuffering` | Translate `on` / `off` to `true` / `false`. ingress-nginx enables request buffering by default, while Traefik defaults to `false`. |
+| `client-body-buffer-size` | `clientBodyBufferSize` | Convert values such as `16k` to bytes. |
+| `proxy-buffering` | `proxyBuffering` | Translate `on` / `off` to `true` / `false`. |
+| `proxy-body-size` | `proxyBodySize` | Convert values such as `1m` to bytes. |
+| `proxy-buffer-size` | `proxyBufferSize` | Convert values such as `8k` to bytes. |
+| `proxy-buffers-number` | `proxyBuffersNumber` | Keep the integer value. |
+| `proxy-next-upstream` | `proxyNextUpstream` | Use a space-separated list of retry conditions such as `error timeout http_502`. |
+| `proxy-next-upstream-timeout` | `proxyNextUpstreamTimeout` | Use integer seconds. |
+| `proxy-next-upstream-tries` | `proxyNextUpstreamTries` | Keep the integer value. |
+| `custom-http-errors` | `customHTTPErrors` | Also configure `providers.kubernetesIngressNGINX.defaultBackendService` if you want a global error page service. |
+| `global-allowed-response-headers` | `globalAllowedResponseHeaders` | Required for `nginx.ingress.kubernetes.io/custom-headers` annotations to take effect. |
+| `allow-cross-namespace-resources` | `allowCrossNamespaceResources` | Use when migrated ingresses must reference supported resources in other namespaces. |
+| `strict-validate-path-type` | `strictValidatePathType` | Traefik v3.7 defaults this option to `true`. |
 | `ssl-redirect` / `force-ssl-redirect` | `nginx.ingress.kubernetes.io/ssl-redirect` and `nginx.ingress.kubernetes.io/force-ssl-redirect` annotations, or cluster-wide [entryPoint redirection](../reference/install-configuration/entrypoints.md#configuration-example) | Traefik translates the annotations when they are present. For a global default, configure HTTP-to-HTTPS redirection on the `web` entryPoint and set `providers.kubernetesIngressNGINX.httpEntryPoint` / `httpsEntryPoint` if you need explicit entryPoint selection. |
 | `ssl-protocols` / `ssl-ciphers` | [TLS options](../reference/routing-configuration/http/tls/tls-options.md) | Apply them globally through an entryPoint TLS option, or per Ingress via `traefik.ingress.kubernetes.io/router.tls.options`. |
 | `hsts`, `hsts-max-age`, `hsts-include-subdomains`, `hsts-preload` | [Headers middleware](../reference/routing-configuration/http/middlewares/headers.md) | Use `stsSeconds`, `stsIncludeSubdomains`, `stsPreload`, and `forceSTSHeader`. Attach the middleware on an entryPoint for a cluster-wide default. |
@@ -528,14 +529,14 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
     
     ```bash
     NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
-  -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
-     
+      -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+
     echo "NGINX IP: $NGINX_IP"
     ```
-    
+
     **Edit your existing NGINX LoadBalancer service to ensure that the floating IP is not released when the loadbalancer service is deleted:**
-    
-    
+
+    ```bash
     kubectl annotate svc my-lb-svc loadbalancer.openstack.org/keep-floatingip=true
     ```
     
