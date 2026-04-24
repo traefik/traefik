@@ -29,6 +29,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 )
 
@@ -1169,16 +1170,22 @@ func (p *Provider) buildPassthroughService(namespace string, backend netv1.Ingre
 	return &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
-func getPort(service *corev1.Service, backend netv1.IngressBackend) (string, corev1.ServicePort, bool) {
+func getServicePort(service *corev1.Service, backend netv1.IngressBackend) (corev1.ServicePort, bool) {
 	for _, p := range service.Spec.Ports {
 		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
 		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
 			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
-			return p.Name, p, true
+			return p, true
 		}
 	}
 
-	return "", corev1.ServicePort{}, false
+	// If the port is not found and the service is of type ExternalName, we return the port defined in the backend.
+	// If this is a named port, the port value will be 0 to be consistent with ingress-nginx.
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return corev1.ServicePort{TargetPort: intstr.Parse(portString(backend.Service.Port))}, true
+	}
+
+	return corev1.ServicePort{}, false
 }
 
 func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]backendAddress, error) {
@@ -1191,21 +1198,21 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	portName, portSpec, match := getPort(service, backend)
+	servicePort, match := getServicePort(service, backend)
 	if !match {
 		return nil, errors.New("service port not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
 	}
 
 	// When service upstream is set to true we return the service ClusterIP as the backend address.
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
 	}
 
-	addresses, err := p.getBackendAddressesFromEndpointSlices(namespace, backend.Service.Name, portName)
+	addresses, err := p.getBackendAddressesFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
 	}
@@ -1224,12 +1231,12 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	portName, _, match = getPort(serviceDefaultBackend, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
+	servicePort, match = getServicePort(serviceDefaultBackend, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
 	if !match {
 		return nil, errors.New("service port not found")
 	}
 
-	return p.getBackendAddressesFromEndpointSlices(namespace, defaultBackend, portName)
+	return p.getBackendAddressesFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
 }
 
 func (p *Provider) getBackendAddressesFromEndpointSlices(namespace, name, portName string) ([]backendAddress, error) {
@@ -1538,7 +1545,7 @@ func (p *Provider) applyCustomHTTPErrors(ctx context.Context, namespace, ingress
 		return fmt.Errorf("getting service: %w", err)
 	}
 
-	_, portSpec, ok := getPort(serviceK8s, *targetedService)
+	servicePort, ok := getServicePort(serviceK8s, *targetedService)
 	if !ok {
 		return fmt.Errorf("port not found for service %s", k8sServiceName)
 	}
@@ -1548,7 +1555,7 @@ func (p *Provider) applyCustomHTTPErrors(ctx context.Context, namespace, ingress
 		"X-Namespaces":   {namespace},
 		"X-Ingress-Name": {ingressName},
 		"X-Service-Name": {k8sServiceName},
-		"X-Service-Port": {strconv.Itoa(int(portSpec.Port))},
+		"X-Service-Port": {strconv.Itoa(int(servicePort.Port))},
 	})
 
 	conf.HTTP.Middlewares[customErrorMiddlewareName] = &dynamic.Middleware{
