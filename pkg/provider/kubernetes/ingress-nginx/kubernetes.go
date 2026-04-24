@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 )
 
@@ -375,12 +376,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					continue
 				}
 
-				port := backend.Service.Port.Name
-				if len(backend.Service.Port.Name) == 0 {
-					port = strconv.Itoa(int(backend.Service.Port.Number))
-				}
-
-				serviceName := provider.Normalize(ingress.Namespace + "-" + backend.Service.Name + "-" + port)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + backend.Service.Name + "-" + portString(backend.Service.Port))
 				conf.TCP.Services[serviceName] = service
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host), "-")
@@ -449,13 +445,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					continue
 				}
 
-				portString := pa.Backend.Service.Port.Name
-				if len(pa.Backend.Service.Port.Name) == 0 {
-					portString = strconv.Itoa(int(pa.Backend.Service.Port.Number))
-				}
-
 				// TODO: if no service, do not add middlewares and 503.
-				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 
 				service, err := p.buildService(ingress.Namespace, pa.Backend, ingressConfig)
 				if err != nil {
@@ -589,6 +580,24 @@ func (p *Provider) buildPassthroughService(namespace string, backend netv1.Ingre
 	return &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
+func getServicePort(service *corev1.Service, backend netv1.IngressBackend) (corev1.ServicePort, bool) {
+	for _, p := range service.Spec.Ports {
+		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
+		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
+			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
+			return p, true
+		}
+	}
+
+	// If the port is not found and the service is of type ExternalName, we return the port defined in the backend.
+	// If this is a named port, the port value will be 0 to be consistent with ingress-nginx.
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return corev1.ServicePort{TargetPort: intstr.Parse(portString(backend.Service.Port))}, true
+	}
+
+	return corev1.ServicePort{}, false
+}
+
 func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg ingressConfig) ([]backendAddress, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
@@ -599,30 +608,18 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	var portName string
-	var portSpec corev1.ServicePort
-	var match bool
-	for _, p := range service.Spec.Ports {
-		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
-		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
-			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
-			portName = p.Name
-			portSpec = p
-			match = true
-			break
-		}
-	}
+	servicePort, match := getServicePort(service, backend)
 	if !match {
 		return nil, errors.New("service port not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
 	}
 
 	// When service upstream is set to true we return the service ClusterIP as the backend address.
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
 	}
 
 	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, backend.Service.Name)
@@ -635,7 +632,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if portName == *p.Name {
+			if servicePort.Name == *p.Name {
 				port = *p.Port
 				break
 			}
@@ -1139,4 +1136,11 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func portString(port netv1.ServiceBackendPort) string {
+	if port.Name == "" {
+		return strconv.Itoa(int(port.Number))
+	}
+	return port.Name
 }
