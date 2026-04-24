@@ -90,6 +90,8 @@ require (
 	sigs.k8s.io/gateway-api v0.4.0
 )
 
+require github.com/google/uuid v1.6.0
+
 require (
 	cloud.google.com/go/auth v0.20.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
@@ -228,7 +230,6 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.21.0 // indirect
 	github.com/gophercloud/gophercloud v1.14.1 // indirect
