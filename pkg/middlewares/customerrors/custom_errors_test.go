@@ -175,7 +175,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:      "forward only allowlisted headers",
-			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ForwardHeaders: []string{"X-Request-Id"}},
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{"X-Request-Id"}},
 			requestHeaders: map[string]string{
 				"X-Request-Id":  "trace-abc",
 				"Authorization": "Bearer secret",
@@ -193,7 +193,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:      "forward no headers",
-			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ForwardHeaders: []string{}},
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{}},
 			requestHeaders: map[string]string{
 				"X-Request-Id":  "trace-abc",
 				"Authorization": "Bearer secret",

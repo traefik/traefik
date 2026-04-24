@@ -33,8 +33,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/middlewares/Middleware08/digestAuth/users/0` | `foobar` |
 | `traefik/http/middlewares/Middleware08/digestAuth/users/1` | `foobar` |
 | `traefik/http/middlewares/Middleware08/digestAuth/usersFile` | `foobar` |
-| `traefik/http/middlewares/Middleware09/errors/forwardHeaders/0` | `foobar` |
-| `traefik/http/middlewares/Middleware09/errors/forwardHeaders/1` | `foobar` |
+| `traefik/http/middlewares/Middleware09/errors/errorRequestHeaders/0` | `foobar` |
+| `traefik/http/middlewares/Middleware09/errors/errorRequestHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware09/errors/query` | `foobar` |
 | `traefik/http/middlewares/Middleware09/errors/service` | `foobar` |
 | `traefik/http/middlewares/Middleware09/errors/status/0` | `foobar` |

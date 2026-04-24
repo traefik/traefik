@@ -35,12 +35,12 @@ type serviceBuilder interface {
 
 // customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
-	name           string
-	next           http.Handler
-	backendHandler http.Handler
-	httpCodeRanges types.HTTPCodeRanges
-	backendQuery   string
-	forwardHeaders []string
+	name                string
+	next                http.Handler
+	backendHandler      http.Handler
+	httpCodeRanges      types.HTTPCodeRanges
+	backendQuery        string
+	errorRequestHeaders []string
 }
 
 // New creates a new custom error pages middleware.
@@ -58,12 +58,12 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}
 
 	return &customErrors{
-		name:           name,
-		next:           next,
-		backendHandler: backend,
-		httpCodeRanges: httpCodeRanges,
-		backendQuery:   config.Query,
-		forwardHeaders: config.ForwardHeaders,
+		name:                name,
+		next:                next,
+		backendHandler:      backend,
+		httpCodeRanges:      httpCodeRanges,
+		backendQuery:        config.Query,
+		errorRequestHeaders: config.ErrorRequestHeaders,
 	}, nil
 }
 
@@ -106,8 +106,8 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if c.forwardHeaders != nil {
-		for _, header := range c.forwardHeaders {
+	if c.errorRequestHeaders != nil {
+		for _, header := range c.errorRequestHeaders {
 			if values := req.Header.Values(header); len(values) > 0 {
 				pageReq.Header[http.CanonicalHeaderKey(header)] = values
 			}

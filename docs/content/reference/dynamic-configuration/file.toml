@@ -148,7 +148,7 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
-        forwardHeaders = ["foobar", "foobar"]
+        errorRequestHeaders = ["foobar", "foobar"]
     [http.middlewares.Middleware10]
       [http.middlewares.Middleware10.forwardAuth]
         address = "foobar"

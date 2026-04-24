@@ -272,8 +272,8 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.ForwardHeaders != nil {
-		in, out := &in.ForwardHeaders, &out.ForwardHeaders
+	if in.ErrorRequestHeaders != nil {
+		in, out := &in.ErrorRequestHeaders, &out.ErrorRequestHeaders
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

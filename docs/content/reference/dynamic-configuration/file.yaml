@@ -159,7 +159,7 @@ http:
           - foobar
         service: foobar
         query: foobar
-        forwardHeaders:
+        errorRequestHeaders:
           - foobar
           - foobar
     Middleware10:

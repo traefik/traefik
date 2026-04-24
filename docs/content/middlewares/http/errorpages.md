@@ -24,7 +24,7 @@ labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
   - "traefik.http.middlewares.test-errors.errors.service=serviceError"
   - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-  - "traefik.http.middlewares.test-errors.errors.forwardHeaders=X-Request-Id,Cookie"
+  - "traefik.http.middlewares.test-errors.errors.errorRequestHeaders=X-Request-Id,Cookie"
 ```
 
 ```yaml tab="Kubernetes"
@@ -43,7 +43,7 @@ spec:
     service:
       name: whoami
       port: 80
-    forwardHeaders:
+    errorRequestHeaders:
       - "X-Request-Id"
       - "Cookie"
 ```
@@ -53,7 +53,7 @@ spec:
 - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
 - "traefik.http.middlewares.test-errors.errors.service=serviceError"
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-- "traefik.http.middlewares.test-errors.errors.forwardHeaders=X-Request-Id,Cookie"
+- "traefik.http.middlewares.test-errors.errors.errorRequestHeaders=X-Request-Id,Cookie"
 ```
 
 ```json tab="Marathon"
@@ -61,7 +61,7 @@ spec:
   "traefik.http.middlewares.test-errors.errors.status": "500,501,503,505-599",
   "traefik.http.middlewares.test-errors.errors.service": "serviceError",
   "traefik.http.middlewares.test-errors.errors.query": "/{status}.html",
-  "traefik.http.middlewares.test-errors.errors.forwardHeaders": "X-Request-Id,Cookie"
+  "traefik.http.middlewares.test-errors.errors.errorRequestHeaders": "X-Request-Id,Cookie"
 }
 ```
 
@@ -71,7 +71,7 @@ labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
   - "traefik.http.middlewares.test-errors.errors.service=serviceError"
   - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-  - "traefik.http.middlewares.test-errors.errors.forwardHeaders=X-Request-Id,Cookie"
+  - "traefik.http.middlewares.test-errors.errors.errorRequestHeaders=X-Request-Id,Cookie"
 ```
 
 ```yaml tab="File (YAML)"
@@ -87,7 +87,7 @@ http:
           - "505-599"
         service: serviceError
         query: "/{status}.html"
-        forwardHeaders:
+        errorRequestHeaders:
           - "X-Request-Id"
           - "Cookie"
 
@@ -102,7 +102,7 @@ http:
     status = ["500","501","503","505-599"]
     service = "serviceError"
     query = "/{status}.html"
-    forwardHeaders = ["X-Request-Id","Cookie"]
+    errorRequestHeaders = ["X-Request-Id","Cookie"]
 
 [http.services]
   # ... definition of error-handler-service and my-service
@@ -155,11 +155,11 @@ The table below lists all the available variables and their associated values.
 | `{status}` | The response status code.                                          |
 | `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
 
-### `forwardHeaders`
+### `errorRequestHeaders`
 
 Defines the list of original request headers forwarded to the error page service.
 
-By default (`forwardHeaders` not set), all request headers — including authentication material such as `Authorization` and `Cookie` — are forwarded.
+By default (`errorRequestHeaders` not set), all request headers — including authentication material such as `Authorization` and `Cookie` — are forwarded.
 If the error page service is a separate trust domain, use this option to restrict which headers cross the service boundary.
 
-Set to an explicit list to forward only those headers, or set to an empty list (`forwardHeaders: []`) to forward no headers.
+Set to an explicit list to forward only those headers, or set to an empty list (`errorRequestHeaders: []`) to forward no headers.
