@@ -127,7 +127,7 @@ jobs:
 
       - name: Install license tools
         if: steps.deps-changed.outputs.changed == 'true'
-        run: pip install cyclonedx-bom==8.7.0 uv
+        run: pip install cyclonedx-bom==7.3.0 uv
 
       - name: Validate licenses
         if: steps.deps-changed.outputs.changed == 'true'
