@@ -3,7 +3,7 @@ SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 TAG_NAME = $(shell git describe --abbrev=0 --tags --exact-match)
 SHA = $(shell git rev-parse HEAD)
 VERSION_GIT = $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
-VERSION ?= $(if $(VERSION),$(VERSION),$(VERSION_GIT))
+VERSION ?= $(VERSION_GIT)
 
 BIN_NAME := traefik
 CODENAME ?= cheddar
