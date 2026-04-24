@@ -40,6 +40,7 @@ type customErrors struct {
 	backendHandler http.Handler
 	httpCodeRanges types.HTTPCodeRanges
 	backendQuery   string
+	forwardHeaders []string
 }
 
 // New creates a new custom error pages middleware.
@@ -62,6 +63,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendHandler: backend,
 		httpCodeRanges: httpCodeRanges,
 		backendQuery:   config.Query,
+		forwardHeaders: config.ForwardHeaders,
 	}, nil
 }
 
@@ -104,7 +106,15 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	utils.CopyHeaders(pageReq.Header, req.Header)
+	if c.forwardHeaders != nil {
+		for _, header := range c.forwardHeaders {
+			if values := req.Header.Values(header); len(values) > 0 {
+				pageReq.Header[http.CanonicalHeaderKey(header)] = values
+			}
+		}
+	} else {
+		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
 
 	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
 		pageReq.WithContext(req.Context()))

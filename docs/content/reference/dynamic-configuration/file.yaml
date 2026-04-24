@@ -159,6 +159,9 @@ http:
           - foobar
         service: foobar
         query: foobar
+        forwardHeaders:
+          - foobar
+          - foobar
     Middleware10:
       forwardAuth:
         address: foobar
