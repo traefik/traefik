@@ -222,9 +222,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				canaryBackendName := provider.Normalize(canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[canaryBackendName]; !exists {
 					mc.Backends[canaryBackendName] = &backend{
-						Name:      canaryBackendName,
-						Namespace: canaryIngress.Namespace,
-						Endpoints: endpoints,
+						Name:        canaryBackendName,
+						Namespace:   canaryIngress.Namespace,
+						ServiceName: pa.Backend.Service.Name,
+						ServicePort: portString(pa.Backend.Service.Port),
+						Endpoints:   endpoints,
 					}
 				}
 
@@ -293,9 +295,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				ptBackendName := provider.Normalize(ing.Namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
 				if _, exists := mc.Backends[ptBackendName]; !exists {
 					mc.Backends[ptBackendName] = &backend{
-						Name:      ptBackendName,
-						Namespace: ing.Namespace,
-						Endpoints: endpoints,
+						Name:        ptBackendName,
+						Namespace:   ing.Namespace,
+						ServiceName: ingBackend.Service.Name,
+						ServicePort: portString(ingBackend.Service.Port),
+						Endpoints:   endpoints,
 					}
 				}
 
@@ -377,9 +381,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				backendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[backendName]; !exists {
 					mc.Backends[backendName] = &backend{
-						Name:      backendName,
-						Namespace: ing.Namespace,
-						Endpoints: endpoints,
+						Name:        backendName,
+						Namespace:   ing.Namespace,
+						ServiceName: pa.Backend.Service.Name,
+						ServicePort: portString(pa.Backend.Service.Port),
+						Endpoints:   endpoints,
 					}
 				}
 
@@ -449,9 +455,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 									ing.config)
 								if err == nil {
 									mc.Backends[errBackendName] = &backend{
-										Name:      errBackendName,
-										Namespace: ing.Namespace,
-										Endpoints: endpoints,
+										Name:        errBackendName,
+										Namespace:   ing.Namespace,
+										ServiceName: defaultSvcName,
+										ServicePort: "0",
+										Endpoints:   endpoints,
 									}
 								}
 							}
@@ -495,6 +503,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						Name:        defaultBackendName,
 						Namespace:   ing.Namespace,
 						ServiceName: db.Service.Name,
+						ServicePort: portString(db.Service.Port),
 						Endpoints:   endpoints,
 					}
 					mc.Backends[defaultBackendName] = bk
@@ -519,9 +528,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			ingDefaultBackendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-default-backend")
 			if _, exists := mc.Backends[ingDefaultBackendName]; !exists {
 				mc.Backends[ingDefaultBackendName] = &backend{
-					Name:      ingDefaultBackendName,
-					Namespace: ing.Namespace,
-					Endpoints: endpoints,
+					Name:        ingDefaultBackendName,
+					Namespace:   ing.Namespace,
+					ServiceName: db.Service.Name,
+					ServicePort: portString(db.Service.Port),
+					Endpoints:   endpoints,
 				}
 			}
 
@@ -735,6 +746,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		Name:        name,
 		Namespace:   namespace,
 		ServiceName: ingBackend.Service.Name,
+		ServicePort: portString(ingBackend.Service.Port),
 		Endpoints:   endpoints,
 	}, nil
 }

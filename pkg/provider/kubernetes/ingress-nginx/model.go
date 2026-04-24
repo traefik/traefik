@@ -54,6 +54,9 @@ type backend struct {
 	// ServiceName is the original Kubernetes service name (without namespace or port).
 	ServiceName string
 
+	// ServicePort is the original port specification (number or name) from the Ingress rule.
+	ServicePort string
+
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
 }
