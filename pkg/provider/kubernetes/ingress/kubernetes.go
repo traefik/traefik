@@ -16,6 +16,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -63,6 +64,8 @@ type Provider struct {
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
+
+	errorDeduper *k8s.ErrorDeduper
 }
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
@@ -71,7 +74,27 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	p.errorDeduper = k8s.NewErrorDeduper()
 	return nil
+}
+
+func (p *Provider) logServiceError(logger zerolog.Logger, namespace, ingress, serviceName, servicePort, msg string, err error) {
+	if p.errorDeduper == nil {
+		p.errorDeduper = k8s.NewErrorDeduper()
+	}
+	key := fmt.Sprintf("%s:%s:%s:%s:%s:%s", ProviderName, namespace, ingress, serviceName, servicePort, err.Error())
+	shouldLog, suppressed := p.errorDeduper.ShouldLog(key)
+	if !shouldLog {
+		return
+	}
+	event := logger.Error().
+		Str("serviceName", serviceName).
+		Str("servicePort", servicePort).
+		Err(err)
+	if suppressed > 0 {
+		event = event.Int("suppressed", suppressed)
+	}
+	event.Msg(msg)
 }
 
 // ProviderName is the Kubernetes Ingress provider name.
@@ -284,19 +307,18 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
 			if err != nil {
-				logger.Error().
-					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
-					Str("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
-					Err(err).
-					Msg("Cannot create service")
+				p.logServiceError(logger, ingress.Namespace, ingress.Name,
+					ingress.Spec.DefaultBackend.Service.Name,
+					ingress.Spec.DefaultBackend.Service.Port.String(),
+					"Cannot create service", err)
 				continue
 			}
 
 			if len(service.LoadBalancer.Servers) == 0 && !p.AllowEmptyServices {
-				logger.Error().
-					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
-					Str("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
-					Msg("Skipping service: no endpoints found")
+				p.logServiceError(logger, ingress.Namespace, ingress.Name,
+					ingress.Spec.DefaultBackend.Service.Name,
+					ingress.Spec.DefaultBackend.Service.Port.String(),
+					"Skipping service: no endpoints found", errors.New("no endpoints found"))
 				continue
 			}
 
@@ -358,19 +380,18 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				service, err := p.loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
-					logger.Error().
-						Str("serviceName", pa.Backend.Service.Name).
-						Str("servicePort", pa.Backend.Service.Port.String()).
-						Err(err).
-						Msg("Cannot create service")
+					p.logServiceError(logger, ingress.Namespace, ingress.Name,
+						pa.Backend.Service.Name,
+						pa.Backend.Service.Port.String(),
+						"Cannot create service", err)
 					continue
 				}
 
 				if len(service.LoadBalancer.Servers) == 0 && !p.AllowEmptyServices {
-					logger.Error().
-						Str("serviceName", pa.Backend.Service.Name).
-						Str("servicePort", pa.Backend.Service.Port.String()).
-						Msg("Skipping service: no endpoints found")
+					p.logServiceError(logger, ingress.Namespace, ingress.Name,
+						pa.Backend.Service.Name,
+						pa.Backend.Service.Port.String(),
+						"Skipping service: no endpoints found", errors.New("no endpoints found"))
 					continue
 				}
 

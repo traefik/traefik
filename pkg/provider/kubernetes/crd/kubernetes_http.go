@@ -101,13 +101,13 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
 				if errBuild != nil {
-					logger.Error().Err(errBuild).Send()
+					p.logIngressError(logger, ingressRoute.Namespace, ingressRoute.Name, "", errBuild)
 					continue
 				}
 			case len(route.Services) == 1:
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
-					logger.Error().Err(err).Send()
+					p.logIngressError(logger, ingressRoute.Namespace, ingressRoute.Name, "", err)
 					continue
 				}
 

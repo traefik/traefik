@@ -20,6 +20,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -67,11 +68,49 @@ type Provider struct {
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
+
+	errorDeduper *k8s.ErrorDeduper
 }
 
 // Init the provider.
 func (p *Provider) Init() error {
+	p.errorDeduper = k8s.NewErrorDeduper()
 	return nil
+}
+
+func (p *Provider) logIngressError(logger zerolog.Logger, namespace, ingress, msg string, err error) {
+	if p.errorDeduper == nil {
+		p.errorDeduper = k8s.NewErrorDeduper()
+	}
+	key := fmt.Sprintf("%s:%s:%s:%s", ProviderName, namespace, ingress, err.Error())
+	shouldLog, suppressed := p.errorDeduper.ShouldLog(key)
+	if !shouldLog {
+		return
+	}
+	event := logger.Error().Err(err)
+	if suppressed > 0 {
+		event = event.Int("suppressed", suppressed)
+	}
+	event.Msg(msg)
+}
+
+func (p *Provider) logIngressServiceError(logger zerolog.Logger, namespace, ingress, serviceName, servicePort, msg string, err error) {
+	if p.errorDeduper == nil {
+		p.errorDeduper = k8s.NewErrorDeduper()
+	}
+	key := fmt.Sprintf("%s:%s:%s:%s:%s:%s", ProviderName, namespace, ingress, serviceName, servicePort, err.Error())
+	shouldLog, suppressed := p.errorDeduper.ShouldLog(key)
+	if !shouldLog {
+		return
+	}
+	event := logger.Error().
+		Str("serviceName", serviceName).
+		Str("servicePort", servicePort).
+		Err(err)
+	if suppressed > 0 {
+		event = event.Int("suppressed", suppressed)
+	}
+	event.Msg(msg)
 }
 
 // Provide allows the k8s provider to provide configurations to traefik
