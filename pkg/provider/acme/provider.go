@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v5/acme"
-	"github.com/go-acme/lego/v5/certcrypto/compat"
 	"github.com/go-acme/lego/v5/certificate"
 	"github.com/go-acme/lego/v5/challenge"
 	"github.com/go-acme/lego/v5/challenge/dns01"
@@ -284,7 +283,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		return p.client, nil
 	}
 
-	account, err := p.initAccount(ctx)
+	account, err := p.initAccount()
 	if err != nil {
 		return nil, err
 	}
@@ -388,6 +387,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	}
 
 	p.client = client
+
 	return p.client, nil
 }
 
@@ -449,10 +449,10 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	}, nil
 }
 
-func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
+func (p *Provider) initAccount() (*Account, error) {
 	if p.account == nil || len(p.account.Email) == 0 {
 		var err error
-		p.account, err = NewAccount(ctx, p.Email, p.KeyType)
+		p.account, err = NewAccount(p.Email)
 		if err != nil {
 			return nil, err
 		}
@@ -460,7 +460,7 @@ func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
 
 	// Set the KeyType if not already defined in the account
 	if len(p.account.KeyType) == 0 {
-		p.account.KeyType = compat.KeyTypeCompat(GetKeyType(ctx, p.KeyType))
+		p.account.KeyType = "4096"
 	}
 
 	return p.account, nil

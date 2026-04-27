@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-acme/lego/v5/acme"
 	"github.com/go-acme/lego/v5/certcrypto"
-	"github.com/go-acme/lego/v5/certcrypto/compat"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
@@ -19,7 +18,7 @@ type Account struct {
 	Email        string
 	Registration *Resource
 	PrivateKey   []byte
-	KeyType      compat.KeyTypeCompat
+	KeyType      string
 }
 
 type Resource struct {
@@ -33,9 +32,7 @@ const (
 )
 
 // NewAccount creates an account.
-func NewAccount(ctx context.Context, email, keyTypeValue string) (*Account, error) {
-	keyType := GetKeyType(ctx, keyTypeValue)
-
+func NewAccount(email string) (*Account, error) {
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -45,7 +42,7 @@ func NewAccount(ctx context.Context, email, keyTypeValue string) (*Account, erro
 	return &Account{
 		Email:      email,
 		PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
-		KeyType:    compat.KeyTypeCompat(keyType),
+		KeyType:    "4096",
 	}, nil
 }
 
