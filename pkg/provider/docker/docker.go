@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,15 +13,13 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/docker/cli/cli/connhelper"
-	dockercontainertypes "github.com/docker/docker/api/types/container"
-	eventtypes "github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/filters"
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
-	"github.com/docker/docker/api/types/versions"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	dockercontainertypes "github.com/moby/moby/api/types/container"
+	eventtypes "github.com/moby/moby/api/types/events"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
@@ -91,7 +88,7 @@ type dockerData struct {
 // NetworkSettings holds the networks data to the provider.
 type networkSettings struct {
 	NetworkMode dockercontainertypes.NetworkMode
-	Ports       nat.PortMap
+	Ports       networktypes.PortMap
 	Networks    map[string]*networkData
 }
 
@@ -124,7 +121,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 			defer dockerClient.Close()
 
-			serverVersion, err := dockerClient.ServerVersion(ctx)
+			serverVersion, err := dockerClient.ServerVersion(ctx, client.ServerVersionOptions{})
 			if err != nil {
 				logger.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
 				return err
@@ -191,12 +188,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					}
 					// channel closed
 				} else {
-					f := filters.NewArgs()
-					f.Add("type", "container")
-					options := eventtypes.ListOptions{
-						Filters: f,
-					}
-
 					startStopHandle := func(m eventtypes.Message) {
 						logger.Debugf("Provider event received %+v", m)
 						containers, err := p.listContainers(ctx, dockerClient)
@@ -219,16 +210,18 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						}
 					}
 
-					eventsc, errc := dockerClient.Events(ctx, options)
+					res := dockerClient.Events(ctx, client.EventsListOptions{
+						Filters: make(client.Filters).Add("type", string(eventtypes.ContainerEventType)),
+					})
 					for {
 						select {
-						case event := <-eventsc:
+						case event := <-res.Messages:
 							if event.Action == "start" ||
 								event.Action == "die" ||
 								strings.HasPrefix(string(event.Action), "health_status") {
 								startStopHandle(event)
 							}
-						case err := <-errc:
+						case err := <-res.Err:
 							if errors.Is(err, io.EOF) {
 								logger.Debug("Provider event stream closed")
 							}
@@ -265,10 +258,9 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	}
 	opts = append(opts,
 		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
 		client.WithHTTPHeaders(httpHeaders))
 
-	return client.NewClientWithOpts(opts...)
+	return client.New(opts...)
 }
 
 func (p *Provider) getClientOpts() ([]client.Opt, error) {
@@ -328,14 +320,14 @@ func (p *Provider) getClientOpts() ([]client.Opt, error) {
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, dockercontainertypes.ListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, client.ContainerListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	var inspectedContainers []dockerData
 	// get inspect containers
-	for _, container := range containerList {
+	for _, container := range containerList.Items {
 		dData := inspectContainers(ctx, dockerClient, container.ID)
 		if len(dData.Name) == 0 {
 			continue
@@ -354,7 +346,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
-	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
+	res, err := dockerClient.ContainerInspect(ctx, containerID, client.ContainerInspectOptions{})
 	if err != nil {
 		log.FromContext(ctx).Warnf("Failed to inspect container %s, error: %s", containerID, err)
 		return dockerData{}
@@ -362,8 +354,8 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 
 	// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
 	// We register only container which are running
-	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
-		return parseContainer(containerInspected)
+	if res.Container.State != nil && res.Container.State.Running {
+		return parseContainer(res.Container)
 	}
 
 	return dockerData{}
@@ -371,21 +363,18 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 
 func parseContainer(container dockercontainertypes.InspectResponse) dockerData {
 	dData := dockerData{
+		ID:              container.ID,
+		Name:            container.Name,
+		ServiceName:     container.Name, // Default ServiceName to be the container's Name.
 		NetworkSettings: networkSettings{},
 	}
 
-	if container.ContainerJSONBase != nil {
-		dData.ID = container.ContainerJSONBase.ID
-		dData.Name = container.ContainerJSONBase.Name
-		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
+	if container.HostConfig != nil {
+		dData.NetworkSettings.NetworkMode = container.HostConfig.NetworkMode
+	}
 
-		if container.ContainerJSONBase.HostConfig != nil {
-			dData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
-		}
-
-		if container.State != nil && container.State.Health != nil {
-			dData.Health = container.State.Health.Status
-		}
+	if container.State != nil && container.State.Health != nil {
+		dData.Health = string(container.State.Health.Status)
 	}
 
 	if container.Config != nil && container.Config.Labels != nil {
@@ -399,9 +388,11 @@ func parseContainer(container dockercontainertypes.InspectResponse) dockerData {
 		if container.NetworkSettings.Networks != nil {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for name, containerNetwork := range container.NetworkSettings.Networks {
-				addr := containerNetwork.IPAddress
-				if addr == "" {
-					addr = containerNetwork.GlobalIPv6Address
+				var addr string
+				if containerNetwork.IPAddress.IsValid() {
+					addr = containerNetwork.IPAddress.String()
+				} else if containerNetwork.GlobalIPv6Address.IsValid() {
+					addr = containerNetwork.GlobalIPv6Address.String()
 				}
 
 				dData.NetworkSettings.Networks[name] = &networkData{
@@ -418,17 +409,17 @@ func parseContainer(container dockercontainertypes.InspectResponse) dockerData {
 func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	logger := log.FromContext(ctx)
 
-	serviceList, err := dockerClient.ServiceList(ctx, swarmtypes.ServiceListOptions{})
+	serviceList, err := dockerClient.ServiceList(ctx, client.ServiceListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	serverVersion, err := dockerClient.ServerVersion(ctx)
+	serverVersion, err := dockerClient.ServerVersion(ctx, client.ServerVersionOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	networkListArgs := filters.NewArgs()
+	networkListArgs := client.Filters{}
 	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
 	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
 		networkListArgs.Add("scope", "swarm")
@@ -436,21 +427,21 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 		networkListArgs.Add("driver", "overlay")
 	}
 
-	networkList, err := dockerClient.NetworkList(ctx, networktypes.ListOptions{Filters: networkListArgs})
+	networkList, err := dockerClient.NetworkList(ctx, client.NetworkListOptions{Filters: networkListArgs})
 	if err != nil {
 		logger.Debugf("Failed to network inspect on client for docker, error: %s", err)
 		return nil, err
 	}
 
 	networkMap := make(map[string]*networktypes.Summary)
-	for _, network := range networkList {
+	for _, network := range networkList.Items {
 		networkMap[network.ID] = &network
 	}
 
 	var dockerDataList []dockerData
 	var dockerDataListTasks []dockerData
 
-	for _, service := range serviceList {
+	for _, service := range serviceList.Items {
 		dData, err := p.parseService(ctx, service, networkMap)
 		if err != nil {
 			logger.Errorf("Skip container %s: %v", getServiceName(dData), err)
@@ -501,21 +492,20 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
 				networkService := networkMap[virtualIP.NetworkID]
-				if networkService != nil {
-					if len(virtualIP.Addr) > 0 {
-						ip, _, _ := net.ParseCIDR(virtualIP.Addr)
-						network := &networkData{
-							Name: networkService.Name,
-							ID:   virtualIP.NetworkID,
-							Addr: ip.String(),
-						}
-						dData.NetworkSettings.Networks[network.Name] = network
-					} else {
-						logger.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
-					}
-				} else {
+				if networkService == nil {
 					logger.Debugf("Network not found, id: %s", virtualIP.NetworkID)
+					continue
 				}
+				if !virtualIP.Addr.Addr().IsValid() {
+					logger.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
+					continue
+				}
+				network := &networkData{
+					Name: networkService.Name,
+					ID:   virtualIP.NetworkID,
+					Addr: virtualIP.Addr.Addr().String(),
+				}
+				dData.NetworkSettings.Networks[network.Name] = network
 			}
 		}
 	}
@@ -525,17 +515,15 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
 	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
 ) ([]dockerData, error) {
-	serviceIDFilter := filters.NewArgs()
-	serviceIDFilter.Add("service", serviceID)
-	serviceIDFilter.Add("desired-state", "running")
-
-	taskList, err := dockerClient.TaskList(ctx, swarmtypes.TaskListOptions{Filters: serviceIDFilter})
+	taskList, err := dockerClient.TaskList(ctx, client.TaskListOptions{
+		Filters: make(client.Filters).Add("service", serviceID).Add("desired-state", "running"),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	var dockerDataList []dockerData
-	for _, task := range taskList {
+	for _, task := range taskList.Items {
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
@@ -570,11 +558,11 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 	}
 
 	if task.NodeID != "" {
-		node, _, err := dockerClient.NodeInspectWithRaw(ctx, task.NodeID)
+		res, err := dockerClient.NodeInspect(ctx, task.NodeID, client.NodeInspectOptions{})
 		if err != nil {
 			return dockerData{}, fmt.Errorf("inspecting node %s: %w", task.NodeID, err)
 		}
-		dData.NodeIP = node.Status.Addr
+		dData.NodeIP = res.Node.Status.Addr
 	}
 
 	if task.NetworksAttachments != nil {
@@ -584,11 +572,14 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 				if len(virtualIP.Addresses) > 0 {
 					// Not sure about this next loop - when would a task have multiple IP's for the same network?
 					for _, addr := range virtualIP.Addresses {
-						ip, _, _ := net.ParseCIDR(addr)
+						var ip string
+						if addr.IsValid() {
+							ip = addr.Addr().String()
+						}
 						network := &networkData{
 							ID:   virtualIP.Network.ID,
 							Name: networkService.Name,
-							Addr: ip.String(),
+							Addr: ip,
 						}
 						dData.NetworkSettings.Networks[network.Name] = network
 					}
