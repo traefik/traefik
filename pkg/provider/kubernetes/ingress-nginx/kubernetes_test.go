@@ -13569,6 +13569,16 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-limit-whitelist-rule-0-path-0-limit-rps", "default-ingress-with-limit-whitelist-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-limit-whitelist-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-whitelist",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-limit-whitelist-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -13577,6 +13587,16 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-limit-whitelist-rule-0-path-0-tls-limit-rps", "default-ingress-with-limit-whitelist-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-limit-whitelist-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-whitelist",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -13620,6 +13640,15 @@ func TestLoadIngresses(t *testing.T) {
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 								ServersTransport: "default-ingress-with-limit-whitelist",
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
 							},
 						},
 					},

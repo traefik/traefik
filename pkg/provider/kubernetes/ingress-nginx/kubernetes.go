@@ -1583,9 +1583,9 @@ func applyLimitRPMConfiguration(routerName string, ingressConfig IngressConfig, 
 	rateLimitMiddlewareName := routerName + "-limit-rpm"
 	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
 		RateLimit: &dynamic.RateLimit{
-			Average: int64(limitRPM),
-			Period:  ptypes.Duration(time.Minute),
-			Burst:   int64(limitRPM) * getLimitBurstMultiplier(ingressConfig),
+			Average:     int64(limitRPM),
+			Period:      ptypes.Duration(time.Minute),
+			Burst:       int64(limitRPM) * getLimitBurstMultiplier(ingressConfig),
 			ExcludedIPs: parseLimitWhitelist(ingressConfig.LimitWhitelist),
 		},
 	}
@@ -1602,9 +1602,9 @@ func applyLimitRPSConfiguration(routerName string, ingressConfig IngressConfig, 
 	rateLimitMiddlewareName := routerName + "-limit-rps"
 	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
 		RateLimit: &dynamic.RateLimit{
-			Average: int64(limitRPS),
-			Period:  ptypes.Duration(time.Second),
-			Burst:   int64(limitRPS) * getLimitBurstMultiplier(ingressConfig),
+			Average:     int64(limitRPS),
+			Period:      ptypes.Duration(time.Second),
+			Burst:       int64(limitRPS) * getLimitBurstMultiplier(ingressConfig),
 			ExcludedIPs: parseLimitWhitelist(ingressConfig.LimitWhitelist),
 		},
 	}
