@@ -1,18 +1,17 @@
 package docker
 
 import (
-	dockercontainertypes "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/swarm"
-	"github.com/docker/go-connections/nat"
+	"net/netip"
+
+	dockercontainertypes "github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/api/types/swarm"
 )
 
 func containerJSON(ops ...func(*dockercontainertypes.InspectResponse)) dockercontainertypes.InspectResponse {
 	c := &dockercontainertypes.InspectResponse{
-		ContainerJSONBase: &dockercontainertypes.ContainerJSONBase{
-			Name:       "fake",
-			HostConfig: &dockercontainertypes.HostConfig{},
-		},
+		Name:            "fake",
+		HostConfig:      &dockercontainertypes.HostConfig{},
 		Config:          &dockercontainertypes.Config{},
 		NetworkSettings: &dockercontainertypes.NetworkSettings{},
 	}
@@ -26,17 +25,17 @@ func containerJSON(ops ...func(*dockercontainertypes.InspectResponse)) dockercon
 
 func name(name string) func(*dockercontainertypes.InspectResponse) {
 	return func(c *dockercontainertypes.InspectResponse) {
-		c.ContainerJSONBase.Name = name
+		c.Name = name
 	}
 }
 
 func networkMode(mode string) func(*dockercontainertypes.InspectResponse) {
 	return func(c *dockercontainertypes.InspectResponse) {
-		c.ContainerJSONBase.HostConfig.NetworkMode = dockercontainertypes.NetworkMode(mode)
+		c.HostConfig.NetworkMode = dockercontainertypes.NetworkMode(mode)
 	}
 }
 
-func ports(portMap nat.PortMap) func(*dockercontainertypes.InspectResponse) {
+func ports(portMap network.PortMap) func(*dockercontainertypes.InspectResponse) {
 	return func(c *dockercontainertypes.InspectResponse) {
 		c.NetworkSettings.Ports = portMap
 	}
@@ -56,13 +55,13 @@ func withNetwork(name string, ops ...func(*network.EndpointSettings)) func(*dock
 
 func ipv4(ip string) func(*network.EndpointSettings) {
 	return func(s *network.EndpointSettings) {
-		s.IPAddress = ip
+		s.IPAddress = netip.MustParseAddr(ip).Unmap()
 	}
 }
 
 func ipv6(ip string) func(*network.EndpointSettings) {
 	return func(s *network.EndpointSettings) {
-		s.GlobalIPv6Address = ip
+		s.GlobalIPv6Address = netip.MustParseAddr(ip)
 	}
 }
 
@@ -91,20 +90,20 @@ func taskNodeID(id string) func(*swarm.Task) {
 }
 
 func taskNetworkAttachment(id, name, driver string, addresses []string) func(*swarm.Task) {
+	prefixes := make([]netip.Prefix, len(addresses))
+	for i, s := range addresses {
+		prefixes[i] = mustParseAddrOrPrefix(s)
+	}
 	return func(task *swarm.Task) {
 		task.NetworksAttachments = append(task.NetworksAttachments, swarm.NetworkAttachment{
 			Network: swarm.Network{
 				ID: id,
 				Spec: swarm.NetworkSpec{
-					Annotations: swarm.Annotations{
-						Name: name,
-					},
-					DriverConfiguration: &swarm.Driver{
-						Name: driver,
-					},
+					Annotations:         swarm.Annotations{Name: name},
+					DriverConfiguration: &swarm.Driver{Name: driver},
 				},
 			},
-			Addresses: addresses,
+			Addresses: prefixes,
 		})
 	}
 }
@@ -183,7 +182,7 @@ func virtualIP(networkID, addr string) func(*swarm.Endpoint) {
 		}
 		endpoint.VirtualIPs = append(endpoint.VirtualIPs, swarm.EndpointVirtualIP{
 			NetworkID: networkID,
-			Addr:      addr,
+			Addr:      mustParseAddrOrPrefix(addr),
 		})
 	}
 }
@@ -206,4 +205,22 @@ func modeDNSRR(spec *swarm.EndpointSpec) {
 
 func modeVIP(spec *swarm.EndpointSpec) {
 	spec.Mode = swarm.ResolutionModeVIP
+}
+
+// mustParseAddrOrPrefix parses addrOrPrefix into a [netip.Prefix].
+//
+// We should expect only IP-addresses, but for backwards-compatibility,
+// the Addresses field on [swarm.NetworkAttachment] accepts a prefix.
+func mustParseAddrOrPrefix(addrOrPrefix string) netip.Prefix {
+	if addrOrPrefix == "" {
+		return netip.Prefix{}
+	}
+	if p, err := netip.ParsePrefix(addrOrPrefix); err == nil {
+		return p
+	}
+	a := netip.MustParseAddr(addrOrPrefix)
+	if a.Is4() {
+		return netip.PrefixFrom(a, 32)
+	}
+	return netip.PrefixFrom(a, 128)
 }

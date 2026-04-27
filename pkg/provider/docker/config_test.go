@@ -1,14 +1,13 @@
 package docker
 
 import (
+	"net/netip"
 	"strconv"
 	"testing"
 
-	docker "github.com/docker/docker/api/types"
-	dockercontainertypes "github.com/docker/docker/api/types/container"
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
-	"github.com/docker/go-connections/nat"
+	dockercontainertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -31,8 +30,8 @@ func TestDefaultRule(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -90,8 +89,8 @@ func TestDefaultRule(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -151,8 +150,8 @@ func TestDefaultRule(t *testing.T) {
 						"traefik.domain": "foo.bar",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -210,8 +209,8 @@ func TestDefaultRule(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -263,8 +262,8 @@ func TestDefaultRule(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -316,8 +315,8 @@ func TestDefaultRule(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -413,8 +412,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.test": "",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -456,8 +455,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.services.test": "",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -499,8 +498,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.services.test": "",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/udp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/udp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -540,8 +539,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -598,8 +597,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -614,8 +613,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test2",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -688,8 +687,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -705,8 +704,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -768,8 +767,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -830,8 +829,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.service":                       "Service1",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -889,8 +888,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -949,8 +948,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1010,8 +1009,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service2.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1075,8 +1074,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.service": "Service1",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1135,8 +1134,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1154,8 +1153,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1204,8 +1203,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1223,8 +1222,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1242,8 +1241,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1292,8 +1291,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1311,8 +1310,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1374,8 +1373,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1441,8 +1440,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1460,8 +1459,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1530,8 +1529,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1549,8 +1548,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1613,8 +1612,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1632,8 +1631,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1651,8 +1650,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "40",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1718,8 +1717,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1737,8 +1736,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1795,8 +1794,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1814,8 +1813,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1833,8 +1832,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foobar.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1894,8 +1893,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1913,8 +1912,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1975,8 +1974,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -1993,8 +1992,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2057,8 +2056,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.wrong.label": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2118,8 +2117,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.LoadBalancer.server.port":   "8080",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2179,8 +2178,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service2.LoadBalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2241,7 +2240,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels:      map[string]string{},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{},
+						Ports: networktypes.PortMap{},
 						Networks: map[string]*networkData{
 							"bridge": {
 								Name: "bridge",
@@ -2282,7 +2281,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{},
+						Ports: networktypes.PortMap{},
 						Networks: map[string]*networkData{
 							"bridge": {
 								Name: "bridge",
@@ -2323,8 +2322,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.enable": "false",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2362,7 +2361,7 @@ func Test_buildConfiguration(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      string(dockercontainertypes.Unhealthy),
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2393,7 +2392,7 @@ func Test_buildConfiguration(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      string(dockercontainertypes.Unhealthy),
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2435,7 +2434,7 @@ func Test_buildConfiguration(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      string(dockercontainertypes.Unhealthy),
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
@@ -2469,7 +2468,7 @@ func Test_buildConfiguration(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      string(dockercontainertypes.Unhealthy),
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
@@ -2513,7 +2512,7 @@ func Test_buildConfiguration(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      string(dockercontainertypes.Unhealthy),
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
@@ -2550,7 +2549,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
-					Health: docker.Unhealthy,
+					Health: string(dockercontainertypes.Unhealthy),
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2592,8 +2591,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tags": "foo",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2636,8 +2635,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tags": "foo",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2698,8 +2697,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.routers.Test.middlewares":                "Middleware1",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2770,8 +2769,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.routers.Test.middlewares":                        "Middleware1",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2837,8 +2836,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.routers.foo.tls":  "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2897,8 +2896,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.routers.foo.entrypoints": "mydns",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -2955,8 +2954,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.routers.foo.tls": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3011,8 +3010,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3074,8 +3073,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.services.foo.loadbalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3134,8 +3133,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3155,8 +3154,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3236,8 +3235,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.services.foo.loadbalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3290,8 +3289,8 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{},
 						},
 						Networks: map[string]*networkData{
 							"bridge": {
@@ -3344,13 +3343,13 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.http.services.Test.loadbalancer.server.port": "80",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("79/tcp"): []nat.PortBinding{{
-								HostIP:   "192.168.0.1",
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("79/tcp"): []networktypes.PortBinding{{
+								HostIP:   netip.MustParseAddr("192.168.0.1"),
 								HostPort: "8080",
 							}},
-							nat.Port("80/tcp"): []nat.PortBinding{{
-								HostIP:   "192.168.0.1",
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{{
+								HostIP:   netip.MustParseAddr("192.168.0.1"),
 								HostPort: "8081",
 							}},
 						},
@@ -3414,13 +3413,13 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foobar, fiibar",
 					},
 					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("79/tcp"): []nat.PortBinding{{
-								HostIP:   "192.168.0.1",
+						Ports: networktypes.PortMap{
+							networktypes.MustParsePort("79/tcp"): []networktypes.PortBinding{{
+								HostIP:   netip.MustParseAddr("192.168.0.1"),
 								HostPort: "8080",
 							}},
-							nat.Port("80/tcp"): []nat.PortBinding{{
-								HostIP:   "192.168.0.1",
+							networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{{
+								HostIP:   netip.MustParseAddr("192.168.0.1"),
 								HostPort: "8081",
 							}},
 						},
@@ -3527,8 +3526,8 @@ func TestDockerGetIPPort(t *testing.T) {
 		{
 			desc: "label traefik.port not set, no binding, falling back on the container's IP/Port",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"8080/tcp": {},
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("8080/tcp"): {},
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13"))),
 			expected: expected{
@@ -3540,8 +3539,8 @@ func TestDockerGetIPPort(t *testing.T) {
 			desc: "label traefik.port not set, single binding with port only, falling back on the container's IP/Port",
 			container: containerJSON(
 				withNetwork("testnet", ipv4("10.11.12.13")),
-				ports(nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{
 						{
 							HostPort: "8082",
 						},
@@ -3556,10 +3555,10 @@ func TestDockerGetIPPort(t *testing.T) {
 		{
 			desc: "label traefik.port not set, binding with ip:port should create a route to the bound ip:port",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "1.2.3.4",
+							HostIP:   netip.MustParseAddr("1.2.3.4"),
 							HostPort: "8081",
 						},
 					},
@@ -3582,10 +3581,10 @@ func TestDockerGetIPPort(t *testing.T) {
 		{
 			desc: "label traefik.port set, single binding with ip:port for the label, creates the route",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"443/tcp": []nat.PortBinding{
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("443/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "5.6.7.8",
+							HostIP:   netip.MustParseAddr("5.6.7.8"),
 							HostPort: "8082",
 						},
 					},
@@ -3600,10 +3599,10 @@ func TestDockerGetIPPort(t *testing.T) {
 		{
 			desc: "label traefik.port set, no binding on the corresponding port, falling back on the container's IP/label.port",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"443/tcp": []nat.PortBinding{
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("443/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "5.6.7.8",
+							HostIP:   netip.MustParseAddr("5.6.7.8"),
 							HostPort: "8082",
 						},
 					},
@@ -3618,16 +3617,16 @@ func TestDockerGetIPPort(t *testing.T) {
 		{
 			desc: "label traefik.port set, multiple bindings on different ports, uses the label to select the correct (first) binding",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "1.2.3.4",
+							HostIP:   netip.MustParseAddr("1.2.3.4"),
 							HostPort: "8081",
 						},
 					},
-					"443/tcp": []nat.PortBinding{
+					networktypes.MustParsePort("443/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "5.6.7.8",
+							HostIP:   netip.MustParseAddr("5.6.7.8"),
 							HostPort: "8082",
 						},
 					},
@@ -3642,16 +3641,16 @@ func TestDockerGetIPPort(t *testing.T) {
 		{
 			desc: "label traefik.port set, multiple bindings on different ports, uses the label to select the correct (second) binding",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": []nat.PortBinding{
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("80/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "1.2.3.4",
+							HostIP:   netip.MustParseAddr("1.2.3.4"),
 							HostPort: "8081",
 						},
 					},
-					"443/tcp": []nat.PortBinding{
+					networktypes.MustParsePort("443/tcp"): []networktypes.PortBinding{
 						{
-							HostIP:   "5.6.7.8",
+							HostIP:   netip.MustParseAddr("5.6.7.8"),
 							HostPort: "8082",
 						},
 					},
@@ -3702,16 +3701,16 @@ func TestDockerGetPort(t *testing.T) {
 		},
 		{
 			desc: "binding, no server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"80/tcp": {},
+			container: containerJSON(ports(networktypes.PortMap{
+				networktypes.MustParsePort("80/tcp"): {},
 			})),
 			expected: "80",
 		},
 		{
 			desc: "binding, multiple ports, no server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"80/tcp":  {},
-				"443/tcp": {},
+			container: containerJSON(ports(networktypes.PortMap{
+				networktypes.MustParsePort("80/tcp"):  {},
+				networktypes.MustParsePort("443/tcp"): {},
 			})),
 			expected: "80",
 		},
@@ -3724,17 +3723,17 @@ func TestDockerGetPort(t *testing.T) {
 		{
 			desc: "binding, server port label",
 			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": {},
+				ports(networktypes.PortMap{
+					networktypes.MustParsePort("80/tcp"): {},
 				})),
 			serverPort: "8080",
 			expected:   "8080",
 		},
 		{
 			desc: "binding, multiple ports, server port label",
-			container: containerJSON(ports(nat.PortMap{
-				"8080/tcp": {},
-				"80/tcp":   {},
+			container: containerJSON(ports(networktypes.PortMap{
+				networktypes.MustParsePort("8080/tcp"): {},
+				networktypes.MustParsePort("80/tcp"):   {},
 			})),
 			serverPort: "8080",
 			expected:   "8080",
@@ -3886,7 +3885,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			expected: "10.11.12.13",
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -3904,10 +3903,10 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			expected: "10.11.12.99",
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foonet",
+					Network: networktypes.Network{Name: "foonet"},
 				},
 				"2": {
-					Name: "barnet",
+					Network: networktypes.Network{Name: "barnet"},
 				},
 			},
 		},

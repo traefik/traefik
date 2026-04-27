@@ -1,14 +1,17 @@
 package docker
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
-	"github.com/docker/go-connections/nat"
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -103,7 +106,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		}
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
+	if container.Health != "" && container.Health != string(containertypes.Healthy) {
 		return nil
 	}
 
@@ -127,7 +130,7 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 		}
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
+	if container.Health != "" && container.Health != string(containertypes.Healthy) {
 		return nil
 	}
 
@@ -153,7 +156,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		}
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
+	if container.Health != "" && container.Health != string(containertypes.Healthy) {
 		return nil
 	}
 
@@ -185,7 +188,7 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 		return false
 	}
 
-	if !p.AllowEmptyServices && container.Health != "" && container.Health != dockertypes.Healthy {
+	if !p.AllowEmptyServices && container.Health != "" && container.Health != string(containertypes.Healthy) {
 		logger.Debug("Filtering unhealthy or starting container")
 		return false
 	}
@@ -286,10 +289,12 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 		switch {
 		case err != nil:
 			logger.Infof("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
-		case portBinding.HostIP == "0.0.0.0" || len(portBinding.HostIP) == 0:
+		case portBinding.HostIP.IsUnspecified() || !portBinding.HostIP.IsValid():
 			logger.Infof("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
 		default:
-			ip = portBinding.HostIP
+			if hostIP := portBinding.HostIP; hostIP.IsValid() {
+				ip = portBinding.HostIP.String()
+			}
 			port = portBinding.HostPort
 			usedBound = true
 		}
@@ -345,7 +350,7 @@ func (p *Provider) getIPAddress(ctx context.Context, container dockerData) strin
 		}
 
 		connectedContainer := container.NetworkSettings.NetworkMode.ConnectedContainer()
-		containerInspected, err := dockerClient.ContainerInspect(context.Background(), connectedContainer)
+		res, err := dockerClient.ContainerInspect(context.Background(), connectedContainer, client.ContainerInspectOptions{})
 		if err != nil {
 			logger.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, connectedContainer, err)
 			return ""
@@ -353,10 +358,10 @@ func (p *Provider) getIPAddress(ctx context.Context, container dockerData) strin
 
 		// Check connected container for traefik.docker.network, falling back to
 		// the network specified on the current container.
-		containerParsed := parseContainer(containerInspected)
+		containerParsed := parseContainer(res.Container)
 		extraConf, err := p.getConfiguration(containerParsed)
 		if err != nil {
-			logger.Warnf("Unable to get IP address for container %s : failed to get extra configuration for container %s: %s", container.Name, containerInspected.Name, err)
+			logger.Warnf("Unable to get IP address for container %s : failed to get extra configuration for container %s: %s", container.Name, res.Container.Name, err)
 			return ""
 		}
 
@@ -379,10 +384,10 @@ func (p *Provider) getIPAddress(ctx context.Context, container dockerData) strin
 	return ""
 }
 
-func (p *Provider) getPortBinding(container dockerData, serverPort string) (*nat.PortBinding, error) {
+func (p *Provider) getPortBinding(container dockerData, serverPort string) (*networktypes.PortBinding, error) {
 	port := getPort(container, serverPort)
 	for netPort, portBindings := range container.NetworkSettings.Ports {
-		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
+		if netPort.Port() == port && (netPort.Proto() == networktypes.TCP || netPort.Proto() == networktypes.UDP) {
 			for _, p := range portBindings {
 				return &p, nil
 			}
@@ -396,22 +401,20 @@ func getPort(container dockerData, serverPort string) string {
 	if len(serverPort) > 0 {
 		return serverPort
 	}
+	if len(container.NetworkSettings.Ports) == 0 {
+		return ""
+	}
 
-	var ports []nat.Port
+	var ports []networktypes.Port
 	for port := range container.NetworkSettings.Ports {
 		ports = append(ports, port)
 	}
 
-	less := func(i, j nat.Port) bool {
-		return i.Int() < j.Int()
-	}
-	nat.Sort(ports, less)
+	slices.SortFunc(ports, func(a, b networktypes.Port) int {
+		return cmp.Compare(a.Num(), b.Num())
+	})
 
-	if len(ports) > 0 {
-		return ports[0].Port()
-	}
-
-	return ""
+	return ports[0].Port()
 }
 
 func getServiceName(container dockerData) string {
