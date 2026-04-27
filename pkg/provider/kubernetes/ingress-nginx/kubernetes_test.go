@@ -9167,13 +9167,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(int64(defaultProxyBodySize)),
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(int64(defaultProxyBodySize)),
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 					},
