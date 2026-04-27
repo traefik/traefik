@@ -26,10 +26,6 @@ THE SOFTWARE.
 
 package v1alpha1
 
-import (
-	dynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
-)
-
 // RouteApplyConfiguration represents a declarative configuration of the Route type for use
 // with apply.
 //
@@ -58,7 +54,7 @@ type RouteApplyConfiguration struct {
 	Middlewares []MiddlewareRefApplyConfiguration `json:"middlewares,omitempty"`
 	// Observability defines the observability configuration for a router.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
-	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty"`
+	Observability *RouterObservabilityConfigApplyConfiguration `json:"observability,omitempty"`
 }
 
 // RouteApplyConfiguration constructs a declarative configuration of the Route type for use with
@@ -128,7 +124,7 @@ func (b *RouteApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyC
 // WithObservability sets the Observability field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Observability field is set to the value of the last call.
-func (b *RouteApplyConfiguration) WithObservability(value dynamic.RouterObservabilityConfig) *RouteApplyConfiguration {
-	b.Observability = &value
+func (b *RouteApplyConfiguration) WithObservability(value *RouterObservabilityConfigApplyConfiguration) *RouteApplyConfiguration {
+	b.Observability = value
 	return b
 }

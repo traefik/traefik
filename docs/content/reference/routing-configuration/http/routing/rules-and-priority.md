@@ -24,7 +24,7 @@ The table below lists all the available matchers:
 |-----------------------------------------------------------------|:-------------------------------------------------------------------------------|
 | <a id="opt-Headerkey-value" href="#opt-Headerkey-value" title="#opt-Headerkey-value">[```Header(`key`, `value`)```](#header-and-headerregexp)</a> | Matches requests containing a header named `key` set to `value`.               |
 | <a id="opt-HeaderRegexpkey-regexp" href="#opt-HeaderRegexpkey-regexp" title="#opt-HeaderRegexpkey-regexp">[```HeaderRegexp(`key`, `regexp`)```](#header-and-headerregexp)</a> | Matches requests containing a header named `key` matching `regexp`.            |
-| <a id="opt-Hostdomain" href="#opt-Hostdomain" title="#opt-Hostdomain">[```Host(`domain`)```](#host-and-hostregexp)</a> | Matches requests host set to `domain`.                                         |
+| <a id="opt-Hostdomain" href="#opt-Hostdomain" title="#opt-Hostdomain">[```Host(`domain`)```](#host-and-hostregexp)</a> | Matches requests host set to `domain`. Supports wildcard subdomain matching (e.g. `*.example.com`). |
 | <a id="opt-HostRegexpregexp" href="#opt-HostRegexpregexp" title="#opt-HostRegexpregexp">[```HostRegexp(`regexp`)```](#host-and-hostregexp)</a> | Matches requests host matching `regexp`.                                       |
 | <a id="opt-Methodmethod" href="#opt-Methodmethod" title="#opt-Methodmethod">[```Method(`method`)```](#method)</a> | Matches requests method set to `method`.                                       |
 | <a id="opt-Pathpath" href="#opt-Pathpath" title="#opt-Pathpath">[```Path(`path`)```](#path-pathprefix-and-pathregexp)</a> | Matches requests path set to `path`.                                           |
@@ -53,6 +53,15 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
 If no `Host` is set in the request URL (for example, it's an IP address), these matchers will look at the `Host` header.
 
 These matchers will match the request's host in lowercase.
+
+!!! info "Wildcard subdomain matching"
+
+    The `Host` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
+    It should be preferred over the `HostRegexp` matcher as it allows attaching a TLS option and is more efficient.
+
+    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.    
+
+    This is only available with the **v3 rule syntax** (the default).
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
@@ -231,6 +240,12 @@ Traefik reserves a range of priorities for its internal routers, the maximum use
 
 - `(MaxInt32 - 1000)` = `2147482647` for 32-bit platforms,
 - `(MaxInt64 - 1000)` = `9223372036854774807` for 64-bit platforms.
+
+!!! info "Providers Precedence"
+
+    When two routes from **different providers** share the same numeric priority,
+    Traefik uses the [`providers.precedence`](../../../install-configuration/providers/overview.md#providers-precedence) install configuration option to determine which route takes precedence.
+    The provider listed first in `precedence` wins the tie.
 
 ### Example
 

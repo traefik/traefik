@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"net/url"
 	"sort"
+	"time"
 )
 
 const (
@@ -14,6 +15,9 @@ const (
 const (
 	ascendantSorting  = "asc"
 	descendantSorting = "desc"
+
+	sortFieldName   = "name"
+	sortFieldStatus = "status"
 )
 
 type orderedWithName interface {
@@ -31,6 +35,14 @@ type orderedRouter interface {
 	entryPointsCount() int
 }
 
+type orderedCertificate interface {
+	orderedWithName
+
+	status() string
+	issuer() string
+	validUntil() time.Time
+}
+
 func sortRouters[T orderedRouter](values url.Values, routers []T) {
 	sortBy := values.Get(sortByParam)
 
@@ -40,7 +52,7 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 	}
 
 	switch sortBy {
-	case "name":
+	case sortFieldName:
 		sortByName(direction, routers)
 
 	case "provider":
@@ -49,7 +61,7 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 	case "priority":
 		sortByFunc(direction, routers, func(i int) int { return routers[i].priority() })
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, routers, func(i int) string { return routers[i].status() })
 
 	case "rule":
@@ -170,7 +182,7 @@ func sortServices[T orderedService](values url.Values, services []T) {
 	}
 
 	switch sortBy {
-	case "name":
+	case sortFieldName:
 		sortByName(direction, services)
 
 	case "type":
@@ -182,7 +194,7 @@ func sortServices[T orderedService](values url.Values, services []T) {
 	case "provider":
 		sortByFunc(direction, services, func(i int) string { return services[i].provider() })
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, services, func(i int) string { return services[i].status() })
 
 	default:
@@ -291,7 +303,7 @@ func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
 	}
 
 	switch sortBy {
-	case "name":
+	case sortFieldName:
 		sortByName(direction, middlewares)
 
 	case "type":
@@ -300,7 +312,7 @@ func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
 	case "provider":
 		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].provider() })
 
-	case "status":
+	case sortFieldStatus:
 		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].status() })
 
 	default:
@@ -338,6 +350,56 @@ func (m tcpMiddlewareRepresentation) provider() string {
 
 func (m tcpMiddlewareRepresentation) status() string {
 	return m.Status
+}
+
+func sortCertificates[T orderedCertificate](values url.Values, certificates []T) {
+	sortBy := values.Get(sortByParam)
+
+	direction := values.Get(directionParam)
+	if direction == "" {
+		direction = ascendantSorting
+	}
+
+	switch sortBy {
+	case sortFieldName, "cn":
+		sortByName(direction, certificates)
+
+	case sortFieldStatus:
+		sortByFunc(direction, certificates, func(i int) string { return certificates[i].status() })
+
+	case "issuer":
+		sortByFunc(direction, certificates, func(i int) string { return certificates[i].issuer() })
+
+	case "validUntil":
+		sortByTime(direction, certificates, func(i int) time.Time { return certificates[i].validUntil() })
+
+	default:
+		sortByName(direction, certificates)
+	}
+}
+
+func sortByTime[T orderedWithName](direction string, results []T, fn func(int) time.Time) {
+	// Ascending
+	if direction == ascendantSorting {
+		sort.Slice(results, func(i, j int) bool {
+			ti, tj := fn(i), fn(j)
+			if ti.Equal(tj) {
+				return results[i].name() < results[j].name()
+			}
+			return ti.Before(tj)
+		})
+
+		return
+	}
+
+	// Descending
+	sort.Slice(results, func(i, j int) bool {
+		ti, tj := fn(i), fn(j)
+		if ti.Equal(tj) {
+			return results[i].name() > results[j].name()
+		}
+		return ti.After(tj)
+	})
 }
 
 func sortByName[T orderedWithName](direction string, results []T) {

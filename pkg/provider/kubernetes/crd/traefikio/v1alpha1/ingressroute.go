@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -54,7 +55,22 @@ type Route struct {
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 	// Observability defines the observability configuration for a router.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
-	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty"`
+	Observability *RouterObservabilityConfig `json:"observability,omitempty"`
+}
+
+// RouterObservabilityConfig holds the observability configuration for a router.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
+type RouterObservabilityConfig struct {
+	// AccessLogs enables access logs for this router.
+	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	// Metrics enables metrics for this router.
+	Metrics *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	// Tracing enables tracing for this router.
+	Tracing *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	// TraceVerbosity defines the verbosity level of the tracing for this router.
+	// +kubebuilder:validation:Enum=minimal;detailed
+	// +kubebuilder:default=minimal
+	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // TLS holds the TLS configuration.
