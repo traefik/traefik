@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"net/http"
 	"testing"
 	"time"
@@ -213,6 +214,156 @@ func TestHTTP30RTT(t *testing.T) {
 
 	// 0RTT need to be false.
 	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
+}
+
+func TestHTTP3_WithAWSNLBGenerator(t *testing.T) {
+	t.Setenv("AWS_LBC_QUIC_SERVER_ID", "oQ==")
+
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "web-quic-nlb", &static.EntryPoint{
+		Address:          "127.0.0.1:8091",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"h3"},
+	})
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	// Wait for listener readiness
+	time.Sleep(time.Second)
+
+	serverAddr := entryPoint.listener.Addr().String()
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	tlsConf := &tls.Config{
+		RootCAs:    certPool,
+		ServerName: "example.com",
+		NextProtos: []string{"h3"},
+	}
+
+	gets := make(chan string, 100)
+	puts := make(chan string, 100)
+	cache := newClientSessionCache(tls.NewLRUClientSessionCache(10), gets, puts)
+	tlsConf.ClientSessionCache = cache
+
+	earlyConnection, err := quic.DialAddrEarly(t.Context(), serverAddr, tlsConf, &quic.Config{})
+	require.NoError(t, err, "First connection failed - Server might be crashing with custom generator")
+
+	t.Cleanup(func() {
+		_ = earlyConnection.CloseWithError(0, "")
+		entryPoint.Shutdown(ctx)
+	})
+
+	<-earlyConnection.HandshakeComplete()
+	require.False(t, earlyConnection.ConnectionState().Used0RTT)
+
+	earlyConnection2, err := quic.DialAddrEarly(t.Context(), serverAddr, tlsConf, &quic.Config{})
+	require.NoError(t, err)
+	defer func() {
+		_ = earlyConnection2.CloseWithError(0, "")
+	}()
+
+	<-earlyConnection2.HandshakeComplete()
+	assert.False(t, earlyConnection2.ConnectionState().Used0RTT)
+}
+
+func TestAWSNLBConnectionIDGenerator_Logic(t *testing.T) {
+	tests := []struct {
+		name          string
+		envValue      string
+		expectSuccess bool
+		expectedBytes []byte
+	}{
+		{
+			name:          "Standard Base64",
+			envValue:      "oQ==",
+			expectSuccess: true,
+			expectedBytes: []byte{0xa1},
+		},
+		{
+			name:          "Valid Base64 with slash",
+			envValue:      "////",
+			expectSuccess: true,
+			expectedBytes: []byte{0xff, 0xff, 0xff},
+		},
+		{
+			name:          "Valid Base64 no plus/slash",
+			envValue:      "sg==",
+			expectSuccess: true,
+			expectedBytes: []byte{0xb2},
+		},
+		{
+			name:          "Multi-byte ID",
+			envValue:      "EjSrzQ==",
+			expectSuccess: true,
+			expectedBytes: []byte{0x12, 0x34, 0xab, 0xcd},
+		},
+		{
+			name:          "Invalid Base64",
+			envValue:      "not-base64!",
+			expectSuccess: false,
+			expectedBytes: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			decodedID, err := base64.StdEncoding.DecodeString(tt.envValue)
+
+			if !tt.expectSuccess {
+				require.Error(t, err, "Invalid base64 string should result in an error")
+				return
+			}
+			require.NoError(t, err, "Valid base64 string should be decoded without error")
+			assert.Equal(t, tt.expectedBytes, decodedID, "Decoded bytes do not match expected value")
+
+			generator := &awsNlbConnectionIDGenerator{
+				ServerID: decodedID,
+			}
+
+			assert.Equal(t, 20, generator.ConnectionIDLen(), "AWS NLB implies a fixed length of 20 bytes")
+
+			for range 5 {
+				connID, err := generator.GenerateConnectionID()
+				require.NoError(t, err)
+
+				assert.Equal(t, 20, connID.Len(), "Generated Connection ID must be exactly 20 bytes")
+
+				connIDBytes := connID.Bytes()
+				prefixLen := len(tt.expectedBytes)
+
+				assert.Equal(t, tt.expectedBytes, connIDBytes[:prefixLen], "Connection ID must start with the correct ServerID prefix")
+			}
+		})
+	}
 }
 
 type clientSessionCache struct {
