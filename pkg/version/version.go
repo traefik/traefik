@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v72/github"
 	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/rs/zerolog/log"

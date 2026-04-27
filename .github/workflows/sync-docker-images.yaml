@@ -17,11 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
-      
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: go.mod
+
       - name: Sync
-        run: |
-          EXCLUDED_TAGS="1.7.9-alpine v1.0.0-beta.392 v1.0.0-beta.404 v1.0.0-beta.704 v1.0.0-rc1 v1.7.9-alpine"
-          EXCLUDED_REGEX=$(echo $EXCLUDED_TAGS | sed 's/ /|/g')
-          diff <(crane ls traefik) <(crane ls ghcr.io/traefik/traefik) | grep '^<' | awk '{print $2}' | while read -r tag; do [[ "$tag" =~ ^($EXCLUDED_REGEX)$ ]] || (echo "Processing image: traefik:$tag"; crane cp "traefik:$tag" "ghcr.io/traefik/traefik:$tag"); done
-          crane cp traefik:latest ghcr.io/traefik/traefik:latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: go run ./internal/syncimage/ -dry-run=false
