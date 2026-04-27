@@ -39,7 +39,10 @@ import (
 
 var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
-const tailscaleSecretFilePath = "tailscale.secret"
+const (
+	tailscaleSecretFilePath = "tailscale.secret"
+	k3sImage                = "docker.io/rancher/k3s:v1.21.14-k3s1"
+)
 
 type composeConfig struct {
 	Services map[string]composeService `yaml:"services"`

@@ -64,6 +64,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154 // No tag on the repo.
 	github.com/testcontainers/testcontainers-go v0.42.0
+	github.com/testcontainers/testcontainers-go/modules/k3s v0.42.0
 	github.com/traefik/paerser v0.2.2
 	github.com/traefik/yaegi v0.16.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
@@ -375,6 +376,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
 	go.uber.org/zap v1.27.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
