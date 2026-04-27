@@ -340,6 +340,7 @@
         average = 42
         period = "42s"
         burst = 42
+        excludedIPs = ["foobar", "foobar"]
         [http.middlewares.Middleware19.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true

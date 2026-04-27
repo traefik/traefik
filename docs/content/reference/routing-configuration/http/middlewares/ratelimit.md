@@ -18,6 +18,7 @@ For a rate below 1 req/s, define a `period` larger than a second
 ```yaml tab="Structured (YAML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
+# Requests from 10.0.0.0/24 and 192.168.1.1 bypass rate limiting entirely.
 # Redis distributed rate limiting is configured with all available options.
 http:
   middlewares:
@@ -26,6 +27,9 @@ http:
         average: 100
         period: 1s
         burst: 200
+        excludedIPs:
+          - "10.0.0.0/24"
+          - "192.168.1.1"
         redis:
           endpoints:
             - "redis-primary.example.com:6379"
@@ -49,12 +53,14 @@ http:
 ```toml tab="Structured (TOML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
+# Requests from 10.0.0.0/24 and 192.168.1.1 bypass rate limiting entirely.
 # Redis distributed rate limiting is configured with all available options.
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     average = 100
     period = "1s"
     burst = 200
+    excludedIPs = ["10.0.0.0/24", "192.168.1.1"]
     [http.middlewares.test-ratelimit.rateLimit.redis]
       endpoints = ["redis-primary.example.com:6379", "redis-replica.example.com:6379"]
       username = "ratelimit-user"
@@ -76,11 +82,13 @@ http:
 ```yaml tab="Labels"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
+# Requests from 10.0.0.0/24 and 192.168.1.1 bypass rate limiting entirely.
 # Redis distributed rate limiting is configured with all available options.
 labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1s"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.excludedips=10.0.0.0/24,192.168.1.1"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password"
@@ -100,12 +108,14 @@ labels:
 ```json tab="Tags"
 // Here, an average of 100 requests per second is allowed.
 // In addition, a burst of 200 requests is allowed.
+// Requests from 10.0.0.0/24 and 192.168.1.1 bypass rate limiting entirely.
 // Redis distributed rate limiting is configured with all available options.
 {
   "Tags": [
     "traefik.http.middlewares.test-ratelimit.ratelimit.average=100",
     "traefik.http.middlewares.test-ratelimit.ratelimit.period=1s",
     "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.excludedips=10.0.0.0/24,192.168.1.1",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password",
@@ -127,6 +137,7 @@ labels:
 ```yaml tab="Kubernetes"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
+# Requests from 10.0.0.0/24 and 192.168.1.1 bypass rate limiting entirely.
 # Redis distributed rate limiting is configured with all available options.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -137,6 +148,9 @@ spec:
     average: 100
     period: 1s
     burst: 200
+    excludedIPs:
+      - "10.0.0.0/24"
+      - "192.168.1.1"
     redis:
       endpoints:
         - "redis-primary.example.com:6379"
@@ -196,6 +210,7 @@ data:
 | <a id="opt-sourceCriterion-ipStrategy-depth" href="#opt-sourceCriterion-ipStrategy-depth" title="#opt-sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`depth`](#sourcecriterionipstrategydepth) below. | 0      | No      |
 | <a id="opt-sourceCriterion-ipStrategy-excludedIPs" href="#opt-sourceCriterion-ipStrategy-excludedIPs" title="#opt-sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows scanning the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
 | <a id="opt-sourceCriterion-ipStrategy-ipv6Subnet" href="#opt-sourceCriterion-ipStrategy-ipv6Subnet" title="#opt-sourceCriterion-ipStrategy-ipv6Subnet">`sourceCriterion.ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#sourcecriterionipstrategyipv6subnet) below. |       | No      |
+| <a id="opt-excludedIPs" href="#opt-excludedIPs" title="#opt-excludedIPs">`excludedIPs`</a> | List of IPs and CIDR ranges that are **excluded from rate limiting**. Requests from these sources bypass the rate limiter and are forwarded directly.<br />Accepts individual IPs (e.g. `192.168.1.1`) and CIDR notation (e.g. `10.0.0.0/24`).<br />Note: this is distinct from [`sourceCriterion.ipStrategy.excludedIPs`](#sourcecriterionipstrategyexcludedips), which controls IP identification strategy and does **not** exempt IPs from rate limiting. | [] | No |
 | <a id="opt-redis" href="#opt-redis" title="#opt-redis">`redis`</a> | The `redis` configuration enables distributed rate limiting by using Redis to store rate limit tokens across multiple Traefik instances. This allows you to enforce consistent rate limits across a cluster of Traefik proxies. <br />When Redis is not configured, Traefik uses in-memory storage for rate limiting, which works only for the individual Traefik instance.|       | No      |
 | <a id="opt-redis-endpoints" href="#opt-redis-endpoints" title="#opt-redis-endpoints">`redis.endpoints`</a> | List of Redis server endpoints for distributed rate limiting. You can specify multiple endpoints for Redis cluster or high availability setups. | "127.0.0.1:6379" | No |
 | <a id="opt-redis-username" href="#opt-redis-username" title="#opt-redis-username">`redis.username`</a> | Username for Redis authentication. | "" | No |

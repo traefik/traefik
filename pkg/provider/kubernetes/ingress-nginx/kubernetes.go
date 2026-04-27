@@ -1583,9 +1583,10 @@ func applyLimitRPMConfiguration(routerName string, ingressConfig IngressConfig, 
 	rateLimitMiddlewareName := routerName + "-limit-rpm"
 	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
 		RateLimit: &dynamic.RateLimit{
-			Average: int64(limitRPM),
-			Period:  ptypes.Duration(time.Minute),
-			Burst:   int64(limitRPM) * getLimitBurstMultiplier(ingressConfig),
+			Average:     int64(limitRPM),
+			Period:      ptypes.Duration(time.Minute),
+			Burst:       int64(limitRPM) * getLimitBurstMultiplier(ingressConfig),
+			ExcludedIPs: parseLimitWhitelist(ingressConfig.LimitWhitelist),
 		},
 	}
 
@@ -1601,13 +1602,29 @@ func applyLimitRPSConfiguration(routerName string, ingressConfig IngressConfig, 
 	rateLimitMiddlewareName := routerName + "-limit-rps"
 	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
 		RateLimit: &dynamic.RateLimit{
-			Average: int64(limitRPS),
-			Period:  ptypes.Duration(time.Second),
-			Burst:   int64(limitRPS) * getLimitBurstMultiplier(ingressConfig),
+			Average:     int64(limitRPS),
+			Period:      ptypes.Duration(time.Second),
+			Burst:       int64(limitRPS) * getLimitBurstMultiplier(ingressConfig),
+			ExcludedIPs: parseLimitWhitelist(ingressConfig.LimitWhitelist),
 		},
 	}
 
 	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
+}
+
+func parseLimitWhitelist(whitelist *string) []string {
+	if whitelist == nil {
+		return nil
+	}
+
+	var result []string
+	for cidr := range strings.SplitSeq(*whitelist, ",") {
+		if cidr = strings.TrimSpace(cidr); cidr != "" {
+			result = append(result, cidr)
+		}
+	}
+
+	return result
 }
 
 func applyRedirect(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
