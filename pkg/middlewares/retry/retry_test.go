@@ -106,20 +106,15 @@ func TestRetry(t *testing.T) {
 
 			retryAttempts := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				// This signals that a connection will be established with the backend
-				// to enable the Retry middleware mechanism.
-				shouldRetry := ContextShouldRetry(req.Context())
-				if shouldRetry != nil {
-					shouldRetry(true)
-				}
 
 				retryAttempts++
 
 				if retryAttempts > test.amountFaultyEndpoints {
 					// This signals that request headers have been sent to the backend.
-					if shouldRetry != nil {
-						shouldRetry(false)
-					}
+					trace := httptrace.ContextClientTrace(req.Context())
+					require.NotNil(t, trace)
+
+					trace.WroteHeaders()
 
 					rw.WriteHeader(http.StatusOK)
 					return
@@ -129,13 +124,13 @@ func TestRetry(t *testing.T) {
 			})
 
 			retryListener := &countingRetryListener{}
-			retry, err := New(t.Context(), next, test.config, retryListener, "traefikTest")
+			retryHandler, err := New(t.Context(), WrapHandler(next), test.config, retryListener, "traefikTest")
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
 
-			retry.ServeHTTP(recorder, req)
+			retryHandler.ServeHTTP(recorder, req)
 
 			assert.Equal(t, test.wantResponseStatus, recorder.Code)
 			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
@@ -145,11 +140,17 @@ func TestRetry(t *testing.T) {
 
 func TestRetryEmptyServerList(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		// This signals that request headers have been sent to the backend.
+		trace := httptrace.ContextClientTrace(r.Context())
+		require.NotNil(t, trace)
+
+		trace.WroteHeaders()
+
 		rw.WriteHeader(http.StatusServiceUnavailable)
 	})
 
 	retryListener := &countingRetryListener{}
-	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 3}, retryListener, "traefikTest")
+	retry, err := New(t.Context(), WrapHandler(next), dynamic.Retry{Attempts: 3}, retryListener, "traefikTest")
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
@@ -506,10 +507,10 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Status:              []string{"502"},
 				MaxRequestBodyBytes: ptr.To[int64](8),
 			},
-			responseStatusCodes: []int{http.StatusOK},
+			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
 			wantRetryAttempts:   0, // Should not retry because body is too large to buffer
-			wantResponseStatus:  http.StatusRequestEntityTooLarge,
+			wantResponseStatus:  http.StatusBadGateway,
 		},
 		{
 			desc: "retry with timeout stops retries early",
@@ -761,7 +762,6 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 
 	retry.ServeHTTP(recorder, req)
 
-	// Should return 413 Request Entity Too Large when body is too large
-	assert.Equal(t, http.StatusRequestEntityTooLarge, recorder.Code)
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
 	assert.Equal(t, 0, retryListener.timesCalled)
 }
