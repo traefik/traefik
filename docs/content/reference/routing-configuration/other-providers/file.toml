@@ -421,6 +421,8 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
       [http.serversTransports.ServersTransport0.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
@@ -448,6 +450,8 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
       [http.serversTransports.ServersTransport1.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
