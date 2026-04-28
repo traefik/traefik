@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog/log"
-	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -110,7 +108,7 @@ func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Co
 		for _, loc := range srv.Locations {
 			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
 				if _, exists := conf.HTTP.ServersTransports[loc.ServersTransportName]; !exists {
-					conf.HTTP.ServersTransports[loc.ServersTransportName] = buildServersTransport(*loc.ServersTransport)
+					conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
 				}
 			}
 
@@ -275,33 +273,6 @@ func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Co
 	}
 
 	return conf
-}
-
-func buildServersTransport(nst serversTransport) *dynamic.ServersTransport {
-	st := &dynamic.ServersTransport{
-		ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-			DialTimeout:     ptypes.Duration(time.Duration(nst.DialTimeoutSeconds) * time.Second),
-			ReadTimeout:     ptypes.Duration(time.Duration(nst.ReadTimeoutSeconds) * time.Second),
-			WriteTimeout:    ptypes.Duration(time.Duration(nst.WriteTimeoutSeconds) * time.Second),
-			IdleConnTimeout: ptypes.Duration(time.Duration(nst.IdleConnTimeoutSec) * time.Second),
-		},
-		DisableHTTP2: nst.DisableHTTP2,
-	}
-	if !nst.HTTPS {
-		return st
-	}
-	st.ServerName = nst.ServerName
-	st.InsecureSkipVerify = nst.InsecureSkipVerify
-	if len(nst.RootCA) > 0 {
-		st.RootCAs = []types.FileOrContent{types.FileOrContent(nst.RootCA)}
-	}
-	if len(nst.CertPEM) > 0 && len(nst.KeyPEM) > 0 {
-		st.Certificates = []tls.Certificate{{
-			CertFile: types.FileOrContent(nst.CertPEM),
-			KeyFile:  types.FileOrContent(nst.KeyPEM),
-		}}
-	}
-	return st
 }
 
 func buildService(backend *backend, serversTransportName string) *dynamic.Service {

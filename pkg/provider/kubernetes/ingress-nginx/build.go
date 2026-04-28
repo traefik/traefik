@@ -9,11 +9,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -302,8 +305,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
 			continue
 		}
-		nstTransport := nst.transport
-
 		// Resolve TLS option (auth-tls-secret).
 		var tlsOptionName string
 		var tlsOption *tlsOption
@@ -378,7 +379,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					PathType:             pa.PathType,
 					BackendName:          backendName,
 					ServersTransportName: nst.name,
-					ServersTransport:     &nstTransport,
+					ServersTransport:     nst.ServersTransport,
 					LocationIndex:        pi,
 					RuleIndex:            ri,
 					Config:               ing.config,
@@ -547,26 +548,29 @@ type resolvedAddress struct {
 	fenced  bool
 }
 
-type namedTransport struct {
-	name      string
-	transport serversTransport
+type namedServersTransport struct {
+	*dynamic.ServersTransport
+
+	name string
 }
 
-func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedTransport, error) {
-	nst := namedTransport{
+func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
+	nst := namedServersTransport{
 		name: provider.Normalize(namespace + "-" + name),
-		transport: serversTransport{
-			DialTimeoutSeconds:  ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout),
-			ReadTimeoutSeconds:  ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout),
-			WriteTimeoutSeconds: ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout),
-			IdleConnTimeoutSec:  p.UpstreamKeepaliveTimeout,
+		ServersTransport: &dynamic.ServersTransport{
+			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
+				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
+				WriteTimeout:    ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)) * time.Second),
+				IdleConnTimeout: ptypes.Duration(time.Duration(p.UpstreamKeepaliveTimeout) * time.Second),
+			},
 		},
 	}
 
 	if proxyHTTPVersion := ptr.Deref(cfg.ProxyHTTPVersion, ""); proxyHTTPVersion != "" {
 		switch proxyHTTPVersion {
 		case "1.1":
-			nst.transport.DisableHTTP2 = true
+			nst.DisableHTTP2 = true
 		case "1.0":
 			log.Ctx(ctx).Warn().Msg("Value '1.0' is not supported with proxy-http-version, ignoring")
 		default:
@@ -578,29 +582,34 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 		return nst, nil
 	}
 
-	nst.transport.HTTPS = true
-	nst.transport.ServerName = ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, ""))
-	nst.transport.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on"
+	nst.ServerName = ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, ""))
+	nst.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on"
 
 	if sslSecret := ptr.Deref(cfg.ProxySSLSecret, ""); sslSecret != "" {
 		parts := strings.Split(sslSecret, "/")
 		if len(parts) != 2 {
-			return namedTransport{}, fmt.Errorf("malformed proxy SSL secret: %s", sslSecret)
+			return namedServersTransport{}, fmt.Errorf("malformed proxy SSL secret: %s", sslSecret)
 		}
 
 		secretNamespace, secretName := parts[0], parts[1]
 		if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
-			return namedTransport{}, fmt.Errorf("cross-namespace proxy SSL secret not allowed: %s/%s", secretNamespace, secretName)
+			return namedServersTransport{}, fmt.Errorf("cross-namespace proxy SSL secret not allowed: %s/%s", secretNamespace, secretName)
 		}
 
 		blocks, err := p.certificateBlocks(secretNamespace, secretName)
 		if err != nil {
-			return namedTransport{}, fmt.Errorf("getting certificate blocks: %w", err)
+			return namedServersTransport{}, fmt.Errorf("getting certificate blocks: %w", err)
 		}
 
-		nst.transport.RootCA = blocks.ca
-		nst.transport.CertPEM = blocks.cert
-		nst.transport.KeyPEM = blocks.key
+		if len(blocks.ca) > 0 {
+			nst.RootCAs = []types.FileOrContent{types.FileOrContent(blocks.ca)}
+		}
+		if len(blocks.cert) > 0 && len(blocks.key) > 0 {
+			nst.Certificates = []tls.Certificate{{
+				CertFile: types.FileOrContent(blocks.cert),
+				KeyFile:  types.FileOrContent(blocks.key),
+			}}
+		}
 	}
 
 	return nst, nil

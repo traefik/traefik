@@ -22,23 +22,6 @@ type configuration struct {
 	DefaultBackend *backend
 }
 
-// serversTransport carries the raw values needed to construct a Traefik
-// dynamic.ServersTransport in the translator.
-type serversTransport struct {
-	DialTimeoutSeconds  int
-	ReadTimeoutSeconds  int
-	WriteTimeoutSeconds int
-	IdleConnTimeoutSec  int
-	DisableHTTP2        bool
-	// HTTPS-specific fields (empty for plain HTTP backends).
-	HTTPS              bool
-	ServerName         string
-	InsecureSkipVerify bool
-	RootCA             []byte
-	CertPEM            []byte
-	KeyPEM             []byte
-}
-
 // tlsCertificate is a raw TLS keypair resolved from a Kubernetes Secret.
 type tlsCertificate struct {
 	CertPEM []byte
@@ -119,10 +102,10 @@ type location struct {
 	// ServersTransportName is the unique name of the per-ingress transport.
 	ServersTransportName string
 
-	// serversTransport holds the resolved per-ingress transport config (nil for
+	// ServersTransport holds the resolved per-ingress transport config (nil for
 	// locations that do not need a custom transport, e.g. ingress default backend).
 	// The translator registers it once per unique ServersTransportName.
-	ServersTransport *serversTransport
+	ServersTransport *dynamic.ServersTransport
 
 	// Config holds all parsed annotation values for this location.
 	Config IngressConfig
