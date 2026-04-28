@@ -17,8 +17,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-const defaultBackendTLSName = "default-backend-tls"
-
 // translate converts a configuration produced by Phase 1 into a Traefik dynamic.Configuration.
 func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Configuration {
 	conf := &dynamic.Configuration{

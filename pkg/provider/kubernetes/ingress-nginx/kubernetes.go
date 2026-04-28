@@ -31,7 +31,8 @@ const (
 	defaultControllerName  = "k8s.io/ingress-nginx"
 	defaultAnnotationValue = "nginx"
 
-	defaultBackendName = "default-backend"
+	defaultBackendName    = "default-backend"
+	defaultBackendTLSName = "default-backend-tls"
 
 	defaultProxyConnectTimeout = 60
 	defaultProxyReadTimeout    = 60
