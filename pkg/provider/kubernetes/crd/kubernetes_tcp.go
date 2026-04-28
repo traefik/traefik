@@ -67,11 +67,9 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			for _, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
-					logger.Error().
-						Str("serviceName", service.Name).
-						Stringer("servicePort", &service.Port).
-						Err(err).
-						Msg("Cannot create service")
+					p.logIngressServiceError(logger, ingressRouteTCP.Namespace, ingressRouteTCP.Name,
+						service.Name, service.Port.String(),
+						"Cannot create service", err)
 					continue
 				}
 
