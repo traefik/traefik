@@ -35,8 +35,25 @@ type pathEntry struct {
 	config IngressConfig
 }
 
-// build reads all Ingress resources visible to the client and produces a
-// Configuration. All k8s I/O happens here.
+type namedServersTransport struct {
+	*dynamic.ServersTransport
+
+	name string
+}
+
+type resolvedAddress struct {
+	address string
+	fenced  bool
+}
+
+// certBlocks holds the raw TLS material extracted from a Kubernetes Secret.
+type certBlocks struct {
+	ca   []byte
+	cert []byte
+	key  []byte
+}
+
+// build reads all Ingress resources visible to the client and produces a configuration.
 //
 //nolint:funlen // multi-phase ingress processing kept inline for readability
 func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressClass) *configuration {
@@ -537,19 +554,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	return mc
 }
 
-// ---- helpers ---------------------------------------------------------------
-
-type resolvedAddress struct {
-	address string
-	fenced  bool
-}
-
-type namedServersTransport struct {
-	*dynamic.ServersTransport
-
-	name string
-}
-
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
 	nst := namedServersTransport{
 		name: provider.Normalize(namespace + "-" + name),
@@ -621,20 +625,20 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	portName, portSpec, match := getPort(service, backend)
+	servicePort, match := getServicePort(service, backend)
 	if !match {
 		return nil, errors.New("service port not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []resolvedAddress{{address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(portSpec.TargetPort.IntValue()))}}, nil
+		return []resolvedAddress{{address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
 	}
 
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []resolvedAddress{{address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []resolvedAddress{{address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
 	}
 
-	addresses, err := p.getAddressesFromEndpointSlices(namespace, backend.Service.Name, portName)
+	addresses, err := p.getAddressesFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
 	}
@@ -654,12 +658,12 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	fallbackPortName, _, match := getPort(fallbackSvc, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
+	servicePort, match = getServicePort(fallbackSvc, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
 	if !match {
 		return nil, errors.New("fallback service port not found")
 	}
 
-	return p.getAddressesFromEndpointSlices(namespace, defaultBackend, fallbackPortName)
+	return p.getAddressesFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
 }
 
 func (p *Provider) getAddressesFromEndpointSlices(namespace, name, portName string) ([]resolvedAddress, error) {
@@ -726,13 +730,6 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 	}, nil
 }
 
-// certBlocks holds the raw TLS material extracted from a Kubernetes Secret.
-type certBlocks struct {
-	ca   []byte
-	cert []byte
-	key  []byte
-}
-
 func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error) {
 	secret, err := p.k8sClient.GetSecret(namespace, name)
 	if err != nil {
@@ -769,9 +766,8 @@ func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error
 	return &blocks, nil
 }
 
-// loadCertificates loads TLS certificates for an ingress into mcCerts (keyed by
-// cert PEM). The loaded set is shared across ingresses to avoid re-reading the
-// same secret multiple times.
+// loadCertificates loads TLS certificates for an ingress into mcCerts (keyed by cert PEM).
+// The loaded set is shared across ingresses to avoid re-reading the same secret multiple times.
 func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcCerts map[string]string, loaded map[string]bool) error {
 	for _, t := range ing.Spec.TLS {
 		if t.SecretName == "" {
@@ -979,11 +975,11 @@ func getOrCreateServer(m map[string]*server, hostname string) *server {
 	return srv
 }
 
-func getPort(service *corev1.Service, backend netv1.IngressBackend) (string, corev1.ServicePort, bool) {
+func getServicePort(service *corev1.Service, backend netv1.IngressBackend) (corev1.ServicePort, bool) {
 	for _, p := range service.Spec.Ports {
 		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
 			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
-			return p.Name, p, true
+			return p, true
 		}
 	}
 
@@ -991,10 +987,10 @@ func getPort(service *corev1.Service, backend netv1.IngressBackend) (string, cor
 	// service spec. Synthesize a ServicePort whose TargetPort echoes the backend
 	// port value (named ports parse to 0, matching ingress-nginx behavior).
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return "", corev1.ServicePort{TargetPort: intstr.Parse(portString(backend.Service.Port))}, true
+		return corev1.ServicePort{TargetPort: intstr.Parse(portString(backend.Service.Port))}, true
 	}
 
-	return "", corev1.ServicePort{}, false
+	return corev1.ServicePort{}, false
 }
 
 func portString(port netv1.ServiceBackendPort) string {
