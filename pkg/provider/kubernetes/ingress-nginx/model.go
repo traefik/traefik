@@ -21,12 +21,12 @@ type configuration struct {
 
 	// DefaultBackend is the provider-level catch-all backend (nil if not configured).
 	DefaultBackend *backend
-}
 
-// tlsCertificate is a raw TLS keypair resolved from a Kubernetes Secret.
-type tlsCertificate struct {
-	CertPEM []byte
-	KeyPEM  []byte
+	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all
+	// ingresses. The map key is the certificate PEM, the value is the matching
+	// private key PEM. Using the cert PEM as the key naturally deduplicates
+	// certificates that appear in multiple ingresses.
+	Certs map[string]string
 }
 
 // backend represents a resolved upstream service.
@@ -62,10 +62,6 @@ type server struct {
 
 	// Locations holds the per-path routing units for this hostname.
 	Locations []*location
-
-	// Certs holds the TLS certificates contributed by ingresses targeting this
-	// hostname. Deduplicated by pointer at append time in Phase 1.
-	Certs []*tlsCertificate
 }
 
 // location is the per-path routing unit. It is the central type of the metamodel:

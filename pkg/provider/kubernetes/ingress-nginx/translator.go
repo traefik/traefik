@@ -35,20 +35,13 @@ func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Co
 		TLS: &dynamic.TLSConfiguration{},
 	}
 
-	seenCerts := map[*tlsCertificate]struct{}{}
-	for _, srv := range mc.Servers {
-		for _, c := range srv.Certs {
-			if _, ok := seenCerts[c]; ok {
-				continue
-			}
-			seenCerts[c] = struct{}{}
-			conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
-				Certificate: tls.Certificate{
-					CertFile: types.FileOrContent(c.CertPEM),
-					KeyFile:  types.FileOrContent(c.KeyPEM),
-				},
-			})
-		}
+	for cert, key := range mc.Certs {
+		conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
+			Certificate: tls.Certificate{
+				CertFile: types.FileOrContent(cert),
+				KeyFile:  types.FileOrContent(key),
+			},
+		})
 	}
 
 	if mc.DefaultBackend != nil {

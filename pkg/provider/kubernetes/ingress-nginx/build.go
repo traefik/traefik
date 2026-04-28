@@ -42,6 +42,7 @@ type pathEntry struct {
 func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressClass) *configuration {
 	mc := &configuration{
 		Backends: make(map[string]*backend),
+		Certs:    make(map[string]string),
 	}
 
 	// Builder-local cache of TLS options resolved per ingress. Each Location
@@ -235,8 +236,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	}
 
 	// Third pass: build Servers and Locations from regular ingresses.
-	serverMap := make(map[string]*server)               // hostname → Server
-	seenCertSecrets := make(map[string]*tlsCertificate) // cross-ingress TLS cert dedup
+	serverMap := make(map[string]*server)  // hostname → Server
+	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
 
 	for _, ing := range regularIngresses {
 		logger := log.Ctx(ctx).With().
@@ -325,23 +326,19 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			}
 		}
 
-		// Load TLS certificates (deduplicated across ingresses via seenCertSecrets).
-		// A non-nil (possibly empty) slice signals that the ingress has a TLS section,
-		// even when cert loading failed (translator falls back to the default cert).
-		var certs []*tlsCertificate
-		if len(ing.Spec.TLS) > 0 {
-			certs = []*tlsCertificate{}
-			loaded, err := p.loadCertificates(ctxIng, ing.Ingress, seenCertSecrets)
-			if err != nil {
+		// Load TLS certificates into the shared mc.Certs map (keyed by cert PEM,
+		// which naturally deduplicates certs reused across ingresses). When loading
+		// fails, hasTLS still signals that the ingress has a TLS section so the
+		// translator can fall back to the default cert.
+		hasTLS := len(ing.Spec.TLS) > 0
+		if hasTLS {
+			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
 				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
-			} else {
-				certs = loaded
 			}
 		}
 
 		for ri, rule := range ing.Spec.Rules {
 			srv := getOrCreateServer(serverMap, rule.Host)
-			appendUniqueCerts(srv, certs)
 
 			for pi, pa := range rule.HTTP.Paths {
 				if pa.Backend.Service == nil {
@@ -385,7 +382,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					Config:               ing.config,
 					TLSOptionName:        tlsOptionName,
 					TLSOption:            tlsOption,
-					HasTLS:               certs != nil,
+					HasTLS:               hasTLS,
 					ServerSnippet:        serverSnippets[rule.Host],
 					Namespace:            ing.Namespace,
 					IngressName:          ing.Name,
@@ -501,7 +498,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				seenHosts[rule.Host] = struct{}{}
 
 				srv := getOrCreateServer(serverMap, rule.Host)
-				appendUniqueCerts(srv, certs)
 
 				loc := &location{
 					Path:                    "",
@@ -510,7 +506,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					Config:                  ing.config,
 					TLSOptionName:           tlsOptionName,
 					TLSOption:               tlsOption,
-					HasTLS:                  certs != nil,
+					HasTLS:                  hasTLS,
 					ServerSnippet:           serverSnippets[rule.Host],
 					Namespace:               ing.Namespace,
 					IngressName:             ing.Name,
@@ -773,45 +769,35 @@ func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error
 	return &blocks, nil
 }
 
-// loadCertificates loads TLS certificates for an ingress. The seen map is shared
-// across ingresses to deduplicate secrets that appear in multiple ingress TLS sections.
-func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, seen map[string]*tlsCertificate) ([]*tlsCertificate, error) {
-	var certs []*tlsCertificate
-
+// loadCertificates loads TLS certificates for an ingress into mcCerts (keyed by
+// cert PEM). The loaded set is shared across ingresses to avoid re-reading the
+// same secret multiple times.
+func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcCerts map[string]string, loaded map[string]bool) error {
 	for _, t := range ing.Spec.TLS {
 		if t.SecretName == "" {
 			log.Ctx(ctx).Debug().Msg("Skipping TLS section: no secret name")
 			continue
 		}
 
-		certKey := ing.Namespace + "-" + t.SecretName
-		if existing, exists := seen[certKey]; exists {
-			if existing != nil {
-				certs = append(certs, existing)
-			}
+		secretKey := ing.Namespace + "-" + t.SecretName
+		if loaded[secretKey] {
 			continue
 		}
+		loaded[secretKey] = true
 
 		blocks, err := p.certificateBlocks(ing.Namespace, t.SecretName)
 		if err != nil {
-			seen[certKey] = nil
-			return nil, fmt.Errorf("getting certificate blocks: %w", err)
+			return fmt.Errorf("getting certificate blocks: %w", err)
 		}
 
 		if blocks.cert == nil || blocks.key == nil {
-			seen[certKey] = nil
-			return nil, fmt.Errorf("no keypair found in secret %s/%s", ing.Namespace, t.SecretName)
+			return fmt.Errorf("no keypair found in secret %s/%s", ing.Namespace, t.SecretName)
 		}
 
-		cert := &tlsCertificate{
-			CertPEM: blocks.cert,
-			KeyPEM:  blocks.key,
-		}
-		seen[certKey] = cert
-		certs = append(certs, cert)
+		mcCerts[string(blocks.cert)] = string(blocks.key)
 	}
 
-	return certs, nil
+	return nil
 }
 
 func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (*tls.Options, error) {
@@ -991,15 +977,6 @@ func getOrCreateServer(m map[string]*server, hostname string) *server {
 	srv := &server{Hostname: hostname}
 	m[hostname] = srv
 	return srv
-}
-
-func appendUniqueCerts(srv *server, certs []*tlsCertificate) {
-	for _, c := range certs {
-		found := slices.Contains(srv.Certs, c)
-		if !found {
-			srv.Certs = append(srv.Certs, c)
-		}
-	}
 }
 
 func getPort(service *corev1.Service, backend netv1.IngressBackend) (string, corev1.ServicePort, bool) {
