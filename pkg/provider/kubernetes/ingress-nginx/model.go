@@ -6,11 +6,10 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
-// configuration is the root output of Phase 1.
-// It is a complete, self-contained snapshot of all ingress resources resolved
-// into a Traefik-agnostic intermediate form. Phase 2 only reads this struct.
+// configuration is a complete, self-contained snapshot of all ingress resources resolved into a
+// Traefik-agnostic intermediate form.
 type configuration struct {
-	// Backends holds all resolved upstream services, keyed by Backend.Name.
+	// Backends holds all resolved upstream services, keyed by backend.Name.
 	Backends map[string]*backend
 
 	// Servers holds one entry per distinct hostname across all ingresses.
@@ -22,10 +21,9 @@ type configuration struct {
 	// DefaultBackend is the provider-level catch-all backend (nil if not configured).
 	DefaultBackend *backend
 
-	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all
-	// ingresses. The map key is the certificate PEM, the value is the matching
-	// private key PEM. Using the cert PEM as the key naturally deduplicates
-	// certificates that appear in multiple ingresses.
+	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all ingresses. T
+	// The map key is the certificate PEM, the value is the matching private key PEM.
+	// Using the cert PEM as the key naturally deduplicates certificates that appear in multiple ingresses.
 	Certs map[string]string
 }
 
@@ -148,12 +146,6 @@ type location struct {
 	ServiceName string
 	ServicePort string
 
-	// ---- Middleware decisions (Phase 1 output, Phase 2 input) ----
-	// Each field below represents a distinct middleware concern. A nil value
-	// means the middleware is not applicable to this location. The translator
-	// reads these fields to build the Traefik dynamic.Configuration; it does
-	// not interpret IngressConfig annotations.
-
 	// SSLRedirectOnly is true when the non-TLS router should only perform an
 	// HTTPS redirect. All other middlewares are suppressed for that router.
 	SSLRedirectOnly bool
@@ -203,7 +195,7 @@ type location struct {
 	// Retry, if non-nil, configures request retry behavior.
 	Retry *dynamic.Retry
 
-	// If the loc is in an error state
+	// If the loc is in an error state.
 	Error bool
 
 	// IsIngressDefaultBackend is true when this location represents the
@@ -211,11 +203,6 @@ type location struct {
 	// no serversTransport).
 	IsIngressDefaultBackend bool
 }
-
-// ---- Domain-level middleware structs ----------------------------------------
-// These types use only Go primitives. They are independent of Traefik's
-// dynamic.Configuration so that the metamodel does not couple Phase 1 to the
-// exact output format. The translator converts them to *dynamic.Middleware.
 
 // middlewareCustomHTTPErrors configures error-page routing for specific HTTP status codes.
 type middlewareCustomHTTPErrors struct {
