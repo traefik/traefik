@@ -34,6 +34,7 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildRewriteTarget(loc)
 	p.buildUpstreamVhost(loc)
 	p.buildRateLimit(loc)
+	p.buildLimitConnections(loc)
 	p.buildAuthTLSPassCert(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
@@ -307,6 +308,20 @@ func (p *Provider) buildRateLimit(loc *location) {
 			Period:  ptypes.Duration(time.Second),
 			Burst:   int64(rps) * burst,
 		}
+	}
+}
+
+func (p *Provider) buildLimitConnections(loc *location) {
+	limit := ptr.Deref(loc.Config.LimitConnections, 0)
+	if limit <= 0 {
+		return
+	}
+
+	loc.LimitConnections = &dynamic.InFlightReq{
+		Amount: int64(limit),
+		SourceCriterion: &dynamic.SourceCriterion{
+			IPStrategy: &dynamic.IPStrategy{},
+		},
 	}
 }
 
