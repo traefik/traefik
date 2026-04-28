@@ -64,8 +64,6 @@ func ContextShouldRetry(ctx context.Context) ShouldRetry {
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if shouldRetry := ContextShouldRetry(req.Context()); shouldRetry != nil {
-			shouldRetry(true)
-
 			trace := &httptrace.ClientTrace{
 				WroteHeaders: func() {
 					shouldRetry(false)
@@ -146,21 +144,43 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
 
+	// statusCodes contains the retriable status codes,
+	// it stands as a condition for HTTP retry.
+	var statusCodes types.HTTPCodeRanges
+	isIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
+	if r.retryNonIdempotentMethod || isIdempotent {
+		// statusCode controls whether the request is retried.
+		// A nil value bypass the retry.
+		statusCodes = r.statusCode
+	}
+
 	var reusableReq *mirror.ReusableRequest
 	if len(r.statusCode) > 0 {
 		var err error
-		reusableReq, _, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
+		var readBytes []byte
+		reusableReq, readBytes, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
 		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
 			logger.Debug().Err(err).Msg("Error while creating reusable request for retry middleware")
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
+		// If the request body has failed to be read,
+		// disable the HTTP retry.
 		if errors.Is(err, mirror.ErrBodyTooLarge) {
-			http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
-			return
+			statusCodes = nil
+
+			req.Body = &peekedBody{
+				ReadCloser: req.Body,
+				peeked:     readBytes,
+			}
+
+			//http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
+			//return
 		}
-	} else {
+	}
+
+	if reusableReq == nil {
 		closableBody := req.Body
 		defer closableBody.Close()
 
@@ -198,14 +218,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		remainAttempts := attempts < r.attempts
-
-		var statusCodes types.HTTPCodeRanges
-		isIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
-		if r.retryNonIdempotentMethod || isIdempotent {
-			// statusCode controls whether the request is retried.
-			// A nil value bypass the retry.
-			statusCodes = r.statusCode
-		}
 
 		retryResponseWriter := newResponseWriter(rw, statusCodes, remainAttempts, start, r.timeout)
 
@@ -283,7 +295,7 @@ func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRa
 type responseWriter struct {
 	responseWriter  http.ResponseWriter
 	headers         http.Header
-	shouldRetry     bool
+	shouldRetry     *bool
 	written         bool
 	statusCodeRange types.HTTPCodeRanges
 	remainAttempts  bool
@@ -292,11 +304,13 @@ type responseWriter struct {
 }
 
 func (r *responseWriter) ShouldRetry() bool {
-	return r.shouldRetry
+	return r.remainAttempts && (r.shouldRetry == nil || *r.shouldRetry)
 }
 
 func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
-	r.shouldRetry = shouldRetry
+	if r.shouldRetry == nil {
+		r.shouldRetry = &shouldRetry
+	}
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -304,7 +318,8 @@ func (r *responseWriter) Header() http.Header {
 	// return the real response writer's headers. During a retry (shouldRetry=true),
 	// even after written=true, return the internal headers map so that failed-attempt
 	// headers are discarded and not leaked to the client.
-	if r.written && !r.shouldRetry {
+	// here if I switch the && for a || the TestRetryFlakyBufferingOnRecovers succeeds.
+	if r.written && !r.ShouldRetry() {
 		return r.responseWriter.Header()
 	}
 
@@ -312,7 +327,7 @@ func (r *responseWriter) Header() http.Header {
 }
 
 func (r *responseWriter) Write(buf []byte) (int, error) {
-	if r.shouldRetry {
+	if r.ShouldRetry() {
 		return len(buf), nil
 	}
 
@@ -324,7 +339,7 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 }
 
 func (r *responseWriter) WriteHeader(code int) {
-	if r.shouldRetry || r.written {
+	if r.ShouldRetry() || r.written {
 		return
 	}
 
@@ -341,10 +356,10 @@ func (r *responseWriter) WriteHeader(code int) {
 
 	if r.statusCodeRange != nil {
 		timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
-		r.shouldRetry = r.statusCodeRange.Contains(code) && r.remainAttempts && !timedOut
+		r.SetShouldRetry(r.statusCodeRange.Contains(code) && !timedOut)
 	}
 
-	if r.shouldRetry {
+	if r.ShouldRetry() {
 		return
 	}
 
@@ -371,4 +386,24 @@ func (r *responseWriter) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+type peekedBody struct {
+	io.ReadCloser
+
+	peeked []byte
+}
+
+// Read drains accumulated peeked bytes first, then reads the body.
+func (p *peekedBody) Read(b []byte) (int, error) {
+	if len(p.peeked) > 0 {
+		n := copy(b, p.peeked)
+		p.peeked = p.peeked[n:]
+		if len(p.peeked) == 0 {
+			p.peeked = nil
+		}
+		return n, nil
+	}
+
+	return p.ReadCloser.Read(b)
 }
