@@ -117,13 +117,7 @@ func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Co
 					conf.TLS.Options = make(map[string]tls.Options)
 				}
 				if _, exists := conf.TLS.Options[loc.TLSOptionName]; !exists {
-					tlsOpt := tls.Options{}
-					tlsOpt.SetDefaults()
-					tlsOpt.ClientAuth = tls.ClientAuth{
-						CAFiles:        []types.FileOrContent{types.FileOrContent(loc.TLSOption.CAPEM)},
-						ClientAuthType: loc.TLSOption.ClientAuthType,
-					}
-					conf.TLS.Options[loc.TLSOptionName] = tlsOpt
+					conf.TLS.Options[loc.TLSOptionName] = *loc.TLSOption
 				}
 			}
 

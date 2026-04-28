@@ -2,6 +2,7 @@ package ingressnginx
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	netv1 "k8s.io/api/networking/v1"
 )
 
@@ -26,12 +27,6 @@ type configuration struct {
 type tlsCertificate struct {
 	CertPEM []byte
 	KeyPEM  []byte
-}
-
-// tlsOption holds the resolved client-auth configuration for an ingress.
-type tlsOption struct {
-	CAPEM          []byte
-	ClientAuthType string
 }
 
 // backend represents a resolved upstream service.
@@ -130,10 +125,10 @@ type location struct {
 	// TLSOptionName is set to the TLS option name when auth-tls-secret is configured.
 	TLSOptionName string
 
-	// tlsOption holds the resolved client-auth TLS option for this Location
+	// TLSOption holds the resolved client-auth TLS option for this Location
 	// (nil when auth-tls-secret is not configured). The translator registers it
 	// once per unique TLSOptionName in conf.TLS.Options.
-	TLSOption *tlsOption
+	TLSOption *tls.Options
 
 	// HasTLS is true when the parent ingress has a TLS section covering this
 	// location's host. The certs themselves live on the parent Server.

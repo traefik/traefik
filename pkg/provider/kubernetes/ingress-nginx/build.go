@@ -47,7 +47,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// Builder-local cache of TLS options resolved per ingress. Each Location
 	// that needs an option carries a pointer to the cached entry; the translator
 	// registers each unique option once in conf.TLS.Options.
-	tlsOptionCache := make(map[string]*tlsOption)
+	tlsOptionCache := make(map[string]*tls.Options)
 
 	// Builder-local maps used to construct router rules; they are not exposed
 	// to the translator.
@@ -307,7 +307,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 		// Resolve TLS option (auth-tls-secret).
 		var tlsOptionName string
-		var tlsOption *tlsOption
+		var tlsOption *tls.Options
 		if ing.config.AuthTLSSecret != nil {
 			optName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + *ing.config.AuthTLSSecret)
 			if cached, exists := tlsOptionCache[optName]; exists {
@@ -319,7 +319,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					logger.Error().Err(err).Msg("Cannot build client auth TLS option")
 				} else {
 					tlsOptionName = optName
-					tlsOption = &tlsOpt
+					tlsOption = tlsOpt
 					tlsOptionCache[optName] = tlsOption
 				}
 			}
@@ -814,34 +814,37 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, see
 	return certs, nil
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (tlsOption, error) {
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (*tls.Options, error) {
 	if cfg.AuthTLSSecret == nil {
-		return tlsOption{}, errors.New("auth-tls-secret is nil")
+		return nil, errors.New("auth-tls-secret is nil")
 	}
 
 	parts := strings.SplitN(*cfg.AuthTLSSecret, "/", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return tlsOption{}, errors.New("auth-tls-secret must be in namespace/name format")
+		return nil, errors.New("auth-tls-secret must be in namespace/name format")
 	}
 
 	secretNamespace, secretName := parts[0], parts[1]
 	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
-		return tlsOption{}, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+		return nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return tlsOption{}, fmt.Errorf("reading client certificate: %w", err)
+		return nil, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.ca == nil {
-		return tlsOption{}, errors.New("secret does not contain a CA certificate")
+		return nil, errors.New("secret does not contain a CA certificate")
 	}
 
-	return tlsOption{
-		CAPEM:          blocks.ca,
+	opt := &tls.Options{}
+	opt.SetDefaults()
+	opt.ClientAuth = tls.ClientAuth{
+		CAFiles:        []types.FileOrContent{types.FileOrContent(blocks.ca)},
 		ClientAuthType: clientAuthTypeFromString(cfg.AuthTLSVerifyClient),
-	}, nil
+	}
+	return opt, nil
 }
 
 func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, error) {
