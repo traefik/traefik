@@ -33,6 +33,10 @@ func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Co
 		TLS: &dynamic.TLSConfiguration{},
 	}
 
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb}
+
 	for cert, key := range mc.Certs {
 		conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
 			Certificate: tls.Certificate{
@@ -189,8 +193,8 @@ func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Co
 				Observability: obs,
 			}
 
+			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
 			if loc.Error {
-				ensureUnavailableService(conf)
 				rt.Service = unavailableServiceName
 				rtTLS.Service = unavailableServiceName
 			}

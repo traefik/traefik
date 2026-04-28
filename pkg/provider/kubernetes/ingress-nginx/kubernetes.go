@@ -26,6 +26,10 @@ const (
 	// ProviderName is the Kubernetes Ingress NGINX provider name.
 	ProviderName = "kubernetesingressnginx"
 
+	// unavailableServiceName is the name of a Traefik service returning a 503 Service Unavailable.
+	unavailableServiceName = "unavailable-service"
+
+	// NGINX default values.
 	annotationIngressClass = "kubernetes.io/ingress.class"
 
 	defaultControllerName  = "k8s.io/ingress-nginx"
@@ -286,9 +290,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	}
 
 	// Phase 2: translate the metamodel into a Traefik dynamic.Configuration.
-	conf := p.translate(ctx, mc)
-	ensureUnavailableService(conf)
-	return conf
+	return p.translate(ctx, mc)
 }
 
 func (p *Provider) validateConfiguration() error {
