@@ -13,7 +13,7 @@ type configuration struct {
 	Backends map[string]*backend
 
 	// Servers holds one entry per distinct hostname across all ingresses.
-	Servers []*server
+	Servers map[string]*server
 
 	// PassthroughBackends holds ssl-passthrough entries.
 	PassthroughBackends []*sslPassthroughBackend

@@ -253,7 +253,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	}
 
 	// Third pass: build Servers and Locations from regular ingresses.
-	serverMap := make(map[string]*server)  // hostname → Server
+	mc.Servers = make(map[string]*server)  // hostname → Server
 	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
 
 	for _, ing := range regularIngresses {
@@ -355,7 +355,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 
 		for ri, rule := range ing.Spec.Rules {
-			srv := getOrCreateServer(serverMap, rule.Host)
+			srv := getOrCreateServer(mc.Servers, rule.Host)
 
 			for pi, pa := range rule.HTTP.Paths {
 				if pa.Backend.Service == nil {
@@ -514,7 +514,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 				seenHosts[rule.Host] = struct{}{}
 
-				srv := getOrCreateServer(serverMap, rule.Host)
+				srv := getOrCreateServer(mc.Servers, rule.Host)
 
 				loc := &location{
 					Path:                    "",
@@ -544,11 +544,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				srv.Locations = append(srv.Locations, loc)
 			}
 		}
-	}
-
-	// Flatten serverMap into mc.Servers.
-	for _, srv := range serverMap {
-		mc.Servers = append(mc.Servers, srv)
 	}
 
 	return mc
