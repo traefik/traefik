@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"k8s.io/utils/ptr"
 )
 
 func TestStripPrefix(t *testing.T) {
@@ -140,6 +141,40 @@ func TestStripPrefix(t *testing.T) {
 			expectedPath:       "/a/b",
 			expectedRawPath:    "/a%2Fb",
 			expectedHeader:     "/api/",
+		},
+		{
+			desc: "dot in the path not stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api./foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/foo",
+			expectedRawPath:    "",
+			expectedHeader:     "/api",
+		},
+		{
+			desc: "multiple dots in the path not stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api../foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/foo",
+			expectedRawPath:    "",
+			expectedHeader:     "/api",
+		},
+		{
+			desc: "multiple dots in the path not stripped by the prefix with forceSlash",
+			config: dynamic.StripPrefix{
+				Prefixes:   []string{"/api"},
+				ForceSlash: ptr.To(true),
+			},
+			path:               "/api../foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/foo",
+			expectedRawPath:    "",
+			expectedHeader:     "/api",
 		},
 	}
 

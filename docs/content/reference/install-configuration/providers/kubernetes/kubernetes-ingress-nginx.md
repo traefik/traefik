@@ -39,7 +39,7 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 **Best Practices:**
 
 - Use IngressClass to specify which Ingresses should be handled by this provider
-- Configure `watchNamespace` to limit discovery to specific namespaces
+- Configure `watchNamespace` to limit discovery to a single namespace
 - Use `watchNamespaceSelector` to target Ingresses based on namespace labels
 
 ### IngressClass Selection Logic

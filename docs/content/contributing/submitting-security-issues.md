@@ -15,12 +15,38 @@ You can subscribe by sending an email to security+subscribe@traefik.io or on [th
 Reported vulnerabilities can be found on
 [cve.mitre.org](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=traefik).
 
+CVEs are only created for vulnerabilities affecting **Generally Available (GA) versions** of Traefik.
+Vulnerabilities discovered in non-GA versions (release candidates, betas, early access, or development branches)
+will be fixed without creating a CVE.
+
 ## Report a Vulnerability
 
 We want to keep Traefik safe for everyone.
 If you've discovered a security vulnerability in Traefik,
 we appreciate your help in disclosing it to us in a responsible manner,
 by creating a [security advisory](https://github.com/traefik/traefik/security/advisories).
+
+## Code of Conduct for Vulnerability Submissions
+
+We are committed to handling every legitimate report responsibly,
+and we expect submitters to engage with our security team in a respectful and collaborative manner.
+
+The following behaviors are **not acceptable** and will not be tolerated:
+
+- **Threats** to publicly disclose the vulnerability if it is not fixed within a timeframe you set unilaterally.
+- **Ultimatums** or pressure tactics intended to force a faster response than our normal triage and remediation process allows.
+- **Demands** for payment, bug bounties, or any form of compensation in exchange for not disclosing the issue
+  (Traefik does not operate a paid bug bounty program).
+- **Aggressive, abusive, or disrespectful communication** with our security team.
+
+Submitters who engage in any of the above may face the following consequences:
+
+- The submitter **will not be credited** in the security advisory or any subsequent communication.
+- The submitter's GitHub profile may be **reported to GitHub** for violation of platform terms of service.
+- We may **decline to engage further** on the report, while still addressing the underlying issue if it is legitimate.
+
+We take security seriously and act on legitimate reports as quickly as our resources allow.
+Patience and constructive dialogue help us protect users effectively.
 
 ## Submission Quality Guidelines
 

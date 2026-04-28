@@ -2,43 +2,42 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-with-canary-by-cookie
+  name: first-ingress
   namespace: default
-
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "shared.localhost"
 spec:
   ingressClassName: nginx
   rules:
-    - host: production.localhost
+    - host: first.localhost
       http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
+          - backend:
               service:
                 name: whoami
                 port:
                   number: 80
+            path: /
+            pathType: Prefix
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: canary
+  name: second-ingress
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/canary: "true"
-    nginx.ingress.kubernetes.io/canary-by-cookie: "foo.bar"
-
+    nginx.ingress.kubernetes.io/server-alias: "shared.localhost"
 spec:
   ingressClassName: nginx
   rules:
-    - host: production.localhost
+    - host: second.localhost
       http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
+          - backend:
               service:
-                name: canary
+                name: whoami
                 port:
                   number: 80
+            path: /
+            pathType: Prefix
