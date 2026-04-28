@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -20,9 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 )
-
-// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
-var strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 
 type ingressEntry struct {
 	*netv1.Ingress

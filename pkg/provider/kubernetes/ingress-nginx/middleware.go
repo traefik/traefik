@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -15,14 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"k8s.io/utils/ptr"
 )
-
-var (
-	nginxSizeRegexp      = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
-	headerValueRegexp    = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
-	regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
-)
-
-const defaultLimitBurstMultiplier = 5
 
 // buildMiddlewares populates all middleware-related fields on loc from its
 // IngressConfig and provider defaults. It is called once per location in Phase 1,

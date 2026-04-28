@@ -22,8 +22,6 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
-var headerRegexp = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
-
 const (
 	// ProviderName is the Kubernetes Ingress NGINX provider name.
 	ProviderName = "kubernetesingressnginx"
@@ -46,16 +44,30 @@ const (
 	defaultProxyBufferSize = int64(8 * 1024) // 8KB
 	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#proxy-buffers-number
 	defaultProxyBuffersNumber = 4
+	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
+	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream
 	defaultProxyNextUpstream = "error timeout"
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream-tries
 	// ingress-nginx uses 3 as default value.
 	defaultProxyNextUpstreamTries = 3
+
+	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#rate-limiting
+	defaultLimitBurstMultiplier = 5
+
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-timeout
 	defaultUpstreamKeepaliveTimeout = 60
+)
 
-	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
-	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
+var (
+	nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
+
+	headerRegexp      = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
+	headerValueRegexp = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
+	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
+	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
+	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/parser/validators.go#L77
+	regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
 )
 
 // Provider holds configurations of the provider.
@@ -74,12 +86,14 @@ type Provider struct {
 	WatchIngressWithoutClass bool   `description:"Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified." json:"watchIngressWithoutClass,omitempty" toml:"watchIngressWithoutClass,omitempty" yaml:"watchIngressWithoutClass,omitempty" export:"true"`
 	IngressClassByName       bool   `description:"Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class." json:"ingressClassByName,omitempty" toml:"ingressClassByName,omitempty" yaml:"ingressClassByName,omitempty" export:"true"`
 
+	// TODO: support report-node-internal-ip-address and update-status.
 	PublishService       string   `description:"Service fronting the Ingress controller. Takes the form 'namespace/name'." json:"publishService,omitempty" toml:"publishService,omitempty" yaml:"publishService,omitempty" export:"true"`
 	PublishStatusAddress []string `description:"Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies." json:"publishStatusAddress,omitempty" toml:"publishStatusAddress,omitempty" yaml:"publishStatusAddress,omitempty"`
 
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
+	// Configuration options available within the NGINX Ingress Controller ConfigMap.
 	ProxyRequestBuffering    bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
 	ClientBodyBufferSize     int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
 	ProxyBodySize            int64    `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
@@ -105,6 +119,7 @@ type Provider struct {
 	// TLSEntryPoints is set to the HTTPSEntryPoint value if it is set, otherwise it is left empty.
 	TLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
+	// Its value is set to the HTTPEntryPoint value if it is set, otherwise it is computed in SetEffectiveConfiguration.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	StrictValidatePathType bool `description:"Defines whether to reject the entire ingress when any path contains regex characters and pathType is Prefix or Exact." json:"strictValidatePathType,omitempty" toml:"strictValidatePathType,omitempty" yaml:"strictValidatePathType,omitempty" export:"true"`
@@ -155,6 +170,7 @@ func (p *Provider) Init() error {
 		p.TLSEntryPoints = []string{p.HTTPSEntryPoint}
 	}
 
+	// Initializes Kubernetes client.
 	var err error
 	p.k8sClient, err = p.newK8sClient()
 	if err != nil {
@@ -164,7 +180,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the provider to push configurations to Traefik using the given channel.
+// Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
@@ -193,12 +209,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				// Note that event is the *first* event that came in during this
-				// throttling interval -- if we're hitting our throttle, we may have
-				// dropped events. This is fine, because we don't treat different
-				// event types differently. But if we do in the future, we'll need to
-				// track more information about the dropped events.
 				case event := <-eventsChan:
+					// Note that event is the *first* event that came in during this
+					// throttling interval -- if we're hitting our throttle, we may have
+					// dropped events. This is fine, because we don't treat different
+					// event types differently. But if we do in the future, we'll need to
+					// track more information about the dropped events.
 					conf := p.loadConfiguration(ctxLog)
 
 					confHash, err := hashstructure.Hash(conf, nil)
@@ -275,6 +291,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) validateConfiguration() error {
+	// Validates and parses the default backend configuration.
 	if p.DefaultBackendService != "" {
 		parts := strings.Split(p.DefaultBackendService, "/")
 		if len(parts) != 2 {
@@ -290,6 +307,7 @@ func (p *Provider) validateConfiguration() error {
 			log.Warn().Msgf("GlobalAllowedResponseHeaders header value %q is invalid and will be ignored. Only alphanumeric characters, dashes and underscores are allowed.", header)
 			continue
 		}
+
 		allowedHeaders = append(allowedHeaders, header)
 	}
 
@@ -328,8 +346,10 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {
 				ingStatus = append(ingStatus, netv1.IngressLoadBalancerIngress{IP: nameOrIP})
 				continue
 			}
+
 			ingStatus = append(ingStatus, netv1.IngressLoadBalancerIngress{Hostname: nameOrIP})
 		}
+
 		return p.k8sClient.UpdateIngressStatus(ing, ingStatus)
 	}
 
@@ -349,14 +369,20 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {
 
 	switch service.Spec.Type {
 	case corev1.ServiceTypeExternalName:
-		ingressStatus = []netv1.IngressLoadBalancerIngress{{Hostname: service.Spec.ExternalName}}
+		ingressStatus = []netv1.IngressLoadBalancerIngress{{
+			Hostname: service.Spec.ExternalName,
+		}}
 
 	case corev1.ServiceTypeClusterIP:
-		ingressStatus = []netv1.IngressLoadBalancerIngress{{IP: service.Spec.ClusterIP}}
+		ingressStatus = []netv1.IngressLoadBalancerIngress{{
+			IP: service.Spec.ClusterIP,
+		}}
 
 	case corev1.ServiceTypeNodePort:
 		if service.Spec.ExternalIPs == nil {
-			ingressStatus = []netv1.IngressLoadBalancerIngress{{IP: service.Spec.ClusterIP}}
+			ingressStatus = []netv1.IngressLoadBalancerIngress{{
+				IP: service.Spec.ClusterIP,
+			}}
 		} else {
 			ingressStatus = make([]netv1.IngressLoadBalancerIngress, 0, len(service.Spec.ExternalIPs))
 			for _, ip := range service.Spec.ExternalIPs {
@@ -370,6 +396,7 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {
 			return fmt.Errorf("converting ingress loadbalancer status: %w", err)
 		}
 		for _, ip := range service.Spec.ExternalIPs {
+			// Avoid duplicates in the ingress status.
 			var found bool
 			for _, status := range ingressStatus {
 				if status.IP == ip || status.Hostname == ip {
