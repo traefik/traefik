@@ -4,6 +4,10 @@
 // GitHub Actions to consume via fromJson(). Listing is done by parsing the
 // `_test.go` files with go/ast — no compilation, so it runs in a couple of
 // seconds even on a cold cache.
+//
+// Each group additionally carries the set of packages whose tests landed in
+// that bin, so the consuming workflow can pass a narrow list of packages to
+// `go test` instead of recompiling the whole tree on every shard.
 package main
 
 import (
@@ -24,8 +28,9 @@ import (
 const defaultDuration = 1.0
 
 type group struct {
-	ID    int    `json:"id"`
-	Regex string `json:"regex"`
+	ID       int    `json:"id"`
+	Regex    string `json:"regex"`
+	Packages string `json:"packages"`
 }
 
 type junitTestCase struct {
@@ -40,6 +45,15 @@ type junitSuite struct {
 type junitSummary struct {
 	XMLName xml.Name     `xml:"testsuites"`
 	Suites  []junitSuite `xml:"testsuite"`
+}
+
+// testEntry pairs a top-level test function name with every package that
+// declares a function of that name. The same name can appear in several
+// packages (e.g. `TestNew`); when assigned to a shard, all of them must run
+// because `go test -run` matches by name across the package list.
+type testEntry struct {
+	name string
+	pkgs []string
 }
 
 func main() {
@@ -99,11 +113,11 @@ func loadTimings(path string) map[string]float64 {
 	return timings
 }
 
-// listTestFunctions walks the given roots and returns the unique set of
-// top-level `Test*` function names declared in `*_test.go` files. TestMain is
-// excluded because Go runs it implicitly.
-func listTestFunctions(roots []string) []string {
-	seen := map[string]struct{}{}
+// listTestFunctions walks the given roots and returns each top-level `Test*`
+// function declared in `*_test.go` files together with the package(s) that
+// declare it. TestMain is excluded because Go runs it implicitly.
+func listTestFunctions(roots []string) []testEntry {
+	nameToPkgs := map[string]map[string]struct{}{}
 	for _, root := range roots {
 		root = strings.TrimSpace(root)
 		if root == "" {
@@ -123,6 +137,7 @@ func listTestFunctions(roots []string) []string {
 				// rest of the tree still needs to be enumerated.
 				return nil //nolint:nilerr // intentional: a single unparsable file shouldn't kill the listing.
 			}
+			pkg := normalizePackagePath(filepath.Dir(path))
 			for _, decl := range f.Decls {
 				fn, ok := decl.(*ast.FuncDecl)
 				if !ok || fn.Recv != nil {
@@ -132,29 +147,55 @@ func listTestFunctions(roots []string) []string {
 				if !strings.HasPrefix(name, "Test") || name == "TestMain" {
 					continue
 				}
-				seen[name] = struct{}{}
+				if nameToPkgs[name] == nil {
+					nameToPkgs[name] = map[string]struct{}{}
+				}
+				nameToPkgs[name][pkg] = struct{}{}
 			}
 			return nil
 		})
 	}
-	tests := make([]string, 0, len(seen))
-	for name := range seen {
-		tests = append(tests, name)
+
+	entries := make([]testEntry, 0, len(nameToPkgs))
+	for name, pkgSet := range nameToPkgs {
+		pkgs := make([]string, 0, len(pkgSet))
+		for p := range pkgSet {
+			pkgs = append(pkgs, p)
+		}
+		sort.Strings(pkgs)
+		entries = append(entries, testEntry{name: name, pkgs: pkgs})
 	}
-	sort.Strings(tests)
-	return tests
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].name < entries[j].name
+	})
+	return entries
+}
+
+// normalizePackagePath turns a filesystem directory like `pkg/foo` into the
+// `./pkg/foo` form expected by `go test`.
+func normalizePackagePath(dir string) string {
+	dir = filepath.ToSlash(dir)
+	if dir == "" || dir == "." {
+		return "."
+	}
+	if strings.HasPrefix(dir, "./") {
+		return dir
+	}
+	return "./" + dir
 }
 
 // binPack distributes tests into groupCount bins using greedy first-fit
 // decreasing on the per-test timing. Tests without timing data get the
 // average timing of those with data (or `defaultDuration` if none).
-func binPack(tests []string, timings map[string]float64, groupCount int) []group {
+// The packages of every test in a bin are accumulated so each shard can run
+// only the directories it actually needs.
+func binPack(tests []testEntry, timings map[string]float64, groupCount int) []group {
 	avg := defaultDuration
 	if len(timings) > 0 {
 		var sum float64
 		var n int
 		for _, t := range tests {
-			if v, ok := timings[t]; ok {
+			if v, ok := timings[t.name]; ok {
 				sum += v
 				n++
 			}
@@ -165,25 +206,29 @@ func binPack(tests []string, timings map[string]float64, groupCount int) []group
 	}
 
 	type weighted struct {
-		name string
-		time float64
+		entry testEntry
+		time  float64
 	}
 	w := make([]weighted, len(tests))
-	for i, name := range tests {
-		t, ok := timings[name]
+	for i, e := range tests {
+		t, ok := timings[e.name]
 		if !ok {
 			t = avg
 		}
-		w[i] = weighted{name: name, time: t}
+		w[i] = weighted{entry: e, time: t}
 	}
 	sort.Slice(w, func(i, j int) bool {
 		if w[i].time != w[j].time {
 			return w[i].time > w[j].time
 		}
-		return w[i].name < w[j].name
+		return w[i].entry.name < w[j].entry.name
 	})
 
 	bins := make([][]string, groupCount)
+	binPkgs := make([]map[string]struct{}, groupCount)
+	for i := range binPkgs {
+		binPkgs[i] = map[string]struct{}{}
+	}
 	totals := make([]float64, groupCount)
 	for _, t := range w {
 		minIdx := 0
@@ -192,7 +237,10 @@ func binPack(tests []string, timings map[string]float64, groupCount int) []group
 				minIdx = i
 			}
 		}
-		bins[minIdx] = append(bins[minIdx], t.name)
+		bins[minIdx] = append(bins[minIdx], t.entry.name)
+		for _, p := range t.entry.pkgs {
+			binPkgs[minIdx][p] = struct{}{}
+		}
 		totals[minIdx] += t.time
 	}
 
@@ -202,11 +250,17 @@ func binPack(tests []string, timings map[string]float64, groupCount int) []group
 			continue
 		}
 		sort.Strings(b)
+		pkgs := make([]string, 0, len(binPkgs[i]))
+		for p := range binPkgs[i] {
+			pkgs = append(pkgs, p)
+		}
+		sort.Strings(pkgs)
 		matrix = append(matrix, group{
-			ID:    i,
-			Regex: "^(?:" + strings.Join(b, "|") + ")$",
+			ID:       i,
+			Regex:    "^(?:" + strings.Join(b, "|") + ")$",
+			Packages: strings.Join(pkgs, " "),
 		})
-		fmt.Fprintf(os.Stderr, "bin %d: %d tests, ~%.1fs estimated\n", i, len(b), totals[i])
+		fmt.Fprintf(os.Stderr, "bin %d: %d tests in %d pkgs, ~%.1fs estimated\n", i, len(b), len(pkgs), totals[i])
 	}
 	return matrix
 }
