@@ -343,6 +343,9 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		for ri, rule := range ing.Spec.Rules {
 			srv := getOrCreateServer(mc.Servers, rule.Host)
 
+			if rule.HTTP == nil {
+				continue
+			}
 			for pi, pa := range rule.HTTP.Paths {
 				if pa.Backend.Service == nil {
 					continue
