@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -74,6 +75,9 @@ func loadConfigFiles(configFile string, element any) (string, error) {
 	}
 
 	if len(filePath) == 0 {
+		if configFile != "" {
+			return "", fmt.Errorf("configuration file not found: %s", configFile)
+		}
 		return "", nil
 	}
 
