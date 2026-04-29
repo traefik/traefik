@@ -1,6 +1,10 @@
 name: Test Unit
 
 on:
+  push:
+    branches:
+      - master
+      - v*
   pull_request:
     branches:
       - '*'
@@ -12,54 +16,128 @@ on:
 jobs:
 
   generate-packages:
-    name: List Go Packages
+    name: List and bin-pack Go tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: '.go-version'
           check-latest: true
+          cache: false
+
+      - name: Find latest timing artifact run
+        id: latest_run
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID=$(gh api \
+            "/repos/${{ github.repository }}/actions/artifacts?name=unit-test-summary&per_page=1" \
+            --jq '.artifacts[0].workflow_run.id // ""')
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Download previous test timing data
+        if: steps.latest_run.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: unit-test-summary
+          run-id: ${{ steps.latest_run.outputs.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Generate matrix
         id: set-matrix
         run: |
-          matrix_output=$(go run ./internal/testsci/genmatrix.go)
+          junit_arg=""
+          [ -f unit-test-summary.xml ] && junit_arg="-junit unit-test-summary.xml"
+          matrix_output=$(go run ./internal/testsci/genmatrix.go -groups 12 $junit_arg)
           echo "$matrix_output"
-          echo "$matrix_output" >> $GITHUB_OUTPUT
+          echo "$matrix_output" >> "$GITHUB_OUTPUT"
 
   test-unit:
+    name: Unit tests (shard ${{ matrix.shard.id }})
     runs-on: ubuntu-latest
     needs: generate-packages
     strategy:
+      fail-fast: false
       matrix:
-        package: ${{ fromJson(needs.generate-packages.outputs.matrix) }}
+        shard: ${{ fromJson(needs.generate-packages.outputs.matrix) }}
 
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: '.go-version'
           check-latest: true
+          cache: false
+
+      - name: Restore go modules cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Restore go build cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
 
       - name: Avoid generating webui
         run: touch webui/static/index.html
 
-      - name: Tests
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
+      - name: Run unit tests
         run: |
-          go test -v -parallel 8 ${{ matrix.package.group }}
+          gotestsum --junitfile unit-shard-${{ matrix.shard.id }}-results.xml -- -parallel 8 -v -run "${{ matrix.shard.regex }}" ${{ matrix.shard.packages }}
+
+      - name: Upload shard test results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: unit-shard-${{ matrix.shard.id }}-results
+          path: unit-shard-${{ matrix.shard.id }}-results.xml
+          retention-days: 7
+
+  merge-unit-results:
+    runs-on: ubuntu-latest
+    needs:
+      - test-unit
+    if: ${{ !cancelled() && needs.test-unit.result != 'skipped' }}
+    steps:
+      - name: Download all shard results
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: unit-shard-*-results
+          merge-multiple: true
+
+      - name: Merge JUnit XML results
+        run: npx --yes junit-report-merger@9.0.3 unit-test-summary.xml unit-shard-*-results.xml
+
+      - name: Upload merged test summary
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: unit-test-summary
+          path: unit-test-summary.xml
+          retention-days: 30
 
   test-ui-unit:
     runs-on: ubuntu-latest
@@ -67,8 +145,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
