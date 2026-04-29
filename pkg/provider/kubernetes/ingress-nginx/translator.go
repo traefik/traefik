@@ -145,13 +145,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			primarySvcName := loc.BackendName
-			var primarySvc *dynamic.Service
-			if loc.IsIngressDefaultBackend {
-				primarySvc = buildService(backend, loc.ServersTransportName)
-			} else {
-				primarySvc = buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
-			}
-			conf.HTTP.Services[primarySvcName] = primarySvc
+			conf.HTTP.Services[primarySvcName] = buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{

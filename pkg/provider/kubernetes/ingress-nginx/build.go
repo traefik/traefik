@@ -522,7 +522,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				loc := &location{
 					Path:                    "",
 					BackendName:             ingDefaultBackendName,
-					ServersTransportName:    "",
+					ServersTransportName:    nst.name,
+					ServersTransport:        nst.ServersTransport,
 					Config:                  ing.config,
 					TLSOptionName:           tlsOptionName,
 					TLSOption:               tlsOption,
