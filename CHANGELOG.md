@@ -1,3 +1,13 @@
+## [v2.11.44](https://github.com/traefik/traefik/tree/v2.11.44) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.43...v2.11.44)
+
+**Bug fixes:**
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+- **[acme]** Bump github.com/go-acme/lego to v4.35.2 ([#13052](https://github.com/traefik/traefik/pull/13052) @mmatur)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
 ## [v2.11.43](https://github.com/traefik/traefik/tree/v2.11.43) (2026-04-22)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.42...v2.11.43)
 
