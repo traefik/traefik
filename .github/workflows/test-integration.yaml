@@ -1,6 +1,10 @@
 name: Test Integration
 
 on:
+  push:
+    branches:
+      - master
+      - v*
   pull_request:
     branches:
       - '*'
@@ -28,6 +32,23 @@ jobs:
         with:
           go-version-file: '.go-version'
           check-latest: true
+          cache: false
+
+      - name: Go modules cache
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Go build cache
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
 
       - name: Avoid generating webui
         run: touch webui/static/index.html
@@ -35,12 +56,8 @@ jobs:
       - name: Build binary
         run: make binary-linux-amd64
 
-      - name: Save go cache build
-        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
-        with:
-          path: |
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.mod', '**/go.sum') }}
+      - name: Pre-compile integration test binaries
+        run: go test -c -o /dev/null ./integration
 
       - name: Artifact traefik binary
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -53,8 +70,11 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+    permissions:
+      contents: read
+      actions: read
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         parallel: [12]
         index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -62,14 +82,13 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: '.go-version'
           check-latest: true
+          cache: false
 
       - name: Avoid generating webui
         run: touch webui/static/index.html
@@ -83,22 +102,89 @@ jobs:
       - name: Make binary executable
         run: chmod +x ./dist/linux/amd64/traefik
 
-      - name: Restore go cache build
+      - name: Restore go modules cache
         uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
-          path: |
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Restore go build cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
+
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
+      - name: Find latest timing artifact run
+        id: latest_run
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID=$(gh api \
+            "/repos/${{ github.repository }}/actions/artifacts?name=integration-test-summary&per_page=1" \
+            --jq '.artifacts[0].workflow_run.id // ""')
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Download previous test timing data
+        if: steps.latest_run.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: integration-test-summary
+          run-id: ${{ steps.latest_run.outputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Ensure timing data exists
+        run: |
+          [ -f integration-test-summary.xml ] || echo '<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>' > integration-test-summary.xml
 
       - name: Generate go test Slice
         id: test_split
-        uses: hashicorp-forge/go-test-split-action@ddb2685fb140c29505663b405af7eb2cd953dd13 # v2.0.1
+        uses: hashicorp-forge/go-test-split-action@3b2b67379b94f6bea96556b2e4e15929b57c10cf # v2.0.3
         with:
           packages: ./integration
           total: ${{ matrix.parallel }}
           index: ${{ matrix.index }}
+          junit-summary: ${{ github.workspace }}/integration-test-summary.xml
 
       - name: Run Integration tests
         run: |
           TESTS=$(echo "${{ steps.test_split.outputs.run}}" | sed 's/\$/\$\$/g')
-          TESTFLAGS="-run \"${TESTS}\"" make test-integration
+          gotestsum --junitfile shard-${{ matrix.index }}-results.xml --packages ./integration -- -test.timeout=20m -v -run "${TESTS}"
+
+      - name: Upload shard test results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: integration-shard-${{ matrix.index }}-results
+          path: shard-${{ matrix.index }}-results.xml
+          retention-days: 7
+
+  merge-test-results:
+    runs-on: ubuntu-latest
+    needs:
+      - test-integration
+    if: ${{ !cancelled() && needs.test-integration.result != 'skipped' }}
+    steps:
+      - name: Download all shard results
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: integration-shard-*-results
+          merge-multiple: true
+
+      - name: Merge JUnit XML results
+        run: npx --yes junit-report-merger@9.0.3 integration-test-summary.xml shard-*-results.xml
+
+      - name: Upload merged test summary
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: integration-test-summary
+          path: integration-test-summary.xml
+          retention-days: 30
