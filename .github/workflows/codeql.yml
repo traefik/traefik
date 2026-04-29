@@ -36,6 +36,7 @@ jobs:
       with:
         go-version-file: '.go-version'
         check-latest: true
+        cache: false
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
