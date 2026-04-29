@@ -107,7 +107,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          gotestsum --junitfile unit-shard-${{ matrix.shard.id }}-results.xml -- -parallel 8 -v -run "${{ matrix.shard.regex }}" ./cmd/... ./pkg/...
+          gotestsum --junitfile unit-shard-${{ matrix.shard.id }}-results.xml -- -parallel 8 -v -run "${{ matrix.shard.regex }}" ${{ matrix.shard.packages }}
 
       - name: Upload shard test results
         if: always()
