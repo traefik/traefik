@@ -208,6 +208,9 @@ http:
           name1: 42
         service: foobar
         query: foobar
+        errorRequestHeaders:
+          - foobar
+          - foobar
     Middleware10:
       forwardAuth:
         address: foobar
