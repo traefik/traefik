@@ -9453,6 +9453,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-http-status-retry-and-buffering-off-whoami-80",
+							Middlewares: []string{"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -9469,6 +9470,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-http-status-retry-and-buffering-off-whoami-80",
+							Middlewares: []string{"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-tls-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -9482,7 +9484,22 @@ func TestLoadIngresses(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{},
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								Status:              []string{"502"},
+								MaxRequestBodyBytes: ptr.To(int64(0)),
+							},
+						},
+						"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								Status:              []string{"502"},
+								MaxRequestBodyBytes: ptr.To(int64(0)),
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -11243,6 +11260,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-rule-0-path-0-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -11275,6 +11293,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -11305,7 +11324,24 @@ func TestLoadIngresses(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{},
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:                 3,
+								Status:                   []string{"400"},
+								RetryNonIdempotentMethod: true,
+								MaxRequestBodyBytes:      ptr.To(int64(0)),
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:                 3,
+								Status:                   []string{"400"},
+								RetryNonIdempotentMethod: true,
+								MaxRequestBodyBytes:      ptr.To(int64(0)),
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{

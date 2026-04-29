@@ -310,6 +310,13 @@ func (r *responseWriter) ShouldRetry() bool {
 func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
 	if r.shouldRetry == nil {
 		r.shouldRetry = &shouldRetry
+		return
+	}
+
+	// Allow upgrading from false to true (HTTP status code overrides TCP baseline),
+	// but not downgrading from true to false.
+	if shouldRetry {
+		*r.shouldRetry = true
 	}
 }
 
@@ -327,19 +334,24 @@ func (r *responseWriter) Header() http.Header {
 }
 
 func (r *responseWriter) Write(buf []byte) (int, error) {
-	if r.ShouldRetry() {
-		return len(buf), nil
-	}
-
 	if !r.written {
 		r.WriteHeader(http.StatusOK)
+	}
+
+	if r.ShouldRetry() {
+		return len(buf), nil
 	}
 
 	return r.responseWriter.Write(buf)
 }
 
 func (r *responseWriter) WriteHeader(code int) {
-	if r.ShouldRetry() || r.written {
+	if r.written {
+		return
+	}
+
+	// If TCP-level retry has already been signaled, discard this response.
+	if r.shouldRetry != nil && *r.shouldRetry {
 		return
 	}
 

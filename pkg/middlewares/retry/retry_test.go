@@ -167,11 +167,6 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 	expectedHeaderValue := "bar"
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		shouldRetry := ContextShouldRetry(req.Context())
-		if shouldRetry != nil {
-			shouldRetry(true)
-		}
-
 		headerName := fmt.Sprintf("X-Foo-Test-%d", attempt)
 		rw.Header().Add(headerName, expectedHeaderValue)
 		if attempt < 2 {
@@ -179,14 +174,17 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 			return
 		}
 
-		// Request has been successfully written to backend
-		shouldRetry(false)
+		// Signal that request headers have been sent to the backend.
+		trace := httptrace.ContextClientTrace(req.Context())
+		require.NotNil(t, trace)
+
+		trace.WroteHeaders()
 
 		// And we decide to answer to client.
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	retry, err := New(t.Context(), WrapHandler(next), dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
 	res := httptest.NewRecorder()
@@ -210,17 +208,18 @@ func TestRetryShouldNotLooseHeadersOnWrite(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Add("X-Foo-Test", "bar")
 
-		// Request has been successfully written to backend.
-		shouldRetry := ContextShouldRetry(req.Context())
-		if shouldRetry != nil {
-			shouldRetry(false)
-		}
+		// Signal that request headers have been sent to the backend.
+		trace := httptrace.ContextClientTrace(req.Context())
+		require.NotNil(t, trace)
+
+		trace.WroteHeaders()
+
 		// And we decide to answer to client without calling WriteHeader.
 		_, err := rw.Write([]byte("bar"))
 		require.NoError(t, err)
 	})
 
-	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	retry, err := New(t.Context(), WrapHandler(next), dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
 	res := httptest.NewRecorder()
@@ -286,19 +285,13 @@ func TestRetryWebsocket(t *testing.T) {
 
 			retryAttempts := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				// This signals that a connection will be established with the backend
-				// to enable the Retry middleware mechanism.
-				shouldRetry := ContextShouldRetry(req.Context())
-				if shouldRetry != nil {
-					shouldRetry(true)
-				}
-
 				retryAttempts++
 
 				if retryAttempts > test.amountFaultyEndpoints {
-					// This signals that request headers have been sent to the backend.
-					if shouldRetry != nil {
-						shouldRetry(false)
+					// Signal that request headers have been sent to the backend.
+					trace := httptrace.ContextClientTrace(req.Context())
+					if trace != nil {
+						trace.WroteHeaders()
 					}
 
 					upgrader := websocket.Upgrader{}
@@ -313,7 +306,7 @@ func TestRetryWebsocket(t *testing.T) {
 			})
 
 			retryListener := &countingRetryListener{}
-			retryH, err := New(t.Context(), next, dynamic.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")
+			retryH, err := New(t.Context(), WrapHandler(next), dynamic.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")
 			require.NoError(t, err)
 
 			retryServer := httptest.NewServer(retryH)
@@ -587,8 +580,8 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				time.Sleep(test.responseDelay)
 
 				if callCount < test.amountOfTCPFailures {
-					// This signals that a connection will be established with the backend
-					// to enable the Retry middleware mechanism.
+					// Simulate a TCP-level failure: the request was not forwarded
+					// to the backend, signal that retry is possible.
 					shouldRetry := ContextShouldRetry(req.Context())
 					if shouldRetry != nil {
 						shouldRetry(true)
@@ -598,6 +591,12 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 					rw.WriteHeader(http.StatusGatewayTimeout)
 					return
 				}
+
+				trace := httptrace.ContextClientTrace(req.Context())
+				require.NotNil(t, trace)
+
+				// Signal that request headers have been sent to the backend.
+				trace.WroteHeaders()
 
 				// Verify the body is readable on each attempt.
 				if test.requestBody != "" {
@@ -629,7 +628,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			})
 
 			retryListener := &countingRetryListener{}
-			retry, err := New(t.Context(), next, test.config, retryListener, "traefikTest")
+			retry, err := New(t.Context(), WrapHandler(next), test.config, retryListener, "traefikTest")
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
@@ -750,11 +749,17 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		trace := httptrace.ContextClientTrace(req.Context())
+		require.NotNil(t, trace)
+
+		// Signal that request headers have been sent to the backend.
+		trace.WroteHeaders()
+
 		rw.WriteHeader(http.StatusServiceUnavailable)
 	})
 
 	retryListener := &countingRetryListener{}
-	retry, err := New(t.Context(), next, config, retryListener, "traefikTest")
+	retry, err := New(t.Context(), WrapHandler(next), config, retryListener, "traefikTest")
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
