@@ -28,7 +28,7 @@ type model struct {
 	// metadata to the global catch-all routers.
 	DefaultBackendLocation *location
 
-	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all ingresses. T
+	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all ingresses.
 	// The map key is the certificate PEM, the value is the matching private key PEM.
 	// Using the cert PEM as the key naturally deduplicates certificates that appear in multiple ingresses.
 	Certs map[string]string
