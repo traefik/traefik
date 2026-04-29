@@ -83,6 +83,10 @@ var (
 	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/parser/validators.go#L77
 	regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
+	// trailingSlashCaptureRegex matches a trailing /(...) at the end of a path regex.
+	// Used to make the slash optional so "/original/(.*)" also matches "/original".
+	// See https://github.com/traefik/traefik/issues/12982
+	trailingSlashCaptureRegex = regexp.MustCompile(`/\(([^)]*)\)$`)
 )
 
 type unavailableError struct {
@@ -1714,8 +1718,17 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	}
 
 	// The usage of rewrite-target annotation implies the usage of regex.
+	//
+	// When the path ends with a trailing slash + capture group like "/(.*)"
+	// or "/(.+)", make the slash optional so the regex also matches the bare
+	// prefix without a trailing slash. nginx handles this by doing a prefix
+	// match before the regex; Traefik only does regex, so the slash must be
+	// optional to get equivalent behavior.
+	// See https://github.com/traefik/traefik/issues/12982
+	regex := trailingSlashCaptureRegex.ReplaceAllString(rulePath, "/?($1)")
+
 	rewriteTarget := &dynamic.RewriteTarget{
-		Regex:       rulePath,
+		Regex:       regex,
 		Replacement: rewrite,
 	}
 

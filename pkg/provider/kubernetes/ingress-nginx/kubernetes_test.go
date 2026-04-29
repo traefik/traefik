@@ -3071,14 +3071,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "/(prefix)/(sub)/(.*)",
+								Regex:            "/(prefix)/(sub)/?(.*)",
 								Replacement:      "/$3",
 								XForwardedPrefix: "/$1/$2",
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:            "/(prefix)/(sub)/(.*)",
+								Regex:            "/(prefix)/(sub)/?(.*)",
 								Replacement:      "/$3",
 								XForwardedPrefix: "/$1/$2",
 							},
