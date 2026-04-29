@@ -212,8 +212,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				// The canary backend's addresses are checked using the original ingress config.
-				addrs, err := p.getBackendAddresses(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
-				if err != nil || len(addrs) == 0 {
+				endpoints, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
+				if err != nil || len(endpoints) == 0 {
 					continue
 				}
 
@@ -225,10 +225,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// Resolve canary backend.
 				canaryBackendName := provider.Normalize(canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[canaryBackendName]; !exists {
-					endpoints := make([]endpoint, 0, len(addrs))
-					for _, a := range addrs {
-						endpoints = append(endpoints, endpoint{Address: a.address, Fenced: a.fenced})
-					}
 					mc.Backends[canaryBackendName] = &backend{
 						Name:      canaryBackendName,
 						Namespace: canaryIngress.Namespace,
@@ -287,7 +283,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					continue
 				}
 
-				addrs, err := p.getBackendAddresses(ing.Namespace, *ingBackend, ing.config)
+				endpoints, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
 				if err != nil {
 					logger.Error().Err(err).Msgf("Cannot resolve passthrough backend for host %q", rule.Host)
 					continue
@@ -295,14 +291,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				ptBackendName := provider.Normalize(ing.Namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
 				if _, exists := mc.Backends[ptBackendName]; !exists {
-					eps := make([]endpoint, 0, len(addrs))
-					for _, a := range addrs {
-						eps = append(eps, endpoint{Address: a.address, Fenced: a.fenced})
-					}
 					mc.Backends[ptBackendName] = &backend{
 						Name:      ptBackendName,
 						Namespace: ing.Namespace,
-						Endpoints: eps,
+						Endpoints: endpoints,
 					}
 				}
 
@@ -365,25 +357,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// the location is still emitted with an empty backend so the router
 				// (and its middlewares) exist, mirroring ingress-nginx's 503-on-no-servers
 				// behavior.
-				addrs, err := p.getBackendAddresses(ing.Namespace, pa.Backend, ing.config)
+				endpoints, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
 				if err != nil {
 					logger.Warn().
 						Str("service", pa.Backend.Service.Name).
 						Err(err).
 						Msg("Cannot resolve backend addresses, emitting empty backend")
-					addrs = nil
+					endpoints = nil
 				}
 
 				backendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[backendName]; !exists {
-					eps := make([]endpoint, 0, len(addrs))
-					for _, a := range addrs {
-						eps = append(eps, endpoint{Address: a.address, Fenced: a.fenced})
-					}
 					mc.Backends[backendName] = &backend{
 						Name:      backendName,
 						Namespace: ing.Namespace,
-						Endpoints: eps,
+						Endpoints: endpoints,
 					}
 				}
 
@@ -446,18 +434,14 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 							// Build the error backend using defaultBackend annotation or provider default.
 							defaultSvcName := ptr.Deref(ing.config.DefaultBackend, "")
 							if defaultSvcName != "" {
-								errAddrs, err := p.getBackendAddresses(ing.Namespace,
+								endpoints, err := p.getBackendEndpoints(ing.Namespace,
 									netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
 									ing.config)
 								if err == nil {
-									eps := make([]endpoint, 0, len(errAddrs))
-									for _, a := range errAddrs {
-										eps = append(eps, endpoint{Address: a.address, Fenced: a.fenced})
-									}
 									mc.Backends[errBackendName] = &backend{
 										Name:      errBackendName,
 										Namespace: ing.Namespace,
-										Endpoints: eps,
+										Endpoints: endpoints,
 									}
 								}
 							}
@@ -484,25 +468,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		// the ingress defaultBackend as the fallback location for each server block.
 		if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil {
 			db := ing.Spec.DefaultBackend
-			addrs, err := p.getBackendAddresses(ing.Namespace, *db, ing.config)
+			endpoints, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
 			if err != nil {
 				logger.Warn().
 					Str("service", db.Service.Name).
 					Err(err).
 					Msg("Cannot resolve ingress default backend, emitting empty backend")
-				addrs = nil
+				endpoints = nil
 			}
 
 			defaultBackendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-default-backend")
 			if _, exists := mc.Backends[defaultBackendName]; !exists {
-				eps := make([]endpoint, 0, len(addrs))
-				for _, a := range addrs {
-					eps = append(eps, endpoint{Address: a.address, Fenced: a.fenced})
-				}
 				mc.Backends[defaultBackendName] = &backend{
 					Name:      defaultBackendName,
 					Namespace: ing.Namespace,
-					Endpoints: eps,
+					Endpoints: endpoints,
 				}
 			}
 
@@ -609,7 +589,7 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	return nst, nil
 }
 
-func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]resolvedAddress, error) {
+func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting service: %w", err)
@@ -625,22 +605,22 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []resolvedAddress{{address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
 	}
 
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []resolvedAddress{{address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
 	}
 
-	addresses, err := p.getAddressesFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
+	endpoints, err := p.getEndpointsFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
 	if err != nil {
-		return nil, fmt.Errorf("getting backend addresses: %w", err)
+		return nil, fmt.Errorf("getting backend endpoints: %w", err)
 	}
 
 	// Fall back to default-backend annotation if no endpoints.
 	defaultBackend := ptr.Deref(cfg.DefaultBackend, "")
-	if defaultBackend == "" || defaultBackend == backend.Service.Name || len(addresses) > 0 {
-		return addresses, nil
+	if defaultBackend == "" || defaultBackend == backend.Service.Name || len(endpoints) > 0 {
+		return endpoints, nil
 	}
 
 	fallbackSvc, err := p.k8sClient.GetService(namespace, defaultBackend)
@@ -657,16 +637,16 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("fallback service port not found")
 	}
 
-	return p.getAddressesFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
+	return p.getEndpointsFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
 }
 
-func (p *Provider) getAddressesFromEndpointSlices(namespace, name, portName string) ([]resolvedAddress, error) {
+func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName string) ([]endpoint, error) {
 	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
-	var addresses []resolvedAddress
+	var endpoints []endpoint
 	seen := map[string]struct{}{}
 
 	for _, es := range endpointSlices {
@@ -693,26 +673,21 @@ func (p *Provider) getAddressesFromEndpointSlices(namespace, name, portName stri
 					continue
 				}
 				seen[addr] = struct{}{}
-				addresses = append(addresses, resolvedAddress{
-					address: net.JoinHostPort(addr, strconv.Itoa(int(port))),
-					fenced:  ptr.Deref(ep.Conditions.Terminating, false),
+				endpoints = append(endpoints, endpoint{
+					Address: net.JoinHostPort(addr, strconv.Itoa(int(port))),
+					Fenced:  ptr.Deref(ep.Conditions.Terminating, false),
 				})
 			}
 		}
 	}
 
-	return addresses, nil
+	return endpoints, nil
 }
 
 func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBackend, cfg IngressConfig) (*backend, error) {
-	addrs, err := p.getBackendAddresses(namespace, ingBackend, cfg)
+	endpoints, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
 	if err != nil {
 		return nil, err
-	}
-
-	eps := make([]endpoint, 0, len(addrs))
-	for _, a := range addrs {
-		eps = append(eps, endpoint{Address: a.address, Fenced: a.fenced})
 	}
 
 	name := provider.Normalize(namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
@@ -720,7 +695,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		Name:        name,
 		Namespace:   namespace,
 		ServiceName: ingBackend.Service.Name,
-		Endpoints:   eps,
+		Endpoints:   endpoints,
 	}, nil
 }
 
