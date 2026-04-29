@@ -1891,6 +1891,73 @@ func generateTestFilename(suffix, desc string) string {
 	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
 }
 
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces verifies that an Ingress,
+// declaring a `traefik.ingress.kubernetes.io/router.middlewares` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		paths                   []string
+		wantRouter              string
+	}{
+		{
+			desc:                    "Ingress with middleware annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			paths: []string{
+				"fixtures/Ingress-with-annotations_ingress.yml",
+				"fixtures/Ingress-with-annotations_endpoint.yml",
+				"fixtures/Ingress-with-annotations_service.yml",
+			},
+			wantRouter: "testing-bar",
+		},
+		{
+			desc:                    "Ingress with middleware annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+			paths: []string{
+				"fixtures/Ingress-with-annotations_ingress.yml",
+				"fixtures/Ingress-with-annotations_endpoint.yml",
+				"fixtures/Ingress-with-annotations_service.yml",
+			},
+		},
+		{
+			desc:                    "Ingress with middleware annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			paths: []string{
+				"fixtures/Ingress-with-annotations_ingress.yml",
+				"fixtures/Ingress-with-annotations_endpoint.yml",
+				"fixtures/Ingress-with-annotations_service.yml",
+			},
+			wantRouter: "testing-bar",
+		},
+		{
+			desc:                    "Ingress with middleware annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+			paths: []string{
+				"fixtures/Ingress-with-annotations_ingress.yml",
+				"fixtures/Ingress-with-annotations_endpoint.yml",
+				"fixtures/Ingress-with-annotations_service.yml",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock("v1.17", test.paths...))
+
+			if test.wantRouter == "" {
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+		})
+	}
+}
+
 func TestGetCertificates(t *testing.T) {
 	testIngressWithoutHostname := buildIngress(
 		iNamespace("testing"),

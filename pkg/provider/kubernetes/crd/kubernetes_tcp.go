@@ -111,23 +111,35 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
-					// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
-					ns := ingressRouteTCP.Spec.TLS.Options.Namespace
-					if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
-						if len(ns) == 0 {
-							ns = ingressRouteTCP.Namespace
-						}
-						tlsOptionsName = makeID(ns, tlsOptionsName)
-					} else if len(ns) > 0 {
-						logger.
-							WithField("TLSOption", ingressRouteTCP.Spec.TLS.Options.Name).
-							Warnf("Namespace %q is ignored in cross-provider context", ns)
-					}
 
-					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
-						logger.Errorf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
-							ns, ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
-						continue
+					if strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
+						if !p.AllowCrossNamespace && strings.HasSuffix(tlsOptionsName, providerNamespaceSeparator+providerName) {
+							logger.Errorf("Invalid reference to TLSOption %q: when allowCrossNamespace is disabled, @kubernetescrd references are disallowed",
+								ingressRouteTCP.Spec.TLS.Options.Name)
+							continue
+						}
+
+						if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, ingressRouteTCP.Namespace) {
+							logger.Errorf("TLSOption %q reference is not allowed: namespace %q is not in crossProviderNamespaces",
+								ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
+							continue
+						}
+
+						if len(ingressRouteTCP.Spec.TLS.Options.Namespace) > 0 {
+							logger.
+								WithField("TLSOption", ingressRouteTCP.Spec.TLS.Options.Name).
+								Warnf("Namespace %q is ignored in cross-provider context", ingressRouteTCP.Spec.TLS.Options.Namespace)
+						}
+					} else {
+						ns := namespaceOrParentNamespace(ingressRouteTCP.Spec.TLS.Options.Namespace, ingressRouteTCP.Namespace)
+
+						if !p.AllowCrossNamespace && ns != ingressRouteTCP.Namespace {
+							logger.Errorf("Invalid reference to TLSOption %s/%s: when allowCrossNamespace is disabled, cross-namespace are disallowed",
+								ingressRouteTCP.Spec.TLS.Options.Name)
+							continue
+						}
+
+						tlsOptionsName = makeID(ns, tlsOptionsName)
 					}
 
 					r.TLS.Options = tlsOptionsName
@@ -146,22 +158,31 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 
 	for _, mi := range middlewares {
 		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if !p.AllowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
+				// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+				// if the provider namespace kubernetescrd is used,
+				// we don't allow this format to avoid cross-namespace references.
+				return nil, fmt.Errorf("invalid reference to middleware %s: when allowCrossNamespace is disabled @kubernetescrd provider references are disallowed", mi.Name)
+			}
+
+			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, ingRouteTCPNamespace) {
+				return nil, fmt.Errorf("IngressRouteTCP in namespace %q references middlewares but namespace is not in crossProviderNamespaces", ingRouteTCPNamespace)
+			}
+
 			if len(mi.Namespace) > 0 {
 				log.FromContext(ctx).
 					WithField(log.MiddlewareName, mi.Name).
 					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
+
 			mds = append(mds, mi.Name)
 			continue
 		}
 
-		ns := ingRouteTCPNamespace
-		if len(mi.Namespace) > 0 {
-			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteTCPNamespace, mi.Namespace) {
-				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRouteTCP namespace %s", mi.Namespace, mi.Name, ingRouteTCPNamespace)
-			}
+		ns := namespaceOrParentNamespace(mi.Namespace, ingRouteTCPNamespace)
 
-			ns = mi.Namespace
+		if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteTCPNamespace, ns) {
+			return nil, fmt.Errorf("middleware %s/%s is not in the IngressRouteTCP namespace %s", mi.Namespace, mi.Name, ingRouteTCPNamespace)
 		}
 
 		mds = append(mds, provider.Normalize(makeID(ns, mi.Name)))

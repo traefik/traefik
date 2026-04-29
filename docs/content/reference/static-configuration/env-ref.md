@@ -702,6 +702,9 @@ Allow ExternalName services. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_CROSSPROVIDERNAMESPACES`:  
+List of namespaces from which Traefik resources are allowed to declare references to services, middlewares, TLS options or ServersTransports. A nil list (default) means unrestricted; an empty list rejects every resource declaring references.
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -725,6 +728,9 @@ Enable Kubernetes gateway api provider with default settings. (Default: ```false
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_CROSSPROVIDERNAMESPACES`:  
+List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references. A nil list (default) means unrestricted; an empty list rejects every TraefikService backendRef.
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -752,6 +758,9 @@ Allow ExternalName services. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CROSSPROVIDERNAMESPACES`:  
+List of namespaces from which Ingresses are allowed to attach Traefik middlewares via the router.middlewares annotation. A nil list (default) means unrestricted; an empty list rejects every Ingress declaring middleware references.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).

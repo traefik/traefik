@@ -341,6 +341,38 @@ providers:
 --providers.kubernetescrd.allowexternalnameservices=true
 ```
 
+### `crossProviderNamespaces`
+
+_Optional, Default: nil_
+
+`crossProviderNamespaces` is the list of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService,
+are allowed to declare direct references to Traefik resources (Services, Middlewares, TLSOptions, ServersTransports, ...).
+
+| Value      | Behavior                                                                                          |
+|------------|---------------------------------------------------------------------------------------------------|
+| not set    | Resources may declare references from any namespace (default, backward compatible).               |
+| `[]`       | Every resource declaring a reference is rejected.                                                 |
+| `["ns-a"]` | Only resources in the listed namespaces may declare references; resources elsewhere are rejected. |
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    crossProviderNamespaces:
+      - ns-a
+      - ns-b
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  crossProviderNamespaces = ["ns-a", "ns-b"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.crossProviderNamespaces=ns-a,ns-b
+```
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

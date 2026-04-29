@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -53,6 +54,7 @@ type Provider struct {
 	Namespaces                []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	AllowCrossNamespace       bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	AllowExternalNameServices bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	CrossProviderNamespaces   []string        `description:"List of namespaces from which custom resources are allowed to declare direct references to Services, Middlewares, TLSOptions or ServersTransports." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	LabelSelector             string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass              string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
@@ -91,6 +93,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	if p.AllowExternalNameServices {
 		logger.Warn("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+	}
+
+	if p.CrossProviderNamespaces != nil {
+		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -283,7 +289,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		chain, err := createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain, p.AllowCrossNamespace)
+		chain, err := createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain, p.AllowCrossNamespace, p.CrossProviderNamespaces)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading chain middleware: %v", err)
 			continue
@@ -332,6 +338,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
 	}
 
 	for _, service := range client.GetTraefikServices() {
@@ -631,6 +638,7 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
 	}
 
 	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec)
@@ -862,9 +870,13 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
-func createChainMiddleware(ctx context.Context, parentNamespace string, chain *traefikv1alpha1.Chain, allowCrossNamespace bool) (*dynamic.Chain, error) {
+func createChainMiddleware(ctx context.Context, parentNamespace string, chain *traefikv1alpha1.Chain, allowCrossNamespace bool, crossProviderNamespaces []string) (*dynamic.Chain, error) {
 	if chain == nil {
 		return nil, nil
+	}
+
+	if len(chain.Middlewares) > 0 && !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNamespace) {
+		return nil, fmt.Errorf("chain middleware in namespace %q references middlewares but namespace is not in crossProviderNamespaces", parentNamespace)
 	}
 
 	var mds []string
@@ -1207,4 +1219,14 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace string) bool {
 	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
 	return allowCrossNamespace || parentNamespace == namespace
+}
+
+// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare direct references to Traefik resources.
+// A nil allowList means references are unrestricted, and an empty allowList disables them entirely.
+func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool {
+	if allowList == nil {
+		return true
+	}
+
+	return slices.Contains(allowList, namespace)
 }

@@ -46,13 +46,14 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token            string                `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath string                `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces       []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector    string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	Endpoint                string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                   string                `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath        string                `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces              []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector           string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	ThrottleDuration        ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	CrossProviderNamespaces []string              `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+	EntryPoints             map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	lastConfiguration safe.Safe
 
@@ -82,6 +83,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
+	}
+
+	if p.CrossProviderNamespaces != nil {
+		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -516,9 +521,9 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			case kindHTTPRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTCPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTLSRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
 			}
 		}
 	}
@@ -781,7 +786,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 			if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef) {
 				router.Service = string(routeRule.BackendRefs[0].Name)
 			} else {
-				wrrService, subServices, err := loadServices(client, route.Namespace, routeRule.BackendRefs)
+				wrrService, subServices, err := loadServices(client, route.Namespace, routeRule.BackendRefs, p.CrossProviderNamespaces)
 				if err != nil {
 					// update "ResolvedRefs" status true with "DroppedRoutes" reason
 					conditions = append(conditions, metav1.Condition{
@@ -815,7 +820,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 	return conditions
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func (p *Provider) gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
 		return nil
@@ -895,7 +900,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 				continue
 			}
 
-			wrrService, subServices, err := loadTCPServices(client, route.Namespace, rule.BackendRefs)
+			wrrService, subServices, err := loadTCPServices(client, route.Namespace, rule.BackendRefs, p.CrossProviderNamespaces)
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
 				conditions = append(conditions, metav1.Condition{
@@ -943,7 +948,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 	return conditions
 }
 
-func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
+func (p *Provider) gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
 		return nil
@@ -1040,7 +1045,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 				continue
 			}
 
-			wrrService, subServices, err := loadTCPServices(client, route.Namespace, routeRule.BackendRefs)
+			wrrService, subServices, err := loadTCPServices(client, route.Namespace, routeRule.BackendRefs, p.CrossProviderNamespaces)
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
 				conditions = append(conditions, metav1.Condition{
@@ -1430,7 +1435,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 }
 
 // loadServices is generating a WRR service, even when there is only one target.
-func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
+func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HTTPBackendRef, crossProviderNamespaces []string) (*dynamic.Service, map[string]*dynamic.Service, error) {
 	services := map[string]*dynamic.Service{}
 
 	wrrSvc := &dynamic.Service{
@@ -1452,6 +1457,11 @@ func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HT
 		weight := int(ptr.Deref(backendRef.Weight, 1))
 
 		if isTraefikService(backendRef.BackendRef) {
+			// We don't check whether backendRef.Name contains a @provider reference because of provider namespace resolution that would happen anyway at build time.
+			if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, namespace) {
+				return nil, nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), namespace)
+			}
+
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1554,7 +1564,7 @@ func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HT
 }
 
 // loadTCPServices is generating a WRR service, even when there is only one target.
-func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2.BackendRef) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
+func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2.BackendRef, crossProviderNamespaces []string) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
 	services := map[string]*dynamic.TCPService{}
 
 	wrrSvc := &dynamic.TCPService{
@@ -1576,6 +1586,11 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2
 		weight := int(ptr.Deref(backendRef.Weight, 1))
 
 		if isTraefikService(backendRef) {
+			// We don't check whether backendRef.Name contains a @provider reference because of provider namespace resolution that would happen anyway at build time.
+			if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, namespace) {
+				return nil, nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), namespace)
+			}
+
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1721,6 +1736,15 @@ func isTraefikService(ref gatev1alpha2.BackendRef) bool {
 
 func isInternalService(ref gatev1alpha2.BackendRef) bool {
 	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
+}
+
+// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to use cross-provider references.
+func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool {
+	if allowList == nil {
+		return true
+	}
+
+	return slices.Contains(allowList, namespace)
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.

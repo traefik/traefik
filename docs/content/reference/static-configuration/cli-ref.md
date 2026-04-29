@@ -702,6 +702,9 @@ Allow ExternalName services. (Default: ```false```)
 `--providers.kubernetescrd.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`--providers.kubernetescrd.crossprovidernamespaces`:  
+List of namespaces from which Traefik resources are allowed to declare references to services, middlewares, TLS options or ServersTransports. A nil list (default) means unrestricted; an empty list rejects every resource declaring references.
+
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -725,6 +728,9 @@ Enable Kubernetes gateway api provider with default settings. (Default: ```false
 
 `--providers.kubernetesgateway.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesgateway.crossprovidernamespaces`:  
+List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references. A nil list (default) means unrestricted; an empty list rejects every TraefikService backendRef.
 
 `--providers.kubernetesgateway.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -752,6 +758,9 @@ Allow ExternalName services. (Default: ```false```)
 
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesingress.crossprovidernamespaces`:  
+List of namespaces from which Ingresses are allowed to attach Traefik middlewares via the router.middlewares annotation. A nil list (default) means unrestricted; an empty list rejects every Ingress declaring middleware references.
 
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).

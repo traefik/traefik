@@ -269,4 +269,36 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
+### `crossProviderNamespaces`
+
+_Optional, Default: nil (unrestricted)_
+
+`crossProviderNamespaces` is the list of namespaces from which Gateway API routes (HTTPRoute, TCPRoute, TLSRoute),
+are allowed to declare a backendRef of kind `TraefikService`.
+
+| Value      | Behavior                                                                                  |
+|------------|-------------------------------------------------------------------------------------------|
+| not set    | TraefikService backendRefs are allowed from any namespace (default, backward compatible). |
+| `[]`       | Every TraefikService backendRef is rejected and the route is dropped.                     |
+| `["ns-a"]` | Only routes in the listed namespaces may declare TraefikService backendRefs.              |
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    crossProviderNamespaces:
+      - ns-a
+      - ns-b
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  crossProviderNamespaces = ["ns-a", "ns-b"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.crossProviderNamespaces=ns-a,ns-b
+```
+
 {% include-markdown "includes/traefik-for-business-applications.md" %}
