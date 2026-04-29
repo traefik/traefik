@@ -47,7 +47,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	}
 
 	if mc.DefaultBackend != nil {
-		svc := buildService(mc.DefaultBackend, "")
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
 				Ingress: &dynamic.KubernetesIngressMetadata{
@@ -57,8 +56,19 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			},
 		}
 
-		conf.HTTP.Services[defaultBackendName] = svc
-		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
+		var serversTransportName string
+		if loc := mc.DefaultBackendLocation; loc != nil {
+			obs.Metadata.Ingress.IngressName = loc.IngressName
+			obs.Metadata.Ingress.ServicePort = loc.ServicePort
+			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
+				serversTransportName = loc.ServersTransportName
+				conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
+			}
+		}
+
+		conf.HTTP.Services[defaultBackendName] = buildService(mc.DefaultBackend, serversTransportName)
+
+		rt := &dynamic.Router{
 			EntryPoints:   p.NonTLSEntryPoints,
 			Rule:          `PathPrefix("/")`,
 			RuleSyntax:    "default",
@@ -66,7 +76,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:       defaultBackendName,
 			Observability: obs,
 		}
-		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
+		rtTLS := &dynamic.Router{
 			EntryPoints:   p.TLSEntryPoints,
 			Rule:          `PathPrefix("/")`,
 			RuleSyntax:    "default",
@@ -75,6 +85,18 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			TLS:           &dynamic.RouterTLSConfig{},
 			Observability: obs,
 		}
+
+		if loc := mc.DefaultBackendLocation; loc != nil && loc.Retry != nil {
+			retryName := defaultBackendName + "-retry"
+			retryTLSName := defaultBackendTLSName + "-retry"
+			conf.HTTP.Middlewares[retryName] = &dynamic.Middleware{Retry: loc.Retry}
+			conf.HTTP.Middlewares[retryTLSName] = &dynamic.Middleware{Retry: loc.Retry}
+			rt.Middlewares = []string{retryName}
+			rtTLS.Middlewares = []string{retryTLSName}
+		}
+
+		conf.HTTP.Routers[defaultBackendName] = rt
+		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
 	}
 
 	for _, pt := range mc.PassthroughBackends {

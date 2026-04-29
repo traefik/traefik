@@ -17,8 +17,16 @@ type model struct {
 	// PassthroughBackends holds ssl-passthrough entries.
 	PassthroughBackends []*sslPassthroughBackend
 
-	// DefaultBackend is the provider-level catch-all backend (nil if not configured).
+	// DefaultBackend is the catch-all backend (nil if not configured). It is
+	// either provider-level (DefaultBackendService) or sourced from an ingress
+	// with spec.defaultBackend and no rules.
 	DefaultBackend *backend
+
+	// DefaultBackendLocation, when non-nil, holds metadata for an ingress-level
+	// spec.defaultBackend on an ingress with no rules. The translator uses it
+	// to attach retry middleware, ServersTransport, and ingress observability
+	// metadata to the global catch-all routers.
+	DefaultBackendLocation *location
 
 	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all ingresses. T
 	// The map key is the certificate PEM, the value is the matching private key PEM.

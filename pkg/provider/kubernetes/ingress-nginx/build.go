@@ -466,6 +466,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		// Ingress-level spec.defaultBackend: emit one host-only catch-all location
 		// per distinct host in the ingress rules. Mirrors ingress-nginx which uses
 		// the ingress defaultBackend as the fallback location for each server block.
+		// When the ingress has no rules, register the backend as the global catch-all
+		// (default-backend / default-backend-tls routers) so it still serves traffic.
 		if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil {
 			db := ing.Spec.DefaultBackend
 			endpoints, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
@@ -477,10 +479,37 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				endpoints = nil
 			}
 
-			defaultBackendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-default-backend")
-			if _, exists := mc.Backends[defaultBackendName]; !exists {
-				mc.Backends[defaultBackendName] = &backend{
-					Name:      defaultBackendName,
+			if len(ing.Spec.Rules) == 0 {
+				if mc.DefaultBackend == nil {
+					bk := &backend{
+						Name:        defaultBackendName,
+						Namespace:   ing.Namespace,
+						ServiceName: db.Service.Name,
+						Endpoints:   endpoints,
+					}
+					mc.Backends[defaultBackendName] = bk
+					mc.DefaultBackend = bk
+
+					loc := &location{
+						BackendName:          defaultBackendName,
+						ServersTransportName: nst.name,
+						ServersTransport:     nst.ServersTransport,
+						Config:               ing.config,
+						Namespace:            ing.Namespace,
+						IngressName:          ing.Name,
+						ServiceName:          db.Service.Name,
+						ServicePort:          portString(db.Service.Port),
+					}
+					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
+					mc.DefaultBackendLocation = loc
+				}
+				continue
+			}
+
+			ingDefaultBackendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-default-backend")
+			if _, exists := mc.Backends[ingDefaultBackendName]; !exists {
+				mc.Backends[ingDefaultBackendName] = &backend{
+					Name:      ingDefaultBackendName,
 					Namespace: ing.Namespace,
 					Endpoints: endpoints,
 				}
@@ -497,7 +526,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				loc := &location{
 					Path:                    "",
-					BackendName:             defaultBackendName,
+					BackendName:             ingDefaultBackendName,
 					ServersTransportName:    "",
 					Config:                  ing.config,
 					TLSOptionName:           tlsOptionName,
@@ -515,7 +544,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				loc.UseRegex = hostsWithUseRegex[rule.Host]
 
 				endpointCount := 0
-				if backend, ok := mc.Backends[defaultBackendName]; ok {
+				if backend, ok := mc.Backends[ingDefaultBackendName]; ok {
 					endpointCount = len(backend.Endpoints)
 				}
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
