@@ -75,6 +75,45 @@ func GetObservabilityMetadata(ctx context.Context) *dynamic.ObservabilityMetadat
 	return nil
 }
 
+type serviceObservabilityKey struct{}
+
+// ServiceObservabilityState carries the service-level observability metadata
+// produced by the service handler during request processing. The pointer is
+// seeded once upstream (at the entrypoint chain) and mutated by the leaf
+// service handler when the load balancer dispatches; access-log middleware
+// reads the final state at log emission. Mirrors how *LogData is shared.
+type ServiceObservabilityState struct {
+	Metadata *dynamic.ServiceObservabilityMetadata
+}
+
+// WithServiceObservabilityState seeds an empty state container in the context
+// so downstream handlers and the access-log middleware share the same pointer.
+func WithServiceObservabilityState(ctx context.Context) context.Context {
+	return context.WithValue(ctx, serviceObservabilityKey{}, &ServiceObservabilityState{})
+}
+
+// GetServiceObservabilityState returns the per-request state container, or nil
+// if none has been seeded upstream.
+func GetServiceObservabilityState(ctx context.Context) *ServiceObservabilityState {
+	s, _ := ctx.Value(serviceObservabilityKey{}).(*ServiceObservabilityState)
+	return s
+}
+
+// NewServiceMetadataHandler wraps the service handler so that when the leaf is
+// reached at request time, its metadata is published into the per-request state
+// container. A no-op when the service has no observability metadata attached.
+func NewServiceMetadataHandler(cfg *dynamic.ServiceObservabilityConfig, next http.Handler) http.Handler {
+	if cfg == nil || cfg.Metadata == nil {
+		return next
+	}
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if state := GetServiceObservabilityState(req.Context()); state != nil {
+			state.Metadata = cfg.Metadata
+		}
+		next.ServeHTTP(rw, req)
+	})
+}
+
 // SetStatusErrorf flags the span as in error and log an event.
 func SetStatusErrorf(ctx context.Context, format string, args ...any) {
 	if span := trace.SpanFromContext(ctx); span != nil {

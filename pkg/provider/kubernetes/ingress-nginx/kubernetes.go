@@ -434,12 +434,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		ib := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}}
 		svc := p.buildService(ctx, p.defaultBackendServiceNamespace, ib, nil, IngressConfig{})
 
+		// Global default backend: no Ingress resource, just a K8s Service in a namespace.
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesIngressMetadata{
-					// No ingress and no service port with the global default backend.
-					Namespace:   p.defaultBackendServiceNamespace,
-					ServiceName: p.defaultBackendServiceName,
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: p.defaultBackendServiceNamespace,
 				},
 			},
 		}
@@ -653,11 +653,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			defaultBackendObs = &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
-					Ingress: &dynamic.KubernetesIngressMetadata{
-						Namespace:   ingress.Namespace,
-						IngressName: ingress.Name,
-						ServiceName: ingress.Spec.DefaultBackend.Service.Name,
-						ServicePort: portString(ingress.Spec.DefaultBackend.Service.Port),
+					Ingress: &dynamic.KubernetesMetadata{
+						Kind:      "Ingress",
+						Namespace: ingress.Namespace,
+						Name:      ingress.Name,
 					},
 				},
 			}
@@ -830,11 +829,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				pathObs := &dynamic.RouterObservabilityConfig{
 					Metadata: &dynamic.ObservabilityMetadata{
-						Ingress: &dynamic.KubernetesIngressMetadata{
-							Namespace:   ingress.Namespace,
-							IngressName: ingress.Name,
-							ServiceName: pa.Backend.Service.Name,
-							ServicePort: portString(pa.Backend.Service.Port),
+						Ingress: &dynamic.KubernetesMetadata{
+							Kind:      "Ingress",
+							Namespace: ingress.Namespace,
+							Name:      ingress.Name,
 						},
 					},
 				}
@@ -1116,6 +1114,24 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	return nst, nil
 }
 
+// buildServiceObservability returns the Kubernetes Service identity metadata
+// attached to leaf services so access logs can expose the actual backend that
+// handled each request. Returns nil when the backend has no Service reference.
+func buildServiceObservability(namespace string, backend netv1.IngressBackend) *dynamic.ServiceObservabilityConfig {
+	if backend.Service == nil {
+		return nil
+	}
+	return &dynamic.ServiceObservabilityConfig{
+		Metadata: &dynamic.ServiceObservabilityMetadata{
+			Kubernetes: &dynamic.KubernetesServiceMetadata{
+				Namespace: namespace,
+				Name:      backend.Service.Name,
+				Port:      portString(backend.Service.Port),
+			},
+		},
+	}
+}
+
 func (p *Provider) buildService(ctx context.Context, namespace string, backend netv1.IngressBackend, nst *namedServersTransport, cfg IngressConfig) *dynamic.Service {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
@@ -1129,7 +1145,10 @@ func (p *Provider) buildService(ctx context.Context, namespace string, backend n
 			Err(err).
 			Msg("Cannot build service, defaulting to 503 Service Unavailable")
 
-		return &dynamic.Service{LoadBalancer: lb}
+		return &dynamic.Service{
+			LoadBalancer:  lb,
+			Observability: buildServiceObservability(namespace, backend),
+		}
 	}
 
 	lb.Sticky = buildSticky(cfg, "")
@@ -1144,7 +1163,10 @@ func (p *Provider) buildService(ctx context.Context, namespace string, backend n
 	}
 
 	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
-	svc := &dynamic.Service{LoadBalancer: lb}
+	svc := &dynamic.Service{
+		LoadBalancer:  lb,
+		Observability: buildServiceObservability(namespace, backend),
+	}
 	for _, addr := range backendAddresses {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
 			URL: fmt.Sprintf("%s://%s", scheme, addr.Address),
@@ -1416,7 +1438,7 @@ func (p *Provider) applyMiddlewares(ctx context.Context, ingress ingress, router
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
 	}
 	applyAppRootConfiguration(routerKey, ingress.IngressConfig, rt, conf)
-	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingress, backend, rt, conf)
+	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingress, rt, conf)
 	applyRedirect(routerKey, ingress.IngressConfig, rt, conf)
 
 	if err := p.applyBasicAuthConfiguration(ingress.Namespace, routerKey, ingress.IngressConfig, rt, conf); err != nil {
@@ -1758,7 +1780,7 @@ func applyAppRootConfiguration(routerName string, ingressConfig IngressConfig, r
 	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
 }
 
-func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingress ingress, backend *netv1.IngressBackend, rt *dynamic.Router, conf *dynamic.Configuration) {
+func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingress ingress, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingress.IngressConfig.FromToWwwRedirect == nil || !*ingress.IngressConfig.FromToWwwRedirect {
 		return
 	}
@@ -1789,14 +1811,10 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		},
 	}
 
-	ingressMetadata := &dynamic.KubernetesIngressMetadata{
-		Namespace:   ingress.Namespace,
-		IngressName: ingress.Name,
-	}
-
-	if backend != nil && backend.Service != nil {
-		ingressMetadata.ServiceName = backend.Service.Name
-		ingressMetadata.ServicePort = portString(backend.Service.Port)
+	ingressMetadata := &dynamic.KubernetesMetadata{
+		Kind:      "Ingress",
+		Namespace: ingress.Namespace,
+		Name:      ingress.Name,
 	}
 
 	wwwRedirectRouter := &dynamic.Router{

@@ -205,11 +205,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	}
 
 	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
-		if metadata.Ingress != nil {
-			logDataTable.Core[KubernetesIngressNamespace] = metadata.Ingress.Namespace
-			logDataTable.Core[KubernetesIngressName] = metadata.Ingress.IngressName
-			logDataTable.Core[KubernetesServiceName] = metadata.Ingress.ServiceName
-			logDataTable.Core[KubernetesServicePort] = metadata.Ingress.ServicePort
+		// Dispatch on the source resource kind so each kind maps to its own
+		// stable access-log field names. A single generic struct backs every
+		// Kubernetes provider; only the kind differs.
+		if k := metadata.Ingress; k != nil {
+			switch k.Kind {
+			case "Ingress":
+				logDataTable.Core[KubernetesIngressNamespace] = k.Namespace
+				logDataTable.Core[KubernetesIngressName] = k.Name
+			case "IngressRoute":
+				logDataTable.Core[KubernetesIngressRouteNamespace] = k.Namespace
+				logDataTable.Core[KubernetesIngressRouteName] = k.Name
+			}
 		}
 	}
 
@@ -275,6 +282,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		logDataTable.DownstreamResponse.status = capt.StatusCode()
 		logDataTable.DownstreamResponse.size = capt.ResponseSize()
 		logDataTable.Request.size = capt.RequestSize()
+
+		// Service-level observability metadata is written by the leaf service
+		// handler while the chain runs (the state container is shared by
+		// pointer via the request context). Read it once here so the fields
+		// reflect the backend the load balancer actually dispatched to.
+		if state := observability.GetServiceObservabilityState(reqWithDataTable.Context()); state != nil && state.Metadata != nil {
+			if k := state.Metadata.Kubernetes; k != nil {
+				core[KubernetesServiceName] = k.Name
+				core[KubernetesServiceNamespace] = k.Namespace
+				core[KubernetesServicePort] = k.Port
+			}
+		}
 
 		if _, ok := core[ClientUsername]; !ok {
 			core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)

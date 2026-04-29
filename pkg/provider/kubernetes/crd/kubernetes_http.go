@@ -129,15 +129,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:        route.Match,
 				Service:     serviceName,
 				ParentRefs:  parentRouterNames,
+				Observability: &dynamic.RouterObservabilityConfig{
+					Metadata: &dynamic.ObservabilityMetadata{
+						Ingress: buildIngressRouteMetadata(ingressRoute),
+					},
+				},
 			}
 
 			if route.Observability != nil {
-				r.Observability = &dynamic.RouterObservabilityConfig{
-					AccessLogs:     route.Observability.AccessLogs,
-					Metrics:        route.Observability.Metrics,
-					Tracing:        route.Observability.Tracing,
-					TraceVerbosity: route.Observability.TraceVerbosity,
-				}
+				r.Observability.AccessLogs = route.Observability.AccessLogs
+				r.Observability.Metrics = route.Observability.Metrics
+				r.Observability.Tracing = route.Observability.Tracing
+				r.Observability.TraceVerbosity = route.Observability.TraceVerbosity
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -178,6 +181,20 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	}
 
 	return conf
+}
+
+// buildIngressRouteMetadata returns the IngressRoute identity attached to
+// generated routers so that access logs can expose the originating IngressRoute
+// kind, name and namespace. The backing Kubernetes Service identity is
+// intentionally not carried here: under multi-service routes, TraefikService
+// weighted/mirroring/HRW/failover, the actual backend is only known per request
+// and is stamped at runtime from the leaf Service.Observability.
+func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dynamic.KubernetesMetadata {
+	return &dynamic.KubernetesMetadata{
+		Kind:      "IngressRoute",
+		Namespace: ingressRoute.Namespace,
+		Name:      ingressRoute.Name,
+	}
 }
 
 func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []traefikv1alpha1.MiddlewareRef, allowCrossNamespace bool) ([]string, error) {
@@ -512,7 +529,18 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 		return nil, err
 	}
 
-	service := &dynamic.Service{LoadBalancer: lb}
+	service := &dynamic.Service{
+		LoadBalancer: lb,
+		Observability: &dynamic.ServiceObservabilityConfig{
+			Metadata: &dynamic.ServiceObservabilityMetadata{
+				Kubernetes: &dynamic.KubernetesServiceMetadata{
+					Namespace: namespace,
+					Name:      svc.Name,
+					Port:      svc.Port.String(),
+				},
+			},
+		},
+	}
 	if len(svc.Middlewares) > 0 {
 		mds, err := makeMiddlewareKeys(ctx, namespace, svc.Middlewares, c.allowCrossNamespace)
 		if err != nil {
