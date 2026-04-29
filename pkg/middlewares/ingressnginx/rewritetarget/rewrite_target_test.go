@@ -220,6 +220,26 @@ func TestRewriteTarget(t *testing.T) {
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://portal.example.org/site/foo/bar?tenant=acme&id=42",
 		},
+		{
+			desc: "regex with optional slash matches base path without trailing slash",
+			path: "/original",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original/?(.*)`,
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/",
+		},
+		{
+			desc: "regex with optional slash matches path with suffix",
+			path: "/original/other",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original/?(.*)`,
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/other",
+		},
 	}
 
 	for _, test := range testCases {
