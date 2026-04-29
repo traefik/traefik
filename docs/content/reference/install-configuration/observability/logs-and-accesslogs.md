@@ -171,6 +171,9 @@ accessLog:
         User-Agent: redact
         # Drop the Authorization header value
         Authorization: drop
+    queryParameters:
+      # Drop all query parameters
+      defaultMode: drop
 ```
 
 ```toml tab="File (TOML)"
@@ -194,6 +197,9 @@ accessLog:
       [accessLog.fields.headers.names]
         User-Agent = "redact"
         Authorization = "drop"
+
+    [accessLog.fields.queryParameters]
+      defaultMode = "drop
 ```
 
 ```sh tab="CLI"
@@ -208,6 +214,7 @@ accessLog:
 --accesslog.fields.headers.defaultmode=keep
 --accesslog.fields.headers.names.User-Agent=redact
 --accesslog.fields.headers.names.Authorization=drop
+--accesslog.fields.queryparameters.defaultmode=drop
 ```
 
 ### Configuration Options
@@ -228,6 +235,7 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-fields-names" href="#opt-accesslog-fields-names" title="#opt-accesslog-fields-names">`accesslog.fields.names`</a> | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#json-format-fields). |  [ ]    | No      |
 | <a id="opt-accesslog-fields-headers-defaultMode" href="#opt-accesslog-fields-headers-defaultMode" title="#opt-accesslog-fields-headers-defaultMode">`accesslog.fields.headers.defaultMode`</a> | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
 | <a id="opt-accesslog-fields-headers-names" href="#opt-accesslog-fields-headers-names" title="#opt-accesslog-fields-headers-names">`accesslog.fields.headers.names`</a> | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
+| <a id="opt-accesslog-fields-queryParameters-defaultMode" href="#opt-accesslog-fields-queryParameters-defaultMode" title="#opt-accesslog-fields-queryParameters-defaultMode">`accesslog.fields.queryParameters.defaultMode`</a> | Mode to apply by default to the access logs query parameters (`keep` or `drop`) | keep | No      |
 
 ### OpenTelemetry
 
