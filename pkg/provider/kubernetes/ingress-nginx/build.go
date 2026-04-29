@@ -41,11 +41,6 @@ type namedServersTransport struct {
 	name string
 }
 
-type resolvedAddress struct {
-	address string
-	fenced  bool
-}
-
 // certBlocks holds the raw TLS material extracted from a Kubernetes Secret.
 type certBlocks struct {
 	ca   []byte
@@ -59,6 +54,7 @@ type certBlocks struct {
 func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressClass) *model {
 	mc := &model{
 		Backends: make(map[string]*backend),
+		Servers:  make(map[string]*server),
 		Certs:    make(map[string]string),
 	}
 
@@ -248,7 +244,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	}
 
 	// Third pass: build Servers and Locations from regular ingresses.
-	mc.Servers = make(map[string]*server)  // hostname → Server
 	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
 
 	for _, ing := range regularIngresses {
