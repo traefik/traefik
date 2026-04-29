@@ -1449,7 +1449,9 @@ func (p *Provider) applyMiddlewares(ctx context.Context, ingress ingress, router
 
 	p.applySnippetsAndAuth(routerKey, serverSnippet, ingress.IngressConfig, rt, conf)
 
-	p.applyRetry(routerKey, ingress.IngressConfig, rt, conf)
+	if err := p.applyRetry(routerKey, ingress.IngressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying retry: %w", err)
+	}
 
 	if p.applyMiddlewareFunc == nil &&
 		(ptr.Deref(ingress.IngressConfig.EnableModSecurity, false) ||
@@ -2208,22 +2210,22 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 	return nil
 }
 
-func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	attempts := ptr.Deref(ingressConfig.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
 	// Safeguard to deactivate retry when the value is less than 0.
 	if attempts < 0 {
-		return
+		return nil
 	}
 
 	proxyNextUpstream := ptr.Deref(ingressConfig.ProxyNextUpstream, p.ProxyNextUpstream)
 	if proxyNextUpstream == "" {
-		return
+		return nil
 	}
 
 	retryConditions := strings.Fields(proxyNextUpstream)
 	// "off" disables the retry entirely.
 	if slices.Contains(retryConditions, "off") {
-		return
+		return nil
 	}
 
 	// proxy-next-upstream-tries = 0 on NGINX means unlimited tries, which maps to try every available server.
@@ -2231,7 +2233,7 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 	if attempts == 0 {
 		svc, ok := conf.HTTP.Services[rt.Service]
 		if !ok || svc.LoadBalancer == nil {
-			return
+			return nil
 		}
 		serverCount := len(svc.LoadBalancer.Servers)
 		attempts = serverCount
@@ -2240,6 +2242,22 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 	retryConfig := &dynamic.Retry{
 		Attempts: attempts,
 	}
+
+	maxRequestBodyBytes := p.ProxyBodySize
+	if proxyBodySize := ptr.Deref(ingressConfig.ProxyBodySize, ""); proxyBodySize != "" {
+		var err error
+		if maxRequestBodyBytes, err = nginxSizeToBytes(proxyBodySize); err != nil {
+			return fmt.Errorf("proxy-body-size annotation has invalid value: %w", err)
+		}
+	}
+
+	if maxRequestBodyBytes == 0 {
+		// Zero value means no limit with ingress-nginx.
+		// With the retry middleware, the equivalent configuration is a negative value.
+		maxRequestBodyBytes = -1
+	}
+
+	retryConfig.MaxRequestBodyBytes = &maxRequestBodyBytes
 
 	// Disable network error retry if no error nor timeout present on the configuration.
 	hasError := slices.Contains(retryConditions, "error")
@@ -2256,6 +2274,20 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 		}
 	}
 	if len(statusCodes) > 0 {
+		disableRequestBuffering := !p.ProxyRequestBuffering
+		if ingressConfig.ProxyRequestBuffering != nil {
+			// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+			disableRequestBuffering = *ingressConfig.ProxyRequestBuffering != "on"
+		}
+
+		// When request buffering is explicitly disabled,
+		// NGINX streams the body directly to the upstream without keeping a copy,
+		// making retry impossible once the body has started being sent.
+		// So we can just skip the retry middleware setup in that case.
+		if disableRequestBuffering {
+			return nil
+		}
+
 		retryConfig.Status = statusCodes
 	}
 
@@ -2275,6 +2307,8 @@ func (p *Provider) applyRetry(routerName string, ingressConfig IngressConfig, rt
 		Retry: retryConfig,
 	}
 	rt.Middlewares = append(rt.Middlewares, retryMiddlewareName)
+
+	return nil
 }
 
 func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users, error) {
