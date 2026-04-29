@@ -24,7 +24,7 @@ require (
 	github.com/docker/go-connections v0.6.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/go-acme/lego/v4 v4.35.1
+	github.com/go-acme/lego/v4 v4.35.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
@@ -318,7 +318,7 @@ require (
 	github.com/nrdcg/namesilo v0.5.0 // indirect
 	github.com/nrdcg/nodion v0.1.0 // indirect
 	github.com/nrdcg/oci-go-sdk/common/v1065 v1065.113.0 // indirect
-	github.com/nrdcg/oci-go-sdk/dns/v1065 v1065.112.0 // indirect
+	github.com/nrdcg/oci-go-sdk/dns/v1065 v1065.113.0 // indirect
 	github.com/nrdcg/porkbun v0.4.0 // indirect
 	github.com/nrdcg/vegadns v0.3.0 // indirect
 	github.com/nzdjb/go-metaname v1.0.0 // indirect
