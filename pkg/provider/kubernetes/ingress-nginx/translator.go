@@ -501,6 +501,12 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
+	if loc.LimitConnections != nil {
+		name := routerKey + "-limit-connections"
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{InFlightReq: loc.LimitConnections}
+		rt.Middlewares = append(rt.Middlewares, name)
+	}
+
 	if loc.AuthTLSPassCert != nil && rt.TLS != nil {
 		name := routerKey + "-pass-certificate-to-upstream"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert}

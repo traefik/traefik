@@ -193,6 +193,9 @@ type location struct {
 	// RateLimitRPS, if non-nil, applies a per-second request rate limit.
 	RateLimitRPS *dynamic.RateLimit
 
+	// LimitConnections, if non-nil, caps concurrent in-flight requests per source IP.
+	LimitConnections *dynamic.InFlightReq
+
 	// AuthTLSPassCert, if non-nil, forwards the client TLS certificate to the backend.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
 
