@@ -53,11 +53,11 @@ type certBlocks struct {
 	key  []byte
 }
 
-// build reads all Ingress resources visible to the client and produces a configuration.
+// build reads all Ingress resources visible to the client and produces a model.
 //
 //nolint:funlen // multi-phase ingress processing kept inline for readability
-func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressClass) *configuration {
-	mc := &configuration{
+func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressClass) *model {
+	mc := &model{
 		Backends: make(map[string]*backend),
 		Certs:    make(map[string]string),
 	}
@@ -67,8 +67,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// registers each unique option once in conf.TLS.Options.
 	tlsOptionCache := make(map[string]*tls.Options)
 
-	// Builder-local maps used to construct router rules; they are not exposed
-	// to the translator.
 	allHosts := make(map[string]bool)
 	hostsWithUseRegex := make(map[string]bool)
 	claimedAliases := make(map[string]string)
@@ -89,8 +87,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	}
 
 	// First pass: collect all regular and canary ingresses.
-	var regularIngresses []ingressEntry
-	var canaryIngresses []ingressEntry
+	var (
+		regularIngresses []ingressEntry
+		canaryIngresses  []ingressEntry
+	)
 
 	// ingressPaths tracks existing paths for canary matching.
 	// key: namespace/host+path+pathType → (backend service, IngressConfig)
@@ -102,32 +102,32 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// descending namespace/name lexicographic order, matching ingress-nginx
 	// behavior. This ordering is what makes server-alias conflict resolution
 	// deterministic: the first ingress in this order to claim an alias owns it.
-	listed := p.k8sClient.ListIngresses()
-	sort.SliceStable(listed, func(a, b int) bool {
-		ta, tb := listed[a].CreationTimestamp, listed[b].CreationTimestamp
+	ingresses := p.k8sClient.ListIngresses()
+	sort.SliceStable(ingresses, func(a, b int) bool {
+		ta, tb := ingresses[a].CreationTimestamp, ingresses[b].CreationTimestamp
 		if ta.Equal(&tb) {
-			ia := listed[a].Namespace + "/" + listed[a].Name
-			ib := listed[b].Namespace + "/" + listed[b].Name
+			ia := ingresses[a].Namespace + "/" + ingresses[a].Name
+			ib := ingresses[b].Namespace + "/" + ingresses[b].Name
 			return ia > ib
 		}
 		return ta.Before(&tb)
 	})
 
-	for _, ing := range listed {
-		if !p.shouldProcess(ing, ingressClasses) {
+	for _, ingress := range ingresses {
+		if !p.shouldProcess(ingress, ingressClasses) {
 			continue
 		}
 
-		cfg := parseIngressConfig(ing)
+		logger := log.Ctx(ctx).With().
+			Str("ingress", ingress.Name).
+			Str("namespace", ingress.Namespace).
+			Logger()
 
-		entry := ingressEntry{Ingress: ing, config: cfg}
+		cfg := parseIngressConfig(ingress)
+		entry := ingressEntry{Ingress: ingress, config: cfg}
 
 		if err := p.validateIngress(entry.Ingress, entry.config); err != nil {
-			log.Ctx(ctx).Error().
-				Str("ingress", ing.Name).
-				Str("namespace", ing.Namespace).
-				Err(err).
-				Msg("Invalid Ingress, skipping")
+			logger.Error().Err(err).Msg("Invalid Ingress, skipping")
 			continue
 		}
 
@@ -139,11 +139,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		for _, alias := range ptr.Deref(cfg.ServerAlias, nil) {
 			a := strings.ToLower(alias)
 			if _, exists := claimedAliases[a]; !exists {
-				claimedAliases[a] = ing.Namespace + "/" + ing.Name
+				claimedAliases[a] = ingress.Namespace + "/" + ingress.Name
 			}
 		}
 
-		for _, rule := range ing.Spec.Rules {
+		for _, rule := range ingress.Spec.Rules {
 			allHosts[rule.Host] = true
 
 			if ptr.Deref(cfg.UseRegex, false) || ptr.Deref(cfg.RewriteTarget, "") != "" {
@@ -161,7 +161,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					if pa.Backend.Service == nil {
 						continue
 					}
-					key := ingressPathKey(ing.Namespace, rule.Host, pa)
+					key := ingressPathKey(ingress.Namespace, rule.Host, pa)
 					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg}
 				}
 			}
@@ -172,30 +172,29 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	// Second pass: resolve canary backends.
 	// canaryMap: key = namespace/svcName/port → CanaryConfig
-	canaryMap := make(map[string]canaryConfig) // primary backend key → canary info
-	matchedPaths := make(map[string]struct{})
+	canaryConfigs := make(map[string]canaryConfig) // primary backend key → canary info
+	alreadyMatchedPaths := make(map[string]struct{})
 
-	for _, ce := range canaryIngresses {
-		for _, rule := range ce.Spec.Rules {
+	for _, canaryIngress := range canaryIngresses {
+		logger := log.With().
+			Str("ingress", canaryIngress.Name).
+			Str("namespace", canaryIngress.Namespace).
+			Logger()
+
+		for _, rule := range canaryIngress.Spec.Rules {
 			if rule.HTTP == nil {
 				continue
 			}
 			for _, pa := range rule.HTTP.Paths {
-				pathKey := ingressPathKey(ce.Namespace, rule.Host, pa)
-				existing, ok := ingressPaths[pathKey]
+				pathKey := ingressPathKey(canaryIngress.Namespace, rule.Host, pa)
+				prodIngressPath, ok := ingressPaths[pathKey]
 				if !ok {
-					log.Ctx(ctx).Error().
-						Str("ingress", ce.Name).
-						Str("namespace", ce.Namespace).
-						Msgf("Canary ingress does not match any Ingress rule for host=%s path=%s", rule.Host, pa.Path)
+					logger.Error().Msgf("Canary ingress does not match any Ingress rule for host=%s path=%s", rule.Host, pa.Path)
 					continue
 				}
 
-				if _, already := matchedPaths[pathKey]; already {
-					log.Ctx(ctx).Error().
-						Str("ingress", ce.Name).
-						Str("namespace", ce.Namespace).
-						Msgf("A canary ingress is already matching Ingress rule host=%s path=%s", rule.Host, pa.Path)
+				if _, ok := alreadyMatchedPaths[pathKey]; ok {
+					logger.Error().Msgf("A canary ingress is already matching Ingress rule host=%s path=%s", rule.Host, pa.Path)
 					continue
 				}
 
@@ -206,25 +205,25 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// Skip if the canary path uses the same service as the production path — this
 				// is a "non-matching" canary ingress where the matching path doesn't actually
 				// route to a different backend.
-				prodSvc := existing.Backend.Service
+				prodSvc := prodIngressPath.Backend.Service
 				if pa.Backend.Service.Name == prodSvc.Name &&
 					portString(pa.Backend.Service.Port) == portString(prodSvc.Port) {
 					continue
 				}
 
 				// The canary backend's addresses are checked using the original ingress config.
-				addrs, err := p.getBackendAddresses(ce.Namespace, pa.Backend, existing.config)
+				addrs, err := p.getBackendAddresses(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
 				if err != nil || len(addrs) == 0 {
 					continue
 				}
 
-				matchedPaths[pathKey] = struct{}{}
+				alreadyMatchedPaths[pathKey] = struct{}{}
 
-				weightTotal := max(ptr.Deref(ce.config.CanaryWeightTotal, 0), 100)
-				weight := min(max(ptr.Deref(ce.config.CanaryWeight, 0), 0), weightTotal)
+				weightTotal := max(ptr.Deref(canaryIngress.config.CanaryWeightTotal, 0), 100)
+				weight := min(max(ptr.Deref(canaryIngress.config.CanaryWeight, 0), 0), weightTotal)
 
 				// Resolve canary backend.
-				canaryBackendName := provider.Normalize(ce.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
+				canaryBackendName := provider.Normalize(canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[canaryBackendName]; !exists {
 					endpoints := make([]endpoint, 0, len(addrs))
 					for _, a := range addrs {
@@ -232,21 +231,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 					mc.Backends[canaryBackendName] = &backend{
 						Name:      canaryBackendName,
-						Namespace: ce.Namespace,
+						Namespace: canaryIngress.Namespace,
 						Endpoints: endpoints,
 					}
 				}
 
 				// Primary backend key for the original ingress path.
-				primaryKey := canaryPrimaryKey(ce.Namespace, *existing.Backend.Service)
-				canaryMap[primaryKey] = canaryConfig{
+				primaryKey := canaryPrimaryKey(canaryIngress.Namespace, *prodIngressPath.Backend.Service)
+				canaryConfigs[primaryKey] = canaryConfig{
 					BackendName:   canaryBackendName,
 					Weight:        weight,
 					WeightTotal:   weightTotal,
-					Header:        ptr.Deref(ce.config.CanaryHeader, ""),
-					HeaderValue:   ptr.Deref(ce.config.CanaryHeaderValue, ""),
-					HeaderPattern: ptr.Deref(ce.config.CanaryHeaderPattern, ""),
-					Cookie:        ptr.Deref(ce.config.CanaryCookie, ""),
+					Header:        ptr.Deref(canaryIngress.config.CanaryHeader, ""),
+					HeaderValue:   ptr.Deref(canaryIngress.config.CanaryHeaderValue, ""),
+					HeaderPattern: ptr.Deref(canaryIngress.config.CanaryHeaderPattern, ""),
+					Cookie:        ptr.Deref(canaryIngress.config.CanaryCookie, ""),
 				}
 			}
 		}
@@ -409,7 +408,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				// Attach canary config if one exists for this primary backend.
 				primaryKey := canaryPrimaryKey(ing.Namespace, *pa.Backend.Service)
-				if cc, ok := canaryMap[primaryKey]; ok {
+				if cc, ok := canaryConfigs[primaryKey]; ok {
 					loc.Canary = &cc
 				}
 

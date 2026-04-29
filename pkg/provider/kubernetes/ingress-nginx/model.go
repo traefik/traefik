@@ -6,9 +6,8 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
-// configuration is a complete, self-contained snapshot of all ingress resources resolved into a
-// Traefik-agnostic intermediate form.
-type configuration struct {
+// model is a complete, self-contained snapshot of all ingress resources resolved into a Traefik-agnostic intermediate form.
+type model struct {
 	// Backends holds all resolved upstream services, keyed by backend.Name.
 	Backends map[string]*backend
 

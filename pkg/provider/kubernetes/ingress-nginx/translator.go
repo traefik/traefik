@@ -17,8 +17,8 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-// translate converts a configuration produced by Phase 1 into a Traefik dynamic.Configuration.
-func (p *Provider) translate(ctx context.Context, mc *configuration) *dynamic.Configuration {
+// translate converts a model produced by Phase 1 into a Traefik dynamic.Configuration.
+func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configuration {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -345,7 +345,7 @@ func appendNonCanaryRule(rule string, c *canaryConfig) string {
 	return fmt.Sprintf("(%s) && (%s)", rule, strings.Join(rules, " || "))
 }
 
-// buildSticky returns a Sticky configuration if the affinity configuration is set to "cookie" and nil otherwise.
+// buildSticky returns a Sticky model if the affinity model is set to "cookie" and nil otherwise.
 // It also appends the given nameSuffix to the cookie name if not empty.
 func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 	if ptr.Deref(cfg.Affinity, "") != "cookie" {
@@ -371,7 +371,7 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 	}
 }
 
-func (p *Provider) applyMiddlewares(mc *configuration, loc *location, routerKey string, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if loc.SSLRedirectOnly && rt.TLS == nil {
 		name := routerKey + "-redirect-scheme"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
