@@ -230,11 +230,17 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestAddr] = req.Host
 		core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
 	}
+
+	queryParameters := ""
+	if h.config.Fields.KeepQueryParameters() {
+		queryParameters = req.URL.RawQuery
+	}
+
 	// copy the URL without the scheme, hostname etc
 	urlCopy := &url.URL{
 		Path:       req.URL.Path,
 		RawPath:    req.URL.RawPath,
-		RawQuery:   req.URL.RawQuery,
+		RawQuery:   queryParameters,
 		ForceQuery: req.URL.ForceQuery,
 		Fragment:   req.URL.Fragment,
 	}

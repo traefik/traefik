@@ -93,9 +93,15 @@ type FieldHeaders struct {
 
 // AccessLogFields holds configuration for access log fields.
 type AccessLogFields struct {
-	DefaultMode string            `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
-	Names       map[string]string `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
-	Headers     *FieldHeaders     `description:"Headers to keep, drop or redact" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	DefaultMode     string                `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
+	Names           map[string]string     `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
+	Headers         *FieldHeaders         `description:"Headers to keep, drop or redact" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	QueryParameters *FieldQueryParameters `description:"Keep or drop all query parameters" json:"queryParameters,omitempty" toml:"queryParameters,omitempty" yaml:"queryParameters,omitempty" export:"true"`
+}
+
+// FieldHeaders holds configuration for access log query parameters.
+type FieldQueryParameters struct {
+	DefaultMode string `description:"Default mode for query parameters: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -103,6 +109,9 @@ func (f *AccessLogFields) SetDefaults() {
 	f.DefaultMode = AccessLogKeep
 	f.Headers = &FieldHeaders{
 		DefaultMode: AccessLogDrop,
+	}
+	f.QueryParameters = &FieldQueryParameters{
+		DefaultMode: AccessLogKeep,
 	}
 }
 
@@ -130,6 +139,14 @@ func (f *AccessLogFields) KeepHeader(header string) string {
 		}
 	}
 	return defaultValue
+}
+
+func (f *AccessLogFields) KeepQueryParameters() bool {
+	defaultKeep := true
+	if f == nil || f.QueryParameters == nil {
+		return defaultKeep
+	}
+	return checkFieldValue(f.QueryParameters.DefaultMode, defaultKeep)
 }
 
 func checkFieldValue(value string, defaultKeep bool) bool {
