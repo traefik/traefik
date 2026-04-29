@@ -5351,6 +5351,178 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress default backend respects backend-protocol and affinity annotations",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-annotations.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-default-backend-annotations-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-whoami-tls-443",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+						"default-ingress-with-default-backend-annotations-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-whoami-tls-443",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+						// The ingress-level default backend should also use the ingress annotations
+						// (backend-protocol=HTTPS → https:// scheme, affinity=cookie → sticky session).
+						"default-ingress-with-default-backend-annotations-default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-default-backend",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-default-backend-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+						"default-ingress-with-default-backend-annotations-default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-default-backend",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-default-backend-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-default-backend-annotations-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+						"default-ingress-with-default-backend-annotations-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+						"default-ingress-with-default-backend-annotations-default-backend-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+						"default-ingress-with-default-backend-annotations-default-backend-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						// Regular path backend: https:// scheme + sticky cookie from annotations.
+						"default-ingress-with-default-backend-annotations-whoami-tls-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "https://10.10.0.3:8443"},
+									{URL: "https://10.10.0.4:8443"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-default-backend-annotations",
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "MYSTICKYNESS",
+										HTTPOnly: true,
+										Path:     ptr.To("/"),
+									},
+								},
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						// Ingress-level default backend: must also use https:// scheme + sticky cookie.
+						"default-ingress-with-default-backend-annotations-default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "https://10.10.0.3:8443"},
+									{URL: "https://10.10.0.4:8443"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-default-backend-annotations",
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "MYSTICKYNESS",
+										HTTPOnly: true,
+										Path:     ptr.To("/"),
+									},
+								},
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-default-backend-annotations": {
+							ServerName:         "",
+							InsecureSkipVerify: true,
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "WhitelistSourceRange with single IP",
 			paths: []string{
 				"services.yml",
