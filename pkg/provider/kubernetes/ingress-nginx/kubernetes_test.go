@@ -15246,11 +15246,10 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-external-name-external-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15264,11 +15263,10 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15281,11 +15279,10 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-external-name-external-http",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "http",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15299,11 +15296,10 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "http",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15316,11 +15312,10 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-external-name-external-3000",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "3000",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15334,11 +15329,10 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "3000",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15351,11 +15345,10 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-external-name-external-foo",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "foo",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15369,11 +15362,10 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-external-name",
-										ServiceName: "external",
-										ServicePort: "foo",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-external-name",
 									},
 								},
 							},
@@ -15436,6 +15428,15 @@ func TestLoadIngresses(t *testing.T) {
 								},
 								ServersTransport: "default-ingress-with-external-name",
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "external",
+										Port:      "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-external-name-external-3000": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -15450,6 +15451,15 @@ func TestLoadIngresses(t *testing.T) {
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 								ServersTransport: "default-ingress-with-external-name",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "external",
+										Port:      "3000",
+									},
+								},
 							},
 						},
 						"default-ingress-with-external-name-external-http": {
@@ -15466,6 +15476,15 @@ func TestLoadIngresses(t *testing.T) {
 								},
 								ServersTransport: "default-ingress-with-external-name",
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "external",
+										Port:      "http",
+									},
+								},
+							},
 						},
 						"default-ingress-with-external-name-external-foo": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -15480,6 +15499,15 @@ func TestLoadIngresses(t *testing.T) {
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 								ServersTransport: "default-ingress-with-external-name",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "external",
+										Port:      "foo",
+									},
+								},
 							},
 						},
 						"unavailable-service": {
