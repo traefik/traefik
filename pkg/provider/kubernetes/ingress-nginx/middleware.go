@@ -327,18 +327,12 @@ func (p *Provider) buildCustomHeaders(loc *location) {
 		return
 	}
 
-	validated := make(map[string]string, len(loc.ResolvedCustomHeaders))
-	for k, v := range loc.ResolvedCustomHeaders {
-		if headerValueRegexp.MatchString(v) {
-			validated[k] = v
+	for _, v := range loc.ResolvedCustomHeaders {
+		if !headerValueRegexp.MatchString(v) {
+			loc.ResolvedCustomHeaders = nil
+			loc.Error = true
+			return
 		}
-	}
-
-	if len(validated) > 0 {
-		loc.ResolvedCustomHeaders = validated
-	} else {
-		loc.ResolvedCustomHeaders = nil
-		loc.Error = true
 	}
 }
 
