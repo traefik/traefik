@@ -24,7 +24,7 @@ require (
 	github.com/docker/go-connections v0.6.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/go-acme/lego/v4 v4.35.1
+	github.com/go-acme/lego/v4 v4.35.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
@@ -78,7 +78,7 @@ require (
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
 	github.com/valyala/fasthttp v1.69.0
-	github.com/vulcand/oxy/v2 v2.0.3
+	github.com/vulcand/oxy/v2 v2.1.0
 	github.com/vulcand/predicate v1.3.0
 	github.com/yuin/gopher-lua v1.1.1
 	go.opentelemetry.io/collector/pdata v1.41.0
@@ -148,7 +148,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/HdrHistogram/hdrhistogram-go v1.2.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -245,7 +245,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.21.0 // indirect
 	github.com/gophercloud/gophercloud v1.14.1 // indirect
 	github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56 // indirect
-	github.com/gravitational/trace v1.5.0 // indirect
+	github.com/gravitational/trace v1.5.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hashicorp/cronexpr v1.1.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -285,7 +285,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mailgun/minheap v0.0.0-20170619185613-3dbe6c6bf55f // indirect
-	github.com/mailgun/multibuf v0.1.2 // indirect
+	github.com/mailgun/multibuf v0.2.0 // indirect
 	github.com/mailgun/timetools v0.0.0-20141028012446-7e6055773c51 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -319,7 +319,7 @@ require (
 	github.com/nrdcg/namesilo v0.5.0 // indirect
 	github.com/nrdcg/nodion v0.1.0 // indirect
 	github.com/nrdcg/oci-go-sdk/common/v1065 v1065.113.0 // indirect
-	github.com/nrdcg/oci-go-sdk/dns/v1065 v1065.112.0 // indirect
+	github.com/nrdcg/oci-go-sdk/dns/v1065 v1065.113.0 // indirect
 	github.com/nrdcg/porkbun v0.4.0 // indirect
 	github.com/nrdcg/vegadns v0.3.0 // indirect
 	github.com/nzdjb/go-metaname v1.0.0 // indirect
@@ -427,7 +427,6 @@ replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
-	github.com/vulcand/oxy/v2 => github.com/traefik/oxy/v2 v2.0.0-20260126093803-fb11d60e0fdf
 )
 
 // ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
