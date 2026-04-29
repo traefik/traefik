@@ -338,6 +338,7 @@ func (p *Provider) buildCustomHeaders(loc *location) {
 		loc.ResolvedCustomHeaders = validated
 	} else {
 		loc.ResolvedCustomHeaders = nil
+		loc.Error = true
 	}
 }
 
