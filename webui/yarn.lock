@@ -10774,6 +10774,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"handlebars@npm:4.7.9":
+  version: 4.7.9
+  resolution: "handlebars@npm:4.7.9"
+  dependencies:
+    minimist: "npm:^1.2.5"
+    neo-async: "npm:^2.6.2"
+    source-map: "npm:^0.6.1"
+    uglify-js: "npm:^3.1.4"
+    wordwrap: "npm:^1.0.0"
+  dependenciesMeta:
+    uglify-js:
+      optional: true
+  bin:
+    handlebars: bin/handlebars
+  checksum: 10c0/22f8105a7e68e81aff2662bb434edf05f757d21d850731d71cec886d69c10cd33d3c43e34b2892968ec62de8241611851d3d0674c8ef324ea3e01dc66262faa9
+  languageName: node
+  linkType: hard
+
 "handlebars@npm:^4.7.7":
   version: 4.7.8
   resolution: "handlebars@npm:4.7.8"
@@ -17683,6 +17701,7 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^5.2.0"
     framer-motion: "npm:^11.18.2"
     globals: "npm:^16.0.0"
+    handlebars: "npm:4.7.9"
     husky: "npm:^3.1.0"
     jest-extended: "npm:^4.0.2"
     jsdom: "npm:^24.0.0"
