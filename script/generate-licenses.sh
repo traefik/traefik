@@ -10,11 +10,15 @@ set -euo pipefail
 #   - jq: Merges individual SBOMs into one
 #   - assimilis: Generates human-readable attribution files from the merged SBOM
 
-# ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-v1.1.0}"
-ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-v2.0.0}"
+ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-1dcb76ae31a3750e882f2e3dcb803459c1c2dd19}"
 CYCLONEDX_GOMOD_VERSION="${CYCLONEDX_GOMOD_VERSION:-v1.10.0}"
 CYCLONEDX_PY_VERSION="${CYCLONEDX_PY_VERSION:-7.3.0}"
 REPO_NAME="${REPO_NAME:-traefik}"
+
+# This script is meant to run inside script/licenses.Dockerfile, which is
+# linux/amd64 with all required tooling pre-installed. Running it natively
+# works too, but the resulting SBOM may differ because Go build constraints
+# and yarn optionalDependencies are platform-specific.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -30,8 +34,7 @@ fi
 
 if ! command -v assimilis &>/dev/null; then
     echo "Installing assimilis ${ASSIMILIS_VERSION}..."
-    GOBIN=/tmp/assimilis go install "github.com/traefik/assimilis/cmd@${ASSIMILIS_VERSION}"
-    mv /tmp/assimilis/cmd "$(go env GOPATH)/bin/assimilis"
+    go install "github.com/traefik/assimilis/cmd/assimilis@${ASSIMILIS_VERSION}"
 fi
 
 if ! command -v jq &>/dev/null; then
@@ -79,8 +82,11 @@ go_pid=$!
 
 # npm SBOM via Yarn CycloneDX plugin (reads licenses from node_modules/package.json).
 echo "Generating npm SBOM (yarn cyclonedx)..."
-(cd "${PROJECT_DIR}/webui" && yarn cyclonedx \
-    --output-file "${WORK_DIR}/sbom/npm.cdx.json" 2>&1) &
+(
+    cd "${PROJECT_DIR}/webui"
+    yarn install --mode skip-build
+    yarn cyclonedx --output-file "${WORK_DIR}/sbom/npm.cdx.json"
+) &
 npm_pid=$!
 
 # Python SBOM from docs/requirements.txt.
@@ -89,11 +95,11 @@ echo "Generating Python SBOM (cyclonedx-py)..."
     venv_dir="${WORK_DIR}/venv"
     python3 -m venv "$venv_dir"
     uv pip compile "${PROJECT_DIR}/docs/requirements.txt" \
-        -o "${venv_dir}/requirements-lock.txt" 2>/dev/null
+        -o "${venv_dir}/requirements-lock.txt"
     "$venv_dir/bin/pip" install -q -r "${venv_dir}/requirements-lock.txt"
     cyclonedx-py environment --of json \
         -o "${WORK_DIR}/sbom/py.cdx.json" \
-        "$venv_dir" 2>&1
+        "$venv_dir"
 ) &
 py_pid=$!
 
@@ -126,7 +132,6 @@ echo "Merged SBOM: $(jq '.components | length' "${WORK_DIR}/sbom/${REPO_NAME}.cd
 
 # ─── Copy merged SBOM to output and run assimilis ───
 
-# rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}" "${OUT_DIR}/sbom" "${OUT_DIR}/licenses/custom"
 cp "${WORK_DIR}/sbom/${REPO_NAME}.cdx.json" "${OUT_DIR}/sbom/${REPO_NAME}.cdx.json"
 
