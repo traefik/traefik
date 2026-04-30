@@ -110,6 +110,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	code := catcher.getCode()
 
 	originalCode := code
+	rw.WriteHeader(originalCode)
 
 	// Check if we need to rewrite the status code
 	for _, rsc := range c.statusRewrites {
