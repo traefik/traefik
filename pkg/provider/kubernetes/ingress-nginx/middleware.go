@@ -12,6 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"k8s.io/utils/ptr"
 )
 
@@ -333,8 +335,27 @@ func (p *Provider) buildAuthTLSPassCert(loc *location) {
 		return
 	}
 
+	verifyClient := clientAuthTypeFromString(loc.Config.AuthTLSVerifyClient)
+
+	var caFiles []types.FileOrContent
+	// When auth-tls-verify-client is "optional_no_ca" (RequestClientCert), the CA
+	// certificate from the auth-tls-secret is forwarded to the upstream so the
+	// upstream can verify the client certificate it receives.
+	if verifyClient == tls.RequestClientCert {
+		parts := strings.SplitN(ptr.Deref(loc.Config.AuthTLSSecret, ""), "/", 2)
+		if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
+			secretNamespace, secretName := parts[0], parts[1]
+			if p.AllowCrossNamespaceResources || secretNamespace == loc.Namespace {
+				if blocks, err := p.certificateBlocks(secretNamespace, secretName); err == nil && blocks.ca != nil {
+					caFiles = []types.FileOrContent{types.FileOrContent(blocks.ca)}
+				}
+			}
+		}
+	}
+
 	loc.AuthTLSPassCert = &dynamic.AuthTLSPassCertificateToUpstream{
-		ClientAuthType: clientAuthTypeFromString(loc.Config.AuthTLSVerifyClient),
+		ClientAuthType: verifyClient,
+		CAFiles:        caFiles,
 	}
 }
 

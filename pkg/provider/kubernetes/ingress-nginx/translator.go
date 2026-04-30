@@ -3,9 +3,11 @@ package ingressnginx
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -37,11 +39,12 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	lb.SetDefaults()
 	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb}
 
-	for cert, key := range mc.Certs {
+	for _, k := range slices.Sorted(maps.Keys(mc.Certs)) {
+		cp := mc.Certs[k]
 		conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
 			Certificate: tls.Certificate{
-				CertFile: types.FileOrContent(cert),
-				KeyFile:  types.FileOrContent(key),
+				CertFile: types.FileOrContent(cp.Cert),
+				KeyFile:  types.FileOrContent(cp.Key),
 			},
 		})
 	}
@@ -411,7 +414,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		if e.ErrorBackendName != "" {
 			errorSvcName = "default-backend-" + routerKey
 			if errBackend, ok := mc.Backends[e.ErrorBackendName]; ok {
-				conf.HTTP.Services[errorSvcName] = buildService(errBackend, "")
+				conf.HTTP.Services[errorSvcName] = buildServiceWithLocConfig(errBackend, "", loc.Config)
 			}
 		}
 		headers := http.Header{
