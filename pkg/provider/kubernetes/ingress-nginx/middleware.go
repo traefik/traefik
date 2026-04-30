@@ -229,7 +229,10 @@ func (p *Provider) buildIPAllowList(loc *location) {
 		ranges = append(ranges, strings.TrimSpace(r))
 	}
 
-	loc.IPAllowList = &dynamic.IPAllowList{SourceRange: ranges}
+	loc.IPAllowList = &dynamic.IPAllowList{
+		SourceRange: ranges,
+		IPStrategy:  p.IPAllowListStrategy,
+	}
 }
 
 func (p *Provider) buildCORS(loc *location) {
