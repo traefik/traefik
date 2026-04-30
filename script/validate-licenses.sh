@@ -13,10 +13,10 @@ cd "${PROJECT_DIR}"
 "${SCRIPT_DIR}/generate-licenses.sh"
 
 # Compare (ignore sbom/ as it contains timestamps/UUIDs that change every run).
-if ! git diff --exit-code --quiet -- 'licenses/' ':!licenses/sbom/'; then
+if ! git diff --exit-code --quiet -- 'third_party/' ':!third_party/sbom/'; then
     echo "Error: license attribution files are out of date."
     echo "Run 'make generate-licenses' and commit the changes."
-    git diff --stat -- 'licenses/' ':!licenses/sbom/'
+    git diff --stat -- 'third_party/' ':!third_party/sbom/'
     exit 1
 fi
 

@@ -4,7 +4,7 @@ This product uses source code from third party libraries which carry
 their own copyright notices and license terms. These notices are provided
 below.
 
-Generated at: 2026-04-23T11:59:59Z
+Generated at: 2026-04-29T20:13:11Z
 
 ---
 
@@ -17,26 +17,6 @@ Upstream: [https://www.npmjs.com/package/jsonstream](https://www.npmjs.com/packa
 Licenses: Apache-2.0, MIT
 
 Copyright (c) Dominic Tarr
-
-
-## Markdown 3.3.6
-
-PURL: pkg:pypi/markdown@3.3.6
-Upstream: [https://pypi.org/project/markdown/](https://pypi.org/project/markdown/)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) Manfred Stienstra, Yuri takhteyev and Waylan limberg
-
-
-## PyYAML 6.0.1
-
-PURL: pkg:pypi/pyyaml@6.0.1
-Upstream: [https://pypi.org/project/pyyaml/](https://pypi.org/project/pyyaml/)
-
-Licenses: MIT
-
-Copyright (c) Kirill Simonov
 
 
 ## abbrev 1.1.1
@@ -177,6 +157,16 @@ Upstream: [https://www.npmjs.com/package/ajv](https://www.npmjs.com/package/ajv)
 Licenses: MIT
 
 Copyright (c) 2015-2017 Evgeny Poberezkin
+
+
+## alien-signals 0.4.14
+
+PURL: pkg:npm/alien-signals@0.4.14
+Upstream: [https://www.npmjs.com/package/alien-signals](https://www.npmjs.com/package/alien-signals)
+
+Licenses: MIT
+
+Copyright (c) 2024-present Johnson Chu
 
 
 ## all-package-names 2.0.897
@@ -359,6 +349,26 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
+## api-extractor-model 7.32.0
+
+PURL: pkg:npm/%40microsoft/api-extractor-model@7.32.0
+Upstream: [https://www.npmjs.com/package/%40microsoft/api-extractor-model](https://www.npmjs.com/package/%40microsoft/api-extractor-model)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+## api-extractor 7.55.0
+
+PURL: pkg:npm/%40microsoft/api-extractor@7.55.0
+Upstream: [https://www.npmjs.com/package/%40microsoft/api-extractor](https://www.npmjs.com/package/%40microsoft/api-extractor)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
 ## aproba 2.0.0
 
 PURL: pkg:npm/aproba@2.0.0
@@ -406,7 +416,17 @@ Upstream: [https://www.npmjs.com/package/argparse](https://www.npmjs.com/package
 
 Licenses: MIT
 
-Copyright (c) 1991 - 1995, Stichting Mathematisch Centrum Amsterdam,
+Copyright (C) 2012 by Vitaly Puzrin
+
+
+## argparse 1.0.38
+
+PURL: pkg:npm/%40types/argparse@1.0.38
+Upstream: [https://www.npmjs.com/package/%40types/argparse](https://www.npmjs.com/package/%40types/argparse)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
 
 
 ## argparse 2.0.1
@@ -416,7 +436,7 @@ Upstream: [https://www.npmjs.com/package/argparse](https://www.npmjs.com/package
 
 Licenses: Python-2.0
 
-Copyright (c) 1991 - 1995, Stichting Mathematisch Centrum Amsterdam,
+Copyright (C) 2012 by Vitaly Puzrin
 
 
 ## argv-formatter 1.0.0
@@ -609,6 +629,16 @@ Licenses: MIT
 Copyright 2009–2014 Contributors. All rights reserved.
 
 
+## assertion-error 2.0.1
+
+PURL: pkg:npm/assertion-error@2.0.1
+Upstream: [https://www.npmjs.com/package/assertion-error](https://www.npmjs.com/package/assertion-error)
+
+Licenses: MIT
+
+Copyright (c) 2013 Jake Luer jake@qualiancy.com (http://qualiancy.com)
+
+
 ## ast-types-flow 0.0.8
 
 PURL: pkg:npm/ast-types-flow@0.0.8
@@ -717,6 +747,16 @@ Upstream: [https://www.npmjs.com/package/babel-loader](https://www.npmjs.com/pac
 Licenses: MIT
 
 Copyright (c) 2014-2019 Luís Couto <hello@luiscouto.pt>
+
+
+## babel-plugin-debug-ids 1.2.2
+
+PURL: pkg:npm/%40vanilla-extract/babel-plugin-debug-ids@1.2.2
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/babel-plugin-debug-ids](https://www.npmjs.com/package/%40vanilla-extract/babel-plugin-debug-ids)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
 
 
 ## babel-plugin-polyfill-corejs2 0.4.13
@@ -929,6 +969,16 @@ Licenses: MIT
 Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
 
 
+## brace-expansion 5.0.0
+
+PURL: pkg:npm/%40isaacs/brace-expansion@5.0.0
+Upstream: [https://www.npmjs.com/package/%40isaacs/brace-expansion](https://www.npmjs.com/package/%40isaacs/brace-expansion)
+
+Licenses: MIT
+
+Copyright Julian Gruber <julian@juliangruber.com>
+
+
 ## braces 3.0.3
 
 PURL: pkg:npm/braces@3.0.3
@@ -987,6 +1037,16 @@ Upstream: [https://www.npmjs.com/package/bundle-name](https://www.npmjs.com/pack
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+
+## cac 6.7.14
+
+PURL: pkg:npm/cac@6.7.14
+Upstream: [https://www.npmjs.com/package/cac](https://www.npmjs.com/package/cac)
+
+Licenses: MIT
+
+Copyright (c) EGOIST <0x142857@gmail.com> (https://github.com/egoist)
 
 
 ## cacache 16.1.3
@@ -1289,6 +1349,16 @@ Licenses: MIT
 Copyright (c) 2014-2024 Chart.js Contributors
 
 
+## check-error 2.1.1
+
+PURL: pkg:npm/check-error@2.1.1
+Upstream: [https://www.npmjs.com/package/check-error](https://www.npmjs.com/package/check-error)
+
+Licenses: MIT
+
+Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com> (http://alogicalparadox.com)
+
+
 ## chownr 2.0.0
 
 PURL: pkg:npm/chownr@2.0.0
@@ -1541,7 +1611,7 @@ Copyright © 2011-2015 Paul Vorbach <paul@vorba.ch>
 
 ## cloud.google.com/go/auth/oauth2adapt v0.2.8
 
-PURL: pkg:golang/cloud.google.com/go/auth/oauth2adapt@v0.2.8?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/cloud.google.com/go/auth/oauth2adapt@v0.2.8?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/cloud.google.com/go/auth/oauth2adapt](https://pkg.go.dev/cloud.google.com/go/auth/oauth2adapt)
 
 Licenses: Apache-2.0
@@ -1551,7 +1621,7 @@ copyright notice that is included in or attached to the work
 
 ## cloud.google.com/go/auth v0.20.0
 
-PURL: pkg:golang/cloud.google.com/go/auth@v0.20.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/cloud.google.com/go/auth@v0.20.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/cloud.google.com/go/auth](https://pkg.go.dev/cloud.google.com/go/auth)
 
 Licenses: Apache-2.0
@@ -1561,7 +1631,7 @@ copyright notice that is included in or attached to the work
 
 ## cloud.google.com/go/compute/metadata v0.9.0
 
-PURL: pkg:golang/cloud.google.com/go/compute/metadata@v0.9.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/cloud.google.com/go/compute/metadata@v0.9.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/cloud.google.com/go/compute/metadata](https://pkg.go.dev/cloud.google.com/go/compute/metadata)
 
 Licenses: Apache-2.0
@@ -1809,6 +1879,16 @@ Licenses: MIT
 Copyright (c) 2015 Steve Mao
 
 
+## compare-versions 6.1.1
+
+PURL: pkg:npm/compare-versions@6.1.1
+Upstream: [https://www.npmjs.com/package/compare-versions](https://www.npmjs.com/package/compare-versions)
+
+Licenses: MIT
+
+Copyright (c) 2015-2021 Ole Michelsen
+
+
 ## compat-data 7.26.8
 
 PURL: pkg:npm/%40babel/compat-data@7.26.8
@@ -1829,6 +1909,46 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
+## compiler-core 3.5.24
+
+PURL: pkg:npm/%40vue/compiler-core@3.5.24
+Upstream: [https://www.npmjs.com/package/%40vue/compiler-core](https://www.npmjs.com/package/%40vue/compiler-core)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## compiler-dom 3.5.24
+
+PURL: pkg:npm/%40vue/compiler-dom@3.5.24
+Upstream: [https://www.npmjs.com/package/%40vue/compiler-dom](https://www.npmjs.com/package/%40vue/compiler-dom)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## compiler-vue2 2.7.16
+
+PURL: pkg:npm/%40vue/compiler-vue2@2.7.16
+Upstream: [https://www.npmjs.com/package/%40vue/compiler-vue2](https://www.npmjs.com/package/%40vue/compiler-vue2)
+
+Licenses: MIT
+
+Copyright (c) Evan You
+
+
+## compiler 0.3.1
+
+PURL: pkg:npm/%40vanilla-extract/compiler@0.3.1
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/compiler](https://www.npmjs.com/package/%40vanilla-extract/compiler)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
+
+
 ## concat-map 0.0.1
 
 PURL: pkg:npm/concat-map@0.0.1
@@ -1837,6 +1957,26 @@ Upstream: [https://www.npmjs.com/package/concat-map](https://www.npmjs.com/packa
 Licenses: MIT
 
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+
+
+## confbox 0.1.8
+
+PURL: pkg:npm/confbox@0.1.8
+Upstream: [https://www.npmjs.com/package/confbox](https://www.npmjs.com/package/confbox)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io>
+
+
+## confbox 0.2.2
+
+PURL: pkg:npm/confbox@0.2.2
+Upstream: [https://www.npmjs.com/package/confbox](https://www.npmjs.com/package/confbox)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io>
 
 
 ## config-array 0.21.0
@@ -2249,6 +2389,16 @@ Licenses: MIT
 Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca>
 
 
+## css-what 6.2.2
+
+PURL: pkg:npm/css-what@6.2.2
+Upstream: [https://www.npmjs.com/package/css-what](https://www.npmjs.com/package/css-what)
+
+Licenses: BSD-2-Clause
+
+Copyright (c) Felix Böhm
+
+
 ## css.escape 1.5.1
 
 PURL: pkg:npm/css.escape@1.5.1
@@ -2257,6 +2407,16 @@ Upstream: [https://www.npmjs.com/package/css.escape](https://www.npmjs.com/packa
 Licenses: MIT
 
 Copyright (c) Mathias Bynens
+
+
+## css 1.17.4
+
+PURL: pkg:npm/%40vanilla-extract/css@1.17.4
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/css](https://www.npmjs.com/package/%40vanilla-extract/css)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
 
 
 ## cssesc 3.0.0
@@ -2311,7 +2471,7 @@ Copyright (c) 2018, Tadeusz Łazurski
 
 ## dario.cat/mergo v1.0.2
 
-PURL: pkg:golang/dario.cat/mergo@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/dario.cat/mergo@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/dario.cat/mergo](https://pkg.go.dev/dario.cat/mergo)
 
 Licenses: BSD-3-Clause
@@ -2389,14 +2549,14 @@ Licenses: MIT
 Copyright (c) Steven Levithan
 
 
-## datepicker 6.6.8
+## de-indent 1.0.2
 
-PURL: pkg:npm/%40rehookify/datepicker@6.6.8?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Frehookify%2Fdatepicker.git
-Upstream: [https://www.npmjs.com/package/%40rehookify/datepicker](https://www.npmjs.com/package/%40rehookify/datepicker)
+PURL: pkg:npm/de-indent@1.0.2
+Upstream: [https://www.npmjs.com/package/de-indent](https://www.npmjs.com/package/de-indent)
 
 Licenses: MIT
 
-Copyright (c) <pavel.feschenko@gmail.com>
+Copyright (c) Evan You
 
 
 ## debug 3.2.7
@@ -2506,7 +2666,7 @@ Upstream: [https://www.npmjs.com/package/dedent](https://www.npmjs.com/package/d
 
 Licenses: MIT
 
-Copyright (c) 2015 Desmond Brand (dmnd@desmondbrand.com)
+Copyright (c) Desmond Brand
 
 
 ## dedent 1.7.0
@@ -2516,7 +2676,7 @@ Upstream: [https://www.npmjs.com/package/dedent](https://www.npmjs.com/package/d
 
 Licenses: MIT
 
-Copyright (c) 2015 Desmond Brand (dmnd@desmondbrand.com)
+Copyright (c) Desmond Brand
 
 
 ## deep-eql 4.0.2
@@ -2527,6 +2687,16 @@ Upstream: [https://www.npmjs.com/package/%40types/deep-eql](https://www.npmjs.co
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
+
+
+## deep-eql 5.0.2
+
+PURL: pkg:npm/deep-eql@5.0.2
+Upstream: [https://www.npmjs.com/package/deep-eql](https://www.npmjs.com/package/deep-eql)
+
+Licenses: MIT
+
+Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com> (http://alogicalparadox.com)
 
 
 ## deep-equal 2.2.3
@@ -2557,6 +2727,26 @@ Upstream: [https://www.npmjs.com/package/deep-is](https://www.npmjs.com/package/
 Licenses: MIT
 
 Copyright (c) 2012, 2013 Thorsten Lorenz <thlorenz@gmx.de>
+
+
+## deep-object-diff 1.1.9
+
+PURL: pkg:npm/deep-object-diff@1.1.9
+Upstream: [https://www.npmjs.com/package/deep-object-diff](https://www.npmjs.com/package/deep-object-diff)
+
+Licenses: MIT
+
+Copyright (c) 2016-present Matt Phillips <mattphillips>
+
+
+## deepmerge 4.3.1
+
+PURL: pkg:npm/deepmerge@4.3.1
+Upstream: [https://www.npmjs.com/package/deepmerge](https://www.npmjs.com/package/deepmerge)
+
+Licenses: MIT
+
+Copyright (c) 2012 James Halliday, Josh Duff, and other contributors
 
 
 ## default-browser-id 3.0.0
@@ -2919,6 +3109,16 @@ Licenses: BSD-3-Clause
 Copyright (c) 2013, Deoxxa Development
 
 
+## dynamic 2.1.5
+
+PURL: pkg:npm/%40vanilla-extract/dynamic@2.1.5
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/dynamic](https://www.npmjs.com/package/%40vanilla-extract/dynamic)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
+
+
 ## eastasianwidth 0.2.0
 
 PURL: pkg:npm/eastasianwidth@0.2.0
@@ -2987,6 +3187,16 @@ Upstream: [https://www.npmjs.com/package/emojis-list](https://www.npmjs.com/pack
 Licenses: MIT
 
 Copyright © 2015 Kiko Beats
+
+
+## empathic 2.0.0
+
+PURL: pkg:npm/empathic@2.0.0
+Upstream: [https://www.npmjs.com/package/empathic](https://www.npmjs.com/package/empathic)
+
+Licenses: MIT
+
+Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 
 
 ## encoding 0.1.13
@@ -3549,6 +3759,16 @@ Licenses: MIT
 Copyright (c) Microsoft Corporation.
 
 
+## eval 0.1.8
+
+PURL: pkg:npm/eval@0.1.8
+Upstream: [https://www.npmjs.com/package/eval](https://www.npmjs.com/package/eval)
+
+Licenses: MIT
+
+Copyright (c) 2012 Pierre Curto
+
+
 ## execa 1.0.0
 
 PURL: pkg:npm/execa@1.0.0
@@ -3646,7 +3866,7 @@ Upstream: [https://www.npmjs.com/package/%40vitest/expect](https://www.npmjs.com
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
 ## expect 4.0.3
@@ -3656,7 +3876,7 @@ Upstream: [https://www.npmjs.com/package/%40vitest/expect](https://www.npmjs.com
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
 ## exponential-backoff 3.1.2
@@ -3669,6 +3889,16 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
+## exsolve 1.0.8
+
+PURL: pkg:npm/exsolve@1.0.8
+Upstream: [https://www.npmjs.com/package/exsolve](https://www.npmjs.com/package/exsolve)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io>
+
+
 ## external-editor 3.1.0
 
 PURL: pkg:npm/external-editor@3.1.0
@@ -3677,6 +3907,16 @@ Upstream: [https://www.npmjs.com/package/external-editor](https://www.npmjs.com/
 Licenses: MIT
 
 Copyright (c) 2016 Kevin Gravier
+
+
+## faency 12.0.7
+
+PURL: pkg:npm/%40traefik-labs/faency@12.0.7
+Upstream: [https://www.npmjs.com/package/%40traefik-labs/faency](https://www.npmjs.com/package/%40traefik-labs/faency)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
 
 
 ## fast-deep-equal 3.1.3
@@ -3737,6 +3977,36 @@ Upstream: [https://www.npmjs.com/package/fastq](https://www.npmjs.com/package/fa
 Licenses: ISC
 
 Copyright (c) 2015-2020, Matteo Collina <matteo.collina@gmail.com>
+
+
+## fdir 6.4.3
+
+PURL: pkg:npm/fdir@6.4.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fthecodrr%2Ffdir.git
+Upstream: [https://www.npmjs.com/package/fdir](https://www.npmjs.com/package/fdir)
+
+Licenses: MIT
+
+Copyright 2023 Abdullah Atta
+
+
+## fdir 6.4.6
+
+PURL: pkg:npm/fdir@6.4.6?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fthecodrr%2Ffdir.git
+Upstream: [https://www.npmjs.com/package/fdir](https://www.npmjs.com/package/fdir)
+
+Licenses: MIT
+
+Copyright 2023 Abdullah Atta
+
+
+## fdir 6.5.0
+
+PURL: pkg:npm/fdir@6.5.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fthecodrr%2Ffdir.git
+Upstream: [https://www.npmjs.com/package/fdir](https://www.npmjs.com/package/fdir)
+
+Licenses: MIT
+
+Copyright 2023 Abdullah Atta
 
 
 ## figures 1.0.11
@@ -4331,7 +4601,7 @@ Copyright (c) 2013 TJ Holowaychuk <tj@vision-media.ca>
 
 ## github.com/AdamSLevy/jsonrpc2/v14 v14.1.0
 
-PURL: pkg:golang/github.com/AdamSLevy/jsonrpc2/v14@v14.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/AdamSLevy/jsonrpc2/v14@v14.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/AdamSLevy/jsonrpc2](https://github.com/AdamSLevy/jsonrpc2)
 
 Licenses: MIT
@@ -4341,7 +4611,7 @@ Copyright 2018 Adam S Levy
 
 ## github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c
 
-PURL: pkg:golang/github.com/Azure/go-ansiterm@v0.0.0-20250102033503-faa5f7b0171c?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-ansiterm@v0.0.0-20250102033503-faa5f7b0171c?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-ansiterm](https://github.com/Azure/go-ansiterm)
 
 Licenses: MIT
@@ -4351,7 +4621,7 @@ Copyright (c) 2015 Microsoft Corporation
 
 ## github.com/Azure/go-autorest/autorest/adal v0.9.22
 
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/adal@v0.9.22?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/autorest/adal@v0.9.22?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4361,7 +4631,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/autorest/azure/auth v0.5.13
 
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/azure/auth@v0.5.13?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/autorest/azure/auth@v0.5.13?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4371,7 +4641,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/autorest/azure/cli v0.4.6
 
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/azure/cli@v0.4.6?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/autorest/azure/cli@v0.4.6?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4381,7 +4651,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/autorest/date v0.3.0
 
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/date@v0.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/autorest/date@v0.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4391,7 +4661,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/autorest/to v0.4.1
 
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/to@v0.4.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/autorest/to@v0.4.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4401,7 +4671,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/autorest v0.11.30
 
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest@v0.11.30?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/autorest@v0.11.30?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4411,7 +4681,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/logger v0.2.1
 
-PURL: pkg:golang/github.com/Azure/go-autorest/logger@v0.2.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/logger@v0.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4421,7 +4691,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest/tracing v0.6.0
 
-PURL: pkg:golang/github.com/Azure/go-autorest/tracing@v0.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest/tracing@v0.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4431,7 +4701,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/Azure/go-autorest v14.2.0+incompatible
 
-PURL: pkg:golang/github.com/Azure/go-autorest@v14.2.0+incompatible?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Azure/go-autorest@v14.2.0+incompatible?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
 
 Licenses: Apache-2.0
@@ -4441,7 +4711,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0
 
-PURL: pkg:golang/github.com/AzureAD/microsoft-authentication-library-for-go@v1.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/AzureAD/microsoft-authentication-library-for-go@v1.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/AzureAD/microsoft-authentication-library-for-go](https://github.com/AzureAD/microsoft-authentication-library-for-go)
 
 Licenses: MIT
@@ -4451,7 +4721,7 @@ Copyright (c) Microsoft Corporation.
 
 ## github.com/HdrHistogram/hdrhistogram-go v1.1.2
 
-PURL: pkg:golang/github.com/HdrHistogram/hdrhistogram-go@v1.1.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/HdrHistogram/hdrhistogram-go@v1.1.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/HdrHistogram/hdrhistogram-go](https://github.com/HdrHistogram/hdrhistogram-go)
 
 Licenses: MIT
@@ -4461,7 +4731,7 @@ Copyright (c) 2014 Coda Hale
 
 ## github.com/Microsoft/go-winio v0.6.2
 
-PURL: pkg:golang/github.com/Microsoft/go-winio@v0.6.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/Microsoft/go-winio@v0.6.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/Microsoft/go-winio](https://github.com/Microsoft/go-winio)
 
 Licenses: MIT
@@ -4471,7 +4741,7 @@ Copyright (c) 2015 Microsoft
 
 ## github.com/VividCortex/gohistogram v1.0.0
 
-PURL: pkg:golang/github.com/VividCortex/gohistogram@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/VividCortex/gohistogram@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/VividCortex/gohistogram](https://github.com/VividCortex/gohistogram)
 
 Licenses: MIT
@@ -4481,7 +4751,7 @@ Copyright (c) 2013 VividCortex
 
 ## github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.1.0
 
-PURL: pkg:golang/github.com/akamai/AkamaiOPEN-edgegrid-golang/v13@v13.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/akamai/AkamaiOPEN-edgegrid-golang/v13@v13.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/akamai/AkamaiOPEN-edgegrid-golang](https://github.com/akamai/AkamaiOPEN-edgegrid-golang)
 
 Licenses: Apache-2.0
@@ -4491,7 +4761,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5
 
-PURL: pkg:golang/github.com/alexbrainman/sspi@v0.0.0-20180613141037-e580b900e9f5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/alexbrainman/sspi@v0.0.0-20180613141037-e580b900e9f5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alexbrainman/sspi](https://github.com/alexbrainman/sspi)
 
 Licenses: BSD-3-Clause
@@ -4501,7 +4771,7 @@ Copyright (c) 2012 The Go Authors. All rights reserved.
 
 ## github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5
 
-PURL: pkg:golang/github.com/alibabacloud-go/alibabacloud-gateway-spi@v0.0.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/alibabacloud-go/alibabacloud-gateway-spi@v0.0.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/alibabacloud-gateway-spi](https://github.com/alibabacloud-go/alibabacloud-gateway-spi)
 
 Licenses: Apache-2.0
@@ -4511,7 +4781,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.16
 
-PURL: pkg:golang/github.com/alibabacloud-go/darabonba-openapi/v2@v2.1.16?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/alibabacloud-go/darabonba-openapi/v2@v2.1.16?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/darabonba-openapi](https://github.com/alibabacloud-go/darabonba-openapi)
 
 Licenses: Apache-2.0
@@ -4521,7 +4791,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/alibabacloud-go/debug v1.0.1
 
-PURL: pkg:golang/github.com/alibabacloud-go/debug@v1.0.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/alibabacloud-go/debug@v1.0.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/debug](https://github.com/alibabacloud-go/debug)
 
 Licenses: Apache-2.0
@@ -4531,7 +4801,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/alibabacloud-go/tea-utils/v2 v2.0.9
 
-PURL: pkg:golang/github.com/alibabacloud-go/tea-utils/v2@v2.0.9?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/alibabacloud-go/tea-utils/v2@v2.0.9?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/tea-utils](https://github.com/alibabacloud-go/tea-utils)
 
 Licenses: Apache-2.0
@@ -4541,7 +4811,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/alibabacloud-go/tea v1.4.0
 
-PURL: pkg:golang/github.com/alibabacloud-go/tea@v1.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/alibabacloud-go/tea@v1.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/tea](https://github.com/alibabacloud-go/tea)
 
 Licenses: Apache-2.0
@@ -4551,7 +4821,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/aliyun/credentials-go v1.4.7
 
-PURL: pkg:golang/github.com/aliyun/credentials-go@v1.4.7?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/aliyun/credentials-go@v1.4.7?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/aliyun/credentials-go](https://github.com/aliyun/credentials-go)
 
 Licenses: Apache-2.0
@@ -4561,7 +4831,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/andybalholm/brotli v1.2.0
 
-PURL: pkg:golang/github.com/andybalholm/brotli@v1.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/andybalholm/brotli@v1.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/andybalholm/brotli](https://github.com/andybalholm/brotli)
 
 Licenses: MIT
@@ -4571,7 +4841,7 @@ Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
 
 ## github.com/armon/go-metrics v0.4.1
 
-PURL: pkg:golang/github.com/armon/go-metrics@v0.4.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/armon/go-metrics@v0.4.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/armon/go-metrics](https://github.com/armon/go-metrics)
 
 Licenses: MIT
@@ -4581,7 +4851,7 @@ Copyright (c) 2013 Armon Dadgar
 
 ## github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 
-PURL: pkg:golang/github.com/armon/go-socks5@v0.0.0-20160902184237-e75332964ef5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/armon/go-socks5@v0.0.0-20160902184237-e75332964ef5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/armon/go-socks5](https://github.com/armon/go-socks5)
 
 Licenses: MIT
@@ -4591,7 +4861,7 @@ Copyright (c) 2014 Armon Dadgar
 
 ## github.com/aws/smithy-go v1.24.2
 
-PURL: pkg:golang/github.com/aws/smithy-go@v1.24.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/aws/smithy-go@v1.24.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/aws/smithy-go](https://github.com/aws/smithy-go)
 
 Licenses: Apache-2.0
@@ -4601,7 +4871,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/baidubce/bce-sdk-go v0.9.264
 
-PURL: pkg:golang/github.com/baidubce/bce-sdk-go@v0.9.264?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/baidubce/bce-sdk-go@v0.9.264?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/baidubce/bce-sdk-go](https://github.com/baidubce/bce-sdk-go)
 
 Licenses: Apache-2.0
@@ -4611,7 +4881,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/benbjohnson/clock v1.3.5
 
-PURL: pkg:golang/github.com/benbjohnson/clock@v1.3.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/benbjohnson/clock@v1.3.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/benbjohnson/clock](https://github.com/benbjohnson/clock)
 
 Licenses: MIT
@@ -4621,7 +4891,7 @@ Copyright (c) 2014 Ben Johnson
 
 ## github.com/beorn7/perks v1.0.1
 
-PURL: pkg:golang/github.com/beorn7/perks@v1.0.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/beorn7/perks@v1.0.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/beorn7/perks](https://github.com/beorn7/perks)
 
 Licenses: MIT
@@ -4631,17 +4901,17 @@ Copyright (C) 2013 Blake Mizerany
 
 ## github.com/blendle/zapdriver v1.3.1
 
-PURL: pkg:golang/github.com/blendle/zapdriver@v1.3.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/blendle/zapdriver@v1.3.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/blendle/zapdriver](https://github.com/blendle/zapdriver)
 
-Licenses: 0BSD
+Licenses: ISC
 
 Copyright (c) Blendle
 
 
 ## github.com/bodgit/tsig v1.2.2
 
-PURL: pkg:golang/github.com/bodgit/tsig@v1.2.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/bodgit/tsig@v1.2.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/bodgit/tsig](https://github.com/bodgit/tsig)
 
 Licenses: BSD-3-Clause
@@ -4651,7 +4921,7 @@ Copyright (c) 2018, Matt Dainty
 
 ## github.com/boombuler/barcode v1.0.1
 
-PURL: pkg:golang/github.com/boombuler/barcode@v1.0.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/boombuler/barcode@v1.0.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/boombuler/barcode](https://github.com/boombuler/barcode)
 
 Licenses: MIT
@@ -4661,7 +4931,7 @@ Copyright (c) 2014 Florian Sundermann
 
 ## github.com/cenkalti/backoff/v4 v4.3.0
 
-PURL: pkg:golang/github.com/cenkalti/backoff/v4@v4.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/cenkalti/backoff/v4@v4.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/cenkalti/backoff](https://github.com/cenkalti/backoff)
 
 Licenses: MIT
@@ -4671,7 +4941,7 @@ Copyright (c) 2014 Cenk Altı
 
 ## github.com/cenkalti/backoff/v5 v5.0.3
 
-PURL: pkg:golang/github.com/cenkalti/backoff/v5@v5.0.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/cenkalti/backoff/v5@v5.0.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/cenkalti/backoff](https://github.com/cenkalti/backoff)
 
 Licenses: MIT
@@ -4681,7 +4951,7 @@ Copyright (c) 2014 Cenk Altı
 
 ## github.com/clbanning/mxj/v2 v2.7.0
 
-PURL: pkg:golang/github.com/clbanning/mxj/v2@v2.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/clbanning/mxj/v2@v2.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/clbanning/mxj](https://github.com/clbanning/mxj)
 
 Licenses: MIT
@@ -4691,7 +4961,7 @@ Copyright (c) 2012-2021 Charles Banning <clbanning@gmail.com>.  All rights reser
 
 ## github.com/containerd/errdefs/pkg v0.3.0
 
-PURL: pkg:golang/github.com/containerd/errdefs/pkg@v0.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containerd/errdefs/pkg@v0.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containerd/errdefs](https://github.com/containerd/errdefs)
 
 Licenses: Apache-2.0
@@ -4701,7 +4971,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/containerd/errdefs v1.0.0
 
-PURL: pkg:golang/github.com/containerd/errdefs@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containerd/errdefs@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containerd/errdefs](https://github.com/containerd/errdefs)
 
 Licenses: Apache-2.0
@@ -4711,7 +4981,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/containerd/log v0.1.0
 
-PURL: pkg:golang/github.com/containerd/log@v0.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containerd/log@v0.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containerd/log](https://github.com/containerd/log)
 
 Licenses: Apache-2.0
@@ -4721,7 +4991,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/containerd/platforms v1.0.0-rc.1
 
-PURL: pkg:golang/github.com/containerd/platforms@v1.0.0-rc.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containerd/platforms@v1.0.0-rc.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containerd/platforms](https://github.com/containerd/platforms)
 
 Licenses: Apache-2.0
@@ -4731,7 +5001,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 
-PURL: pkg:golang/github.com/containous/alice@v0.0.0-20181107144136-d83ebdd94cbd?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containous/alice@v0.0.0-20181107144136-d83ebdd94cbd?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containous/alice](https://github.com/containous/alice)
 
 Licenses: MIT
@@ -4741,7 +5011,7 @@ Copyright (c) 2014 Justinas Stankevicius
 
 ## github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
 
-PURL: pkg:golang/github.com/containous/go-http-auth@v0.4.1-0.20200324110947-a37a7636d23e?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containous/go-http-auth@v0.4.1-0.20200324110947-a37a7636d23e?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containous/go-http-auth](https://github.com/containous/go-http-auth)
 
 Licenses: Apache-2.0
@@ -4751,7 +5021,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 
-PURL: pkg:golang/github.com/containous/minheap@v0.0.0-20190809180810-6e71eb837595?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containous/minheap@v0.0.0-20190809180810-6e71eb837595?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containous/minheap](https://github.com/containous/minheap)
 
 Licenses: Apache-2.0
@@ -4761,7 +5031,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59
 
-PURL: pkg:golang/github.com/containous/mux@v0.0.0-20250523120546-41b6ec3aed59?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/containous/mux@v0.0.0-20250523120546-41b6ec3aed59?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/containous/mux](https://github.com/containous/mux)
 
 Licenses: BSD-3-Clause
@@ -4771,7 +5041,7 @@ Copyright (c) 2012 Rodrigo Moraes. All rights reserved.
 
 ## github.com/coreos/go-semver v0.3.1
 
-PURL: pkg:golang/github.com/coreos/go-semver@v0.3.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/coreos/go-semver@v0.3.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/coreos/go-semver](https://github.com/coreos/go-semver)
 
 Licenses: Apache-2.0
@@ -4781,7 +5051,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/coreos/go-systemd/v22 v22.5.0
 
-PURL: pkg:golang/github.com/coreos/go-systemd/v22@v22.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/coreos/go-systemd/v22@v22.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/coreos/go-systemd](https://github.com/coreos/go-systemd)
 
 Licenses: Apache-2.0
@@ -4791,7 +5061,7 @@ Copyright [yyyy] [name of copyright owner]
 
 ## github.com/cpuguy83/dockercfg v0.3.2
 
-PURL: pkg:golang/github.com/cpuguy83/dockercfg@v0.3.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/cpuguy83/dockercfg@v0.3.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/cpuguy83/dockercfg](https://github.com/cpuguy83/dockercfg)
 
 Licenses: MIT
@@ -4801,17 +5071,17 @@ Copyright (c) 2020 Brian Goff
 
 ## github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 
-PURL: pkg:golang/github.com/davecgh/go-spew@v1.1.2-0.20180830191138-d8f796af33cc?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/davecgh/go-spew@v1.1.2-0.20180830191138-d8f796af33cc?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/davecgh/go-spew](https://github.com/davecgh/go-spew)
 
-Licenses: 0BSD
+Licenses: ISC
 
 Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
 
 
 ## github.com/deepmap/oapi-codegen v1.9.1
 
-PURL: pkg:golang/github.com/deepmap/oapi-codegen@v1.9.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/deepmap/oapi-codegen@v1.9.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen)
 
 Licenses: Apache-2.0
@@ -4821,7 +5091,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f
 
-PURL: pkg:golang/github.com/desertbit/timer@v0.0.0-20180107155436-c41aec40b27f?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/desertbit/timer@v0.0.0-20180107155436-c41aec40b27f?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/desertbit/timer](https://github.com/desertbit/timer)
 
 Licenses: MIT
@@ -4831,7 +5101,7 @@ Copyright (c) 2016 Roland Singer
 
 ## github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f
 
-PURL: pkg:golang/github.com/dgryski/go-rendezvous@v0.0.0-20200823014737-9f7001d12a5f?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/dgryski/go-rendezvous@v0.0.0-20200823014737-9f7001d12a5f?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/dgryski/go-rendezvous](https://github.com/dgryski/go-rendezvous)
 
 Licenses: MIT
@@ -4841,7 +5111,7 @@ Copyright (c) 2017-2020 Damian Gryski <damian@gryski.com>
 
 ## github.com/dimchansky/utfbom v1.1.1
 
-PURL: pkg:golang/github.com/dimchansky/utfbom@v1.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/dimchansky/utfbom@v1.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/dimchansky/utfbom](https://github.com/dimchansky/utfbom)
 
 Licenses: Apache-2.0
@@ -4851,7 +5121,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/distribution/reference v0.6.0
 
-PURL: pkg:golang/github.com/distribution/reference@v0.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/distribution/reference@v0.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/distribution/reference](https://github.com/distribution/reference)
 
 Licenses: Apache-2.0
@@ -4861,7 +5131,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/docker/cli v29.2.1+incompatible
 
-PURL: pkg:golang/github.com/docker/cli@v29.2.1+incompatible?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/docker/cli@v29.2.1+incompatible?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/docker/cli](https://github.com/docker/cli)
 
 Licenses: Apache-2.0
@@ -4871,7 +5141,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/docker/docker v28.5.2+incompatible
 
-PURL: pkg:golang/github.com/docker/docker@v28.5.2+incompatible?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/docker/docker@v28.5.2+incompatible?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/docker/docker](https://github.com/docker/docker)
 
 Licenses: Apache-2.0
@@ -4881,7 +5151,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/docker/go-connections v0.6.0
 
-PURL: pkg:golang/github.com/docker/go-connections@v0.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/docker/go-connections@v0.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/docker/go-connections](https://github.com/docker/go-connections)
 
 Licenses: Apache-2.0
@@ -4891,7 +5161,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/docker/go-units v0.5.0
 
-PURL: pkg:golang/github.com/docker/go-units@v0.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/docker/go-units@v0.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/docker/go-units](https://github.com/docker/go-units)
 
 Licenses: Apache-2.0
@@ -4901,7 +5171,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/ebitengine/purego v0.8.4
 
-PURL: pkg:golang/github.com/ebitengine/purego@v0.8.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/ebitengine/purego@v0.8.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ebitengine/purego](https://github.com/ebitengine/purego)
 
 Licenses: Apache-2.0
@@ -4911,7 +5181,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/emicklei/go-restful/v3 v3.13.0
 
-PURL: pkg:golang/github.com/emicklei/go-restful/v3@v3.13.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/emicklei/go-restful/v3@v3.13.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/emicklei/go-restful](https://github.com/emicklei/go-restful)
 
 Licenses: MIT
@@ -4921,7 +5191,7 @@ Copyright (c) 2012,2013 Ernest Micklei
 
 ## github.com/evanphx/json-patch/v5 v5.9.11
 
-PURL: pkg:golang/github.com/evanphx/json-patch/v5@v5.9.11?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/evanphx/json-patch/v5@v5.9.11?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/evanphx/json-patch](https://github.com/evanphx/json-patch)
 
 Licenses: BSD-3-Clause
@@ -4931,7 +5201,7 @@ Copyright (c) 2014, Evan Phoenix
 
 ## github.com/exoscale/egoscale/v3 v3.1.34
 
-PURL: pkg:golang/github.com/exoscale/egoscale/v3@v3.1.34?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/exoscale/egoscale/v3@v3.1.34?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/exoscale/egoscale](https://github.com/exoscale/egoscale)
 
 Licenses: Apache-2.0
@@ -4941,7 +5211,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/fatih/structs v1.1.0
 
-PURL: pkg:golang/github.com/fatih/structs@v1.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/fatih/structs@v1.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/fatih/structs](https://github.com/fatih/structs)
 
 Licenses: MIT
@@ -4951,7 +5221,7 @@ Copyright (c) 2014 Fatih Arslan
 
 ## github.com/fsnotify/fsnotify v1.9.0
 
-PURL: pkg:golang/github.com/fsnotify/fsnotify@v1.9.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/fsnotify/fsnotify@v1.9.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/fsnotify/fsnotify](https://github.com/fsnotify/fsnotify)
 
 Licenses: BSD-3-Clause
@@ -4961,7 +5231,7 @@ Copyright © 2012 The Go Authors. All rights reserved.
 
 ## github.com/fxamacker/cbor/v2 v2.9.0
 
-PURL: pkg:golang/github.com/fxamacker/cbor/v2@v2.9.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/fxamacker/cbor/v2@v2.9.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/fxamacker/cbor](https://github.com/fxamacker/cbor)
 
 Licenses: MIT
@@ -4971,7 +5241,7 @@ Copyright (c) 2019-present Faye Amacker
 
 ## github.com/gabriel-vasile/mimetype v1.4.13
 
-PURL: pkg:golang/github.com/gabriel-vasile/mimetype@v1.4.13?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gabriel-vasile/mimetype@v1.4.13?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gabriel-vasile/mimetype](https://github.com/gabriel-vasile/mimetype)
 
 Licenses: MIT
@@ -4981,7 +5251,7 @@ Copyright (c) 2018 Gabriel Vasile
 
 ## github.com/ghodss/yaml v1.0.0
 
-PURL: pkg:golang/github.com/ghodss/yaml@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/ghodss/yaml@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ghodss/yaml](https://github.com/ghodss/yaml)
 
 Licenses: MIT
@@ -4991,7 +5261,7 @@ Copyright (c) 2014 Sam Ghods
 
 ## github.com/go-acme/alidns-20150109/v4 v4.7.0
 
-PURL: pkg:golang/github.com/go-acme/alidns-20150109/v4@v4.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-acme/alidns-20150109/v4@v4.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/alidns-20150109](https://github.com/go-acme/alidns-20150109)
 
 Licenses: Apache-2.0
@@ -5001,7 +5271,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-acme/esa-20240910/v2 v2.48.0
 
-PURL: pkg:golang/github.com/go-acme/esa-20240910/v2@v2.48.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-acme/esa-20240910/v2@v2.48.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/esa-20240910](https://github.com/go-acme/esa-20240910)
 
 Licenses: Apache-2.0
@@ -5011,7 +5281,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-acme/jdcloud-sdk-go v1.64.0
 
-PURL: pkg:golang/github.com/go-acme/jdcloud-sdk-go@v1.64.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-acme/jdcloud-sdk-go@v1.64.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/jdcloud-sdk-go](https://github.com/go-acme/jdcloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -5021,7 +5291,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-acme/lego/v4 v4.34.0
 
-PURL: pkg:golang/github.com/go-acme/lego/v4@v4.34.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-acme/lego/v4@v4.34.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/lego](https://github.com/go-acme/lego)
 
 Licenses: MIT
@@ -5031,7 +5301,7 @@ Copyright (c) 2017-2024 Ludovic Fernandez
 
 ## github.com/go-acme/tencentclouddnspod v1.3.24
 
-PURL: pkg:golang/github.com/go-acme/tencentclouddnspod@v1.3.24?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-acme/tencentclouddnspod@v1.3.24?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/tencentclouddnspod](https://github.com/go-acme/tencentclouddnspod)
 
 Licenses: Apache-2.0
@@ -5041,7 +5311,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-acme/tencentedgdeone v1.3.38
 
-PURL: pkg:golang/github.com/go-acme/tencentedgdeone@v1.3.38?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-acme/tencentedgdeone@v1.3.38?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/tencentedgdeone](https://github.com/go-acme/tencentedgdeone)
 
 Licenses: Apache-2.0
@@ -5051,7 +5321,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-jose/go-jose/v4 v4.1.4
 
-PURL: pkg:golang/github.com/go-jose/go-jose/v4@v4.1.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-jose/go-jose/v4@v4.1.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-jose/go-jose](https://github.com/go-jose/go-jose)
 
 Licenses: Apache-2.0
@@ -5061,7 +5331,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-kit/kit v0.13.0
 
-PURL: pkg:golang/github.com/go-kit/kit@v0.13.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-kit/kit@v0.13.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-kit/kit](https://github.com/go-kit/kit)
 
 Licenses: MIT
@@ -5071,7 +5341,7 @@ Copyright (c) 2015 Peter Bourgon
 
 ## github.com/go-kit/log v0.2.1
 
-PURL: pkg:golang/github.com/go-kit/log@v0.2.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-kit/log@v0.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-kit/log](https://github.com/go-kit/log)
 
 Licenses: MIT
@@ -5081,7 +5351,7 @@ Copyright (c) 2021 Go kit
 
 ## github.com/go-logfmt/logfmt v0.5.1
 
-PURL: pkg:golang/github.com/go-logfmt/logfmt@v0.5.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-logfmt/logfmt@v0.5.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-logfmt/logfmt](https://github.com/go-logfmt/logfmt)
 
 Licenses: MIT
@@ -5091,7 +5361,7 @@ Copyright (c) 2015 go-logfmt
 
 ## github.com/go-logr/logr v1.4.3
 
-PURL: pkg:golang/github.com/go-logr/logr@v1.4.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-logr/logr@v1.4.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-logr/logr](https://github.com/go-logr/logr)
 
 Licenses: Apache-2.0
@@ -5101,7 +5371,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-logr/stdr v1.2.2
 
-PURL: pkg:golang/github.com/go-logr/stdr@v1.2.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-logr/stdr@v1.2.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-logr/stdr](https://github.com/go-logr/stdr)
 
 Licenses: Apache-2.0
@@ -5111,7 +5381,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-logr/zapr v1.3.0
 
-PURL: pkg:golang/github.com/go-logr/zapr@v1.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-logr/zapr@v1.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-logr/zapr](https://github.com/go-logr/zapr)
 
 Licenses: Apache-2.0
@@ -5121,7 +5391,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-ole/go-ole v1.3.0
 
-PURL: pkg:golang/github.com/go-ole/go-ole@v1.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-ole/go-ole@v1.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-ole/go-ole](https://github.com/go-ole/go-ole)
 
 Licenses: MIT
@@ -5131,7 +5401,7 @@ Copyright © 2013-2017 Yasuhiro Matsumoto, <mattn.jp@gmail.com>
 
 ## github.com/go-openapi/jsonpointer v0.21.2
 
-PURL: pkg:golang/github.com/go-openapi/jsonpointer@v0.21.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-openapi/jsonpointer@v0.21.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-openapi/jsonpointer](https://github.com/go-openapi/jsonpointer)
 
 Licenses: Apache-2.0
@@ -5141,7 +5411,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-openapi/jsonreference v0.21.0
 
-PURL: pkg:golang/github.com/go-openapi/jsonreference@v0.21.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-openapi/jsonreference@v0.21.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-openapi/jsonreference](https://github.com/go-openapi/jsonreference)
 
 Licenses: Apache-2.0
@@ -5151,7 +5421,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-openapi/swag v0.23.1
 
-PURL: pkg:golang/github.com/go-openapi/swag@v0.23.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-openapi/swag@v0.23.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-openapi/swag](https://github.com/go-openapi/swag)
 
 Licenses: Apache-2.0
@@ -5161,7 +5431,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 
-PURL: pkg:golang/github.com/go-ozzo/ozzo-validation/v4@v4.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-ozzo/ozzo-validation/v4@v4.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-ozzo/ozzo-validation](https://github.com/go-ozzo/ozzo-validation)
 
 Licenses: MIT
@@ -5171,7 +5441,7 @@ Copyright (c) 2016, Qiang Xue
 
 ## github.com/go-playground/locales v0.14.1
 
-PURL: pkg:golang/github.com/go-playground/locales@v0.14.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-playground/locales@v0.14.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-playground/locales](https://github.com/go-playground/locales)
 
 Licenses: MIT
@@ -5181,7 +5451,7 @@ Copyright (c) 2016 Go Playground
 
 ## github.com/go-playground/universal-translator v0.18.1
 
-PURL: pkg:golang/github.com/go-playground/universal-translator@v0.18.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-playground/universal-translator@v0.18.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-playground/universal-translator](https://github.com/go-playground/universal-translator)
 
 Licenses: MIT
@@ -5191,7 +5461,7 @@ Copyright (c) 2016 Go Playground
 
 ## github.com/go-playground/validator/v10 v10.23.0
 
-PURL: pkg:golang/github.com/go-playground/validator/v10@v10.23.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-playground/validator/v10@v10.23.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-playground/validator](https://github.com/go-playground/validator)
 
 Licenses: MIT
@@ -5201,7 +5471,7 @@ Copyright (c) 2015 Dean Karn
 
 ## github.com/go-resty/resty/v2 v2.17.2
 
-PURL: pkg:golang/github.com/go-resty/resty/v2@v2.17.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-resty/resty/v2@v2.17.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-resty/resty](https://github.com/go-resty/resty)
 
 Licenses: MIT
@@ -5211,7 +5481,7 @@ Copyright (c) 2015-2024 Jeevanandam M., https://myjeeva.com <jeeva@myjeeva.com>
 
 ## github.com/go-viper/mapstructure/v2 v2.5.0
 
-PURL: pkg:golang/github.com/go-viper/mapstructure/v2@v2.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-viper/mapstructure/v2@v2.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-viper/mapstructure](https://github.com/go-viper/mapstructure)
 
 Licenses: MIT
@@ -5221,7 +5491,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 
 ## github.com/go-zookeeper/zk v1.0.3
 
-PURL: pkg:golang/github.com/go-zookeeper/zk@v1.0.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/go-zookeeper/zk@v1.0.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-zookeeper/zk](https://github.com/go-zookeeper/zk)
 
 Licenses: BSD-3-Clause
@@ -5231,7 +5501,7 @@ Copyright (c) 2013, Samuel Stauffer <samuel@descolada.com>
 
 ## github.com/goccy/go-yaml v1.19.2
 
-PURL: pkg:golang/github.com/goccy/go-yaml@v1.19.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/goccy/go-yaml@v1.19.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/goccy/go-yaml](https://github.com/goccy/go-yaml)
 
 Licenses: MIT
@@ -5241,7 +5511,7 @@ Copyright (c) 2019 Masaaki Goshima
 
 ## github.com/gofrs/flock v0.13.0
 
-PURL: pkg:golang/github.com/gofrs/flock@v0.13.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gofrs/flock@v0.13.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gofrs/flock](https://github.com/gofrs/flock)
 
 Licenses: BSD-3-Clause
@@ -5251,7 +5521,7 @@ Copyright (c) 2018-2025, The Gofrs
 
 ## github.com/gofrs/uuid v4.4.0+incompatible
 
-PURL: pkg:golang/github.com/gofrs/uuid@v4.4.0+incompatible?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gofrs/uuid@v4.4.0+incompatible?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gofrs/uuid](https://github.com/gofrs/uuid)
 
 Licenses: MIT
@@ -5261,17 +5531,17 @@ Copyright (C) 2013-2018 by Maxim Bublis <b@codemonkey.ru>
 
 ## github.com/gogo/protobuf v1.3.2
 
-PURL: pkg:golang/github.com/gogo/protobuf@v1.3.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gogo/protobuf@v1.3.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gogo/protobuf](https://github.com/gogo/protobuf)
 
-Licenses: 0BSD
+Licenses: BSD-3-Clause
 
 Copyright (c) 2013, The GoGo Authors. All rights reserved.
 
 
 ## github.com/golang-jwt/jwt/v4 v4.5.2
 
-PURL: pkg:golang/github.com/golang-jwt/jwt/v4@v4.5.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/golang-jwt/jwt/v4@v4.5.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt)
 
 Licenses: MIT
@@ -5281,7 +5551,7 @@ Copyright (c) 2012 Dave Grijalva
 
 ## github.com/golang-jwt/jwt/v5 v5.3.1
 
-PURL: pkg:golang/github.com/golang-jwt/jwt/v5@v5.3.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/golang-jwt/jwt/v5@v5.3.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt)
 
 Licenses: MIT
@@ -5291,7 +5561,7 @@ Copyright (c) 2012 Dave Grijalva
 
 ## github.com/golang/protobuf v1.5.4
 
-PURL: pkg:golang/github.com/golang/protobuf@v1.5.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/golang/protobuf@v1.5.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/golang/protobuf](https://github.com/golang/protobuf)
 
 Licenses: BSD-3-Clause
@@ -5301,7 +5571,7 @@ Copyright 2010 The Go Authors.  All rights reserved.
 
 ## github.com/google/gnostic-models v0.7.0
 
-PURL: pkg:golang/github.com/google/gnostic-models@v0.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/google/gnostic-models@v0.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/google/gnostic-models](https://github.com/google/gnostic-models)
 
 Licenses: Apache-2.0
@@ -5311,7 +5581,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/google/go-cmp v0.7.0
 
-PURL: pkg:golang/github.com/google/go-cmp@v0.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/google/go-cmp@v0.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/google/go-cmp](https://github.com/google/go-cmp)
 
 Licenses: BSD-3-Clause
@@ -5321,7 +5591,7 @@ Copyright (c) 2017 The Go Authors. All rights reserved.
 
 ## github.com/google/go-github/v28 v28.1.1
 
-PURL: pkg:golang/github.com/google/go-github/v28@v28.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/google/go-github/v28@v28.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/google/go-github](https://github.com/google/go-github)
 
 Licenses: BSD-3-Clause
@@ -5331,7 +5601,7 @@ Copyright (c) 2013 The go-github AUTHORS. All rights reserved.
 
 ## github.com/google/go-querystring v1.2.0
 
-PURL: pkg:golang/github.com/google/go-querystring@v1.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/google/go-querystring@v1.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/google/go-querystring](https://github.com/google/go-querystring)
 
 Licenses: BSD-3-Clause
@@ -5341,7 +5611,7 @@ Copyright (c) 2013 Google. All rights reserved.
 
 ## github.com/google/uuid v1.6.0
 
-PURL: pkg:golang/github.com/google/uuid@v1.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/google/uuid@v1.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/google/uuid](https://github.com/google/uuid)
 
 Licenses: BSD-3-Clause
@@ -5351,7 +5621,7 @@ Copyright (c) 2009,2014 Google Inc. All rights reserved.
 
 ## github.com/googleapis/enterprise-certificate-proxy v0.3.14
 
-PURL: pkg:golang/github.com/googleapis/enterprise-certificate-proxy@v0.3.14?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/googleapis/enterprise-certificate-proxy@v0.3.14?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/googleapis/enterprise-certificate-proxy](https://github.com/googleapis/enterprise-certificate-proxy)
 
 Licenses: Apache-2.0
@@ -5361,7 +5631,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/googleapis/gax-go/v2 v2.21.0
 
-PURL: pkg:golang/github.com/googleapis/gax-go/v2@v2.21.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/googleapis/gax-go/v2@v2.21.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/googleapis/gax-go](https://github.com/googleapis/gax-go)
 
 Licenses: BSD-3-Clause
@@ -5371,7 +5641,7 @@ Copyright 2016, Google Inc.
 
 ## github.com/gophercloud/gophercloud v1.14.1
 
-PURL: pkg:golang/github.com/gophercloud/gophercloud@v1.14.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gophercloud/gophercloud@v1.14.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gophercloud/gophercloud](https://github.com/gophercloud/gophercloud)
 
 Licenses: Apache-2.0
@@ -5381,7 +5651,7 @@ Copyright 2012-2013 Rackspace, Inc.
 
 ## github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56
 
-PURL: pkg:golang/github.com/gophercloud/utils@v0.0.0-20231010081019-80377eca5d56?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gophercloud/utils@v0.0.0-20231010081019-80377eca5d56?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gophercloud/utils](https://github.com/gophercloud/utils)
 
 Licenses: Apache-2.0
@@ -5391,7 +5661,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 
-PURL: pkg:golang/github.com/gorilla/websocket@v1.5.4-0.20250319132907-e064f32e3674?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gorilla/websocket@v1.5.4-0.20250319132907-e064f32e3674?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gorilla/websocket](https://github.com/gorilla/websocket)
 
 Licenses: BSD-2-Clause
@@ -5401,7 +5671,7 @@ Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
 
 ## github.com/gravitational/trace v1.5.0
 
-PURL: pkg:golang/github.com/gravitational/trace@v1.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/gravitational/trace@v1.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gravitational/trace](https://github.com/gravitational/trace)
 
 Licenses: Apache-2.0
@@ -5411,7 +5681,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0
 
-PURL: pkg:golang/github.com/grpc-ecosystem/grpc-gateway/v2@v2.28.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/grpc-ecosystem/grpc-gateway/v2@v2.28.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/grpc-ecosystem/grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)
 
 Licenses: BSD-3-Clause
@@ -5421,7 +5691,7 @@ Copyright (c) 2015, Gengo, Inc.
 
 ## github.com/hashicorp/consul/api v1.26.1
 
-PURL: pkg:golang/github.com/hashicorp/consul/api@v1.26.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/consul/api@v1.26.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/consul](https://github.com/hashicorp/consul)
 
 Licenses: MPL-2.0
@@ -5431,7 +5701,7 @@ Copyright (c) 2020 HashiCorp, Inc.
 
 ## github.com/hashicorp/cronexpr v1.1.2
 
-PURL: pkg:golang/github.com/hashicorp/cronexpr@v1.1.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/cronexpr@v1.1.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/cronexpr](https://github.com/hashicorp/cronexpr)
 
 Licenses: Apache-2.0
@@ -5441,7 +5711,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/hashicorp/errwrap v1.1.0
 
-PURL: pkg:golang/github.com/hashicorp/errwrap@v1.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/errwrap@v1.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/errwrap](https://github.com/hashicorp/errwrap)
 
 Licenses: MPL-2.0
@@ -5451,7 +5721,7 @@ copyright doctrines of fair use, fair dealing, or other equivalents.
 
 ## github.com/hashicorp/go-hclog v1.6.3
 
-PURL: pkg:golang/github.com/hashicorp/go-hclog@v1.6.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/go-hclog@v1.6.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/go-hclog](https://github.com/hashicorp/go-hclog)
 
 Licenses: MIT
@@ -5461,7 +5731,7 @@ Copyright (c) 2017 HashiCorp, Inc.
 
 ## github.com/hashicorp/go-multierror v1.1.1
 
-PURL: pkg:golang/github.com/hashicorp/go-multierror@v1.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/go-multierror@v1.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/go-multierror](https://github.com/hashicorp/go-multierror)
 
 Licenses: MPL-2.0
@@ -5471,7 +5741,7 @@ copyright doctrines of fair use, fair dealing, or other equivalents.
 
 ## github.com/hashicorp/go-retryablehttp v0.7.8
 
-PURL: pkg:golang/github.com/hashicorp/go-retryablehttp@v0.7.8?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/go-retryablehttp@v0.7.8?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/go-retryablehttp](https://github.com/hashicorp/go-retryablehttp)
 
 Licenses: MPL-2.0
@@ -5481,7 +5751,7 @@ Copyright (c) 2015 HashiCorp, Inc.
 
 ## github.com/hashicorp/go-uuid v1.0.3
 
-PURL: pkg:golang/github.com/hashicorp/go-uuid@v1.0.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/go-uuid@v1.0.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/go-uuid](https://github.com/hashicorp/go-uuid)
 
 Licenses: MPL-2.0
@@ -5491,7 +5761,7 @@ Copyright © 2015-2022 HashiCorp, Inc.
 
 ## github.com/hashicorp/go-version v1.9.0
 
-PURL: pkg:golang/github.com/hashicorp/go-version@v1.9.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/go-version@v1.9.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/go-version](https://github.com/hashicorp/go-version)
 
 Licenses: MPL-2.0
@@ -5501,7 +5771,7 @@ Copyright IBM Corp. 2014, 2025
 
 ## github.com/hashicorp/golang-lru v1.0.2
 
-PURL: pkg:golang/github.com/hashicorp/golang-lru@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/golang-lru@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/golang-lru](https://github.com/hashicorp/golang-lru)
 
 Licenses: MPL-2.0
@@ -5511,7 +5781,7 @@ Copyright (c) 2014 HashiCorp, Inc.
 
 ## github.com/hashicorp/hcl v1.0.1-vault-5
 
-PURL: pkg:golang/github.com/hashicorp/hcl@v1.0.1-vault-5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/hcl@v1.0.1-vault-5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/hcl](https://github.com/hashicorp/hcl)
 
 Licenses: MPL-2.0
@@ -5521,7 +5791,7 @@ copyright doctrines of fair use, fair dealing, or other equivalents.
 
 ## github.com/hashicorp/nomad/api v0.0.0-20231213195942-64e3dca9274b
 
-PURL: pkg:golang/github.com/hashicorp/nomad/api@v0.0.0-20231213195942-64e3dca9274b?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/nomad/api@v0.0.0-20231213195942-64e3dca9274b?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/nomad](https://github.com/hashicorp/nomad)
 
 Licenses: MPL-2.0
@@ -5531,7 +5801,7 @@ Copyright (c) 2015 HashiCorp, Inc.
 
 ## github.com/hashicorp/serf v0.10.1
 
-PURL: pkg:golang/github.com/hashicorp/serf@v0.10.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/hashicorp/serf@v0.10.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/hashicorp/serf](https://github.com/hashicorp/serf)
 
 Licenses: MPL-2.0
@@ -5541,7 +5811,7 @@ copyright doctrines of fair use, fair dealing, or other equivalents.
 
 ## github.com/http-wasm/http-wasm-host-go v0.7.0
 
-PURL: pkg:golang/github.com/http-wasm/http-wasm-host-go@v0.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/http-wasm/http-wasm-host-go@v0.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/http-wasm/http-wasm-host-go](https://github.com/http-wasm/http-wasm-host-go)
 
 Licenses: Apache-2.0
@@ -5551,7 +5821,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/huandu/xstrings v1.5.0
 
-PURL: pkg:golang/github.com/huandu/xstrings@v1.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/huandu/xstrings@v1.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/huandu/xstrings](https://github.com/huandu/xstrings)
 
 Licenses: MIT
@@ -5561,7 +5831,7 @@ Copyright (c) 2015 Huan Du
 
 ## github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.192
 
-PURL: pkg:golang/github.com/huaweicloud/huaweicloud-sdk-go-v3@v0.1.192?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/huaweicloud/huaweicloud-sdk-go-v3@v0.1.192?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/huaweicloud/huaweicloud-sdk-go-v3](https://github.com/huaweicloud/huaweicloud-sdk-go-v3)
 
 Licenses: Apache-2.0
@@ -5571,7 +5841,7 @@ Copyright (c) Huawei Technologies Co., Ltd. 2020-present. All rights reserved.
 
 ## github.com/imdario/mergo v0.3.16
 
-PURL: pkg:golang/github.com/imdario/mergo@v0.3.16?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/imdario/mergo@v0.3.16?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/imdario/mergo](https://github.com/imdario/mergo)
 
 Licenses: BSD-3-Clause
@@ -5581,7 +5851,7 @@ Copyright (c) 2013 Dario Castañé. All rights reserved.
 
 ## github.com/influxdata/influxdb-client-go/v2 v2.7.0
 
-PURL: pkg:golang/github.com/influxdata/influxdb-client-go/v2@v2.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/influxdata/influxdb-client-go/v2@v2.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/influxdata/influxdb-client-go](https://github.com/influxdata/influxdb-client-go)
 
 Licenses: MIT
@@ -5591,7 +5861,7 @@ Copyright (c) 2020-2021 Influxdata, Inc.
 
 ## github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 
-PURL: pkg:golang/github.com/influxdata/influxdb1-client@v0.0.0-20200827194710-b269163b24ab?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/influxdata/influxdb1-client@v0.0.0-20200827194710-b269163b24ab?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/influxdata/influxdb1-client](https://github.com/influxdata/influxdb1-client)
 
 Licenses: MIT
@@ -5601,7 +5871,7 @@ Copyright (c) 2019 InfluxData
 
 ## github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839
 
-PURL: pkg:golang/github.com/influxdata/line-protocol@v0.0.0-20200327222509-2487e7298839?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/influxdata/line-protocol@v0.0.0-20200327222509-2487e7298839?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/influxdata/line-protocol](https://github.com/influxdata/line-protocol)
 
 Licenses: MIT
@@ -5611,7 +5881,7 @@ Copyright (c) 2013-2018 InfluxData Inc.
 
 ## github.com/infobloxopen/infoblox-go-client/v2 v2.11.0
 
-PURL: pkg:golang/github.com/infobloxopen/infoblox-go-client/v2@v2.11.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/infobloxopen/infoblox-go-client/v2@v2.11.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/infobloxopen/infoblox-go-client](https://github.com/infobloxopen/infoblox-go-client)
 
 Licenses: Apache-2.0
@@ -5621,7 +5891,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/jcmturner/aescts/v2 v2.0.0
 
-PURL: pkg:golang/github.com/jcmturner/aescts/v2@v2.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/jcmturner/aescts/v2@v2.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/jcmturner/aescts](https://github.com/jcmturner/aescts)
 
 Licenses: Apache-2.0
@@ -5631,7 +5901,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/jcmturner/dnsutils/v2 v2.0.0
 
-PURL: pkg:golang/github.com/jcmturner/dnsutils/v2@v2.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/jcmturner/dnsutils/v2@v2.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/jcmturner/dnsutils](https://github.com/jcmturner/dnsutils)
 
 Licenses: Apache-2.0
@@ -5641,7 +5911,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/jcmturner/gofork v1.7.6
 
-PURL: pkg:golang/github.com/jcmturner/gofork@v1.7.6?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/jcmturner/gofork@v1.7.6?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/jcmturner/gofork](https://github.com/jcmturner/gofork)
 
 Licenses: BSD-3-Clause
@@ -5651,7 +5921,7 @@ Copyright (c) 2009 The Go Authors. All rights reserved.
 
 ## github.com/jcmturner/goidentity/v6 v6.0.1
 
-PURL: pkg:golang/github.com/jcmturner/goidentity/v6@v6.0.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/jcmturner/goidentity/v6@v6.0.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/jcmturner/goidentity](https://github.com/jcmturner/goidentity)
 
 Licenses: Apache-2.0
@@ -5661,7 +5931,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/jcmturner/gokrb5/v8 v8.4.4
 
-PURL: pkg:golang/github.com/jcmturner/gokrb5/v8@v8.4.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/jcmturner/gokrb5/v8@v8.4.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/jcmturner/gokrb5](https://github.com/jcmturner/gokrb5)
 
 Licenses: Apache-2.0
@@ -5671,7 +5941,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/jcmturner/rpc/v2 v2.0.3
 
-PURL: pkg:golang/github.com/jcmturner/rpc/v2@v2.0.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/jcmturner/rpc/v2@v2.0.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/jcmturner/rpc](https://github.com/jcmturner/rpc)
 
 Licenses: Apache-2.0
@@ -5679,19 +5949,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/jinzhu/copier v0.4.0
-
-PURL: pkg:golang/github.com/jinzhu/copier@v0.4.0?type=module&goos=darwin&goarch=arm64
-Upstream: [https://github.com/jinzhu/copier](https://github.com/jinzhu/copier)
-
-Licenses: MIT
-
-Copyright (c) 2015 Jinzhu
-
-
 ## github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 
-PURL: pkg:golang/github.com/json-iterator/go@v1.1.13-0.20220915233716-71ac16282d12?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/json-iterator/go@v1.1.13-0.20220915233716-71ac16282d12?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/json-iterator/go](https://github.com/json-iterator/go)
 
 Licenses: MIT
@@ -5701,7 +5961,7 @@ Copyright (c) 2016 json-iterator
 
 ## github.com/klauspost/compress v1.18.5
 
-PURL: pkg:golang/github.com/klauspost/compress@v1.18.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/klauspost/compress@v1.18.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/klauspost/compress](https://github.com/klauspost/compress)
 
 Licenses: Apache-2.0
@@ -5711,7 +5971,7 @@ Copyright (c) 2012 The Go Authors. All rights reserved.
 
 ## github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b
 
-PURL: pkg:golang/github.com/kolo/xmlrpc@v0.0.0-20220921171641-a4b6fa1dd06b?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kolo/xmlrpc@v0.0.0-20220921171641-a4b6fa1dd06b?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kolo/xmlrpc](https://github.com/kolo/xmlrpc)
 
 Licenses: MIT
@@ -5721,7 +5981,7 @@ Copyright (C) 2012 Dmitry Maksimov
 
 ## github.com/kvtools/consul v1.0.2
 
-PURL: pkg:golang/github.com/kvtools/consul@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kvtools/consul@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/consul](https://github.com/kvtools/consul)
 
 Licenses: Apache-2.0
@@ -5731,7 +5991,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/kvtools/etcdv3 v1.0.3
 
-PURL: pkg:golang/github.com/kvtools/etcdv3@v1.0.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kvtools/etcdv3@v1.0.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/etcdv3](https://github.com/kvtools/etcdv3)
 
 Licenses: Apache-2.0
@@ -5741,7 +6001,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/kvtools/redis v1.2.0
 
-PURL: pkg:golang/github.com/kvtools/redis@v1.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kvtools/redis@v1.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/redis](https://github.com/kvtools/redis)
 
 Licenses: Apache-2.0
@@ -5751,7 +6011,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/kvtools/valkeyrie v1.0.0
 
-PURL: pkg:golang/github.com/kvtools/valkeyrie@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kvtools/valkeyrie@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/valkeyrie](https://github.com/kvtools/valkeyrie)
 
 Licenses: Apache-2.0
@@ -5761,7 +6021,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/kvtools/zookeeper v1.0.2
 
-PURL: pkg:golang/github.com/kvtools/zookeeper@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kvtools/zookeeper@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/zookeeper](https://github.com/kvtools/zookeeper)
 
 Licenses: Apache-2.0
@@ -5771,7 +6031,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/kylelemons/godebug v1.1.0
 
-PURL: pkg:golang/github.com/kylelemons/godebug@v1.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/kylelemons/godebug@v1.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kylelemons/godebug](https://github.com/kylelemons/godebug)
 
 Licenses: Apache-2.0
@@ -5781,7 +6041,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/labbsr0x/bindman-dns-webhook v1.0.2
 
-PURL: pkg:golang/github.com/labbsr0x/bindman-dns-webhook@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/labbsr0x/bindman-dns-webhook@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/labbsr0x/bindman-dns-webhook](https://github.com/labbsr0x/bindman-dns-webhook)
 
 Licenses: MIT
@@ -5791,7 +6051,7 @@ Copyright (c) 2018 Labbs
 
 ## github.com/labbsr0x/goh v1.0.1
 
-PURL: pkg:golang/github.com/labbsr0x/goh@v1.0.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/labbsr0x/goh@v1.0.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/labbsr0x/goh](https://github.com/labbsr0x/goh)
 
 Licenses: MIT
@@ -5801,7 +6061,7 @@ Copyright (c) 2019 Abilio Esteves
 
 ## github.com/leodido/go-urn v1.4.0
 
-PURL: pkg:golang/github.com/leodido/go-urn@v1.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/leodido/go-urn@v1.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/leodido/go-urn](https://github.com/leodido/go-urn)
 
 Licenses: MIT
@@ -5811,7 +6071,7 @@ Copyright (c) 2018 Leonardo Di Donato
 
 ## github.com/linode/linodego v1.67.0
 
-PURL: pkg:golang/github.com/linode/linodego@v1.67.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/linode/linodego@v1.67.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/linode/linodego](https://github.com/linode/linodego)
 
 Licenses: MIT
@@ -5821,7 +6081,7 @@ Copyright (c) 2017 Christopher "Chief" Najewicz
 
 ## github.com/liquidweb/liquidweb-cli v0.7.0
 
-PURL: pkg:golang/github.com/liquidweb/liquidweb-cli@v0.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/liquidweb/liquidweb-cli@v0.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/liquidweb/liquidweb-cli](https://github.com/liquidweb/liquidweb-cli)
 
 Licenses: Apache-2.0
@@ -5831,7 +6091,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/liquidweb/liquidweb-go v1.6.4
 
-PURL: pkg:golang/github.com/liquidweb/liquidweb-go@v1.6.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/liquidweb/liquidweb-go@v1.6.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/liquidweb/liquidweb-go](https://github.com/liquidweb/liquidweb-go)
 
 Licenses: Apache-2.0
@@ -5841,7 +6101,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35
 
-PURL: pkg:golang/github.com/lufia/plan9stats@v0.0.0-20250317134145-8bc96cf8fc35?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/lufia/plan9stats@v0.0.0-20250317134145-8bc96cf8fc35?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/lufia/plan9stats](https://github.com/lufia/plan9stats)
 
 Licenses: BSD-3-Clause
@@ -5851,7 +6111,7 @@ Copyright (c) 2019, KADOTA, Kyohei
 
 ## github.com/mailgun/multibuf v0.1.2
 
-PURL: pkg:golang/github.com/mailgun/multibuf@v0.1.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mailgun/multibuf@v0.1.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mailgun/multibuf](https://github.com/mailgun/multibuf)
 
 Licenses: Apache-2.0
@@ -5861,7 +6121,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/mailgun/timetools v0.0.0-20141028012446-7e6055773c51
 
-PURL: pkg:golang/github.com/mailgun/timetools@v0.0.0-20141028012446-7e6055773c51?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mailgun/timetools@v0.0.0-20141028012446-7e6055773c51?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mailgun/timetools](https://github.com/mailgun/timetools)
 
 Licenses: Apache-2.0
@@ -5871,7 +6131,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 
-PURL: pkg:golang/github.com/mailgun/ttlmap@v0.0.0-20170619185759-c1c17f74874f?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mailgun/ttlmap@v0.0.0-20170619185759-c1c17f74874f?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mailgun/ttlmap](https://github.com/mailgun/ttlmap)
 
 Licenses: Apache-2.0
@@ -5881,7 +6141,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/mailru/easyjson v0.9.1
 
-PURL: pkg:golang/github.com/mailru/easyjson@v0.9.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mailru/easyjson@v0.9.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mailru/easyjson](https://github.com/mailru/easyjson)
 
 Licenses: MIT
@@ -5891,7 +6151,7 @@ Copyright (c) 2016 Mail.Ru Group
 
 ## github.com/mattn/go-colorable v0.1.14
 
-PURL: pkg:golang/github.com/mattn/go-colorable@v0.1.14?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mattn/go-colorable@v0.1.14?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mattn/go-colorable](https://github.com/mattn/go-colorable)
 
 Licenses: MIT
@@ -5901,7 +6161,7 @@ Copyright (c) 2016 Yasuhiro Matsumoto
 
 ## github.com/mattn/go-isatty v0.0.21
 
-PURL: pkg:golang/github.com/mattn/go-isatty@v0.0.21?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mattn/go-isatty@v0.0.21?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mattn/go-isatty](https://github.com/mattn/go-isatty)
 
 Licenses: MIT
@@ -5911,7 +6171,7 @@ Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
 
 ## github.com/miekg/dns v1.1.72
 
-PURL: pkg:golang/github.com/miekg/dns@v1.1.72?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/miekg/dns@v1.1.72?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/miekg/dns](https://github.com/miekg/dns)
 
 Licenses: BSD-3-Clause
@@ -5921,7 +6181,7 @@ Copyright (c) 2009, The Go Authors. Extensions copyright (c) 2011, Miek Gieben.
 
 ## github.com/mimuret/golang-iij-dpf v0.9.1
 
-PURL: pkg:golang/github.com/mimuret/golang-iij-dpf@v0.9.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mimuret/golang-iij-dpf@v0.9.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mimuret/golang-iij-dpf](https://github.com/mimuret/golang-iij-dpf)
 
 Licenses: MIT
@@ -5931,7 +6191,7 @@ Copyright (c) 2021 Manabu Sonoda
 
 ## github.com/mitchellh/copystructure v1.2.0
 
-PURL: pkg:golang/github.com/mitchellh/copystructure@v1.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mitchellh/copystructure@v1.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mitchellh/copystructure](https://github.com/mitchellh/copystructure)
 
 Licenses: MIT
@@ -5941,7 +6201,7 @@ Copyright (c) 2014 Mitchell Hashimoto
 
 ## github.com/mitchellh/go-homedir v1.1.0
 
-PURL: pkg:golang/github.com/mitchellh/go-homedir@v1.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mitchellh/go-homedir@v1.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mitchellh/go-homedir](https://github.com/mitchellh/go-homedir)
 
 Licenses: MIT
@@ -5951,7 +6211,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 
 ## github.com/mitchellh/hashstructure v1.0.0
 
-PURL: pkg:golang/github.com/mitchellh/hashstructure@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mitchellh/hashstructure@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mitchellh/hashstructure](https://github.com/mitchellh/hashstructure)
 
 Licenses: MIT
@@ -5961,7 +6221,7 @@ Copyright (c) 2016 Mitchell Hashimoto
 
 ## github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c
 
-PURL: pkg:golang/github.com/mitchellh/mapstructure@v1.5.1-0.20231216201459-8508981c8b6c?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mitchellh/mapstructure@v1.5.1-0.20231216201459-8508981c8b6c?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mitchellh/mapstructure](https://github.com/mitchellh/mapstructure)
 
 Licenses: MIT
@@ -5971,7 +6231,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 
 ## github.com/mitchellh/reflectwalk v1.0.2
 
-PURL: pkg:golang/github.com/mitchellh/reflectwalk@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mitchellh/reflectwalk@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mitchellh/reflectwalk](https://github.com/mitchellh/reflectwalk)
 
 Licenses: MIT
@@ -5981,7 +6241,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 
 ## github.com/moby/docker-image-spec v1.3.1
 
-PURL: pkg:golang/github.com/moby/docker-image-spec@v1.3.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/docker-image-spec@v1.3.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/docker-image-spec](https://github.com/moby/docker-image-spec)
 
 Licenses: Apache-2.0
@@ -5991,7 +6251,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/go-archive v0.1.0
 
-PURL: pkg:golang/github.com/moby/go-archive@v0.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/go-archive@v0.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/go-archive](https://github.com/moby/go-archive)
 
 Licenses: Apache-2.0
@@ -6001,7 +6261,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/patternmatcher v0.6.0
 
-PURL: pkg:golang/github.com/moby/patternmatcher@v0.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/patternmatcher@v0.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/patternmatcher](https://github.com/moby/patternmatcher)
 
 Licenses: Apache-2.0
@@ -6011,7 +6271,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/spdystream v0.5.0
 
-PURL: pkg:golang/github.com/moby/spdystream@v0.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/spdystream@v0.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/spdystream](https://github.com/moby/spdystream)
 
 Licenses: Apache-2.0
@@ -6021,7 +6281,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/sys/sequential v0.6.0
 
-PURL: pkg:golang/github.com/moby/sys/sequential@v0.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/sys/sequential@v0.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/sys](https://github.com/moby/sys)
 
 Licenses: Apache-2.0
@@ -6031,7 +6291,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/sys/userns v0.1.0
 
-PURL: pkg:golang/github.com/moby/sys/userns@v0.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/sys/userns@v0.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/sys](https://github.com/moby/sys)
 
 Licenses: Apache-2.0
@@ -6041,7 +6301,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/sys/user v0.4.0
 
-PURL: pkg:golang/github.com/moby/sys/user@v0.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/sys/user@v0.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/sys](https://github.com/moby/sys)
 
 Licenses: Apache-2.0
@@ -6051,7 +6311,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/moby/term v0.5.2
 
-PURL: pkg:golang/github.com/moby/term@v0.5.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/moby/term@v0.5.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/term](https://github.com/moby/term)
 
 Licenses: Apache-2.0
@@ -6061,7 +6321,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 
-PURL: pkg:golang/github.com/modern-go/concurrent@v0.0.0-20180306012644-bacd9c7ef1dd?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/modern-go/concurrent@v0.0.0-20180306012644-bacd9c7ef1dd?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/modern-go/concurrent](https://github.com/modern-go/concurrent)
 
 Licenses: Apache-2.0
@@ -6071,7 +6331,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee
 
-PURL: pkg:golang/github.com/modern-go/reflect2@v1.0.3-0.20250322232337-35a7c28c31ee?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/modern-go/reflect2@v1.0.3-0.20250322232337-35a7c28c31ee?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/modern-go/reflect2](https://github.com/modern-go/reflect2)
 
 Licenses: Apache-2.0
@@ -6081,7 +6341,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/morikuni/aec v1.0.0
 
-PURL: pkg:golang/github.com/morikuni/aec@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/morikuni/aec@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/morikuni/aec](https://github.com/morikuni/aec)
 
 Licenses: MIT
@@ -6091,7 +6351,7 @@ Copyright (c) 2016 Taihei Morikuni
 
 ## github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 
-PURL: pkg:golang/github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/munnerz/goautoneg](https://github.com/munnerz/goautoneg)
 
 Licenses: BSD-3-Clause
@@ -6101,7 +6361,7 @@ Copyright (c) 2011, Open Knowledge Foundation Ltd.
 
 ## github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
 
-PURL: pkg:golang/github.com/mxk/go-flowrate@v0.0.0-20140419014527-cca7078d478f?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/mxk/go-flowrate@v0.0.0-20140419014527-cca7078d478f?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mxk/go-flowrate](https://github.com/mxk/go-flowrate)
 
 Licenses: BSD-3-Clause
@@ -6111,7 +6371,7 @@ Copyright (c) 2014 The Go-FlowRate Authors. All rights reserved.
 
 ## github.com/namedotcom/go/v4 v4.0.2
 
-PURL: pkg:golang/github.com/namedotcom/go/v4@v4.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/namedotcom/go/v4@v4.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/namedotcom/go](https://github.com/namedotcom/go)
 
 Licenses: MIT
@@ -6121,7 +6381,7 @@ Copyright (c) 2017 Name.com
 
 ## github.com/nrdcg/bunny-go v0.1.0
 
-PURL: pkg:golang/github.com/nrdcg/bunny-go@v0.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/nrdcg/bunny-go@v0.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/nrdcg/bunny-go](https://github.com/nrdcg/bunny-go)
 
 Licenses: MIT
@@ -6131,7 +6391,7 @@ Copyright (c) 2021 simplesurance GmbH
 
 ## github.com/nrdcg/dnspod-go v0.4.0
 
-PURL: pkg:golang/github.com/nrdcg/dnspod-go@v0.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/nrdcg/dnspod-go@v0.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/nrdcg/dnspod-go](https://github.com/nrdcg/dnspod-go)
 
 Licenses: MIT
@@ -6141,7 +6401,7 @@ Copyright (c) 2017 decker
 
 ## github.com/nrdcg/goacmedns v0.2.0
 
-PURL: pkg:golang/github.com/nrdcg/goacmedns@v0.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/nrdcg/goacmedns@v0.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/nrdcg/goacmedns](https://github.com/nrdcg/goacmedns)
 
 Licenses: MIT
@@ -6151,7 +6411,7 @@ Copyright (c) 2018 Daniel McCarney
 
 ## github.com/nrdcg/goinwx v0.12.0
 
-PURL: pkg:golang/github.com/nrdcg/goinwx@v0.12.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/nrdcg/goinwx@v0.12.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/nrdcg/goinwx](https://github.com/nrdcg/goinwx)
 
 Licenses: MIT
@@ -6161,7 +6421,7 @@ Copyright (c) 2017 Andrew
 
 ## github.com/nrdcg/vegadns v0.3.0
 
-PURL: pkg:golang/github.com/nrdcg/vegadns@v0.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/nrdcg/vegadns@v0.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/nrdcg/vegadns](https://github.com/nrdcg/vegadns)
 
 Licenses: Apache-2.0
@@ -6171,7 +6431,7 @@ Copyright 2018, Cisco Systems, Inc.
 
 ## github.com/nzdjb/go-metaname v1.0.0
 
-PURL: pkg:golang/github.com/nzdjb/go-metaname@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/nzdjb/go-metaname@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/nzdjb/go-metaname](https://github.com/nzdjb/go-metaname)
 
 Licenses: MIT
@@ -6181,7 +6441,7 @@ Copyright (c) 2023 nzdjb
 
 ## github.com/opencontainers/go-digest v1.0.0
 
-PURL: pkg:golang/github.com/opencontainers/go-digest@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/opencontainers/go-digest@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/opencontainers/go-digest](https://github.com/opencontainers/go-digest)
 
 Licenses: Apache-2.0
@@ -6191,7 +6451,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/opencontainers/image-spec v1.1.1
 
-PURL: pkg:golang/github.com/opencontainers/image-spec@v1.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/opencontainers/image-spec@v1.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/opencontainers/image-spec](https://github.com/opencontainers/image-spec)
 
 Licenses: Apache-2.0
@@ -6201,7 +6461,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/openshift/gssapi v0.0.0-20161010215902-5fb4217df13b
 
-PURL: pkg:golang/github.com/openshift/gssapi@v0.0.0-20161010215902-5fb4217df13b?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/openshift/gssapi@v0.0.0-20161010215902-5fb4217df13b?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/openshift/gssapi](https://github.com/openshift/gssapi)
 
 Licenses: Apache-2.0
@@ -6211,7 +6471,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/ovh/go-ovh v1.9.0
 
-PURL: pkg:golang/github.com/ovh/go-ovh@v1.9.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/ovh/go-ovh@v1.9.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ovh/go-ovh](https://github.com/ovh/go-ovh)
 
 Licenses: BSD-3-Clause
@@ -6221,7 +6481,7 @@ Copyright (c) 2015-2025, OVH SAS
 
 ## github.com/patrickmn/go-cache v2.1.0+incompatible
 
-PURL: pkg:golang/github.com/patrickmn/go-cache@v2.1.0+incompatible?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/patrickmn/go-cache@v2.1.0+incompatible?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/patrickmn/go-cache](https://github.com/patrickmn/go-cache)
 
 Licenses: MIT
@@ -6231,7 +6491,7 @@ Copyright (c) 2012-2017 Patrick Mylund Nielsen and the go-cache contributors
 
 ## github.com/pelletier/go-toml/v2 v2.2.4
 
-PURL: pkg:golang/github.com/pelletier/go-toml/v2@v2.2.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/pelletier/go-toml/v2@v2.2.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pelletier/go-toml](https://github.com/pelletier/go-toml)
 
 Licenses: MIT
@@ -6241,7 +6501,7 @@ Copyright (c) 2021 - 2023 Thomas Pelletier
 
 ## github.com/peterhellberg/link v1.2.0
 
-PURL: pkg:golang/github.com/peterhellberg/link@v1.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/peterhellberg/link@v1.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/peterhellberg/link](https://github.com/peterhellberg/link)
 
 Licenses: MIT
@@ -6251,7 +6511,7 @@ Copyright (c) 2015-2022 Peter Hellberg https://c7.se
 
 ## github.com/pires/go-proxyproto v0.8.1
 
-PURL: pkg:golang/github.com/pires/go-proxyproto@v0.8.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/pires/go-proxyproto@v0.8.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pires/go-proxyproto](https://github.com/pires/go-proxyproto)
 
 Licenses: Apache-2.0
@@ -6261,7 +6521,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 
-PURL: pkg:golang/github.com/pkg/browser@v0.0.0-20240102092130-5ac0b6a4141c?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/pkg/browser@v0.0.0-20240102092130-5ac0b6a4141c?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pkg/browser](https://github.com/pkg/browser)
 
 Licenses: BSD-2-Clause
@@ -6271,7 +6531,7 @@ Copyright (c) 2014, Dave Cheney <dave@cheney.net>
 
 ## github.com/pkg/errors v0.9.1
 
-PURL: pkg:golang/github.com/pkg/errors@v0.9.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/pkg/errors@v0.9.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pkg/errors](https://github.com/pkg/errors)
 
 Licenses: BSD-2-Clause
@@ -6281,7 +6541,7 @@ Copyright (c) 2015, Dave Cheney <dave@cheney.net>
 
 ## github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 
-PURL: pkg:golang/github.com/pmezard/go-difflib@v1.0.1-0.20181226105442-5d4384ee4fb2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/pmezard/go-difflib@v1.0.1-0.20181226105442-5d4384ee4fb2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pmezard/go-difflib](https://github.com/pmezard/go-difflib)
 
 Licenses: BSD-3-Clause
@@ -6291,7 +6551,7 @@ Copyright (c) 2013, Patrick Mezard
 
 ## github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55
 
-PURL: pkg:golang/github.com/power-devops/perfstat@v0.0.0-20240221224432-82ca36839d55?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/power-devops/perfstat@v0.0.0-20240221224432-82ca36839d55?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/power-devops/perfstat](https://github.com/power-devops/perfstat)
 
 Licenses: MIT
@@ -6301,7 +6561,7 @@ Copyright (c) 2020 Power DevOps
 
 ## github.com/pquerna/otp v1.5.0
 
-PURL: pkg:golang/github.com/pquerna/otp@v1.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/pquerna/otp@v1.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pquerna/otp](https://github.com/pquerna/otp)
 
 Licenses: Apache-2.0
@@ -6311,7 +6571,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/prometheus/client_golang v1.23.2
 
-PURL: pkg:golang/github.com/prometheus/client_golang@v1.23.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/prometheus/client_golang@v1.23.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/client_golang](https://github.com/prometheus/client_golang)
 
 Licenses: Apache-2.0
@@ -6321,7 +6581,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/prometheus/client_model v0.6.2
 
-PURL: pkg:golang/github.com/prometheus/client_model@v0.6.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/prometheus/client_model@v0.6.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/client_model](https://github.com/prometheus/client_model)
 
 Licenses: Apache-2.0
@@ -6331,7 +6591,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/prometheus/common v0.67.4
 
-PURL: pkg:golang/github.com/prometheus/common@v0.67.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/prometheus/common@v0.67.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/common](https://github.com/prometheus/common)
 
 Licenses: Apache-2.0
@@ -6341,7 +6601,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/prometheus/procfs v0.19.2
 
-PURL: pkg:golang/github.com/prometheus/procfs@v0.19.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/prometheus/procfs@v0.19.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/procfs](https://github.com/prometheus/procfs)
 
 Licenses: Apache-2.0
@@ -6351,7 +6611,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/quic-go/quic-go v0.59.0
 
-PURL: pkg:golang/github.com/quic-go/quic-go@v0.59.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/quic-go/quic-go@v0.59.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/quic-go/quic-go](https://github.com/quic-go/quic-go)
 
 Licenses: MIT
@@ -6361,7 +6621,7 @@ Copyright (c) 2016 the quic-go authors & Google, Inc.
 
 ## github.com/redis/go-redis/v9 v9.8.0
 
-PURL: pkg:golang/github.com/redis/go-redis/v9@v9.8.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/redis/go-redis/v9@v9.8.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/redis/go-redis](https://github.com/redis/go-redis)
 
 Licenses: BSD-2-Clause
@@ -6371,7 +6631,7 @@ Copyright (c) 2013 The github.com/redis/go-redis Authors.
 
 ## github.com/regfish/regfish-dnsapi-go v0.1.1
 
-PURL: pkg:golang/github.com/regfish/regfish-dnsapi-go@v0.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/regfish/regfish-dnsapi-go@v0.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/regfish/regfish-dnsapi-go](https://github.com/regfish/regfish-dnsapi-go)
 
 Licenses: MIT
@@ -6381,7 +6641,7 @@ Copyright (c) 2024 regfish GmbH
 
 ## github.com/rs/cors v1.7.0
 
-PURL: pkg:golang/github.com/rs/cors@v1.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/rs/cors@v1.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/rs/cors](https://github.com/rs/cors)
 
 Licenses: MIT
@@ -6391,7 +6651,7 @@ Copyright (c) 2014 Olivier Poitrey <rs@dailymotion.com>
 
 ## github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529
 
-PURL: pkg:golang/github.com/rs/dnscache@v0.0.0-20230804202142-fc85eb664529?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/rs/dnscache@v0.0.0-20230804202142-fc85eb664529?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/rs/dnscache](https://github.com/rs/dnscache)
 
 Licenses: MIT
@@ -6401,7 +6661,7 @@ Copyright (c) 2018 Olivier Poitrey
 
 ## github.com/rs/zerolog v1.33.0
 
-PURL: pkg:golang/github.com/rs/zerolog@v1.33.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/rs/zerolog@v1.33.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/rs/zerolog](https://github.com/rs/zerolog)
 
 Licenses: MIT
@@ -6411,7 +6671,7 @@ Copyright (c) 2017 Olivier Poitrey
 
 ## github.com/sacloud/api-client-go v0.3.5
 
-PURL: pkg:golang/github.com/sacloud/api-client-go@v0.3.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sacloud/api-client-go@v0.3.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sacloud/api-client-go](https://github.com/sacloud/api-client-go)
 
 Licenses: Apache-2.0
@@ -6421,7 +6681,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/sacloud/go-http v0.1.9
 
-PURL: pkg:golang/github.com/sacloud/go-http@v0.1.9?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sacloud/go-http@v0.1.9?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sacloud/go-http](https://github.com/sacloud/go-http)
 
 Licenses: Apache-2.0
@@ -6431,7 +6691,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/sacloud/iaas-api-go v1.23.1
 
-PURL: pkg:golang/github.com/sacloud/iaas-api-go@v1.23.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sacloud/iaas-api-go@v1.23.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sacloud/iaas-api-go](https://github.com/sacloud/iaas-api-go)
 
 Licenses: Apache-2.0
@@ -6441,7 +6701,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/sacloud/packages-go v0.0.12
 
-PURL: pkg:golang/github.com/sacloud/packages-go@v0.0.12?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sacloud/packages-go@v0.0.12?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sacloud/packages-go](https://github.com/sacloud/packages-go)
 
 Licenses: Apache-2.0
@@ -6451,7 +6711,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/sagikazarmark/locafero v0.4.0
 
-PURL: pkg:golang/github.com/sagikazarmark/locafero@v0.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sagikazarmark/locafero@v0.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sagikazarmark/locafero](https://github.com/sagikazarmark/locafero)
 
 Licenses: MIT
@@ -6461,7 +6721,7 @@ Copyright (c) 2023 Márk Sági-Kazár <mark.sagikazar@gmail.com>
 
 ## github.com/sagikazarmark/slog-shim v0.1.0
 
-PURL: pkg:golang/github.com/sagikazarmark/slog-shim@v0.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sagikazarmark/slog-shim@v0.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sagikazarmark/slog-shim](https://github.com/sagikazarmark/slog-shim)
 
 Licenses: BSD-3-Clause
@@ -6471,7 +6731,7 @@ Copyright (c) 2009 The Go Authors. All rights reserved.
 
 ## github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
 
-PURL: pkg:golang/github.com/scaleway/scaleway-sdk-go@v1.0.0-beta.36?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/scaleway/scaleway-sdk-go@v1.0.0-beta.36?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/scaleway/scaleway-sdk-go](https://github.com/scaleway/scaleway-sdk-go)
 
 Licenses: Apache-2.0
@@ -6481,7 +6741,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/selectel/domains-go v1.1.0
 
-PURL: pkg:golang/github.com/selectel/domains-go@v1.1.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/selectel/domains-go@v1.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/selectel/domains-go](https://github.com/selectel/domains-go)
 
 Licenses: Apache-2.0
@@ -6491,7 +6751,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/selectel/go-selvpcclient/v4 v4.2.0
 
-PURL: pkg:golang/github.com/selectel/go-selvpcclient/v4@v4.2.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/selectel/go-selvpcclient/v4@v4.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/selectel/go-selvpcclient](https://github.com/selectel/go-selvpcclient)
 
 Licenses: Apache-2.0
@@ -6501,7 +6761,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/shirou/gopsutil/v4 v4.25.6
 
-PURL: pkg:golang/github.com/shirou/gopsutil/v4@v4.25.6?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/shirou/gopsutil/v4@v4.25.6?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/shirou/gopsutil](https://github.com/shirou/gopsutil)
 
 Licenses: BSD-3-Clause
@@ -6511,7 +6771,7 @@ Copyright (c) 2014, WAKAYAMA Shirou
 
 ## github.com/shopspring/decimal v1.4.0
 
-PURL: pkg:golang/github.com/shopspring/decimal@v1.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/shopspring/decimal@v1.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/shopspring/decimal](https://github.com/shopspring/decimal)
 
 Licenses: MIT
@@ -6521,7 +6781,7 @@ Copyright (c) 2015 Spring, Inc.
 
 ## github.com/sirupsen/logrus v1.9.3
 
-PURL: pkg:golang/github.com/sirupsen/logrus@v1.9.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sirupsen/logrus@v1.9.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sirupsen/logrus](https://github.com/sirupsen/logrus)
 
 Licenses: MIT
@@ -6531,7 +6791,7 @@ Copyright (c) 2014 Simon Eskildsen
 
 ## github.com/softlayer/softlayer-go v1.2.1
 
-PURL: pkg:golang/github.com/softlayer/softlayer-go@v1.2.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/softlayer/softlayer-go@v1.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/softlayer/softlayer-go](https://github.com/softlayer/softlayer-go)
 
 Licenses: Apache-2.0
@@ -6541,7 +6801,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/softlayer/xmlrpc v0.0.0-20200409220501-5f089df7cb7e
 
-PURL: pkg:golang/github.com/softlayer/xmlrpc@v0.0.0-20200409220501-5f089df7cb7e?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/softlayer/xmlrpc@v0.0.0-20200409220501-5f089df7cb7e?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/softlayer/xmlrpc](https://github.com/softlayer/xmlrpc)
 
 Licenses: MIT
@@ -6551,7 +6811,7 @@ Copyright (C) 2012 Dmitry Maksimov
 
 ## github.com/sony/gobreaker v1.0.0
 
-PURL: pkg:golang/github.com/sony/gobreaker@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sony/gobreaker@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sony/gobreaker](https://github.com/sony/gobreaker)
 
 Licenses: MIT
@@ -6561,7 +6821,7 @@ Copyright 2015 Sony Corporation
 
 ## github.com/sourcegraph/conc v0.3.0
 
-PURL: pkg:golang/github.com/sourcegraph/conc@v0.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/sourcegraph/conc@v0.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sourcegraph/conc](https://github.com/sourcegraph/conc)
 
 Licenses: MIT
@@ -6571,7 +6831,7 @@ Copyright (c) 2023 Sourcegraph
 
 ## github.com/spf13/cast v1.7.0
 
-PURL: pkg:golang/github.com/spf13/cast@v1.7.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/spf13/cast@v1.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/spf13/cast](https://github.com/spf13/cast)
 
 Licenses: MIT
@@ -6581,7 +6841,7 @@ Copyright (c) 2014 Steve Francia
 
 ## github.com/spf13/pflag v1.0.10
 
-PURL: pkg:golang/github.com/spf13/pflag@v1.0.10?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/spf13/pflag@v1.0.10?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/spf13/pflag](https://github.com/spf13/pflag)
 
 Licenses: BSD-3-Clause
@@ -6591,7 +6851,7 @@ Copyright (c) 2012 Alex Ogier. All rights reserved.
 
 ## github.com/spf13/viper v1.18.2
 
-PURL: pkg:golang/github.com/spf13/viper@v1.18.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/spf13/viper@v1.18.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/spf13/viper](https://github.com/spf13/viper)
 
 Licenses: MIT
@@ -6601,7 +6861,7 @@ Copyright (c) 2014 Steve Francia
 
 ## github.com/spiffe/go-spiffe/v2 v2.6.0
 
-PURL: pkg:golang/github.com/spiffe/go-spiffe/v2@v2.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/spiffe/go-spiffe/v2@v2.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/spiffe/go-spiffe](https://github.com/spiffe/go-spiffe)
 
 Licenses: Apache-2.0
@@ -6611,7 +6871,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/stealthrocket/wasi-go v0.8.0
 
-PURL: pkg:golang/github.com/stealthrocket/wasi-go@v0.8.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/stealthrocket/wasi-go@v0.8.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/stealthrocket/wasi-go](https://github.com/stealthrocket/wasi-go)
 
 Licenses: Apache-2.0
@@ -6621,7 +6881,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/stealthrocket/wazergo v0.19.1
 
-PURL: pkg:golang/github.com/stealthrocket/wazergo@v0.19.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/stealthrocket/wazergo@v0.19.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/stealthrocket/wazergo](https://github.com/stealthrocket/wazergo)
 
 Licenses: MIT
@@ -6631,7 +6891,7 @@ Copyright (c) 2023 Stealth Rocket
 
 ## github.com/stretchr/objx v0.5.3
 
-PURL: pkg:golang/github.com/stretchr/objx@v0.5.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/stretchr/objx@v0.5.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/stretchr/objx](https://github.com/stretchr/objx)
 
 Licenses: MIT
@@ -6641,7 +6901,7 @@ Copyright (c) 2014 Stretchr, Inc.
 
 ## github.com/stretchr/testify v1.11.1
 
-PURL: pkg:golang/github.com/stretchr/testify@v1.11.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/stretchr/testify@v1.11.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/stretchr/testify](https://github.com/stretchr/testify)
 
 Licenses: MIT
@@ -6651,7 +6911,7 @@ Copyright (c) 2012-2020 Mat Ryer, Tyler Bunnell and contributors.
 
 ## github.com/stvp/go-udp-testing v0.0.0-20201019212854-469649b16807
 
-PURL: pkg:golang/github.com/stvp/go-udp-testing@v0.0.0-20201019212854-469649b16807?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/stvp/go-udp-testing@v0.0.0-20201019212854-469649b16807?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/stvp/go-udp-testing](https://github.com/stvp/go-udp-testing)
 
 Licenses: MIT
@@ -6661,7 +6921,7 @@ Copyright (c) 2015 Stovepipe Studios, Inc.
 
 ## github.com/subosito/gotenv v1.6.0
 
-PURL: pkg:golang/github.com/subosito/gotenv@v1.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/subosito/gotenv@v1.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/subosito/gotenv](https://github.com/subosito/gotenv)
 
 Licenses: MIT
@@ -6671,7 +6931,7 @@ Copyright (c) 2013 Alif Rachmawadi
 
 ## github.com/tailscale/tscert v0.0.0-20230806124524-28a91b69a046
 
-PURL: pkg:golang/github.com/tailscale/tscert@v0.0.0-20230806124524-28a91b69a046?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tailscale/tscert@v0.0.0-20230806124524-28a91b69a046?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tailscale/tscert](https://github.com/tailscale/tscert)
 
 Licenses: BSD-3-Clause
@@ -6681,7 +6941,7 @@ Copyright (c) 2020 Tailscale & AUTHORS.
 
 ## github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.77
 
-PURL: pkg:golang/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common@v1.3.77?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common@v1.3.77?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tencentcloud/tencentcloud-sdk-go](https://github.com/tencentcloud/tencentcloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -6691,7 +6951,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/testcontainers/testcontainers-go/modules/k3s v0.40.0
 
-PURL: pkg:golang/github.com/testcontainers/testcontainers-go/modules/k3s@v0.40.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/testcontainers/testcontainers-go/modules/k3s@v0.40.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/testcontainers/testcontainers-go](https://github.com/testcontainers/testcontainers-go)
 
 Licenses: MIT
@@ -6701,7 +6961,7 @@ Copyright (c) 2017-2019 Gianluca Arbezzano
 
 ## github.com/testcontainers/testcontainers-go v0.40.0
 
-PURL: pkg:golang/github.com/testcontainers/testcontainers-go@v0.40.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/testcontainers/testcontainers-go@v0.40.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/testcontainers/testcontainers-go](https://github.com/testcontainers/testcontainers-go)
 
 Licenses: MIT
@@ -6711,7 +6971,7 @@ Copyright (c) 2017-2019 Gianluca Arbezzano
 
 ## github.com/tetratelabs/wazero v1.8.0
 
-PURL: pkg:golang/github.com/tetratelabs/wazero@v1.8.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tetratelabs/wazero@v1.8.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tetratelabs/wazero](https://github.com/tetratelabs/wazero)
 
 Licenses: Apache-2.0
@@ -6721,7 +6981,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/tidwall/gjson v1.17.0
 
-PURL: pkg:golang/github.com/tidwall/gjson@v1.17.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tidwall/gjson@v1.17.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tidwall/gjson](https://github.com/tidwall/gjson)
 
 Licenses: MIT
@@ -6731,7 +6991,7 @@ Copyright (c) 2016 Josh Baker
 
 ## github.com/tidwall/match v1.1.1
 
-PURL: pkg:golang/github.com/tidwall/match@v1.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tidwall/match@v1.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tidwall/match](https://github.com/tidwall/match)
 
 Licenses: MIT
@@ -6741,7 +7001,7 @@ Copyright (c) 2016 Josh Baker
 
 ## github.com/tidwall/pretty v1.2.1
 
-PURL: pkg:golang/github.com/tidwall/pretty@v1.2.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tidwall/pretty@v1.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tidwall/pretty](https://github.com/tidwall/pretty)
 
 Licenses: MIT
@@ -6751,7 +7011,7 @@ Copyright (c) 2017 Josh Baker
 
 ## github.com/tjfoc/gmsm v1.4.1
 
-PURL: pkg:golang/github.com/tjfoc/gmsm@v1.4.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tjfoc/gmsm@v1.4.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tjfoc/gmsm](https://github.com/tjfoc/gmsm)
 
 Licenses: Apache-2.0
@@ -6761,7 +7021,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/tklauser/go-sysconf v0.3.15
 
-PURL: pkg:golang/github.com/tklauser/go-sysconf@v0.3.15?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tklauser/go-sysconf@v0.3.15?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tklauser/go-sysconf](https://github.com/tklauser/go-sysconf)
 
 Licenses: BSD-3-Clause
@@ -6771,7 +7031,7 @@ Copyright (c) 2018-2022, Tobias Klauser
 
 ## github.com/tklauser/numcpus v0.10.0
 
-PURL: pkg:golang/github.com/tklauser/numcpus@v0.10.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tklauser/numcpus@v0.10.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tklauser/numcpus](https://github.com/tklauser/numcpus)
 
 Licenses: Apache-2.0
@@ -6781,7 +7041,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/traefik/oxy/v2 v2.0.0-20260126093803-fb11d60e0fdf
 
-PURL: pkg:golang/github.com/traefik/oxy/v2@v2.0.0-20260126093803-fb11d60e0fdf?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/traefik/oxy/v2@v2.0.0-20260126093803-fb11d60e0fdf?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/traefik/oxy](https://github.com/traefik/oxy)
 
 Licenses: Apache-2.0
@@ -6791,7 +7051,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/traefik/paerser v0.2.2
 
-PURL: pkg:golang/github.com/traefik/paerser@v0.2.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/traefik/paerser@v0.2.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/traefik/paerser](https://github.com/traefik/paerser)
 
 Licenses: Apache-2.0
@@ -6801,7 +7061,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/traefik/yaegi v0.16.1
 
-PURL: pkg:golang/github.com/traefik/yaegi@v0.16.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/traefik/yaegi@v0.16.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/traefik/yaegi](https://github.com/traefik/yaegi)
 
 Licenses: Apache-2.0
@@ -6811,7 +7071,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/transip/gotransip/v6 v6.26.2
 
-PURL: pkg:golang/github.com/transip/gotransip/v6@v6.26.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/transip/gotransip/v6@v6.26.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/transip/gotransip](https://github.com/transip/gotransip)
 
 Licenses: MIT
@@ -6821,7 +7081,7 @@ Copyright (c) 2018 TransIP B.V.
 
 ## github.com/tufanbarisyildirim/gonginx v0.0.0-20250620092546-c3e307e36701
 
-PURL: pkg:golang/github.com/tufanbarisyildirim/gonginx@v0.0.0-20250620092546-c3e307e36701?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/tufanbarisyildirim/gonginx@v0.0.0-20250620092546-c3e307e36701?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tufanbarisyildirim/gonginx](https://github.com/tufanbarisyildirim/gonginx)
 
 Licenses: MIT
@@ -6831,7 +7091,7 @@ Copyright (c) 2020 Tufan Barış YILDIRIM
 
 ## github.com/ucloud/ucloud-sdk-go v0.22.61
 
-PURL: pkg:golang/github.com/ucloud/ucloud-sdk-go@v0.22.61?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/ucloud/ucloud-sdk-go@v0.22.61?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ucloud/ucloud-sdk-go](https://github.com/ucloud/ucloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -6841,7 +7101,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/ultradns/ultradns-go-sdk v1.8.1-20250722213956-faef419
 
-PURL: pkg:golang/github.com/ultradns/ultradns-go-sdk@v1.8.1-20250722213956-faef419?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/ultradns/ultradns-go-sdk@v1.8.1-20250722213956-faef419?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ultradns/ultradns-go-sdk](https://github.com/ultradns/ultradns-go-sdk)
 
 Licenses: Apache-2.0
@@ -6851,7 +7111,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/unrolled/render v1.0.2
 
-PURL: pkg:golang/github.com/unrolled/render@v1.0.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/unrolled/render@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/unrolled/render](https://github.com/unrolled/render)
 
 Licenses: MIT
@@ -6861,7 +7121,7 @@ Copyright (c) 2014 Cory Jacobsen
 
 ## github.com/unrolled/secure v1.0.9
 
-PURL: pkg:golang/github.com/unrolled/secure@v1.0.9?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/unrolled/secure@v1.0.9?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/unrolled/secure](https://github.com/unrolled/secure)
 
 Licenses: MIT
@@ -6871,7 +7131,7 @@ Copyright (c) 2014 Cory Jacobsen
 
 ## github.com/valyala/bytebufferpool v1.0.0
 
-PURL: pkg:golang/github.com/valyala/bytebufferpool@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/valyala/bytebufferpool@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/valyala/bytebufferpool](https://github.com/valyala/bytebufferpool)
 
 Licenses: MIT
@@ -6881,7 +7141,7 @@ Copyright (c) 2016 Aliaksandr Valialkin, VertaMedia
 
 ## github.com/valyala/fasthttp v1.69.0
 
-PURL: pkg:golang/github.com/valyala/fasthttp@v1.69.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/valyala/fasthttp@v1.69.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/valyala/fasthttp](https://github.com/valyala/fasthttp)
 
 Licenses: MIT
@@ -6891,7 +7151,7 @@ Copyright (c) 2015-present Aliaksandr Valialkin, VertaMedia, Kirill Danshin, Eri
 
 ## github.com/vinyldns/go-vinyldns v0.9.17
 
-PURL: pkg:golang/github.com/vinyldns/go-vinyldns@v0.9.17?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/vinyldns/go-vinyldns@v0.9.17?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vinyldns/go-vinyldns](https://github.com/vinyldns/go-vinyldns)
 
 Licenses: Apache-2.0
@@ -6901,7 +7161,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/volcengine/volc-sdk-golang v1.0.241
 
-PURL: pkg:golang/github.com/volcengine/volc-sdk-golang@v1.0.241?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/volcengine/volc-sdk-golang@v1.0.241?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/volcengine/volc-sdk-golang](https://github.com/volcengine/volc-sdk-golang)
 
 Licenses: Apache-2.0
@@ -6911,7 +7171,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/vulcand/predicate v1.3.0
 
-PURL: pkg:golang/github.com/vulcand/predicate@v1.3.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/vulcand/predicate@v1.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vulcand/predicate](https://github.com/vulcand/predicate)
 
 Licenses: Apache-2.0
@@ -6921,7 +7181,7 @@ copyright notice that is included in or attached to the work
 
 ## github.com/vultr/govultr/v3 v3.30.0
 
-PURL: pkg:golang/github.com/vultr/govultr/v3@v3.30.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/vultr/govultr/v3@v3.30.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vultr/govultr](https://github.com/vultr/govultr)
 
 Licenses: MIT
@@ -6931,7 +7191,7 @@ Copyright (c) 2019 Vultr
 
 ## github.com/x448/float16 v0.8.4
 
-PURL: pkg:golang/github.com/x448/float16@v0.8.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/x448/float16@v0.8.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/x448/float16](https://github.com/x448/float16)
 
 Licenses: MIT
@@ -6941,7 +7201,7 @@ Copyright (c) 2019 Montgomery Edwards⁴⁴⁸ and Faye Amacker
 
 ## github.com/yandex-cloud/go-genproto v0.71.0
 
-PURL: pkg:golang/github.com/yandex-cloud/go-genproto@v0.71.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/yandex-cloud/go-genproto@v0.71.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-genproto](https://github.com/yandex-cloud/go-genproto)
 
 Licenses: MIT
@@ -6951,7 +7211,7 @@ Copyright (c) 2018 YANDEX LLC
 
 ## github.com/yandex-cloud/go-sdk/services/dns v0.0.52
 
-PURL: pkg:golang/github.com/yandex-cloud/go-sdk/services/dns@v0.0.52?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/yandex-cloud/go-sdk/services/dns@v0.0.52?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-sdk](https://github.com/yandex-cloud/go-sdk)
 
 Licenses: MIT
@@ -6961,7 +7221,7 @@ Copyright (c) 2018 YANDEX LLC
 
 ## github.com/yandex-cloud/go-sdk/v2 v2.88.0
 
-PURL: pkg:golang/github.com/yandex-cloud/go-sdk/v2@v2.88.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/yandex-cloud/go-sdk/v2@v2.88.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-sdk](https://github.com/yandex-cloud/go-sdk)
 
 Licenses: MIT
@@ -6971,7 +7231,7 @@ Copyright (c) 2018 YANDEX LLC
 
 ## github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 
-PURL: pkg:golang/github.com/youmark/pkcs8@v0.0.0-20240726163527-a2c0da244d78?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/youmark/pkcs8@v0.0.0-20240726163527-a2c0da244d78?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/youmark/pkcs8](https://github.com/youmark/pkcs8)
 
 Licenses: MIT
@@ -6981,7 +7241,7 @@ Copyright (c) 2014 youmark
 
 ## github.com/yuin/gopher-lua v1.1.1
 
-PURL: pkg:golang/github.com/yuin/gopher-lua@v1.1.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/yuin/gopher-lua@v1.1.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yuin/gopher-lua](https://github.com/yuin/gopher-lua)
 
 Licenses: MIT
@@ -6991,7 +7251,7 @@ Copyright (c) 2015 Yusuke Inuzuka
 
 ## github.com/yusufpapurcu/wmi v1.2.4
 
-PURL: pkg:golang/github.com/yusufpapurcu/wmi@v1.2.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/github.com/yusufpapurcu/wmi@v1.2.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yusufpapurcu/wmi](https://github.com/yusufpapurcu/wmi)
 
 Licenses: MIT
@@ -7171,7 +7431,7 @@ Copyright (c) 2018 Terkel Gjervig Nielsen
 
 ## go.etcd.io/etcd/api/v3 v3.6.5
 
-PURL: pkg:golang/go.etcd.io/etcd/api/v3@v3.6.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.etcd.io/etcd/api/v3@v3.6.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.etcd.io/etcd/api/v3](https://pkg.go.dev/go.etcd.io/etcd/api/v3)
 
 Licenses: Apache-2.0
@@ -7181,7 +7441,7 @@ copyright notice that is included in or attached to the work
 
 ## go.etcd.io/etcd/client/pkg/v3 v3.6.5
 
-PURL: pkg:golang/go.etcd.io/etcd/client/pkg/v3@v3.6.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.etcd.io/etcd/client/pkg/v3@v3.6.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.etcd.io/etcd/client/pkg/v3](https://pkg.go.dev/go.etcd.io/etcd/client/pkg/v3)
 
 Licenses: Apache-2.0
@@ -7191,7 +7451,7 @@ copyright notice that is included in or attached to the work
 
 ## go.etcd.io/etcd/client/v3 v3.6.5
 
-PURL: pkg:golang/go.etcd.io/etcd/client/v3@v3.6.5?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.etcd.io/etcd/client/v3@v3.6.5?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.etcd.io/etcd/client/v3](https://pkg.go.dev/go.etcd.io/etcd/client/v3)
 
 Licenses: Apache-2.0
@@ -7201,7 +7461,7 @@ copyright notice that is included in or attached to the work
 
 ## go.mongodb.org/mongo-driver v1.17.9
 
-PURL: pkg:golang/go.mongodb.org/mongo-driver@v1.17.9?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.mongodb.org/mongo-driver@v1.17.9?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.mongodb.org/mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver)
 
 Licenses: Apache-2.0
@@ -7211,7 +7471,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/auto/sdk v1.2.1
 
-PURL: pkg:golang/go.opentelemetry.io/auto/sdk@v1.2.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/auto/sdk@v1.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/auto/sdk](https://pkg.go.dev/go.opentelemetry.io/auto/sdk)
 
 Licenses: Apache-2.0
@@ -7221,7 +7481,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/collector/featuregate v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/collector/featuregate@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/collector/featuregate@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/featuregate](https://pkg.go.dev/go.opentelemetry.io/collector/featuregate)
 
 Licenses: Apache-2.0
@@ -7231,7 +7491,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/collector/pdata v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/collector/pdata@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/collector/pdata@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/pdata](https://pkg.go.dev/go.opentelemetry.io/collector/pdata)
 
 Licenses: Apache-2.0
@@ -7241,7 +7501,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/bridges/otellogrus v0.13.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/bridges/otellogrus@v0.13.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/bridges/otellogrus@v0.13.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otellogrus](https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otellogrus)
 
 Licenses: Apache-2.0
@@ -7251,7 +7511,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp@v0.67.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp@v0.67.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp)
 
 Licenses: Apache-2.0
@@ -7261,7 +7521,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/propagators/autoprop v0.63.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/autoprop@v0.63.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/autoprop@v0.63.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/autoprop](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/autoprop)
 
 Licenses: Apache-2.0
@@ -7271,7 +7531,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/propagators/aws v1.38.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/aws@v1.38.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/aws@v1.38.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/aws](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/aws)
 
 Licenses: Apache-2.0
@@ -7281,7 +7541,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/propagators/b3 v1.38.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/b3@v1.38.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/b3@v1.38.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/b3](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/b3)
 
 Licenses: Apache-2.0
@@ -7291,7 +7551,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/propagators/jaeger v1.38.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/jaeger@v1.38.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/jaeger@v1.38.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/jaeger](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/jaeger)
 
 Licenses: Apache-2.0
@@ -7301,7 +7561,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/contrib/propagators/ot v1.38.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/ot@v1.38.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/ot@v1.38.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/ot](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/ot)
 
 Licenses: Apache-2.0
@@ -7311,7 +7571,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.17.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.17.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.17.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc)
 
 Licenses: Apache-2.0
@@ -7321,7 +7581,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.17.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.17.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.17.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp)
 
 Licenses: Apache-2.0
@@ -7331,7 +7591,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc)
 
 Licenses: Apache-2.0
@@ -7341,7 +7601,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp)
 
 Licenses: Apache-2.0
@@ -7351,7 +7611,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc)
 
 Licenses: Apache-2.0
@@ -7361,7 +7621,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
 
 Licenses: Apache-2.0
@@ -7371,7 +7631,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.41.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace@v1.41.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace@v1.41.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace)
 
 Licenses: Apache-2.0
@@ -7381,7 +7641,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/log v0.17.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/log@v0.17.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/log@v0.17.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/log](https://pkg.go.dev/go.opentelemetry.io/otel/log)
 
 Licenses: Apache-2.0
@@ -7391,7 +7651,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/metric v1.43.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/metric@v1.43.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/metric@v1.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/metric](https://pkg.go.dev/go.opentelemetry.io/otel/metric)
 
 Licenses: Apache-2.0
@@ -7401,7 +7661,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/sdk/log v0.17.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/sdk/log@v0.17.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/sdk/log@v0.17.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/sdk/log](https://pkg.go.dev/go.opentelemetry.io/otel/sdk/log)
 
 Licenses: Apache-2.0
@@ -7411,7 +7671,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/sdk/metric v1.43.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/sdk/metric@v1.43.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/sdk/metric@v1.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric](https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric)
 
 Licenses: Apache-2.0
@@ -7421,7 +7681,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/sdk v1.43.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/sdk@v1.43.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/sdk@v1.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/sdk](https://pkg.go.dev/go.opentelemetry.io/otel/sdk)
 
 Licenses: Apache-2.0
@@ -7431,7 +7691,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel/trace v1.43.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel/trace@v1.43.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel/trace@v1.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/trace](https://pkg.go.dev/go.opentelemetry.io/otel/trace)
 
 Licenses: Apache-2.0
@@ -7441,7 +7701,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/otel v1.43.0
 
-PURL: pkg:golang/go.opentelemetry.io/otel@v1.43.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/otel@v1.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel](https://pkg.go.dev/go.opentelemetry.io/otel)
 
 Licenses: Apache-2.0
@@ -7451,7 +7711,7 @@ copyright notice that is included in or attached to the work
 
 ## go.opentelemetry.io/proto/otlp v1.9.0
 
-PURL: pkg:golang/go.opentelemetry.io/proto/otlp@v1.9.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.opentelemetry.io/proto/otlp@v1.9.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/proto/otlp](https://pkg.go.dev/go.opentelemetry.io/proto/otlp)
 
 Licenses: Apache-2.0
@@ -7461,7 +7721,7 @@ copyright notice that is included in or attached to the work
 
 ## go.uber.org/ratelimit v0.3.1
 
-PURL: pkg:golang/go.uber.org/ratelimit@v0.3.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.uber.org/ratelimit@v0.3.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.uber.org/ratelimit](https://pkg.go.dev/go.uber.org/ratelimit)
 
 Licenses: MIT
@@ -7471,7 +7731,7 @@ Copyright (c) 2016 Uber Technologies, Inc.
 
 ## go.uber.org/zap v1.27.1
 
-PURL: pkg:golang/go.uber.org/zap@v1.27.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.uber.org/zap@v1.27.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.uber.org/zap](https://pkg.go.dev/go.uber.org/zap)
 
 Licenses: MIT
@@ -7481,7 +7741,7 @@ Copyright (c) 2016-2024 Uber Technologies, Inc.
 
 ## go.yaml.in/yaml/v2 v2.4.3
 
-PURL: pkg:golang/go.yaml.in/yaml/v2@v2.4.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.yaml.in/yaml/v2@v2.4.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.yaml.in/yaml/v2](https://pkg.go.dev/go.yaml.in/yaml/v2)
 
 Licenses: Apache-2.0
@@ -7491,7 +7751,7 @@ copyright notice that is included in or attached to the work
 
 ## go.yaml.in/yaml/v3 v3.0.4
 
-PURL: pkg:golang/go.yaml.in/yaml/v3@v3.0.4?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/go.yaml.in/yaml/v3@v3.0.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.yaml.in/yaml/v3](https://pkg.go.dev/go.yaml.in/yaml/v3)
 
 Licenses: Apache-2.0
@@ -7501,7 +7761,7 @@ copyright staring in 2011 when the project was ported over:
 
 ## golang.org/x/crypto v0.50.0
 
-PURL: pkg:golang/golang.org/x/crypto@v0.50.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/crypto@v0.50.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto)
 
 Licenses: BSD-3-Clause
@@ -7511,7 +7771,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 
-PURL: pkg:golang/golang.org/x/exp@v0.0.0-20260410095643-746e56fc9e2f?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/exp@v0.0.0-20260410095643-746e56fc9e2f?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/exp](https://pkg.go.dev/golang.org/x/exp)
 
 Licenses: BSD-3-Clause
@@ -7521,7 +7781,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/mod v0.35.0
 
-PURL: pkg:golang/golang.org/x/mod@v0.35.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/mod@v0.35.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/mod](https://pkg.go.dev/golang.org/x/mod)
 
 Licenses: BSD-3-Clause
@@ -7531,7 +7791,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/net v0.53.0
 
-PURL: pkg:golang/golang.org/x/net@v0.53.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/net@v0.53.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/net](https://pkg.go.dev/golang.org/x/net)
 
 Licenses: BSD-3-Clause
@@ -7541,7 +7801,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/oauth2 v0.36.0
 
-PURL: pkg:golang/golang.org/x/oauth2@v0.36.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/oauth2@v0.36.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/oauth2](https://pkg.go.dev/golang.org/x/oauth2)
 
 Licenses: BSD-3-Clause
@@ -7551,7 +7811,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/sync v0.20.0
 
-PURL: pkg:golang/golang.org/x/sync@v0.20.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/sync@v0.20.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/sync](https://pkg.go.dev/golang.org/x/sync)
 
 Licenses: BSD-3-Clause
@@ -7561,7 +7821,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/sys v0.43.0
 
-PURL: pkg:golang/golang.org/x/sys@v0.43.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/sys@v0.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/sys](https://pkg.go.dev/golang.org/x/sys)
 
 Licenses: BSD-3-Clause
@@ -7571,7 +7831,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/term v0.42.0
 
-PURL: pkg:golang/golang.org/x/term@v0.42.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/term@v0.42.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/term](https://pkg.go.dev/golang.org/x/term)
 
 Licenses: BSD-3-Clause
@@ -7581,7 +7841,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/text v0.36.0
 
-PURL: pkg:golang/golang.org/x/text@v0.36.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/text@v0.36.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/text](https://pkg.go.dev/golang.org/x/text)
 
 Licenses: BSD-3-Clause
@@ -7591,7 +7851,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/time v0.15.0
 
-PURL: pkg:golang/golang.org/x/time@v0.15.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/time@v0.15.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/time](https://pkg.go.dev/golang.org/x/time)
 
 Licenses: BSD-3-Clause
@@ -7601,7 +7861,7 @@ Copyright 2009 The Go Authors.
 
 ## golang.org/x/tools v0.44.0
 
-PURL: pkg:golang/golang.org/x/tools@v0.44.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/golang.org/x/tools@v0.44.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/tools](https://pkg.go.dev/golang.org/x/tools)
 
 Licenses: BSD-3-Clause
@@ -7611,7 +7871,7 @@ Copyright 2009 The Go Authors.
 
 ## gomodules.xyz/jsonpatch/v2 v2.5.0
 
-PURL: pkg:golang/gomodules.xyz/jsonpatch/v2@v2.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gomodules.xyz/jsonpatch/v2@v2.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gomodules.xyz/jsonpatch/v2](https://pkg.go.dev/gomodules.xyz/jsonpatch/v2)
 
 Licenses: Apache-2.0
@@ -7621,7 +7881,7 @@ copyright notice that is included in or attached to the work
 
 ## google.golang.org/api v0.275.0
 
-PURL: pkg:golang/google.golang.org/api@v0.275.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/google.golang.org/api@v0.275.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/api](https://pkg.go.dev/google.golang.org/api)
 
 Licenses: BSD-3-Clause
@@ -7631,7 +7891,7 @@ Copyright (c) 2011 Google Inc. All rights reserved.
 
 ## google.golang.org/genproto/googleapis/api v0.0.0-20260319201613-d00831a3d3e7
 
-PURL: pkg:golang/google.golang.org/genproto/googleapis/api@v0.0.0-20260319201613-d00831a3d3e7?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/google.golang.org/genproto/googleapis/api@v0.0.0-20260319201613-d00831a3d3e7?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/genproto/googleapis/api](https://pkg.go.dev/google.golang.org/genproto/googleapis/api)
 
 Licenses: Apache-2.0
@@ -7641,7 +7901,7 @@ copyright notice that is included in or attached to the work
 
 ## google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9
 
-PURL: pkg:golang/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260401024825-9d38bb4040a9?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260401024825-9d38bb4040a9?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/genproto/googleapis/rpc](https://pkg.go.dev/google.golang.org/genproto/googleapis/rpc)
 
 Licenses: Apache-2.0
@@ -7651,7 +7911,7 @@ copyright notice that is included in or attached to the work
 
 ## google.golang.org/grpc v1.80.0
 
-PURL: pkg:golang/google.golang.org/grpc@v1.80.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/google.golang.org/grpc@v1.80.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/grpc](https://pkg.go.dev/google.golang.org/grpc)
 
 Licenses: Apache-2.0
@@ -7661,7 +7921,7 @@ copyright notice that is included in or attached to the work
 
 ## google.golang.org/protobuf v1.36.11
 
-PURL: pkg:golang/google.golang.org/protobuf@v1.36.11?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/google.golang.org/protobuf@v1.36.11?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/protobuf](https://pkg.go.dev/google.golang.org/protobuf)
 
 Licenses: BSD-3-Clause
@@ -7681,7 +7941,7 @@ Copyright (c) 2022 Jordan Harband
 
 ## gopkg.in/evanphx/json-patch.v4 v4.13.0
 
-PURL: pkg:golang/gopkg.in/evanphx/json-patch.v4@v4.13.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gopkg.in/evanphx/json-patch.v4@v4.13.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/evanphx/json-patch.v4](https://pkg.go.dev/gopkg.in/evanphx/json-patch.v4)
 
 Licenses: BSD-3-Clause
@@ -7691,7 +7951,7 @@ Copyright (c) 2014, Evan Phoenix
 
 ## gopkg.in/inf.v0 v0.9.1
 
-PURL: pkg:golang/gopkg.in/inf.v0@v0.9.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gopkg.in/inf.v0@v0.9.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/inf.v0](https://pkg.go.dev/gopkg.in/inf.v0)
 
 Licenses: BSD-3-Clause
@@ -7701,7 +7961,7 @@ Copyright (c) 2012 Péter Surányi. Portions Copyright (c) 2009 The Go
 
 ## gopkg.in/ini.v1 v1.67.1
 
-PURL: pkg:golang/gopkg.in/ini.v1@v1.67.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gopkg.in/ini.v1@v1.67.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/ini.v1](https://pkg.go.dev/gopkg.in/ini.v1)
 
 Licenses: Apache-2.0
@@ -7711,7 +7971,7 @@ Copyright 2014 Unknwon
 
 ## gopkg.in/natefinch/lumberjack.v2 v2.2.1
 
-PURL: pkg:golang/gopkg.in/natefinch/lumberjack.v2@v2.2.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gopkg.in/natefinch/lumberjack.v2@v2.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/natefinch/lumberjack.v2](https://pkg.go.dev/gopkg.in/natefinch/lumberjack.v2)
 
 Licenses: MIT
@@ -7721,7 +7981,7 @@ Copyright (c) 2014 Nate Finch
 
 ## gopkg.in/yaml.v2 v2.4.0
 
-PURL: pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gopkg.in/yaml.v2@v2.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/yaml.v2](https://pkg.go.dev/gopkg.in/yaml.v2)
 
 Licenses: Apache-2.0
@@ -7731,7 +7991,7 @@ copyright notice that is included in or attached to the work
 
 ## gopkg.in/yaml.v3 v3.0.1
 
-PURL: pkg:golang/gopkg.in/yaml.v3@v3.0.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/gopkg.in/yaml.v3@v3.0.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/yaml.v3](https://pkg.go.dev/gopkg.in/yaml.v3)
 
 Licenses: Apache-2.0
@@ -7929,6 +8189,16 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
+## hash 0.9.2
+
+PURL: pkg:npm/%40emotion/hash@0.9.2
+Upstream: [https://www.npmjs.com/package/%40emotion/hash](https://www.npmjs.com/package/%40emotion/hash)
+
+Licenses: MIT
+
+Copyright (c) Emotion team and other contributors
+
+
 ## hashes 2.0.1
 
 PURL: pkg:npm/%40noble/hashes@2.0.1
@@ -7947,6 +8217,16 @@ Upstream: [https://www.npmjs.com/package/hasown](https://www.npmjs.com/package/h
 Licenses: MIT
 
 Copyright (c) Jordan Harband and contributors
+
+
+## he 1.2.0
+
+PURL: pkg:npm/he@1.2.0
+Upstream: [https://www.npmjs.com/package/he](https://www.npmjs.com/package/he)
+
+Licenses: MIT
+
+Copyright (c) Mathias Bynens
 
 
 ## headers-polyfill 4.0.3
@@ -8797,6 +9077,16 @@ Upstream: [https://www.npmjs.com/package/%40npmcli/installed-package-contents](h
 Licenses: ISC
 
 Copyright (c) npm, Inc.
+
+
+## integration 8.0.4
+
+PURL: pkg:npm/%40vanilla-extract/integration@8.0.4
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/integration](https://www.npmjs.com/package/%40vanilla-extract/integration)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
 
 
 ## interceptors 0.37.6
@@ -9699,6 +9989,16 @@ Licenses: BlueOak-1.0.0
 copyright in it.
 
 
+## javascript-stringify 2.1.0
+
+PURL: pkg:npm/javascript-stringify@2.1.0
+Upstream: [https://www.npmjs.com/package/javascript-stringify](https://www.npmjs.com/package/javascript-stringify)
+
+Licenses: MIT
+
+Copyright (c) 2013 Blake Embrey (hello@blakeembrey.com)
+
+
 ## jest-axe 3.5.9
 
 PURL: pkg:npm/%40types/jest-axe@3.5.9
@@ -9847,6 +10147,16 @@ Upstream: [https://www.npmjs.com/package/%40types/jest](https://www.npmjs.com/pa
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
+
+
+## jju 1.4.0
+
+PURL: pkg:npm/jju@1.4.0
+Upstream: [https://www.npmjs.com/package/jju](https://www.npmjs.com/package/jju)
+
+Licenses: MIT
+
+Copyright (c) 2013 Alex Kocharin
 
 
 ## js-tokens 4.0.0
@@ -10131,7 +10441,7 @@ Copyright (c) 2016 angus croll
 
 ## k8s.io/apiextensions-apiserver v0.35.2
 
-PURL: pkg:golang/k8s.io/apiextensions-apiserver@v0.35.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/apiextensions-apiserver@v0.35.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/apiextensions-apiserver](https://pkg.go.dev/k8s.io/apiextensions-apiserver)
 
 Licenses: Apache-2.0
@@ -10141,7 +10451,7 @@ copyright notice that is included in or attached to the work
 
 ## k8s.io/apimachinery v0.35.2
 
-PURL: pkg:golang/k8s.io/apimachinery@v0.35.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/apimachinery@v0.35.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/apimachinery](https://pkg.go.dev/k8s.io/apimachinery)
 
 Licenses: Apache-2.0
@@ -10151,7 +10461,7 @@ copyright notice that is included in or attached to the work
 
 ## k8s.io/api v0.35.2
 
-PURL: pkg:golang/k8s.io/api@v0.35.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/api@v0.35.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/api](https://pkg.go.dev/k8s.io/api)
 
 Licenses: Apache-2.0
@@ -10161,7 +10471,7 @@ copyright notice that is included in or attached to the work
 
 ## k8s.io/client-go v0.35.2
 
-PURL: pkg:golang/k8s.io/client-go@v0.35.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/client-go@v0.35.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/client-go](https://pkg.go.dev/k8s.io/client-go)
 
 Licenses: Apache-2.0
@@ -10171,7 +10481,7 @@ copyright notice that is included in or attached to the work
 
 ## k8s.io/klog/v2 v2.130.1
 
-PURL: pkg:golang/k8s.io/klog/v2@v2.130.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/klog/v2@v2.130.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/klog/v2](https://pkg.go.dev/k8s.io/klog/v2)
 
 Licenses: Apache-2.0
@@ -10181,7 +10491,7 @@ Copyright [yyyy] [name of copyright owner]
 
 ## k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 
-PURL: pkg:golang/k8s.io/kube-openapi@v0.0.0-20250910181357-589584f1c912?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/kube-openapi@v0.0.0-20250910181357-589584f1c912?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/kube-openapi](https://pkg.go.dev/k8s.io/kube-openapi)
 
 Licenses: Apache-2.0
@@ -10191,7 +10501,7 @@ copyright notice that is included in or attached to the work
 
 ## k8s.io/utils v0.0.0-20260108192941-914a6e750570
 
-PURL: pkg:golang/k8s.io/utils@v0.0.0-20260108192941-914a6e750570?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/k8s.io/utils@v0.0.0-20260108192941-914a6e750570?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/utils](https://pkg.go.dev/k8s.io/utils)
 
 Licenses: Apache-2.0
@@ -10241,7 +10551,7 @@ Copyright (c) 2017 Mani Maghsoudlou
 
 ## knative.dev/networking v0.0.0-20251217020127-11890a5dabea
 
-PURL: pkg:golang/knative.dev/networking@v0.0.0-20251217020127-11890a5dabea?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/knative.dev/networking@v0.0.0-20251217020127-11890a5dabea?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/knative.dev/networking](https://pkg.go.dev/knative.dev/networking)
 
 Licenses: Apache-2.0
@@ -10251,12 +10561,32 @@ copyright notice that is included in or attached to the work
 
 ## knative.dev/pkg v0.0.0-20251216153728-9c8140b780d1
 
-PURL: pkg:golang/knative.dev/pkg@v0.0.0-20251216153728-9c8140b780d1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/knative.dev/pkg@v0.0.0-20251216153728-9c8140b780d1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/knative.dev/pkg](https://pkg.go.dev/knative.dev/pkg)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
+
+
+## kolorist 1.8.0
+
+PURL: pkg:npm/kolorist@1.8.0
+Upstream: [https://www.npmjs.com/package/kolorist](https://www.npmjs.com/package/kolorist)
+
+Licenses: MIT
+
+Copyright (c) 2020-present Marvin Hagemeister
+
+
+## language-core 2.4.23
+
+PURL: pkg:npm/%40volar/language-core@2.4.23
+Upstream: [https://www.npmjs.com/package/%40volar/language-core](https://www.npmjs.com/package/%40volar/language-core)
+
+Licenses: MIT
+
+Copyright (c) 2021-present Johnson Chu
 
 
 ## language-tags 1.0.9
@@ -10519,6 +10849,16 @@ Licenses: MIT
 Copyright JS Foundation and other contributors
 
 
+## local-pkg 1.1.2
+
+PURL: pkg:npm/local-pkg@1.1.2
+Upstream: [https://www.npmjs.com/package/local-pkg](https://www.npmjs.com/package/local-pkg)
+
+Licenses: MIT
+
+Copyright (c) 2021 Anthony Fu <https://github.com/antfu>
+
+
 ## locate-path 2.0.0
 
 PURL: pkg:npm/locate-path@2.0.0
@@ -10557,6 +10897,16 @@ Upstream: [https://www.npmjs.com/package/locate-path](https://www.npmjs.com/pack
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+
+## lodash-es 4.18.1
+
+PURL: pkg:npm/lodash-es@4.18.1
+Upstream: [https://www.npmjs.com/package/lodash-es](https://www.npmjs.com/package/lodash-es)
+
+Licenses: MIT
+
+Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
 
 
 ## lodash.capitalize 4.2.1
@@ -10769,6 +11119,16 @@ Licenses: MIT
 Copyright (c) 2015 Andres Suarez <zertosh@gmail.com>
 
 
+## loupe 3.2.1
+
+PURL: pkg:npm/loupe@3.2.1
+Upstream: [https://www.npmjs.com/package/loupe](https://www.npmjs.com/package/loupe)
+
+Licenses: MIT
+
+Copyright (c) 2011-2013 Jake Luer jake@alogicalparadox.com
+
+
 ## lowercase-keys 2.0.0
 
 PURL: pkg:npm/lowercase-keys@2.0.0
@@ -10977,6 +11337,16 @@ Upstream: [https://www.npmjs.com/package/%40types/mdx](https://www.npmjs.com/pac
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
+
+
+## media-query-parser 2.0.2
+
+PURL: pkg:npm/media-query-parser@2.0.2
+Upstream: [https://www.npmjs.com/package/media-query-parser](https://www.npmjs.com/package/media-query-parser)
+
+Licenses: MIT
+
+Copyright (c) Tom Golden
 
 
 ## meow 12.1.1
@@ -11389,16 +11759,6 @@ Licenses: MIT
 Copyright James Halliday (mail@substack.net) and Isaac Z. Schlueter (i@izs.me)
 
 
-## mkdocs-exclude 1.0.2
-
-PURL: pkg:pypi/mkdocs-exclude@1.0.2
-Upstream: [https://pypi.org/project/mkdocs-exclude/](https://pypi.org/project/mkdocs-exclude/)
-
-Licenses: 
-
-Copyright (c) Avery Pennarun
-
-
 ## mkdocs-include-markdown-plugin 7.2.0
 
 PURL: pkg:pypi/mkdocs-include-markdown-plugin@7.2.0
@@ -11417,6 +11777,46 @@ Upstream: [https://pypi.org/project/mkdocs-traefiklabs/](https://pypi.org/projec
 Licenses: MIT
 
 Copyright (c) traefiklabs
+
+
+## mlly 1.8.0
+
+PURL: pkg:npm/mlly@1.8.0
+Upstream: [https://www.npmjs.com/package/mlly](https://www.npmjs.com/package/mlly)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io>
+
+
+## mocker 3.2.4
+
+PURL: pkg:npm/%40vitest/mocker@3.2.4?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fmocker
+Upstream: [https://www.npmjs.com/package/%40vitest/mocker](https://www.npmjs.com/package/%40vitest/mocker)
+
+Licenses: MIT
+
+Copyright (c) 2021-Present Vitest Team
+
+
+## mocker 4.0.3
+
+PURL: pkg:npm/%40vitest/mocker@4.0.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fmocker
+Upstream: [https://www.npmjs.com/package/%40vitest/mocker](https://www.npmjs.com/package/%40vitest/mocker)
+
+Licenses: MIT
+
+Copyright (c) 2021-Present Vitest Team
+
+
+## modern-ahocorasick 1.1.0
+
+PURL: pkg:npm/modern-ahocorasick@1.1.0
+Upstream: [https://www.npmjs.com/package/modern-ahocorasick](https://www.npmjs.com/package/modern-ahocorasick)
+
+Licenses: MIT
+
+Copyright (c) 2023 ice breaker
 
 
 ## modify-values 1.0.1
@@ -11509,6 +11909,16 @@ Licenses: MIT
 Copyright (c) 2018–present Artem Zakharchenko
 
 
+## muggle-string 0.4.1
+
+PURL: pkg:npm/muggle-string@0.4.1
+Upstream: [https://www.npmjs.com/package/muggle-string](https://www.npmjs.com/package/muggle-string)
+
+Licenses: MIT
+
+Copyright (c) 2022-present Johnson Chu
+
+
 ## mute-stream 0.0.7
 
 PURL: pkg:npm/mute-stream@0.0.7
@@ -11551,7 +11961,7 @@ Copyright (c) Isaac Z. Schlueter and Contributors
 
 ## mvdan.cc/xurls/v2 v2.5.0
 
-PURL: pkg:golang/mvdan.cc/xurls/v2@v2.5.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/mvdan.cc/xurls/v2@v2.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/mvdan.cc/xurls/v2](https://pkg.go.dev/mvdan.cc/xurls/v2)
 
 Licenses: BSD-3-Clause
@@ -11657,6 +12067,16 @@ Upstream: [https://www.npmjs.com/package/nice-try](https://www.npmjs.com/package
 Licenses: MIT
 
 Copyright (c) 2018 Tobias Reich
+
+
+## node-core-library 5.18.0
+
+PURL: pkg:npm/%40rushstack/node-core-library@5.18.0?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Frushstack.git%23libraries%2Fnode-core-library
+Upstream: [https://www.npmjs.com/package/%40rushstack/node-core-library](https://www.npmjs.com/package/%40rushstack/node-core-library)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
 
 
 ## node-emoji 1.11.0
@@ -12809,6 +13229,16 @@ Licenses: MIT
 Copyright (c) 2017-Present David Sheldrick
 
 
+## path-browserify 1.0.1
+
+PURL: pkg:npm/path-browserify@1.0.1
+Upstream: [https://www.npmjs.com/package/path-browserify](https://www.npmjs.com/package/path-browserify)
+
+Licenses: MIT
+
+Copyright (c) 2013 James Halliday
+
+
 ## path-exists 3.0.0
 
 PURL: pkg:npm/path-exists@3.0.0
@@ -12929,6 +13359,16 @@ Licenses: MIT
 Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
 
 
+## pathval 2.0.1
+
+PURL: pkg:npm/pathval@2.0.1
+Upstream: [https://www.npmjs.com/package/pathval](https://www.npmjs.com/package/pathval)
+
+Licenses: MIT
+
+Copyright (c) 2011-2013 Jake Luer jake@alogicalparadox.com
+
+
 ## picocolors 1.1.1
 
 PURL: pkg:npm/picocolors@1.1.1
@@ -12989,6 +13429,16 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
+## pip 23.0.1
+
+PURL: pkg:pypi/pip@23.0.1
+Upstream: [https://pypi.org/project/pip/](https://pypi.org/project/pip/)
+
+Licenses: MIT
+
+Copyright (c) The pip developers
+
+
 ## pkg-conf 2.1.0
 
 PURL: pkg:npm/pkg-conf@2.1.0
@@ -13017,6 +13467,26 @@ Upstream: [https://www.npmjs.com/package/pkg-dir](https://www.npmjs.com/package/
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+
+## pkg-types 1.3.1
+
+PURL: pkg:npm/pkg-types@1.3.1
+Upstream: [https://www.npmjs.com/package/pkg-types](https://www.npmjs.com/package/pkg-types)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
+
+
+## pkg-types 2.3.0
+
+PURL: pkg:npm/pkg-types@2.3.0
+Upstream: [https://www.npmjs.com/package/pkg-types](https://www.npmjs.com/package/pkg-types)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
 
 
 ## please-upgrade-node 3.2.0
@@ -13599,26 +14069,6 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-react-jsx-self 7.27.1
-
-PURL: pkg:npm/%40babel/plugin-transform-react-jsx-self@7.27.1?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-jsx-self
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx-self](https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx-self)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-react-jsx-source 7.27.1
-
-PURL: pkg:npm/%40babel/plugin-transform-react-jsx-source@7.27.1?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-jsx-source
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx-source](https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx-source)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
 ## plugin-transform-react-jsx 7.25.9
 
 PURL: pkg:npm/%40babel/plugin-transform-react-jsx@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-jsx
@@ -13949,6 +14399,26 @@ Licenses: MIT
 Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 
 
+## private 1.0.9
+
+PURL: pkg:npm/%40vanilla-extract/private@1.0.9
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/private](https://www.npmjs.com/package/%40vanilla-extract/private)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
+
+
+## problem-matcher 0.1.1
+
+PURL: pkg:npm/%40rushstack/problem-matcher@0.1.1?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Frushstack.git%23libraries%2Fproblem-matcher
+Upstream: [https://www.npmjs.com/package/%40rushstack/problem-matcher](https://www.npmjs.com/package/%40rushstack/problem-matcher)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
 ## proc-log 2.0.1
 
 PURL: pkg:npm/proc-log@2.0.1
@@ -14179,6 +14649,16 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
+## quansync 0.2.11
+
+PURL: pkg:npm/quansync@0.2.11
+Upstream: [https://www.npmjs.com/package/quansync](https://www.npmjs.com/package/quansync)
+
+Licenses: MIT
+
+Copyright (c) 2025-PRESENT Anthony Fu <https://github.com/antfu> and Kevin Deng <https://github.com/sxzz>
+
+
 ## query-string 6.14.1
 
 PURL: pkg:npm/query-string@6.14.1
@@ -14319,16 +14799,6 @@ Licenses: MIT
 Copyright (c) Facebook, Inc. and its affiliates.
 
 
-## react-dom 2.1.2
-
-PURL: pkg:npm/%40floating-ui/react-dom@2.1.2?vcs_url=https%3A%2F%2Fgithub.com%2Ffloating-ui%2Ffloating-ui.git%23packages%2Freact-dom
-Upstream: [https://www.npmjs.com/package/%40floating-ui/react-dom](https://www.npmjs.com/package/%40floating-ui/react-dom)
-
-Licenses: MIT
-
-Copyright (c) 2021-present Floating UI contributors
-
-
 ## react-error-boundary 4.1.2
 
 PURL: pkg:npm/react-error-boundary@4.1.2?vcs_url=https%3A%2F%2Fgithub.com%2Fbvaughn%2Freact-error-boundary
@@ -14357,16 +14827,6 @@ Upstream: [https://www.npmjs.com/package/react-helmet-async](https://www.npmjs.c
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
-
-
-## react-icons 1.3.2
-
-PURL: pkg:npm/%40radix-ui/react-icons@1.3.2
-Upstream: [https://www.npmjs.com/package/%40radix-ui/react-icons](https://www.npmjs.com/package/%40radix-ui/react-icons)
-
-Licenses: MIT
-
-Copyright (c) 2022 WorkOS
 
 
 ## react-icons 5.5.0
@@ -14436,7 +14896,7 @@ Upstream: [https://www.npmjs.com/package/react-refresh](https://www.npmjs.com/pa
 
 Licenses: MIT
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
 ## react-refresh 0.18.0
@@ -14446,27 +14906,7 @@ Upstream: [https://www.npmjs.com/package/react-refresh](https://www.npmjs.com/pa
 
 Licenses: MIT
 
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react-remove-scroll-bar 2.3.8
-
-PURL: pkg:npm/react-remove-scroll-bar@2.3.8
-Upstream: [https://www.npmjs.com/package/react-remove-scroll-bar](https://www.npmjs.com/package/react-remove-scroll-bar)
-
-Licenses: MIT
-
-Copyright (c) Anton Korzunov
-
-
-## react-remove-scroll 2.6.3
-
-PURL: pkg:npm/react-remove-scroll@2.6.3
-Upstream: [https://www.npmjs.com/package/react-remove-scroll](https://www.npmjs.com/package/react-remove-scroll)
-
-Licenses: MIT
-
-Copyright (c) 2017 Anton Korzunov
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
 ## react-router-dom 5.3.3
@@ -14507,26 +14947,6 @@ Upstream: [https://www.npmjs.com/package/react-router](https://www.npmjs.com/pac
 Licenses: MIT
 
 Copyright (c) React Training LLC 2015-2019
-
-
-## react-style-singleton 2.2.3
-
-PURL: pkg:npm/react-style-singleton@2.2.3?vcs_url=https%3A%2F%2Fgithub.com%2FtheKashey%2Freact-style-singleton
-Upstream: [https://www.npmjs.com/package/react-style-singleton](https://www.npmjs.com/package/react-style-singleton)
-
-Licenses: MIT
-
-Copyright (c) 2017 Anton Korzunov
-
-
-## react 0.26.28
-
-PURL: pkg:npm/%40floating-ui/react@0.26.28?vcs_url=https%3A%2F%2Fgithub.com%2Ffloating-ui%2Ffloating-ui.git%23packages%2Freact
-Upstream: [https://www.npmjs.com/package/%40floating-ui/react](https://www.npmjs.com/package/%40floating-ui/react)
-
-Licenses: MIT
-
-Copyright (c) 2021-present Floating UI contributors
 
 
 ## react 14.3.1
@@ -14571,22 +14991,22 @@ Copyright (c) Microsoft Corporation.
 
 ## react 19.1.0
 
-PURL: pkg:npm/react@19.1.0
-Upstream: [https://www.npmjs.com/package/react](https://www.npmjs.com/package/react)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react 19.1.0
-
 PURL: pkg:npm/%40types/react@19.1.0
 Upstream: [https://www.npmjs.com/package/%40types/react](https://www.npmjs.com/package/%40types/react)
 
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
+
+
+## react 19.1.0
+
+PURL: pkg:npm/react@19.1.0
+Upstream: [https://www.npmjs.com/package/react](https://www.npmjs.com/package/react)
+
+Licenses: MIT
+
+Copyright (c) Facebook, Inc. and its affiliates.
 
 
 ## react 2.3.0
@@ -14747,6 +15167,16 @@ Upstream: [https://www.npmjs.com/package/recast](https://www.npmjs.com/package/r
 Licenses: MIT
 
 Copyright (c) 2012 Ben Newman <bn@cs.stanford.edu>
+
+
+## recipes 0.5.7
+
+PURL: pkg:npm/%40vanilla-extract/recipes@0.5.7?vcs_url=https%3A%2F%2Fgithub.com%2Fvanilla-extract-css%2Fvanilla-extract.git%23packages%2Frecipes
+Upstream: [https://www.npmjs.com/package/%40vanilla-extract/recipes](https://www.npmjs.com/package/%40vanilla-extract/recipes)
+
+Licenses: MIT
+
+Copyright (c) 2021 SEEK
 
 
 ## redent 3.0.0
@@ -14919,6 +15349,16 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
+## remapping 2.3.5
+
+PURL: pkg:npm/%40jridgewell/remapping@2.3.5
+Upstream: [https://www.npmjs.com/package/%40jridgewell/remapping](https://www.npmjs.com/package/%40jridgewell/remapping)
+
+Licenses: MIT
+
+Copyright 2024 Justin Ridgewell <justin@ridgewell.name>
+
+
 ## request-error 3.0.3
 
 PURL: pkg:npm/%40octokit/request-error@3.0.3
@@ -14947,6 +15387,26 @@ Upstream: [https://www.npmjs.com/package/require-directory](https://www.npmjs.co
 Licenses: MIT
 
 Copyright (c) 2011 Troy Goode <troygoode@gmail.com>
+
+
+## require-from-string 2.0.2
+
+PURL: pkg:npm/require-from-string@2.0.2
+Upstream: [https://www.npmjs.com/package/require-from-string](https://www.npmjs.com/package/require-from-string)
+
+Licenses: MIT
+
+Copyright (c) Vsevolod Strukchinsky <floatdrop@gmail.com> (github.com/floatdrop)
+
+
+## require-like 0.1.2
+
+PURL: pkg:npm/require-like@0.1.2
+Upstream: [https://www.npmjs.com/package/require-like](https://www.npmjs.com/package/require-like)
+
+Licenses: 
+
+Copyright (c) 2011 Felix Geisendörfer (felix@debuggable.com)
 
 
 ## requires-port 1.0.0
@@ -15177,6 +15637,16 @@ Upstream: [https://www.npmjs.com/package/rfdc](https://www.npmjs.com/package/rfd
 Licenses: MIT
 
 Copyright 2019 "David Mark Clements <david.mark.clements@gmail.com>"
+
+
+## rig-package 0.6.0
+
+PURL: pkg:npm/%40rushstack/rig-package@0.6.0
+Upstream: [https://www.npmjs.com/package/%40rushstack/rig-package](https://www.npmjs.com/package/%40rushstack/rig-package)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
 
 
 ## rimraf 2.7.1
@@ -15469,6 +15939,16 @@ Licenses: MIT
 Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
+## scheduler 0.26.0
+
+PURL: pkg:npm/%40types/scheduler@0.26.0
+Upstream: [https://www.npmjs.com/package/%40types/scheduler](https://www.npmjs.com/package/%40types/scheduler)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
+
+
 ## schema-utils 2.7.1
 
 PURL: pkg:npm/schema-utils@2.7.1
@@ -15659,6 +16139,16 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
+## setuptools 66.1.1
+
+PURL: pkg:pypi/setuptools@66.1.1
+Upstream: [https://pypi.org/project/setuptools/](https://pypi.org/project/setuptools/)
+
+Licenses: MIT
+
+Copyright (c) Python Packaging Authority
+
+
 ## shallowequal 1.1.0
 
 PURL: pkg:npm/shallowequal@1.1.0
@@ -15667,6 +16157,16 @@ Upstream: [https://www.npmjs.com/package/shallowequal](https://www.npmjs.com/pac
 Licenses: MIT
 
 Copyright (c) 2017 Alberto Leal <mailforalberto@gmail.com> (github.com/dashed)
+
+
+## shared 3.5.24
+
+PURL: pkg:npm/%40vue/shared@3.5.24
+Upstream: [https://www.npmjs.com/package/%40vue/shared](https://www.npmjs.com/package/%40vue/shared)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
 
 
 ## shebang-command 1.2.0
@@ -15791,7 +16291,7 @@ Copyright (c) Klaus Sinani <klaussinani@gmail.com>
 
 ## sigs.k8s.io/controller-runtime v0.23.3
 
-PURL: pkg:golang/sigs.k8s.io/controller-runtime@v0.23.3?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/controller-runtime@v0.23.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
 
 Licenses: Apache-2.0
@@ -15801,7 +16301,7 @@ copyright notice that is included in or attached to the work
 
 ## sigs.k8s.io/gateway-api/conformance v1.5.1
 
-PURL: pkg:golang/sigs.k8s.io/gateway-api/conformance@v1.5.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/gateway-api/conformance@v1.5.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/gateway-api/conformance](https://pkg.go.dev/sigs.k8s.io/gateway-api/conformance)
 
 Licenses: Apache-2.0
@@ -15811,7 +16311,7 @@ copyright notice that is included in or attached to the work
 
 ## sigs.k8s.io/gateway-api v1.5.1
 
-PURL: pkg:golang/sigs.k8s.io/gateway-api@v1.5.1?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/gateway-api@v1.5.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/gateway-api](https://pkg.go.dev/sigs.k8s.io/gateway-api)
 
 Licenses: Apache-2.0
@@ -15821,7 +16321,7 @@ copyright notice that is included in or attached to the work
 
 ## sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730
 
-PURL: pkg:golang/sigs.k8s.io/json@v0.0.0-20250730193827-2d320260d730?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/json@v0.0.0-20250730193827-2d320260d730?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/json](https://pkg.go.dev/sigs.k8s.io/json)
 
 Licenses: Apache-2.0
@@ -15831,7 +16331,7 @@ copyright notice that is included in or attached to the work
 
 ## sigs.k8s.io/randfill v1.0.0
 
-PURL: pkg:golang/sigs.k8s.io/randfill@v1.0.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/randfill@v1.0.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/randfill](https://pkg.go.dev/sigs.k8s.io/randfill)
 
 Licenses: Apache-2.0
@@ -15841,7 +16341,7 @@ copyright notice that is included in or attached to the work
 
 ## sigs.k8s.io/structured-merge-diff/v6 v6.3.2
 
-PURL: pkg:golang/sigs.k8s.io/structured-merge-diff/v6@v6.3.2?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/structured-merge-diff/v6@v6.3.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/structured-merge-diff/v6](https://pkg.go.dev/sigs.k8s.io/structured-merge-diff/v6)
 
 Licenses: Apache-2.0
@@ -15851,7 +16351,7 @@ copyright notice that is included in or attached to the work
 
 ## sigs.k8s.io/yaml v1.6.0
 
-PURL: pkg:golang/sigs.k8s.io/yaml@v1.6.0?type=module&goos=darwin&goarch=arm64
+PURL: pkg:golang/sigs.k8s.io/yaml@v1.6.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/yaml](https://pkg.go.dev/sigs.k8s.io/yaml)
 
 Licenses: MIT
@@ -16009,6 +16509,16 @@ Licenses: BSD-3-Clause
 Copyright (c) 2009-2011, Mozilla Foundation and contributors
 
 
+## source-map 2.4.23
+
+PURL: pkg:npm/%40volar/source-map@2.4.23
+Upstream: [https://www.npmjs.com/package/%40volar/source-map](https://www.npmjs.com/package/%40volar/source-map)
+
+Licenses: MIT
+
+Copyright (c) 2021-present Johnson Chu
+
+
 ## sourcemap-codec 1.5.0
 
 PURL: pkg:npm/%40jridgewell/sourcemap-codec@1.5.0
@@ -16156,7 +16666,7 @@ Upstream: [https://www.npmjs.com/package/%40vitest/spy](https://www.npmjs.com/pa
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
 ## spy 4.0.3
@@ -16166,7 +16676,7 @@ Upstream: [https://www.npmjs.com/package/%40vitest/spy](https://www.npmjs.com/pa
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
 ## ssri 12.0.0
@@ -16277,16 +16787,6 @@ Upstream: [https://www.npmjs.com/package/stop-iteration-iterator](https://www.np
 Licenses: MIT
 
 Copyright (c) 2023 Jordan Harband
-
-
-## storybook 10.0.8
-
-PURL: pkg:npm/storybook@10.0.8?vcs_url=https%3A%2F%2Fgithub.com%2Fstorybookjs%2Fstorybook.git%23code%2Fcore
-Upstream: [https://www.npmjs.com/package/storybook](https://www.npmjs.com/package/storybook)
-
-Licenses: MIT
-
-Copyright (c) Storybook Team
 
 
 ## stream-combiner2 1.1.1
@@ -16596,7 +17096,7 @@ Upstream: [https://www.npmjs.com/package/strip-json-comments](https://www.npmjs.
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## strip-json-comments 3.1.1
@@ -16606,7 +17106,7 @@ Upstream: [https://www.npmjs.com/package/strip-json-comments](https://www.npmjs.
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## supports-color 2.0.0
@@ -16789,6 +17289,16 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
+## terminal 0.19.3
+
+PURL: pkg:npm/%40rushstack/terminal@0.19.3?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Frushstack.git%23libraries%2Fterminal
+Upstream: [https://www.npmjs.com/package/%40rushstack/terminal](https://www.npmjs.com/package/%40rushstack/terminal)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
 ## test-exclude 7.0.1
 
 PURL: pkg:npm/test-exclude@7.0.1
@@ -16959,6 +17469,16 @@ Licenses: MIT
 Copyright (c) 2022 Tinylibs
 
 
+## tinyspy 4.0.4
+
+PURL: pkg:npm/tinyspy@4.0.4
+Upstream: [https://www.npmjs.com/package/tinyspy](https://www.npmjs.com/package/tinyspy)
+
+Licenses: MIT
+
+Copyright (c) 2022 Tinylibs
+
+
 ## titleize 3.0.0
 
 PURL: pkg:npm/titleize@3.0.0
@@ -17119,6 +17639,16 @@ Licenses: MIT
 Copyright (c) JoshuaKGoldberg
 
 
+## ts-command-line 5.1.3
+
+PURL: pkg:npm/%40rushstack/ts-command-line@5.1.3
+Upstream: [https://www.npmjs.com/package/%40rushstack/ts-command-line](https://www.npmjs.com/package/%40rushstack/ts-command-line)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
 ## ts-dedent 2.2.0
 
 PURL: pkg:npm/ts-dedent@2.2.0
@@ -17177,6 +17707,26 @@ Upstream: [https://www.npmjs.com/package/%40octokit/tsconfig](https://www.npmjs.
 Licenses: MIT
 
 Copyright (c) Gregor Martynus
+
+
+## tsdoc-config 0.18.0
+
+PURL: pkg:npm/%40microsoft/tsdoc-config@0.18.0
+Upstream: [https://www.npmjs.com/package/%40microsoft/tsdoc-config](https://www.npmjs.com/package/%40microsoft/tsdoc-config)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+## tsdoc 0.16.0
+
+PURL: pkg:npm/%40microsoft/tsdoc@0.16.0
+Upstream: [https://www.npmjs.com/package/%40microsoft/tsdoc](https://www.npmjs.com/package/%40microsoft/tsdoc)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation. All rights reserved.
 
 
 ## tslib 1.14.1
@@ -17489,6 +18039,16 @@ Licenses: MIT
 Copyright (c) 2019 typescript-eslint and other contributors
 
 
+## typescript 2.4.23
+
+PURL: pkg:npm/%40volar/typescript@2.4.23
+Upstream: [https://www.npmjs.com/package/%40volar/typescript](https://www.npmjs.com/package/%40volar/typescript)
+
+Licenses: MIT
+
+Copyright (c) 2021-present Johnson Chu
+
+
 ## typescript 5.8.2
 
 PURL: pkg:npm/typescript@5.8.2?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2FTypeScript.git
@@ -17517,6 +18077,16 @@ Upstream: [https://www.npmjs.com/package/typescript](https://www.npmjs.com/packa
 Licenses: Apache-2.0
 
 Copyright (c) Microsoft Corp.
+
+
+## ufo 1.6.1
+
+PURL: pkg:npm/ufo@1.6.1
+Upstream: [https://www.npmjs.com/package/ufo](https://www.npmjs.com/package/ufo)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io>
 
 
 ## uglify-js 3.19.3
@@ -17779,36 +18349,6 @@ Licenses: MIT
 Copyright (c) 2015 Unshift.io, Arnout Kazemier,  the Contributors.
 
 
-## use-callback-ref 1.3.3
-
-PURL: pkg:npm/use-callback-ref@1.3.3
-Upstream: [https://www.npmjs.com/package/use-callback-ref](https://www.npmjs.com/package/use-callback-ref)
-
-Licenses: MIT
-
-Copyright (c) 2017 Anton Korzunov
-
-
-## use-debounce 9.0.2
-
-PURL: pkg:npm/use-debounce@9.0.2?vcs_url=git%2Bssh%3A%2F%2Fgit%40github.com%2Fxnimorz%2Fuse-debounce.git
-Upstream: [https://www.npmjs.com/package/use-debounce](https://www.npmjs.com/package/use-debounce)
-
-Licenses: MIT
-
-Copyright (c) 2018 Nikita Mostovoy
-
-
-## use-sidecar 1.1.3
-
-PURL: pkg:npm/use-sidecar@1.1.3?vcs_url=https%3A%2F%2Fgithub.com%2FtheKashey%2Fuse-sidecar
-Upstream: [https://www.npmjs.com/package/use-sidecar](https://www.npmjs.com/package/use-sidecar)
-
-Licenses: MIT
-
-Copyright (c) 2017 Anton Korzunov
-
-
 ## use-sync-external-store 1.5.0
 
 PURL: pkg:npm/use-sync-external-store@1.5.0?vcs_url=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact.git%23packages%2Fuse-sync-external-store
@@ -17949,6 +18489,16 @@ Licenses: MIT
 Copyright (c) 2019 typescript-eslint and other contributors
 
 
+## vite-node 3.2.4
+
+PURL: pkg:npm/vite-node@3.2.4
+Upstream: [https://www.npmjs.com/package/vite-node](https://www.npmjs.com/package/vite-node)
+
+Licenses: MIT
+
+Copyright (c) 2021-Present Vitest Team
+
+
 ## vite-tsconfig-paths 5.1.4
 
 PURL: pkg:npm/vite-tsconfig-paths@5.1.4
@@ -18017,6 +18567,16 @@ Upstream: [https://www.npmjs.com/package/vitest](https://www.npmjs.com/package/v
 Licenses: MIT
 
 Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+
+
+## vscode-uri 3.1.0
+
+PURL: pkg:npm/vscode-uri@3.1.0
+Upstream: [https://www.npmjs.com/package/vscode-uri](https://www.npmjs.com/package/vscode-uri)
+
+Licenses: MIT
+
+Copyright (c) Microsoft
 
 
 ## w3c-xmlserializer 5.0.0
