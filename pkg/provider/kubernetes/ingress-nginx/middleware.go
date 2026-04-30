@@ -256,7 +256,13 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 		return
 	}
 
-	regex := loc.Path
+	// When the path ends with a trailing slash + capture group like "/(.*)"
+	// or "/(.+)", make the slash optional so the regex also matches the bare
+	// prefix without a trailing slash. nginx handles this by doing a prefix
+	// match before the regex; Traefik only does regex, so the slash must be
+	// optional to get equivalent behavior.
+	// See https://github.com/traefik/traefik/issues/12982
+	regex := trailingSlashCaptureRegex.ReplaceAllString(loc.Path, "/?($1)")
 
 	xfp := ""
 	if loc.Config.XForwardedPrefix != nil && regexPathWithCapture.MatchString(*loc.Config.XForwardedPrefix) {

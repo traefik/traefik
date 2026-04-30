@@ -73,6 +73,10 @@ var (
 	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 	// The same regexp used in ingress-nginx: https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/parser/validators.go#L77
 	regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
+	// trailingSlashCaptureRegex matches a trailing /(...) at the end of a path regex.
+	// Used to make the slash optional so "/original/(.*)" also matches "/original".
+	// See https://github.com/traefik/traefik/issues/12982
+	trailingSlashCaptureRegex = regexp.MustCompile(`/\(([^)]*)\)$`)
 )
 
 // Provider holds configurations of the provider.
