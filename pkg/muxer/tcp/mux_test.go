@@ -272,10 +272,10 @@ func Test_addTCPRoute(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			router, err := NewMuxer()
+			router, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = router.AddRoute(test.rule, "", 0, handler)
+			err = router.AddRoute(test.rule, "", 0, "", handler)
 			if test.routeErr {
 				require.Error(t, err)
 				return
@@ -388,47 +388,66 @@ func TestParseHostSNI(t *testing.T) {
 }
 
 func Test_Priority(t *testing.T) {
+	type rule struct {
+		rule     string
+		priority int
+		provider string
+	}
+
 	testCases := []struct {
-		desc         string
-		rules        map[string]int
-		serverName   string
-		expectedRule string
+		desc             string
+		rules            []rule
+		serverName       string
+		expectedRule     string
+		expectedProvider string
 	}{
 		{
-			desc: "One matching rule, calculated priority",
-			rules: map[string]int{
-				"HostSNI(`example.com`)": 0,
-				"HostSNI(`example.org`)": 0,
+			desc: "One matching rule, same priority",
+			rules: []rule{
+				{rule: "HostSNI(`example.com`)"},
+				{rule: "HostSNI(`example.org`)"},
 			},
-			expectedRule: "HostSNI(`example.com`)",
 			serverName:   "example.com",
+			expectedRule: "HostSNI(`example.com`)",
 		},
 		{
 			desc: "One matching rule, custom priority",
-			rules: map[string]int{
-				"HostSNI(`example.org`)": 0,
-				"HostSNI(`example.com`)": 10000,
+			rules: []rule{
+				{rule: "HostSNI(`example.com`)", priority: 10000},
+				{rule: "HostSNI(`example.org`)"},
 			},
-			expectedRule: "HostSNI(`example.org`)",
 			serverName:   "example.org",
+			expectedRule: "HostSNI(`example.org`)",
 		},
 		{
-			desc: "Two matching rules, calculated priority",
-			rules: map[string]int{
-				"HostSNI(`example.org`)": 0,
-				"HostSNI(`example.com`)": 0,
+			desc: "Same rule and priority, kubernetescrd wins over kubernetes",
+			rules: []rule{
+				{rule: "HostSNI(`example.org`)", provider: "kubernetescrd"},
+				{rule: "HostSNI(`example.org`)", provider: "kubernetes"},
 			},
-			expectedRule: "HostSNI(`example.org`)",
-			serverName:   "example.org",
+			serverName:       "example.org",
+			expectedRule:     "HostSNI(`example.org`)",
+			expectedProvider: "kubernetescrd",
 		},
 		{
-			desc: "Two matching rules, custom priority",
-			rules: map[string]int{
-				"HostSNI(`example.com`)": 10000,
-				"HostSNI(`example.org`)": 0,
+			desc: "Same rule and priority, known provider wins over unknown provider",
+			rules: []rule{
+				{rule: "HostSNI(`example.org`)", provider: "kubernetescrd"},
+				{rule: "HostSNI(`example.org`)", provider: "foo"},
 			},
-			expectedRule: "HostSNI(`example.com`)",
-			serverName:   "example.com",
+			serverName:       "example.org",
+			expectedRule:     "HostSNI(`example.org`)",
+			expectedProvider: "kubernetescrd",
+		},
+		{
+			desc: "Same rule, higher numeric priority wins regardless of provider",
+			rules: []rule{
+				{rule: "HostSNI(`example.org`)", priority: 10, provider: "kubernetescrd"},
+				{rule: "HostSNI(`example.org`)", priority: 20, provider: "kubernetes"},
+			},
+			serverName:       "example.org",
+			expectedRule:     "HostSNI(`example.org`)",
+			expectedProvider: "kubernetes",
 		},
 	}
 
@@ -436,13 +455,17 @@ func Test_Priority(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer([]string{"kubernetescrd", "kubernetes"})
 			require.NoError(t, err)
 
-			matchedRule := ""
-			for rule, priority := range test.rules {
-				err := muxer.AddRoute(rule, "", priority, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
-					matchedRule = rule
+			var (
+				matchedRule     string
+				matchedProvider string
+			)
+			for _, r := range test.rules {
+				err := muxer.AddRoute(r.rule, "", r.priority, r.provider, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+					matchedRule = r.rule
+					matchedProvider = r.provider
 				}))
 				require.NoError(t, err)
 			}
@@ -454,6 +477,7 @@ func Test_Priority(t *testing.T) {
 
 			handler.ServeTCP(nil)
 			assert.Equal(t, test.expectedRule, matchedRule)
+			assert.Equal(t, test.expectedProvider, matchedProvider)
 		})
 	}
 }

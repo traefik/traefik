@@ -204,6 +204,15 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
+	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
+		if metadata.Ingress != nil {
+			logDataTable.Core[KubernetesIngressNamespace] = metadata.Ingress.Namespace
+			logDataTable.Core[KubernetesIngressName] = metadata.Ingress.IngressName
+			logDataTable.Core[KubernetesServiceName] = metadata.Ingress.ServiceName
+			logDataTable.Core[KubernetesServicePort] = metadata.Ingress.ServicePort
+		}
+	}
+
 	if span := trace.SpanFromContext(req.Context()); span != nil {
 		spanContext := span.SpanContext()
 		if spanContext.HasTraceID() && spanContext.HasSpanID() {
@@ -460,8 +469,8 @@ func usernameIfPresent(theURL *url.URL) string {
 	return "-"
 }
 
-var requestCounter uint64 // Request ID
+var requestCounter atomic.Uint64 // Request ID
 
 func nextRequestCount() uint64 {
-	return atomic.AddUint64(&requestCounter, 1)
+	return requestCounter.Add(1)
 }

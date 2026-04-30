@@ -55,7 +55,7 @@ func getHost(req *http.Request) string {
 		return h
 	}
 
-	h = requestdecorator.GetCanonizedHost(req.Context())
+	h = requestdecorator.GetCanonicalHost(req.Context())
 	if h != "" {
 		return h
 	}

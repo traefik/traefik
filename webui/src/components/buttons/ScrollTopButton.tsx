@@ -1,4 +1,4 @@
-import { Button } from '@traefiklabs/faency'
+import { Button } from '@traefik-labs/faency'
 import { useCallback, useEffect, useState } from 'react'
 
 export const ScrollTopButton = () => {

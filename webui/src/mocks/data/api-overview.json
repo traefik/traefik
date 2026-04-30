@@ -45,6 +45,11 @@
       "errors": 0
     }
   },
+  "certificates": {
+    "total": 9,
+    "warnings": 1,
+    "errors": 1
+  },
   "features": {
     "tracing": "Prometheus",
     "metrics": "",

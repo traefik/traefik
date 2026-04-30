@@ -97,7 +97,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.AddHTTPTLSConfig("*", &tls.Config{
@@ -159,7 +159,7 @@ func TestHTTP30RTT(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.AddHTTPTLSConfig("example.com", &tls.Config{

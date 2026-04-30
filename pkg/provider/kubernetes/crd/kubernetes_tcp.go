@@ -339,7 +339,7 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 		return "", nil
 	}
 
-	if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
+	if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+ProviderName) {
 		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
 		// if the provider namespace kubernetescrd is used,
 		// we don't allow this format to avoid cross namespace references.

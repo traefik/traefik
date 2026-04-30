@@ -168,11 +168,32 @@ type RouterObservabilityConfig struct {
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
 	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+
+	// Metadata holds the metadata for this router.
+	// Metadata cannot be user-defined for now.
+	Metadata *ObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
 	r.TraceVerbosity = otypes.MinimalVerbosity
+}
+
+// +k8s:deepcopy-gen=true
+
+// ObservabilityMetadata holds the observability metadata configuration.
+type ObservabilityMetadata struct {
+	Ingress *KubernetesIngressMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// KubernetesIngressMetadata holds the Kubernetes Ingress metadata.
+type KubernetesIngressMetadata struct {
+	Namespace   string `json:"namespace,omitempty"`
+	IngressName string `json:"ingressName,omitempty"`
+	ServiceName string `json:"serviceName,omitempty"`
+	ServicePort string `json:"servicePort,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -318,7 +339,7 @@ type Cookie struct {
 	HTTPOnly bool `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-	// +kubebuilder:validation:Enum=none;lax;strict
+	// +kubebuilder:validation:Enum=none;lax;strict;None;Lax;Strict
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
 	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.

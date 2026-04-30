@@ -27,8 +27,8 @@ import (
 // defaultTemplateRule is the default template for the default rule.
 const defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
-// providerName is the Consul Catalog provider name.
-const providerName = "consulcatalog"
+// ProviderName is the Consul Catalog provider name.
+const ProviderName = "consulcatalog"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -58,7 +58,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
-			name:          providerName,
+			name:          ProviderName,
 		}}
 	}
 
@@ -66,7 +66,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	for _, namespace := range p.Namespaces {
 		providers = append(providers, &Provider{
 			Configuration: p.Configuration,
-			name:          providerName + "-" + namespace,
+			name:          ProviderName + "-" + namespace,
 			namespace:     namespace,
 		})
 	}
@@ -145,7 +145,7 @@ func (p *Provider) Init() error {
 
 	// In case they didn't initialize Provider with BuildProviders.
 	if p.name == "" {
-		p.name = providerName
+		p.name = ProviderName
 	}
 
 	return nil

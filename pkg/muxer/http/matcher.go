@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"unicode"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 )
 
 var httpFuncs = matcherBuilderFuncs{
@@ -69,33 +69,33 @@ func method(tree *matchersTree, methods ...string) error {
 }
 
 func host(tree *matchersTree, hosts ...string) error {
-	host := hosts[0]
+	hostExpr := hosts[0]
 
-	if !IsASCII(host) {
-		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", host)
+	if !muxer.IsASCII(hostExpr) {
+		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", hostExpr)
 	}
 
-	host = strings.ToLower(host)
+	hostExpr = strings.ToLower(hostExpr)
 
 	tree.matcher = func(req *http.Request) bool {
-		reqHost := requestdecorator.GetCanonizedHost(req.Context())
+		reqHost := requestdecorator.GetCanonicalHost(req.Context())
 		if len(reqHost) == 0 {
 			return false
 		}
 
-		if reqHost == host {
+		if muxer.DomainMatchHostExpression(reqHost, hostExpr) {
 			return true
 		}
 
 		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
 		if len(flatH) > 0 {
-			return strings.EqualFold(flatH, host)
+			return muxer.DomainMatchHostExpression(flatH, hostExpr)
 		}
 
 		// Check for match on trailing period on host
-		if last := len(host) - 1; last >= 0 && host[last] == '.' {
-			h := host[:last]
-			if reqHost == h {
+		if last := len(hostExpr) - 1; last >= 0 && hostExpr[last] == '.' {
+			h := hostExpr[:last]
+			if muxer.DomainMatchHostExpression(reqHost, h) {
 				return true
 			}
 		}
@@ -103,7 +103,7 @@ func host(tree *matchersTree, hosts ...string) error {
 		// Check for match on trailing period on request
 		if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
 			h := reqHost[:last]
-			if h == host {
+			if muxer.DomainMatchHostExpression(h, hostExpr) {
 				return true
 			}
 		}
@@ -117,7 +117,7 @@ func host(tree *matchersTree, hosts ...string) error {
 func hostRegexp(tree *matchersTree, hosts ...string) error {
 	host := hosts[0]
 
-	if !IsASCII(host) {
+	if !muxer.IsASCII(host) {
 		return fmt.Errorf("invalid value %q for HostRegexp matcher, non-ASCII characters are not allowed", host)
 	}
 
@@ -127,7 +127,7 @@ func hostRegexp(tree *matchersTree, hosts ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return re.MatchString(requestdecorator.GetCanonizedHost(req.Context())) ||
+		return re.MatchString(requestdecorator.GetCanonicalHost(req.Context())) ||
 			re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context()))
 	}
 
@@ -251,15 +251,4 @@ func queryRegexp(tree *matchersTree, queries ...string) error {
 	}
 
 	return nil
-}
-
-// IsASCII checks if the given string contains only ASCII characters.
-func IsASCII(s string) bool {
-	for i := range len(s) {
-		if s[i] > unicode.MaxASCII {
-			return false
-		}
-	}
-
-	return true
 }

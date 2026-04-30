@@ -443,6 +443,42 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
 
     For more details, see the [GKE LoadBalancer Service parameters documentation](https://cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters).
 
+??? note "OVHcloud"
+
+    OVHcloud supports static IP on OVHcloud Public Load Balancer, it is based on Openstack Octavia which allocates floating IPs to LoadBalancer services. This requires the [Openstack Cloud Controller Manager](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md) to be installed in your cluster. If you are using OVHcloud Managed Kubernetes Service (MKS), the Openstack Cloud Controller Manager is already installed and managed for you.
+    
+    To retain your existing floating IP when migrating from NGINX to Traefik:
+
+    **Identify the existing public IP:**
+    
+    ```bash
+    NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
+  -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+     
+    echo "NGINX IP: $NGINX_IP"
+    ```
+    
+    **Edit your existing NGINX LoadBalancer service to ensure that the floating IP is not released when the loadbalancer service is deleted:**
+    
+    
+    kubectl annotate svc my-lb-svc loadbalancer.openstack.org/keep-floatingip=true
+    ```
+    
+    The `keep-floatingip` annotation prevents the floating IP from being released when the service is deleted or modified.
+
+    **Delete the NGINX LoadBalancer service to release the floating IP**
+
+    **Update `traefik-values.yaml`:**
+    
+    ```yaml
+    service:
+      type: LoadBalancer
+      spec:
+        loadBalancerIP: "<your-existing-floating-ip>"
+    ```
+
+    To learn more, see the [OVHcloud MKS Public Load Balancer annotations documentation](https://help.ovhcloud.com/csm/en-public-cloud-kubernetes-expose-applications-using-load-balancer?id=kb_article_view&sysparm_article=KB0062878#supported-annotations-features).
+
 ??? note "Other Cloud Providers"
 
     - **DigitalOcean:** Supports `loadBalancerIP` with floating IPs

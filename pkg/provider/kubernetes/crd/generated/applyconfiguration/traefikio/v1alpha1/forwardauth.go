@@ -36,6 +36,8 @@ type ForwardAuthApplyConfiguration struct {
 	// Address defines the authentication server address.
 	Address *string `json:"address,omitempty"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+	//
+	// Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
 	TrustForwardHeader *bool `json:"trustForwardHeader,omitempty"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`

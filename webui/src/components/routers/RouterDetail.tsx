@@ -1,4 +1,4 @@
-import { Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
+import { Flex, H1, Skeleton, Text } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'

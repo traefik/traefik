@@ -18,7 +18,7 @@ The table below lists all the available matchers:
 
 | Rule                                                        | Description                                                                                      |
 |-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`.<br /> More information [here](#hostsni-and-hostsniregexp).                          |
+| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`. Supports wildcard subdomain matching (e.g. `*.example.com`).<br /> More information [here](#hostsni-and-hostsniregexp). |
 | <a id="opt-HostSNIRegexpregexp" href="#opt-HostSNIRegexpregexp" title="#opt-HostSNIRegexpregexp">[```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
 | <a id="opt-ClientIPip" href="#opt-ClientIPip" title="#opt-ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
 | <a id="opt-ALPNprotocol" href="#opt-ALPNprotocol" title="#opt-ALPNprotocol">[```ALPN(`protocol`)```](#alpn)</a> | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
@@ -59,6 +59,15 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
     when one wants a non-TLS router that matches all (non-TLS) requests,
     one should use the specific ```HostSNI(`*`)``` syntax.
 
+!!! info "Wildcard subdomain matching"
+
+    The `HostSNI` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
+    It should be preferred over the `HostSNIRegexp` matcher as it allows attaching a TLS option and is more efficient.
+
+    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.    
+
+    This is only available with the **v3 rule syntax** (the default).
+
 #### Examples
 
 Match all connections:
@@ -77,7 +86,13 @@ Match TCP connections sent to `example.com`:
 HostSNI(`example.com`)
 ```
 
-Match TCP connections opened on any subdomain of `example.com`:
+Match TCP connections opened on any direct subdomain of `example.com` (e.g. `foo.example.com`):
+
+```yaml
+HostSNI(`*.example.com`)
+```
+
+Match TCP connections opened on any subdomain of `example.com` (including nested subdomains), using a regular expression:
 
 ```yaml
 HostSNIRegexp(`^.+\.example\.com$`)
@@ -201,3 +216,9 @@ Traefik reserves a range of priorities for its internal routers, the maximum use
 
 - `(MaxInt32 - 1000)` for 32-bit platforms,
 - `(MaxInt64 - 1000)` for 64-bit platforms.
+
+!!! info "Providers Precedence"
+
+    When two routes from **different providers** share the same numeric priority,
+    Traefik uses the [`providers.precedence`](../../../install-configuration/providers/overview.md#providers-precedence) install configuration option to determine which route takes precedence.
+    The provider listed first in `precedence` wins the tie.
