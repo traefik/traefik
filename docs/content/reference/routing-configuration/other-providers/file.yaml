@@ -483,6 +483,7 @@ http:
         readIdleTimeout: 42s
         pingTimeout: 42s
       disableHTTP2: true
+      disableCompression: true
       peerCertURI: foobar
       spiffe:
         ids:
@@ -513,6 +514,7 @@ http:
         readIdleTimeout: 42s
         pingTimeout: 42s
       disableHTTP2: true
+      disableCompression: true
       peerCertURI: foobar
       spiffe:
         ids:
