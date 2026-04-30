@@ -174,9 +174,9 @@ func TestHandler(t *testing.T) {
 			}),
 			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				t.Helper()
-				// In nginx mode, the error page backend's status code (200) is preserved,
-				// NOT overridden to the original error code (500).
-				assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
+				// In nginx mode, the original error code (500) is written back,
+				// overriding the error page backend's status code.
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
 				assert.Contains(t, recorder.Body.String(), "Custom error page.")
 			},
 		},
@@ -208,8 +208,8 @@ func TestHandler(t *testing.T) {
 			}),
 			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				t.Helper()
-				// Backend's chosen status code (404) is preserved in nginx mode.
-				assert.Equal(t, http.StatusNotFound, recorder.Code, "HTTP status")
+				// The original error code (502) overrides the backend's chosen status code in nginx mode.
+				assert.Equal(t, http.StatusBadGateway, recorder.Code, "HTTP status")
 				assert.Contains(t, recorder.Body.String(), "Custom 404 page.")
 			},
 		},
