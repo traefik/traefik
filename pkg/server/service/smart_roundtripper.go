@@ -11,15 +11,6 @@ import (
 	"golang.org/x/net/http2"
 )
 
-type h2cTransportWrapper struct {
-	*http2.Transport
-}
-
-func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.URL.Scheme = "http"
-	return t.Transport.RoundTrip(req)
-}
-
 func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (*smartRoundTripper, error) {
 	transportHTTP1 := transport.Clone()
 
@@ -33,13 +24,11 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
 		transportHTTP2.PingTimeout = time.Duration(forwardingTimeouts.PingTimeout)
 	}
 
-	transportH2C := &h2cTransportWrapper{
-		Transport: &http2.Transport{
-			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(network, addr)
-			},
-			AllowHTTP: true,
+	transportH2C := &http2.Transport{
+		DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+			return net.Dial(network, addr)
 		},
+		AllowHTTP: true,
 	}
 
 	if forwardingTimeouts != nil {
@@ -47,11 +36,10 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
 		transportH2C.PingTimeout = time.Duration(forwardingTimeouts.PingTimeout)
 	}
 
-	transport.RegisterProtocol("h2c", transportH2C)
-
 	return &smartRoundTripper{
 		http2: transport,
 		http:  transportHTTP1,
+		h2c:   transportH2C,
 	}, nil
 }
 
@@ -60,18 +48,31 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
 type smartRoundTripper struct {
 	http2 *http.Transport
 	http  *http.Transport
+	h2c   *http2.Transport
 }
 
 func (m *smartRoundTripper) Clone() http.RoundTripper {
 	h := m.http.Clone()
 	h2 := m.http2.Clone()
+	// TODO: this clone looses the "h2c" protocol registration. This was already the case before the fix for
+	// https://github.com/traefik/traefik/issues/7465, when "h2c" was registered with
+	// m.http2.RegisterProtocol("h2c", transportH2C).
+	// We should switch to the new http.Protocols.SetUnencryptedHTTP2 on http.Transport, which is part of the stdlib and
+	// supports Clone(). But this switch should probably be done with a new minor release.
 	return &smartRoundTripper{http: h, http2: h2}
 }
 
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// If we have a connection upgrade, we don't use HTTP/2
+	isH2c := (m.h2c != nil && req.URL.Scheme == "h2c")
+	if isH2c {
+		req.URL.Scheme = "http"
+	}
+
+	// If we have a connection upgrade, we don't use HTTP/2 or HTTP/2 cleartext
 	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return m.http.RoundTrip(req)
+	} else if isH2c {
+		return m.h2c.RoundTrip(req)
 	}
 
 	return m.http2.RoundTrip(req)
