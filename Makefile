@@ -177,6 +177,36 @@ generate-crd:
 generate-genconf:
 	go run ./cmd/internal/gen/
 
+LICENSES_IMAGE := traefik-licenses
+GO_VERSION := $(shell cat .go-version)
+NODE_MAJOR := $(shell cut -d. -f1 webui/.nvmrc)
+
+.PHONY: build-licenses-image
+#? build-licenses-image: Build the Docker image used to generate/validate licenses
+build-licenses-image:
+	docker build \
+	    --platform=linux/amd64 \
+	    --build-arg GO_VERSION=$(GO_VERSION) \
+	    --build-arg NODE_MAJOR=$(NODE_MAJOR) \
+	    -t $(LICENSES_IMAGE) -f script/licenses.Dockerfile script/
+
+LICENSES_DOCKER_RUN = docker run --rm \
+    --platform=linux/amd64 \
+    -u "$(shell id -u):$(shell id -g)" \
+    -v "$(CURDIR)":/src \
+    -w /src \
+    $(LICENSES_IMAGE)
+
+.PHONY: generate-licenses
+#? generate-licenses: Generate SBOM and third-party license attribution files
+generate-licenses: build-licenses-image
+	$(LICENSES_DOCKER_RUN) script/generate-licenses.sh
+
+.PHONY: validate-licenses
+#? validate-licenses: Validate that license attribution files are up to date
+validate-licenses: build-licenses-image
+	$(LICENSES_DOCKER_RUN) script/validate-licenses.sh
+
 .PHONY: fmt
 #? fmt: Format the Code
 fmt:

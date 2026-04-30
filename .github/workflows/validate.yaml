@@ -79,3 +79,26 @@ jobs:
         run: |
           make generate-crd
           git diff --exit-code
+
+  validate-licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check for dependency changes
+        id: deps-changed
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '^(go\.(mod|sum)|webui/yarn\.lock|docs/requirements\.txt)$'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate licenses
+        if: steps.deps-changed.outputs.changed == 'true'
+        run: make validate-licenses
