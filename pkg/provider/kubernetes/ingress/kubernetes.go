@@ -120,7 +120,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// dropped events. This is fine, because we don't treat different
 					// event types differently. But if we do in the future, we'll need to
 					// track more information about the dropped events.
-					conf := p.loadConfigurationFromIngresses(ctxLog, k8sClient)
+					conf := p.loadConfigurationFromIngresses(context.Background(), k8sClient)
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
@@ -241,8 +241,12 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
-		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
-		ctxIngress := logger.WithContext(ctx)
+		logger := log.With().
+			Str(logs.ProviderName, "kubernetes").
+			Str("ingress", ingress.Name).
+			Str("namespace", ingress.Namespace).
+			Logger()
+		ctxIngress := logger.WithContext(context.Background())
 
 		if !p.shouldProcessIngress(ingress, ingressClasses) {
 			continue
