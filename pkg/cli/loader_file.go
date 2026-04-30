@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -68,7 +69,23 @@ func loadConfigFiles(configFile string, element any) (string, error) {
 		Extensions: []string{"toml", "yaml", "yml"},
 	}
 
-	filePath, err := finder.Find(configFile)
+	if strings.TrimSpace(configFile) != "" {
+		filePath, err := cli.Finder{}.Find(configFile)
+		if err != nil {
+			return "", err
+		}
+
+		if len(filePath) == 0 {
+			return "", fmt.Errorf("configuration file %q not found", configFile)
+		}
+
+		if err := file.Decode(filePath, element); err != nil {
+			return "", err
+		}
+		return filePath, nil
+	}
+
+	filePath, err := finder.Find("")
 	if err != nil {
 		return "", err
 	}
