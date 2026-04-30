@@ -59,7 +59,7 @@ tls:
       keyFile:  /certs/local.key
 ```
 
-In the same folder as the `dynamic/tls.yaml` file, create a `docker-compose.yaml` file and include the following:
+In your project root folder (the parent folder to the `dynamic/tls.yaml` file), create a `docker-compose.yaml` file and include the following:
 
 ```yaml
 services:

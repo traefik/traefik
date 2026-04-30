@@ -48,4 +48,4 @@ providers:
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kv.md).
+See the dedicated section in [routing](../../../../reference/routing-configuration/other-providers/kv.md).

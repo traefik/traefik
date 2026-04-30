@@ -1,4 +1,4 @@
-import { Flex, globalCss, styled } from '@traefiklabs/faency'
+import { Flex, globalCss, styled } from '@traefik-labs/faency'
 import { ReactNode, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 

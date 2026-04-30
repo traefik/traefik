@@ -328,6 +328,10 @@ linters:
         text: 'SA1019: cfg.(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
       - path: (.+)\.go$
         text: 'SA1019: c.Providers.(ConsulCatalog|Consul|Nomad).Namespace is deprecated'
+      - path: pkg/middlewares/auth/basic_auth_test.go
+        text: 'SA1008: keys in http.Header are canonicalized, "x-user" is not canonical; fix the constant or use http.CanonicalHeaderKey'
+      - path: pkg/middlewares/auth/digest_auth_test.go
+        text: 'SA1008: keys in http.Header are canonicalized, "x-user" is not canonical; fix the constant or use http.CanonicalHeaderKey'
       - path: pkg/provider/kubernetes/crd/kubernetes.go
         text: "Function 'loadConfigurationFromCRD' has too many statements"
         linters:

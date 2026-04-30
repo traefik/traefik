@@ -9,9 +9,9 @@ How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
 !!! success "Streamlined Migration Process"
-    Traefik v3 introduces minimal breaking changes and maintains backward compatibility with v2 syntax in dynamic configuration, offering a gradual migration path.
+    Traefik v3 introduces minimal breaking changes and maintains backward compatibility with v2 syntax in routing configuration, offering a gradual migration path.
 
-With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [static configuration](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
+With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [install configuration](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [routing configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
 
 ## Migration Overview
 
@@ -20,33 +20,33 @@ The migration process consists of three progressive steps designed to minimize r
 !!! abstract "Migration Steps"
     **Step 1:** [Prepare configurations and test v3](#step-1-prepare-configurations-and-test-v3)  
     **Step 2:** [Migrate production instances to Traefik v3](#step-2-migrate-production-instances-to-traefik-v3)  
-    **Step 3:** [Progressively migrate dynamic configuration](#step-3-progressively-migrate-dynamic-configuration)
+    **Step 3:** [Progressively migrate routing configuration](#step-3-progressively-migrate-routing-configuration)
 
 ---
 
 ## Step 1: Prepare Configurations and Test v3
 
 !!! info "Preparation Phase"
-    This step focuses on updating static configurations and enabling backward compatibility for a safe testing environment.
+    This step focuses on updating install configurations and enabling backward compatibility for a safe testing environment.
 
 ### Configuration Updates
 
-**Review and Update Static Configuration**
+**Review and Update install Configuration**
 
-Check the changes in [static configurations](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Traefik v3. Modify your configurations accordingly.
+Check the changes in [install configurations](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Traefik v3. Modify your configurations accordingly.
 
 **Enable v2 Compatibility Mode**
 
 Add the following configuration to maintain v2 syntax compatibility:
 
 ```yaml
-# static configuration
+# install configuration
 core:
   defaultRuleSyntax: v2
 ```
 
 !!! note "Backward Compatibility"
-    This snippet in the static configuration makes the [v2 format](../migrate/v2-to-v3-details.md#configure-the-default-syntax-in-static-configuration "Link to configure default syntax in static config") the default rule matchers syntax.
+    This snippet in the install configuration makes the [v2 format](./v2-to-v3-details.md#configure-the-default-syntax-in-install-configuration "Link to configure default syntax in install config") the default rule matchers syntax.
 
 ### Testing Phase
 
@@ -107,16 +107,16 @@ We strongly advise you to follow a progressive migration strategy ([Kubernetes r
 
 ---
 
-## Step 3: Progressively Migrate Dynamic Configuration
+## Step 3: Progressively Migrate Routing Configuration
 
 !!! info "Optional Immediate Step"
-    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). Enable Traefik logs to get some help if any deprecated option is in use.
+    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [routing configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). Enable Traefik logs to get some help if any deprecated option is in use.
 
 ### Migration Process
 
-**Review Dynamic Configuration Changes**
+**Review Routing Configuration Changes**
 
-Check the changes in [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes") to understand what updates are needed.
+Check the changes in [routing configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes") to understand what updates are needed.
 
 **Progressive Router Migration**
 
@@ -140,7 +140,7 @@ Check the changes in [dynamic configuration](./v2-to-v3-details.md#routing-confi
 Once all Ingress resources are migrated to v3 syntax, remove the compatibility configuration:
 
 ```yaml
-# Remove this from static configuration
+# Remove this from install configuration
 core:
   defaultRuleSyntax: v2  # ← Delete this entire section
 ```

@@ -194,12 +194,13 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
+		_, err = factoryGateway.Gateway().V1().TLSRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
 		if c.experimentalChannel {
 			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
-			if err != nil {
-				return nil, err
-			}
-			_, err = factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
 			if err != nil {
 				return nil, err
 			}
@@ -319,10 +320,10 @@ func (c *clientWrapper) ListTCPRoutes() ([]*gatev1alpha2.TCPRoute, error) {
 	return tcpRoutes, nil
 }
 
-func (c *clientWrapper) ListTLSRoutes() ([]*gatev1alpha2.TLSRoute, error) {
-	var tlsRoutes []*gatev1alpha2.TLSRoute
+func (c *clientWrapper) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
+	var tlsRoutes []*gatev1.TLSRoute
 	for _, namespace := range c.watchedNamespaces {
-		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().TLSRoutes().Lister().TLSRoutes(namespace).List(labels.Everything())
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().TLSRoutes().Lister().TLSRoutes(namespace).List(labels.Everything())
 		if err != nil {
 			return nil, fmt.Errorf("listing TLS routes in namespace %s", namespace)
 		}
@@ -650,13 +651,13 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
-func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TLSRouteStatus) error {
+func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.TLSRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TLSRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TLSRoutes().Lister().TLSRoutes(route.Namespace).Get(route.Name)
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().TLSRoutes().Lister().TLSRoutes(route.Namespace).Get(route.Name)
 		if err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
@@ -680,13 +681,13 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 		}
 
 		currentRoute = currentRoute.DeepCopy()
-		currentRoute.Status = gatev1alpha2.TLSRouteStatus{
+		currentRoute.Status = gatev1.TLSRouteStatus{
 			RouteStatus: gatev1.RouteStatus{
 				Parents: parentStatuses,
 			},
 		}
 
-		if _, err = c.csGateway.GatewayV1alpha2().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+		if _, err = c.csGateway.GatewayV1().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
 			return err
@@ -814,13 +815,13 @@ func policyAncestorStatusEqual(sA, sB gatev1.PolicyAncestorStatus) bool {
 		conditionsEqual(sA.Conditions, sB.Conditions)
 }
 
-func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev1alpha2.RouteParentStatus) bool {
+func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev1.RouteParentStatus) bool {
 	if len(routeParentStatusesA) != len(routeParentStatusesB) {
 		return false
 	}
 
 	for _, sA := range routeParentStatusesA {
-		if !slices.ContainsFunc(routeParentStatusesB, func(sB gatev1alpha2.RouteParentStatus) bool {
+		if !slices.ContainsFunc(routeParentStatusesB, func(sB gatev1.RouteParentStatus) bool {
 			return routeParentStatusEqual(sB, sA)
 		}) {
 			return false
@@ -828,7 +829,7 @@ func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev
 	}
 
 	for _, sB := range routeParentStatusesB {
-		if !slices.ContainsFunc(routeParentStatusesA, func(sA gatev1alpha2.RouteParentStatus) bool {
+		if !slices.ContainsFunc(routeParentStatusesA, func(sA gatev1.RouteParentStatus) bool {
 			return routeParentStatusEqual(sA, sB)
 		}) {
 			return false
@@ -838,7 +839,7 @@ func routeParentStatusesEqual(routeParentStatusesA, routeParentStatusesB []gatev
 	return true
 }
 
-func routeParentStatusEqual(sA, sB gatev1alpha2.RouteParentStatus) bool {
+func routeParentStatusEqual(sA, sB gatev1.RouteParentStatus) bool {
 	return sA.ControllerName == sB.ControllerName &&
 		reflect.DeepEqual(sA.ParentRef, sB.ParentRef) &&
 		conditionsEqual(sA.Conditions, sB.Conditions)

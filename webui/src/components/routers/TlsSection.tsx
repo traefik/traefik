@@ -1,4 +1,4 @@
-import { Badge, Box, Card, Flex } from '@traefiklabs/faency'
+import { Badge, Box, Card, Flex } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 
 import TlsIcon from './TlsIcon'

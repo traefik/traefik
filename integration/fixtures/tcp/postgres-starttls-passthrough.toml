@@ -1,0 +1,33 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.tcp]
+    address = ":8094"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[tcp]
+  [tcp.routers]
+    [tcp.routers.to-postgres-ssl]
+      rule = "HostSNI(`postgres-starttls-passthrough`)"
+      service = "postgres-ssl"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-postgres-ssl.tls]
+        passthrough = true
+
+  [tcp.services]
+    [tcp.services.postgres-ssl.loadBalancer]
+      [[tcp.services.postgres-ssl.loadBalancer.servers]]
+        address = "{{ .PostgresSSLAddr }}"

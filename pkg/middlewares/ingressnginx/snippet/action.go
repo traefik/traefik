@@ -11,15 +11,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/tufanbarisyildirim/gonginx/config"
 )
 
 // context holds variables set during request processing.
 type actionContext struct {
-	vars                    map[string]string
-	nonMergeablePostActions map[string][]action
-	mergeablePostActions    []action
+	vars                map[string]string
+	authResponseHeaders http.Header
+	req                 *http.Request
 
 	statusCode     int
 	body           string
@@ -30,178 +31,10 @@ type actionContext struct {
 	stopAllDirectives bool
 }
 
-func newContext(previousCtx *actionContext, a *actions) *actionContext {
-	unmergeablePostActions := a.nonMergeablePostActions
-	if a.nonMergeablePostActions == nil {
-		unmergeablePostActions = map[string][]action{}
-	}
-
-	return &actionContext{
-		vars:                    previousCtx.vars,
-		statusCode:              previousCtx.statusCode,
-		body:                    previousCtx.body,
-		redirectURL:             previousCtx.redirectURL,
-		nonMergeablePostActions: unmergeablePostActions,
-		mergeablePostActions:    a.mergeablePostActions,
-	}
-}
-
-func (c *actionContext) mergeWithSubContext(subCtx *actionContext) {
-	for directive, actions := range subCtx.nonMergeablePostActions {
-		if len(actions) > 0 {
-			c.nonMergeablePostActions[directive] = actions
-		}
-	}
-
-	c.mergeablePostActions = append(c.mergeablePostActions, subCtx.mergeablePostActions...)
-	c.statusCode = subCtx.statusCode
-	c.body = subCtx.body
-	c.redirectURL = subCtx.redirectURL
-
-	if subCtx.stopCurrentBlock {
-		c.stopCurrentBlock = true
-	}
-	if subCtx.stopAllDirectives {
-		c.stopAllDirectives = true
-	}
-}
-
-type actions struct {
-	actions                 []action
-	mergeablePostActions    []action
-	nonMergeablePostActions map[string][]action
-}
-
-func (a *actions) Execute(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-	// The actions struct can be nil if the middleware does not have a server snippet or a configuration snippet.
-	if a == nil {
-		return false, nil
-	}
-
-	subCtx := newContext(ctx, a)
-	finish := false
-	for _, act := range a.actions {
-		var err error
-		finish, err = act(rw, req, subCtx)
-		if err != nil {
-			return false, err
-		}
-		if finish || subCtx.stopCurrentBlock || subCtx.stopAllDirectives {
-			break
-		}
-	}
-
-	ctx.mergeWithSubContext(subCtx)
-
-	return finish, nil
-}
-
 // action is a function that applies a directive to the request/response.
 // It returns true if the request should be interrupted (e.g. return directive).
 // The context parameter allows actions to share state (e.g., variables set by 'set' directive).
 type action func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error)
-
-func buildActions(block config.IBlock) (*actions, error) {
-	acts := &actions{
-		nonMergeablePostActions: make(map[string][]action),
-	}
-	for _, d := range block.GetDirectives() {
-		if err := isAllowedInContext(d); err != nil {
-			return nil, err
-		}
-
-		switch d.GetName() {
-		case "add_header":
-			action, err := createAddHeaderAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating add_header action: %w", err)
-			}
-			acts.nonMergeablePostActions[d.GetName()] = append(acts.nonMergeablePostActions[d.GetName()], action)
-		case "more_set_headers":
-			action, err := createMoreSetHeadersAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating more_set_headers action: %w", err)
-			}
-			acts.mergeablePostActions = append(acts.mergeablePostActions, action)
-		case "proxy_set_header":
-			action, err := createProxySetHeaderAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating proxy_set_header action: %w", err)
-			}
-			acts.nonMergeablePostActions[d.GetName()] = append(acts.nonMergeablePostActions[d.GetName()], action)
-		case "more_set_input_headers":
-			action, err := createMoreSetInputHeadersAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating more_set_input_headers action: %w", err)
-			}
-			acts.mergeablePostActions = append(acts.mergeablePostActions, action)
-		case "more_clear_headers":
-			action, err := createMoreClearHeadersAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating more_clear_headers action: %w", err)
-			}
-			acts.mergeablePostActions = append(acts.mergeablePostActions, action)
-		case "more_clear_input_headers":
-			action, err := createMoreClearInputHeadersAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating more_clear_input_headers action: %w", err)
-			}
-			acts.mergeablePostActions = append(acts.mergeablePostActions, action)
-		case "if":
-			action, err := createIfAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating if action: %w", err)
-			}
-			acts.actions = append(acts.actions, action)
-		case "set":
-			action, err := createSetAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating set action: %w", err)
-			}
-			acts.actions = append(acts.actions, action)
-		case "return":
-			action, err := createReturnAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating return action: %w", err)
-			}
-			acts.actions = append(acts.actions, action)
-		case "rewrite":
-			action, err := createRewriteAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating rewrite action: %w", err)
-			}
-			acts.actions = append(acts.actions, action)
-		case "location":
-			action, err := createLocationAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating location action: %w", err)
-			}
-			acts.actions = append(acts.actions, action)
-		case "allow", "deny":
-			action, err := createAccessAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating %s action: %w", d.GetName(), err)
-			}
-			acts.actions = append(acts.actions, action)
-		case "proxy_hide_header":
-			action, err := createProxyHideHeaderAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating proxy_hide_header action: %w", err)
-			}
-			acts.mergeablePostActions = append(acts.mergeablePostActions, action)
-		case "expires":
-			action, err := createExpiresAction(d)
-			if err != nil {
-				return nil, fmt.Errorf("creating expires action: %w", err)
-			}
-			acts.mergeablePostActions = append(acts.mergeablePostActions, action)
-		default:
-			return nil, fmt.Errorf("unsupported directive %q", d.GetName())
-		}
-	}
-
-	return acts, nil
-}
 
 // addHeaderStatusCodes lists the status codes for which add_header is effective
 // when the "always" parameter is NOT specified.
@@ -211,42 +44,16 @@ var addHeaderStatusCodes = []int{
 	307, 308,
 }
 
-func createAddHeaderAction(d config.IDirective) (action, error) {
+func createProxyMethodAction(d config.IDirective) (action, error) {
 	params := d.GetParameters()
-	if len(params) < 2 {
-		return nil, errors.New("add_header directive must have at least 2 parameters (header and value)")
+	if len(params) != 1 {
+		return nil, errors.New("proxy_method directive must have 1 parameter")
 	}
 
-	key := params[0].String()
-	val := trimQuote(params[1].String())
+	method := trimQuote(params[0].String())
 
-	// Check for the "always" flag (third parameter).
-	var always bool
-	if len(params) >= 3 && params[2].String() == "always" {
-		always = true
-	}
-
-	if always {
-		// With "always", the header is added regardless of response status code.
-		return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-			rw.Header().Add(key, ingressnginx.ReplaceVariables(val, req, ctx.vars))
-			return false, nil
-		}, nil
-	}
-
-	// Without "always", register a deferred operation that checks the status code.
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		if wrapper, ok := rw.(*snippetResponseWriter); ok {
-			resolvedVal := ingressnginx.ReplaceVariables(val, req, ctx.vars)
-			wrapper.onWriteHeader = append(wrapper.onWriteHeader, func(code int, h http.Header) {
-				if slices.Contains(addHeaderStatusCodes, code) {
-					h.Add(key, resolvedVal)
-				}
-			})
-		} else {
-			// Fallback: add unconditionally.
-			rw.Header().Add(key, ingressnginx.ReplaceVariables(val, req, ctx.vars))
-		}
+		req.Method = ingressnginx.ReplaceVariables(method, ctx.req, nil, ctx.vars)
 		return false, nil
 	}, nil
 }
@@ -348,7 +155,7 @@ func createMoreSetHeadersAction(d config.IDirective) (action, error) {
 					if !matchesStatusFilter(flags.statusCodes, code) || !matchesContentTypeFilter(flags.contentTypes, ct) {
 						return
 					}
-					applyHeaderOps(h, nil, ops, flags, req, ctx)
+					applyHeaderOps(h, req, ops, flags, ctx)
 				})
 			}
 			return false, nil
@@ -356,7 +163,7 @@ func createMoreSetHeadersAction(d config.IDirective) (action, error) {
 	}
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		applyHeaderOps(rw.Header(), nil, ops, flags, req, ctx)
+		applyHeaderOps(rw.Header(), req, ops, flags, ctx)
 		return false, nil
 	}, nil
 }
@@ -376,14 +183,14 @@ func createMoreSetInputHeadersAction(d config.IDirective) (action, error) {
 		if len(flags.contentTypes) > 0 && !matchesContentTypeFilter(flags.contentTypes, req.Header.Get("Content-Type")) {
 			return false, nil
 		}
-		applyHeaderOps(nil, req, ops, flags, req, ctx)
+		applyHeaderOps(nil, req, ops, flags, ctx)
 		return false, nil
 	}, nil
 }
 
 // applyHeaderOps applies header operations to either response headers (h) or request headers (req).
 // If h is non-nil, operations apply to response headers. Otherwise, operations apply to req.Header.
-func applyHeaderOps(h http.Header, r *http.Request, ops []headerOp, flags directiveFlags, req *http.Request, ctx *actionContext) {
+func applyHeaderOps(h http.Header, r *http.Request, ops []headerOp, flags directiveFlags, ctx *actionContext) {
 	target := h
 	if target == nil && r != nil {
 		target = r.Header
@@ -403,7 +210,7 @@ func applyHeaderOps(h http.Header, r *http.Request, ops []headerOp, flags direct
 			continue
 		}
 
-		resolvedVal := ingressnginx.ReplaceVariables(op.value, req, ctx.vars)
+		resolvedVal := ingressnginx.ReplaceVariables(op.value, ctx.req, nil, ctx.vars)
 		if flags.appendMode {
 			target.Add(op.key, resolvedVal)
 		} else {
@@ -565,6 +372,21 @@ func parseMoreSetParams(params []config.Parameter, directiveName string) ([]head
 	return ops, nil
 }
 
+func createAuthRequestSetAction(d config.IDirective) (action, error) {
+	params := d.GetParameters()
+	if len(params) < 2 {
+		return nil, errors.New("auth_request_set directive requires 2 parameters (variable name and value)")
+	}
+
+	varName := params[0].String()
+	value := trimQuote(params[1].String())
+
+	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
+		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, ctx.req, ctx.authResponseHeaders, ctx.vars)
+		return false, nil
+	}, nil
+}
+
 func createProxySetHeaderAction(d config.IDirective) (action, error) {
 	params := d.GetParameters()
 	if len(params) < 2 {
@@ -575,10 +397,11 @@ func createProxySetHeaderAction(d config.IDirective) (action, error) {
 	val := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		resolved := ingressnginx.ReplaceVariables(val, req, ctx.vars)
+		resolved := ingressnginx.ReplaceVariables(val, ctx.req, nil, ctx.vars)
 		if resolved == "" {
 			req.Header.Del(key)
 		} else {
+			log.Debug().Msgf("proxy_set_header %s %s", key, resolved)
 			req.Header.Set(key, resolved)
 		}
 		return false, nil
@@ -798,45 +621,6 @@ func parseNginxDuration(s string) (time.Duration, error) {
 	return 0, fmt.Errorf("cannot parse duration %q", s)
 }
 
-func createIfAction(d config.IDirective) (action, error) {
-	params := d.GetParameters()
-	if len(params) == 0 {
-		return nil, errors.New("if directive requires a condition")
-	}
-
-	// Parse condition - simplified implementation.
-	// Supports: ($var = value), ($var != value), ($var), ($request_method = METHOD).
-	var paramStrs []string
-	for _, p := range params {
-		paramStrs = append(paramStrs, p.String())
-	}
-	condition := strings.Join(paramStrs, " ")
-	condition = strings.Trim(condition, "()")
-
-	// Build actions from the if block.
-	block := d.GetBlock()
-	if block == nil {
-		return nil, errors.New("if directive requires a block")
-	}
-
-	blockActions, err := buildActions(block)
-	if err != nil {
-		return nil, fmt.Errorf("building if block actions: %w", err)
-	}
-
-	eval, err := buildCondition(condition)
-	if err != nil {
-		return nil, fmt.Errorf("building if condition: %w", err)
-	}
-
-	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		if eval(req, ctx) {
-			return blockActions.Execute(rw, req, ctx)
-		}
-		return false, nil
-	}, nil
-}
-
 // isRedirectCode returns true if the given HTTP status code is a redirect code
 // that NGINX treats as requiring a Location header (301, 302, 303, 307, 308).
 func isRedirectCode(code int) bool {
@@ -862,7 +646,7 @@ func parseIntSimple(s string) (int, bool) {
 
 func createReturnURLAction(u string) action {
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		resolvedURL := ingressnginx.ReplaceVariables(u, req, ctx.vars)
+		resolvedURL := ingressnginx.ReplaceVariables(u, ctx.req, nil, ctx.vars)
 		ctx.statusCode = http.StatusFound
 		ctx.redirectURL = resolvedURL
 		return true, nil
@@ -896,7 +680,7 @@ func createReturnAction(d config.IDirective) (action, error) {
 		return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
 			ctx.statusCode = code
 			if text != "" {
-				ctx.redirectURL = ingressnginx.ReplaceVariables(text, req, ctx.vars)
+				ctx.redirectURL = ingressnginx.ReplaceVariables(text, ctx.req, nil, ctx.vars)
 			}
 			return true, nil
 		}, nil
@@ -905,7 +689,7 @@ func createReturnAction(d config.IDirective) (action, error) {
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
 		ctx.statusCode = code
 		if text != "" {
-			ctx.body = ingressnginx.ReplaceVariables(text, req, ctx.vars)
+			ctx.body = ingressnginx.ReplaceVariables(text, ctx.req, nil, ctx.vars)
 		}
 		return true, nil
 	}, nil
@@ -938,7 +722,7 @@ func createRewriteAction(d config.IDirective) (action, error) {
 	}
 
 	pattern := params[0].String()
-	replacement := params[1].String()
+	replacement := trimQuote(params[1].String())
 
 	var flag string
 	if len(params) >= 3 {
@@ -977,7 +761,7 @@ func createRewriteAction(d config.IDirective) (action, error) {
 
 		// Build the replacement string: first replace capture groups, then NGINX variables.
 		result := replaceCaptureGroups(replacement, matches)
-		result = ingressnginx.ReplaceVariables(result, req, ctx.vars)
+		result = ingressnginx.ReplaceVariables(result, ctx.req, nil, ctx.vars)
 
 		// Determine redirect behavior.
 		switch {
@@ -1041,73 +825,7 @@ func createSetAction(d config.IDirective) (action, error) {
 	value := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, req, ctx.vars)
-		return false, nil
-	}, nil
-}
-
-func createLocationAction(d config.IDirective) (action, error) {
-	params := d.GetParameters()
-	if len(params) == 0 {
-		return nil, errors.New("location directive requires a path pattern")
-	}
-
-	pathPattern := params[0].String()
-	if len(params) == 2 {
-		pathPattern += params[1].String()
-	}
-
-	// Build actions from the location block.
-	block := d.GetBlock()
-	if block == nil {
-		return nil, errors.New("location directive requires a block")
-	}
-
-	blockActions, err := buildActions(block)
-	if err != nil {
-		return nil, fmt.Errorf("building location block actions: %w", err)
-	}
-
-	// Determine location type and compile regex if needed.
-	// Check ~* (case-insensitive regex) before ~ (case-sensitive regex).
-	var re *regexp.Regexp
-	var isExact bool
-	if pattern, ok := strings.CutPrefix(pathPattern, "~*"); ok {
-		pattern = strings.TrimSpace(pattern)
-		re, err = regexp.Compile("(?i)" + pattern)
-		if err != nil {
-			return nil, fmt.Errorf("compiling location regex: %w", err)
-		}
-	} else if pattern, ok := strings.CutPrefix(pathPattern, "~"); ok {
-		pattern = strings.TrimSpace(pattern)
-		re, err = regexp.Compile(pattern)
-		if err != nil {
-			return nil, fmt.Errorf("compiling location regex: %w", err)
-		}
-	} else if exact, ok := strings.CutPrefix(pathPattern, "="); ok {
-		pathPattern = strings.TrimSpace(exact)
-		isExact = true
-	}
-
-	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		var matches bool
-		switch {
-		case re != nil:
-			matches = re.MatchString(req.URL.Path)
-		case isExact:
-			matches = req.URL.Path == pathPattern
-		default:
-			matches = strings.HasPrefix(req.URL.Path, pathPattern)
-		}
-
-		if matches {
-			stop, err := blockActions.Execute(rw, req, ctx)
-			if err != nil {
-				return false, fmt.Errorf("executing location block: %w", err)
-			}
-
-			return stop, nil
-		}
+		ctx.vars[varName] = ingressnginx.ReplaceVariables(value, ctx.req, nil, ctx.vars)
 		return false, nil
 	}, nil
 }
@@ -1130,7 +848,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 	if len(parts) == 1 {
 		varExpr := parts[0]
 		return func(req *http.Request, ctx *actionContext) bool {
-			val := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
+			val := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			// If the variable was not resolved, treat as undefined.
 			if val == varExpr {
 				return false
@@ -1150,15 +868,15 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 	switch operator {
 	case "=":
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
-			expected := ingressnginx.ReplaceVariables(expectedExpr, req, ctx.vars)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
+			expected := ingressnginx.ReplaceVariables(expectedExpr, ctx.req, nil, ctx.vars)
 			return varVal == expected
 		}, nil
 
 	case "!=":
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
-			expected := ingressnginx.ReplaceVariables(expectedExpr, req, ctx.vars)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
+			expected := ingressnginx.ReplaceVariables(expectedExpr, ctx.req, nil, ctx.vars)
 			return varVal != expected
 		}, nil
 
@@ -1168,7 +886,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			matches := re.FindStringSubmatch(varVal)
 			if matches == nil {
 				return false
@@ -1183,7 +901,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			return !re.MatchString(varVal)
 		}, nil
 
@@ -1193,7 +911,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling case-insensitive regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			matches := re.FindStringSubmatch(varVal)
 			if matches == nil {
 				return false
@@ -1208,7 +926,7 @@ func buildCondition(condition string) (conditionEvaluator, error) {
 			return nil, fmt.Errorf("compiling case-insensitive regex in condition: %w", err)
 		}
 		return func(req *http.Request, ctx *actionContext) bool {
-			varVal := ingressnginx.ReplaceVariables(varExpr, req, ctx.vars)
+			varVal := ingressnginx.ReplaceVariables(varExpr, ctx.req, nil, ctx.vars)
 			return !re.MatchString(varVal)
 		}, nil
 

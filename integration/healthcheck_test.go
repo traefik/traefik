@@ -577,7 +577,7 @@ func (s *HealthCheckSuite) TestPropagateNoHealthCheck() {
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`noop.localhost`)"), try.BodyNotContains("Host(`root.localhost`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`noop.localhost`)"), try.BodyContains("cannot register wsp1 as updater for wsp-service1@file"))
 	require.NoError(s.T(), err)
 
 	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)

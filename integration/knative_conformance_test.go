@@ -73,10 +73,10 @@ func (s *KnativeConformanceSuite) SetupSuite() {
 
 	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/knative/00-knative-crd-v1.19.0.yml"),
+		k3s.WithManifest("./fixtures/knative/00-knative-crd-v1.20.0.yml"),
 		k3s.WithManifest("./fixtures/knative/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/knative/02-traefik.yml"),
-		k3s.WithManifest("./fixtures/knative/03-knative-serving-v1.19.0.yaml"),
+		k3s.WithManifest("./fixtures/knative/03-knative-serving-v1.20.0.yaml"),
 		k3s.WithManifest("./fixtures/knative/04-serving-tests-namespace.yaml"),
 		network.WithNetwork(nil, s.network),
 	)

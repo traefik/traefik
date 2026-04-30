@@ -228,10 +228,10 @@ func TestMuxer(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -264,9 +264,10 @@ func TestMuxer(t *testing.T) {
 
 func Test_addRoutePriority(t *testing.T) {
 	type Case struct {
-		xFrom    string
-		rule     string
-		priority int
+		xFrom        string
+		rule         string
+		priority     int
+		providerName string
 	}
 
 	testCases := []struct {
@@ -375,6 +376,120 @@ func Test_addRoutePriority(t *testing.T) {
 			},
 			expected: "header3",
 		},
+		{
+			desc: "Same priority and rule, kubernetescrd wins over kubernetes",
+			path: "/my",
+			cases: []Case{
+				{
+					xFrom:        "header1",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetes",
+				},
+				{
+					xFrom:        "header2",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetescrd",
+				},
+			},
+			expected: "header2",
+		},
+		{
+			desc: "Same priority and rule, kubernetesgateway wins over kubernetescrd",
+			path: "/my",
+			cases: []Case{
+				{
+					xFrom:        "header1",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetescrd",
+				},
+				{
+					xFrom:        "header2",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetesgateway",
+				},
+			},
+			expected: "header2",
+		},
+		{
+			desc: "Same priority and rule, kubernetesgateway wins over kubernetes",
+			path: "/my",
+			cases: []Case{
+				{
+					xFrom:        "header1",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetesgateway",
+				},
+				{
+					xFrom:        "header2",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetes",
+				},
+			},
+			expected: "header1",
+		},
+		{
+			desc: "Same priority and rule, kubernetescrd wins over kubernetesingressnginx",
+			path: "/my",
+			cases: []Case{
+				{
+					xFrom:        "header1",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetesingressnginx",
+				},
+				{
+					xFrom:        "header2",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetescrd",
+				},
+			},
+			expected: "header2",
+		},
+		{
+			desc: "Same priority and rule, known provider wins over unknown provider",
+			path: "/my",
+			cases: []Case{
+				{
+					xFrom:        "header1",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "unknownprovider",
+				},
+				{
+					xFrom:        "header2",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetes",
+				},
+			},
+			expected: "header2",
+		},
+		{
+			desc: "Higher numeric priority wins regardless of provider",
+			path: "/my",
+			cases: []Case{
+				{
+					xFrom:        "header1",
+					rule:         "PathPrefix(`/my`)",
+					priority:     20,
+					providerName: "kubernetesingressnginx",
+				},
+				{
+					xFrom:        "header2",
+					rule:         "PathPrefix(`/my`)",
+					priority:     10,
+					providerName: "kubernetesgateway",
+				},
+			},
+			expected: "header1",
+		},
 	}
 
 	for _, test := range testCases {
@@ -383,7 +498,7 @@ func Test_addRoutePriority(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, []string{"kubernetesgateway", "kubernetescrd", "kubernetes", "kubernetesingressnginx"})
 
 			for _, route := range test.cases {
 				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -394,7 +509,7 @@ func Test_addRoutePriority(t *testing.T) {
 					route.priority = GetRulePriority(route.rule)
 				}
 
-				err := muxer.AddRoute(route.rule, "", route.priority, handler)
+				err := muxer.AddRoute(route.rule, "", route.priority, route.providerName, handler)
 				require.NoError(t, err, route.rule)
 			}
 
@@ -517,9 +632,9 @@ func TestEmptyHost(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			require.NoError(t, err)
 
 			// RequestDecorator is necessary for the host rule
