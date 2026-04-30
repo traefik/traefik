@@ -30,7 +30,7 @@ func TestLoadIngresses(t *testing.T) {
 		defaultBackendServiceNamespace string
 		allowCrossNamespaceResources   bool
 		globalAllowedResponseHeaders   []string
-		ipAllowListDepth               int
+		ipAllowListStrategy            *dynamic.IPStrategy
 		allowSnippetAnnotations        bool
 		globalAuthURL                  string
 		strictValidatePathType         *bool
@@ -6283,8 +6283,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:             "AllowlistSourceRange with global IPAllowListDepth",
-			ipAllowListDepth: 2,
+			desc:                "AllowlistSourceRange with global IPAllowListDepth",
+			ipAllowListStrategy: &dynamic.IPStrategy{Depth: 2},
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -6303,6 +6303,16 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-allowlist-single-ip",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -6311,6 +6321,16 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-allowlist-single-ip",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6342,6 +6362,15 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
 						"default-ingress-with-allowlist-single-ip-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
@@ -15106,7 +15135,7 @@ func TestLoadIngresses(t *testing.T) {
 				NonTLSEntryPoints:              []string{"http"},
 				TLSEntryPoints:                 []string{"https"},
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
-				IPAllowListDepth:               test.ipAllowListDepth,
+				IPAllowListStrategy:            test.ipAllowListStrategy,
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 				GlobalAuthURL:                  test.globalAuthURL,
 			}

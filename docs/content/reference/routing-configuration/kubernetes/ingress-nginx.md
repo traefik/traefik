@@ -364,12 +364,16 @@ The following annotations are organized by category for easier navigation.
 
 ### IP Whitelist
 
+!!! info "Client IP Strategy"
+
+    By default, the client IP is determined from the remote address of the incoming request.
+    When Traefik is behind a reverse proxy, the actual client IP is often found in the `X-Forwarded-For` header instead.
+    The IP strategy used by the generated [IPAllowList](../../http/middlewares/ipallowlist) middleware can be configured globally using the provider option [`ipAllowListStrategy`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-ipAllowListStrategy).
+
 | Annotation                                                                                                                                                                                                                                          | Limitations / Notes                                                                        |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                                                      |
-
-The client IP extraction depth used by the generated IP allow list middleware can be configured globally with the provider option [`ipAllowListDepth`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-ipAllowListDepth).
 
 ### Rate Limiting
 
