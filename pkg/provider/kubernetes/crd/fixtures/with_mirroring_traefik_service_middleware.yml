@@ -1,0 +1,89 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix-main
+  namespace: default
+
+spec:
+  stripPrefix:
+    prefixes:
+      - /mainstrip
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix-mirror
+  namespace: default
+
+spec:
+  stripPrefix:
+    prefixes:
+      - /mirrorstrip
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: inner-main
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: whoami
+        port: 80
+        weight: 1
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: inner-mirror
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: whoami
+        port: 80
+        weight: 1
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: outer-mirroring
+  namespace: default
+
+spec:
+  mirroring:
+    name: inner-main
+    kind: TraefikService
+    middlewares:
+      - name: stripprefix-main
+    mirrors:
+      - name: inner-mirror
+        kind: TraefikService
+        percent: 50
+        middlewares:
+          - name: stripprefix-mirror
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      services:
+        - name: outer-mirroring
+          kind: TraefikService

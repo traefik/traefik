@@ -219,6 +219,19 @@ func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []tra
 	return mds, nil
 }
 
+// makeChildMiddlewareKeys returns the normalized middleware keys declared on
+// a composite-service child, but only when the child targets another
+// TraefikService. For kind: Service children, middlewares are already carried
+// by the synthetic dynamic.Service built in buildServersLB, so returning nil
+// here avoids double-wrapping at runtime.
+func (c configBuilder) makeChildMiddlewareKeys(ctx context.Context, namespace string, spec traefikv1alpha1.LoadBalancerSpec) ([]string, error) {
+	if spec.Kind != "TraefikService" || len(spec.Middlewares) == 0 {
+		return nil, nil
+	}
+
+	return makeMiddlewareKeys(ctx, namespace, spec.Middlewares, c.allowCrossNamespace)
+}
+
 // resolveParentRouterNames resolves parent IngressRoute references to router names.
 // It returns the list of parent router names and an error if one occurred during processing.
 func resolveParentRouterNames(client Client, ingressRoute *traefikv1alpha1.IngressRoute, allowCrossNamespace bool) ([]string, error) {
@@ -312,9 +325,15 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 			weight = func(i int) *int { return &i }(1)
 		}
 
+		middlewares, err := c.makeChildMiddlewareKeys(ctx, namespace, service.LoadBalancerSpec)
+		if err != nil {
+			return fmt.Errorf("building middleware keys for weighted service %q: %w", fullName, err)
+		}
+
 		wrrServices = append(wrrServices, dynamic.WRRService{
-			Name:   fullName,
-			Weight: weight,
+			Name:        fullName,
+			Weight:      weight,
+			Middlewares: middlewares,
 		})
 	}
 
@@ -359,6 +378,11 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		conf[fullNameMain] = k8sService
 	}
 
+	mainServiceMiddlewares, err := c.makeChildMiddlewareKeys(ctx, tService.Namespace, tService.Spec.Mirroring.LoadBalancerSpec)
+	if err != nil {
+		return fmt.Errorf("building middleware keys for mirroring main service %q: %w", fullNameMain, err)
+	}
+
 	var mirrorServices []dynamic.MirrorService
 	for _, mirror := range tService.Spec.Mirroring.Mirrors {
 		mirroredName, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirror.LoadBalancerSpec)
@@ -370,15 +394,22 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 			conf[mirroredName] = k8sService
 		}
 
+		mirrorMiddlewares, err := c.makeChildMiddlewareKeys(ctx, tService.Namespace, mirror.LoadBalancerSpec)
+		if err != nil {
+			return fmt.Errorf("building middleware keys for mirror %q: %w", mirroredName, err)
+		}
+
 		mirrorServices = append(mirrorServices, dynamic.MirrorService{
-			Name:    mirroredName,
-			Percent: mirror.Percent,
+			Name:        mirroredName,
+			Percent:     mirror.Percent,
+			Middlewares: mirrorMiddlewares,
 		})
 	}
 
 	conf[id] = &dynamic.Service{
 		Mirroring: &dynamic.Mirroring{
 			Service:     fullNameMain,
+			Middlewares: mainServiceMiddlewares,
 			Mirrors:     mirrorServices,
 			MirrorBody:  tService.Spec.Mirroring.MirrorBody,
 			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
@@ -741,9 +772,15 @@ func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.T
 			weight = func(i int) *int { return &i }(1)
 		}
 
+		middlewares, err := c.makeChildMiddlewareKeys(ctx, tService.Namespace, hrwService.LoadBalancerSpec)
+		if err != nil {
+			return fmt.Errorf("building middleware keys for hrw service %q: %w", hrwServiceName, err)
+		}
+
 		hrwServices = append(hrwServices, dynamic.HRWService{
-			Name:   hrwServiceName,
-			Weight: weight,
+			Name:        hrwServiceName,
+			Weight:      weight,
+			Middlewares: middlewares,
 		})
 	}
 
@@ -762,14 +799,26 @@ func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alp
 		return fmt.Errorf("getting service: %w", err)
 	}
 
+	serviceMiddlewares, err := c.makeChildMiddlewareKeys(ctx, tService.Namespace, tService.Spec.Failover.Service)
+	if err != nil {
+		return fmt.Errorf("building middleware keys for failover service %q: %w", serviceName, err)
+	}
+
 	fallbackName, fallback, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Fallback)
 	if err != nil {
 		return fmt.Errorf("getting fallback service: %w", err)
 	}
 
+	fallbackMiddlewares, err := c.makeChildMiddlewareKeys(ctx, tService.Namespace, tService.Spec.Failover.Fallback)
+	if err != nil {
+		return fmt.Errorf("building middleware keys for failover fallback %q: %w", fallbackName, err)
+	}
+
 	failover := &dynamic.Failover{
-		Service:  serviceName,
-		Fallback: fallbackName,
+		Service:             serviceName,
+		Middlewares:         serviceMiddlewares,
+		Fallback:            fallbackName,
+		FallbackMiddlewares: fallbackMiddlewares,
 		Errors: &dynamic.FailoverError{
 			Status:              tService.Spec.Failover.Errors.Status,
 			MaxRequestBodyBytes: tService.Spec.Failover.Errors.MaxRequestBodyBytes,

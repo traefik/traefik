@@ -201,13 +201,14 @@ type KubernetesIngressMetadata struct {
 // Mirroring holds the Mirroring configuration.
 type Mirroring struct {
 	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Middlewares []string        `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	MirrorBody  *bool           `json:"mirrorBody,omitempty" toml:"mirrorBody,omitempty" yaml:"mirrorBody,omitempty" export:"true"`
 	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
 	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty" export:"true"`
 	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
-// SetDefaults Default values for a WRRService.
+// SetDefaults Default values for a Mirroring.
 func (m *Mirroring) SetDefaults() {
 	defaultMirrorBody := MirroringDefaultMirrorBody
 	m.MirrorBody = &defaultMirrorBody
@@ -219,10 +220,12 @@ func (m *Mirroring) SetDefaults() {
 
 // Failover holds the Failover configuration.
 type Failover struct {
-	Service     string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Fallback    string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
-	HealthCheck *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
+	Service             string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Middlewares         []string       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Fallback            string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	FallbackMiddlewares []string       `json:"fallbackMiddlewares,omitempty" toml:"fallbackMiddlewares,omitempty" yaml:"fallbackMiddlewares,omitempty" export:"true"`
+	HealthCheck         *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Errors              *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -233,7 +236,7 @@ type FailoverError struct {
 	Status              []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
 }
 
-// SetDefaults Default values for a WRRService.
+// SetDefaults Default values for a FailoverError.
 func (m *FailoverError) SetDefaults() {
 	m.MaxRequestBodyBytes = ptr.To(FailoverErrorsDefaultMaxRequestBodyBytes)
 }
@@ -242,8 +245,9 @@ func (m *FailoverError) SetDefaults() {
 
 // MirrorService holds the MirrorService configuration.
 type MirrorService struct {
-	Name    string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
-	Percent int    `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty" export:"true"`
+	Name        string   `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Percent     int      `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -277,8 +281,9 @@ type HighestRandomWeight struct {
 
 // WRRService is a reference to a service load-balanced with weighted round-robin.
 type WRRService struct {
-	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
-	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+	Name        string   `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Weight      *int     `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 
 	// Headers defines the HTTP headers that should be added to the request when calling the service.
 	// This is required by the Knative implementation which expects specific headers to be sent.
@@ -302,8 +307,9 @@ func (w *WRRService) SetDefaults() {
 
 // HRWService is a reference to a service load-balanced with highest random weight.
 type HRWService struct {
-	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
-	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+	Name        string   `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Weight      *int     `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a HRWService.
