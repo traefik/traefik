@@ -323,7 +323,6 @@ func (r *responseWriter) Header() http.Header {
 	// return the real response writer's headers. During a retry (shouldRetry=true),
 	// even after written=true, return the internal headers map so that failed-attempt
 	// headers are discarded and not leaked to the client.
-	// here if I switch the && for a || the TestRetryFlakyBufferingOnRecovers succeeds.
 	if r.written && !r.ShouldRetry() {
 		return r.responseWriter.Header()
 	}
