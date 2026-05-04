@@ -317,6 +317,18 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
 			continue
 		}
+		// Load TLS certificates into the shared mc.Certs map first. They are kept
+		// even when the rest of the ingress is later skipped (e.g. when an
+		// auth-tls-secret fails to resolve), so the default certificate pool stays
+		// consistent. When loading fails, hasTLS still signals that the ingress has
+		// a TLS section so the translator can fall back to the default cert.
+		hasTLS := len(ing.Spec.TLS) > 0
+		if hasTLS {
+			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
+				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
+			}
+		}
+
 		// Resolve TLS option (auth-tls-secret).
 		var tlsOptionName string
 		var tlsOption *tls.Options
@@ -328,23 +340,15 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			} else {
 				tlsOpt, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config)
 				if err != nil {
-					logger.Error().Err(err).Msg("Cannot build client auth TLS option")
-				} else {
-					tlsOptionName = optName
-					tlsOption = tlsOpt
-					tlsOptionCache[optName] = tlsOption
+					logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+					// Skipping the ingress entirely matches ingress-nginx behavior:
+					// when the configured client-auth secret cannot be resolved, no
+					// router/middleware/service should be exposed for the ingress.
+					continue
 				}
-			}
-		}
-
-		// Load TLS certificates into the shared mc.Certs map (keyed by cert PEM,
-		// which naturally deduplicates certs reused across ingresses). When loading
-		// fails, hasTLS still signals that the ingress has a TLS section so the
-		// translator can fall back to the default cert.
-		hasTLS := len(ing.Spec.TLS) > 0
-		if hasTLS {
-			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
-				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
+				tlsOptionName = optName
+				tlsOption = tlsOpt
+				tlsOptionCache[optName] = tlsOption
 			}
 		}
 

@@ -89,13 +89,13 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Observability: obs,
 		}
 
-		if loc := mc.DefaultBackendLocation; loc != nil && loc.Retry != nil {
-			retryName := defaultBackendName + "-retry"
-			retryTLSName := defaultBackendTLSName + "-retry"
-			conf.HTTP.Middlewares[retryName] = &dynamic.Middleware{Retry: loc.Retry}
-			conf.HTTP.Middlewares[retryTLSName] = &dynamic.Middleware{Retry: loc.Retry}
-			rt.Middlewares = []string{retryName}
-			rtTLS.Middlewares = []string{retryTLSName}
+		// Apply the full middleware stack from the ingress location annotations to
+		// both catch-all routers, so options like enable-cors, custom-headers,
+		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
+		// ingress reach its catch-all routers (and not just retry).
+		if loc := mc.DefaultBackendLocation; loc != nil {
+			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
 
 		conf.HTTP.Routers[defaultBackendName] = rt
