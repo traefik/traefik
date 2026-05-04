@@ -703,7 +703,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetescrd.crossprovidernamespaces`:  
-List of namespaces from which Traefik resources are allowed to declare references to services, middlewares, TLS options or ServersTransports. A nil list (default) means unrestricted; an empty list rejects every resource declaring references.
+List of namespaces from which custom resources are allowed to declare direct references to Services, Middlewares, TLSOptions or ServersTransports.
 
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -730,7 +730,7 @@ Enable Kubernetes gateway api provider with default settings. (Default: ```false
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetesgateway.crossprovidernamespaces`:  
-List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references. A nil list (default) means unrestricted; an empty list rejects every TraefikService backendRef.
+List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references.
 
 `--providers.kubernetesgateway.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -760,7 +760,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetesingress.crossprovidernamespaces`:  
-List of namespaces from which Ingresses are allowed to attach Traefik middlewares via the router.middlewares annotation. A nil list (default) means unrestricted; an empty list rejects every Ingress declaring middleware references.
+List of namespaces from which Ingresses are allowed to attach Traefik middlewares via the router.middlewares annotation.
 
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
