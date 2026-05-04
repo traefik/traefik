@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/utils/ptr"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -313,7 +314,7 @@ func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
 	// Allow upgrading from false to true (HTTP status code overrides TCP baseline),
 	// but not downgrading from true to false.
 	if shouldRetry {
-		*r.shouldRetry = true
+		r.shouldRetry = ptr.To(true)
 	}
 }
 
