@@ -5338,7 +5338,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress default backend without rules emits catch-all routers",
+			desc: "Ingress default backend without rules emits catch-all routers with middleware annotations applied",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5357,7 +5357,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Priority:    math.MinInt32,
 							Service:     "default-backend",
-							Middlewares: []string{"default-backend-retry"},
+							Middlewares: []string{"default-backend-cors", "default-backend-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -5375,7 +5375,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Priority:    math.MinInt32,
 							Service:     "default-backend",
-							Middlewares: []string{"default-backend-tls-retry"},
+							Middlewares: []string{"default-backend-tls-cors", "default-backend-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -5390,6 +5390,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-backend-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlExposeHeaders:    []string{},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"},
+								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlMaxAge:           1728000,
+							},
+						},
+						"default-backend-tls-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlExposeHeaders:    []string{},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"},
+								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlMaxAge:           1728000,
+							},
+						},
 						"default-backend-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -15645,6 +15665,47 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Auth TLS secret missing — ingress is skipped entirely",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-missing.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
