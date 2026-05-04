@@ -40,7 +40,7 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildAuthTLSPassCert(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
-	p.buildRetry(loc, endpointCount)
+	p.buildRetry(ctx, loc, endpointCount)
 }
 
 func (p *Provider) buildSSLRedirect(loc *location) {
@@ -413,7 +413,7 @@ func (p *Provider) buildSnippetAuth(loc *location) {
 	loc.SnippetAuth = sa
 }
 
-func (p *Provider) buildRetry(loc *location, endpointCount int) {
+func (p *Provider) buildRetry(ctx context.Context, loc *location, endpointCount int) {
 	attempts := ptr.Deref(loc.Config.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
 	// Safeguard to deactivate retry when the value is less than 0.
 	if attempts < 0 {
@@ -442,6 +442,23 @@ func (p *Provider) buildRetry(loc *location, endpointCount int) {
 
 	retry := &dynamic.Retry{Attempts: attempts}
 
+	maxRequestBodyBytes := p.ProxyBodySize
+	if proxyBodySize := ptr.Deref(loc.Config.ProxyBodySize, ""); proxyBodySize != "" {
+		if v, err := nginxSizeToBytes(proxyBodySize); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("proxy-body-size invalid, using provider default")
+		} else {
+			maxRequestBodyBytes = v
+		}
+	}
+
+	if maxRequestBodyBytes == 0 {
+		// Zero value means no limit with ingress-nginx.
+		// With the retry middleware, the equivalent configuration is a negative value.
+		maxRequestBodyBytes = -1
+	}
+
+	retry.MaxRequestBodyBytes = &maxRequestBodyBytes
+
 	hasError := slices.Contains(conditions, "error")
 	hasTimeout := slices.Contains(conditions, "timeout")
 	if !hasError && !hasTimeout {
@@ -451,6 +468,20 @@ func (p *Provider) buildRetry(loc *location, endpointCount int) {
 	for _, sc := range conditions {
 		if code, ok := strings.CutPrefix(sc, "http_"); ok {
 			retry.Status = append(retry.Status, code)
+		}
+	}
+	if len(retry.Status) > 0 {
+		disableRequestBuffering := !p.ProxyRequestBuffering
+		if loc.Config.ProxyRequestBuffering != nil {
+			// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+			disableRequestBuffering = *loc.Config.ProxyRequestBuffering != "on"
+		}
+
+		// When request buffering is explicitly disabled,
+		// we still want to allow the retry for empty body requests
+		// but disable it for request with bodies.
+		if disableRequestBuffering {
+			retry.MaxRequestBodyBytes = ptr.To(int64(0))
 		}
 	}
 

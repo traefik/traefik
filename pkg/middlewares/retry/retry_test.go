@@ -106,7 +106,6 @@ func TestRetry(t *testing.T) {
 
 			retryAttempts := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-
 				retryAttempts++
 
 				if retryAttempts > test.amountFaultyEndpoints {
