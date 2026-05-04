@@ -1,3 +1,49 @@
+##  [v3.7.0-rc.3](https://github.com/traefik/traefik/tree/v3.7.0-rc.3) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.0-rc.2...v3.7.0-rc.3)
+
+**Enhancements:**
+- **[k8s/ingress-nginx]** Use a metamodel to generate dynamic configuration in ingress-nginx ([#13062](https://github.com/traefik/traefik/pull/13062) @juliens)
+- **[k8s/ingress-nginx]** Add limit-connections support ([#13030](https://github.com/traefik/traefik/pull/13030) @amazon7737)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix SSL redirect behavior for ingress-nginx provider ([#13028](https://github.com/traefik/traefik/pull/13028) @gndz07)
+- **[k8s/ingress-nginx]** Do not require a port for ExternalName services ([#13033](https://github.com/traefik/traefik/pull/13033) @kevinpollet)
+- **[k8s, k8s/ingress-nginx]** Add regression test for ingress default backend without rules ([#13066](https://github.com/traefik/traefik/pull/13066) @mmatur)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.1 ([#13027](https://github.com/traefik/traefik/pull/13027) @ldez)
+- **[server]** Bump github.com/vulcand/oxy to v2.1.0 ([#13046](https://github.com/traefik/traefik/pull/13046) @ldez)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.2 ([#13043](https://github.com/traefik/traefik/pull/13043) @ldez)
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+
+**Documentation:**
+- **[k8s/ingress-nginx]** Add ingress-nginx ConfigMap migration step ([#12963](https://github.com/traefik/traefik/pull/12963) @sheddy-traefik)
+- **[k8s/ingress-nginx]** Delete the coming soon section from the ingress-nginx documentation ([#13037](https://github.com/traefik/traefik/pull/13037) @nmengin)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
+## [v3.6.15](https://github.com/traefik/traefik/tree/v3.6.15) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.14...v3.6.15)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.2 ([#13043](https://github.com/traefik/traefik/pull/13043) @ldez)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.1 ([#13027](https://github.com/traefik/traefik/pull/13027) @ldez)
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+- **[k8s/ingress-nginx]** Do not require a port for ExternalName services ([#13033](https://github.com/traefik/traefik/pull/13033) @kevinpollet)
+- **[server]** Bump github.com/vulcand/oxy to v2.1.0 ([#13046](https://github.com/traefik/traefik/pull/13046) @ldez)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
+## [v2.11.44](https://github.com/traefik/traefik/tree/v2.11.44) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.43...v2.11.44)
+
+**Bug fixes:**
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+- **[acme]** Bump github.com/go-acme/lego to v4.35.2 ([#13052](https://github.com/traefik/traefik/pull/13052) @mmatur)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
 ## [v3.7.0-rc.2](https://github.com/traefik/traefik/tree/v3.7.0-rc.2) (2026-04-22)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.0-rc.1...v3.7.0-rc.2)
 
