@@ -174,9 +174,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				ReadCloser: req.Body,
 				peeked:     readBytes,
 			}
-
-			//http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
-			//return
 		}
 	}
 

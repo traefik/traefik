@@ -5519,12 +5519,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-backend-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 						"default-backend-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5656,16 +5658,28 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-default-backend-annotations-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-default-backend-annotations-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-default-backend-annotations-default-backend-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-default-backend-annotations-default-backend-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -6491,12 +6505,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 					},
@@ -15312,8 +15328,18 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-limit-connections-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-limit-connections-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3}},
+						"default-ingress-with-limit-connections-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-limit-connections-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
+						},
 						"default-ingress-with-limit-connections-rule-0-path-0-limit-connections": {
 							InFlightReq: &dynamic.InFlightReq{
 								Amount: 10,
