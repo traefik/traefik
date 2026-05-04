@@ -15130,11 +15130,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			// Regression test for the metamodel refactor: two TLS sections that
-			// reference distinct Secrets must produce two TLS certificate entries,
-			// even when the Secrets carry identical PEM content. The fix in build.go
-			// keys the certs map by "<namespace>/<secretName>" rather than by the
-			// certificate PEM, so the second entry is no longer dropped.
+			// Two TLS sections that reference distinct Secrets must produce two TLS certificate entries,
+			// even when the Secrets carry identical PEM content.
 			desc: "TLS multiple secrets are not deduplicated by PEM content",
 			paths: []string{
 				"services.yml",
@@ -15295,10 +15292,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			// Regression test for the metamodel refactor: an ingress with
-			// ssl-passthrough must still load TLS certificates from its Spec.TLS
-			// section, so the certificate is registered as a default cert even
-			// though TCP passthrough takes over the actual routing.
+			// An ingress with ssl-passthrough must still load TLS certificates from its Spec.TLS section,
+			// so the certificate is registered as a default cert even though TCP passthrough takes over the actual routing.
 			desc: "SSL Passthrough still loads TLS section certificates",
 			paths: []string{
 				"services.yml",
@@ -15359,11 +15354,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			// Regression test for the metamodel refactor: when
-			// auth-tls-pass-certificate-to-upstream is enabled together with
-			// auth-tls-verify-client=optional_no_ca (RequestClientCert), the
-			// auth-tls-secret's CA bytes must be forwarded to the upstream via
-			// the AuthTLSPassCertificateToUpstream middleware's CAFiles field.
+			// When auth-tls-pass-certificate-to-upstream is enabled together with auth-tls-verify-client=optional_no_ca (RequestClientCert),
+			// the auth-tls-secret's CA bytes must be forwarded to the upstream via the AuthTLSPassCertificateToUpstream middleware's CAFiles field.
 			desc: "Auth TLS pass certificate to upstream with optional_no_ca populates CAFiles",
 			paths: []string{
 				"services.yml",
@@ -15506,12 +15498,9 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			// Regression test for the metamodel refactor: when an ingress combines
-			// custom-http-errors + a per-ingress default-backend annotation +
-			// upstream-hash-by, the per-router error-backend service must inherit
-			// the upstream-hash-by configuration (HRW strategy + NginxUpstreamHashBy)
-			// from the ingress location config — not fall back to the default WRR
-			// strategy.
+			// When an ingress combines custom-http-errors + a per-ingress default-backend annotation + upstream-hash-by,
+			// the per-router error-backend service must inherit the upstream-hash-by configuration (HRW strategy + NginxUpstreamHashBy)
+			// from the ingress location config — not fall back to the default WRR strategy.
 			desc: "Custom HTTP errors error-backend service inherits upstream-hash-by",
 			paths: []string{
 				"services.yml",
