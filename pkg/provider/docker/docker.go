@@ -419,7 +419,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 		return nil, err
 	}
 
-	var networkListArgs client.Filters
+	networkListArgs := client.Filters{}
 	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
 	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
 		networkListArgs.Add("scope", "swarm")
