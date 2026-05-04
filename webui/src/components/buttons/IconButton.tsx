@@ -1,4 +1,4 @@
-import { Button, Flex, Text } from '@traefiklabs/faency'
+import { Button, Flex, Text } from '@traefik-labs/faency'
 import { ComponentProps, ReactNode } from 'react'
 
 type IconButtonProps = ComponentProps<typeof Button> & {

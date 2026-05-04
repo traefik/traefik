@@ -1,4 +1,4 @@
-import { Box, Button, Flex, H1, Text } from '@traefiklabs/faency'
+import { Box, Button, Flex, H1, Text } from '@traefik-labs/faency'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 

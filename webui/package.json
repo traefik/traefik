@@ -18,15 +18,9 @@
   },
   "lint-staged": {
     "**/*.{ts,tsx}": [
-      "yarn format",
-      "eslint --fix",
-      "git add"
+      "prettier --config .prettierrc.json --write",
+      "eslint --fix"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "browserslist": {
     "production": [
@@ -43,13 +37,13 @@
   "type": "module",
   "dependencies": {
     "@eslint/js": "^9.32.0",
-    "@noble/ed25519": "^3.0.0",
+    "@noble/ed25519": "^3.0.1",
     "@noble/hashes": "^2.0.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
-    "@traefiklabs/faency": "12.0.4",
+    "@traefik-labs/faency": "12.3.3",
     "@types/lodash": "^4.17.16",
     "@types/node": "^22.15.18",
     "@types/react": "^18.2.0",
@@ -71,7 +65,7 @@
     "globals": "^16.0.0",
     "jest-extended": "^4.0.2",
     "jsdom": "^24.0.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "msw": "^2.1.7",
     "query-string": "^6.9.0",
     "react": "^18.2.0",
@@ -81,7 +75,7 @@
     "react-helmet-async": "^2.0.4",
     "react-icons": "^5.0.1",
     "react-infinite-scroll-hook": "^4.1.1",
-    "react-router-dom": "6.22.1",
+    "react-router-dom": "6.30.2",
     "swr": "^2.2.4",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.38.0",
@@ -92,8 +86,8 @@
     "vitest-canvas-mock": "^0.3.3"
   },
   "devDependencies": {
-    "husky": "^3.1.0",
-    "lint-staged": "^9.5.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
     "prettier": "^3.5.3"
   },
   "msw": {
@@ -103,6 +97,7 @@
   },
   "packageManager": "yarn@4.9.1",
   "resolutions": {
-    "form-data": "4.0.4"
+    "form-data": "4.0.4",
+    "js-yaml": "4.1.1"
   }
 }
