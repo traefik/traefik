@@ -1,4 +1,4 @@
-import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefiklabs/faency'
+import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { FiArrowRight, FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 

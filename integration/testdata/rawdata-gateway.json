@@ -5,7 +5,7 @@
 				"traefik"
 			],
 			"service": "api@internal",
-			"rule": "PathPrefix(\"/api\")",
+			"rule": "PathPrefix(`/api`)",
 			"ruleSyntax": "default",
 			"priority": 9223372036854775806,
 			"observability": {
@@ -28,7 +28,7 @@
 				"dashboard_stripprefix@internal"
 			],
 			"service": "dashboard@internal",
-			"rule": "PathPrefix(\"/\")",
+			"rule": "PathPrefix(`/`)",
 			"ruleSyntax": "default",
 			"priority": 9223372036854775805,
 			"observability": {
@@ -127,7 +127,7 @@
 						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.8:80"
 					}
 				],
 				"strategy": "wrr",
@@ -139,7 +139,7 @@
 			"status": "enabled",
 			"serverStatus": {
 				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.6:80": "UP"
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-wrr@kubernetesgateway": {
@@ -175,6 +175,29 @@
 		}
 	},
 	"tcpRouters": {
+		"deny-unknown-host@kubernetesgateway": {
+			"entryPoints": [
+				"footcp",
+				"footlspassthrough",
+				"footlsterminate",
+				"web",
+				"websecure"
+			],
+			"service": "deny-unknown-host",
+			"rule": "HostSNI(`*`) \u0026\u0026 !ALPN(`h2`) \u0026\u0026 !ALPN(`http/1.1`)",
+			"priority": 1,
+			"tls": {
+				"passthrough": false
+			},
+			"status": "enabled",
+			"using": [
+				"footcp",
+				"footlspassthrough",
+				"footlsterminate",
+				"web",
+				"websecure"
+			]
+		},
 		"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-e3b0c44298fc1c149afb@kubernetesgateway": {
 			"entryPoints": [
 				"footcp"
@@ -186,22 +209,6 @@
 			"status": "enabled",
 			"using": [
 				"footcp"
-			]
-		},
-		"tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-footlsterminate-0-e3b0c44298fc1c149afb@kubernetesgateway": {
-			"entryPoints": [
-				"footlsterminate"
-			],
-			"service": "tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-footlsterminate-0-e3b0c44298fc1c149afb-wrr",
-			"rule": "HostSNI(\"*\")",
-			"ruleSyntax": "default",
-			"priority": -1,
-			"tls": {
-				"passthrough": false
-			},
-			"status": "enabled",
-			"using": [
-				"footlsterminate"
 			]
 		},
 		"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-e3b0c44298fc1c149afb@kubernetesgateway": {
@@ -226,18 +233,25 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.2:8080"
+						"address": "10.42.0.6:8080"
 					},
 					{
-						"address": "10.42.0.3:8080"
+						"address": "10.42.0.9:8080"
 					}
 				]
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.2:8080": "UP",
-				"10.42.0.6:8080": "UP"
+				"10.42.0.6:8080": "UP",
+				"10.42.0.9:8080": "UP"
 			}
+		},
+		"deny-unknown-host@kubernetesgateway": {
+			"loadBalancer": {},
+			"status": "enabled",
+			"usedBy": [
+				"deny-unknown-host@kubernetesgateway"
+			]
 		},
 		"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
 			"weighted": {
@@ -251,20 +265,6 @@
 			"status": "enabled",
 			"usedBy": [
 				"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-e3b0c44298fc1c149afb@kubernetesgateway"
-			]
-		},
-		"tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-footlsterminate-0-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
-			"weighted": {
-				"services": [
-					{
-						"name": "default-whoamitcp-8080",
-						"weight": 1
-					}
-				]
-			},
-			"status": "enabled",
-			"usedBy": [
-				"tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-footlsterminate-0-e3b0c44298fc1c149afb@kubernetesgateway"
 			]
 		},
 		"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {

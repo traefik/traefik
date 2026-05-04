@@ -66,7 +66,7 @@ func newTCPMiddlewareRepresentation(name string, mi *runtime.TCPMiddlewareInfo) 
 	}
 }
 
-func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpRouterRepresentation, 0, len(h.runtimeConfiguration.TCPRouters))
 
 	query := request.URL.Query()
@@ -97,7 +97,7 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 	scapedRouterID := mux.Vars(request)["routerID"]
 
 	routerID, err := url.PathUnescape(scapedRouterID)
@@ -123,7 +123,7 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpServiceRepresentation, 0, len(h.runtimeConfiguration.TCPServices))
 
 	query := request.URL.Query()
@@ -154,7 +154,7 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 	scapedServiceID := mux.Vars(request)["serviceID"]
 
 	serviceID, err := url.PathUnescape(scapedServiceID)
@@ -180,7 +180,7 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpMiddlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
 
 	query := request.URL.Query()
@@ -211,7 +211,7 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 	}
 }
 
-func (h Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request) {
 	scapedMiddlewareID := mux.Vars(request)["middlewareID"]
 
 	middlewareID, err := url.PathUnescape(scapedMiddlewareID)

@@ -132,6 +132,7 @@ func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, intern
 		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
 		TracingEnabled:         o.shouldTrace(internal, config, otypes.MinimalVerbosity),
 		DetailedTracingEnabled: o.shouldTrace(internal, config, otypes.DetailedVerbosity),
+		Metadata:               config.Metadata,
 	})
 }
 

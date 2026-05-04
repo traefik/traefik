@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -727,6 +728,77 @@ type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Hand
 
 func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
 	return s(ctx, serviceName)
+}
+
+func TestGetServiceHandler_HealthCheck(t *testing.T) {
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+	testCases := []struct {
+		desc           string
+		withMiddleware bool
+	}{
+		{
+			desc: "without service middleware",
+		},
+		{
+			desc:           "with service middleware",
+			withMiddleware: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(backend.Close)
+
+			childSvc := &dynamic.Service{
+				LoadBalancer: &dynamic.ServersLoadBalancer{
+					Servers: []dynamic.Server{{URL: backend.URL}},
+					HealthCheck: &dynamic.ServerHealthCheck{
+						Path: "/health",
+					},
+				},
+			}
+			if test.withMiddleware {
+				childSvc.Middlewares = []string{"add-header@file"}
+			}
+
+			configs := map[string]*runtime.ServiceInfo{
+				"child@file": {Service: childSvc},
+				"wrr@file": {
+					Service: &dynamic.Service{
+						Weighted: &dynamic.WeightedRoundRobin{
+							Services:    []dynamic.WRRService{{Name: "child@file", Weight: pointer(1)}},
+							HealthCheck: &dynamic.HealthCheck{},
+						},
+					},
+				},
+			}
+
+			manager := NewManager(configs, nil, nil, &transportManagerMock{}, pb)
+			if test.withMiddleware {
+				manager.SetMiddlewareChainBuilder(&noopMiddlewareChainBuilder{})
+			}
+
+			_, err := manager.BuildHTTP(t.Context(), "wrr@file")
+			require.NoError(t, err)
+		})
+	}
+}
+
+// noopMiddlewareChainBuilder wraps a handler in a plain http.HandlerFunc,
+// simulating the effect of service-level middlewares without needing real middleware config.
+type noopMiddlewareChainBuilder struct{}
+
+func (n *noopMiddlewareChainBuilder) BuildMiddlewareChain(_ context.Context, _ []string) *alice.Chain {
+	chain := alice.New(func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(next.ServeHTTP), nil
+	})
+	return &chain
 }
 
 type internalHandler struct{}

@@ -205,3 +205,18 @@ endpoints:
       - 10.10.0.8
     conditions:
       ready: true
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: external
+  namespace: default
+
+spec:
+  type: ExternalName
+  externalName: external.com
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http

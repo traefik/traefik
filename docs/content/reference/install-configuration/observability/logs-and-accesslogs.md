@@ -384,6 +384,10 @@ Below the fields displayed with the generic CLF format:
 | <a id="opt-TLSVersion" href="#opt-TLSVersion" title="#opt-TLSVersion">`TLSVersion`</a> | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).   |
 | <a id="opt-TLSCipher" href="#opt-TLSCipher" title="#opt-TLSCipher">`TLSCipher`</a> | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS).      |
 | <a id="opt-TLSClientSubject" href="#opt-TLSClientSubject" title="#opt-TLSClientSubject">`TLSClientSubject`</a> | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`).  |
+| <a id="opt-KubernetesIngressNamespace" href="#opt-KubernetesIngressNamespace" title="#opt-KubernetesIngressNamespace">`KubernetesIngressNamespace`</a> | The namespace of the Kubernetes Ingress resource the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
+| <a id="opt-KubernetesIngressName" href="#opt-KubernetesIngressName" title="#opt-KubernetesIngressName">`KubernetesIngressName`</a> | The name of the Kubernetes Ingress resource the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
+| <a id="opt-KubernetesServiceName" href="#opt-KubernetesServiceName" title="#opt-KubernetesServiceName">`KubernetesServiceName`</a> | The name of the Kubernetes Service associated with the Ingress the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
+| <a id="opt-KubernetesServicePort" href="#opt-KubernetesServicePort" title="#opt-KubernetesServicePort">`KubernetesServicePort`</a> | The port of the Kubernetes Service associated with the Ingress the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
 
 ### Log Rotation
 

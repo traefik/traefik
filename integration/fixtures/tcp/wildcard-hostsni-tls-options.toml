@@ -1,0 +1,65 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.tcp]
+    address = ":8093"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[tcp]
+  [tcp.routers]
+    # Wildcard router covering *.snitest.com with TLS option "foo" (minTLS12).
+    [tcp.routers.wildcard]
+      rule = "HostSNI(`*.snitest.com`)"
+      service = "backend"
+      entryPoints = ["tcp"]
+      [tcp.routers.wildcard.tls]
+        options = "foo"
+
+    # Override: bar.snitest.com uses TLS option "bar" (minTLS13), stricter than the wildcard.
+    [tcp.routers.bar]
+      rule = "HostSNI(`bar.snitest.com`)"
+      service = "backend"
+      entryPoints = ["tcp"]
+      [tcp.routers.bar.tls]
+        options = "bar"
+
+    [tcp.routers.default]
+      rule = "HostSNI(`other.snitest.com`)"
+      service = "backend"
+      entryPoints = ["tcp"]
+      [tcp.routers.default.tls]
+
+  [tcp.services]
+    [tcp.services.backend.loadBalancer]
+      [[tcp.services.backend.loadBalancer.servers]]
+        address = "{{ .Backend }}"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/wildcard.snitest.com.cert"
+  keyFile = "fixtures/https/wildcard.snitest.com.key"
+
+[tls.options]
+  [tls.options.default]
+    minVersion = "VersionTLS11"
+    maxVersion = "VersionTLS11"
+
+  [tls.options.foo]
+    minVersion = "VersionTLS12"
+    maxVersion = "VersionTLS12"
+
+  [tls.options.bar]
+    minVersion = "VersionTLS13"
+    maxVersion = "VersionTLS13"

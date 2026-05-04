@@ -1,4 +1,4 @@
-import { Box } from '@traefiklabs/faency'
+import { Box } from '@traefik-labs/faency'
 import { HTMLAttributes, useMemo } from 'react'
 
 import Consul from 'components/icons/providers/Consul'

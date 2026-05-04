@@ -56,3 +56,37 @@ services:
       - -name
       - whoami-banner
       - --banner
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
+      POSTGRES_DB: test
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command:
+      - postgres
+      - -c
+      - ssl=off
+
+  postgres-ssl:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
+      POSTGRES_DB: test
+      POSTGRES_HOST_AUTH_METHOD: trust
+    entrypoint:
+      - sh
+      - -c
+      - |
+        apk add --no-cache openssl && \
+        openssl req -new -x509 -days 3650 -nodes \
+          -out /tmp/server.crt -keyout /tmp/server.key \
+          -subj '/CN=postgres-ssl' && \
+        chown 70:70 /tmp/server.crt /tmp/server.key && \
+        chmod 0600 /tmp/server.key && \
+        exec docker-entrypoint.sh postgres \
+          -c ssl=on \
+          -c ssl_cert_file=/tmp/server.crt \
+          -c ssl_key_file=/tmp/server.key

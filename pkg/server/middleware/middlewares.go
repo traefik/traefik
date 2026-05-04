@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
@@ -348,6 +349,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return rewritetarget.New(ctx, next, *config.RewriteTarget, middlewareName)
+		}
+	}
+
+	// UpstreamVHost
+	if config.UpstreamVHost != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return upstreamvhost.New(ctx, next, *config.UpstreamVHost, middlewareName)
 		}
 	}
 

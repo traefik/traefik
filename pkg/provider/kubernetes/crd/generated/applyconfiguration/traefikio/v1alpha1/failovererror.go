@@ -28,9 +28,14 @@ package v1alpha1
 
 // FailoverErrorApplyConfiguration represents a declarative configuration of the FailoverError type for use
 // with apply.
+//
+// FailoverError holds errors configuration for a Failover service.
 type FailoverErrorApplyConfiguration struct {
-	Status              []string `json:"status,omitempty"`
-	MaxRequestBodyBytes *int64   `json:"maxRequestBodyBytes,omitempty"`
+	// Status defines the list of status code ranges for which the fallback service should be used.
+	Status []string `json:"status,omitempty"`
+	// MaxRequestBodyBytes defines the maximum size allowed for the body of the request.
+	// Default value is -1, which means unlimited size.
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
 }
 
 // FailoverErrorApplyConfiguration constructs a declarative configuration of the FailoverError type for use with

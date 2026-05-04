@@ -24,7 +24,7 @@ import (
 )
 
 func TestShutdownHijacked(t *testing.T) {
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -40,7 +40,7 @@ func TestShutdownHijacked(t *testing.T) {
 }
 
 func TestShutdownHTTP(t *testing.T) {
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -52,10 +52,10 @@ func TestShutdownHTTP(t *testing.T) {
 }
 
 func TestShutdownTCP(t *testing.T) {
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
-	err = router.AddTCPRoute("HostSNI(`*`)", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	err = router.AddTCPRoute("HostSNI(`*`)", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		_, err := http.ReadRequest(bufio.NewReader(conn))
 		if err != nil {
 			return
@@ -177,7 +177,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -216,7 +216,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -258,7 +258,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -306,7 +306,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -350,7 +350,7 @@ func TestKeepAliveH2c(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

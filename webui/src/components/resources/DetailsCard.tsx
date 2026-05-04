@@ -1,4 +1,4 @@
-import { Card, CSS, Flex, Grid, H2, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Card, CSS, Flex, Grid, H2, Skeleton, styled, Text } from '@traefik-labs/faency'
 import { Fragment, ReactNode, useMemo } from 'react'
 
 import ScrollableCard from 'components/ScrollableCard'

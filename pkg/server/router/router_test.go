@@ -332,7 +332,7 @@ func TestRouterManager_Get(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, []string{})
 
 			handlers := routerManager.BuildHandlers(t.Context(), test.entryPoints, false)
 
@@ -720,7 +720,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, []string{})
 
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, true)
@@ -801,7 +801,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(t, err)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, []string{})
 
 	_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 
@@ -856,7 +856,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(b, err)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, []string{})
 
 	handlers := routerManager.BuildHandlers(b.Context(), entryPoints, false)
 
@@ -902,6 +902,155 @@ func BenchmarkService(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		handler.ServeHTTP(w, req)
+	}
+}
+
+func TestProvidersPrecedence(t *testing.T) {
+	// Each provider gets its own service with a fake URL whose host encodes the
+	// provider label. labellingProxyBuilder writes the host back as the X-From
+	// response header so the test can identify which backend was selected.
+	//
+	// Service names must be fully qualified ("svc@<provider>") because the
+	// router manager qualifies every unqualified name with the provider embedded
+	// in the router's own name ("router@<provider>").
+	svcFor := func(provider string) *dynamic.Service {
+		return &dynamic.Service{
+			LoadBalancer: &dynamic.ServersLoadBalancer{
+				Strategy: dynamic.BalancerStrategyWRR,
+				Servers:  []dynamic.Server{{URL: "http://" + provider}},
+			},
+		}
+	}
+
+	testCases := []struct {
+		desc                string
+		providersPrecedence []string
+		routersConfig       map[string]*dynamic.Router
+		serviceConfig       map[string]*dynamic.Service
+		expectedFrom        string
+	}{
+		{
+			desc:                "kubernetescrd beats kubernetes when listed after it",
+			providersPrecedence: []string{"kubernetescrd", "kubernetes"},
+			routersConfig: map[string]*dynamic.Router{
+				// Service names are bare; the manager qualifies them with the
+				// provider extracted from the router key (@kubernetes / @kubernetescrd).
+				"router@kubernetes": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Service:     "svc",
+				},
+				"router@kubernetescrd": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Service:     "svc",
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"svc@kubernetes":    svcFor("kubernetes"),
+				"svc@kubernetescrd": svcFor("kubernetescrd"),
+			},
+			expectedFrom: "kubernetescrd",
+		},
+		{
+			desc:                "kubernetes beats kubernetescrd when listed after it",
+			providersPrecedence: []string{"kubernetes", "kubernetescrd"},
+			routersConfig: map[string]*dynamic.Router{
+				"router@kubernetes": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Service:     "svc",
+				},
+				"router@kubernetescrd": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Service:     "svc",
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"svc@kubernetes":    svcFor("kubernetes"),
+				"svc@kubernetescrd": svcFor("kubernetescrd"),
+			},
+			expectedFrom: "kubernetes",
+		},
+		{
+			desc:                "higher numeric priority wins regardless of providersPrecedence",
+			providersPrecedence: []string{"kubernetescrd", "kubernetes"},
+			routersConfig: map[string]*dynamic.Router{
+				"router@kubernetes": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Priority:    100,
+					Service:     "svc",
+				},
+				"router@kubernetescrd": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Priority:    10,
+					Service:     "svc",
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"svc@kubernetes":    svcFor("kubernetes"),
+				"svc@kubernetescrd": svcFor("kubernetescrd"),
+			},
+			expectedFrom: "kubernetes",
+		},
+		{
+			desc:                "provider not in providersPrecedence loses to any listed provider",
+			providersPrecedence: []string{"kubernetes"},
+			routersConfig: map[string]*dynamic.Router{
+				"router@file": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Service:     "svc",
+				},
+				"router@kubernetes": {
+					EntryPoints: []string{"web"},
+					Rule:        "Host(`foo.bar`)",
+					Service:     "svc",
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"svc@file":       svcFor("file"),
+				"svc@kubernetes": svcFor("kubernetes"),
+			},
+			expectedFrom: "kubernetes",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Services:    test.serviceConfig,
+					Routers:     test.routersConfig,
+					Middlewares: map[string]*dynamic.Middleware{},
+				},
+			})
+
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, labellingProxyBuilder{})
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			tlsManager := traefiktls.NewManager(nil)
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, test.providersPrecedence)
+			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
+
+			w := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
+			requestdecorator.New(nil).ServeHTTP(w, req, handlers["web"].ServeHTTP)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, test.expectedFrom, w.Header().Get("X-From"), "wrong provider won the route")
+		})
 	}
 }
 
@@ -1449,7 +1598,7 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, []string{})
 
 			// Compute multi-layer routing to populate ChildRefs
 			manager.ParseRouterTree()
@@ -1640,7 +1789,7 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, []string{})
 
 			// Run ParseRouterTree to validate configuration and populate ChildRefs/errors
 			manager.ParseRouterTree()
@@ -1787,7 +1936,7 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, []string{})
 
 			// Compute multi-layer routing to set up parent-child relationships
 			manager.ParseRouterTree()
@@ -1942,7 +2091,7 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, []string{})
 
 			// Compute multi-layer routing to set up parent-child relationships
 			manager.ParseRouterTree()
@@ -2014,3 +2163,17 @@ func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration
 func (p proxyBuilderMock) Update(_ map[string]*dynamic.ServersTransport) {
 	panic("implement me")
 }
+
+// labellingProxyBuilder builds a handler that writes the target URL host as
+// the X-From response header, allowing tests to identify which backend was
+// selected by the router.
+type labellingProxyBuilder struct{}
+
+func (l labellingProxyBuilder) Build(_ string, target *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
+	label := target.Host
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-From", label)
+	}), nil
+}
+
+func (l labellingProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}

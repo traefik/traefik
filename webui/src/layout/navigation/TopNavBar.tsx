@@ -12,7 +12,7 @@ import {
   Link,
   Text,
   Tooltip,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { useContext, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiBookOpen, FiChevronLeft, FiGithub, FiHeart, FiHelpCircle } from 'react-icons/fi'

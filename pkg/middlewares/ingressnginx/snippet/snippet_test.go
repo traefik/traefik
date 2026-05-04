@@ -8,7 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
+
+func boolPtr(b bool) *bool {
+	return &b
+}
 
 func Test_New(t *testing.T) {
 	testCases := []struct {
@@ -256,21 +261,27 @@ func Test_New(t *testing.T) {
 
 func Test_Directives(t *testing.T) {
 	testCases := []struct {
-		desc                      string
-		serverSnippet             string
-		configurationSnippet      string
-		method                    string
-		path                      string
-		remoteAddr                string
-		requestHeaders            map[string]string
-		expectedResponseHeaders   map[string]string
-		unexpectedResponseHeaders []string
-		expectedRequestHeaders    map[string]string
-		expectedStatusCode        int
-		expectedBody              string
-		expectedPath              string
-		expectedQuery             string
-		expectedRedirectURL       string
+		desc                       string
+		serverSnippet              string
+		configurationSnippet       string
+		authSnippet                string
+		authResponseHeaders        []string
+		authSigninURL              string
+		authServerHandler          func(t *testing.T) http.HandlerFunc
+		method                     string
+		path                       string
+		remoteAddr                 string
+		requestHeaders             map[string]string
+		expectedResponseHeaders    map[string]string
+		unexpectedResponseHeaders  []string
+		expectedRequestHeaders     map[string]string
+		expectedAuthRequestHeaders map[string]string
+		expectedStatusCode         int
+		expectedBody               string
+		expectedPath               string
+		expectedQuery              string
+		expectedRedirectURL        string
+		expectNextCalled           *bool
 	}{
 		{
 			desc:                    "add_header server snippet adds simple header",
@@ -1107,6 +1118,24 @@ rewrite ^/old$ http://other.example.com/new last;
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "http://other.example.com/new",
 		},
+		{
+			desc: "rewrite with quoted replacement",
+			configurationSnippet: `
+rewrite ^/search$ "/new?" last;
+`,
+			path:          "/search?q=test",
+			expectedPath:  "/new",
+			expectedQuery: "",
+		},
+		{
+			desc: "rewrite with quoted replacement and uri variable",
+			configurationSnippet: `
+rewrite ^/(.*)$ "${uri}?" break;
+`,
+			path:          "/some/path?q=test",
+			expectedPath:  "/some/path",
+			expectedQuery: "",
+		},
 		// --- add_header always tests ---
 		{
 			desc: "add_header with always applies to 200 status",
@@ -1407,6 +1436,340 @@ add_header X-Fallback "yes";
 				"X-Fallback": "yes",
 			},
 		},
+		{
+			desc: "auth snippet - proxy_method after if condition",
+			authSnippet: `
+if ($request_method = GET) {
+    return 200;
+}
+proxy_method $request_method;
+`,
+			authResponseHeaders: []string{"X-Request-Method"},
+			method:              http.MethodPost,
+			expectedRequestHeaders: map[string]string{
+				"X-Request-Method": "POST",
+			},
+		},
+		{
+			desc: "forward auth passes with 200 response",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc: "forward auth fails with 401 response",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusUnauthorized)
+					_, _ = w.Write([]byte("Unauthorized"))
+				}
+			},
+			expectedStatusCode: http.StatusUnauthorized,
+			expectedBody:       "Unauthorized",
+			expectNextCalled:   boolPtr(false),
+		},
+		{
+			desc: "forward auth fails with 403 response",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte("Forbidden"))
+				}
+			},
+			expectedStatusCode: http.StatusForbidden,
+			expectedBody:       "Forbidden",
+			expectNextCalled:   boolPtr(false),
+		},
+		{
+			desc:          "forward auth with signin URL redirects on 401",
+			authSigninURL: "https://login.example.com/signin",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusUnauthorized)
+				}
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://login.example.com/signin",
+			expectNextCalled:    boolPtr(false),
+		},
+		{
+			desc:                "forward auth copies response headers to original request",
+			authResponseHeaders: []string{"X-Auth-User", "X-Auth-Role"},
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("X-Auth-User", "john")
+					w.Header().Set("X-Auth-Role", "admin")
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedRequestHeaders: map[string]string{
+				"X-Auth-User": "john",
+				"X-Auth-Role": "admin",
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet proxy_set_header modifies auth request",
+			authSnippet: `proxy_set_header X-Custom-Auth "auth-value";`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "auth-value", r.Header.Get("X-Custom-Auth"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet proxy_set_header with variable",
+			authSnippet: `proxy_set_header X-Original-Method $request_method;`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "GET", r.Header.Get("X-Original-Method"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc: "auth-snippet set directive creates variable for proxy_set_header",
+			authSnippet: `
+set $auth_token "bearer-token-123";
+proxy_set_header Authorization $auth_token;
+`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "bearer-token-123", r.Header.Get("Authorization"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet more_set_input_headers modifies auth request",
+			authSnippet: `more_set_input_headers "X-Input-Header: input-value";`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "input-value", r.Header.Get("X-Input-Header"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet more_clear_input_headers removes header from auth request",
+			authSnippet: `more_clear_input_headers "X-Remove-Me";`,
+			requestHeaders: map[string]string{
+				"X-Remove-Me": "should-be-removed",
+			},
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Empty(t, r.Header.Get("X-Remove-Me"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc: "auth-snippet with multiple proxy_set_header directives",
+			authSnippet: `
+proxy_set_header X-Header-One "value-one";
+proxy_set_header X-Header-Two "value-two";
+proxy_set_header X-Header-Three $request_method;
+`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "value-one", r.Header.Get("X-Header-One"))
+					assert.Equal(t, "value-two", r.Header.Get("X-Header-Two"))
+					assert.Equal(t, "GET", r.Header.Get("X-Header-Three"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet with return directive terminates",
+			authSnippet: `return 403 "Auth blocked";`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					t.Error("auth server should not be called")
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusForbidden,
+			expectedBody:       "Auth blocked",
+			expectNextCalled:   boolPtr(false),
+		},
+		{
+			desc: "auth-snippet with conditional return",
+			authSnippet: `
+if ($http_x_block_auth = "yes") {
+	return 403 "Blocked by auth-snippet";
+}
+`,
+			requestHeaders: map[string]string{
+				"X-Block-Auth": "yes",
+			},
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					t.Error("auth server should not be called")
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusForbidden,
+			expectedBody:       "Blocked by auth-snippet",
+			expectNextCalled:   boolPtr(false),
+		},
+		{
+			desc: "forward auth error response includes body",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusBadRequest)
+					_, _ = w.Write([]byte(`{"error":"invalid request"}`))
+				}
+			},
+			expectedStatusCode: http.StatusBadRequest,
+			expectedBody:       `{"error":"invalid request"}`,
+			expectNextCalled:   boolPtr(false),
+		},
+		{
+			desc: "forward auth preserves error response headers",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("X-Error-Code", "ERR001")
+					w.Header().Set("X-Retry-After", "60")
+					w.WriteHeader(http.StatusTooManyRequests)
+				}
+			},
+			expectedStatusCode: http.StatusTooManyRequests,
+			expectedResponseHeaders: map[string]string{
+				"X-Error-Code":  "ERR001",
+				"X-Retry-After": "60",
+			},
+			expectNextCalled: boolPtr(false),
+		},
+		{
+			desc:                 "forward auth with configuration snippet applies headers on success",
+			configurationSnippet: `add_header X-Authenticated "true";`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectedResponseHeaders: map[string]string{
+				"X-Authenticated": "true",
+			},
+			expectNextCalled: boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet with more_set_input_headers variable interpolation",
+			authSnippet: `more_set_input_headers "X-Request-Info: method=$request_method,uri=$request_uri";`,
+			path:        "/api/test",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "method=GET,uri=/api/test", r.Header.Get("X-Request-Info"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc:        "auth-snippet proxy_set_header removes header with empty value",
+			authSnippet: `proxy_set_header Authorization "";`,
+			requestHeaders: map[string]string{
+				"Authorization": "Bearer secret-token",
+			},
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Empty(t, r.Header.Get("Authorization"))
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
+		{
+			desc: "forward auth with redirect from auth server",
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Location", "https://redirect.example.com/path")
+					w.WriteHeader(http.StatusTemporaryRedirect)
+				}
+			},
+			expectedStatusCode:  http.StatusTemporaryRedirect,
+			expectedRedirectURL: "https://redirect.example.com/path",
+			expectNextCalled:    boolPtr(false),
+		},
+		{
+			desc:                "auth-snippet combined with auth response headers",
+			authResponseHeaders: []string{"X-User-Id"},
+			authSnippet:         `proxy_set_header X-Auth-Source "snippet";`,
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "snippet", r.Header.Get("X-Auth-Source"))
+					w.Header().Set("X-User-Id", "user-123")
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedRequestHeaders: map[string]string{
+				"X-User-Id": "user-123",
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   boolPtr(true),
+		},
 	}
 
 	for _, test := range testCases {
@@ -1426,9 +1789,37 @@ add_header X-Fallback "yes";
 				w.WriteHeader(http.StatusOK)
 			})
 
+			capturedAuthRequestHeaders := make(map[string]string)
+			authCalled := false
+
+			var authHandler http.HandlerFunc
+			if test.authServerHandler != nil {
+				authHandler = test.authServerHandler(t)
+			} else {
+				authHandler = func(w http.ResponseWriter, r *http.Request) {
+					authCalled = true
+					for header := range test.expectedAuthRequestHeaders {
+						capturedAuthRequestHeaders[header] = r.Header.Get(header)
+					}
+					w.Header().Set("X-Request-Method", r.Method)
+					w.Header().Set("X-Auth-Debug", r.RequestURI)
+				}
+			}
+			authServer := httptest.NewServer(authHandler)
+			defer authServer.Close()
+
 			config := &dynamic.Snippet{
 				ServerSnippet:        test.serverSnippet,
 				ConfigurationSnippet: test.configurationSnippet,
+			}
+
+			if test.authSnippet != "" || authHandler != nil {
+				config.Auth = &dynamic.Auth{
+					Snippet:             test.authSnippet,
+					Address:             authServer.URL + "/auth",
+					AuthResponseHeaders: test.authResponseHeaders,
+					AuthSigninURL:       test.authSigninURL,
+				}
 			}
 
 			handler, err := New(t.Context(), next, config, "test-snippet")
@@ -1454,6 +1845,10 @@ add_header X-Fallback "yes";
 
 			handler.ServeHTTP(rw, req)
 
+			if test.authSnippet != "" && test.authServerHandler == nil {
+				assert.True(t, authCalled, "forward auth was not called")
+			}
+
 			expectedStatusCode := test.expectedStatusCode
 			if expectedStatusCode == 0 {
 				expectedStatusCode = http.StatusOK
@@ -1464,8 +1859,11 @@ add_header X-Fallback "yes";
 				assert.Equal(t, test.expectedBody, rw.Body.String())
 			}
 
-			// If a return directive was used, next should not be called
-			if test.expectedStatusCode != 0 && test.expectedStatusCode != http.StatusOK {
+			// Check expectNextCalled if explicitly set
+			if test.expectNextCalled != nil {
+				assert.Equal(t, *test.expectNextCalled, nextCalled, "next handler called expectation")
+			} else if test.expectedStatusCode != 0 && test.expectedStatusCode != http.StatusOK {
+				// If a return directive was used, next should not be called
 				assert.False(t, nextCalled, "next handler should not be called when return directive is used")
 			}
 
@@ -1496,4 +1894,154 @@ add_header X-Fallback "yes";
 			}
 		})
 	}
+}
+
+func Test_ForwardAuth_New_Validation(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      dynamic.Snippet
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			desc: "auth-snippet with empty auth-url fails",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Snippet: `proxy_set_header X-Test "value";`,
+					Address: "",
+				},
+			},
+			expectError: true,
+			errorMsg:    "address is required in auth configuration",
+		},
+		{
+			desc: "auth-snippet with valid auth-url succeeds",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Snippet: `proxy_set_header X-Test "value";`,
+					Address: "http://auth.example.com/verify",
+				},
+			},
+			expectError: false,
+		},
+		{
+			desc: "nginx auth without auth-snippet succeeds",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address: "http://auth.example.com/verify",
+				},
+			},
+			expectError: false,
+		},
+		{
+			desc: "auth-snippet with invalid syntax fails",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Snippet: `proxy_set_header X-Test`,
+					Address: "http://auth.example.com/verify",
+				},
+			},
+			expectError: true,
+		},
+		{
+			desc: "auth-snippet with unknown directive fails",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Snippet: `unknown_directive value;`,
+					Address: "http://auth.example.com/verify",
+				},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			_, err := New(t.Context(), next, &test.config, "test-auth-validation")
+			if test.expectError {
+				require.Error(t, err)
+				if test.errorMsg != "" {
+					assert.Contains(t, err.Error(), test.errorMsg)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestForwardAuthAuthSigninURL_interpolation_existingQueryParam(t *testing.T) {
+	var authSrvCalled bool
+	authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authSrvCalled = true
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(authSrv.Close)
+
+	client := &http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	auth := &dynamic.Auth{
+		Address:       authSrv.URL,
+		AuthSigninURL: "http://foo.com$request_uri?foo=bar",
+	}
+	middleware, err := New(t.Context(), next, &dynamic.Snippet{
+		Auth: auth,
+	}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/protected", nil)
+
+	res, err := client.Do(req)
+	require.NoError(t, err)
+
+	assert.True(t, authSrvCalled)
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+
+	l, err := res.Location()
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://foo.com/protected?foo=bar&rd="+ts.URL+"%2Fprotected", l.String())
+}
+
+func TestForwardAuthAddress_interpolation(t *testing.T) {
+	var authSrvCalled bool
+	authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authSrvCalled = true
+
+		assert.Equal(t, "/protected", req.URL.Query().Get("uri"))
+
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(authSrv.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	auth := &dynamic.Auth{
+		Address: authSrv.URL + "?uri=$escaped_request_uri",
+	}
+	middleware, err := New(t.Context(), next, &dynamic.Snippet{Auth: auth}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/protected", nil)
+
+	_, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	assert.True(t, authSrvCalled)
 }

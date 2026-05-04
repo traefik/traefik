@@ -78,7 +78,7 @@ Docker provider `tls.CAOptional` option has been removed in v3, as TLS client au
 
 ##### Remediation
 
-The `tls.caOptional` option should be removed from the Docker provider static configuration.
+The `tls.caOptional` option should be removed from the Docker provider install configuration.
 
 ### Kubernetes Gateway API
 
@@ -134,8 +134,8 @@ It is now unsupported and would prevent Traefik to start.
 
 ##### Remediation
 
-The `http3` option should be removed from the static configuration experimental section.
-To configure `http3`, please checkout the [entrypoint configuration documentation](../reference/install-configuration/entrypoints.md#http3).
+The `http3` option should be removed from the install configuration experimental section.
+To configure `http3`, please checkout the [entrypoint configuration documentation](../reference/install-configuration/entrypoints.md#opt-http3).
 
 ### Consul provider
 
@@ -205,7 +205,7 @@ Consul provider `tls.CAOptional` option has been removed in v3, as TLS client au
 
 ##### Remediation
 
-The `tls.caOptional` option should be removed from the Consul provider static configuration.
+The `tls.caOptional` option should be removed from the Consul provider install configuration.
 
 ### ConsulCatalog provider
 
@@ -276,7 +276,7 @@ ConsulCatalog provider `endpoint.tls.CAOptional` option has been removed in v3, 
 
 ##### Remediation
 
-The `endpoint.tls.caOptional` option should be removed from the ConsulCatalog provider static configuration.
+The `endpoint.tls.caOptional` option should be removed from the ConsulCatalog provider install configuration.
 
 ### Nomad provider
 
@@ -347,7 +347,7 @@ Nomad provider `endpoint.tls.CAOptional` option has been removed in v3, as TLS c
 
 ##### Remediation
 
-The `endpoint.tls.caOptional` option should be removed from the Nomad provider static configuration.
+The `endpoint.tls.caOptional` option should be removed from the Nomad provider install configuration.
 
 ### Rancher v1 Provider
 
@@ -374,9 +374,9 @@ This configuration is now unsupported and would prevent Traefik to start.
 #### Remediation
 
 Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
-As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../providers/kubernetes-crd.md) directly.
+As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) directly.
 
-Also, all Rancher provider related configuration should be removed from the static configuration.
+Also, all Rancher provider related configuration should be removed from the install configuration.
 
 ### Marathon provider
 
@@ -402,7 +402,7 @@ This configuration is now unsupported and would prevent Traefik to start.
 
 #### Remediation
 
-All Marathon provider related configuration should be removed from the static configuration.
+All Marathon provider related configuration should be removed from the install configuration.
 
 ### HTTP Provider
 
@@ -430,7 +430,7 @@ HTTP provider `tls.CAOptional` option has been removed in v3, as TLS client auth
 
 ##### Remediation
 
-The `tls.caOptional` option should be removed from the HTTP provider static configuration.
+The `tls.caOptional` option should be removed from the HTTP provider install configuration.
 
 ### ETCD Provider
 
@@ -458,7 +458,7 @@ ETCD provider `tls.CAOptional` option has been removed in v3, as TLS client auth
 
 ##### Remediation
 
-The `tls.caOptional` option should be removed from the ETCD provider static configuration.
+The `tls.caOptional` option should be removed from the ETCD provider install configuration.
 
 ### Redis Provider
 
@@ -486,7 +486,7 @@ Redis provider `tls.CAOptional` option has been removed in v3, as TLS client aut
 
 ##### Remediation
 
-The `tls.caOptional` option should be removed from the Redis provider static configuration.
+The `tls.caOptional` option should be removed from the Redis provider install configuration.
 
 ### InfluxDB v1
 
@@ -512,7 +512,7 @@ This configuration is now unsupported and would prevent Traefik to start.
 
 #### Remediation
 
-All InfluxDB v1 metrics provider related configuration should be removed from the static configuration.
+All InfluxDB v1 metrics provider related configuration should be removed from the install configuration.
 
 ### Pilot
 
@@ -539,7 +539,7 @@ it is now unsupported and would prevent Traefik to start.
 
 #### Remediation
 
-All Pilot related configuration should be removed from the static configuration.
+All Pilot related configuration should be removed from the install configuration.
 
 ### Kubernetes Ingress Path Matching
 
@@ -550,16 +550,16 @@ In v3, the Kubernetes Ingress default path matching does not support regexes any
 Two levels of remediation are possible:
 
 - Interpret the default path matcher `PathPrefix` with v2 syntax.
-This can done globally for all routers with the [static configuration](#configure-the-default-syntax-in-static-configuration) or on a per-router basis by using the [traefik.ingress.kubernetes.io/router.rulesyntax](../routing/providers/kubernetes-ingress.md#annotations) annotation.
+This can done globally for all routers with the [install configuration](#configure-the-default-syntax-in-install-configuration) or on a per-router basis by using the [traefik.ingress.kubernetes.io/router.rulesyntax](../reference/routing-configuration/kubernetes/ingress.md#annotations) annotation.
 
-- Adapt the path regex to be compatible with the Go regex syntax and change the default path matcher to use the `PathRegexp` matcher with the [`traefik.ingress.kubernetes.io/router.pathmatcher`](../routing/providers/kubernetes-ingress.md#annotations) annotation.
+- Adapt the path regex to be compatible with the Go regex syntax and change the default path matcher to use the `PathRegexp` matcher with the [`traefik.ingress.kubernetes.io/router.pathmatcher`](../reference/routing-configuration/kubernetes/ingress.md#annotations) annotation.
 
 ## Operations Changes
 
 ### Traefik RBAC Update
 
 In v3, the support of `TCPServersTransport` has been introduced.
-When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
+When using the KubernetesCRD provider, it is therefore necessary to update RBAC and CRDs ([See requirements](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md#requirements)).
 
 ### Content-Type Auto-Detection
 
@@ -602,7 +602,7 @@ Here are two possible transition strategies:
     using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
     This allows continued compatibility with the existing infrastructure.
 
-Please check the [OpenTelemetry Tracing provider documention](../observability/tracing/opentelemetry.md) for more information.
+Please check the [OpenTelemetry Tracing provider documentation](../reference/install-configuration/observability/tracing.md) for more information.
 
 #### Internal Resources Observability
 
@@ -610,9 +610,9 @@ In v3, observability for internal routers or services (e.g.: `ping@internal`) is
 To enable it one should use the new `addInternals` option for AccessLogs, Metrics or Tracing.
 Please take a look at the observability documentation for more information:
 
-- [AccessLogs](../observability/access-logs.md#addinternals)
-- [Metrics](../observability/metrics/overview.md#addinternals)
-- [Tracing](../observability/tracing/overview.md#addinternals)
+- [AccessLogs](../reference/install-configuration/observability/logs-and-accesslogs.md#accesslogs)
+- [Metrics](../reference/install-configuration/observability/metrics.md)
+- [Tracing](../reference/install-configuration/observability/tracing.md)
 
 #### Access logs
 
@@ -628,7 +628,7 @@ The default rule matchers syntax is now the v3 one, but for backward compatibili
 The v2 rule matchers syntax is deprecated and its support will be removed in the next major version.
 For this reason, we encourage migrating to the new syntax.
 
-By default, the `defaultRuleSyntax` static option is automatically set to `v3`, meaning that the default rule is the new one.
+By default, the `defaultRuleSyntax` install option is automatically set to `v3`, meaning that the default rule is the new one.
 
 #### New V3 Syntax Notable Changes
 
@@ -653,27 +653,27 @@ and should be explicitly combined using logical operators to mimic previous beha
 
 #### Remediation
 
-##### Configure the Default Syntax In Static Configuration
+##### Configure the Default Syntax In Install Configuration
 
 The default rule matchers syntax is the expected syntax for any router that is not self opt-out from this default value.
-It can be configured in the static configuration.
+It can be configured in the install configuration.
 
 ??? example "An example configuration for the default rule matchers syntax"
 
     ```yaml tab="File (YAML)"
-    # static configuration
+    # install configuration
     core:
       defaultRuleSyntax: v2
     ```
 
     ```toml tab="File (TOML)"
-    # static configuration
+    # install configuration
     [core]
         defaultRuleSyntax="v2"
     ```
 
     ```bash tab="CLI"
-    # static configuration
+    # install configuration
     --core.defaultRuleSyntax=v2
     ```
 
@@ -769,7 +769,7 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 ### TCP LoadBalancer `terminationDelay` option
 
 The TCP LoadBalancer `terminationDelay` option has been deprecated.
-This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
+This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../reference/routing-configuration/tcp/serverstransport.md#opt-serverstransport-terminationDelay)
 
 ### Kubernetes CRDs API Group `traefik.containo.us`
 

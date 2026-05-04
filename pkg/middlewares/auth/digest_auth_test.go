@@ -151,3 +151,30 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 		})
 	}
 }
+
+func TestDigestAuthUserHeaderCanonical(t *testing.T) {
+	var nextCalled bool
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		nextCalled = true
+		assert.Empty(t, req.Header.Get("X-User"))
+		assert.Equal(t, []string{"test"}, req.Header["x-user"])
+	})
+	auth := dynamic.DigestAuth{
+		Users:       []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
+		HeaderField: "x-user",
+	}
+	m, err := NewDigest(t.Context(), next, auth, "test")
+	require.NoError(t, err)
+
+	srv := httptest.NewServer(m)
+	t.Cleanup(srv.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, srv.URL, nil)
+	req.Header.Set("X-User", "admin")
+	digestReq := newDigestRequest("test", "test", http.DefaultClient)
+	res, err := digestReq.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.True(t, nextCalled)
+}
