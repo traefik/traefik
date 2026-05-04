@@ -443,6 +443,7 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
+	service = *service.DeepCopy()
 	service.Namespace = namespaceOrFallback(service, parentNamespace)
 
 	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
