@@ -267,15 +267,6 @@ creating the corresponding routers, services, middlewares, and other components 
 This section lists all known NGINX Ingress annotations.
 The following annotations are organized by category for easier navigation.
 
-### Coming Soon: More Annotations in Active Development
-
- Several annotations currently listed as unsupported are actively being implemented and will become available in upcoming release.
-
-!!! tip "Preview upcoming annotation support"
-    You can follow the progress and explore annotations that are already available in the next version of Traefik by visiting the **[experimental documentation (master branch)](https://doc.traefik.io/traefik/master/reference/routing-configuration/kubernetes/ingress-nginx/)**.
-
-    The experimental page reflects the state of the `master` branch and may include annotations not yet available in the current stable release. Features shown there are subject to change before the final release.
-
 ### Authentication
 
 | Annotation                                            | Limitations / Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -385,6 +376,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rpm" href="#opt-nginx-ingress-kubernetes-iolimit-rpm" title="#opt-nginx-ingress-kubernetes-iolimit-rpm">`nginx.ingress.kubernetes.io/limit-rpm`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-burst-multiplier" href="#opt-nginx-ingress-kubernetes-iolimit-burst-multiplier" title="#opt-nginx-ingress-kubernetes-iolimit-burst-multiplier">`nginx.ingress.kubernetes.io/limit-burst-multiplier`</a> | Default to a multiplier of 5 if the configured value is less than 1. Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
+| <a id="opt-nginx-ingress-kubernetes-iolimit-connections" href="#opt-nginx-ingress-kubernetes-iolimit-connections" title="#opt-nginx-ingress-kubernetes-iolimit-connections">`nginx.ingress.kubernetes.io/limit-connections`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. The concurrent connection limit is evaluated per client IP address. Values less than or equal to `0` are safely ignored. |
 
 ### Buffering
 
@@ -463,7 +455,6 @@ In practice, Traefik is slightly more lenient under bursty load, as it smooths o
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate-after" href="#opt-nginx-ingress-kubernetes-iolimit-rate-after" title="#opt-nginx-ingress-kubernetes-iolimit-rate-after">`nginx.ingress.kubernetes.io/limit-rate-after`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate" href="#opt-nginx-ingress-kubernetes-iolimit-rate" title="#opt-nginx-ingress-kubernetes-iolimit-rate">`nginx.ingress.kubernetes.io/limit-rate`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-whitelist" href="#opt-nginx-ingress-kubernetes-iolimit-whitelist" title="#opt-nginx-ingress-kubernetes-iolimit-whitelist">`nginx.ingress.kubernetes.io/limit-whitelist`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iolimit-connections" href="#opt-nginx-ingress-kubernetes-iolimit-connections" title="#opt-nginx-ingress-kubernetes-iolimit-connections">`nginx.ingress.kubernetes.io/limit-connections`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioglobal-rate-limit" href="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit" title="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit">`nginx.ingress.kubernetes.io/global-rate-limit`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioglobal-rate-limit-window" href="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit-window" title="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit-window">`nginx.ingress.kubernetes.io/global-rate-limit-window`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioglobal-rate-limit-key" href="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit-key" title="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit-key">`nginx.ingress.kubernetes.io/global-rate-limit-key`</a> |                                                      |

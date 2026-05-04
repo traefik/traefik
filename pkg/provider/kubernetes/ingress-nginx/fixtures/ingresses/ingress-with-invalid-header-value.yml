@@ -1,0 +1,34 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-invalid-header-value
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/custom-headers: default/invalid-header-value-configmap
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: invalid-header-value-configmap
+  namespace: default
+# The value contains a newline character (YAML literal block scalar),
+# which does not match headerValueRegexp and should be treated as invalid.
+data:
+  X-Custom-Header: |
+    value-with-embedded-newline

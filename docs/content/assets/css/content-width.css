@@ -1,4 +1,4 @@
 /* Use a wider grid to accommodate table content and code blocks. */
 .md-grid {
-  max-width: 1650px;
+  max-width: 1800px;
 }
