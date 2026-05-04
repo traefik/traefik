@@ -255,9 +255,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 		// ssl-passthrough: handled per-rule. serversTransport is not needed for passthrough.
 		if ptr.Deref(ing.config.SSLPassthrough, false) {
-			// Even with ssl-passthrough, the Spec.TLS section's certificates are
-			// still loaded so they remain available as the default certificate
-			// (mirrors ingress-nginx behavior pre-metamodel).
+			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
 			if len(ing.Spec.TLS) > 0 {
 				if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
 					logger.Warn().Err(err).Msg("Error loading TLS certificates for ssl-passthrough ingress")

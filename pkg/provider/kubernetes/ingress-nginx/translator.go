@@ -92,7 +92,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 		// Apply the full middleware stack from the ingress location annotations to
 		// both catch-all routers, so options like enable-cors, custom-headers,
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
-		// ingress reach its catch-all routers (and not just retry).
+		// ingress reach its catch-all routers.
 		if loc := mc.DefaultBackendLocation; loc != nil {
 			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
