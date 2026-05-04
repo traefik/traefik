@@ -85,6 +85,14 @@ spec:
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage">`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`</a> | Sets the Max-Age attribute (in seconds) on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `42` |
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path">`traefik.ingress.kubernetes.io/service.sticky.cookie.path`</a> | Sets the Path attribute on the sticky session cookie, defining the path that must exist in the requested URL.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `/foobar` |
 
+??? info "`traefik.ingress.kubernetes.io/service.middlewares`"
+
+    See [service middlewares](../http/load-balancing/service.md#middlewares) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.middlewares: auth@file,prefix@kubernetescrd
+    ```
+
 ## TLS
 
 ### Enabling TLS via HTTP Options on Entrypoint
