@@ -201,7 +201,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		},
 		{
 			desc:  "Simple Ingress Route, with foo entrypoint and crossprovider middleware",
-			paths: []string{"tcp/services.yml", "tcp/with_middleware_crossprovider.yml"},
+			paths: []string{"tcp/services.yml", "tcp/with_middleware_cross_provider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1666,7 +1666,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:                "Simple Ingress Route with middleware crossprovider",
 			allowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_middleware_crossprovider.yml"},
+			paths:               []string{"services.yml", "with_middleware_cross_provider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -6277,7 +6277,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			clientMock := newClientMock("services.yml", "with_middleware_crossprovider.yml")
+			clientMock := newClientMock("services.yml", "with_middleware_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
 
 			router, ok := conf.HTTP.Routers["default-test2-route-23c7f4c450289ee29016"]
@@ -6348,7 +6348,7 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			clientMock := newClientMock("services.yml", "with_service_crossprovider.yml")
+			clientMock := newClientMock("services.yml", "with_service_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
 
 			_, mirrorOK := conf.HTTP.Services["foo-mirror-cp"]
@@ -6397,7 +6397,7 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			clientMock := newClientMock("services.yml", "with_tls_option_crossprovider.yml")
+			clientMock := newClientMock("services.yml", "with_tls_option_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
 
 			router, ok := conf.HTTP.Routers["default-test-route-6b204d94623b3df4370c"]
@@ -6450,7 +6450,7 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			clientMock := newClientMock("tcp/services.yml", "tcp/with_tls_option_crossprovider.yml")
+			clientMock := newClientMock("tcp/services.yml", "tcp/with_tls_options_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
 
 			router, ok := conf.TCP.Routers["default-test.route-fdd3e9338e47a45efefc"]
@@ -6503,7 +6503,7 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			clientMock := newClientMock("services.yml", "with_servers_transport_crossprovider.yml")
+			clientMock := newClientMock("services.yml", "with_servers_transport_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
 
 			service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
