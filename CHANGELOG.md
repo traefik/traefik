@@ -1,3 +1,23 @@
+## [v3.6.16](https://github.com/traefik/traefik/tree/v3.6.16) (2026-05-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.15...v3.6.16)
+
+**Bug fixes:**
+- **[k8s/crd]** Remove cross-provider sanitization for Kubernetes service loading ([#13087](https://github.com/traefik/traefik/pull/13087) @rtribotte)
+- **[k8s/ingress-nginx]** Fix typo in default CORS allowed headers ([#13088](https://github.com/traefik/traefik/pull/13088) @mliang2)
+- **[logs, metrics, tracing]** Bump go.opentelemetry.io/otel ([#13100](https://github.com/traefik/traefik/pull/13100) @juliens)
+- **[docker, ecs]** Migrate to github.com/moby/moby modules ([#12672](https://github.com/traefik/traefik/pull/12672) @thaJeztah)
+- **[docker, ecs]** Migrate to github.com/moby/moby modules ([#13053](https://github.com/traefik/traefik/pull/13053) @mmatur)
+
+**Documentation:**
+- **[k8s/gatewayapi]** Update Helm chart values link for Kubernetes Gateway ([#13063](https://github.com/traefik/traefik/pull/13063) @0054)
+
+## [v2.11.45](https://github.com/traefik/traefik/tree/v2.11.45) (2026-05-05)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.44...v2.11.45)
+
+**Bug fixes:**
+- **[k8s/crd]** Remove cross-provider sanitization for Kubernetes service loading ([#13087](https://github.com/traefik/traefik/pull/13087) @rtribotte)
+- **[docker, ecs]** Migrate to github.com/moby/moby modules ([#13053](https://github.com/traefik/traefik/pull/13053) @mmatur)
+
 ##  [v3.7.0-rc.3](https://github.com/traefik/traefik/tree/v3.7.0-rc.3) (2026-04-29)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.0-rc.2...v3.7.0-rc.3)
 

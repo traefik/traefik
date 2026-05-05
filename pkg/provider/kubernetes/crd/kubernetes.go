@@ -267,16 +267,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
+		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
 			continue
 		}
 
-		if errorPage != nil && errorPageService != nil {
-			serviceName := id + "-errorpage-service"
-			errorPage.Service = serviceName
-			conf.HTTP.Services[serviceName] = errorPageService
+		if errorPage != nil {
+			if errorPageService != nil {
+				serviceName := id + "-errorpage-service"
+				errorPage.Service = serviceName
+				conf.HTTP.Services[serviceName] = errorPageService
+			} else {
+				errorPage.Service = errorPageName
+			}
 		}
 
 		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
@@ -652,15 +656,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
-		return nil, nil, nil
-	}
-
-	errorPageMiddleware := &dynamic.ErrorPage{
-		Status:         errorPage.Status,
-		StatusRewrites: errorPage.StatusRewrites,
-		Query:          errorPage.Query,
+		return "", nil, nil, nil
 	}
 
 	cb := configBuilder{
@@ -670,12 +668,16 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		allowEmptyServices:        p.AllowEmptyServices,
 	}
 
-	balancerServerHTTP, err := cb.buildServersLB(ctx, namespace, errorPage.Service.LoadBalancerSpec)
+	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, err
 	}
 
-	return errorPageMiddleware, balancerServerHTTP, nil
+	return balancerName, &dynamic.ErrorPage{
+		Status:         errorPage.Status,
+		StatusRewrites: errorPage.StatusRewrites,
+		Query:          errorPage.Query,
+	}, balancerServerHTTP, nil
 }
 
 // getServicePort always returns a valid port, an error otherwise.

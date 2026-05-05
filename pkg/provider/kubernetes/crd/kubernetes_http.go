@@ -389,7 +389,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -403,7 +403,7 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 		// Here we are just logging a warning as the default value is already applied.
 		case "RoundRobin":
 			log.Warn().
-				Str("namespace", namespace).
+				Str("namespace", svc.Namespace).
 				Str("service", svc.Name).
 				Msgf("RoundRobin strategy value is deprecated, please use %s value instead", dynamic.BalancerStrategyWRR)
 
@@ -412,7 +412,7 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 		}
 	}
 
-	servers, err := c.loadServers(namespace, svc)
+	servers, err := c.loadServers(svc)
 	if err != nil {
 		return nil, err
 	}
@@ -507,14 +507,14 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 		}
 	}
 
-	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
+	lb.ServersTransport, err = c.makeServersTransportKey(svc.Namespace, svc.ServersTransport)
 	if err != nil {
 		return nil, err
 	}
 
 	service := &dynamic.Service{LoadBalancer: lb}
 	if len(svc.Middlewares) > 0 {
-		mds, err := makeMiddlewareKeys(ctx, namespace, svc.Middlewares, c.allowCrossNamespace)
+		mds, err := makeMiddlewareKeys(ctx, svc.Namespace, svc.Middlewares, c.allowCrossNamespace)
 		if err != nil {
 			return nil, fmt.Errorf("could not create middleware keys: %w", err)
 		}
@@ -543,21 +543,13 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
 }
 
-func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
-	namespace := namespaceOrFallback(svc, parentNamespace)
-
-	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
-		return nil, fmt.Errorf("load balancer service %s/%s is not in the parent resource namespace %s", svc.Namespace, svc.Name, parentNamespace)
-	}
-
-	// If the service uses explicitly the provider suffix
-	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+ProviderName)
-	service, exists, err := c.client.GetService(namespace, sanitizedName)
+func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+	service, exists, err := c.client.GetService(svc.Namespace, svc.Name)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
+		return nil, fmt.Errorf("kubernetes service not found: %s/%s", svc.Namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
@@ -566,12 +558,12 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	}
 
 	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", namespace, sanitizedName)
+		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", svc.Namespace, svc.Name)
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
-			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, sanitizedName)
+			return nil, fmt.Errorf("externalName services not allowed: %s/%s", svc.Namespace, svc.Name)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
@@ -613,7 +605,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			return nil, nodesErr
 		}
 		if !nodesExists || len(nodes) == 0 {
-			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", namespace, sanitizedName)
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
@@ -634,13 +626,13 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		}
 
 		if len(servers) == 0 {
-			return nil, fmt.Errorf("no servers were generated for service %s in namespace", sanitizedName)
+			return nil, fmt.Errorf("no servers were generated for service %s in namespace", svc.Name)
 		}
 
 		return servers, nil
 	}
 
-	endpointSlices, err := c.client.GetEndpointSlicesForService(namespace, sanitizedName)
+	endpointSlices, err := c.client.GetEndpointSlicesForService(svc.Namespace, svc.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
@@ -686,7 +678,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 	}
 
 	if len(servers) == 0 && !c.allowEmptyServices {
-		return nil, fmt.Errorf("no servers found for %s/%s", namespace, sanitizedName)
+		return nil, fmt.Errorf("no servers found for %s/%s", svc.Namespace, svc.Name)
 	}
 
 	return servers, nil
@@ -699,25 +691,26 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.Ctx(ctx).With().Str(logs.ServiceName, service.Name).Logger().WithContext(ctx)
 
-	namespace := namespaceOrFallback(service, parentNamespace)
+	service = *service.DeepCopy()
+	service.Namespace = namespaceOrFallback(service, parentNamespace)
 
-	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
+	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
 		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
 	}
 
 	switch service.Kind {
 	case "", "Service":
-		serversLB, err := c.buildServersLB(ctx, namespace, service)
+		serversLB, err := c.buildServersLB(ctx, service)
 		if err != nil {
 			return "", nil, err
 		}
 
-		fullName := fullServiceName(svcCtx, namespace, service, service.Port)
+		fullName := fullServiceName(svcCtx, service, service.Port)
 
 		return fullName, serversLB, nil
 
 	case "TraefikService":
-		return fullServiceName(svcCtx, namespace, service, intstr.FromInt(0)), nil, nil
+		return fullServiceName(svcCtx, service, intstr.FromInt(0)), nil, nil
 
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
@@ -797,18 +790,18 @@ func splitSvcNameProvider(name string) (string, string) {
 	return svc, pvd
 }
 
-func fullServiceName(ctx context.Context, namespace string, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
+func fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
 	if (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "") {
-		return provider.Normalize(fmt.Sprintf("%s-%s-%s", namespace, service.Name, &port))
+		return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, &port))
 	}
 
 	if !strings.Contains(service.Name, providerNamespaceSeparator) {
-		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, service.Name))
+		return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, service.Name))
 	}
 
 	name, pName := splitSvcNameProvider(service.Name)
 	if pName == ProviderName {
-		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
+		return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, name))
 	}
 
 	if service.Namespace != "" {

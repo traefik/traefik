@@ -5394,7 +5394,7 @@ func TestLoadIngresses(t *testing.T) {
 							Headers: &dynamic.Headers{
 								AccessControlAllowCredentials: true,
 								AccessControlExposeHeaders:    []string{},
-								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
 								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlMaxAge:           1728000,
@@ -5404,7 +5404,7 @@ func TestLoadIngresses(t *testing.T) {
 							Headers: &dynamic.Headers{
 								AccessControlAllowCredentials: true,
 								AccessControlExposeHeaders:    []string{},
-								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
 								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlMaxAge:           1728000,
