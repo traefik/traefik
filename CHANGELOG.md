@@ -1,3 +1,10 @@
+## [v2.11.45](https://github.com/traefik/traefik/tree/v2.11.45) (2026-05-05)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.44...v2.11.45)
+
+**Bug fixes:**
+- **[k8s/crd]** Remove cross-provider sanitization for Kubernetes service loading ([#13087](https://github.com/traefik/traefik/pull/13087) @rtribotte)
+- **[docker, ecs]** Migrate to github.com/moby/moby modules ([#13053](https://github.com/traefik/traefik/pull/13053) @mmatur)
+
 ## [v2.11.44](https://github.com/traefik/traefik/tree/v2.11.44) (2026-04-29)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.43...v2.11.44)
 
