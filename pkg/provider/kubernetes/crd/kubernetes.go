@@ -887,13 +887,13 @@ func createChainMiddleware(ctx context.Context, parentNamespace string, chain *t
 			}
 
 			if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNamespace) {
-				logger.Errorf("middleware %q reference is not allowed: namespace %q is not in crossProviderNamespaces", mi.Name, parentNamespace)
+				logger.Errorf("Middleware %q reference is not allowed: namespace %q is not in crossProviderNamespaces", mi.Name, parentNamespace)
 				continue
 			}
 
 			if len(mi.Namespace) > 0 {
 				log.FromContext(ctx).
-					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+					Warnf("Namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
 			mds = append(mds, mi.Name)
 			continue
