@@ -20,7 +20,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
-	"github.com/scaleway/scaleway-sdk-go/logger"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
@@ -878,6 +877,7 @@ func createChainMiddleware(ctx context.Context, parentNamespace string, chain *t
 
 	var mds []string
 	for _, mi := range chain.Middlewares {
+		logger := log.FromContext(log.With(ctx, log.Str("middleware", mi.Name), log.Str("namespace", parentNamespace)))
 		if strings.Contains(mi.Name, providerNamespaceSeparator) {
 			if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
 				// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
