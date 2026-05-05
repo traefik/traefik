@@ -1958,6 +1958,60 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 	}
 }
 
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport verifies that a Service referencing a cross-provider ServersTransport,
+// via the `traefik.ingress.kubernetes.io/service.serverstransport` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport(t *testing.T) {
+	paths := []string{
+		"fixtures/Ingress-with-servers-transport-annotation_ingress.yml",
+		"fixtures/Ingress-with-servers-transport-annotation_endpoint.yml",
+		"fixtures/Ingress-with-servers-transport-annotation_service.yml",
+	}
+
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantService             string
+	}{
+		{
+			desc:                    "Service with serversTransport annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+		},
+		{
+			desc:                    "Service with serversTransport annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock("v1.17", paths...))
+
+			if test.wantService == "" {
+				assert.Empty(t, conf.HTTP.Services)
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Services, test.wantService)
+			assert.Equal(t, "foobar@file", conf.HTTP.Services[test.wantService].LoadBalancer.ServersTransport)
+		})
+	}
+}
+
 func TestGetCertificates(t *testing.T) {
 	testIngressWithoutHostname := buildIngress(
 		iNamespace("testing"),

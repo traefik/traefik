@@ -760,7 +760,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetesingress.crossprovidernamespaces`:  
-List of namespaces from which Ingresses are allowed to attach Traefik middlewares via the router.middlewares annotation.
+List of namespaces from which Ingresses are allowed to attach Traefik middlewares or ServersTransports via annotations.
 
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).

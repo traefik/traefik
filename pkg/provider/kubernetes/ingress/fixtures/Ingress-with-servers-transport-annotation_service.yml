@@ -1,0 +1,13 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
+
+spec:
+  ports:
+  - port: 80
+  clusterIP: 10.0.0.1
