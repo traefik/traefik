@@ -501,15 +501,17 @@ providers:
 
 ### `crossProviderNamespaces`
 
-_Optional, Default: nil (unrestricted)_
+_Optional, Default: nil_
 
-`crossProviderNamespaces` is the list of namespaces from which Ingresses are allowed to attach Traefik middlewares declared via the `traefik.ingress.kubernetes.io/router.middlewares` annotation.
+`crossProviderNamespaces` is the list of namespaces from which Ingresses or Services are allowed to use `traefik.ingress.kubernetes.io/router.middlewares`, 
+`traefik.ingress.kubernetes.io/router.tls.options`,
+or `traefik.ingress.kubernetes.io/service.serverstransport` annotations.
 
-| Value      | Behavior                                                                                                           |
-|------------|--------------------------------------------------------------------------------------------------------------------|
-| not set    | Ingresses may declare middleware references from any namespace (default, backward compatible).                     |
-| `[]`       | Every Ingress declaring a middleware reference is rejected and dropped from the dynamic configuration.             |
-| `["ns-a"]` | Only Ingresses in the listed namespaces may declare middleware references; otherwise the whole Ingress is dropped. |
+| Value      | Behavior                                                                                                |
+|------------|---------------------------------------------------------------------------------------------------------|
+| not set    | Annotations can be used from any namespace (default, backward compatible).                              |
+| `[]`       | Every Ingress or Service using this annotations is rejected and dropped from the dynamic configuration. |
+| `["ns-a"]` | Only Ingresses and Services in the listed namespaces may use these annotations.                         |
 
 ```yaml tab="File (YAML)"
 providers:

@@ -346,13 +346,13 @@ providers:
 _Optional, Default: nil_
 
 `crossProviderNamespaces` is the list of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService,
-are allowed to declare direct references to Traefik resources (Services, Middlewares, TLSOptions, ServersTransports, ...).
+are allowed to declare cross-provider references to Traefik resources (Services, Middlewares, TLSOptions, ServersTransports, ...).
 
-| Value      | Behavior                                                                                          |
-|------------|---------------------------------------------------------------------------------------------------|
-| not set    | Resources may declare references from any namespace (default, backward compatible).               |
-| `[]`       | Every resource declaring a reference is rejected.                                                 |
-| `["ns-a"]` | Only resources in the listed namespaces may declare references; resources elsewhere are rejected. |
+| Value      | Behavior                                                                                           |
+|------------|----------------------------------------------------------------------------------------------------|
+| not set    | Resources may declare cross-provider references from any namespace (default, backward compatible). |
+| `[]`       | Every resource declaring a cross-provider reference is rejected.                                   |
+| `["ns-a"]` | Only resources in the listed namespaces may declare cross-provider references.                     |
 
 ```yaml tab="File (YAML)"
 providers:

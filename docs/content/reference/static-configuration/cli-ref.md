@@ -703,7 +703,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetescrd.crossprovidernamespaces`:  
-List of namespaces from which custom resources are allowed to declare direct references to Services, Middlewares, TLSOptions or ServersTransports.
+List of namespaces allowed to use cross-provider references.
 
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -760,7 +760,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `--providers.kubernetesingress.crossprovidernamespaces`:  
-List of namespaces from which Ingresses are allowed to attach Traefik middlewares or ServersTransports via annotations.
+List of namespaces from which Ingresses or Services are allowed to reference Middlewares, TLSOptions, or ServersTransport.
 
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).

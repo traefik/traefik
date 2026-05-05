@@ -1,0 +1,17 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.options: foobar@file
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /bar
+            backend:
+              serviceName: service1
+              servicePort: 80

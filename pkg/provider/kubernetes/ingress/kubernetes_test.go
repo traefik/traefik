@@ -1958,6 +1958,60 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 	}
 }
 
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions verifies that an Ingress,
+// declaring a `traefik.ingress.kubernetes.io/router.tls.options` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions(t *testing.T) {
+	paths := []string{
+		"fixtures/Ingress-with-tls-options-annotation_ingress.yml",
+		"fixtures/Ingress-with-tls-options-annotation_endpoint.yml",
+		"fixtures/Ingress-with-tls-options-annotation_service.yml",
+	}
+
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouter              string
+	}{
+		{
+			desc:                    "Ingress with TLS options annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock("v1.17", paths...))
+
+			if test.wantRouter == "" {
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+			assert.NotNil(t, conf.HTTP.Routers[test.wantRouter].TLS)
+			assert.Equal(t, "foobar@file", conf.HTTP.Routers[test.wantRouter].TLS.Options)
+		})
+	}
+}
+
 // TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport verifies that a Service referencing a cross-provider ServersTransport,
 // via the `traefik.ingress.kubernetes.io/service.serverstransport` annotation,
 // is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.

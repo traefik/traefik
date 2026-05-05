@@ -271,7 +271,7 @@ providers:
 
 ### `crossProviderNamespaces`
 
-_Optional, Default: nil (unrestricted)_
+_Optional, Default: nil_
 
 `crossProviderNamespaces` is the list of namespaces from which Gateway API routes (HTTPRoute, TCPRoute, TLSRoute),
 are allowed to declare a backendRef of kind `TraefikService`.
