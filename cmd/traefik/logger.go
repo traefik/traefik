@@ -33,7 +33,10 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	}
 
 	// configure log format
-	w, rotateFn := getLogWriter(staticConfiguration)
+	w, rotateFn, err := getLogWriter(staticConfiguration)
+	if err != nil {
+		return nil, err
+	}
 
 	// configure log level
 	logLevel := getLogLevel(staticConfiguration)
@@ -67,11 +70,19 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	return rotateFn, nil
 }
 
-func getLogWriter(staticConfiguration *static.Configuration) (io.Writer, func() error) {
+func getLogWriter(staticConfiguration *static.Configuration) (io.Writer, func() error, error) {
 	var w io.Writer = os.Stdout
 	var rotateFn func() error
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
-		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
+		f, err := os.OpenFile(staticConfiguration.Log.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+		if err != nil {
+			return nil, nil, fmt.Errorf("opening log file %q: %w", staticConfiguration.Log.FilePath, err)
+		}
+
+		if err := f.Close(); err != nil {
+			return nil, nil, fmt.Errorf("closing log file %q: %w", staticConfiguration.Log.FilePath, err)
+		}
+
 		lj := &lumberjack.Logger{
 			Filename:   staticConfiguration.Log.FilePath,
 			MaxSize:    staticConfiguration.Log.MaxSize,
@@ -91,7 +102,7 @@ func getLogWriter(staticConfiguration *static.Configuration) (io.Writer, func() 
 		}
 	}
 
-	return w, rotateFn
+	return w, rotateFn, nil
 }
 
 func getLogLevel(staticConfiguration *static.Configuration) zerolog.Level {
