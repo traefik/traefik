@@ -60,7 +60,6 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/quic-go/quic-go v0.57.1
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac // No tag on the repo.
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154 // No tag on the repo.
@@ -335,6 +334,7 @@ require (
 	github.com/sacloud/packages-go v0.0.12 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/selectel/domains-go v1.1.0 // indirect
