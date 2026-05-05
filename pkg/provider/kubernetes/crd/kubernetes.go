@@ -877,7 +877,6 @@ func createChainMiddleware(ctx context.Context, parentNamespace string, chain *t
 
 	var mds []string
 	for _, mi := range chain.Middlewares {
-		logger := log.FromContext(log.With(ctx, log.Str("middleware", mi.Name), log.Str("namespace", parentNamespace)))
 		if strings.Contains(mi.Name, providerNamespaceSeparator) {
 			if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
 				// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
@@ -887,7 +886,8 @@ func createChainMiddleware(ctx context.Context, parentNamespace string, chain *t
 			}
 
 			if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNamespace) {
-				logger.Errorf("Middleware %q reference is not allowed: namespace %q is not in crossProviderNamespaces", mi.Name, parentNamespace)
+				log.FromContext(ctx).
+					Errorf("Middleware %q reference is not allowed: namespace %q is not in crossProviderNamespaces", mi.Name, parentNamespace)
 				continue
 			}
 
