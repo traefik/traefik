@@ -20,6 +20,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
+	"github.com/scaleway/scaleway-sdk-go/logger"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
@@ -875,20 +876,21 @@ func createChainMiddleware(ctx context.Context, parentNamespace string, chain *t
 		return nil, nil
 	}
 
-	if len(chain.Middlewares) > 0 && !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNamespace) {
-		return nil, fmt.Errorf("chain middleware in namespace %q references middlewares but namespace is not in crossProviderNamespaces", parentNamespace)
-	}
-
 	var mds []string
 	for _, mi := range chain.Middlewares {
-		if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
-			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-			// if the provider namespace kubernetescrd is used,
-			// we don't allow this format to avoid cross-namespace references.
-			return nil, fmt.Errorf("invalid reference to middleware %s: when allowCrossNamespace is disabled @kubernetescrd provider references are disallowed", mi.Name)
-		}
-
 		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
+				// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+				// if the provider namespace kubernetescrd is used,
+				// we don't allow this format to avoid cross-namespace references.
+				return nil, fmt.Errorf("invalid reference to middleware %s: when allowCrossNamespace is disabled @kubernetescrd provider references are disallowed", mi.Name)
+			}
+
+			if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNamespace) {
+				logger.Errorf("middleware %q reference is not allowed: namespace %q is not in crossProviderNamespaces", mi.Name, parentNamespace)
+				continue
+			}
+
 			if len(mi.Namespace) > 0 {
 				log.FromContext(ctx).
 					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
@@ -897,13 +899,10 @@ func createChainMiddleware(ctx context.Context, parentNamespace string, chain *t
 			continue
 		}
 
-		ns := parentNamespace
-		if len(mi.Namespace) > 0 {
-			if !isNamespaceAllowed(allowCrossNamespace, parentNamespace, mi.Namespace) {
-				return nil, fmt.Errorf("middleware %s/%s is not in the chain namespace %s", mi.Namespace, mi.Name, parentNamespace)
-			}
+		ns := namespaceOrParentNamespace(mi.Namespace, parentNamespace)
 
-			ns = mi.Namespace
+		if !isNamespaceAllowed(allowCrossNamespace, parentNamespace, ns) {
+			return nil, fmt.Errorf("middleware %s/%s is not in the chain namespace %s", ns, mi.Name, parentNamespace)
 		}
 
 		mds = append(mds, makeID(ns, mi.Name))
