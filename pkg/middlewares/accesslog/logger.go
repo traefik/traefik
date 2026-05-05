@@ -469,8 +469,8 @@ func usernameIfPresent(theURL *url.URL) string {
 	return "-"
 }
 
-var requestCounter uint64 // Request ID
+var requestCounter atomic.Uint64 // Request ID
 
 func nextRequestCount() uint64 {
-	return atomic.AddUint64(&requestCounter, 1)
+	return requestCounter.Add(1)
 }

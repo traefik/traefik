@@ -1,3 +1,118 @@
+##  [v3.7.0-rc.3](https://github.com/traefik/traefik/tree/v3.7.0-rc.3) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.0-rc.2...v3.7.0-rc.3)
+
+**Enhancements:**
+- **[k8s/ingress-nginx]** Use a metamodel to generate dynamic configuration in ingress-nginx ([#13062](https://github.com/traefik/traefik/pull/13062) @juliens)
+- **[k8s/ingress-nginx]** Add limit-connections support ([#13030](https://github.com/traefik/traefik/pull/13030) @amazon7737)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix SSL redirect behavior for ingress-nginx provider ([#13028](https://github.com/traefik/traefik/pull/13028) @gndz07)
+- **[k8s/ingress-nginx]** Do not require a port for ExternalName services ([#13033](https://github.com/traefik/traefik/pull/13033) @kevinpollet)
+- **[k8s, k8s/ingress-nginx]** Add regression test for ingress default backend without rules ([#13066](https://github.com/traefik/traefik/pull/13066) @mmatur)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.1 ([#13027](https://github.com/traefik/traefik/pull/13027) @ldez)
+- **[server]** Bump github.com/vulcand/oxy to v2.1.0 ([#13046](https://github.com/traefik/traefik/pull/13046) @ldez)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.2 ([#13043](https://github.com/traefik/traefik/pull/13043) @ldez)
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+
+**Documentation:**
+- **[k8s/ingress-nginx]** Add ingress-nginx ConfigMap migration step ([#12963](https://github.com/traefik/traefik/pull/12963) @sheddy-traefik)
+- **[k8s/ingress-nginx]** Delete the coming soon section from the ingress-nginx documentation ([#13037](https://github.com/traefik/traefik/pull/13037) @nmengin)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
+## [v3.6.15](https://github.com/traefik/traefik/tree/v3.6.15) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.14...v3.6.15)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.2 ([#13043](https://github.com/traefik/traefik/pull/13043) @ldez)
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.35.1 ([#13027](https://github.com/traefik/traefik/pull/13027) @ldez)
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+- **[k8s/ingress-nginx]** Do not require a port for ExternalName services ([#13033](https://github.com/traefik/traefik/pull/13033) @kevinpollet)
+- **[server]** Bump github.com/vulcand/oxy to v2.1.0 ([#13046](https://github.com/traefik/traefik/pull/13046) @ldez)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
+## [v2.11.44](https://github.com/traefik/traefik/tree/v2.11.44) (2026-04-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.43...v2.11.44)
+
+**Bug fixes:**
+- **[middleware]** Add errorRequestHeaders option to Errors middleware ([#13034](https://github.com/traefik/traefik/pull/13034) @gndz07)
+- **[acme]** Bump github.com/go-acme/lego to v4.35.2 ([#13052](https://github.com/traefik/traefik/pull/13052) @mmatur)
+
+**Misc:**
+- Make FLAGS Make variable usable ([#13009](https://github.com/traefik/traefik/pull/13009) @twz123)
+
+## [v3.7.0-rc.2](https://github.com/traefik/traefik/tree/v3.7.0-rc.2) (2026-04-22)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.0-rc.1...v3.7.0-rc.2)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.34.0 ([#12993](https://github.com/traefik/traefik/pull/12993) @ldez)
+- **[docker]** Downgrade log level for missing container on inspect ([#12900](https://github.com/traefik/traefik/pull/12900) @Otoru)
+- **[k8s/crd, k8s]** Honor allowCrossNamespace with chain middleware CRD ([#12976](https://github.com/traefik/traefik/pull/12976) @rtribotte)
+- **[k8s/ingress-nginx]** Avoid 302 redirect when rewrite-target value is not an absolute URL for ingress-nginx provider ([#12977](https://github.com/traefik/traefik/pull/12977) @gndz07)
+- **[k8s/ingress-nginx]** Fix custom headers annotation with 503 Service Unavailable ([#12969](https://github.com/traefik/traefik/pull/12969) @LBF38)
+- **[k8s/ingress-nginx]** Fix service unavailable on ingress-nginx ([#12996](https://github.com/traefik/traefik/pull/12996) @LBF38)
+- **[k8s/ingress-nginx]** Handle duplicate server-alias on ingress-nginx provider ([#13019](https://github.com/traefik/traefik/pull/13019) @gndz07)
+- **[k8s/ingress-nginx]** Use QuoteMeta for cookie name when building canary rules ([#12973](https://github.com/traefik/traefik/pull/12973) @kevinpollet)
+- **[middleware, authentication]** Cleanup and make ForwardAuth logs consistent ([#13013](https://github.com/traefik/traefik/pull/13013) @kevinpollet)
+- **[middleware, authentication]** Fix trustForwardHeader on forward auth middleware ([#12994](https://github.com/traefik/traefik/pull/12994) @juliens)
+- **[middleware, authentication]** Remove map lookup making the basic auth notFoundSecret empty ([#12960](https://github.com/traefik/traefik/pull/12960) @rtribotte)
+- **[middleware, k8s/ingress-nginx]** Fix app-root with query params redirect ([#12986](https://github.com/traefik/traefik/pull/12986) @LBF38)
+- **[middleware, k8s/ingress-nginx]** Fix rewrite target with full URL and no regex in ingress path ([#12992](https://github.com/traefik/traefik/pull/12992) @LBF38)
+- **[middleware, k8s/ingress-nginx]** Preserve request query on absolute-URL redirect ([#13020](https://github.com/traefik/traefik/pull/13020) @SAY-5)
+- **[middleware, k8s/ingress-nginx]** Resolve NGINX variables in ingress-nginx upstream-vhost annotation ([#12978](https://github.com/traefik/traefik/pull/12978) @mmatur)
+- **[middleware]** Deprecate ForwardAuth.TrustForwardHeader option ([#13012](https://github.com/traefik/traefik/pull/13012) @kevinpollet)
+- **[middleware]** Remove untrusted X headers with underscores ([#12961](https://github.com/traefik/traefik/pull/12961) @rtribotte)
+- **[middleware]** Sanitize the request URL after stripping the prefix ([#12990](https://github.com/traefik/traefik/pull/12990) @kevinpollet)
+- **[sticky-session, k8s/crd]** Make SameSite cookie value case-insensitive ([#12922](https://github.com/traefik/traefik/pull/12922) @murataslan1)
+- **[tls]** Restore default cipher suites when serversTransport has no explicit cipherSuites ([#12974](https://github.com/traefik/traefik/pull/12974) @mmatur)
+- **[webui]** Bump lodash version ([#12954](https://github.com/traefik/traefik/pull/12954) @gndz07)
+- **[webui]** Upgrade form-data to 2.5.4, 3.0.4, 4.0.4 ([#12958](https://github.com/traefik/traefik/pull/12958) @orbisai0security)
+
+**Documentation:**
+- **[k8s]** Fix yaml indentation ([#12957](https://github.com/traefik/traefik/pull/12957) @isayme)
+- **[k8s]** Clarify install config watchNamespace watches only one namespace ([#12962](https://github.com/traefik/traefik/pull/12962) @parkerfath)
+- **[k8s/crd]** Update ingressroute.md ([#12916](https://github.com/traefik/traefik/pull/12916) @Rajakavitha1)
+- **[k8s/ingress-nginx]** Document the rd parameter behavior for the auth-signin annotation ([#13017](https://github.com/traefik/traefik/pull/13017) @kevinpollet)
+- Reverse versions order in migration guide ([#12959](https://github.com/traefik/traefik/pull/12959) @nmengin)
+- Update vulnerability submission guidelines ([#12968](https://github.com/traefik/traefik/pull/12968) @emilevauge)
+
+## [v3.6.14](https://github.com/traefik/traefik/tree/v3.6.14) (2026-04-22)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.13...v3.6.14)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.34.0 ([#12993](https://github.com/traefik/traefik/pull/12993) @ldez)
+- **[docker]** Downgrade log level for missing container on inspect ([#12900](https://github.com/traefik/traefik/pull/12900) @Otoru)
+- **[sticky-session, k8s/crd]** Make SameSite cookie value case-insensitive ([#12922](https://github.com/traefik/traefik/pull/12922) @murataslan1)
+- **[k8s/crd, k8s]** Honor allowCrossNamespace with chain middleware CRD ([#12976](https://github.com/traefik/traefik/pull/12976) @rtribotte)
+- **[middleware]** Remove untrusted X headers with underscores ([#12961](https://github.com/traefik/traefik/pull/12961) @rtribotte)
+- **[middleware]** Sanitize the request URL after stripping the prefix ([#12990](https://github.com/traefik/traefik/pull/12990) @kevinpollet)
+- **[middleware]** Deprecate ForwardAuth.TrustForwardHeader option ([#13012](https://github.com/traefik/traefik/pull/13012) @kevinpollet)
+- **[middleware, authentication]** Remove map lookup making the basic auth notFoundSecret empty ([#12960](https://github.com/traefik/traefik/pull/12960) @rtribotte)
+- **[middleware, authentication]** Fix trustForwardHeader on forward auth middleware ([#12994](https://github.com/traefik/traefik/pull/12994) @juliens)
+- **[middleware, authentication]** Cleanup and make ForwardAuth logs consistent ([#13013](https://github.com/traefik/traefik/pull/13013) @kevinpollet)
+- **[webui]** Upgrade form-data to 2.5.4, 3.0.4, 4.0.4 ([#12958](https://github.com/traefik/traefik/pull/12958) @orbisai0security)
+
+**Documentation:**
+- **[k8s]** Fix yaml indentation ([#12957](https://github.com/traefik/traefik/pull/12957) @isayme)
+- **[k8s]** Clarify install config watchNamespace watches only one namespace ([#12962](https://github.com/traefik/traefik/pull/12962) @parkerfath)
+- **[k8s/crd]** Update ingressroute.md ([#12916](https://github.com/traefik/traefik/pull/12916) @Rajakavitha1)
+- Reverse versions order in migration guide ([#12959](https://github.com/traefik/traefik/pull/12959) @nmengin)
+- Update vulnerability submission guidelines ([#12968](https://github.com/traefik/traefik/pull/12968) @emilevauge)
+
+## [v2.11.43](https://github.com/traefik/traefik/tree/v2.11.43) (2026-04-22)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.42...v2.11.43)
+
+**Bug fixes:**
+- **[middleware, authentication]** Remove map lookup making the basic auth notFoundSecret empty ([#12960](https://github.com/traefik/traefik/pull/12960) @rtribotte)
+- **[middleware, authentication]** Fix trustForwardHeader on forward auth middleware ([#12994](https://github.com/traefik/traefik/pull/12994) @juliens)
+- **[middleware, authentication]** Cleanup and make ForwardAuth logs consistent ([#13013](https://github.com/traefik/traefik/pull/13013) @kevinpollet)
+- **[middleware]** Remove untrusted X headers with underscores ([#12961](https://github.com/traefik/traefik/pull/12961) @rtribotte)
+- **[middleware]** Sanitize the request URL after stripping the prefix ([#12990](https://github.com/traefik/traefik/pull/12990) @kevinpollet)
+- **[k8s/crd, k8s]** Honor allowCrossNamespace with chain middleware CRD ([#12976](https://github.com/traefik/traefik/pull/12976) @rtribotte)
+
 ## [v3.7.0-rc.1](https://github.com/traefik/traefik/tree/v3.7.0-rc.1) (2026-04-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.0-ea.3...v3.7.0-rc.1)
 

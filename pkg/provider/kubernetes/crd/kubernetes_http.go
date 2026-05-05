@@ -189,8 +189,8 @@ func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []tra
 		if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+ProviderName) {
 			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
 			// if the provider namespace kubernetescrd is used,
-			// we don't allow this format to avoid cross namespace references.
-			return nil, fmt.Errorf("invalid reference to middleware %s: with crossnamespace disallowed, the namespace field needs to be explicitly specified", mi.Name)
+			// we don't allow this format to avoid cross-namespace references.
+			return nil, fmt.Errorf("invalid reference to middleware %s: when allowCrossNamespace is disabled @kubernetescrd provider references are disallowed", mi.Name)
 		}
 
 		if strings.Contains(name, providerNamespaceSeparator) {
