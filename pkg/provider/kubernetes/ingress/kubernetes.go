@@ -48,7 +48,7 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
-	CrossProviderNamespaces   []string         `description:"List of namespaces from which Ingresses or Services are allowed to reference Middlewares, TLSOptions, or ServersTransport." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+	CrossProviderNamespaces   []string         `description:"List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 

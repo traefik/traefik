@@ -703,7 +703,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CROSSPROVIDERNAMESPACES`:  
-List of namespaces allowed to use cross-provider references.
+List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references.
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -760,7 +760,7 @@ Allow ExternalName services. (Default: ```false```)
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CROSSPROVIDERNAMESPACES`:  
-List of namespaces from which Ingresses or Services are allowed to reference Middlewares, TLSOptions, or ServersTransport.
+List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
