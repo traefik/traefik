@@ -128,6 +128,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     allowExternalNameServices = true
+    crossProviderNamespaces = ["foobar", "foobar"]
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -139,6 +140,7 @@
     namespaces = ["foobar", "foobar"]
     allowCrossNamespace = true
     allowExternalNameServices = true
+    crossProviderNamespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
     throttleDuration = "42s"
@@ -150,6 +152,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     throttleDuration = "42s"
+    crossProviderNamespaces = ["foobar", "foobar"]
   [providers.rest]
     insecure = true
   [providers.rancher]

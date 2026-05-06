@@ -5236,3 +5236,121 @@ func Test_makeListenerKey(t *testing.T) {
 		})
 	}
 }
+
+func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		allowList []string
+		namespace string
+		want      bool
+	}{
+		{desc: "nil allowList allows any namespace", allowList: nil, namespace: "ns-a", want: true},
+		{desc: "empty allowList denies every namespace", allowList: []string{}, namespace: "ns-a", want: false},
+		{desc: "namespace in allowList is accepted", allowList: []string{"ns-a"}, namespace: "ns-a", want: true},
+		{desc: "namespace not in allowList is rejected", allowList: []string{"ns-b"}, namespace: "ns-a", want: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			got := isCrossProviderNamespaceAllowed(test.allowList, test.namespace)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_HTTPRoute verifies that the
+// CrossProviderNamespaces option gates `@otherProvider` TraefikService
+// backendRefs declared on a Gateway HTTPRoute. The check is anchored on the
+// HTTPRoute's namespace; when the route is rejected, the whole router is
+// dropped from the dynamic configuration.
+func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouter              bool
+	}{
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantRouter: true},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantRouter: false},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantRouter: true},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantRouter: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				EntryPoints:             map[string]Entrypoint{"web": {Address: ":80"}},
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock("services.yml", "httproute/simple_cross_provider.yml"))
+
+			_, ok := conf.HTTP.Routers["default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06"]
+			assert.Equal(t, test.wantRouter, ok)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_TCPRoute verifies that the option also gates
+// cross-provider TraefikService backendRefs declared on a Gateway TCPRoute.
+func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouter              bool
+	}{
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantRouter: true},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantRouter: false},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantRouter: true},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantRouter: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				EntryPoints:             map[string]Entrypoint{"tcp": {Address: ":9000"}},
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock("services.yml", "tcproute/simple_cross_provider.yml"))
+
+			_, ok := conf.TCP.Routers["default-tcp-app-1-my-gateway-tcp-e3b0c44298fc1c149afb"]
+			assert.Equal(t, test.wantRouter, ok)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_TLSRoute verifies that the option also gates
+// cross-provider TraefikService backendRefs declared on a Gateway TLSRoute.
+func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouter              bool
+	}{
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantRouter: true},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantRouter: false},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantRouter: true},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantRouter: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				EntryPoints:             map[string]Entrypoint{"tls": {Address: ":9000"}},
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			conf := p.loadConfigurationFromGateway(t.Context(), newClientMock("services.yml", "tlsroute/simple_cross_provider.yml"))
+
+			_, ok := conf.TCP.Routers["default-tcp-app-1-my-gateway-tls-e3b0c44298fc1c149afb"]
+			assert.Equal(t, test.wantRouter, ok)
+		})
+	}
+}

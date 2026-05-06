@@ -499,6 +499,39 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `crossProviderNamespaces`
+
+_Optional, Default: nil_
+
+`crossProviderNamespaces` is the list of namespaces from which Ingresses or Services are allowed to use `traefik.ingress.kubernetes.io/router.middlewares`, 
+`traefik.ingress.kubernetes.io/router.tls.options`,
+or `traefik.ingress.kubernetes.io/service.serverstransport` annotations.
+
+| Value      | Behavior                                                                                                |
+|------------|---------------------------------------------------------------------------------------------------------|
+| not set    | Annotations can be used from any namespace (default, backward compatible).                              |
+| `[]`       | Every Ingress or Service using this annotations is rejected and dropped from the dynamic configuration. |
+| `["ns-a"]` | Only Ingresses and Services in the listed namespaces may use these annotations.                         |
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    crossProviderNamespaces:
+      - ns-a
+      - ns-b
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  crossProviderNamespaces = ["ns-a", "ns-b"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.crossProviderNamespaces=ns-a,ns-b
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,

@@ -702,6 +702,9 @@ Allow ExternalName services. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_CROSSPROVIDERNAMESPACES`:  
+List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references.
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -725,6 +728,9 @@ Enable Kubernetes gateway api provider with default settings. (Default: ```false
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_CROSSPROVIDERNAMESPACES`:  
+List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references.
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -752,6 +758,9 @@ Allow ExternalName services. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CROSSPROVIDERNAMESPACES`:  
+List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
