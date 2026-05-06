@@ -208,7 +208,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			epObsConfig = model.Observability
 		}
 
-		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
+		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, m.observabilityMgr.IsPingEntryPoint(entryPointName), epObsConfig).Then(http.NotFoundHandler())
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -230,7 +230,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
 	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
-	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, m.observabilityMgr.IsPingEntryPoint(entryPointName), config).Then(http.NotFoundHandler())
 	if err != nil {
 		return nil, err
 	}
