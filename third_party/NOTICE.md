@@ -4,24 +4,14 @@ This product uses source code from third party libraries which carry
 their own copyright notices and license terms. These notices are provided
 below.
 
-Generated at: 2026-04-29T20:13:11Z
+Generated at: 2026-05-06T17:29:54Z
 
 ---
 
 
-## JSONStream 1.3.5
+## abbrev 2.0.0
 
-PURL: pkg:npm/jsonstream@1.3.5
-Upstream: [https://www.npmjs.com/package/jsonstream](https://www.npmjs.com/package/jsonstream)
-
-Licenses: Apache-2.0, MIT
-
-Copyright (c) Dominic Tarr
-
-
-## abbrev 1.1.1
-
-PURL: pkg:npm/abbrev@1.1.1
+PURL: pkg:npm/abbrev@2.0.0
 Upstream: [https://www.npmjs.com/package/abbrev](https://www.npmjs.com/package/abbrev)
 
 Licenses: ISC
@@ -29,14 +19,34 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## abbrev 3.0.0
+## abbrev 4.0.0
 
-PURL: pkg:npm/abbrev@3.0.0
+PURL: pkg:npm/abbrev@4.0.0
 Upstream: [https://www.npmjs.com/package/abbrev](https://www.npmjs.com/package/abbrev)
 
 Licenses: ISC
 
 Copyright (c) Isaac Z. Schlueter and Contributors
+
+
+## abort-controller 3.0.0
+
+PURL: pkg:npm/abort-controller@3.0.0
+Upstream: [https://www.npmjs.com/package/abort-controller](https://www.npmjs.com/package/abort-controller)
+
+Licenses: MIT
+
+Copyright (c) 2017 Toru Nagashima
+
+
+## accepts 1.3.8
+
+PURL: pkg:npm/accepts@1.3.8
+Upstream: [https://www.npmjs.com/package/accepts](https://www.npmjs.com/package/accepts)
+
+Licenses: MIT
+
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 
 ## acorn-jsx 5.3.2
@@ -49,9 +59,19 @@ Licenses: MIT
 Copyright (C) 2012-2017 by Ingvar Stepanyan
 
 
-## acorn 8.14.1
+## acorn-walk 8.3.4
 
-PURL: pkg:npm/acorn@8.14.1
+PURL: pkg:npm/acorn-walk@8.3.4
+Upstream: [https://www.npmjs.com/package/acorn-walk](https://www.npmjs.com/package/acorn-walk)
+
+Licenses: MIT
+
+Copyright (C) 2012-2020 by various contributors (see AUTHORS)
+
+
+## acorn 8.12.1
+
+PURL: pkg:npm/acorn@8.12.1
 Upstream: [https://www.npmjs.com/package/acorn](https://www.npmjs.com/package/acorn)
 
 Licenses: MIT
@@ -59,69 +79,19 @@ Licenses: MIT
 Copyright (C) 2012-2022 by various contributors (see AUTHORS)
 
 
-## acorn 8.15.0
+## ajv-formats 2.1.1
 
-PURL: pkg:npm/acorn@8.15.0
-Upstream: [https://www.npmjs.com/package/acorn](https://www.npmjs.com/package/acorn)
-
-Licenses: MIT
-
-Copyright (C) 2012-2022 by various contributors (see AUTHORS)
-
-
-## agent-base 6.0.2
-
-PURL: pkg:npm/agent-base@6.0.2
-Upstream: [https://www.npmjs.com/package/agent-base](https://www.npmjs.com/package/agent-base)
+PURL: pkg:npm/ajv-formats@2.1.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fajv-validator%2Fajv-formats.git
+Upstream: [https://www.npmjs.com/package/ajv-formats](https://www.npmjs.com/package/ajv-formats)
 
 Licenses: MIT
 
-Copyright (c) Nathan Rajlich
+Copyright (c) 2020 Evgeny Poberezkin
 
 
-## agent-base 7.1.3
+## ajv-keywords 5.1.0
 
-PURL: pkg:npm/agent-base@7.1.3
-Upstream: [https://www.npmjs.com/package/agent-base](https://www.npmjs.com/package/agent-base)
-
-Licenses: MIT
-
-Copyright (c) Nathan Rajlich
-
-
-## agentkeepalive 4.6.0
-
-PURL: pkg:npm/agentkeepalive@4.6.0
-Upstream: [https://www.npmjs.com/package/agentkeepalive](https://www.npmjs.com/package/agentkeepalive)
-
-Licenses: MIT
-
-Copyright(c) node-modules and other contributors.
-
-
-## aggregate-error 3.1.0
-
-PURL: pkg:npm/aggregate-error@3.1.0
-Upstream: [https://www.npmjs.com/package/aggregate-error](https://www.npmjs.com/package/aggregate-error)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## aggregate-error 4.0.1
-
-PURL: pkg:npm/aggregate-error@4.0.1
-Upstream: [https://www.npmjs.com/package/aggregate-error](https://www.npmjs.com/package/aggregate-error)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## ajv-keywords 3.5.2
-
-PURL: pkg:npm/ajv-keywords@3.5.2?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fepoberezkin%2Fajv-keywords.git
+PURL: pkg:npm/ajv-keywords@5.1.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fepoberezkin%2Fajv-keywords.git
 Upstream: [https://www.npmjs.com/package/ajv-keywords](https://www.npmjs.com/package/ajv-keywords)
 
 Licenses: MIT
@@ -136,67 +106,17 @@ Upstream: [https://www.npmjs.com/package/ajv](https://www.npmjs.com/package/ajv)
 
 Licenses: MIT
 
-Copyright (c) 2015-2017 Evgeny Poberezkin
+Copyright (c) 2015-2021 Evgeny Poberezkin
 
 
-## ajv 8.12.0
+## ajv 8.17.1
 
-PURL: pkg:npm/ajv@8.12.0
+PURL: pkg:npm/ajv@8.17.1
 Upstream: [https://www.npmjs.com/package/ajv](https://www.npmjs.com/package/ajv)
 
 Licenses: MIT
 
-Copyright (c) 2015-2017 Evgeny Poberezkin
-
-
-## ajv 8.13.0
-
-PURL: pkg:npm/ajv@8.13.0
-Upstream: [https://www.npmjs.com/package/ajv](https://www.npmjs.com/package/ajv)
-
-Licenses: MIT
-
-Copyright (c) 2015-2017 Evgeny Poberezkin
-
-
-## alien-signals 0.4.14
-
-PURL: pkg:npm/alien-signals@0.4.14
-Upstream: [https://www.npmjs.com/package/alien-signals](https://www.npmjs.com/package/alien-signals)
-
-Licenses: MIT
-
-Copyright (c) 2024-present Johnson Chu
-
-
-## all-package-names 2.0.897
-
-PURL: pkg:npm/all-package-names@2.0.897
-Upstream: [https://www.npmjs.com/package/all-package-names](https://www.npmjs.com/package/all-package-names)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## ansi-align 3.0.1
-
-PURL: pkg:npm/ansi-align@3.0.1
-Upstream: [https://www.npmjs.com/package/ansi-align](https://www.npmjs.com/package/ansi-align)
-
-Licenses: ISC
-
-Copyright (c) 2016, Contributors
-
-
-## ansi-escapes 3.2.0
-
-PURL: pkg:npm/ansi-escapes@3.2.0
-Upstream: [https://www.npmjs.com/package/ansi-escapes](https://www.npmjs.com/package/ansi-escapes)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2015-2021 Evgeny Poberezkin
 
 
 ## ansi-escapes 4.3.2
@@ -207,56 +127,6 @@ Upstream: [https://www.npmjs.com/package/ansi-escapes](https://www.npmjs.com/pac
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## ansi-escapes 5.0.0
-
-PURL: pkg:npm/ansi-escapes@5.0.0
-Upstream: [https://www.npmjs.com/package/ansi-escapes](https://www.npmjs.com/package/ansi-escapes)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## ansi-escapes 6.2.1
-
-PURL: pkg:npm/ansi-escapes@6.2.1
-Upstream: [https://www.npmjs.com/package/ansi-escapes](https://www.npmjs.com/package/ansi-escapes)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## ansi-regex 2.1.1
-
-PURL: pkg:npm/ansi-regex@2.1.1
-Upstream: [https://www.npmjs.com/package/ansi-regex](https://www.npmjs.com/package/ansi-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## ansi-regex 3.0.1
-
-PURL: pkg:npm/ansi-regex@3.0.1
-Upstream: [https://www.npmjs.com/package/ansi-regex](https://www.npmjs.com/package/ansi-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## ansi-regex 4.1.1
-
-PURL: pkg:npm/ansi-regex@4.1.1
-Upstream: [https://www.npmjs.com/package/ansi-regex](https://www.npmjs.com/package/ansi-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## ansi-regex 5.0.1
@@ -273,16 +143,6 @@ Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 PURL: pkg:npm/ansi-regex@6.1.0
 Upstream: [https://www.npmjs.com/package/ansi-regex](https://www.npmjs.com/package/ansi-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## ansi-styles 2.2.1
-
-PURL: pkg:npm/ansi-styles@2.2.1
-Upstream: [https://www.npmjs.com/package/ansi-styles](https://www.npmjs.com/package/ansi-styles)
 
 Licenses: MIT
 
@@ -329,104 +189,54 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## ansicolors 0.3.2
+## any-promise 1.3.0
 
-PURL: pkg:npm/ansicolors@0.3.2
-Upstream: [https://www.npmjs.com/package/ansicolors](https://www.npmjs.com/package/ansicolors)
-
-Licenses: MIT
-
-Copyright 2013 Thorsten Lorenz.
-
-
-## any-observable 0.3.0
-
-PURL: pkg:npm/any-observable@0.3.0
-Upstream: [https://www.npmjs.com/package/any-observable](https://www.npmjs.com/package/any-observable)
+PURL: pkg:npm/any-promise@1.3.0
+Upstream: [https://www.npmjs.com/package/any-promise](https://www.npmjs.com/package/any-promise)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (C) 2014-2016 Kevin Beaty
 
 
-## api-extractor-model 7.32.0
+## anymatch 3.1.3
 
-PURL: pkg:npm/%40microsoft/api-extractor-model@7.32.0
-Upstream: [https://www.npmjs.com/package/%40microsoft/api-extractor-model](https://www.npmjs.com/package/%40microsoft/api-extractor-model)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## api-extractor 7.55.0
-
-PURL: pkg:npm/%40microsoft/api-extractor@7.55.0
-Upstream: [https://www.npmjs.com/package/%40microsoft/api-extractor](https://www.npmjs.com/package/%40microsoft/api-extractor)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## aproba 2.0.0
-
-PURL: pkg:npm/aproba@2.0.0
-Upstream: [https://www.npmjs.com/package/aproba](https://www.npmjs.com/package/aproba)
+PURL: pkg:npm/anymatch@3.1.3
+Upstream: [https://www.npmjs.com/package/anymatch](https://www.npmjs.com/package/anymatch)
 
 Licenses: ISC
 
-Copyright (c) 2015, Rebecca Turner <me@re-becca.org>
+Copyright (c) 2019 Elan Shanker, Paul Miller (https://paulmillr.com)
 
 
-## arborist 5.6.3
+## app-vite 2.0.0-beta.22
 
-PURL: pkg:npm/%40npmcli/arborist@5.6.3
-Upstream: [https://www.npmjs.com/package/%40npmcli/arborist](https://www.npmjs.com/package/%40npmcli/arborist)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## archy 1.0.0
-
-PURL: pkg:npm/archy@1.0.0
-Upstream: [https://www.npmjs.com/package/archy](https://www.npmjs.com/package/archy)
+PURL: pkg:npm/%40quasar/app-vite@2.0.0-beta.22?vcs_url=https%3A%2F%2Fgithub.com%2Fquasarframework%2Fquasar
+Upstream: [https://www.npmjs.com/package/%40quasar/app-vite](https://www.npmjs.com/package/%40quasar/app-vite)
 
 Licenses: MIT
 
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+Copyright (c) 2015-present Razvan Stoenescu
 
 
-## are-we-there-yet 3.0.1
+## archiver-utils 5.0.2
 
-PURL: pkg:npm/are-we-there-yet@3.0.1
-Upstream: [https://www.npmjs.com/package/are-we-there-yet](https://www.npmjs.com/package/are-we-there-yet)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## argparse 1.0.10
-
-PURL: pkg:npm/argparse@1.0.10
-Upstream: [https://www.npmjs.com/package/argparse](https://www.npmjs.com/package/argparse)
+PURL: pkg:npm/archiver-utils@5.0.2
+Upstream: [https://www.npmjs.com/package/archiver-utils](https://www.npmjs.com/package/archiver-utils)
 
 Licenses: MIT
 
-Copyright (C) 2012 by Vitaly Puzrin
+Copyright (c) 2015 Chris Talkington.
 
 
-## argparse 1.0.38
+## archiver 7.0.1
 
-PURL: pkg:npm/%40types/argparse@1.0.38
-Upstream: [https://www.npmjs.com/package/%40types/argparse](https://www.npmjs.com/package/%40types/argparse)
+PURL: pkg:npm/archiver@7.0.1
+Upstream: [https://www.npmjs.com/package/archiver](https://www.npmjs.com/package/archiver)
 
 Licenses: MIT
 
-Copyright (c) Microsoft Corporation. All rights reserved.
+Copyright (c) 2012-2014 Chris Talkington, contributors.
 
 
 ## argparse 2.0.1
@@ -436,72 +246,12 @@ Upstream: [https://www.npmjs.com/package/argparse](https://www.npmjs.com/package
 
 Licenses: Python-2.0
 
-Copyright (C) 2012 by Vitaly Puzrin
+Copyright (c) 1991 - 1995, Stichting Mathematisch Centrum Amsterdam,
 
 
-## argv-formatter 1.0.0
+## array-buffer-byte-length 1.0.1
 
-PURL: pkg:npm/argv-formatter@1.0.0
-Upstream: [https://www.npmjs.com/package/argv-formatter](https://www.npmjs.com/package/argv-formatter)
-
-Licenses: MIT
-
-Copyright (c) 2014 Ben Drucker
-
-
-## aria-hidden 1.2.4
-
-PURL: pkg:npm/aria-hidden@1.2.4
-Upstream: [https://www.npmjs.com/package/aria-hidden](https://www.npmjs.com/package/aria-hidden)
-
-Licenses: MIT
-
-Copyright (c) 2017 Anton Korzunov
-
-
-## aria-query 5.0.4
-
-PURL: pkg:npm/%40types/aria-query@5.0.4
-Upstream: [https://www.npmjs.com/package/%40types/aria-query](https://www.npmjs.com/package/%40types/aria-query)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## aria-query 5.1.3
-
-PURL: pkg:npm/aria-query@5.1.3
-Upstream: [https://www.npmjs.com/package/aria-query](https://www.npmjs.com/package/aria-query)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## aria-query 5.3.0
-
-PURL: pkg:npm/aria-query@5.3.0
-Upstream: [https://www.npmjs.com/package/aria-query](https://www.npmjs.com/package/aria-query)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## aria-query 5.3.2
-
-PURL: pkg:npm/aria-query@5.3.2
-Upstream: [https://www.npmjs.com/package/aria-query](https://www.npmjs.com/package/aria-query)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## array-buffer-byte-length 1.0.2
-
-PURL: pkg:npm/array-buffer-byte-length@1.0.2
+PURL: pkg:npm/array-buffer-byte-length@1.0.1
 Upstream: [https://www.npmjs.com/package/array-buffer-byte-length](https://www.npmjs.com/package/array-buffer-byte-length)
 
 Licenses: MIT
@@ -509,14 +259,14 @@ Licenses: MIT
 Copyright (c) 2023 Inspect JS
 
 
-## array-ify 1.0.0
+## array-flatten 1.1.1
 
-PURL: pkg:npm/array-ify@1.0.0
-Upstream: [https://www.npmjs.com/package/array-ify](https://www.npmjs.com/package/array-ify)
+PURL: pkg:npm/array-flatten@1.1.1
+Upstream: [https://www.npmjs.com/package/array-flatten](https://www.npmjs.com/package/array-flatten)
 
 Licenses: MIT
 
-Copyright (c) Steve Mao
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
 ## array-includes 3.1.8
@@ -529,39 +279,9 @@ Licenses: MIT
 Copyright (C) 2015 Jordan Harband
 
 
-## array-includes 3.1.9
+## array.prototype.findlastindex 1.2.5
 
-PURL: pkg:npm/array-includes@3.1.9
-Upstream: [https://www.npmjs.com/package/array-includes](https://www.npmjs.com/package/array-includes)
-
-Licenses: MIT
-
-Copyright (C) 2015 Jordan Harband
-
-
-## array-union 2.1.0
-
-PURL: pkg:npm/array-union@2.1.0
-Upstream: [https://www.npmjs.com/package/array-union](https://www.npmjs.com/package/array-union)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## array.prototype.findlast 1.2.5
-
-PURL: pkg:npm/array.prototype.findlast@1.2.5
-Upstream: [https://www.npmjs.com/package/array.prototype.findlast](https://www.npmjs.com/package/array.prototype.findlast)
-
-Licenses: MIT
-
-Copyright (c) 2021 ECMAScript Shims
-
-
-## array.prototype.findlastindex 1.2.6
-
-PURL: pkg:npm/array.prototype.findlastindex@1.2.6
+PURL: pkg:npm/array.prototype.findlastindex@1.2.5
 Upstream: [https://www.npmjs.com/package/array.prototype.findlastindex](https://www.npmjs.com/package/array.prototype.findlastindex)
 
 Licenses: MIT
@@ -569,9 +289,9 @@ Licenses: MIT
 Copyright (c) 2021 ECMAScript Shims
 
 
-## array.prototype.flat 1.3.3
+## array.prototype.flat 1.3.2
 
-PURL: pkg:npm/array.prototype.flat@1.3.3
+PURL: pkg:npm/array.prototype.flat@1.3.2
 Upstream: [https://www.npmjs.com/package/array.prototype.flat](https://www.npmjs.com/package/array.prototype.flat)
 
 Licenses: MIT
@@ -579,9 +299,9 @@ Licenses: MIT
 Copyright (c) 2017 ECMAScript Shims
 
 
-## array.prototype.flatmap 1.3.3
+## array.prototype.flatmap 1.3.2
 
-PURL: pkg:npm/array.prototype.flatmap@1.3.3
+PURL: pkg:npm/array.prototype.flatmap@1.3.2
 Upstream: [https://www.npmjs.com/package/array.prototype.flatmap](https://www.npmjs.com/package/array.prototype.flatmap)
 
 Licenses: MIT
@@ -589,19 +309,9 @@ Licenses: MIT
 Copyright (c) 2017 ECMAScript Shims
 
 
-## array.prototype.tosorted 1.1.4
+## arraybuffer.prototype.slice 1.0.3
 
-PURL: pkg:npm/array.prototype.tosorted@1.1.4
-Upstream: [https://www.npmjs.com/package/array.prototype.tosorted](https://www.npmjs.com/package/array.prototype.tosorted)
-
-Licenses: MIT
-
-Copyright (c) 2021 ECMAScript Shims
-
-
-## arraybuffer.prototype.slice 1.0.4
-
-PURL: pkg:npm/arraybuffer.prototype.slice@1.0.4
+PURL: pkg:npm/arraybuffer.prototype.slice@1.0.3
 Upstream: [https://www.npmjs.com/package/arraybuffer.prototype.slice](https://www.npmjs.com/package/arraybuffer.prototype.slice)
 
 Licenses: MIT
@@ -609,84 +319,24 @@ Licenses: MIT
 Copyright (c) 2023 ECMAScript Shims
 
 
-## arrify 1.0.1
+## assertion-error 1.1.0
 
-PURL: pkg:npm/arrify@1.0.1
-Upstream: [https://www.npmjs.com/package/arrify](https://www.npmjs.com/package/arrify)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## asap 2.0.6
-
-PURL: pkg:npm/asap@2.0.6
-Upstream: [https://www.npmjs.com/package/asap](https://www.npmjs.com/package/asap)
-
-Licenses: MIT
-
-Copyright 2009–2014 Contributors. All rights reserved.
-
-
-## assertion-error 2.0.1
-
-PURL: pkg:npm/assertion-error@2.0.1
+PURL: pkg:npm/assertion-error@1.1.0
 Upstream: [https://www.npmjs.com/package/assertion-error](https://www.npmjs.com/package/assertion-error)
 
 Licenses: MIT
 
-Copyright (c) 2013 Jake Luer jake@qualiancy.com (http://qualiancy.com)
+Copyright (c) Jake Luer
 
 
-## ast-types-flow 0.0.8
+## async 3.2.6
 
-PURL: pkg:npm/ast-types-flow@0.0.8
-Upstream: [https://www.npmjs.com/package/ast-types-flow](https://www.npmjs.com/package/ast-types-flow)
-
-Licenses: MIT
-
-Copyright (c) 2018 Kyle Davis
-
-
-## ast-types 0.16.1
-
-PURL: pkg:npm/ast-types@0.16.1
-Upstream: [https://www.npmjs.com/package/ast-types](https://www.npmjs.com/package/ast-types)
+PURL: pkg:npm/async@3.2.6
+Upstream: [https://www.npmjs.com/package/async](https://www.npmjs.com/package/async)
 
 Licenses: MIT
 
-Copyright (c) 2013 Ben Newman <bn@cs.stanford.edu>
-
-
-## ast-v8-to-istanbul 0.3.3
-
-PURL: pkg:npm/ast-v8-to-istanbul@0.3.3
-Upstream: [https://www.npmjs.com/package/ast-v8-to-istanbul](https://www.npmjs.com/package/ast-v8-to-istanbul)
-
-Licenses: MIT
-
-Copyright (c) Ari Perkkiö
-
-
-## astral-regex 2.0.0
-
-PURL: pkg:npm/astral-regex@2.0.0
-Upstream: [https://www.npmjs.com/package/astral-regex](https://www.npmjs.com/package/astral-regex)
-
-Licenses: MIT
-
-Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com/kevva)
-
-
-## async-function 1.0.0
-
-PURL: pkg:npm/async-function@1.0.0
-Upstream: [https://www.npmjs.com/package/async-function](https://www.npmjs.com/package/async-function)
-
-Licenses: MIT
-
-Copyright (c) 2016 EduardoRFS
+Copyright (c) 2010-2018 Caolan McMahon
 
 
 ## asynckit 0.4.0
@@ -699,24 +349,14 @@ Licenses: MIT
 Copyright (c) 2016 Alex Indigo
 
 
-## at-least-node 1.0.0
+## autoprefixer 10.4.20
 
-PURL: pkg:npm/at-least-node@1.0.0
-Upstream: [https://www.npmjs.com/package/at-least-node](https://www.npmjs.com/package/at-least-node)
-
-Licenses: ISC
-
-Copyright (c) 2020 Ryan Zimmerman <opensrc@ryanzim.com>
-
-
-## auth-token 3.0.4
-
-PURL: pkg:npm/%40octokit/auth-token@3.0.4
-Upstream: [https://www.npmjs.com/package/%40octokit/auth-token](https://www.npmjs.com/package/%40octokit/auth-token)
+PURL: pkg:npm/autoprefixer@10.4.20
+Upstream: [https://www.npmjs.com/package/autoprefixer](https://www.npmjs.com/package/autoprefixer)
 
 Licenses: MIT
 
-Copyright (c) 2019 Octokit contributors
+Copyright 2013 Andrey Sitnik <andrey@sitnik.ru>
 
 
 ## available-typed-arrays 1.0.7
@@ -729,19 +369,29 @@ Licenses: MIT
 Copyright (c) 2020 Inspect JS
 
 
-## axobject-query 4.1.0
+## axios 1.15.1
 
-PURL: pkg:npm/axobject-query@4.1.0
-Upstream: [https://www.npmjs.com/package/axobject-query](https://www.npmjs.com/package/axobject-query)
+PURL: pkg:npm/axios@1.15.1
+Upstream: [https://www.npmjs.com/package/axios](https://www.npmjs.com/package/axios)
+
+Licenses: MIT
+
+Copyright (c) Matt Zabriskie
+
+
+## b4a 1.6.7
+
+PURL: pkg:npm/b4a@1.6.7
+Upstream: [https://www.npmjs.com/package/b4a](https://www.npmjs.com/package/b4a)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
 
 
-## babel-loader 8.4.1
+## babel-loader 9.2.1
 
-PURL: pkg:npm/babel-loader@8.4.1?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-loader.git
+PURL: pkg:npm/babel-loader@9.2.1?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-loader.git
 Upstream: [https://www.npmjs.com/package/babel-loader](https://www.npmjs.com/package/babel-loader)
 
 Licenses: MIT
@@ -749,19 +399,29 @@ Licenses: MIT
 Copyright (c) 2014-2019 Luís Couto <hello@luiscouto.pt>
 
 
-## babel-plugin-debug-ids 1.2.2
+## babel-plugin-dynamic-import-node 2.3.3
 
-PURL: pkg:npm/%40vanilla-extract/babel-plugin-debug-ids@1.2.2
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/babel-plugin-debug-ids](https://www.npmjs.com/package/%40vanilla-extract/babel-plugin-debug-ids)
+PURL: pkg:npm/babel-plugin-dynamic-import-node@2.3.3
+Upstream: [https://www.npmjs.com/package/babel-plugin-dynamic-import-node](https://www.npmjs.com/package/babel-plugin-dynamic-import-node)
 
 Licenses: MIT
 
-Copyright (c) 2021 SEEK
+Copyright (c) 2016 Airbnb
 
 
-## babel-plugin-polyfill-corejs2 0.4.13
+## babel-plugin-module-resolver 5.0.2
 
-PURL: pkg:npm/babel-plugin-polyfill-corejs2@0.4.13?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-plugin-polyfill-corejs2
+PURL: pkg:npm/babel-plugin-module-resolver@5.0.2
+Upstream: [https://www.npmjs.com/package/babel-plugin-module-resolver](https://www.npmjs.com/package/babel-plugin-module-resolver)
+
+Licenses: MIT
+
+Copyright (c) 2015 Tommy Leunen <tommy.leunen@gmail.com> (tommyleunen.com)
+
+
+## babel-plugin-polyfill-corejs2 0.4.11
+
+PURL: pkg:npm/babel-plugin-polyfill-corejs2@0.4.11?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-plugin-polyfill-corejs2
 Upstream: [https://www.npmjs.com/package/babel-plugin-polyfill-corejs2](https://www.npmjs.com/package/babel-plugin-polyfill-corejs2)
 
 Licenses: MIT
@@ -769,9 +429,9 @@ Licenses: MIT
 Copyright (c) 2014-present Nicolò Ribaudo and other contributors
 
 
-## babel-plugin-polyfill-corejs3 0.11.1
+## babel-plugin-polyfill-corejs3 0.10.6
 
-PURL: pkg:npm/babel-plugin-polyfill-corejs3@0.11.1?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-plugin-polyfill-corejs3
+PURL: pkg:npm/babel-plugin-polyfill-corejs3@0.10.6?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-plugin-polyfill-corejs3
 Upstream: [https://www.npmjs.com/package/babel-plugin-polyfill-corejs3](https://www.npmjs.com/package/babel-plugin-polyfill-corejs3)
 
 Licenses: MIT
@@ -779,9 +439,9 @@ Licenses: MIT
 Copyright (c) 2014-present Nicolò Ribaudo and other contributors
 
 
-## babel-plugin-polyfill-regenerator 0.6.4
+## babel-plugin-polyfill-regenerator 0.6.2
 
-PURL: pkg:npm/babel-plugin-polyfill-regenerator@0.6.4?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-plugin-polyfill-regenerator
+PURL: pkg:npm/babel-plugin-polyfill-regenerator@0.6.2?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-plugin-polyfill-regenerator
 Upstream: [https://www.npmjs.com/package/babel-plugin-polyfill-regenerator](https://www.npmjs.com/package/babel-plugin-polyfill-regenerator)
 
 Licenses: MIT
@@ -789,54 +449,14 @@ Licenses: MIT
 Copyright (c) 2014-present Nicolò Ribaudo and other contributors
 
 
-## babel__core 7.20.5
+## babel-preset-app 2.0.3
 
-PURL: pkg:npm/%40types/babel__core@7.20.5
-Upstream: [https://www.npmjs.com/package/%40types/babel__core](https://www.npmjs.com/package/%40types/babel__core)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## babel__generator 7.27.0
-
-PURL: pkg:npm/%40types/babel__generator@7.27.0
-Upstream: [https://www.npmjs.com/package/%40types/babel__generator](https://www.npmjs.com/package/%40types/babel__generator)
+PURL: pkg:npm/%40quasar/babel-preset-app@2.0.3
+Upstream: [https://www.npmjs.com/package/%40quasar/babel-preset-app](https://www.npmjs.com/package/%40quasar/babel-preset-app)
 
 Licenses: MIT
 
-Copyright (c) Microsoft Corporation.
-
-
-## babel__template 7.4.4
-
-PURL: pkg:npm/%40types/babel__template@7.4.4
-Upstream: [https://www.npmjs.com/package/%40types/babel__template](https://www.npmjs.com/package/%40types/babel__template)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## babel__traverse 7.20.7
-
-PURL: pkg:npm/%40types/babel__traverse@7.20.7
-Upstream: [https://www.npmjs.com/package/%40types/babel__traverse](https://www.npmjs.com/package/%40types/babel__traverse)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## babel__traverse 7.28.0
-
-PURL: pkg:npm/%40types/babel__traverse@7.28.0
-Upstream: [https://www.npmjs.com/package/%40types/babel__traverse](https://www.npmjs.com/package/%40types/babel__traverse)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
+Copyright (c) 2015-present Razvan Stoenescu
 
 
 ## balanced-match 1.0.2
@@ -849,6 +469,16 @@ Licenses: MIT
 Copyright (c) 2013 Julian Gruber &lt;julian@juliangruber.com&gt;
 
 
+## bare-events 2.5.0
+
+PURL: pkg:npm/bare-events@2.5.0
+Upstream: [https://www.npmjs.com/package/bare-events](https://www.npmjs.com/package/bare-events)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
 ## base64-js 1.5.1
 
 PURL: pkg:npm/base64-js@1.5.1
@@ -857,46 +487,6 @@ Upstream: [https://www.npmjs.com/package/base64-js](https://www.npmjs.com/packag
 Licenses: MIT
 
 Copyright (c) 2014 Jameson Little
-
-
-## before-after-hook 2.2.3
-
-PURL: pkg:npm/before-after-hook@2.2.3
-Upstream: [https://www.npmjs.com/package/before-after-hook](https://www.npmjs.com/package/before-after-hook)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## big-integer 1.6.52
-
-PURL: pkg:npm/big-integer@1.6.52
-Upstream: [https://www.npmjs.com/package/big-integer](https://www.npmjs.com/package/big-integer)
-
-Licenses: Unlicense
-
-Copyright (c) Peter Olson
-
-
-## big.js 5.2.2
-
-PURL: pkg:npm/big.js@5.2.2
-Upstream: [https://www.npmjs.com/package/big.js](https://www.npmjs.com/package/big.js)
-
-Licenses: MIT
-
-Copyright (c) 2018 Michael Mclaughlin
-
-
-## bin-links 3.0.3
-
-PURL: pkg:npm/bin-links@3.0.3
-Upstream: [https://www.npmjs.com/package/bin-links](https://www.npmjs.com/package/bin-links)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
 
 
 ## binary-extensions 2.3.0
@@ -919,34 +509,34 @@ Licenses: MIT
 Copyright (c) 2013-2019 bl contributors
 
 
-## bottleneck 2.19.5
+## body-parser 1.19.5
 
-PURL: pkg:npm/bottleneck@2.19.5
-Upstream: [https://www.npmjs.com/package/bottleneck](https://www.npmjs.com/package/bottleneck)
-
-Licenses: MIT
-
-Copyright (c) 2014 Simon Grondin
-
-
-## boxen 7.1.1
-
-PURL: pkg:npm/boxen@7.1.1
-Upstream: [https://www.npmjs.com/package/boxen](https://www.npmjs.com/package/boxen)
+PURL: pkg:npm/%40types/body-parser@1.19.5
+Upstream: [https://www.npmjs.com/package/%40types/body-parser](https://www.npmjs.com/package/%40types/body-parser)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) Microsoft Corporation.
 
 
-## bplist-parser 0.2.0
+## body-parser 1.20.3
 
-PURL: pkg:npm/bplist-parser@0.2.0
-Upstream: [https://www.npmjs.com/package/bplist-parser](https://www.npmjs.com/package/bplist-parser)
+PURL: pkg:npm/body-parser@1.20.3
+Upstream: [https://www.npmjs.com/package/body-parser](https://www.npmjs.com/package/body-parser)
 
 Licenses: MIT
 
-Copyright (c) Joe Ferner
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
+
+
+## boolbase 1.0.0
+
+PURL: pkg:npm/boolbase@1.0.0
+Upstream: [https://www.npmjs.com/package/boolbase](https://www.npmjs.com/package/boolbase)
+
+Licenses: ISC
+
+Copyright (c) Felix Boehm
 
 
 ## brace-expansion 1.1.11
@@ -969,16 +559,6 @@ Licenses: MIT
 Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
 
 
-## brace-expansion 5.0.0
-
-PURL: pkg:npm/%40isaacs/brace-expansion@5.0.0
-Upstream: [https://www.npmjs.com/package/%40isaacs/brace-expansion](https://www.npmjs.com/package/%40isaacs/brace-expansion)
-
-Licenses: MIT
-
-Copyright Julian Gruber <julian@juliangruber.com>
-
-
 ## braces 3.0.3
 
 PURL: pkg:npm/braces@3.0.3
@@ -989,14 +569,44 @@ Licenses: MIT
 Copyright (c) 2014-present, Jon Schlinkert.
 
 
-## browserslist 4.24.4
+## browserslist 4.24.0
 
-PURL: pkg:npm/browserslist@4.24.4
+PURL: pkg:npm/browserslist@4.24.0
 Upstream: [https://www.npmjs.com/package/browserslist](https://www.npmjs.com/package/browserslist)
 
 Licenses: MIT
 
 Copyright 2014 Andrey Sitnik <andrey@sitnik.ru> and other contributors
+
+
+## buffer-builder 0.2.0
+
+PURL: pkg:npm/buffer-builder@0.2.0
+Upstream: [https://www.npmjs.com/package/buffer-builder](https://www.npmjs.com/package/buffer-builder)
+
+Licenses: MIT
+
+Copyright (C) 2012 Peter Reid
+
+
+## buffer-crc32 1.0.0
+
+PURL: pkg:npm/buffer-crc32@1.0.0
+Upstream: [https://www.npmjs.com/package/buffer-crc32](https://www.npmjs.com/package/buffer-crc32)
+
+Licenses: MIT
+
+Copyright (c) 2013-2024 Brian J. Brennan
+
+
+## buffer-from 1.1.2
+
+PURL: pkg:npm/buffer-from@1.1.2
+Upstream: [https://www.npmjs.com/package/buffer-from](https://www.npmjs.com/package/buffer-from)
+
+Licenses: MIT
+
+Copyright (c) 2016, 2018 Linus Unnebäck
 
 
 ## buffer 5.7.1
@@ -1009,14 +619,24 @@ Licenses: MIT
 Copyright (c) Feross Aboukhadijeh, and other contributors.
 
 
-## builtins 1.0.3
+## buffer 6.0.3
 
-PURL: pkg:npm/builtins@1.0.3
-Upstream: [https://www.npmjs.com/package/builtins](https://www.npmjs.com/package/builtins)
+PURL: pkg:npm/buffer@6.0.3
+Upstream: [https://www.npmjs.com/package/buffer](https://www.npmjs.com/package/buffer)
 
 Licenses: MIT
 
-Copyright (c) 2015 Julian Gruber <julian@juliangruber.com>
+Copyright (c) Feross Aboukhadijeh, and other contributors.
+
+
+## builtin-modules 3.3.0
+
+PURL: pkg:npm/builtin-modules@3.3.0
+Upstream: [https://www.npmjs.com/package/builtin-modules](https://www.npmjs.com/package/builtin-modules)
+
+Licenses: MIT
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## builtins 5.1.0
@@ -1029,14 +649,34 @@ Licenses: MIT
 Copyright (c) 2015 Julian Gruber <julian@juliangruber.com>
 
 
-## bundle-name 3.0.0
+## bundle-name 4.1.0
 
-PURL: pkg:npm/bundle-name@3.0.0
+PURL: pkg:npm/bundle-name@4.1.0
 Upstream: [https://www.npmjs.com/package/bundle-name](https://www.npmjs.com/package/bundle-name)
 
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+
+## bytes 3.0.0
+
+PURL: pkg:npm/bytes@3.0.0
+Upstream: [https://www.npmjs.com/package/bytes](https://www.npmjs.com/package/bytes)
+
+Licenses: MIT
+
+Copyright (c) 2012-2014 TJ Holowaychuk <tj@vision-media.ca>
+
+
+## bytes 3.1.2
+
+PURL: pkg:npm/bytes@3.1.2
+Upstream: [https://www.npmjs.com/package/bytes](https://www.npmjs.com/package/bytes)
+
+Licenses: MIT
+
+Copyright (c) 2012-2014 TJ Holowaychuk <tj@vision-media.ca>
 
 
 ## cac 6.7.14
@@ -1049,76 +689,6 @@ Licenses: MIT
 Copyright (c) EGOIST <0x142857@gmail.com> (https://github.com/egoist)
 
 
-## cacache 16.1.3
-
-PURL: pkg:npm/cacache@16.1.3
-Upstream: [https://www.npmjs.com/package/cacache](https://www.npmjs.com/package/cacache)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## cacache 19.0.1
-
-PURL: pkg:npm/cacache@19.0.1
-Upstream: [https://www.npmjs.com/package/cacache](https://www.npmjs.com/package/cacache)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## cacheable-lookup 5.0.4
-
-PURL: pkg:npm/cacheable-lookup@5.0.4
-Upstream: [https://www.npmjs.com/package/cacheable-lookup](https://www.npmjs.com/package/cacheable-lookup)
-
-Licenses: MIT
-
-Copyright (c) 2019 Szymon Marczak
-
-
-## cacheable-lookup 7.0.0
-
-PURL: pkg:npm/cacheable-lookup@7.0.0
-Upstream: [https://www.npmjs.com/package/cacheable-lookup](https://www.npmjs.com/package/cacheable-lookup)
-
-Licenses: MIT
-
-Copyright (c) 2019 Szymon Marczak
-
-
-## cacheable-request 10.2.14
-
-PURL: pkg:npm/cacheable-request@10.2.14
-Upstream: [https://www.npmjs.com/package/cacheable-request](https://www.npmjs.com/package/cacheable-request)
-
-Licenses: MIT
-
-Copyright (c) 2017 Luke Childs
-
-
-## cacheable-request 6.0.3
-
-PURL: pkg:npm/%40types/cacheable-request@6.0.3
-Upstream: [https://www.npmjs.com/package/%40types/cacheable-request](https://www.npmjs.com/package/%40types/cacheable-request)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## cacheable-request 7.0.4
-
-PURL: pkg:npm/cacheable-request@7.0.4
-Upstream: [https://www.npmjs.com/package/cacheable-request](https://www.npmjs.com/package/cacheable-request)
-
-Licenses: MIT
-
-Copyright (c) 2017 Luke Childs
-
-
 ## call-bind-apply-helpers 1.0.2
 
 PURL: pkg:npm/call-bind-apply-helpers@1.0.2
@@ -1129,54 +699,14 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
-## call-bind 1.0.8
+## call-bind 1.0.7
 
-PURL: pkg:npm/call-bind@1.0.8
+PURL: pkg:npm/call-bind@1.0.7
 Upstream: [https://www.npmjs.com/package/call-bind](https://www.npmjs.com/package/call-bind)
 
 Licenses: MIT
 
 Copyright (c) 2020 Jordan Harband
-
-
-## call-bound 1.0.4
-
-PURL: pkg:npm/call-bound@1.0.4
-Upstream: [https://www.npmjs.com/package/call-bound](https://www.npmjs.com/package/call-bound)
-
-Licenses: MIT
-
-Copyright (c) 2024 Jordan Harband
-
-
-## caller-callsite 2.0.0
-
-PURL: pkg:npm/caller-callsite@2.0.0
-Upstream: [https://www.npmjs.com/package/caller-callsite](https://www.npmjs.com/package/caller-callsite)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## caller-path 2.0.0
-
-PURL: pkg:npm/caller-path@2.0.0
-Upstream: [https://www.npmjs.com/package/caller-path](https://www.npmjs.com/package/caller-path)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## callsites 2.0.0
-
-PURL: pkg:npm/callsites@2.0.0
-Upstream: [https://www.npmjs.com/package/callsites](https://www.npmjs.com/package/callsites)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## callsites 3.1.0
@@ -1189,49 +719,19 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## callsites 4.2.0
+## camel-case 4.1.2
 
-PURL: pkg:npm/callsites@4.2.0
-Upstream: [https://www.npmjs.com/package/callsites](https://www.npmjs.com/package/callsites)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## camelcase-keys 6.2.2
-
-PURL: pkg:npm/camelcase-keys@6.2.2
-Upstream: [https://www.npmjs.com/package/camelcase-keys](https://www.npmjs.com/package/camelcase-keys)
+PURL: pkg:npm/camel-case@4.1.2
+Upstream: [https://www.npmjs.com/package/camel-case](https://www.npmjs.com/package/camel-case)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
-## camelcase 5.3.1
+## caniuse-lite 1.0.30001667
 
-PURL: pkg:npm/camelcase@5.3.1
-Upstream: [https://www.npmjs.com/package/camelcase](https://www.npmjs.com/package/camelcase)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## camelcase 7.0.1
-
-PURL: pkg:npm/camelcase@7.0.1
-Upstream: [https://www.npmjs.com/package/camelcase](https://www.npmjs.com/package/camelcase)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## caniuse-lite 1.0.30001751
-
-PURL: pkg:npm/caniuse-lite@1.0.30001751
+PURL: pkg:npm/caniuse-lite@1.0.30001667
 Upstream: [https://www.npmjs.com/package/caniuse-lite](https://www.npmjs.com/package/caniuse-lite)
 
 Licenses: CC-BY-4.0
@@ -1239,69 +739,19 @@ Licenses: CC-BY-4.0
 copyright and certain other rights. Our licenses are
 
 
-## cardinal 2.1.1
+## chai 4.5.0
 
-PURL: pkg:npm/cardinal@2.1.1
-Upstream: [https://www.npmjs.com/package/cardinal](https://www.npmjs.com/package/cardinal)
-
-Licenses: MIT
-
-Copyright 2012 Thorsten Lorenz.
-
-
-## chai 5.2.2
-
-PURL: pkg:npm/%40types/chai@5.2.2
-Upstream: [https://www.npmjs.com/package/%40types/chai](https://www.npmjs.com/package/%40types/chai)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## chai 5.3.3
-
-PURL: pkg:npm/chai@5.3.3
+PURL: pkg:npm/chai@4.5.0
 Upstream: [https://www.npmjs.com/package/chai](https://www.npmjs.com/package/chai)
 
 Licenses: MIT
 
 Copyright (c) 2017 Chai.js Assertion Library
-
-
-## chai 6.2.0
-
-PURL: pkg:npm/chai@6.2.0
-Upstream: [https://www.npmjs.com/package/chai](https://www.npmjs.com/package/chai)
-
-Licenses: MIT
-
-Copyright (c) 2017 Chai.js Assertion Library
-
-
-## chalk 1.1.3
-
-PURL: pkg:npm/chalk@1.1.3
-Upstream: [https://www.npmjs.com/package/chalk](https://www.npmjs.com/package/chalk)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## chalk 2.4.2
 
 PURL: pkg:npm/chalk@2.4.2
-Upstream: [https://www.npmjs.com/package/chalk](https://www.npmjs.com/package/chalk)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## chalk 3.0.0
-
-PURL: pkg:npm/chalk@3.0.0
 Upstream: [https://www.npmjs.com/package/chalk](https://www.npmjs.com/package/chalk)
 
 Licenses: MIT
@@ -1319,16 +769,6 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## chalk 5.4.1
-
-PURL: pkg:npm/chalk@5.4.1
-Upstream: [https://www.npmjs.com/package/chalk](https://www.npmjs.com/package/chalk)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## chardet 0.7.0
 
 PURL: pkg:npm/chardet@0.7.0
@@ -1339,9 +779,9 @@ Licenses: MIT
 Copyright (C) 2018 Dmitry Shirokov
 
 
-## chart.js 4.4.8
+## chart.js 4.4.4
 
-PURL: pkg:npm/chart.js@4.4.8
+PURL: pkg:npm/chart.js@4.4.4
 Upstream: [https://www.npmjs.com/package/chart.js](https://www.npmjs.com/package/chart.js)
 
 Licenses: MIT
@@ -1349,9 +789,9 @@ Licenses: MIT
 Copyright (c) 2014-2024 Chart.js Contributors
 
 
-## check-error 2.1.1
+## check-error 1.0.3
 
-PURL: pkg:npm/check-error@2.1.1
+PURL: pkg:npm/check-error@1.0.3
 Upstream: [https://www.npmjs.com/package/check-error](https://www.npmjs.com/package/check-error)
 
 Licenses: MIT
@@ -1359,39 +799,29 @@ Licenses: MIT
 Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com> (http://alogicalparadox.com)
 
 
-## chownr 2.0.0
+## chokidar 3.6.0
 
-PURL: pkg:npm/chownr@2.0.0
-Upstream: [https://www.npmjs.com/package/chownr](https://www.npmjs.com/package/chownr)
+PURL: pkg:npm/chokidar@3.6.0
+Upstream: [https://www.npmjs.com/package/chokidar](https://www.npmjs.com/package/chokidar)
 
-Licenses: ISC
+Licenses: MIT
 
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## chownr 3.0.0
-
-PURL: pkg:npm/chownr@3.0.0
-Upstream: [https://www.npmjs.com/package/chownr](https://www.npmjs.com/package/chownr)
-
-Licenses: BlueOak-1.0.0
-
-Copyright (c) Isaac Z. Schlueter and Contributors
+Copyright (c) 2012-2019 Paul Miller (https://paulmillr.com), Elan Shanker
 
 
-## ci-detect 2.0.0
+## chrome 0.0.262
 
-PURL: pkg:npm/%40npmcli/ci-detect@2.0.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/ci-detect](https://www.npmjs.com/package/%40npmcli/ci-detect)
+PURL: pkg:npm/%40types/chrome@0.0.262
+Upstream: [https://www.npmjs.com/package/%40types/chrome](https://www.npmjs.com/package/%40types/chrome)
 
-Licenses: ISC
+Licenses: MIT
 
-Copyright (c) npm, Inc.
+Copyright (c) Microsoft Corporation.
 
 
-## ci-info 2.0.0
+## ci-info 4.0.0
 
-PURL: pkg:npm/ci-info@2.0.0
+PURL: pkg:npm/ci-info@4.0.0
 Upstream: [https://www.npmjs.com/package/ci-info](https://www.npmjs.com/package/ci-info)
 
 Licenses: MIT
@@ -1399,74 +829,14 @@ Licenses: MIT
 Copyright (c) 2016 Thomas Watson Steen
 
 
-## ci-info 3.9.0
+## clean-css 5.3.3
 
-PURL: pkg:npm/ci-info@3.9.0
-Upstream: [https://www.npmjs.com/package/ci-info](https://www.npmjs.com/package/ci-info)
-
-Licenses: MIT
-
-Copyright (c) 2016 Thomas Watson Steen
-
-
-## cidr-regex 3.1.1
-
-PURL: pkg:npm/cidr-regex@3.1.1
-Upstream: [https://www.npmjs.com/package/cidr-regex](https://www.npmjs.com/package/cidr-regex)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) silverwind
-
-
-## clean-stack 2.2.0
-
-PURL: pkg:npm/clean-stack@2.2.0
-Upstream: [https://www.npmjs.com/package/clean-stack](https://www.npmjs.com/package/clean-stack)
+PURL: pkg:npm/clean-css@5.3.3
+Upstream: [https://www.npmjs.com/package/clean-css](https://www.npmjs.com/package/clean-css)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## clean-stack 4.2.0
-
-PURL: pkg:npm/clean-stack@4.2.0
-Upstream: [https://www.npmjs.com/package/clean-stack](https://www.npmjs.com/package/clean-stack)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## cli-boxes 3.0.0
-
-PURL: pkg:npm/cli-boxes@3.0.0
-Upstream: [https://www.npmjs.com/package/cli-boxes](https://www.npmjs.com/package/cli-boxes)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## cli-columns 4.0.0
-
-PURL: pkg:npm/cli-columns@4.0.0
-Upstream: [https://www.npmjs.com/package/cli-columns](https://www.npmjs.com/package/cli-columns)
-
-Licenses: MIT
-
-Copyright (c) Shannon Moeller <me@shannonmoeller.com> (shannonmoeller.com)
-
-
-## cli-cursor 2.1.0
-
-PURL: pkg:npm/cli-cursor@2.1.0
-Upstream: [https://www.npmjs.com/package/cli-cursor](https://www.npmjs.com/package/cli-cursor)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (C) 2017 JakubPawlowicz.com
 
 
 ## cli-cursor 3.1.0
@@ -1489,66 +859,6 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## cli-table3 0.6.5
-
-PURL: pkg:npm/cli-table3@0.6.5
-Upstream: [https://www.npmjs.com/package/cli-table3](https://www.npmjs.com/package/cli-table3)
-
-Licenses: MIT
-
-Copyright (c) 2014 James Talmage <james.talmage@jrtechnical.com>
-
-
-## cli-truncate 0.2.1
-
-PURL: pkg:npm/cli-truncate@0.2.1
-Upstream: [https://www.npmjs.com/package/cli-truncate](https://www.npmjs.com/package/cli-truncate)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## cli-truncate 2.1.0
-
-PURL: pkg:npm/cli-truncate@2.1.0
-Upstream: [https://www.npmjs.com/package/cli-truncate](https://www.npmjs.com/package/cli-truncate)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## cli-truncate 3.1.0
-
-PURL: pkg:npm/cli-truncate@3.1.0
-Upstream: [https://www.npmjs.com/package/cli-truncate](https://www.npmjs.com/package/cli-truncate)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## cli-width 2.2.1
-
-PURL: pkg:npm/cli-width@2.2.1
-Upstream: [https://www.npmjs.com/package/cli-width](https://www.npmjs.com/package/cli-width)
-
-Licenses: ISC
-
-Copyright (c) 2015, Ilya Radchenko <knownasilya@gmail.com>
-
-
-## cli-width 3.0.0
-
-PURL: pkg:npm/cli-width@3.0.0
-Upstream: [https://www.npmjs.com/package/cli-width](https://www.npmjs.com/package/cli-width)
-
-Licenses: ISC
-
-Copyright (c) 2015, Ilya Radchenko <knownasilya@gmail.com>
-
-
 ## cli-width 4.1.0
 
 PURL: pkg:npm/cli-width@4.1.0
@@ -1557,16 +867,6 @@ Upstream: [https://www.npmjs.com/package/cli-width](https://www.npmjs.com/packag
 Licenses: ISC
 
 Copyright (c) 2015, Ilya Radchenko <knownasilya@gmail.com>
-
-
-## cliui 7.0.4
-
-PURL: pkg:npm/cliui@7.0.4
-Upstream: [https://www.npmjs.com/package/cliui](https://www.npmjs.com/package/cliui)
-
-Licenses: ISC
-
-Copyright (c) 2015, Contributors
 
 
 ## cliui 8.0.1
@@ -1589,14 +889,14 @@ Licenses: ISC
 Copyright (c) 2015, Contributors
 
 
-## clone-response 1.0.3
+## clone-deep 4.0.1
 
-PURL: pkg:npm/clone-response@1.0.3
-Upstream: [https://www.npmjs.com/package/clone-response](https://www.npmjs.com/package/clone-response)
+PURL: pkg:npm/clone-deep@4.0.1
+Upstream: [https://www.npmjs.com/package/clone-deep](https://www.npmjs.com/package/clone-deep)
 
 Licenses: MIT
 
-Copyright (c) 2017 Luke Childs
+Copyright (c) 2014-2018, Jon Schlinkert.
 
 
 ## clone 1.0.4
@@ -1639,44 +939,14 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## cmd-shim 5.0.0
+## code-frame 7.25.7
 
-PURL: pkg:npm/cmd-shim@5.0.0
-Upstream: [https://www.npmjs.com/package/cmd-shim](https://www.npmjs.com/package/cmd-shim)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc. and Contributors
-
-
-## code-frame 7.26.2
-
-PURL: pkg:npm/%40babel/code-frame@7.26.2
+PURL: pkg:npm/%40babel/code-frame@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/code-frame](https://www.npmjs.com/package/%40babel/code-frame)
 
 Licenses: MIT
 
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## code-frame 7.27.1
-
-PURL: pkg:npm/%40babel/code-frame@7.27.1
-Upstream: [https://www.npmjs.com/package/%40babel/code-frame](https://www.npmjs.com/package/%40babel/code-frame)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## code-point-at 1.1.0
-
-PURL: pkg:npm/code-point-at@1.1.0
-Upstream: [https://www.npmjs.com/package/code-point-at](https://www.npmjs.com/package/code-point-at)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## color-convert 1.9.3
@@ -1699,16 +969,6 @@ Licenses: MIT
 Copyright (c) 2011-2016 Heather Arthur <fayearthur@gmail.com>
 
 
-## color-helpers 5.0.2
-
-PURL: pkg:npm/%40csstools/color-helpers@5.0.2
-Upstream: [https://www.npmjs.com/package/%40csstools/color-helpers](https://www.npmjs.com/package/%40csstools/color-helpers)
-
-Licenses: MIT-0
-
-Copyright © CSSTools Contributors
-
-
 ## color-name 1.1.3
 
 PURL: pkg:npm/color-name@1.1.3
@@ -1729,64 +989,24 @@ Licenses: MIT
 Copyright (c) 2015 Dmitry Ivanov
 
 
-## color-support 1.1.3
+## color 0.3.2
 
-PURL: pkg:npm/color-support@1.1.3
-Upstream: [https://www.npmjs.com/package/color-support](https://www.npmjs.com/package/color-support)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## color 0.3.4
-
-PURL: pkg:npm/%40kurkle/color@0.3.4
+PURL: pkg:npm/%40kurkle/color@0.3.2
 Upstream: [https://www.npmjs.com/package/%40kurkle/color](https://www.npmjs.com/package/%40kurkle/color)
 
 Licenses: MIT
 
-Copyright (c) 2018-2024 Jukka Kurkela
+Copyright (c) 2018-2021 Jukka Kurkela
 
 
-## colorette 2.0.20
+## colorjs.io 0.5.2
 
-PURL: pkg:npm/colorette@2.0.20
-Upstream: [https://www.npmjs.com/package/colorette](https://www.npmjs.com/package/colorette)
-
-Licenses: MIT
-
-Copyright © Jorge Bucaran <<https://jorgebucaran.com>>
-
-
-## colors 1.5.0
-
-PURL: pkg:npm/%40colors/colors@1.5.0
-Upstream: [https://www.npmjs.com/package/%40colors/colors](https://www.npmjs.com/package/%40colors/colors)
+PURL: pkg:npm/colorjs.io@0.5.2
+Upstream: [https://www.npmjs.com/package/colorjs.io](https://www.npmjs.com/package/colorjs.io)
 
 Licenses: MIT
 
-Copyright (c) DABH
-
-
-## colors 2.1.0
-
-PURL: pkg:npm/%40radix-ui/colors@2.1.0
-Upstream: [https://www.npmjs.com/package/%40radix-ui/colors](https://www.npmjs.com/package/%40radix-ui/colors)
-
-Licenses: MIT
-
-Copyright (c) 2021 Radix
-
-
-## columnify 1.6.0
-
-PURL: pkg:npm/columnify@1.6.0
-Upstream: [https://www.npmjs.com/package/columnify](https://www.npmjs.com/package/columnify)
-
-Licenses: MIT
-
-Copyright (c) 2013 Tim Oxley
+Copyright (c) 2021 Lea Verou, Chris Lilley
 
 
 ## combined-stream 1.0.8
@@ -1799,14 +1019,14 @@ Licenses: MIT
 Copyright (c) 2011 Debuggable Limited <felix@debuggable.com>
 
 
-## commander-version 1.1.0
+## commander 10.0.1
 
-PURL: pkg:npm/commander-version@1.1.0
-Upstream: [https://www.npmjs.com/package/commander-version](https://www.npmjs.com/package/commander-version)
+PURL: pkg:npm/commander@10.0.1
+Upstream: [https://www.npmjs.com/package/commander](https://www.npmjs.com/package/commander)
 
 Licenses: MIT
 
-Copyright (c) Connor White
+Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
 
 
 ## commander 2.20.3
@@ -1819,9 +1039,9 @@ Licenses: MIT
 Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
 
 
-## commander 6.2.1
+## commander 4.1.1
 
-PURL: pkg:npm/commander@6.2.1
+PURL: pkg:npm/commander@4.1.1
 Upstream: [https://www.npmjs.com/package/commander](https://www.npmjs.com/package/commander)
 
 Licenses: MIT
@@ -1829,69 +1049,19 @@ Licenses: MIT
 Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
 
 
-## commander 9.5.0
+## common-path-prefix 3.0.0
 
-PURL: pkg:npm/commander@9.5.0
-Upstream: [https://www.npmjs.com/package/commander](https://www.npmjs.com/package/commander)
-
-Licenses: MIT
-
-Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
-
-
-## commit-analyzer 9.0.2
-
-PURL: pkg:npm/%40semantic-release/commit-analyzer@9.0.2?vcs_url=https%3A%2F%2Fgithub.com%2Fsemantic-release%2Fcommit-analyzer.git
-Upstream: [https://www.npmjs.com/package/%40semantic-release/commit-analyzer](https://www.npmjs.com/package/%40semantic-release/commit-analyzer)
-
-Licenses: MIT
-
-Copyright (c) 2017 Pierre-Denis Vanduynslager
-
-
-## common-ancestor-path 1.0.1
-
-PURL: pkg:npm/common-ancestor-path@1.0.1
-Upstream: [https://www.npmjs.com/package/common-ancestor-path](https://www.npmjs.com/package/common-ancestor-path)
+PURL: pkg:npm/common-path-prefix@3.0.0
+Upstream: [https://www.npmjs.com/package/common-path-prefix](https://www.npmjs.com/package/common-path-prefix)
 
 Licenses: ISC
 
-Copyright (c) Isaac Z. Schlueter
+Copyright (c) 2016, Mark Wubben
 
 
-## commondir 1.0.1
+## compat-data 7.25.7
 
-PURL: pkg:npm/commondir@1.0.1
-Upstream: [https://www.npmjs.com/package/commondir](https://www.npmjs.com/package/commondir)
-
-Licenses: MIT
-
-Copyright (c) 2013 James Halliday (mail@substack.net)
-
-
-## compare-func 2.0.0
-
-PURL: pkg:npm/compare-func@2.0.0
-Upstream: [https://www.npmjs.com/package/compare-func](https://www.npmjs.com/package/compare-func)
-
-Licenses: MIT
-
-Copyright (c) 2015 Steve Mao
-
-
-## compare-versions 6.1.1
-
-PURL: pkg:npm/compare-versions@6.1.1
-Upstream: [https://www.npmjs.com/package/compare-versions](https://www.npmjs.com/package/compare-versions)
-
-Licenses: MIT
-
-Copyright (c) 2015-2021 Ole Michelsen
-
-
-## compat-data 7.26.8
-
-PURL: pkg:npm/%40babel/compat-data@7.26.8
+PURL: pkg:npm/%40babel/compat-data@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/compat-data](https://www.npmjs.com/package/%40babel/compat-data)
 
 Licenses: MIT
@@ -1899,19 +1069,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## compat-data 7.28.0
+## compiler-core 3.5.11
 
-PURL: pkg:npm/%40babel/compat-data@7.28.0
-Upstream: [https://www.npmjs.com/package/%40babel/compat-data](https://www.npmjs.com/package/%40babel/compat-data)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## compiler-core 3.5.24
-
-PURL: pkg:npm/%40vue/compiler-core@3.5.24
+PURL: pkg:npm/%40vue/compiler-core@3.5.11
 Upstream: [https://www.npmjs.com/package/%40vue/compiler-core](https://www.npmjs.com/package/%40vue/compiler-core)
 
 Licenses: MIT
@@ -1919,9 +1079,9 @@ Licenses: MIT
 Copyright (c) 2018-present, Yuxi (Evan) You
 
 
-## compiler-dom 3.5.24
+## compiler-dom 3.5.11
 
-PURL: pkg:npm/%40vue/compiler-dom@3.5.24
+PURL: pkg:npm/%40vue/compiler-dom@3.5.11
 Upstream: [https://www.npmjs.com/package/%40vue/compiler-dom](https://www.npmjs.com/package/%40vue/compiler-dom)
 
 Licenses: MIT
@@ -1929,24 +1089,64 @@ Licenses: MIT
 Copyright (c) 2018-present, Yuxi (Evan) You
 
 
-## compiler-vue2 2.7.16
+## compiler-sfc 3.5.11
 
-PURL: pkg:npm/%40vue/compiler-vue2@2.7.16
-Upstream: [https://www.npmjs.com/package/%40vue/compiler-vue2](https://www.npmjs.com/package/%40vue/compiler-vue2)
-
-Licenses: MIT
-
-Copyright (c) Evan You
-
-
-## compiler 0.3.1
-
-PURL: pkg:npm/%40vanilla-extract/compiler@0.3.1
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/compiler](https://www.npmjs.com/package/%40vanilla-extract/compiler)
+PURL: pkg:npm/%40vue/compiler-sfc@3.5.11
+Upstream: [https://www.npmjs.com/package/%40vue/compiler-sfc](https://www.npmjs.com/package/%40vue/compiler-sfc)
 
 Licenses: MIT
 
-Copyright (c) 2021 SEEK
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## compiler-ssr 3.5.11
+
+PURL: pkg:npm/%40vue/compiler-ssr@3.5.11
+Upstream: [https://www.npmjs.com/package/%40vue/compiler-ssr](https://www.npmjs.com/package/%40vue/compiler-ssr)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## compress-commons 6.0.2
+
+PURL: pkg:npm/compress-commons@6.0.2
+Upstream: [https://www.npmjs.com/package/compress-commons](https://www.npmjs.com/package/compress-commons)
+
+Licenses: MIT
+
+Copyright (c) 2014 Chris Talkington, contributors.
+
+
+## compressible 2.0.18
+
+PURL: pkg:npm/compressible@2.0.18
+Upstream: [https://www.npmjs.com/package/compressible](https://www.npmjs.com/package/compressible)
+
+Licenses: MIT
+
+Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
+
+
+## compression 1.7.4
+
+PURL: pkg:npm/compression@1.7.4
+Upstream: [https://www.npmjs.com/package/compression](https://www.npmjs.com/package/compression)
+
+Licenses: MIT
+
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
+
+
+## compression 1.7.5
+
+PURL: pkg:npm/%40types/compression@1.7.5
+Upstream: [https://www.npmjs.com/package/%40types/compression](https://www.npmjs.com/package/%40types/compression)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
 
 
 ## concat-map 0.0.1
@@ -1969,20 +1169,10 @@ Licenses: MIT
 Copyright (c) Pooya Parsa <pooya@pi0.io>
 
 
-## confbox 0.2.2
+## config-array 0.13.0
 
-PURL: pkg:npm/confbox@0.2.2
-Upstream: [https://www.npmjs.com/package/confbox](https://www.npmjs.com/package/confbox)
-
-Licenses: MIT
-
-Copyright (c) Pooya Parsa <pooya@pi0.io>
-
-
-## config-array 0.21.0
-
-PURL: pkg:npm/%40eslint/config-array@0.21.0
-Upstream: [https://www.npmjs.com/package/%40eslint/config-array](https://www.npmjs.com/package/%40eslint/config-array)
+PURL: pkg:npm/%40humanwhocodes/config-array@0.13.0
+Upstream: [https://www.npmjs.com/package/%40humanwhocodes/config-array](https://www.npmjs.com/package/%40humanwhocodes/config-array)
 
 Licenses: Apache-2.0
 
@@ -1999,104 +1189,34 @@ Licenses: MIT
 Copyright (c) 2011 Dominic Tarr
 
 
-## config-helpers 0.3.0
+## connect 3.4.38
 
-PURL: pkg:npm/%40eslint/config-helpers@0.3.0
-Upstream: [https://www.npmjs.com/package/%40eslint/config-helpers](https://www.npmjs.com/package/%40eslint/config-helpers)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## config 4.2.2
-
-PURL: pkg:npm/%40npmcli/config@4.2.2
-Upstream: [https://www.npmjs.com/package/%40npmcli/config](https://www.npmjs.com/package/%40npmcli/config)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## configstore 6.0.0
-
-PURL: pkg:npm/configstore@6.0.0
-Upstream: [https://www.npmjs.com/package/configstore](https://www.npmjs.com/package/configstore)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Google
-
-
-## confirm 5.1.9
-
-PURL: pkg:npm/%40inquirer/confirm@5.1.9?vcs_url=https%3A%2F%2Fgithub.com%2FSBoudrias%2FInquirer.js.git
-Upstream: [https://www.npmjs.com/package/%40inquirer/confirm](https://www.npmjs.com/package/%40inquirer/confirm)
+PURL: pkg:npm/%40types/connect@3.4.38
+Upstream: [https://www.npmjs.com/package/%40types/connect](https://www.npmjs.com/package/%40types/connect)
 
 Licenses: MIT
 
-Copyright (c) 2025 Simon Boudrias
+Copyright (c) Microsoft Corporation.
 
 
-## console-control-strings 1.1.0
+## content-disposition 0.5.4
 
-PURL: pkg:npm/console-control-strings@1.1.0
-Upstream: [https://www.npmjs.com/package/console-control-strings](https://www.npmjs.com/package/console-control-strings)
-
-Licenses: ISC
-
-Copyright (c) 2014, Rebecca Turner <me@re-becca.org>
-
-
-## conventional-changelog-angular 5.0.13
-
-PURL: pkg:npm/conventional-changelog-angular@5.0.13
-Upstream: [https://www.npmjs.com/package/conventional-changelog-angular](https://www.npmjs.com/package/conventional-changelog-angular)
-
-Licenses: ISC
-
-Copyright © [conventional-changelog team](https://github.com/conventional-changelog)
-
-
-## conventional-changelog-conventionalcommits 4.6.3
-
-PURL: pkg:npm/conventional-changelog-conventionalcommits@4.6.3
-Upstream: [https://www.npmjs.com/package/conventional-changelog-conventionalcommits](https://www.npmjs.com/package/conventional-changelog-conventionalcommits)
-
-Licenses: ISC
-
-Copyright © [conventional-changelog team](https://github.com/conventional-changelog)
-
-
-## conventional-changelog-writer 5.0.1
-
-PURL: pkg:npm/conventional-changelog-writer@5.0.1
-Upstream: [https://www.npmjs.com/package/conventional-changelog-writer](https://www.npmjs.com/package/conventional-changelog-writer)
+PURL: pkg:npm/content-disposition@0.5.4
+Upstream: [https://www.npmjs.com/package/content-disposition](https://www.npmjs.com/package/content-disposition)
 
 Licenses: MIT
 
-Copyright © [conventional-changelog team](https://github.com/conventional-changelog)
+Copyright (c) 2014-2017 Douglas Christopher Wilson
 
 
-## conventional-commits-filter 2.0.7
+## content-type 1.0.5
 
-PURL: pkg:npm/conventional-commits-filter@2.0.7
-Upstream: [https://www.npmjs.com/package/conventional-commits-filter](https://www.npmjs.com/package/conventional-commits-filter)
-
-Licenses: MIT
-
-Copyright (c) 2015 Steve Mao <maochenyan@gmail.com> (https://github.com/stevemao)
-
-
-## conventional-commits-parser 3.2.4
-
-PURL: pkg:npm/conventional-commits-parser@3.2.4
-Upstream: [https://www.npmjs.com/package/conventional-commits-parser](https://www.npmjs.com/package/conventional-commits-parser)
+PURL: pkg:npm/content-type@1.0.5
+Upstream: [https://www.npmjs.com/package/content-type](https://www.npmjs.com/package/content-type)
 
 Licenses: MIT
 
-Copyright © [conventional-changelog team](https://github.com/conventional-changelog)
+Copyright (c) 2015 Douglas Christopher Wilson
 
 
 ## convert-source-map 2.0.0
@@ -2109,14 +1229,14 @@ Licenses: MIT
 Copyright 2013 Thorsten Lorenz.
 
 
-## cookie 0.6.0
+## cookie-signature 1.0.6
 
-PURL: pkg:npm/%40types/cookie@0.6.0
-Upstream: [https://www.npmjs.com/package/%40types/cookie](https://www.npmjs.com/package/%40types/cookie)
+PURL: pkg:npm/cookie-signature@1.0.6
+Upstream: [https://www.npmjs.com/package/cookie-signature](https://www.npmjs.com/package/cookie-signature)
 
 Licenses: MIT
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) TJ Holowaychuk
 
 
 ## cookie 0.7.2
@@ -2129,24 +1249,34 @@ Licenses: MIT
 Copyright (c) 2012-2014 Roman Shtylman <shtylman@gmail.com>
 
 
-## cookie 2.0.1
+## cordova 11.0.3
 
-PURL: pkg:npm/%40bundled-es-modules/cookie@2.0.1
-Upstream: [https://www.npmjs.com/package/%40bundled-es-modules/cookie](https://www.npmjs.com/package/%40bundled-es-modules/cookie)
+PURL: pkg:npm/%40types/cordova@11.0.3
+Upstream: [https://www.npmjs.com/package/%40types/cordova](https://www.npmjs.com/package/%40types/cordova)
 
-Licenses: ISC
+Licenses: MIT
 
-Copyright (c) Pascal Schilp
+Copyright (c) Microsoft Corporation.
 
 
-## core-js-compat 3.41.0
+## core-js-compat 3.38.1
 
-PURL: pkg:npm/core-js-compat@3.41.0
+PURL: pkg:npm/core-js-compat@3.38.1
 Upstream: [https://www.npmjs.com/package/core-js-compat](https://www.npmjs.com/package/core-js-compat)
 
 Licenses: MIT
 
-Copyright (c) 2014-2025 Denis Pushkarev
+Copyright (c) 2014-2024 Denis Pushkarev
+
+
+## core-js 3.38.1
+
+PURL: pkg:npm/core-js@3.38.1
+Upstream: [https://www.npmjs.com/package/core-js](https://www.npmjs.com/package/core-js)
+
+Licenses: MIT
+
+Copyright (c) 2014-2024 Denis Pushkarev
 
 
 ## core-util-is 1.0.3
@@ -2159,264 +1289,44 @@ Licenses: MIT
 Copyright Node.js contributors. All rights reserved.
 
 
-## core 0.15.1
+## core 7.25.7
 
-PURL: pkg:npm/%40eslint/core@0.15.1
-Upstream: [https://www.npmjs.com/package/%40eslint/core](https://www.npmjs.com/package/%40eslint/core)
+PURL: pkg:npm/%40babel/core@7.25.7
+Upstream: [https://www.npmjs.com/package/%40babel/core](https://www.npmjs.com/package/%40babel/core)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## crc-32 1.2.2
+
+PURL: pkg:npm/crc-32@1.2.2
+Upstream: [https://www.npmjs.com/package/crc-32](https://www.npmjs.com/package/crc-32)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
 
 
-## core 0.19.1
+## crc32-stream 6.0.0
 
-PURL: pkg:npm/%40humanfs/core@0.19.1
-Upstream: [https://www.npmjs.com/package/%40humanfs/core](https://www.npmjs.com/package/%40humanfs/core)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## core 1.6.9
-
-PURL: pkg:npm/%40floating-ui/core@1.6.9
-Upstream: [https://www.npmjs.com/package/%40floating-ui/core](https://www.npmjs.com/package/%40floating-ui/core)
+PURL: pkg:npm/crc32-stream@6.0.0
+Upstream: [https://www.npmjs.com/package/crc32-stream](https://www.npmjs.com/package/crc32-stream)
 
 Licenses: MIT
 
-Copyright (c) 2021-present Floating UI contributors
+Copyright (c) 2014 Chris Talkington, contributors.
 
 
-## core 10.1.10
+## cross-spawn 7.0.3
 
-PURL: pkg:npm/%40inquirer/core@10.1.10?vcs_url=https%3A%2F%2Fgithub.com%2FSBoudrias%2FInquirer.js.git
-Upstream: [https://www.npmjs.com/package/%40inquirer/core](https://www.npmjs.com/package/%40inquirer/core)
-
-Licenses: MIT
-
-Copyright (c) 2025 Simon Boudrias
-
-
-## core 4.2.4
-
-PURL: pkg:npm/%40octokit/core@4.2.4
-Upstream: [https://www.npmjs.com/package/%40octokit/core](https://www.npmjs.com/package/%40octokit/core)
-
-Licenses: MIT
-
-Copyright (c) 2019 Octokit contributors
-
-
-## core 7.26.10
-
-PURL: pkg:npm/%40babel/core@7.26.10
-Upstream: [https://www.npmjs.com/package/%40babel/core](https://www.npmjs.com/package/%40babel/core)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## core 7.28.0
-
-PURL: pkg:npm/%40babel/core@7.28.0
-Upstream: [https://www.npmjs.com/package/%40babel/core](https://www.npmjs.com/package/%40babel/core)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## core 7.28.5
-
-PURL: pkg:npm/%40babel/core@7.28.5
-Upstream: [https://www.npmjs.com/package/%40babel/core](https://www.npmjs.com/package/%40babel/core)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## cosmiconfig 5.2.1
-
-PURL: pkg:npm/cosmiconfig@5.2.1
-Upstream: [https://www.npmjs.com/package/cosmiconfig](https://www.npmjs.com/package/cosmiconfig)
-
-Licenses: MIT
-
-Copyright (c) 2015 David Clark
-
-
-## cosmiconfig 7.1.0
-
-PURL: pkg:npm/cosmiconfig@7.1.0
-Upstream: [https://www.npmjs.com/package/cosmiconfig](https://www.npmjs.com/package/cosmiconfig)
-
-Licenses: MIT
-
-Copyright (c) 2015 David Clark
-
-
-## cosmiconfig 8.3.6
-
-PURL: pkg:npm/cosmiconfig@8.3.6?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fcosmiconfig%2Fcosmiconfig.git
-Upstream: [https://www.npmjs.com/package/cosmiconfig](https://www.npmjs.com/package/cosmiconfig)
-
-Licenses: MIT
-
-Copyright (c) 2015 David Clark
-
-
-## coverage-v8 3.2.4
-
-PURL: pkg:npm/%40vitest/coverage-v8@3.2.4?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fcoverage-v8
-Upstream: [https://www.npmjs.com/package/%40vitest/coverage-v8](https://www.npmjs.com/package/%40vitest/coverage-v8)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present Vitest Team
-
-
-## cross-env 7.0.3
-
-PURL: pkg:npm/cross-env@7.0.3
-Upstream: [https://www.npmjs.com/package/cross-env](https://www.npmjs.com/package/cross-env)
-
-Licenses: MIT
-
-Copyright (c) 2017 Kent C. Dodds
-
-
-## cross-spawn 6.0.6
-
-PURL: pkg:npm/cross-spawn@6.0.6
+PURL: pkg:npm/cross-spawn@7.0.3
 Upstream: [https://www.npmjs.com/package/cross-spawn](https://www.npmjs.com/package/cross-spawn)
 
 Licenses: MIT
 
 Copyright (c) 2018 Made With MOXY Lda <hello@moxy.studio>
-
-
-## cross-spawn 7.0.6
-
-PURL: pkg:npm/cross-spawn@7.0.6
-Upstream: [https://www.npmjs.com/package/cross-spawn](https://www.npmjs.com/package/cross-spawn)
-
-Licenses: MIT
-
-Copyright (c) 2018 Made With MOXY Lda <hello@moxy.studio>
-
-
-## crypto-random-string 2.0.0
-
-PURL: pkg:npm/crypto-random-string@2.0.0
-Upstream: [https://www.npmjs.com/package/crypto-random-string](https://www.npmjs.com/package/crypto-random-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## crypto-random-string 4.0.0
-
-PURL: pkg:npm/crypto-random-string@4.0.0
-Upstream: [https://www.npmjs.com/package/crypto-random-string](https://www.npmjs.com/package/crypto-random-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## css-calc 2.1.2
-
-PURL: pkg:npm/%40csstools/css-calc@2.1.2?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fcsstools%2Fpostcss-plugins.git%23packages%2Fcss-calc
-Upstream: [https://www.npmjs.com/package/%40csstools/css-calc](https://www.npmjs.com/package/%40csstools/css-calc)
-
-Licenses: MIT
-
-Copyright 2022 Romain Menke, Antonio Laguna <antonio@laguna.es>
-
-
-## css-color-parser 3.0.8
-
-PURL: pkg:npm/%40csstools/css-color-parser@3.0.8?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fcsstools%2Fpostcss-plugins.git%23packages%2Fcss-color-parser
-Upstream: [https://www.npmjs.com/package/%40csstools/css-color-parser](https://www.npmjs.com/package/%40csstools/css-color-parser)
-
-Licenses: MIT
-
-Copyright 2022 Romain Menke, Antonio Laguna <antonio@laguna.es>
-
-
-## css-color 3.1.1
-
-PURL: pkg:npm/%40asamuzakjp/css-color@3.1.1
-Upstream: [https://www.npmjs.com/package/%40asamuzakjp/css-color](https://www.npmjs.com/package/%40asamuzakjp/css-color)
-
-Licenses: MIT
-
-Copyright (c) 2024 asamuzaK (Kazz)
-
-
-## css-parser-algorithms 3.0.4
-
-PURL: pkg:npm/%40csstools/css-parser-algorithms@3.0.4?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fcsstools%2Fpostcss-plugins.git%23packages%2Fcss-parser-algorithms
-Upstream: [https://www.npmjs.com/package/%40csstools/css-parser-algorithms](https://www.npmjs.com/package/%40csstools/css-parser-algorithms)
-
-Licenses: MIT
-
-Copyright 2022 Romain Menke, Antonio Laguna <antonio@laguna.es>
-
-
-## css-tokenizer 3.0.3
-
-PURL: pkg:npm/%40csstools/css-tokenizer@3.0.3
-Upstream: [https://www.npmjs.com/package/%40csstools/css-tokenizer](https://www.npmjs.com/package/%40csstools/css-tokenizer)
-
-Licenses: MIT
-
-Copyright 2022 Romain Menke, Antonio Laguna <antonio@laguna.es>
-
-
-## css-tools 4.4.2
-
-PURL: pkg:npm/%40adobe/css-tools@4.4.2
-Upstream: [https://www.npmjs.com/package/%40adobe/css-tools](https://www.npmjs.com/package/%40adobe/css-tools)
-
-Licenses: MIT
-
-Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca>
-
-
-## css-what 6.2.2
-
-PURL: pkg:npm/css-what@6.2.2
-Upstream: [https://www.npmjs.com/package/css-what](https://www.npmjs.com/package/css-what)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Felix Böhm
-
-
-## css.escape 1.5.1
-
-PURL: pkg:npm/css.escape@1.5.1
-Upstream: [https://www.npmjs.com/package/css.escape](https://www.npmjs.com/package/css.escape)
-
-Licenses: MIT
-
-Copyright (c) Mathias Bynens
-
-
-## css 1.17.4
-
-PURL: pkg:npm/%40vanilla-extract/css@1.17.4
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/css](https://www.npmjs.com/package/%40vanilla-extract/css)
-
-Licenses: MIT
-
-Copyright (c) 2021 SEEK
 
 
 ## cssesc 3.0.0
@@ -2429,26 +1339,6 @@ Licenses: MIT
 Copyright (c) Mathias Bynens
 
 
-## cssfontparser 1.2.1
-
-PURL: pkg:npm/cssfontparser@1.2.1
-Upstream: [https://www.npmjs.com/package/cssfontparser](https://www.npmjs.com/package/cssfontparser)
-
-Licenses: MIT
-
-Copyright (c) Elijah Insua
-
-
-## cssstyle 4.3.0
-
-PURL: pkg:npm/cssstyle@4.3.0
-Upstream: [https://www.npmjs.com/package/cssstyle](https://www.npmjs.com/package/cssstyle)
-
-Licenses: MIT
-
-Copyright (c) Chad Walker
-
-
 ## csstype 3.1.3
 
 PURL: pkg:npm/csstype@3.1.3
@@ -2457,16 +1347,6 @@ Upstream: [https://www.npmjs.com/package/csstype](https://www.npmjs.com/package/
 Licenses: MIT
 
 Copyright (c) 2017-2018 Fredrik Nicol
-
-
-## damerau-levenshtein 1.0.8
-
-PURL: pkg:npm/damerau-levenshtein@1.0.8
-Upstream: [https://www.npmjs.com/package/damerau-levenshtein](https://www.npmjs.com/package/damerau-levenshtein)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) 2018, Tadeusz Łazurski
 
 
 ## dario.cat/mergo v1.0.2
@@ -2479,19 +1359,9 @@ Licenses: BSD-3-Clause
 Copyright (c) 2013 Dario Castañé. All rights reserved.
 
 
-## data-urls 5.0.0
+## data-view-buffer 1.0.1
 
-PURL: pkg:npm/data-urls@5.0.0
-Upstream: [https://www.npmjs.com/package/data-urls](https://www.npmjs.com/package/data-urls)
-
-Licenses: MIT
-
-Copyright © Domenic Denicola <d@domenic.me>
-
-
-## data-view-buffer 1.0.2
-
-PURL: pkg:npm/data-view-buffer@1.0.2
+PURL: pkg:npm/data-view-buffer@1.0.1
 Upstream: [https://www.npmjs.com/package/data-view-buffer](https://www.npmjs.com/package/data-view-buffer)
 
 Licenses: MIT
@@ -2499,9 +1369,9 @@ Licenses: MIT
 Copyright (c) 2023 Jordan Harband
 
 
-## data-view-byte-length 1.0.2
+## data-view-byte-length 1.0.1
 
-PURL: pkg:npm/data-view-byte-length@1.0.2
+PURL: pkg:npm/data-view-byte-length@1.0.1
 Upstream: [https://www.npmjs.com/package/data-view-byte-length](https://www.npmjs.com/package/data-view-byte-length)
 
 Licenses: MIT
@@ -2509,9 +1379,9 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
-## data-view-byte-offset 1.0.1
+## data-view-byte-offset 1.0.0
 
-PURL: pkg:npm/data-view-byte-offset@1.0.1
+PURL: pkg:npm/data-view-byte-offset@1.0.0
 Upstream: [https://www.npmjs.com/package/data-view-byte-offset](https://www.npmjs.com/package/data-view-byte-offset)
 
 Licenses: MIT
@@ -2519,44 +1389,14 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
-## date-fns 1.30.1
+## debug 2.6.9
 
-PURL: pkg:npm/date-fns@1.30.1
-Upstream: [https://www.npmjs.com/package/date-fns](https://www.npmjs.com/package/date-fns)
-
-Licenses: MIT
-
-Copyright (c) 2021 Sasha Koss and Lesha Koss https://kossnocorp.mit-license.org
-
-
-## date-fns 4.1.0
-
-PURL: pkg:npm/date-fns@4.1.0
-Upstream: [https://www.npmjs.com/package/date-fns](https://www.npmjs.com/package/date-fns)
+PURL: pkg:npm/debug@2.6.9?vcs_url=git%3A%2F%2Fgithub.com%2Fvisionmedia%2Fdebug.git
+Upstream: [https://www.npmjs.com/package/debug](https://www.npmjs.com/package/debug)
 
 Licenses: MIT
 
-Copyright (c) 2021 Sasha Koss and Lesha Koss https://kossnocorp.mit-license.org
-
-
-## dateformat 3.0.3
-
-PURL: pkg:npm/dateformat@3.0.3
-Upstream: [https://www.npmjs.com/package/dateformat](https://www.npmjs.com/package/dateformat)
-
-Licenses: MIT
-
-Copyright (c) Steven Levithan
-
-
-## de-indent 1.0.2
-
-PURL: pkg:npm/de-indent@1.0.2
-Upstream: [https://www.npmjs.com/package/de-indent](https://www.npmjs.com/package/de-indent)
-
-Licenses: MIT
-
-Copyright (c) Evan You
+Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
 
 
 ## debug 3.2.7
@@ -2569,9 +1409,9 @@ Licenses: MIT
 Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
 
 
-## debug 4.4.0
+## debug 4.3.7
 
-PURL: pkg:npm/debug@4.4.0?vcs_url=git%3A%2F%2Fgithub.com%2Fdebug-js%2Fdebug.git
+PURL: pkg:npm/debug@4.3.7?vcs_url=git%3A%2F%2Fgithub.com%2Fdebug-js%2Fdebug.git
 Upstream: [https://www.npmjs.com/package/debug](https://www.npmjs.com/package/debug)
 
 Licenses: MIT
@@ -2579,69 +1419,9 @@ Licenses: MIT
 Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
 
 
-## debug 4.4.1
+## decode-uri-component 0.4.1
 
-PURL: pkg:npm/debug@4.4.1?vcs_url=git%3A%2F%2Fgithub.com%2Fdebug-js%2Fdebug.git
-Upstream: [https://www.npmjs.com/package/debug](https://www.npmjs.com/package/debug)
-
-Licenses: MIT
-
-Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
-
-
-## debug 4.4.3
-
-PURL: pkg:npm/debug@4.4.3?vcs_url=git%3A%2F%2Fgithub.com%2Fdebug-js%2Fdebug.git
-Upstream: [https://www.npmjs.com/package/debug](https://www.npmjs.com/package/debug)
-
-Licenses: MIT
-
-Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
-
-
-## debuglog 1.0.1
-
-PURL: pkg:npm/debuglog@1.0.1
-Upstream: [https://www.npmjs.com/package/debuglog](https://www.npmjs.com/package/debuglog)
-
-Licenses: MIT
-
-Copyright Joyent, Inc. and other Node contributors. All rights reserved.
-
-
-## decamelize-keys 1.1.1
-
-PURL: pkg:npm/decamelize-keys@1.1.1
-Upstream: [https://www.npmjs.com/package/decamelize-keys](https://www.npmjs.com/package/decamelize-keys)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com), Dmirty Sobolev <disobolev@icloud.com>
-
-
-## decamelize 1.2.0
-
-PURL: pkg:npm/decamelize@1.2.0
-Upstream: [https://www.npmjs.com/package/decamelize](https://www.npmjs.com/package/decamelize)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## decimal.js 10.5.0
-
-PURL: pkg:npm/decimal.js@10.5.0
-Upstream: [https://www.npmjs.com/package/decimal.js](https://www.npmjs.com/package/decimal.js)
-
-Licenses: MIT
-
-Copyright (c) 2025 Michael Mclaughlin
-
-
-## decode-uri-component 0.2.2
-
-PURL: pkg:npm/decode-uri-component@0.2.2
+PURL: pkg:npm/decode-uri-component@0.4.1
 Upstream: [https://www.npmjs.com/package/decode-uri-component](https://www.npmjs.com/package/decode-uri-component)
 
 Licenses: MIT
@@ -2649,74 +1429,14 @@ Licenses: MIT
 Copyright (c) 2017, Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
 
 
-## decompress-response 6.0.0
+## deep-eql 4.1.4
 
-PURL: pkg:npm/decompress-response@6.0.0
-Upstream: [https://www.npmjs.com/package/decompress-response](https://www.npmjs.com/package/decompress-response)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## dedent 0.7.0
-
-PURL: pkg:npm/dedent@0.7.0
-Upstream: [https://www.npmjs.com/package/dedent](https://www.npmjs.com/package/dedent)
-
-Licenses: MIT
-
-Copyright (c) Desmond Brand
-
-
-## dedent 1.7.0
-
-PURL: pkg:npm/dedent@1.7.0?vcs_url=https%3A%2F%2Fgithub.com%2Fdmnd%2Fdedent
-Upstream: [https://www.npmjs.com/package/dedent](https://www.npmjs.com/package/dedent)
-
-Licenses: MIT
-
-Copyright (c) Desmond Brand
-
-
-## deep-eql 4.0.2
-
-PURL: pkg:npm/%40types/deep-eql@4.0.2
-Upstream: [https://www.npmjs.com/package/%40types/deep-eql](https://www.npmjs.com/package/%40types/deep-eql)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## deep-eql 5.0.2
-
-PURL: pkg:npm/deep-eql@5.0.2
+PURL: pkg:npm/deep-eql@4.1.4
 Upstream: [https://www.npmjs.com/package/deep-eql](https://www.npmjs.com/package/deep-eql)
 
 Licenses: MIT
 
 Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com> (http://alogicalparadox.com)
-
-
-## deep-equal 2.2.3
-
-PURL: pkg:npm/deep-equal@2.2.3
-Upstream: [https://www.npmjs.com/package/deep-equal](https://www.npmjs.com/package/deep-equal)
-
-Licenses: MIT
-
-Copyright (c) 2012, 2013, 2014 James Halliday <mail@substack.net>, 2009 Thomas Robinson <280north.com>
-
-
-## deep-extend 0.6.0
-
-PURL: pkg:npm/deep-extend@0.6.0
-Upstream: [https://www.npmjs.com/package/deep-extend](https://www.npmjs.com/package/deep-extend)
-
-Licenses: MIT
-
-Copyright (c) 2013-2018, Viacheslav Lotsmanov
 
 
 ## deep-is 0.1.4
@@ -2729,29 +1449,9 @@ Licenses: MIT
 Copyright (c) 2012, 2013 Thorsten Lorenz <thlorenz@gmx.de>
 
 
-## deep-object-diff 1.1.9
+## default-browser-id 5.0.0
 
-PURL: pkg:npm/deep-object-diff@1.1.9
-Upstream: [https://www.npmjs.com/package/deep-object-diff](https://www.npmjs.com/package/deep-object-diff)
-
-Licenses: MIT
-
-Copyright (c) 2016-present Matt Phillips <mattphillips>
-
-
-## deepmerge 4.3.1
-
-PURL: pkg:npm/deepmerge@4.3.1
-Upstream: [https://www.npmjs.com/package/deepmerge](https://www.npmjs.com/package/deepmerge)
-
-Licenses: MIT
-
-Copyright (c) 2012 James Halliday, Josh Duff, and other contributors
-
-
-## default-browser-id 3.0.0
-
-PURL: pkg:npm/default-browser-id@3.0.0
+PURL: pkg:npm/default-browser-id@5.0.0
 Upstream: [https://www.npmjs.com/package/default-browser-id](https://www.npmjs.com/package/default-browser-id)
 
 Licenses: MIT
@@ -2759,9 +1459,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## default-browser 4.0.0
+## default-browser 5.2.1
 
-PURL: pkg:npm/default-browser@4.0.0
+PURL: pkg:npm/default-browser@5.2.1
 Upstream: [https://www.npmjs.com/package/default-browser](https://www.npmjs.com/package/default-browser)
 
 Licenses: MIT
@@ -2779,26 +1479,6 @@ Licenses: MIT
 Copyright (c) 2022 Sindre Sorhus
 
 
-## defer-to-connect 2.0.1
-
-PURL: pkg:npm/defer-to-connect@2.0.1
-Upstream: [https://www.npmjs.com/package/defer-to-connect](https://www.npmjs.com/package/defer-to-connect)
-
-Licenses: MIT
-
-Copyright (c) 2018 Szymon Marczak
-
-
-## deferred-promise 2.2.0
-
-PURL: pkg:npm/%40open-draft/deferred-promise@2.2.0
-Upstream: [https://www.npmjs.com/package/%40open-draft/deferred-promise](https://www.npmjs.com/package/%40open-draft/deferred-promise)
-
-Licenses: MIT
-
-Copyright (c) Artem Zakharchenko
-
-
 ## define-data-property 1.1.4
 
 PURL: pkg:npm/define-data-property@1.1.4
@@ -2807,6 +1487,16 @@ Upstream: [https://www.npmjs.com/package/define-data-property](https://www.npmjs
 Licenses: MIT
 
 Copyright (c) 2023 Jordan Harband
+
+
+## define-lazy-prop 2.0.0
+
+PURL: pkg:npm/define-lazy-prop@2.0.0
+Upstream: [https://www.npmjs.com/package/define-lazy-prop](https://www.npmjs.com/package/define-lazy-prop)
+
+Licenses: MIT
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## define-lazy-prop 3.0.0
@@ -2829,36 +1519,6 @@ Licenses: MIT
 Copyright (C) 2015 Jordan Harband
 
 
-## del 5.1.0
-
-PURL: pkg:npm/del@5.1.0
-Upstream: [https://www.npmjs.com/package/del](https://www.npmjs.com/package/del)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## del 6.1.1
-
-PURL: pkg:npm/del@6.1.1
-Upstream: [https://www.npmjs.com/package/del](https://www.npmjs.com/package/del)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## del 7.1.0
-
-PURL: pkg:npm/del@7.1.0
-Upstream: [https://www.npmjs.com/package/del](https://www.npmjs.com/package/del)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
 ## delayed-stream 1.0.0
 
 PURL: pkg:npm/delayed-stream@1.0.0
@@ -2869,64 +1529,34 @@ Licenses: MIT
 Copyright (c) 2011 Debuggable Limited <felix@debuggable.com>
 
 
-## delegates 1.0.0
+## depd 2.0.0
 
-PURL: pkg:npm/delegates@1.0.0
-Upstream: [https://www.npmjs.com/package/delegates](https://www.npmjs.com/package/delegates)
-
-Licenses: MIT
-
-Copyright (c) 2015 TJ Holowaychuk <tj@vision-media.ca>
-
-
-## deprecation 2.3.1
-
-PURL: pkg:npm/deprecation@2.3.1
-Upstream: [https://www.npmjs.com/package/deprecation](https://www.npmjs.com/package/deprecation)
-
-Licenses: ISC
-
-Copyright (c) Gregor Martynus and contributors
-
-
-## dequal 2.0.3
-
-PURL: pkg:npm/dequal@2.0.3
-Upstream: [https://www.npmjs.com/package/dequal](https://www.npmjs.com/package/dequal)
+PURL: pkg:npm/depd@2.0.0
+Upstream: [https://www.npmjs.com/package/depd](https://www.npmjs.com/package/depd)
 
 Licenses: MIT
 
-Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
+Copyright (c) 2014-2018 Douglas Christopher Wilson
 
 
-## detect-node-es 1.1.0
+## destroy 1.2.0
 
-PURL: pkg:npm/detect-node-es@1.1.0
-Upstream: [https://www.npmjs.com/package/detect-node-es](https://www.npmjs.com/package/detect-node-es)
-
-Licenses: MIT
-
-Copyright (c) 2017 Ilya Kantor
-
-
-## dezalgo 1.0.4
-
-PURL: pkg:npm/dezalgo@1.0.4
-Upstream: [https://www.npmjs.com/package/dezalgo](https://www.npmjs.com/package/dezalgo)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## diff-sequences 27.5.1
-
-PURL: pkg:npm/diff-sequences@27.5.1
-Upstream: [https://www.npmjs.com/package/diff-sequences](https://www.npmjs.com/package/diff-sequences)
+PURL: pkg:npm/destroy@1.2.0
+Upstream: [https://www.npmjs.com/package/destroy](https://www.npmjs.com/package/destroy)
 
 Licenses: MIT
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) 2014 Jonathan Ong me@jongleberry.com
+
+
+## devtools-api 6.6.4
+
+PURL: pkg:npm/%40vue/devtools-api@6.6.4
+Upstream: [https://www.npmjs.com/package/%40vue/devtools-api](https://www.npmjs.com/package/%40vue/devtools-api)
+
+Licenses: MIT
+
+Copyright (c) Guillaume Chau
 
 
 ## diff-sequences 29.6.3
@@ -2936,57 +1566,7 @@ Upstream: [https://www.npmjs.com/package/diff-sequences](https://www.npmjs.com/p
 
 Licenses: MIT
 
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## diff 5.2.0
-
-PURL: pkg:npm/diff@5.2.0
-Upstream: [https://www.npmjs.com/package/diff](https://www.npmjs.com/package/diff)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>
-
-
-## diff 8.0.2
-
-PURL: pkg:npm/diff@8.0.2
-Upstream: [https://www.npmjs.com/package/diff](https://www.npmjs.com/package/diff)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>
-
-
-## dir-glob 3.0.1
-
-PURL: pkg:npm/dir-glob@3.0.1
-Upstream: [https://www.npmjs.com/package/dir-glob](https://www.npmjs.com/package/dir-glob)
-
-Licenses: MIT
-
-Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com/kevva)
-
-
-## disparity-colors 2.0.0
-
-PURL: pkg:npm/%40npmcli/disparity-colors@2.0.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/disparity-colors](https://www.npmjs.com/package/%40npmcli/disparity-colors)
-
-Licenses: ISC
-
-Copyright (c) npm Inc.
-
-
-## doctrine 0.0.9
-
-PURL: pkg:npm/%40types/doctrine@0.0.9
-Upstream: [https://www.npmjs.com/package/%40types/doctrine](https://www.npmjs.com/package/%40types/doctrine)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
 ## doctrine 2.1.0
@@ -3009,84 +1589,54 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## dom-accessibility-api 0.5.16
+## dot-case 3.0.4
 
-PURL: pkg:npm/dom-accessibility-api@0.5.16
-Upstream: [https://www.npmjs.com/package/dom-accessibility-api](https://www.npmjs.com/package/dom-accessibility-api)
-
-Licenses: MIT
-
-Copyright (c) 2020 Sebastian Silbermann
-
-
-## dom-accessibility-api 0.6.3
-
-PURL: pkg:npm/dom-accessibility-api@0.6.3
-Upstream: [https://www.npmjs.com/package/dom-accessibility-api](https://www.npmjs.com/package/dom-accessibility-api)
+PURL: pkg:npm/dot-case@3.0.4
+Upstream: [https://www.npmjs.com/package/dot-case](https://www.npmjs.com/package/dot-case)
 
 Licenses: MIT
 
-Copyright (c) 2020 Sebastian Silbermann
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
-## dom 1.6.13
+## dot-prop 8.0.2
 
-PURL: pkg:npm/%40floating-ui/dom@1.6.13
-Upstream: [https://www.npmjs.com/package/%40floating-ui/dom](https://www.npmjs.com/package/%40floating-ui/dom)
-
-Licenses: MIT
-
-Copyright (c) 2021-present Floating UI contributors
-
-
-## dom 10.4.1
-
-PURL: pkg:npm/%40testing-library/dom@10.4.1
-Upstream: [https://www.npmjs.com/package/%40testing-library/dom](https://www.npmjs.com/package/%40testing-library/dom)
-
-Licenses: MIT
-
-Copyright (c) 2017 Kent C. Dodds
-
-
-## dom 9.3.4
-
-PURL: pkg:npm/%40testing-library/dom@9.3.4
-Upstream: [https://www.npmjs.com/package/%40testing-library/dom](https://www.npmjs.com/package/%40testing-library/dom)
-
-Licenses: MIT
-
-Copyright (c) 2017 Kent C. Dodds
-
-
-## dot-prop 5.3.0
-
-PURL: pkg:npm/dot-prop@5.3.0
+PURL: pkg:npm/dot-prop@8.0.2
 Upstream: [https://www.npmjs.com/package/dot-prop](https://www.npmjs.com/package/dot-prop)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## dot-prop 6.0.1
+## dot-prop 9.0.0
 
-PURL: pkg:npm/dot-prop@6.0.1
+PURL: pkg:npm/dot-prop@9.0.0
 Upstream: [https://www.npmjs.com/package/dot-prop](https://www.npmjs.com/package/dot-prop)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## dot-prop 7.2.0
+## dotenv-expand 11.0.6
 
-PURL: pkg:npm/dot-prop@7.2.0
-Upstream: [https://www.npmjs.com/package/dot-prop](https://www.npmjs.com/package/dot-prop)
+PURL: pkg:npm/dotenv-expand@11.0.6
+Upstream: [https://www.npmjs.com/package/dotenv-expand](https://www.npmjs.com/package/dotenv-expand)
 
-Licenses: MIT
+Licenses: BSD-2-Clause
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2016, Scott Motte
+
+
+## dotenv 16.4.5
+
+PURL: pkg:npm/dotenv@16.4.5
+Upstream: [https://www.npmjs.com/package/dotenv](https://www.npmjs.com/package/dotenv)
+
+Licenses: BSD-2-Clause
+
+Copyright (c) 2015, Scott Motte
 
 
 ## dunder-proto 1.0.1
@@ -3099,26 +1649,6 @@ Licenses: MIT
 Copyright (c) 2024 ECMAScript Shims
 
 
-## duplexer2 0.1.4
-
-PURL: pkg:npm/duplexer2@0.1.4
-Upstream: [https://www.npmjs.com/package/duplexer2](https://www.npmjs.com/package/duplexer2)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2013, Deoxxa Development
-
-
-## dynamic 2.1.5
-
-PURL: pkg:npm/%40vanilla-extract/dynamic@2.1.5
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/dynamic](https://www.npmjs.com/package/%40vanilla-extract/dynamic)
-
-Licenses: MIT
-
-Copyright (c) 2021 SEEK
-
-
 ## eastasianwidth 0.2.0
 
 PURL: pkg:npm/eastasianwidth@0.2.0
@@ -3129,19 +1659,29 @@ Licenses: MIT
 Copyright (c) Masaki Komagata
 
 
-## ed25519 3.0.0
+## editorconfig 1.0.4
 
-PURL: pkg:npm/%40noble/ed25519@3.0.0
-Upstream: [https://www.npmjs.com/package/%40noble/ed25519](https://www.npmjs.com/package/%40noble/ed25519)
+PURL: pkg:npm/editorconfig@1.0.4
+Upstream: [https://www.npmjs.com/package/editorconfig](https://www.npmjs.com/package/editorconfig)
 
 Licenses: MIT
 
-Copyright (c) 2019 Paul Miller (https://paulmillr.com)
+Copyright © 2012 EditorConfig Team
 
 
-## electron-to-chromium 1.5.132
+## ee-first 1.1.1
 
-PURL: pkg:npm/electron-to-chromium@1.5.132
+PURL: pkg:npm/ee-first@1.1.1
+Upstream: [https://www.npmjs.com/package/ee-first](https://www.npmjs.com/package/ee-first)
+
+Licenses: MIT
+
+Copyright (c) 2014 Jonathan Ong me@jongleberry.com
+
+
+## electron-to-chromium 1.5.33
+
+PURL: pkg:npm/electron-to-chromium@1.5.33
 Upstream: [https://www.npmjs.com/package/electron-to-chromium](https://www.npmjs.com/package/electron-to-chromium)
 
 Licenses: ISC
@@ -3149,14 +1689,14 @@ Licenses: ISC
 Copyright 2018 Kilian Valkhof
 
 
-## elegant-spinner 1.0.1
+## elementtree 0.1.7
 
-PURL: pkg:npm/elegant-spinner@1.0.1
-Upstream: [https://www.npmjs.com/package/elegant-spinner](https://www.npmjs.com/package/elegant-spinner)
+PURL: pkg:npm/elementtree@0.1.7
+Upstream: [https://www.npmjs.com/package/elementtree](https://www.npmjs.com/package/elementtree)
 
-Licenses: MIT
+Licenses: Apache-2.0
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+copyright notice that is included in or attached to the work
 
 
 ## emoji-regex 8.0.0
@@ -3179,54 +1719,24 @@ Licenses: MIT
 Copyright (c) Mathias Bynens
 
 
-## emojis-list 3.0.0
+## encodeurl 1.0.2
 
-PURL: pkg:npm/emojis-list@3.0.0
-Upstream: [https://www.npmjs.com/package/emojis-list](https://www.npmjs.com/package/emojis-list)
-
-Licenses: MIT
-
-Copyright © 2015 Kiko Beats
-
-
-## empathic 2.0.0
-
-PURL: pkg:npm/empathic@2.0.0
-Upstream: [https://www.npmjs.com/package/empathic](https://www.npmjs.com/package/empathic)
+PURL: pkg:npm/encodeurl@1.0.2
+Upstream: [https://www.npmjs.com/package/encodeurl](https://www.npmjs.com/package/encodeurl)
 
 Licenses: MIT
 
-Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
+Copyright (c) 2016 Douglas Christopher Wilson
 
 
-## encoding 0.1.13
+## encodeurl 2.0.0
 
-PURL: pkg:npm/encoding@0.1.13
-Upstream: [https://www.npmjs.com/package/encoding](https://www.npmjs.com/package/encoding)
-
-Licenses: MIT
-
-Copyright (c) 2012-2014 Andris Reinman
-
-
-## end-of-stream 1.4.4
-
-PURL: pkg:npm/end-of-stream@1.4.4
-Upstream: [https://www.npmjs.com/package/end-of-stream](https://www.npmjs.com/package/end-of-stream)
+PURL: pkg:npm/encodeurl@2.0.0
+Upstream: [https://www.npmjs.com/package/encodeurl](https://www.npmjs.com/package/encodeurl)
 
 Licenses: MIT
 
-Copyright (c) 2014 Mathias Buus
-
-
-## endpoint 7.0.6
-
-PURL: pkg:npm/%40octokit/endpoint@7.0.6
-Upstream: [https://www.npmjs.com/package/%40octokit/endpoint](https://www.npmjs.com/package/%40octokit/endpoint)
-
-Licenses: MIT
-
-Copyright (c) 2018 Octokit contributors
+Copyright (c) 2016 Douglas Christopher Wilson
 
 
 ## entities 4.5.0
@@ -3239,59 +1749,9 @@ Licenses: BSD-2-Clause
 Copyright (c) Felix Böhm
 
 
-## env-ci 5.5.0
+## es-abstract 1.23.3
 
-PURL: pkg:npm/env-ci@5.5.0
-Upstream: [https://www.npmjs.com/package/env-ci](https://www.npmjs.com/package/env-ci)
-
-Licenses: MIT
-
-Copyright (c) 2017 Pierre Vanduynslager
-
-
-## env-paths 2.2.1
-
-PURL: pkg:npm/env-paths@2.2.1
-Upstream: [https://www.npmjs.com/package/env-paths](https://www.npmjs.com/package/env-paths)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## err-code 2.0.3
-
-PURL: pkg:npm/err-code@2.0.3
-Upstream: [https://www.npmjs.com/package/err-code](https://www.npmjs.com/package/err-code)
-
-Licenses: MIT
-
-Copyright (c) IndigoUnited
-
-
-## error-ex 1.3.2
-
-PURL: pkg:npm/error-ex@1.3.2
-Upstream: [https://www.npmjs.com/package/error-ex](https://www.npmjs.com/package/error-ex)
-
-Licenses: MIT
-
-Copyright (c) 2015 JD Ballard
-
-
-## error 3.0.0
-
-PURL: pkg:npm/%40semantic-release/error@3.0.0
-Upstream: [https://www.npmjs.com/package/%40semantic-release/error](https://www.npmjs.com/package/%40semantic-release/error)
-
-Licenses: MIT
-
-Copyright (c) 2017 Contributors
-
-
-## es-abstract 1.23.9
-
-PURL: pkg:npm/es-abstract@1.23.9
+PURL: pkg:npm/es-abstract@1.23.3
 Upstream: [https://www.npmjs.com/package/es-abstract](https://www.npmjs.com/package/es-abstract)
 
 Licenses: MIT
@@ -3299,14 +1759,14 @@ Licenses: MIT
 Copyright (C) 2015 Jordan Harband
 
 
-## es-abstract 1.24.0
+## es-define-property 1.0.0
 
-PURL: pkg:npm/es-abstract@1.24.0
-Upstream: [https://www.npmjs.com/package/es-abstract](https://www.npmjs.com/package/es-abstract)
+PURL: pkg:npm/es-define-property@1.0.0
+Upstream: [https://www.npmjs.com/package/es-define-property](https://www.npmjs.com/package/es-define-property)
 
 Licenses: MIT
 
-Copyright (C) 2015 Jordan Harband
+Copyright (c) 2024 Jordan Harband
 
 
 ## es-define-property 1.0.1
@@ -3329,34 +1789,14 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
-## es-get-iterator 1.1.3
+## es-object-atoms 1.0.0
 
-PURL: pkg:npm/es-get-iterator@1.1.3
-Upstream: [https://www.npmjs.com/package/es-get-iterator](https://www.npmjs.com/package/es-get-iterator)
-
-Licenses: MIT
-
-Copyright (c) 2019 Jordan Harband
-
-
-## es-iterator-helpers 1.2.1
-
-PURL: pkg:npm/es-iterator-helpers@1.2.1
-Upstream: [https://www.npmjs.com/package/es-iterator-helpers](https://www.npmjs.com/package/es-iterator-helpers)
+PURL: pkg:npm/es-object-atoms@1.0.0
+Upstream: [https://www.npmjs.com/package/es-object-atoms](https://www.npmjs.com/package/es-object-atoms)
 
 Licenses: MIT
 
-Copyright (c) 2022 ECMAScript Shims
-
-
-## es-module-lexer 1.7.0
-
-PURL: pkg:npm/es-module-lexer@1.7.0
-Upstream: [https://www.npmjs.com/package/es-module-lexer](https://www.npmjs.com/package/es-module-lexer)
-
-Licenses: MIT
-
-Copyright (C) 2018-2022 Guy Bedford
+Copyright (c) 2024 Jordan Harband
 
 
 ## es-object-atoms 1.1.1
@@ -3369,6 +1809,16 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
+## es-set-tostringtag 2.0.3
+
+PURL: pkg:npm/es-set-tostringtag@2.0.3
+Upstream: [https://www.npmjs.com/package/es-set-tostringtag](https://www.npmjs.com/package/es-set-tostringtag)
+
+Licenses: MIT
+
+Copyright (c) 2022 ECMAScript Shims
+
+
 ## es-set-tostringtag 2.1.0
 
 PURL: pkg:npm/es-set-tostringtag@2.1.0
@@ -3379,9 +1829,9 @@ Licenses: MIT
 Copyright (c) 2022 ECMAScript Shims
 
 
-## es-shim-unscopables 1.1.0
+## es-shim-unscopables 1.0.2
 
-PURL: pkg:npm/es-shim-unscopables@1.1.0
+PURL: pkg:npm/es-shim-unscopables@1.0.2
 Upstream: [https://www.npmjs.com/package/es-shim-unscopables](https://www.npmjs.com/package/es-shim-unscopables)
 
 Licenses: MIT
@@ -3389,9 +1839,9 @@ Licenses: MIT
 Copyright (c) 2022 Jordan Harband
 
 
-## es-to-primitive 1.3.0
+## es-to-primitive 1.2.1
 
-PURL: pkg:npm/es-to-primitive@1.3.0
+PURL: pkg:npm/es-to-primitive@1.2.1
 Upstream: [https://www.npmjs.com/package/es-to-primitive](https://www.npmjs.com/package/es-to-primitive)
 
 Licenses: MIT
@@ -3409,29 +1859,9 @@ Licenses: MIT
 Copyright (c) 2020 Evan Wallace
 
 
-## esbuild 0.25.12
+## esbuild 0.23.1
 
-PURL: pkg:npm/esbuild@0.25.12
-Upstream: [https://www.npmjs.com/package/esbuild](https://www.npmjs.com/package/esbuild)
-
-Licenses: MIT
-
-Copyright (c) 2020 Evan Wallace
-
-
-## esbuild 0.25.2
-
-PURL: pkg:npm/esbuild@0.25.2
-Upstream: [https://www.npmjs.com/package/esbuild](https://www.npmjs.com/package/esbuild)
-
-Licenses: MIT
-
-Copyright (c) 2020 Evan Wallace
-
-
-## esbuild 0.25.8
-
-PURL: pkg:npm/esbuild@0.25.8
+PURL: pkg:npm/esbuild@0.23.1
 Upstream: [https://www.npmjs.com/package/esbuild](https://www.npmjs.com/package/esbuild)
 
 Licenses: MIT
@@ -3449,29 +1879,19 @@ Licenses: MIT
 Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 
 
-## escape-goat 4.0.0
+## escape-html 1.0.3
 
-PURL: pkg:npm/escape-goat@4.0.0
-Upstream: [https://www.npmjs.com/package/escape-goat](https://www.npmjs.com/package/escape-goat)
+PURL: pkg:npm/escape-html@1.0.3
+Upstream: [https://www.npmjs.com/package/escape-html](https://www.npmjs.com/package/escape-html)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2012-2013 TJ Holowaychuk
 
 
 ## escape-string-regexp 1.0.5
 
 PURL: pkg:npm/escape-string-regexp@1.0.5
-Upstream: [https://www.npmjs.com/package/escape-string-regexp](https://www.npmjs.com/package/escape-string-regexp)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## escape-string-regexp 2.0.0
-
-PURL: pkg:npm/escape-string-regexp@2.0.0
 Upstream: [https://www.npmjs.com/package/escape-string-regexp](https://www.npmjs.com/package/escape-string-regexp)
 
 Licenses: MIT
@@ -3489,34 +1909,24 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## escape-string-regexp 5.0.0
+## eslint-compat-utils 0.5.1
 
-PURL: pkg:npm/escape-string-regexp@5.0.0
-Upstream: [https://www.npmjs.com/package/escape-string-regexp](https://www.npmjs.com/package/escape-string-regexp)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## eslint-config-prettier 10.1.8
-
-PURL: pkg:npm/eslint-config-prettier@10.1.8
-Upstream: [https://www.npmjs.com/package/eslint-config-prettier](https://www.npmjs.com/package/eslint-config-prettier)
+PURL: pkg:npm/eslint-compat-utils@0.5.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fota-meshi%2Feslint-compat-utils.git
+Upstream: [https://www.npmjs.com/package/eslint-compat-utils](https://www.npmjs.com/package/eslint-compat-utils)
 
 Licenses: MIT
 
-Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022, 2023 Simon Lydell and contributors
+Copyright (c) 2023 Yosuke Ota
 
 
-## eslint-import-context 0.1.9
+## eslint-config-standard 17.1.0
 
-PURL: pkg:npm/eslint-import-context@0.1.9
-Upstream: [https://www.npmjs.com/package/eslint-import-context](https://www.npmjs.com/package/eslint-import-context)
+PURL: pkg:npm/eslint-config-standard@17.1.0?vcs_url=git%3A%2F%2Fgithub.com%2Fstandard%2Feslint-config-standard.git
+Upstream: [https://www.npmjs.com/package/eslint-config-standard](https://www.npmjs.com/package/eslint-config-standard)
 
 Licenses: MIT
 
-Copyright (c) 2021-present UnTS
+Copyright (c) Feross Aboukhadijeh
 
 
 ## eslint-import-resolver-node 0.3.9
@@ -3529,19 +1939,9 @@ Licenses: MIT
 Copyright (c) 2015 Ben Mosher
 
 
-## eslint-import-resolver-typescript 4.4.4
+## eslint-module-utils 2.12.0
 
-PURL: pkg:npm/eslint-import-resolver-typescript@4.4.4
-Upstream: [https://www.npmjs.com/package/eslint-import-resolver-typescript](https://www.npmjs.com/package/eslint-import-resolver-typescript)
-
-Licenses: ISC
-
-Copyright 2021 Alex Gorbatchev <alex.gorbatchev@gmail.com>
-
-
-## eslint-module-utils 2.12.1
-
-PURL: pkg:npm/eslint-module-utils@2.12.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fimport-js%2Feslint-plugin-import.git%23utils
+PURL: pkg:npm/eslint-module-utils@2.12.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fimport-js%2Feslint-plugin-import.git%23utils
 Upstream: [https://www.npmjs.com/package/eslint-module-utils](https://www.npmjs.com/package/eslint-module-utils)
 
 Licenses: MIT
@@ -3549,9 +1949,29 @@ Licenses: MIT
 Copyright (c) 2015 Ben Mosher
 
 
-## eslint-plugin-import 2.32.0
+## eslint-parser 7.25.7
 
-PURL: pkg:npm/eslint-plugin-import@2.32.0?vcs_url=https%3A%2F%2Fgithub.com%2Fimport-js%2Feslint-plugin-import
+PURL: pkg:npm/%40babel/eslint-parser@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23eslint%2Fbabel-eslint-parser
+Upstream: [https://www.npmjs.com/package/%40babel/eslint-parser](https://www.npmjs.com/package/%40babel/eslint-parser)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## eslint-plugin-es-x 7.8.0
+
+PURL: pkg:npm/eslint-plugin-es-x@7.8.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Feslint-community%2Feslint-plugin-es-x.git
+Upstream: [https://www.npmjs.com/package/eslint-plugin-es-x](https://www.npmjs.com/package/eslint-plugin-es-x)
+
+Licenses: MIT
+
+Copyright (c) 2018 Toru Nagashima
+
+
+## eslint-plugin-import 2.31.0
+
+PURL: pkg:npm/eslint-plugin-import@2.31.0?vcs_url=https%3A%2F%2Fgithub.com%2Fimport-js%2Feslint-plugin-import
 Upstream: [https://www.npmjs.com/package/eslint-plugin-import](https://www.npmjs.com/package/eslint-plugin-import)
 
 Licenses: MIT
@@ -3559,49 +1979,49 @@ Licenses: MIT
 Copyright (c) 2015 Ben Mosher
 
 
-## eslint-plugin-jsx-a11y 6.10.2
+## eslint-plugin-n 16.6.2
 
-PURL: pkg:npm/eslint-plugin-jsx-a11y@6.10.2?vcs_url=https%3A%2F%2Fgithub.com%2Fjsx-eslint%2Feslint-plugin-jsx-a11y
-Upstream: [https://www.npmjs.com/package/eslint-plugin-jsx-a11y](https://www.npmjs.com/package/eslint-plugin-jsx-a11y)
-
-Licenses: MIT
-
-Copyright (c) 2016 Ethan Cohen
-
-
-## eslint-plugin-react-hooks 5.2.0
-
-PURL: pkg:npm/eslint-plugin-react-hooks@5.2.0?vcs_url=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact.git%23packages%2Feslint-plugin-react-hooks
-Upstream: [https://www.npmjs.com/package/eslint-plugin-react-hooks](https://www.npmjs.com/package/eslint-plugin-react-hooks)
+PURL: pkg:npm/eslint-plugin-n@16.6.2?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Feslint-community%2Feslint-plugin-n.git
+Upstream: [https://www.npmjs.com/package/eslint-plugin-n](https://www.npmjs.com/package/eslint-plugin-n)
 
 Licenses: MIT
 
-Copyright (c) Meta Platforms, Inc. and affiliates.
+Copyright (c) 2015 Toru Nagashima
 
 
-## eslint-plugin-react 7.37.5
+## eslint-plugin-promise 6.6.0
 
-PURL: pkg:npm/eslint-plugin-react@7.37.5?vcs_url=https%3A%2F%2Fgithub.com%2Fjsx-eslint%2Feslint-plugin-react
-Upstream: [https://www.npmjs.com/package/eslint-plugin-react](https://www.npmjs.com/package/eslint-plugin-react)
+PURL: pkg:npm/eslint-plugin-promise@6.6.0?vcs_url=https%3A%2F%2Fgithub.com%2Feslint-community%2Feslint-plugin-promise
+Upstream: [https://www.npmjs.com/package/eslint-plugin-promise](https://www.npmjs.com/package/eslint-plugin-promise)
+
+Licenses: ISC
+
+Copyright (c) 2020, Jamund Ferguson
+
+
+## eslint-plugin-vue 9.28.0
+
+PURL: pkg:npm/eslint-plugin-vue@9.28.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvuejs%2Feslint-plugin-vue.git
+Upstream: [https://www.npmjs.com/package/eslint-plugin-vue](https://www.npmjs.com/package/eslint-plugin-vue)
 
 Licenses: MIT
 
-Copyright (c) 2014 Yannick Croissant
+Copyright (c) 2017 Toru Nagashima
 
 
-## eslint-plugin 8.38.0
+## eslint-scope-5-internals 5.1.1-v1
 
-PURL: pkg:npm/%40typescript-eslint/eslint-plugin@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Feslint-plugin
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/eslint-plugin](https://www.npmjs.com/package/%40typescript-eslint/eslint-plugin)
+PURL: pkg:npm/%40nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1
+Upstream: [https://www.npmjs.com/package/%40nicolo-ribaudo/eslint-scope-5-internals](https://www.npmjs.com/package/%40nicolo-ribaudo/eslint-scope-5-internals)
 
 Licenses: MIT
 
-Copyright (c) 2019 typescript-eslint and other contributors
+Copyright 2022 Nicolò Ribaudo
 
 
-## eslint-scope 8.4.0
+## eslint-scope 5.1.1
 
-PURL: pkg:npm/eslint-scope@8.4.0
+PURL: pkg:npm/eslint-scope@5.1.1
 Upstream: [https://www.npmjs.com/package/eslint-scope](https://www.npmjs.com/package/eslint-scope)
 
 Licenses: BSD-2-Clause
@@ -3609,9 +2029,19 @@ Licenses: BSD-2-Clause
 Copyright JS Foundation and other contributors, https://js.foundation
 
 
-## eslint-utils 4.5.1
+## eslint-scope 7.2.2
 
-PURL: pkg:npm/%40eslint-community/eslint-utils@4.5.1?vcs_url=https%3A%2F%2Fgithub.com%2Feslint-community%2Feslint-utils
+PURL: pkg:npm/eslint-scope@7.2.2
+Upstream: [https://www.npmjs.com/package/eslint-scope](https://www.npmjs.com/package/eslint-scope)
+
+Licenses: BSD-2-Clause
+
+Copyright JS Foundation and other contributors, https://js.foundation
+
+
+## eslint-utils 4.4.0
+
+PURL: pkg:npm/%40eslint-community/eslint-utils@4.4.0?vcs_url=https%3A%2F%2Fgithub.com%2Feslint-community%2Feslint-utils
 Upstream: [https://www.npmjs.com/package/%40eslint-community/eslint-utils](https://www.npmjs.com/package/%40eslint-community/eslint-utils)
 
 Licenses: MIT
@@ -3619,14 +2049,14 @@ Licenses: MIT
 Copyright (c) 2018 Toru Nagashima
 
 
-## eslint-utils 4.7.0
+## eslint-visitor-keys 2.1.0
 
-PURL: pkg:npm/%40eslint-community/eslint-utils@4.7.0?vcs_url=https%3A%2F%2Fgithub.com%2Feslint-community%2Feslint-utils
-Upstream: [https://www.npmjs.com/package/%40eslint-community/eslint-utils](https://www.npmjs.com/package/%40eslint-community/eslint-utils)
+PURL: pkg:npm/eslint-visitor-keys@2.1.0
+Upstream: [https://www.npmjs.com/package/eslint-visitor-keys](https://www.npmjs.com/package/eslint-visitor-keys)
 
-Licenses: MIT
+Licenses: Apache-2.0
 
-Copyright (c) 2018 Toru Nagashima
+copyright notice that is included in or attached to the work
 
 
 ## eslint-visitor-keys 3.4.3
@@ -3639,29 +2069,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## eslint-visitor-keys 4.2.0
+## eslint 8.57.1
 
-PURL: pkg:npm/eslint-visitor-keys@4.2.0
-Upstream: [https://www.npmjs.com/package/eslint-visitor-keys](https://www.npmjs.com/package/eslint-visitor-keys)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## eslint-visitor-keys 4.2.1
-
-PURL: pkg:npm/eslint-visitor-keys@4.2.1
-Upstream: [https://www.npmjs.com/package/eslint-visitor-keys](https://www.npmjs.com/package/eslint-visitor-keys)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## eslint 9.32.0
-
-PURL: pkg:npm/eslint@9.32.0
+PURL: pkg:npm/eslint@8.57.1
 Upstream: [https://www.npmjs.com/package/eslint](https://www.npmjs.com/package/eslint)
 
 Licenses: MIT
@@ -3669,9 +2079,9 @@ Licenses: MIT
 Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 
 
-## eslintrc 3.3.1
+## eslintrc 2.1.4
 
-PURL: pkg:npm/%40eslint/eslintrc@3.3.1
+PURL: pkg:npm/%40eslint/eslintrc@2.1.4
 Upstream: [https://www.npmjs.com/package/%40eslint/eslintrc](https://www.npmjs.com/package/%40eslint/eslintrc)
 
 Licenses: MIT
@@ -3679,34 +2089,14 @@ Licenses: MIT
 Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 
 
-## espree 10.3.0
+## espree 9.6.1
 
-PURL: pkg:npm/espree@10.3.0
+PURL: pkg:npm/espree@9.6.1
 Upstream: [https://www.npmjs.com/package/espree](https://www.npmjs.com/package/espree)
 
 Licenses: BSD-2-Clause
 
 Copyright (c) Open JS Foundation
-
-
-## espree 10.4.0
-
-PURL: pkg:npm/espree@10.4.0
-Upstream: [https://www.npmjs.com/package/espree](https://www.npmjs.com/package/espree)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Open JS Foundation
-
-
-## esprima 4.0.1
-
-PURL: pkg:npm/esprima@4.0.1
-Upstream: [https://www.npmjs.com/package/esprima](https://www.npmjs.com/package/esprima)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Ariya Hidayat
 
 
 ## esquery 1.6.0
@@ -3739,9 +2129,9 @@ Licenses: MIT
 Copyright (c) 2015-20 [these people](https://github.com/Rich-Harris/estree-walker/graphs/contributors)
 
 
-## estree 1.0.7
+## estree 1.0.6
 
-PURL: pkg:npm/%40types/estree@1.0.7
+PURL: pkg:npm/%40types/estree@1.0.6
 Upstream: [https://www.npmjs.com/package/%40types/estree](https://www.npmjs.com/package/%40types/estree)
 
 Licenses: MIT
@@ -3749,154 +2139,104 @@ Licenses: MIT
 Copyright (c) Microsoft Corporation.
 
 
-## estree 1.0.8
+## etag 1.8.1
 
-PURL: pkg:npm/%40types/estree@1.0.8
-Upstream: [https://www.npmjs.com/package/%40types/estree](https://www.npmjs.com/package/%40types/estree)
+PURL: pkg:npm/etag@1.8.1
+Upstream: [https://www.npmjs.com/package/etag](https://www.npmjs.com/package/etag)
+
+Licenses: MIT
+
+Copyright (c) 2014-2016 Douglas Christopher Wilson
+
+
+## event-target-shim 5.0.1
+
+PURL: pkg:npm/event-target-shim@5.0.1
+Upstream: [https://www.npmjs.com/package/event-target-shim](https://www.npmjs.com/package/event-target-shim)
+
+Licenses: MIT
+
+Copyright (c) 2015 Toru Nagashima
+
+
+## events 3.3.0
+
+PURL: pkg:npm/events@3.3.0
+Upstream: [https://www.npmjs.com/package/events](https://www.npmjs.com/package/events)
+
+Licenses: MIT
+
+Copyright Joyent, Inc. and other Node contributors.
+
+
+## execa 8.0.1
+
+PURL: pkg:npm/execa@8.0.1
+Upstream: [https://www.npmjs.com/package/execa](https://www.npmjs.com/package/execa)
+
+Licenses: MIT
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+
+## expect 1.6.1
+
+PURL: pkg:npm/%40vitest/expect@1.6.1
+Upstream: [https://www.npmjs.com/package/%40vitest/expect](https://www.npmjs.com/package/%40vitest/expect)
+
+Licenses: MIT
+
+Copyright (c) 2021-Present Vitest Team
+
+
+## express-serve-static-core 4.19.6
+
+PURL: pkg:npm/%40types/express-serve-static-core@4.19.6
+Upstream: [https://www.npmjs.com/package/%40types/express-serve-static-core](https://www.npmjs.com/package/%40types/express-serve-static-core)
 
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
 
 
-## eval 0.1.8
+## express-serve-static-core 5.0.0
 
-PURL: pkg:npm/eval@0.1.8
-Upstream: [https://www.npmjs.com/package/eval](https://www.npmjs.com/package/eval)
-
-Licenses: MIT
-
-Copyright (c) 2012 Pierre Curto
-
-
-## execa 1.0.0
-
-PURL: pkg:npm/execa@1.0.0
-Upstream: [https://www.npmjs.com/package/execa](https://www.npmjs.com/package/execa)
+PURL: pkg:npm/%40types/express-serve-static-core@5.0.0
+Upstream: [https://www.npmjs.com/package/%40types/express-serve-static-core](https://www.npmjs.com/package/%40types/express-serve-static-core)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) Microsoft Corporation.
 
 
-## execa 2.1.0
+## express 4.17.21
 
-PURL: pkg:npm/execa@2.1.0
-Upstream: [https://www.npmjs.com/package/execa](https://www.npmjs.com/package/execa)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## execa 5.1.1
-
-PURL: pkg:npm/execa@5.1.1
-Upstream: [https://www.npmjs.com/package/execa](https://www.npmjs.com/package/execa)
+PURL: pkg:npm/%40types/express@4.17.21
+Upstream: [https://www.npmjs.com/package/%40types/express](https://www.npmjs.com/package/%40types/express)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) Microsoft Corporation.
 
 
-## execa 6.1.0
+## express 4.21.0
 
-PURL: pkg:npm/execa@6.1.0
-Upstream: [https://www.npmjs.com/package/execa](https://www.npmjs.com/package/execa)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## execa 7.2.0
-
-PURL: pkg:npm/execa@7.2.0
-Upstream: [https://www.npmjs.com/package/execa](https://www.npmjs.com/package/execa)
+PURL: pkg:npm/express@4.21.0
+Upstream: [https://www.npmjs.com/package/express](https://www.npmjs.com/package/express)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2009-2014 TJ Holowaychuk <tj@vision-media.ca>
 
 
-## exit-hook 3.2.0
+## express 5.0.0
 
-PURL: pkg:npm/exit-hook@3.2.0
-Upstream: [https://www.npmjs.com/package/exit-hook](https://www.npmjs.com/package/exit-hook)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## expect-type 1.2.2
-
-PURL: pkg:npm/expect-type@1.2.2
-Upstream: [https://www.npmjs.com/package/expect-type](https://www.npmjs.com/package/expect-type)
-
-Licenses: Apache-2.0
-
-Copyright 2024 Misha Kaletsky
-
-
-## expect-utils 29.7.0
-
-PURL: pkg:npm/%40jest/expect-utils@29.7.0
-Upstream: [https://www.npmjs.com/package/%40jest/expect-utils](https://www.npmjs.com/package/%40jest/expect-utils)
+PURL: pkg:npm/%40types/express@5.0.0
+Upstream: [https://www.npmjs.com/package/%40types/express](https://www.npmjs.com/package/%40types/express)
 
 Licenses: MIT
 
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## expect 29.7.0
-
-PURL: pkg:npm/expect@29.7.0
-Upstream: [https://www.npmjs.com/package/expect](https://www.npmjs.com/package/expect)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## expect 3.2.4
-
-PURL: pkg:npm/%40vitest/expect@3.2.4
-Upstream: [https://www.npmjs.com/package/%40vitest/expect](https://www.npmjs.com/package/%40vitest/expect)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present Vitest Team
-
-
-## expect 4.0.3
-
-PURL: pkg:npm/%40vitest/expect@4.0.3
-Upstream: [https://www.npmjs.com/package/%40vitest/expect](https://www.npmjs.com/package/%40vitest/expect)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present Vitest Team
-
-
-## exponential-backoff 3.1.2
-
-PURL: pkg:npm/exponential-backoff@3.1.2
-Upstream: [https://www.npmjs.com/package/exponential-backoff](https://www.npmjs.com/package/exponential-backoff)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## exsolve 1.0.8
-
-PURL: pkg:npm/exsolve@1.0.8
-Upstream: [https://www.npmjs.com/package/exsolve](https://www.npmjs.com/package/exsolve)
-
-Licenses: MIT
-
-Copyright (c) Pooya Parsa <pooya@pi0.io>
+Copyright (c) Microsoft Corporation.
 
 
 ## external-editor 3.1.0
@@ -3909,14 +2249,14 @@ Licenses: MIT
 Copyright (c) 2016 Kevin Gravier
 
 
-## faency 12.0.7
+## extras 1.16.12
 
-PURL: pkg:npm/%40traefik-labs/faency@12.0.7
-Upstream: [https://www.npmjs.com/package/%40traefik-labs/faency](https://www.npmjs.com/package/%40traefik-labs/faency)
+PURL: pkg:npm/%40quasar/extras@1.16.12
+Upstream: [https://www.npmjs.com/package/%40quasar/extras](https://www.npmjs.com/package/%40quasar/extras)
 
-Licenses: Apache-2.0
+Licenses: MIT
 
-copyright notice that is included in or attached to the work
+Copyright (c) 2017-present Razvan Stoenescu
 
 
 ## fast-deep-equal 3.1.3
@@ -3929,9 +2269,19 @@ Licenses: MIT
 Copyright (c) 2017 Evgeny Poberezkin
 
 
-## fast-glob 3.3.3
+## fast-fifo 1.3.2
 
-PURL: pkg:npm/fast-glob@3.3.3
+PURL: pkg:npm/fast-fifo@1.3.2
+Upstream: [https://www.npmjs.com/package/fast-fifo](https://www.npmjs.com/package/fast-fifo)
+
+Licenses: MIT
+
+Copyright (c) 2019 Mathias Buus
+
+
+## fast-glob 3.3.2
+
+PURL: pkg:npm/fast-glob@3.3.2
 Upstream: [https://www.npmjs.com/package/fast-glob](https://www.npmjs.com/package/fast-glob)
 
 Licenses: MIT
@@ -3959,19 +2309,19 @@ Licenses: MIT
 Copyright (c) 2013 [Ramesh Nair](http://www.hiddentao.com/)
 
 
-## fastest-levenshtein 1.0.16
+## fast-uri 3.0.2
 
-PURL: pkg:npm/fastest-levenshtein@1.0.16
-Upstream: [https://www.npmjs.com/package/fastest-levenshtein](https://www.npmjs.com/package/fastest-levenshtein)
+PURL: pkg:npm/fast-uri@3.0.2
+Upstream: [https://www.npmjs.com/package/fast-uri](https://www.npmjs.com/package/fast-uri)
 
 Licenses: MIT
 
-Copyright (c) 2020 Kasper Unn Weihe
+Copyright (c) 2021 The Fastify Team
 
 
-## fastq 1.19.1
+## fastq 1.17.1
 
-PURL: pkg:npm/fastq@1.19.1
+PURL: pkg:npm/fastq@1.17.1
 Upstream: [https://www.npmjs.com/package/fastq](https://www.npmjs.com/package/fastq)
 
 Licenses: ISC
@@ -3979,84 +2329,44 @@ Licenses: ISC
 Copyright (c) 2015-2020, Matteo Collina <matteo.collina@gmail.com>
 
 
-## fdir 6.4.3
+## figures 1.0.7
 
-PURL: pkg:npm/fdir@6.4.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fthecodrr%2Ffdir.git
-Upstream: [https://www.npmjs.com/package/fdir](https://www.npmjs.com/package/fdir)
-
-Licenses: MIT
-
-Copyright 2023 Abdullah Atta
-
-
-## fdir 6.4.6
-
-PURL: pkg:npm/fdir@6.4.6?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fthecodrr%2Ffdir.git
-Upstream: [https://www.npmjs.com/package/fdir](https://www.npmjs.com/package/fdir)
-
-Licenses: MIT
-
-Copyright 2023 Abdullah Atta
-
-
-## fdir 6.5.0
-
-PURL: pkg:npm/fdir@6.5.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fthecodrr%2Ffdir.git
-Upstream: [https://www.npmjs.com/package/fdir](https://www.npmjs.com/package/fdir)
-
-Licenses: MIT
-
-Copyright 2023 Abdullah Atta
-
-
-## figures 1.0.11
-
-PURL: pkg:npm/%40inquirer/figures@1.0.11
+PURL: pkg:npm/%40inquirer/figures@1.0.7
 Upstream: [https://www.npmjs.com/package/%40inquirer/figures](https://www.npmjs.com/package/%40inquirer/figures)
 
 Licenses: MIT
 
-Copyright (c) 2025 Simon Boudrias
+Copyright (c) 2023 Simon Boudrias
 
 
-## figures 1.7.0
+## file-entry-cache 6.0.1
 
-PURL: pkg:npm/figures@1.7.0
-Upstream: [https://www.npmjs.com/package/figures](https://www.npmjs.com/package/figures)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## figures 2.0.0
-
-PURL: pkg:npm/figures@2.0.0
-Upstream: [https://www.npmjs.com/package/figures](https://www.npmjs.com/package/figures)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## figures 3.2.0
-
-PURL: pkg:npm/figures@3.2.0
-Upstream: [https://www.npmjs.com/package/figures](https://www.npmjs.com/package/figures)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## file-entry-cache 8.0.0
-
-PURL: pkg:npm/file-entry-cache@8.0.0
+PURL: pkg:npm/file-entry-cache@6.0.1
 Upstream: [https://www.npmjs.com/package/file-entry-cache](https://www.npmjs.com/package/file-entry-cache)
 
 Licenses: MIT
 
-Copyright (c) Roy Riojas & Jared Wray
+Copyright (c) 2015 Roy Riojas
+
+
+## filesystem 0.0.36
+
+PURL: pkg:npm/%40types/filesystem@0.0.36
+Upstream: [https://www.npmjs.com/package/%40types/filesystem](https://www.npmjs.com/package/%40types/filesystem)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
+
+
+## filewriter 0.0.33
+
+PURL: pkg:npm/%40types/filewriter@0.0.33
+Upstream: [https://www.npmjs.com/package/%40types/filewriter](https://www.npmjs.com/package/%40types/filewriter)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
 
 
 ## fill-range 7.1.1
@@ -4069,19 +2379,39 @@ Licenses: MIT
 Copyright (c) 2014-present, Jon Schlinkert.
 
 
-## filter-obj 1.1.0
+## filter-obj 5.1.0
 
-PURL: pkg:npm/filter-obj@1.1.0
+PURL: pkg:npm/filter-obj@5.1.0
 Upstream: [https://www.npmjs.com/package/filter-obj](https://www.npmjs.com/package/filter-obj)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## find-cache-dir 3.3.2
+## finalhandler 1.3.1
 
-PURL: pkg:npm/find-cache-dir@3.3.2
+PURL: pkg:npm/finalhandler@1.3.1
+Upstream: [https://www.npmjs.com/package/finalhandler](https://www.npmjs.com/package/finalhandler)
+
+Licenses: MIT
+
+Copyright (c) 2014-2022 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+
+## find-babel-config 2.1.2
+
+PURL: pkg:npm/find-babel-config@2.1.2
+Upstream: [https://www.npmjs.com/package/find-babel-config](https://www.npmjs.com/package/find-babel-config)
+
+Licenses: MIT
+
+Copyright (c) 2016 Tommy Leunen <tommy.leunen@gmail.com> (tommyleunen.com)
+
+
+## find-cache-dir 4.0.0
+
+PURL: pkg:npm/find-cache-dir@4.0.0
 Upstream: [https://www.npmjs.com/package/find-cache-dir](https://www.npmjs.com/package/find-cache-dir)
 
 Licenses: MIT
@@ -4089,19 +2419,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## find-up 2.1.0
+## find-up 3.0.0
 
-PURL: pkg:npm/find-up@2.1.0
-Upstream: [https://www.npmjs.com/package/find-up](https://www.npmjs.com/package/find-up)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## find-up 4.1.0
-
-PURL: pkg:npm/find-up@4.1.0
+PURL: pkg:npm/find-up@3.0.0
 Upstream: [https://www.npmjs.com/package/find-up](https://www.npmjs.com/package/find-up)
 
 Licenses: MIT
@@ -4129,29 +2449,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## find-versions 4.0.0
+## flat-cache 3.2.0
 
-PURL: pkg:npm/find-versions@4.0.0
-Upstream: [https://www.npmjs.com/package/find-versions](https://www.npmjs.com/package/find-versions)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## find-yarn-workspace-root 2.0.0
-
-PURL: pkg:npm/find-yarn-workspace-root@2.0.0
-Upstream: [https://www.npmjs.com/package/find-yarn-workspace-root](https://www.npmjs.com/package/find-yarn-workspace-root)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## flat-cache 4.0.1
-
-PURL: pkg:npm/flat-cache@4.0.1
+PURL: pkg:npm/flat-cache@3.2.0
 Upstream: [https://www.npmjs.com/package/flat-cache](https://www.npmjs.com/package/flat-cache)
 
 Licenses: MIT
@@ -4159,9 +2459,19 @@ Licenses: MIT
 Copyright (c) Roy Riojas and Jared Wray
 
 
-## flatted 3.3.3
+## flat 5.0.2
 
-PURL: pkg:npm/flatted@3.3.3
+PURL: pkg:npm/flat@5.0.2
+Upstream: [https://www.npmjs.com/package/flat](https://www.npmjs.com/package/flat)
+
+Licenses: BSD-3-Clause
+
+Copyright (c) 2014, Hugh Kennedy
+
+
+## flatted 3.3.1
+
+PURL: pkg:npm/flatted@3.3.1
 Upstream: [https://www.npmjs.com/package/flatted](https://www.npmjs.com/package/flatted)
 
 Licenses: ISC
@@ -4169,9 +2479,19 @@ Licenses: ISC
 Copyright (c) 2018-2020, Andrea Giammarchi, @WebReflection
 
 
-## for-each 0.3.5
+## follow-redirects 1.16.0
 
-PURL: pkg:npm/for-each@0.3.5
+PURL: pkg:npm/follow-redirects@1.16.0?vcs_url=git%2Bssh%3A%2F%2Fgit%40github.com%2Ffollow-redirects%2Ffollow-redirects.git
+Upstream: [https://www.npmjs.com/package/follow-redirects](https://www.npmjs.com/package/follow-redirects)
+
+Licenses: MIT
+
+Copyright 2014–present Olivier Lalonde <olalonde@gmail.com>, James Talmage <james@talmage.io>, Ruben Verborgh
+
+
+## for-each 0.3.3
+
+PURL: pkg:npm/for-each@0.3.3
 Upstream: [https://www.npmjs.com/package/for-each](https://www.npmjs.com/package/for-each)
 
 Licenses: MIT
@@ -4179,9 +2499,9 @@ Licenses: MIT
 Copyright (c) 2012 Raynos.
 
 
-## foreground-child 3.3.1
+## foreground-child 3.3.0
 
-PURL: pkg:npm/foreground-child@3.3.1
+PURL: pkg:npm/foreground-child@3.3.0
 Upstream: [https://www.npmjs.com/package/foreground-child](https://www.npmjs.com/package/foreground-child)
 
 Licenses: ISC
@@ -4189,19 +2509,9 @@ Licenses: ISC
 Copyright (c) 2015-2023 Isaac Z. Schlueter and Contributors
 
 
-## form-data-encoder 2.1.4
+## form-data 4.0.5
 
-PURL: pkg:npm/form-data-encoder@2.1.4
-Upstream: [https://www.npmjs.com/package/form-data-encoder](https://www.npmjs.com/package/form-data-encoder)
-
-Licenses: MIT
-
-Copyright (c) 2021-present Nick K.
-
-
-## form-data 4.0.4
-
-PURL: pkg:npm/form-data@4.0.4
+PURL: pkg:npm/form-data@4.0.5
 Upstream: [https://www.npmjs.com/package/form-data](https://www.npmjs.com/package/form-data)
 
 Licenses: MIT
@@ -4209,84 +2519,44 @@ Licenses: MIT
 Copyright (c) 2012 Felix Geisendörfer (felix@debuggable.com) and contributors
 
 
-## framer-motion 11.18.2
+## forwarded 0.2.0
 
-PURL: pkg:npm/framer-motion@11.18.2
-Upstream: [https://www.npmjs.com/package/framer-motion](https://www.npmjs.com/package/framer-motion)
-
-Licenses: MIT
-
-Copyright (c) 2018 Framer B.V.
-
-
-## from2 2.3.0
-
-PURL: pkg:npm/from2@2.3.0
-Upstream: [https://www.npmjs.com/package/from2](https://www.npmjs.com/package/from2)
+PURL: pkg:npm/forwarded@0.2.0
+Upstream: [https://www.npmjs.com/package/forwarded](https://www.npmjs.com/package/forwarded)
 
 Licenses: MIT
 
-Copyright (c) 2014 Hugh Kennedy
+Copyright (c) 2014-2017 Douglas Christopher Wilson
 
 
-## fromentries 1.3.2
+## fraction.js 4.3.7
 
-PURL: pkg:npm/fromentries@1.3.2
-Upstream: [https://www.npmjs.com/package/fromentries](https://www.npmjs.com/package/fromentries)
+PURL: pkg:npm/fraction.js@4.3.7
+Upstream: [https://www.npmjs.com/package/fraction.js](https://www.npmjs.com/package/fraction.js)
 
 Licenses: MIT
 
-Copyright (c) Feross Aboukhadijeh
+Copyright (c) 2023 Robert Eisele
 
 
-## fs-extra 11.3.0
+## fresh 0.5.2
 
-PURL: pkg:npm/fs-extra@11.3.0
+PURL: pkg:npm/fresh@0.5.2
+Upstream: [https://www.npmjs.com/package/fresh](https://www.npmjs.com/package/fresh)
+
+Licenses: MIT
+
+Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca>
+
+
+## fs-extra 11.2.0
+
+PURL: pkg:npm/fs-extra@11.2.0
 Upstream: [https://www.npmjs.com/package/fs-extra](https://www.npmjs.com/package/fs-extra)
 
 Licenses: MIT
 
-Copyright (c) 2011-2024 JP Richardson
-
-
-## fs-extra 11.3.2
-
-PURL: pkg:npm/fs-extra@11.3.2
-Upstream: [https://www.npmjs.com/package/fs-extra](https://www.npmjs.com/package/fs-extra)
-
-Licenses: MIT
-
-Copyright (c) 2011-2024 JP Richardson
-
-
-## fs-extra 9.1.0
-
-PURL: pkg:npm/fs-extra@9.1.0
-Upstream: [https://www.npmjs.com/package/fs-extra](https://www.npmjs.com/package/fs-extra)
-
-Licenses: MIT
-
-Copyright (c) 2011-2024 JP Richardson
-
-
-## fs-minipass 2.1.0
-
-PURL: pkg:npm/fs-minipass@2.1.0
-Upstream: [https://www.npmjs.com/package/fs-minipass](https://www.npmjs.com/package/fs-minipass)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## fs-minipass 3.0.3
-
-PURL: pkg:npm/fs-minipass@3.0.3
-Upstream: [https://www.npmjs.com/package/fs-minipass](https://www.npmjs.com/package/fs-minipass)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
+Copyright (c) 2011-2017 JP Richardson
 
 
 ## fs.realpath 1.0.0
@@ -4329,26 +2599,6 @@ Licenses: MIT
 Copyright (c) Denis Malinochkin
 
 
-## fs 2.1.2
-
-PURL: pkg:npm/%40npmcli/fs@2.1.2
-Upstream: [https://www.npmjs.com/package/%40npmcli/fs](https://www.npmjs.com/package/%40npmcli/fs)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## fs 4.0.0
-
-PURL: pkg:npm/%40npmcli/fs@4.0.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/fs](https://www.npmjs.com/package/%40npmcli/fs)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
 ## function-bind 1.1.2
 
 PURL: pkg:npm/function-bind@1.1.2
@@ -4359,9 +2609,9 @@ Licenses: MIT
 Copyright (c) 2013 Raynos.
 
 
-## function.prototype.name 1.1.8
+## function.prototype.name 1.1.6
 
-PURL: pkg:npm/function.prototype.name@1.1.8
+PURL: pkg:npm/function.prototype.name@1.1.6
 Upstream: [https://www.npmjs.com/package/function.prototype.name](https://www.npmjs.com/package/function.prototype.name)
 
 Licenses: MIT
@@ -4379,19 +2629,9 @@ Licenses: MIT
 Copyright (c) 2019 Jordan Harband
 
 
-## gauge 4.0.4
+## gen-mapping 0.3.5
 
-PURL: pkg:npm/gauge@4.0.4
-Upstream: [https://www.npmjs.com/package/gauge](https://www.npmjs.com/package/gauge)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## gen-mapping 0.3.12
-
-PURL: pkg:npm/%40jridgewell/gen-mapping@0.3.12
+PURL: pkg:npm/%40jridgewell/gen-mapping@0.3.5
 Upstream: [https://www.npmjs.com/package/%40jridgewell/gen-mapping](https://www.npmjs.com/package/%40jridgewell/gen-mapping)
 
 Licenses: MIT
@@ -4399,39 +2639,9 @@ Licenses: MIT
 Copyright 2022 Justin Ridgewell <jridgewell@google.com>
 
 
-## gen-mapping 0.3.8
+## generator 7.25.7
 
-PURL: pkg:npm/%40jridgewell/gen-mapping@0.3.8
-Upstream: [https://www.npmjs.com/package/%40jridgewell/gen-mapping](https://www.npmjs.com/package/%40jridgewell/gen-mapping)
-
-Licenses: MIT
-
-Copyright 2022 Justin Ridgewell <jridgewell@google.com>
-
-
-## generator 7.27.0
-
-PURL: pkg:npm/%40babel/generator@7.27.0
-Upstream: [https://www.npmjs.com/package/%40babel/generator](https://www.npmjs.com/package/%40babel/generator)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## generator 7.28.0
-
-PURL: pkg:npm/%40babel/generator@7.28.0
-Upstream: [https://www.npmjs.com/package/%40babel/generator](https://www.npmjs.com/package/%40babel/generator)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## generator 7.28.5
-
-PURL: pkg:npm/%40babel/generator@7.28.5
+PURL: pkg:npm/%40babel/generator@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/generator](https://www.npmjs.com/package/%40babel/generator)
 
 Licenses: MIT
@@ -4459,6 +2669,26 @@ Licenses: ISC
 Copyright 2018 Stefan Penner
 
 
+## get-func-name 2.0.2
+
+PURL: pkg:npm/get-func-name@2.0.2
+Upstream: [https://www.npmjs.com/package/get-func-name](https://www.npmjs.com/package/get-func-name)
+
+Licenses: MIT
+
+Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com> (http://alogicalparadox.com)
+
+
+## get-intrinsic 1.2.4
+
+PURL: pkg:npm/get-intrinsic@1.2.4
+Upstream: [https://www.npmjs.com/package/get-intrinsic](https://www.npmjs.com/package/get-intrinsic)
+
+Licenses: MIT
+
+Copyright (c) 2020 Jordan Harband
+
+
 ## get-intrinsic 1.3.0
 
 PURL: pkg:npm/get-intrinsic@1.3.0
@@ -4467,26 +2697,6 @@ Upstream: [https://www.npmjs.com/package/get-intrinsic](https://www.npmjs.com/pa
 Licenses: MIT
 
 Copyright (c) 2020 Jordan Harband
-
-
-## get-nonce 1.0.1
-
-PURL: pkg:npm/get-nonce@1.0.1
-Upstream: [https://www.npmjs.com/package/get-nonce](https://www.npmjs.com/package/get-nonce)
-
-Licenses: MIT
-
-Copyright (c) 2020 Anton Korzunov
-
-
-## get-own-enumerable-property-symbols 3.0.2
-
-PURL: pkg:npm/get-own-enumerable-property-symbols@3.0.2
-Upstream: [https://www.npmjs.com/package/get-own-enumerable-property-symbols](https://www.npmjs.com/package/get-own-enumerable-property-symbols)
-
-Licenses: ISC
-
-Copyright (c) 2019, Shahar Or
 
 
 ## get-proto 1.0.1
@@ -4499,19 +2709,9 @@ Licenses: MIT
 Copyright (c) 2025 Jordan Harband
 
 
-## get-stdin 7.0.0
+## get-stream 8.0.1
 
-PURL: pkg:npm/get-stdin@7.0.0
-Upstream: [https://www.npmjs.com/package/get-stdin](https://www.npmjs.com/package/get-stdin)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## get-stream 4.1.0
-
-PURL: pkg:npm/get-stream@4.1.0
+PURL: pkg:npm/get-stream@8.0.1
 Upstream: [https://www.npmjs.com/package/get-stream](https://www.npmjs.com/package/get-stream)
 
 Licenses: MIT
@@ -4519,29 +2719,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## get-stream 5.2.0
+## get-symbol-description 1.0.2
 
-PURL: pkg:npm/get-stream@5.2.0
-Upstream: [https://www.npmjs.com/package/get-stream](https://www.npmjs.com/package/get-stream)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## get-stream 6.0.1
-
-PURL: pkg:npm/get-stream@6.0.1
-Upstream: [https://www.npmjs.com/package/get-stream](https://www.npmjs.com/package/get-stream)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## get-symbol-description 1.1.0
-
-PURL: pkg:npm/get-symbol-description@1.1.0
+PURL: pkg:npm/get-symbol-description@1.0.2
 Upstream: [https://www.npmjs.com/package/get-symbol-description](https://www.npmjs.com/package/get-symbol-description)
 
 Licenses: MIT
@@ -4549,9 +2729,9 @@ Licenses: MIT
 Copyright (c) 2021 Inspect JS
 
 
-## get-tsconfig 4.10.1
+## get-tsconfig 4.8.1
 
-PURL: pkg:npm/get-tsconfig@4.10.1
+PURL: pkg:npm/get-tsconfig@4.8.1
 Upstream: [https://www.npmjs.com/package/get-tsconfig](https://www.npmjs.com/package/get-tsconfig)
 
 Licenses: MIT
@@ -4567,36 +2747,6 @@ Upstream: [https://pypi.org/project/ghp-import/](https://pypi.org/project/ghp-im
 Licenses: Apache-2.0
 
 Copyright (c) Paul Joseph Davis
-
-
-## git-log-parser 1.2.1
-
-PURL: pkg:npm/git-log-parser@1.2.1
-Upstream: [https://www.npmjs.com/package/git-log-parser](https://www.npmjs.com/package/git-log-parser)
-
-Licenses: MIT
-
-Copyright (c) 2014 Ben Drucker
-
-
-## git 3.0.2
-
-PURL: pkg:npm/%40npmcli/git@3.0.2
-Upstream: [https://www.npmjs.com/package/%40npmcli/git](https://www.npmjs.com/package/%40npmcli/git)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## github-url-from-git 1.5.0
-
-PURL: pkg:npm/github-url-from-git@1.5.0
-Upstream: [https://www.npmjs.com/package/github-url-from-git](https://www.npmjs.com/package/github-url-from-git)
-
-Licenses: MIT
-
-Copyright (c) 2013 TJ Holowaychuk <tj@vision-media.ca>
 
 
 ## github.com/AdamSLevy/jsonrpc2/v14 v14.1.0
@@ -4719,6 +2869,176 @@ Licenses: MIT
 Copyright (c) Microsoft Corporation.
 
 
+## github.com/DataDog/appsec-internal-go v1.13.0
+
+PURL: pkg:golang/github.com/DataDog/appsec-internal-go@v1.13.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/appsec-internal-go](https://github.com/DataDog/appsec-internal-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/comp/core/tagger/origindetection v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/comp/core/tagger/origindetection@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/obfuscate v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/obfuscate@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/proto v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/proto@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.69.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/remoteconfig/state@v0.69.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/trace v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/trace@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/util/log v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/util/log@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/util/scrubber v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/util/scrubber@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/datadog-agent/pkg/version v0.67.0
+
+PURL: pkg:golang/github.com/DataDog/datadog-agent/pkg/version@v0.67.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/datadog-agent](https://github.com/DataDog/datadog-agent)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/dd-trace-go/v2 v2.2.3
+
+PURL: pkg:golang/github.com/DataDog/dd-trace-go/v2@v2.2.3?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/dd-trace-go](https://github.com/DataDog/dd-trace-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/go-libddwaf/v4 v4.3.2
+
+PURL: pkg:golang/github.com/DataDog/go-libddwaf/v4@v4.3.2?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/go-libddwaf](https://github.com/DataDog/go-libddwaf)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/go-runtime-metrics-internal v0.0.4-0.20250721125240-fdf1ef85b633
+
+PURL: pkg:golang/github.com/DataDog/go-runtime-metrics-internal@v0.0.4-0.20250721125240-fdf1ef85b633?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/go-runtime-metrics-internal](https://github.com/DataDog/go-runtime-metrics-internal)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/go-sqllexer v0.1.6
+
+PURL: pkg:golang/github.com/DataDog/go-sqllexer@v0.1.6?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/go-sqllexer](https://github.com/DataDog/go-sqllexer)
+
+Licenses: MIT
+
+Copyright (c) 2023 Datadog, Inc.
+
+
+## github.com/DataDog/go-tuf v1.1.0-0.5.2
+
+PURL: pkg:golang/github.com/DataDog/go-tuf@v1.1.0-0.5.2?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/go-tuf](https://github.com/DataDog/go-tuf)
+
+Licenses: BSD-3-Clause
+
+Copyright (c) 2014-2020 Prime Directive, Inc. All rights reserved.
+
+
+## github.com/DataDog/opentelemetry-mapping-go/pkg/otlp/attributes v0.27.0
+
+PURL: pkg:golang/github.com/DataDog/opentelemetry-mapping-go/pkg/otlp/attributes@v0.27.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/opentelemetry-mapping-go](https://github.com/DataDog/opentelemetry-mapping-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/DataDog/sketches-go v1.4.7
+
+PURL: pkg:golang/github.com/DataDog/sketches-go@v1.4.7?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/DataDog/sketches-go](https://github.com/DataDog/sketches-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61
+
+PURL: pkg:golang/github.com/ExpediaDotCom/haystack-client-go@v0.0.0-20190315171017-e7edbdf53a61?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/ExpediaDotCom/haystack-client-go](https://github.com/ExpediaDotCom/haystack-client-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
 ## github.com/HdrHistogram/hdrhistogram-go v1.1.2
 
 PURL: pkg:golang/github.com/HdrHistogram/hdrhistogram-go@v1.1.2?goarch=amd64&goos=linux&type=module
@@ -4829,16 +3149,6 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/andybalholm/brotli v1.2.0
-
-PURL: pkg:golang/github.com/andybalholm/brotli@v1.2.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/andybalholm/brotli](https://github.com/andybalholm/brotli)
-
-Licenses: MIT
-
-Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
-
-
 ## github.com/armon/go-metrics v0.4.1
 
 PURL: pkg:golang/github.com/armon/go-metrics@v0.4.1?goarch=amd64&goos=linux&type=module
@@ -4849,19 +3159,19 @@ Licenses: MIT
 Copyright (c) 2013 Armon Dadgar
 
 
-## github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
+## github.com/armon/go-radix v1.0.1-0.20221118154546-54df44f2176c
 
-PURL: pkg:golang/github.com/armon/go-socks5@v0.0.0-20160902184237-e75332964ef5?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/armon/go-socks5](https://github.com/armon/go-socks5)
+PURL: pkg:golang/github.com/armon/go-radix@v1.0.1-0.20221118154546-54df44f2176c?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/armon/go-radix](https://github.com/armon/go-radix)
 
 Licenses: MIT
 
 Copyright (c) 2014 Armon Dadgar
 
 
-## github.com/aws/smithy-go v1.24.2
+## github.com/aws/smithy-go v1.25.0
 
-PURL: pkg:golang/github.com/aws/smithy-go@v1.24.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/aws/smithy-go@v1.25.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/aws/smithy-go](https://github.com/aws/smithy-go)
 
 Licenses: Apache-2.0
@@ -4869,9 +3179,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/baidubce/bce-sdk-go v0.9.264
+## github.com/baidubce/bce-sdk-go v0.9.265
 
-PURL: pkg:golang/github.com/baidubce/bce-sdk-go@v0.9.264?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/baidubce/bce-sdk-go@v0.9.265?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/baidubce/bce-sdk-go](https://github.com/baidubce/bce-sdk-go)
 
 Licenses: Apache-2.0
@@ -4897,16 +3207,6 @@ Upstream: [https://github.com/beorn7/perks](https://github.com/beorn7/perks)
 Licenses: MIT
 
 Copyright (C) 2013 Blake Mizerany
-
-
-## github.com/blendle/zapdriver v1.3.1
-
-PURL: pkg:golang/github.com/blendle/zapdriver@v1.3.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/blendle/zapdriver](https://github.com/blendle/zapdriver)
-
-Licenses: ISC
-
-Copyright (c) Blendle
 
 
 ## github.com/bodgit/tsig v1.2.2
@@ -5039,9 +3339,9 @@ Licenses: BSD-3-Clause
 Copyright (c) 2012 Rodrigo Moraes. All rights reserved.
 
 
-## github.com/coreos/go-semver v0.3.1
+## github.com/coreos/go-semver v0.3.0
 
-PURL: pkg:golang/github.com/coreos/go-semver@v0.3.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/coreos/go-semver@v0.3.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/coreos/go-semver](https://github.com/coreos/go-semver)
 
 Licenses: Apache-2.0
@@ -5089,16 +3389,6 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f
-
-PURL: pkg:golang/github.com/desertbit/timer@v0.0.0-20180107155436-c41aec40b27f?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/desertbit/timer](https://github.com/desertbit/timer)
-
-Licenses: MIT
-
-Copyright (c) 2016 Roland Singer
-
-
 ## github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f
 
 PURL: pkg:golang/github.com/dgryski/go-rendezvous@v0.0.0-20200823014737-9f7001d12a5f?goarch=amd64&goos=linux&type=module
@@ -5129,20 +3419,10 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/docker/cli v29.2.1+incompatible
+## github.com/docker/cli v29.4.0+incompatible
 
-PURL: pkg:golang/github.com/docker/cli@v29.2.1+incompatible?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/docker/cli@v29.4.0+incompatible?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/docker/cli](https://github.com/docker/cli)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/docker/docker v28.5.2+incompatible
-
-PURL: pkg:golang/github.com/docker/docker@v28.5.2+incompatible?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/docker/docker](https://github.com/docker/docker)
 
 Licenses: Apache-2.0
 
@@ -5169,9 +3449,29 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/ebitengine/purego v0.8.4
+## github.com/dustin/go-humanize v1.0.1
 
-PURL: pkg:golang/github.com/ebitengine/purego@v0.8.4?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/dustin/go-humanize@v1.0.1?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/dustin/go-humanize](https://github.com/dustin/go-humanize)
+
+Licenses: MIT
+
+Copyright (c) 2005-2008  Dustin Sallings <dustin@spy.net>
+
+
+## github.com/eapache/queue/v2 v2.0.0-20230407133247-75960ed334e4
+
+PURL: pkg:golang/github.com/eapache/queue/v2@v2.0.0-20230407133247-75960ed334e4?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/eapache/queue](https://github.com/eapache/queue)
+
+Licenses: MIT
+
+Copyright (c) 2014 Evan Huus
+
+
+## github.com/ebitengine/purego v0.10.0
+
+PURL: pkg:golang/github.com/ebitengine/purego@v0.10.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ebitengine/purego](https://github.com/ebitengine/purego)
 
 Licenses: Apache-2.0
@@ -5179,24 +3479,14 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/emicklei/go-restful/v3 v3.13.0
+## github.com/emicklei/go-restful/v3 v3.11.0
 
-PURL: pkg:golang/github.com/emicklei/go-restful/v3@v3.13.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/emicklei/go-restful/v3@v3.11.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/emicklei/go-restful](https://github.com/emicklei/go-restful)
 
 Licenses: MIT
 
 Copyright (c) 2012,2013 Ernest Micklei
-
-
-## github.com/evanphx/json-patch/v5 v5.9.11
-
-PURL: pkg:golang/github.com/evanphx/json-patch/v5@v5.9.11?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/evanphx/json-patch](https://github.com/evanphx/json-patch)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2014, Evan Phoenix
 
 
 ## github.com/exoscale/egoscale/v3 v3.1.34
@@ -5229,9 +3519,9 @@ Licenses: BSD-3-Clause
 Copyright © 2012 The Go Authors. All rights reserved.
 
 
-## github.com/fxamacker/cbor/v2 v2.9.0
+## github.com/fxamacker/cbor/v2 v2.7.0
 
-PURL: pkg:golang/github.com/fxamacker/cbor/v2@v2.9.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/fxamacker/cbor/v2@v2.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/fxamacker/cbor](https://github.com/fxamacker/cbor)
 
 Licenses: MIT
@@ -5247,6 +3537,16 @@ Upstream: [https://github.com/gabriel-vasile/mimetype](https://github.com/gabrie
 Licenses: MIT
 
 Copyright (c) 2018 Gabriel Vasile
+
+
+## github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
+
+PURL: pkg:golang/github.com/gambol99/go-marathon@v0.0.0-20180614232016-99a156b96fb2?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/gambol99/go-marathon](https://github.com/gambol99/go-marathon)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
 
 
 ## github.com/ghodss/yaml v1.0.0
@@ -5289,9 +3589,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/go-acme/lego/v4 v4.34.0
+## github.com/go-acme/lego/v4 v4.35.2
 
-PURL: pkg:golang/github.com/go-acme/lego/v4@v4.34.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-acme/lego/v4@v4.35.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/lego](https://github.com/go-acme/lego)
 
 Licenses: MIT
@@ -5379,16 +3679,6 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/go-logr/zapr v1.3.0
-
-PURL: pkg:golang/github.com/go-logr/zapr@v1.3.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/go-logr/zapr](https://github.com/go-logr/zapr)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
 ## github.com/go-ole/go-ole v1.3.0
 
 PURL: pkg:golang/github.com/go-ole/go-ole@v1.3.0?goarch=amd64&goos=linux&type=module
@@ -5399,9 +3689,9 @@ Licenses: MIT
 Copyright © 2013-2017 Yasuhiro Matsumoto, <mattn.jp@gmail.com>
 
 
-## github.com/go-openapi/jsonpointer v0.21.2
+## github.com/go-openapi/jsonpointer v0.21.0
 
-PURL: pkg:golang/github.com/go-openapi/jsonpointer@v0.21.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-openapi/jsonpointer@v0.21.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-openapi/jsonpointer](https://github.com/go-openapi/jsonpointer)
 
 Licenses: Apache-2.0
@@ -5409,9 +3699,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/go-openapi/jsonreference v0.21.0
+## github.com/go-openapi/jsonreference v0.20.2
 
-PURL: pkg:golang/github.com/go-openapi/jsonreference@v0.21.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-openapi/jsonreference@v0.20.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-openapi/jsonreference](https://github.com/go-openapi/jsonreference)
 
 Licenses: Apache-2.0
@@ -5419,9 +3709,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/go-openapi/swag v0.23.1
+## github.com/go-openapi/swag v0.23.0
 
-PURL: pkg:golang/github.com/go-openapi/swag@v0.23.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-openapi/swag@v0.23.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-openapi/swag](https://github.com/go-openapi/swag)
 
 Licenses: Apache-2.0
@@ -5569,9 +3859,9 @@ Licenses: BSD-3-Clause
 Copyright 2010 The Go Authors.  All rights reserved.
 
 
-## github.com/google/gnostic-models v0.7.0
+## github.com/google/gnostic-models v0.6.8
 
-PURL: pkg:golang/github.com/google/gnostic-models@v0.7.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/google/gnostic-models@v0.6.8?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/google/gnostic-models](https://github.com/google/gnostic-models)
 
 Licenses: Apache-2.0
@@ -5607,6 +3897,16 @@ Upstream: [https://github.com/google/go-querystring](https://github.com/google/g
 Licenses: BSD-3-Clause
 
 Copyright (c) 2013 Google. All rights reserved.
+
+
+## github.com/google/gofuzz v1.2.0
+
+PURL: pkg:golang/github.com/google/gofuzz@v1.2.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/google/gofuzz](https://github.com/google/gofuzz)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
 
 
 ## github.com/google/uuid v1.6.0
@@ -5659,9 +3959,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
+## github.com/gorilla/websocket v1.5.3
 
-PURL: pkg:golang/github.com/gorilla/websocket@v1.5.4-0.20250319132907-e064f32e3674?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/gorilla/websocket@v1.5.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gorilla/websocket](https://github.com/gorilla/websocket)
 
 Licenses: BSD-2-Clause
@@ -5669,24 +3969,14 @@ Licenses: BSD-2-Clause
 Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
 
 
-## github.com/gravitational/trace v1.5.0
+## github.com/gravitational/trace v1.1.16-0.20220114165159-14a9a7dd6aaf
 
-PURL: pkg:golang/github.com/gravitational/trace@v1.5.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/gravitational/trace@v1.1.16-0.20220114165159-14a9a7dd6aaf?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/gravitational/trace](https://github.com/gravitational/trace)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
-
-
-## github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0
-
-PURL: pkg:golang/github.com/grpc-ecosystem/grpc-gateway/v2@v2.28.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/grpc-ecosystem/grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2015, Gengo, Inc.
 
 
 ## github.com/hashicorp/consul/api v1.26.1
@@ -5807,16 +4097,6 @@ Upstream: [https://github.com/hashicorp/serf](https://github.com/hashicorp/serf)
 Licenses: MPL-2.0
 
 copyright doctrines of fair use, fair dealing, or other equivalents.
-
-
-## github.com/http-wasm/http-wasm-host-go v0.7.0
-
-PURL: pkg:golang/github.com/http-wasm/http-wasm-host-go@v0.7.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/http-wasm/http-wasm-host-go](https://github.com/http-wasm/http-wasm-host-go)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
 
 
 ## github.com/huandu/xstrings v1.5.0
@@ -5949,6 +4229,26 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
+## github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901
+
+PURL: pkg:golang/github.com/joeshaw/multierror@v0.0.0-20140124173710-69b34d4ec901?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/joeshaw/multierror](https://github.com/joeshaw/multierror)
+
+Licenses: MIT
+
+Copyright (c) 2014 Joe Shaw
+
+
+## github.com/jonboulle/clockwork v0.4.0
+
+PURL: pkg:golang/github.com/jonboulle/clockwork@v0.4.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/jonboulle/clockwork](https://github.com/jonboulle/clockwork)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
 ## github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 
 PURL: pkg:golang/github.com/json-iterator/go@v1.1.13-0.20220915233716-71ac16282d12?goarch=amd64&goos=linux&type=module
@@ -5989,9 +4289,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/kvtools/etcdv3 v1.0.3
+## github.com/kvtools/etcdv3 v1.0.2
 
-PURL: pkg:golang/github.com/kvtools/etcdv3@v1.0.3?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/kvtools/etcdv3@v1.0.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/etcdv3](https://github.com/kvtools/etcdv3)
 
 Licenses: Apache-2.0
@@ -5999,9 +4299,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/kvtools/redis v1.2.0
+## github.com/kvtools/redis v1.1.0
 
-PURL: pkg:golang/github.com/kvtools/redis@v1.2.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/kvtools/redis@v1.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/kvtools/redis](https://github.com/kvtools/redis)
 
 Licenses: Apache-2.0
@@ -6069,9 +4369,9 @@ Licenses: MIT
 Copyright (c) 2018 Leonardo Di Donato
 
 
-## github.com/linode/linodego v1.67.0
+## github.com/linode/linodego v1.68.0
 
-PURL: pkg:golang/github.com/linode/linodego@v1.67.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/linode/linodego@v1.68.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/linode/linodego](https://github.com/linode/linodego)
 
 Licenses: MIT
@@ -6097,6 +4397,16 @@ Upstream: [https://github.com/liquidweb/liquidweb-go](https://github.com/liquidw
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
+
+
+## github.com/looplab/fsm v0.1.0
+
+PURL: pkg:golang/github.com/looplab/fsm@v0.1.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/looplab/fsm](https://github.com/looplab/fsm)
+
+Licenses: Apache-2.0
+
+Copyright [yyyy] [name of copyright owner]
 
 
 ## github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35
@@ -6139,9 +4449,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/mailru/easyjson v0.9.1
+## github.com/mailru/easyjson v0.7.7
 
-PURL: pkg:golang/github.com/mailru/easyjson@v0.9.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/mailru/easyjson@v0.7.7?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mailru/easyjson](https://github.com/mailru/easyjson)
 
 Licenses: MIT
@@ -6249,9 +4559,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/moby/go-archive v0.1.0
+## github.com/moby/go-archive v0.2.0
 
-PURL: pkg:golang/github.com/moby/go-archive@v0.1.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/moby/go-archive@v0.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/moby/go-archive](https://github.com/moby/go-archive)
 
 Licenses: Apache-2.0
@@ -6259,20 +4569,30 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/moby/patternmatcher v0.6.0
+## github.com/moby/moby/api v1.54.1
 
-PURL: pkg:golang/github.com/moby/patternmatcher@v0.6.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/moby/patternmatcher](https://github.com/moby/patternmatcher)
+PURL: pkg:golang/github.com/moby/moby/api@v1.54.1?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/moby/moby](https://github.com/moby/moby)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
 
 
-## github.com/moby/spdystream v0.5.0
+## github.com/moby/moby/client v0.4.0
 
-PURL: pkg:golang/github.com/moby/spdystream@v0.5.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/moby/spdystream](https://github.com/moby/spdystream)
+PURL: pkg:golang/github.com/moby/moby/client@v0.4.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/moby/moby](https://github.com/moby/moby)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/moby/patternmatcher v0.6.1
+
+PURL: pkg:golang/github.com/moby/patternmatcher@v0.6.1?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/moby/patternmatcher](https://github.com/moby/patternmatcher)
 
 Licenses: Apache-2.0
 
@@ -6339,16 +4659,6 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/morikuni/aec v1.0.0
-
-PURL: pkg:golang/github.com/morikuni/aec@v1.0.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/morikuni/aec](https://github.com/morikuni/aec)
-
-Licenses: MIT
-
-Copyright (c) 2016 Taihei Morikuni
-
-
 ## github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 
 PURL: pkg:golang/github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822?goarch=amd64&goos=linux&type=module
@@ -6357,16 +4667,6 @@ Upstream: [https://github.com/munnerz/goautoneg](https://github.com/munnerz/goau
 Licenses: BSD-3-Clause
 
 Copyright (c) 2011, Open Knowledge Foundation Ltd.
-
-
-## github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
-
-PURL: pkg:golang/github.com/mxk/go-flowrate@v0.0.0-20140419014527-cca7078d478f?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/mxk/go-flowrate](https://github.com/mxk/go-flowrate)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2014 The Go-FlowRate Authors. All rights reserved.
 
 
 ## github.com/namedotcom/go/v4 v4.0.2
@@ -6469,6 +4769,56 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
+## github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492
+
+PURL: pkg:golang/github.com/opentracing-contrib/go-observer@v0.0.0-20170622124052-a52f23424492?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/opentracing-contrib/go-observer](https://github.com/opentracing-contrib/go-observer)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b
+
+PURL: pkg:golang/github.com/opentracing/opentracing-go@v1.2.1-0.20220228012449-10b1cf09e00b?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/opentracing/opentracing-go](https://github.com/opentracing/opentracing-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
+
+PURL: pkg:golang/github.com/openzipkin-contrib/zipkin-go-opentracing@v0.4.5?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/openzipkin-contrib/zipkin-go-opentracing](https://github.com/openzipkin-contrib/zipkin-go-opentracing)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/openzipkin/zipkin-go v0.2.5
+
+PURL: pkg:golang/github.com/openzipkin/zipkin-go@v0.2.5?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/openzipkin/zipkin-go](https://github.com/openzipkin/zipkin-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/outcaste-io/ristretto v0.2.3
+
+PURL: pkg:golang/github.com/outcaste-io/ristretto@v0.2.3?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/outcaste-io/ristretto](https://github.com/outcaste-io/ristretto)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
 ## github.com/ovh/go-ovh v1.9.0
 
 PURL: pkg:golang/github.com/ovh/go-ovh@v1.9.0?goarch=amd64&goos=linux&type=module
@@ -6509,9 +4859,9 @@ Licenses: MIT
 Copyright (c) 2015-2022 Peter Hellberg https://c7.se
 
 
-## github.com/pires/go-proxyproto v0.8.1
+## github.com/pires/go-proxyproto v0.6.1
 
-PURL: pkg:golang/github.com/pires/go-proxyproto@v0.8.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/pires/go-proxyproto@v0.6.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/pires/go-proxyproto](https://github.com/pires/go-proxyproto)
 
 Licenses: Apache-2.0
@@ -6537,6 +4887,16 @@ Upstream: [https://github.com/pkg/errors](https://github.com/pkg/errors)
 Licenses: BSD-2-Clause
 
 Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+
+
+## github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
+
+PURL: pkg:golang/github.com/planetscale/vtprotobuf@v0.6.1-0.20240319094008-0393e58bdf10?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/planetscale/vtprotobuf](https://github.com/planetscale/vtprotobuf)
+
+Licenses: BSD-3-Clause
+
+Copyright (c) 2021, PlanetScale Inc. All rights reserved.
 
 
 ## github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
@@ -6569,9 +4929,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/prometheus/client_golang v1.23.2
+## github.com/prometheus/client_golang v1.22.0
 
-PURL: pkg:golang/github.com/prometheus/client_golang@v1.23.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/prometheus/client_golang@v1.22.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/client_golang](https://github.com/prometheus/client_golang)
 
 Licenses: Apache-2.0
@@ -6579,9 +4939,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/prometheus/client_model v0.6.2
+## github.com/prometheus/client_model v0.6.1
 
-PURL: pkg:golang/github.com/prometheus/client_model@v0.6.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/prometheus/client_model@v0.6.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/client_model](https://github.com/prometheus/client_model)
 
 Licenses: Apache-2.0
@@ -6589,9 +4949,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/prometheus/common v0.67.4
+## github.com/prometheus/common v0.62.0
 
-PURL: pkg:golang/github.com/prometheus/common@v0.67.4?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/prometheus/common@v0.62.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/common](https://github.com/prometheus/common)
 
 Licenses: Apache-2.0
@@ -6599,9 +4959,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/prometheus/procfs v0.19.2
+## github.com/prometheus/procfs v0.16.1
 
-PURL: pkg:golang/github.com/prometheus/procfs@v0.19.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/prometheus/procfs@v0.16.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/prometheus/procfs](https://github.com/prometheus/procfs)
 
 Licenses: Apache-2.0
@@ -6609,14 +4969,34 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/quic-go/quic-go v0.59.0
+## github.com/puzpuzpuz/xsync/v3 v3.5.1
 
-PURL: pkg:golang/github.com/quic-go/quic-go@v0.59.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/puzpuzpuz/xsync/v3@v3.5.1?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/puzpuzpuz/xsync](https://github.com/puzpuzpuz/xsync)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/quic-go/quic-go v0.57.1
+
+PURL: pkg:golang/github.com/quic-go/quic-go@v0.57.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/quic-go/quic-go](https://github.com/quic-go/quic-go)
 
 Licenses: MIT
 
 Copyright (c) 2016 the quic-go authors & Google, Inc.
+
+
+## github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
+
+PURL: pkg:golang/github.com/rancher/go-rancher-metadata@v0.0.0-20200311180630-7f4c936a06ac?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/rancher/go-rancher-metadata](https://github.com/rancher/go-rancher-metadata)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
 
 
 ## github.com/redis/go-redis/v9 v9.8.0
@@ -6637,36 +5017,6 @@ Upstream: [https://github.com/regfish/regfish-dnsapi-go](https://github.com/regf
 Licenses: MIT
 
 Copyright (c) 2024 regfish GmbH
-
-
-## github.com/rs/cors v1.7.0
-
-PURL: pkg:golang/github.com/rs/cors@v1.7.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/rs/cors](https://github.com/rs/cors)
-
-Licenses: MIT
-
-Copyright (c) 2014 Olivier Poitrey <rs@dailymotion.com>
-
-
-## github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529
-
-PURL: pkg:golang/github.com/rs/dnscache@v0.0.0-20230804202142-fc85eb664529?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/rs/dnscache](https://github.com/rs/dnscache)
-
-Licenses: MIT
-
-Copyright (c) 2018 Olivier Poitrey
-
-
-## github.com/rs/zerolog v1.33.0
-
-PURL: pkg:golang/github.com/rs/zerolog@v1.33.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/rs/zerolog](https://github.com/rs/zerolog)
-
-Licenses: MIT
-
-Copyright (c) 2017 Olivier Poitrey
 
 
 ## github.com/sacloud/api-client-go v0.3.5
@@ -6739,6 +5089,26 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
+## github.com/secure-systems-lab/go-securesystemslib v0.9.0
+
+PURL: pkg:golang/github.com/secure-systems-lab/go-securesystemslib@v0.9.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/secure-systems-lab/go-securesystemslib](https://github.com/secure-systems-lab/go-securesystemslib)
+
+Licenses: MIT
+
+Copyright (c) 2021 NYU Secure Systems Lab
+
+
+## github.com/segmentio/fasthash v1.0.3
+
+PURL: pkg:golang/github.com/segmentio/fasthash@v1.0.3?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/segmentio/fasthash](https://github.com/segmentio/fasthash)
+
+Licenses: MIT
+
+Copyright (c) 2017 Segment
+
+
 ## github.com/selectel/domains-go v1.1.0
 
 PURL: pkg:golang/github.com/selectel/domains-go@v1.1.0?goarch=amd64&goos=linux&type=module
@@ -6759,9 +5129,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/shirou/gopsutil/v4 v4.25.6
+## github.com/shirou/gopsutil/v4 v4.26.3
 
-PURL: pkg:golang/github.com/shirou/gopsutil/v4@v4.25.6?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/shirou/gopsutil/v4@v4.26.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/shirou/gopsutil](https://github.com/shirou/gopsutil)
 
 Licenses: BSD-3-Clause
@@ -6779,9 +5149,9 @@ Licenses: MIT
 Copyright (c) 2015 Spring, Inc.
 
 
-## github.com/sirupsen/logrus v1.9.3
+## github.com/sirupsen/logrus v1.9.4
 
-PURL: pkg:golang/github.com/sirupsen/logrus@v1.9.3?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/sirupsen/logrus@v1.9.4?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sirupsen/logrus](https://github.com/sirupsen/logrus)
 
 Licenses: MIT
@@ -6839,9 +5209,9 @@ Licenses: MIT
 Copyright (c) 2014 Steve Francia
 
 
-## github.com/spf13/pflag v1.0.10
+## github.com/spf13/pflag v1.0.7
 
-PURL: pkg:golang/github.com/spf13/pflag@v1.0.10?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/spf13/pflag@v1.0.7?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/spf13/pflag](https://github.com/spf13/pflag)
 
 Licenses: BSD-3-Clause
@@ -6857,36 +5227,6 @@ Upstream: [https://github.com/spf13/viper](https://github.com/spf13/viper)
 Licenses: MIT
 
 Copyright (c) 2014 Steve Francia
-
-
-## github.com/spiffe/go-spiffe/v2 v2.6.0
-
-PURL: pkg:golang/github.com/spiffe/go-spiffe/v2@v2.6.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/spiffe/go-spiffe](https://github.com/spiffe/go-spiffe)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/stealthrocket/wasi-go v0.8.0
-
-PURL: pkg:golang/github.com/stealthrocket/wasi-go@v0.8.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/stealthrocket/wasi-go](https://github.com/stealthrocket/wasi-go)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/stealthrocket/wazergo v0.19.1
-
-PURL: pkg:golang/github.com/stealthrocket/wazergo@v0.19.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/stealthrocket/wazergo](https://github.com/stealthrocket/wazergo)
-
-Licenses: MIT
-
-Copyright (c) 2023 Stealth Rocket
 
 
 ## github.com/stretchr/objx v0.5.3
@@ -6909,9 +5249,9 @@ Licenses: MIT
 Copyright (c) 2012-2020 Mat Ryer, Tyler Bunnell and contributors.
 
 
-## github.com/stvp/go-udp-testing v0.0.0-20201019212854-469649b16807
+## github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 
-PURL: pkg:golang/github.com/stvp/go-udp-testing@v0.0.0-20201019212854-469649b16807?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/stvp/go-udp-testing@v0.0.0-20191102171040-06b61409b154?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/stvp/go-udp-testing](https://github.com/stvp/go-udp-testing)
 
 Licenses: MIT
@@ -6929,19 +5269,9 @@ Licenses: MIT
 Copyright (c) 2013 Alif Rachmawadi
 
 
-## github.com/tailscale/tscert v0.0.0-20230806124524-28a91b69a046
+## github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.83
 
-PURL: pkg:golang/github.com/tailscale/tscert@v0.0.0-20230806124524-28a91b69a046?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/tailscale/tscert](https://github.com/tailscale/tscert)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2020 Tailscale & AUTHORS.
-
-
-## github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.77
-
-PURL: pkg:golang/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common@v1.3.77?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common@v1.3.83?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tencentcloud/tencentcloud-sdk-go](https://github.com/tencentcloud/tencentcloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -6949,9 +5279,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/testcontainers/testcontainers-go/modules/k3s v0.40.0
+## github.com/testcontainers/testcontainers-go/modules/k3s v0.42.0
 
-PURL: pkg:golang/github.com/testcontainers/testcontainers-go/modules/k3s@v0.40.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/testcontainers/testcontainers-go/modules/k3s@v0.42.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/testcontainers/testcontainers-go](https://github.com/testcontainers/testcontainers-go)
 
 Licenses: MIT
@@ -6959,9 +5289,9 @@ Licenses: MIT
 Copyright (c) 2017-2019 Gianluca Arbezzano
 
 
-## github.com/testcontainers/testcontainers-go v0.40.0
+## github.com/testcontainers/testcontainers-go v0.42.0
 
-PURL: pkg:golang/github.com/testcontainers/testcontainers-go@v0.40.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/testcontainers/testcontainers-go@v0.42.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/testcontainers/testcontainers-go](https://github.com/testcontainers/testcontainers-go)
 
 Licenses: MIT
@@ -6969,44 +5299,14 @@ Licenses: MIT
 Copyright (c) 2017-2019 Gianluca Arbezzano
 
 
-## github.com/tetratelabs/wazero v1.8.0
+## github.com/tinylib/msgp v1.2.5
 
-PURL: pkg:golang/github.com/tetratelabs/wazero@v1.8.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/tetratelabs/wazero](https://github.com/tetratelabs/wazero)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/tidwall/gjson v1.17.0
-
-PURL: pkg:golang/github.com/tidwall/gjson@v1.17.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/tidwall/gjson](https://github.com/tidwall/gjson)
+PURL: pkg:golang/github.com/tinylib/msgp@v1.2.5?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/tinylib/msgp](https://github.com/tinylib/msgp)
 
 Licenses: MIT
 
-Copyright (c) 2016 Josh Baker
-
-
-## github.com/tidwall/match v1.1.1
-
-PURL: pkg:golang/github.com/tidwall/match@v1.1.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/tidwall/match](https://github.com/tidwall/match)
-
-Licenses: MIT
-
-Copyright (c) 2016 Josh Baker
-
-
-## github.com/tidwall/pretty v1.2.1
-
-PURL: pkg:golang/github.com/tidwall/pretty@v1.2.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/tidwall/pretty](https://github.com/tidwall/pretty)
-
-Licenses: MIT
-
-Copyright (c) 2017 Josh Baker
+Copyright (c) 2014 Philip Hofer
 
 
 ## github.com/tjfoc/gmsm v1.4.1
@@ -7019,9 +5319,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/tklauser/go-sysconf v0.3.15
+## github.com/tklauser/go-sysconf v0.3.16
 
-PURL: pkg:golang/github.com/tklauser/go-sysconf@v0.3.15?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/tklauser/go-sysconf@v0.3.16?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tklauser/go-sysconf](https://github.com/tklauser/go-sysconf)
 
 Licenses: BSD-3-Clause
@@ -7029,20 +5329,10 @@ Licenses: BSD-3-Clause
 Copyright (c) 2018-2022, Tobias Klauser
 
 
-## github.com/tklauser/numcpus v0.10.0
+## github.com/tklauser/numcpus v0.11.0
 
-PURL: pkg:golang/github.com/tklauser/numcpus@v0.10.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/tklauser/numcpus@v0.11.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tklauser/numcpus](https://github.com/tklauser/numcpus)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/traefik/oxy/v2 v2.0.0-20260126093803-fb11d60e0fdf
-
-PURL: pkg:golang/github.com/traefik/oxy/v2@v2.0.0-20260126093803-fb11d60e0fdf?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/traefik/oxy](https://github.com/traefik/oxy)
 
 Licenses: Apache-2.0
 
@@ -7079,19 +5369,29 @@ Licenses: MIT
 Copyright (c) 2018 TransIP B.V.
 
 
-## github.com/tufanbarisyildirim/gonginx v0.0.0-20250620092546-c3e307e36701
+## github.com/uber/jaeger-client-go v2.30.0+incompatible
 
-PURL: pkg:golang/github.com/tufanbarisyildirim/gonginx@v0.0.0-20250620092546-c3e307e36701?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/tufanbarisyildirim/gonginx](https://github.com/tufanbarisyildirim/gonginx)
+PURL: pkg:golang/github.com/uber/jaeger-client-go@v2.30.0+incompatible?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/uber/jaeger-client-go](https://github.com/uber/jaeger-client-go)
 
-Licenses: MIT
+Licenses: Apache-2.0
 
-Copyright (c) 2020 Tufan Barış YILDIRIM
+copyright notice that is included in or attached to the work
 
 
-## github.com/ucloud/ucloud-sdk-go v0.22.61
+## github.com/uber/jaeger-lib v2.4.1+incompatible
 
-PURL: pkg:golang/github.com/ucloud/ucloud-sdk-go@v0.22.61?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/uber/jaeger-lib@v2.4.1+incompatible?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/uber/jaeger-lib](https://github.com/uber/jaeger-lib)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/ucloud/ucloud-sdk-go v0.22.63
+
+PURL: pkg:golang/github.com/ucloud/ucloud-sdk-go@v0.22.63?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ucloud/ucloud-sdk-go](https://github.com/ucloud/ucloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -7129,26 +5429,6 @@ Licenses: MIT
 Copyright (c) 2014 Cory Jacobsen
 
 
-## github.com/valyala/bytebufferpool v1.0.0
-
-PURL: pkg:golang/github.com/valyala/bytebufferpool@v1.0.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/valyala/bytebufferpool](https://github.com/valyala/bytebufferpool)
-
-Licenses: MIT
-
-Copyright (c) 2016 Aliaksandr Valialkin, VertaMedia
-
-
-## github.com/valyala/fasthttp v1.69.0
-
-PURL: pkg:golang/github.com/valyala/fasthttp@v1.69.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/valyala/fasthttp](https://github.com/valyala/fasthttp)
-
-Licenses: MIT
-
-Copyright (c) 2015-present Aliaksandr Valialkin, VertaMedia, Kirill Danshin, Erik Dubbelboer, FastHTTP Authors
-
-
 ## github.com/vinyldns/go-vinyldns v0.9.17
 
 PURL: pkg:golang/github.com/vinyldns/go-vinyldns@v0.9.17?goarch=amd64&goos=linux&type=module
@@ -7159,9 +5439,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/volcengine/volc-sdk-golang v1.0.241
+## github.com/volcengine/volc-sdk-golang v1.0.242
 
-PURL: pkg:golang/github.com/volcengine/volc-sdk-golang@v1.0.241?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/volcengine/volc-sdk-golang@v1.0.242?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/volcengine/volc-sdk-golang](https://github.com/volcengine/volc-sdk-golang)
 
 Licenses: Apache-2.0
@@ -7169,9 +5449,19 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/vulcand/predicate v1.3.0
+## github.com/vulcand/oxy/v2 v2.0.3
 
-PURL: pkg:golang/github.com/vulcand/predicate@v1.3.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/vulcand/oxy/v2@v2.0.3?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/vulcand/oxy](https://github.com/vulcand/oxy)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/vulcand/predicate v1.2.0
+
+PURL: pkg:golang/github.com/vulcand/predicate@v1.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vulcand/predicate](https://github.com/vulcand/predicate)
 
 Licenses: Apache-2.0
@@ -7179,9 +5469,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/vultr/govultr/v3 v3.30.0
+## github.com/vultr/govultr/v3 v3.31.0
 
-PURL: pkg:golang/github.com/vultr/govultr/v3@v3.30.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/vultr/govultr/v3@v3.31.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vultr/govultr](https://github.com/vultr/govultr)
 
 Licenses: MIT
@@ -7199,9 +5489,9 @@ Licenses: MIT
 Copyright (c) 2019 Montgomery Edwards⁴⁴⁸ and Faye Amacker
 
 
-## github.com/yandex-cloud/go-genproto v0.71.0
+## github.com/yandex-cloud/go-genproto v0.73.0
 
-PURL: pkg:golang/github.com/yandex-cloud/go-genproto@v0.71.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/yandex-cloud/go-genproto@v0.73.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-genproto](https://github.com/yandex-cloud/go-genproto)
 
 Licenses: MIT
@@ -7209,9 +5499,9 @@ Licenses: MIT
 Copyright (c) 2018 YANDEX LLC
 
 
-## github.com/yandex-cloud/go-sdk/services/dns v0.0.52
+## github.com/yandex-cloud/go-sdk/services/dns v0.0.54
 
-PURL: pkg:golang/github.com/yandex-cloud/go-sdk/services/dns@v0.0.52?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/yandex-cloud/go-sdk/services/dns@v0.0.54?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-sdk](https://github.com/yandex-cloud/go-sdk)
 
 Licenses: MIT
@@ -7219,9 +5509,9 @@ Licenses: MIT
 Copyright (c) 2018 YANDEX LLC
 
 
-## github.com/yandex-cloud/go-sdk/v2 v2.88.0
+## github.com/yandex-cloud/go-sdk/v2 v2.92.0
 
-PURL: pkg:golang/github.com/yandex-cloud/go-sdk/v2@v2.88.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/yandex-cloud/go-sdk/v2@v2.92.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-sdk](https://github.com/yandex-cloud/go-sdk)
 
 Licenses: MIT
@@ -7239,16 +5529,6 @@ Licenses: MIT
 Copyright (c) 2014 youmark
 
 
-## github.com/yuin/gopher-lua v1.1.1
-
-PURL: pkg:golang/github.com/yuin/gopher-lua@v1.1.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/yuin/gopher-lua](https://github.com/yuin/gopher-lua)
-
-Licenses: MIT
-
-Copyright (c) 2015 Yusuke Inuzuka
-
-
 ## github.com/yusufpapurcu/wmi v1.2.4
 
 PURL: pkg:golang/github.com/yusufpapurcu/wmi@v1.2.4?goarch=amd64&goos=linux&type=module
@@ -7257,16 +5537,6 @@ Upstream: [https://github.com/yusufpapurcu/wmi](https://github.com/yusufpapurcu/
 Licenses: MIT
 
 Copyright (c) 2013 Stack Exchange
-
-
-## github 8.1.0
-
-PURL: pkg:npm/%40semantic-release/github@8.1.0?vcs_url=https%3A%2F%2Fgithub.com%2Fsemantic-release%2Fgithub.git
-Upstream: [https://www.npmjs.com/package/%40semantic-release/github](https://www.npmjs.com/package/%40semantic-release/github)
-
-Licenses: MIT
-
-Copyright (c) 2017 Contributors
 
 
 ## glob-parent 5.1.2
@@ -7289,6 +5559,16 @@ Licenses: ISC
 Copyright (c) 2015, 2019 Elan Shanker
 
 
+## glob-regex 0.3.2
+
+PURL: pkg:npm/glob-regex@0.3.2
+Upstream: [https://www.npmjs.com/package/glob-regex](https://www.npmjs.com/package/glob-regex)
+
+Licenses: MIT
+
+Copyright (c) 2016 Alec Larson
+
+
 ## glob 10.4.5
 
 PURL: pkg:npm/glob@10.4.5
@@ -7296,17 +5576,7 @@ Upstream: [https://www.npmjs.com/package/glob](https://www.npmjs.com/package/glo
 
 Licenses: ISC
 
-Copyright (c) 2009-2022 Isaac Z. Schlueter and Contributors
-
-
-## glob 7.2.0
-
-PURL: pkg:npm/%40types/glob@7.2.0
-Upstream: [https://www.npmjs.com/package/%40types/glob](https://www.npmjs.com/package/%40types/glob)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
+Copyright (c) 2009-2023 Isaac Z. Schlueter and Contributors
 
 
 ## glob 7.2.3
@@ -7316,37 +5586,17 @@ Upstream: [https://www.npmjs.com/package/glob](https://www.npmjs.com/package/glo
 
 Licenses: ISC
 
-Copyright (c) 2009-2022 Isaac Z. Schlueter and Contributors
+Copyright (c) 2009-2023 Isaac Z. Schlueter and Contributors
 
 
-## glob 8.1.0
+## glob 9.3.5
 
-PURL: pkg:npm/glob@8.1.0
+PURL: pkg:npm/glob@9.3.5
 Upstream: [https://www.npmjs.com/package/glob](https://www.npmjs.com/package/glob)
 
 Licenses: ISC
 
-Copyright (c) 2009-2022 Isaac Z. Schlueter and Contributors
-
-
-## global-dirs 3.0.1
-
-PURL: pkg:npm/global-dirs@3.0.1
-Upstream: [https://www.npmjs.com/package/global-dirs](https://www.npmjs.com/package/global-dirs)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## global 5.0.0
-
-PURL: pkg:npm/%40storybook/global@5.0.0
-Upstream: [https://www.npmjs.com/package/%40storybook/global](https://www.npmjs.com/package/%40storybook/global)
-
-Licenses: MIT
-
-Copyright (c) 2022 Norbert de Langen.
+Copyright (c) 2009-2023 Isaac Z. Schlueter and Contributors
 
 
 ## globals 11.12.0
@@ -7359,19 +5609,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## globals 14.0.0
+## globals 13.24.0
 
-PURL: pkg:npm/globals@14.0.0
-Upstream: [https://www.npmjs.com/package/globals](https://www.npmjs.com/package/globals)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## globals 16.0.0
-
-PURL: pkg:npm/globals@16.0.0
+PURL: pkg:npm/globals@13.24.0
 Upstream: [https://www.npmjs.com/package/globals](https://www.npmjs.com/package/globals)
 
 Licenses: MIT
@@ -7389,36 +5629,6 @@ Licenses: MIT
 Copyright (c) 2016 Jordan Harband
 
 
-## globby 10.0.2
-
-PURL: pkg:npm/globby@10.0.2
-Upstream: [https://www.npmjs.com/package/globby](https://www.npmjs.com/package/globby)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## globby 11.1.0
-
-PURL: pkg:npm/globby@11.1.0
-Upstream: [https://www.npmjs.com/package/globby](https://www.npmjs.com/package/globby)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## globby 13.2.2
-
-PURL: pkg:npm/globby@13.2.2
-Upstream: [https://www.npmjs.com/package/globby](https://www.npmjs.com/package/globby)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## globrex 0.1.2
 
 PURL: pkg:npm/globrex@0.1.2
@@ -7429,9 +5639,49 @@ Licenses: MIT
 Copyright (c) 2018 Terkel Gjervig Nielsen
 
 
-## go.etcd.io/etcd/api/v3 v3.6.5
+## go.elastic.co/apm/module/apmhttp/v2 v2.4.8
 
-PURL: pkg:golang/go.etcd.io/etcd/api/v3@v3.6.5?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.elastic.co/apm/module/apmhttp/v2@v2.4.8?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.elastic.co/apm/module/apmhttp/v2](https://pkg.go.dev/go.elastic.co/apm/module/apmhttp/v2)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## go.elastic.co/apm/module/apmot/v2 v2.4.8
+
+PURL: pkg:golang/go.elastic.co/apm/module/apmot/v2@v2.4.8?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.elastic.co/apm/module/apmot/v2](https://pkg.go.dev/go.elastic.co/apm/module/apmot/v2)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## go.elastic.co/apm/v2 v2.4.8
+
+PURL: pkg:golang/go.elastic.co/apm/v2@v2.4.8?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.elastic.co/apm/v2](https://pkg.go.dev/go.elastic.co/apm/v2)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## go.elastic.co/fastjson v1.1.0
+
+PURL: pkg:golang/go.elastic.co/fastjson@v1.1.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.elastic.co/fastjson](https://pkg.go.dev/go.elastic.co/fastjson)
+
+Licenses: Apache-2.0
+
+Copyright 2018 Elasticsearch BV
+
+
+## go.etcd.io/etcd/api/v3 v3.5.10
+
+PURL: pkg:golang/go.etcd.io/etcd/api/v3@v3.5.10?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.etcd.io/etcd/api/v3](https://pkg.go.dev/go.etcd.io/etcd/api/v3)
 
 Licenses: Apache-2.0
@@ -7439,9 +5689,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.etcd.io/etcd/client/pkg/v3 v3.6.5
+## go.etcd.io/etcd/client/pkg/v3 v3.5.16
 
-PURL: pkg:golang/go.etcd.io/etcd/client/pkg/v3@v3.6.5?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.etcd.io/etcd/client/pkg/v3@v3.5.16?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.etcd.io/etcd/client/pkg/v3](https://pkg.go.dev/go.etcd.io/etcd/client/pkg/v3)
 
 Licenses: Apache-2.0
@@ -7449,9 +5699,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.etcd.io/etcd/client/v3 v3.6.5
+## go.etcd.io/etcd/client/v3 v3.5.10
 
-PURL: pkg:golang/go.etcd.io/etcd/client/v3@v3.6.5?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.etcd.io/etcd/client/v3@v3.5.10?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.etcd.io/etcd/client/v3](https://pkg.go.dev/go.etcd.io/etcd/client/v3)
 
 Licenses: Apache-2.0
@@ -7479,9 +5729,19 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.opentelemetry.io/collector/featuregate v1.41.0
+## go.opentelemetry.io/collector/component v1.31.0
 
-PURL: pkg:golang/go.opentelemetry.io/collector/featuregate@v1.41.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.opentelemetry.io/collector/component@v1.31.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/component](https://pkg.go.dev/go.opentelemetry.io/collector/component)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## go.opentelemetry.io/collector/featuregate v1.31.0
+
+PURL: pkg:golang/go.opentelemetry.io/collector/featuregate@v1.31.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/featuregate](https://pkg.go.dev/go.opentelemetry.io/collector/featuregate)
 
 Licenses: Apache-2.0
@@ -7489,9 +5749,19 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.opentelemetry.io/collector/pdata v1.41.0
+## go.opentelemetry.io/collector/internal/telemetry v0.125.0
 
-PURL: pkg:golang/go.opentelemetry.io/collector/pdata@v1.41.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.opentelemetry.io/collector/internal/telemetry@v0.125.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/internal/telemetry](https://pkg.go.dev/go.opentelemetry.io/collector/internal/telemetry)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## go.opentelemetry.io/collector/pdata v1.31.0
+
+PURL: pkg:golang/go.opentelemetry.io/collector/pdata@v1.31.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/pdata](https://pkg.go.dev/go.opentelemetry.io/collector/pdata)
 
 Licenses: Apache-2.0
@@ -7499,10 +5769,20 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.opentelemetry.io/contrib/bridges/otellogrus v0.13.0
+## go.opentelemetry.io/collector/semconv v0.125.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/bridges/otellogrus@v0.13.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otellogrus](https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otellogrus)
+PURL: pkg:golang/go.opentelemetry.io/collector/semconv@v0.125.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.opentelemetry.io/collector/semconv](https://pkg.go.dev/go.opentelemetry.io/collector/semconv)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## go.opentelemetry.io/contrib/bridges/otelzap v0.10.0
+
+PURL: pkg:golang/go.opentelemetry.io/contrib/bridges/otelzap@v0.10.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otelzap](https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otelzap)
 
 Licenses: Apache-2.0
 
@@ -7519,129 +5799,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.opentelemetry.io/contrib/propagators/autoprop v0.63.0
+## go.opentelemetry.io/otel/log v0.11.0
 
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/autoprop@v0.63.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/autoprop](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/autoprop)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/contrib/propagators/aws v1.38.0
-
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/aws@v1.38.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/aws](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/aws)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/contrib/propagators/b3 v1.38.0
-
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/b3@v1.38.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/b3](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/b3)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/contrib/propagators/jaeger v1.38.0
-
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/jaeger@v1.38.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/jaeger](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/jaeger)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/contrib/propagators/ot v1.38.0
-
-PURL: pkg:golang/go.opentelemetry.io/contrib/propagators/ot@v1.38.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/ot](https://pkg.go.dev/go.opentelemetry.io/contrib/propagators/ot)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.17.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc@v0.17.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.17.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.17.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.41.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc@v1.41.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.41.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp@v1.41.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.41.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc@v1.41.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.41.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp@v1.41.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.41.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace@v1.41.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/log v0.17.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/log@v0.17.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.opentelemetry.io/otel/log@v0.11.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/log](https://pkg.go.dev/go.opentelemetry.io/otel/log)
 
 Licenses: Apache-2.0
@@ -7653,26 +5813,6 @@ copyright notice that is included in or attached to the work
 
 PURL: pkg:golang/go.opentelemetry.io/otel/metric@v1.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/metric](https://pkg.go.dev/go.opentelemetry.io/otel/metric)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/sdk/log v0.17.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/sdk/log@v0.17.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/sdk/log](https://pkg.go.dev/go.opentelemetry.io/otel/sdk/log)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## go.opentelemetry.io/otel/sdk/metric v1.43.0
-
-PURL: pkg:golang/go.opentelemetry.io/otel/sdk/metric@v1.43.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric](https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric)
 
 Licenses: Apache-2.0
 
@@ -7709,16 +5849,6 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## go.opentelemetry.io/proto/otlp v1.9.0
-
-PURL: pkg:golang/go.opentelemetry.io/proto/otlp@v1.9.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.opentelemetry.io/proto/otlp](https://pkg.go.dev/go.opentelemetry.io/proto/otlp)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
 ## go.uber.org/ratelimit v0.3.1
 
 PURL: pkg:golang/go.uber.org/ratelimit@v0.3.1?goarch=amd64&goos=linux&type=module
@@ -7729,24 +5859,14 @@ Licenses: MIT
 Copyright (c) 2016 Uber Technologies, Inc.
 
 
-## go.uber.org/zap v1.27.1
+## go.uber.org/zap v1.27.0
 
-PURL: pkg:golang/go.uber.org/zap@v1.27.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/go.uber.org/zap@v1.27.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/go.uber.org/zap](https://pkg.go.dev/go.uber.org/zap)
 
 Licenses: MIT
 
-Copyright (c) 2016-2024 Uber Technologies, Inc.
-
-
-## go.yaml.in/yaml/v2 v2.4.3
-
-PURL: pkg:golang/go.yaml.in/yaml/v2@v2.4.3?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/go.yaml.in/yaml/v2](https://pkg.go.dev/go.yaml.in/yaml/v2)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
+Copyright (c) 2016-2017 Uber Technologies, Inc.
 
 
 ## go.yaml.in/yaml/v3 v3.0.4
@@ -7869,19 +5989,19 @@ Licenses: BSD-3-Clause
 Copyright 2009 The Go Authors.
 
 
-## gomodules.xyz/jsonpatch/v2 v2.5.0
+## golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028
 
-PURL: pkg:golang/gomodules.xyz/jsonpatch/v2@v2.5.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/gomodules.xyz/jsonpatch/v2](https://pkg.go.dev/gomodules.xyz/jsonpatch/v2)
+PURL: pkg:golang/golang.org/x/xerrors@v0.0.0-20231012003039-104605ab7028?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/golang.org/x/xerrors](https://pkg.go.dev/golang.org/x/xerrors)
 
-Licenses: Apache-2.0
+Licenses: BSD-3-Clause
 
-copyright notice that is included in or attached to the work
+Copyright (c) 2019 The Go Authors. All rights reserved.
 
 
-## google.golang.org/api v0.275.0
+## google.golang.org/api v0.276.0
 
-PURL: pkg:golang/google.golang.org/api@v0.275.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/google.golang.org/api@v0.276.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/api](https://pkg.go.dev/google.golang.org/api)
 
 Licenses: BSD-3-Clause
@@ -7929,6 +6049,16 @@ Licenses: BSD-3-Clause
 Copyright (c) 2018 The Go Authors. All rights reserved.
 
 
+## gopd 1.0.1
+
+PURL: pkg:npm/gopd@1.0.1
+Upstream: [https://www.npmjs.com/package/gopd](https://www.npmjs.com/package/gopd)
+
+Licenses: MIT
+
+Copyright (c) 2022 Jordan Harband
+
+
 ## gopd 1.2.0
 
 PURL: pkg:npm/gopd@1.2.0
@@ -7939,9 +6069,19 @@ Licenses: MIT
 Copyright (c) 2022 Jordan Harband
 
 
-## gopkg.in/evanphx/json-patch.v4 v4.13.0
+## gopkg.in/DataDog/dd-trace-go.v1 v1.74.6
 
-PURL: pkg:golang/gopkg.in/evanphx/json-patch.v4@v4.13.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/gopkg.in/DataDog/dd-trace-go.v1@v1.74.6?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/gopkg.in/DataDog/dd-trace-go.v1](https://pkg.go.dev/gopkg.in/DataDog/dd-trace-go.v1)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## gopkg.in/evanphx/json-patch.v4 v4.12.0
+
+PURL: pkg:golang/gopkg.in/evanphx/json-patch.v4@v4.12.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/evanphx/json-patch.v4](https://pkg.go.dev/gopkg.in/evanphx/json-patch.v4)
 
 Licenses: BSD-3-Clause
@@ -7969,16 +6109,6 @@ Licenses: Apache-2.0
 Copyright 2014 Unknwon
 
 
-## gopkg.in/natefinch/lumberjack.v2 v2.2.1
-
-PURL: pkg:golang/gopkg.in/natefinch/lumberjack.v2@v2.2.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/gopkg.in/natefinch/lumberjack.v2](https://pkg.go.dev/gopkg.in/natefinch/lumberjack.v2)
-
-Licenses: MIT
-
-Copyright (c) 2014 Nate Finch
-
-
 ## gopkg.in/yaml.v2 v2.4.0
 
 PURL: pkg:golang/gopkg.in/yaml.v2@v2.4.0?goarch=amd64&goos=linux&type=module
@@ -7997,36 +6127,6 @@ Upstream: [https://pkg.go.dev/gopkg.in/yaml.v3](https://pkg.go.dev/gopkg.in/yaml
 Licenses: Apache-2.0
 
 copyright staring in 2011 when the project was ported over:
-
-
-## got 11.8.6
-
-PURL: pkg:npm/got@11.8.6
-Upstream: [https://www.npmjs.com/package/got](https://www.npmjs.com/package/got)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## got 12.6.1
-
-PURL: pkg:npm/got@12.6.1
-Upstream: [https://www.npmjs.com/package/got](https://www.npmjs.com/package/got)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## graceful-fs 4.2.10
-
-PURL: pkg:npm/graceful-fs@4.2.10
-Upstream: [https://www.npmjs.com/package/graceful-fs](https://www.npmjs.com/package/graceful-fs)
-
-Licenses: ISC
-
-Copyright (c) 2011-2022 Isaac Z. Schlueter, Ben Noordhuis, and Contributors
 
 
 ## graceful-fs 4.2.11
@@ -8049,59 +6149,29 @@ Licenses: MIT
 Copyright 2020 Filament (Anomalous Technologies Limited)
 
 
-## graphql 16.10.0
+## happy-dom 15.7.4
 
-PURL: pkg:npm/graphql@16.10.0
-Upstream: [https://www.npmjs.com/package/graphql](https://www.npmjs.com/package/graphql)
-
-Licenses: MIT
-
-Copyright (c) GraphQL Contributors
-
-
-## graphql 5.0.6
-
-PURL: pkg:npm/%40octokit/graphql@5.0.6
-Upstream: [https://www.npmjs.com/package/%40octokit/graphql](https://www.npmjs.com/package/%40octokit/graphql)
+PURL: pkg:npm/happy-dom@15.7.4
+Upstream: [https://www.npmjs.com/package/happy-dom](https://www.npmjs.com/package/happy-dom)
 
 Licenses: MIT
 
-Copyright (c) 2018 Octokit contributors
+Copyright (c) 2019 David Ortner (capricorn86)
 
 
-## handlebars 4.7.8
+## har-format 1.2.16
 
-PURL: pkg:npm/handlebars@4.7.8
-Upstream: [https://www.npmjs.com/package/handlebars](https://www.npmjs.com/package/handlebars)
-
-Licenses: MIT
-
-Copyright (C) 2011-2019 by Yehuda Katz
-
-
-## hard-rejection 2.1.0
-
-PURL: pkg:npm/hard-rejection@2.1.0
-Upstream: [https://www.npmjs.com/package/hard-rejection](https://www.npmjs.com/package/hard-rejection)
+PURL: pkg:npm/%40types/har-format@1.2.16
+Upstream: [https://www.npmjs.com/package/%40types/har-format](https://www.npmjs.com/package/%40types/har-format)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Microsoft Corporation.
 
 
-## has-ansi 2.0.0
+## has-bigints 1.0.2
 
-PURL: pkg:npm/has-ansi@2.0.0
-Upstream: [https://www.npmjs.com/package/has-ansi](https://www.npmjs.com/package/has-ansi)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## has-bigints 1.1.0
-
-PURL: pkg:npm/has-bigints@1.1.0
+PURL: pkg:npm/has-bigints@1.0.2
 Upstream: [https://www.npmjs.com/package/has-bigints](https://www.npmjs.com/package/has-bigints)
 
 Licenses: MIT
@@ -8139,14 +6209,24 @@ Licenses: MIT
 Copyright (c) 2022 Inspect JS
 
 
-## has-proto 1.2.0
+## has-proto 1.0.3
 
-PURL: pkg:npm/has-proto@1.2.0
+PURL: pkg:npm/has-proto@1.0.3
 Upstream: [https://www.npmjs.com/package/has-proto](https://www.npmjs.com/package/has-proto)
 
 Licenses: MIT
 
 Copyright (c) 2022 Inspect JS
+
+
+## has-symbols 1.0.3
+
+PURL: pkg:npm/has-symbols@1.0.3
+Upstream: [https://www.npmjs.com/package/has-symbols](https://www.npmjs.com/package/has-symbols)
+
+Licenses: MIT
+
+Copyright (c) 2016 Jordan Harband
 
 
 ## has-symbols 1.1.0
@@ -8169,46 +6249,6 @@ Licenses: MIT
 Copyright (c) 2021 Inspect JS
 
 
-## has-unicode 2.0.1
-
-PURL: pkg:npm/has-unicode@2.0.1
-Upstream: [https://www.npmjs.com/package/has-unicode](https://www.npmjs.com/package/has-unicode)
-
-Licenses: ISC
-
-Copyright (c) 2014, Rebecca Turner <me@re-becca.org>
-
-
-## has-yarn 3.0.0
-
-PURL: pkg:npm/has-yarn@3.0.0
-Upstream: [https://www.npmjs.com/package/has-yarn](https://www.npmjs.com/package/has-yarn)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## hash 0.9.2
-
-PURL: pkg:npm/%40emotion/hash@0.9.2
-Upstream: [https://www.npmjs.com/package/%40emotion/hash](https://www.npmjs.com/package/%40emotion/hash)
-
-Licenses: MIT
-
-Copyright (c) Emotion team and other contributors
-
-
-## hashes 2.0.1
-
-PURL: pkg:npm/%40noble/hashes@2.0.1
-Upstream: [https://www.npmjs.com/package/%40noble/hashes](https://www.npmjs.com/package/%40noble/hashes)
-
-Licenses: MIT
-
-Copyright (c) 2022 Paul Miller (https://paulmillr.com)
-
-
 ## hasown 2.0.2
 
 PURL: pkg:npm/hasown@2.0.2
@@ -8219,29 +6259,9 @@ Licenses: MIT
 Copyright (c) Jordan Harband and contributors
 
 
-## he 1.2.0
+## helper-annotate-as-pure 7.25.7
 
-PURL: pkg:npm/he@1.2.0
-Upstream: [https://www.npmjs.com/package/he](https://www.npmjs.com/package/he)
-
-Licenses: MIT
-
-Copyright (c) Mathias Bynens
-
-
-## headers-polyfill 4.0.3
-
-PURL: pkg:npm/headers-polyfill@4.0.3
-Upstream: [https://www.npmjs.com/package/headers-polyfill](https://www.npmjs.com/package/headers-polyfill)
-
-Licenses: MIT
-
-Copyright (c) 2020–present Artem Zakharchenko
-
-
-## helper-annotate-as-pure 7.25.9
-
-PURL: pkg:npm/%40babel/helper-annotate-as-pure@7.25.9
+PURL: pkg:npm/%40babel/helper-annotate-as-pure@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-annotate-as-pure](https://www.npmjs.com/package/%40babel/helper-annotate-as-pure)
 
 Licenses: MIT
@@ -8249,9 +6269,19 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-compilation-targets 7.27.0
+## helper-builder-binary-assignment-operator-visitor 7.25.7
 
-PURL: pkg:npm/%40babel/helper-compilation-targets@7.27.0
+PURL: pkg:npm/%40babel/helper-builder-binary-assignment-operator-visitor@7.25.7
+Upstream: [https://www.npmjs.com/package/%40babel/helper-builder-binary-assignment-operator-visitor](https://www.npmjs.com/package/%40babel/helper-builder-binary-assignment-operator-visitor)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## helper-compilation-targets 7.25.7
+
+PURL: pkg:npm/%40babel/helper-compilation-targets@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-compilation-targets](https://www.npmjs.com/package/%40babel/helper-compilation-targets)
 
 Licenses: MIT
@@ -8259,19 +6289,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-compilation-targets 7.27.2
+## helper-create-class-features-plugin 7.25.7
 
-PURL: pkg:npm/%40babel/helper-compilation-targets@7.27.2
-Upstream: [https://www.npmjs.com/package/%40babel/helper-compilation-targets](https://www.npmjs.com/package/%40babel/helper-compilation-targets)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-create-class-features-plugin 7.27.0
-
-PURL: pkg:npm/%40babel/helper-create-class-features-plugin@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-create-class-features-plugin
+PURL: pkg:npm/%40babel/helper-create-class-features-plugin@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-create-class-features-plugin
 Upstream: [https://www.npmjs.com/package/%40babel/helper-create-class-features-plugin](https://www.npmjs.com/package/%40babel/helper-create-class-features-plugin)
 
 Licenses: MIT
@@ -8279,9 +6299,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-create-regexp-features-plugin 7.27.0
+## helper-create-regexp-features-plugin 7.25.7
 
-PURL: pkg:npm/%40babel/helper-create-regexp-features-plugin@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-create-regexp-features-plugin
+PURL: pkg:npm/%40babel/helper-create-regexp-features-plugin@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-create-regexp-features-plugin
 Upstream: [https://www.npmjs.com/package/%40babel/helper-create-regexp-features-plugin](https://www.npmjs.com/package/%40babel/helper-create-regexp-features-plugin)
 
 Licenses: MIT
@@ -8289,9 +6309,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-define-polyfill-provider 0.6.4
+## helper-define-polyfill-provider 0.6.2
 
-PURL: pkg:npm/%40babel/helper-define-polyfill-provider@0.6.4?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-helper-define-polyfill-provider
+PURL: pkg:npm/%40babel/helper-define-polyfill-provider@0.6.2?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel-polyfills.git%23packages%2Fbabel-helper-define-polyfill-provider
 Upstream: [https://www.npmjs.com/package/%40babel/helper-define-polyfill-provider](https://www.npmjs.com/package/%40babel/helper-define-polyfill-provider)
 
 Licenses: MIT
@@ -8299,19 +6319,9 @@ Licenses: MIT
 Copyright (c) 2014-present Nicolò Ribaudo and other contributors
 
 
-## helper-globals 7.28.0
+## helper-member-expression-to-functions 7.25.7
 
-PURL: pkg:npm/%40babel/helper-globals@7.28.0
-Upstream: [https://www.npmjs.com/package/%40babel/helper-globals](https://www.npmjs.com/package/%40babel/helper-globals)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-member-expression-to-functions 7.25.9
-
-PURL: pkg:npm/%40babel/helper-member-expression-to-functions@7.25.9
+PURL: pkg:npm/%40babel/helper-member-expression-to-functions@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-member-expression-to-functions](https://www.npmjs.com/package/%40babel/helper-member-expression-to-functions)
 
 Licenses: MIT
@@ -8319,9 +6329,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-module-imports 7.25.9
+## helper-module-imports 7.25.7
 
-PURL: pkg:npm/%40babel/helper-module-imports@7.25.9
+PURL: pkg:npm/%40babel/helper-module-imports@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-module-imports](https://www.npmjs.com/package/%40babel/helper-module-imports)
 
 Licenses: MIT
@@ -8329,19 +6339,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-module-imports 7.27.1
+## helper-module-transforms 7.25.7
 
-PURL: pkg:npm/%40babel/helper-module-imports@7.27.1
-Upstream: [https://www.npmjs.com/package/%40babel/helper-module-imports](https://www.npmjs.com/package/%40babel/helper-module-imports)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-module-transforms 7.26.0
-
-PURL: pkg:npm/%40babel/helper-module-transforms@7.26.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-module-transforms
+PURL: pkg:npm/%40babel/helper-module-transforms@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-module-transforms
 Upstream: [https://www.npmjs.com/package/%40babel/helper-module-transforms](https://www.npmjs.com/package/%40babel/helper-module-transforms)
 
 Licenses: MIT
@@ -8349,29 +6349,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-module-transforms 7.27.3
+## helper-optimise-call-expression 7.25.7
 
-PURL: pkg:npm/%40babel/helper-module-transforms@7.27.3?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-module-transforms
-Upstream: [https://www.npmjs.com/package/%40babel/helper-module-transforms](https://www.npmjs.com/package/%40babel/helper-module-transforms)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-module-transforms 7.28.3
-
-PURL: pkg:npm/%40babel/helper-module-transforms@7.28.3?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-module-transforms
-Upstream: [https://www.npmjs.com/package/%40babel/helper-module-transforms](https://www.npmjs.com/package/%40babel/helper-module-transforms)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-optimise-call-expression 7.25.9
-
-PURL: pkg:npm/%40babel/helper-optimise-call-expression@7.25.9
+PURL: pkg:npm/%40babel/helper-optimise-call-expression@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-optimise-call-expression](https://www.npmjs.com/package/%40babel/helper-optimise-call-expression)
 
 Licenses: MIT
@@ -8379,9 +6359,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-plugin-utils 7.26.5
+## helper-plugin-utils 7.25.7
 
-PURL: pkg:npm/%40babel/helper-plugin-utils@7.26.5
+PURL: pkg:npm/%40babel/helper-plugin-utils@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-plugin-utils](https://www.npmjs.com/package/%40babel/helper-plugin-utils)
 
 Licenses: MIT
@@ -8389,19 +6369,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-plugin-utils 7.27.1
+## helper-remap-async-to-generator 7.25.7
 
-PURL: pkg:npm/%40babel/helper-plugin-utils@7.27.1
-Upstream: [https://www.npmjs.com/package/%40babel/helper-plugin-utils](https://www.npmjs.com/package/%40babel/helper-plugin-utils)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-remap-async-to-generator 7.25.9
-
-PURL: pkg:npm/%40babel/helper-remap-async-to-generator@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-remap-async-to-generator
+PURL: pkg:npm/%40babel/helper-remap-async-to-generator@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-remap-async-to-generator
 Upstream: [https://www.npmjs.com/package/%40babel/helper-remap-async-to-generator](https://www.npmjs.com/package/%40babel/helper-remap-async-to-generator)
 
 Licenses: MIT
@@ -8409,9 +6379,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-replace-supers 7.26.5
+## helper-replace-supers 7.25.7
 
-PURL: pkg:npm/%40babel/helper-replace-supers@7.26.5?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-replace-supers
+PURL: pkg:npm/%40babel/helper-replace-supers@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-helper-replace-supers
 Upstream: [https://www.npmjs.com/package/%40babel/helper-replace-supers](https://www.npmjs.com/package/%40babel/helper-replace-supers)
 
 Licenses: MIT
@@ -8419,9 +6389,19 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-skip-transparent-expression-wrappers 7.25.9
+## helper-simple-access 7.25.7
 
-PURL: pkg:npm/%40babel/helper-skip-transparent-expression-wrappers@7.25.9
+PURL: pkg:npm/%40babel/helper-simple-access@7.25.7
+Upstream: [https://www.npmjs.com/package/%40babel/helper-simple-access](https://www.npmjs.com/package/%40babel/helper-simple-access)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## helper-skip-transparent-expression-wrappers 7.25.7
+
+PURL: pkg:npm/%40babel/helper-skip-transparent-expression-wrappers@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-skip-transparent-expression-wrappers](https://www.npmjs.com/package/%40babel/helper-skip-transparent-expression-wrappers)
 
 Licenses: MIT
@@ -8429,9 +6409,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-string-parser 7.25.9
+## helper-string-parser 7.25.7
 
-PURL: pkg:npm/%40babel/helper-string-parser@7.25.9
+PURL: pkg:npm/%40babel/helper-string-parser@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-string-parser](https://www.npmjs.com/package/%40babel/helper-string-parser)
 
 Licenses: MIT
@@ -8439,19 +6419,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-string-parser 7.27.1
+## helper-validator-identifier 7.25.7
 
-PURL: pkg:npm/%40babel/helper-string-parser@7.27.1
-Upstream: [https://www.npmjs.com/package/%40babel/helper-string-parser](https://www.npmjs.com/package/%40babel/helper-string-parser)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-validator-identifier 7.25.9
-
-PURL: pkg:npm/%40babel/helper-validator-identifier@7.25.9
+PURL: pkg:npm/%40babel/helper-validator-identifier@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-validator-identifier](https://www.npmjs.com/package/%40babel/helper-validator-identifier)
 
 Licenses: MIT
@@ -8459,29 +6429,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-validator-identifier 7.27.1
+## helper-validator-option 7.25.7
 
-PURL: pkg:npm/%40babel/helper-validator-identifier@7.27.1
-Upstream: [https://www.npmjs.com/package/%40babel/helper-validator-identifier](https://www.npmjs.com/package/%40babel/helper-validator-identifier)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-validator-identifier 7.28.5
-
-PURL: pkg:npm/%40babel/helper-validator-identifier@7.28.5
-Upstream: [https://www.npmjs.com/package/%40babel/helper-validator-identifier](https://www.npmjs.com/package/%40babel/helper-validator-identifier)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-validator-option 7.25.9
-
-PURL: pkg:npm/%40babel/helper-validator-option@7.25.9
+PURL: pkg:npm/%40babel/helper-validator-option@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-validator-option](https://www.npmjs.com/package/%40babel/helper-validator-option)
 
 Licenses: MIT
@@ -8489,19 +6439,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helper-validator-option 7.27.1
+## helper-wrap-function 7.25.7
 
-PURL: pkg:npm/%40babel/helper-validator-option@7.27.1
-Upstream: [https://www.npmjs.com/package/%40babel/helper-validator-option](https://www.npmjs.com/package/%40babel/helper-validator-option)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helper-wrap-function 7.25.9
-
-PURL: pkg:npm/%40babel/helper-wrap-function@7.25.9
+PURL: pkg:npm/%40babel/helper-wrap-function@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helper-wrap-function](https://www.npmjs.com/package/%40babel/helper-wrap-function)
 
 Licenses: MIT
@@ -8509,9 +6449,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helpers 7.27.0
+## helpers 7.25.7
 
-PURL: pkg:npm/%40babel/helpers@7.27.0
+PURL: pkg:npm/%40babel/helpers@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/helpers](https://www.npmjs.com/package/%40babel/helpers)
 
 Licenses: MIT
@@ -8519,289 +6459,69 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## helpers 7.28.2
+## highlight 7.25.7
 
-PURL: pkg:npm/%40babel/helpers@7.28.2
-Upstream: [https://www.npmjs.com/package/%40babel/helpers](https://www.npmjs.com/package/%40babel/helpers)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## helpers 7.28.4
-
-PURL: pkg:npm/%40babel/helpers@7.28.4
-Upstream: [https://www.npmjs.com/package/%40babel/helpers](https://www.npmjs.com/package/%40babel/helpers)
+PURL: pkg:npm/%40babel/highlight@7.25.7
+Upstream: [https://www.npmjs.com/package/%40babel/highlight](https://www.npmjs.com/package/%40babel/highlight)
 
 Licenses: MIT
 
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## history 4.7.11
+## howett.net/plist v0.0.0-20181124034731-591f970eefbb
 
-PURL: pkg:npm/%40types/history@4.7.11
-Upstream: [https://www.npmjs.com/package/%40types/history](https://www.npmjs.com/package/%40types/history)
+PURL: pkg:golang/howett.net/plist@v0.0.0-20181124034731-591f970eefbb?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/howett.net/plist](https://pkg.go.dev/howett.net/plist)
+
+Licenses: BSD-3-Clause
+
+Copyright (c) 2013, Dustin L. Howett. All rights reserved.
+
+
+## html-minifier-terser 7.2.0
+
+PURL: pkg:npm/html-minifier-terser@7.2.0
+Upstream: [https://www.npmjs.com/package/html-minifier-terser](https://www.npmjs.com/package/html-minifier-terser)
+
+Licenses: MIT
+
+Copyright (c) 2010-2019 Juriy "kangax" Zaytsev
+
+
+## http-errors 2.0.0
+
+PURL: pkg:npm/http-errors@2.0.0
+Upstream: [https://www.npmjs.com/package/http-errors](https://www.npmjs.com/package/http-errors)
+
+Licenses: MIT
+
+Copyright (c) 2014 Jonathan Ong me@jongleberry.com
+
+
+## http-errors 2.0.4
+
+PURL: pkg:npm/%40types/http-errors@2.0.4
+Upstream: [https://www.npmjs.com/package/%40types/http-errors](https://www.npmjs.com/package/%40types/http-errors)
 
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
 
 
-## hook-std 2.0.0
+## human-signals 5.0.0
 
-PURL: pkg:npm/hook-std@2.0.0
-Upstream: [https://www.npmjs.com/package/hook-std](https://www.npmjs.com/package/hook-std)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## hosted-git-info 2.8.9
-
-PURL: pkg:npm/hosted-git-info@2.8.9
-Upstream: [https://www.npmjs.com/package/hosted-git-info](https://www.npmjs.com/package/hosted-git-info)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner
-
-
-## hosted-git-info 4.1.0
-
-PURL: pkg:npm/hosted-git-info@4.1.0
-Upstream: [https://www.npmjs.com/package/hosted-git-info](https://www.npmjs.com/package/hosted-git-info)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner
-
-
-## hosted-git-info 5.2.1
-
-PURL: pkg:npm/hosted-git-info@5.2.1
-Upstream: [https://www.npmjs.com/package/hosted-git-info](https://www.npmjs.com/package/hosted-git-info)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner
-
-
-## hosted-git-info 6.1.3
-
-PURL: pkg:npm/hosted-git-info@6.1.3
-Upstream: [https://www.npmjs.com/package/hosted-git-info](https://www.npmjs.com/package/hosted-git-info)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner
-
-
-## html-encoding-sniffer 4.0.0
-
-PURL: pkg:npm/html-encoding-sniffer@4.0.0
-Upstream: [https://www.npmjs.com/package/html-encoding-sniffer](https://www.npmjs.com/package/html-encoding-sniffer)
-
-Licenses: MIT
-
-Copyright © Domenic Denicola <d@domenic.me>
-
-
-## html-escaper 2.0.2
-
-PURL: pkg:npm/html-escaper@2.0.2
-Upstream: [https://www.npmjs.com/package/html-escaper](https://www.npmjs.com/package/html-escaper)
-
-Licenses: MIT
-
-Copyright (C) 2017-present by Andrea Giammarchi - @WebReflection
-
-
-## http-cache-semantics 4.0.4
-
-PURL: pkg:npm/%40types/http-cache-semantics@4.0.4
-Upstream: [https://www.npmjs.com/package/%40types/http-cache-semantics](https://www.npmjs.com/package/%40types/http-cache-semantics)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## http-cache-semantics 4.1.1
-
-PURL: pkg:npm/http-cache-semantics@4.1.1
-Upstream: [https://www.npmjs.com/package/http-cache-semantics](https://www.npmjs.com/package/http-cache-semantics)
-
-Licenses: BSD-2-Clause
-
-Copyright 2016-2018 Kornel Lesiński
-
-
-## http-proxy-agent 5.0.0
-
-PURL: pkg:npm/http-proxy-agent@5.0.0
-Upstream: [https://www.npmjs.com/package/http-proxy-agent](https://www.npmjs.com/package/http-proxy-agent)
-
-Licenses: MIT
-
-Copyright (c) 2013 Nathan Rajlich <nathan@tootallnate.net>
-
-
-## http-proxy-agent 7.0.2
-
-PURL: pkg:npm/http-proxy-agent@7.0.2
-Upstream: [https://www.npmjs.com/package/http-proxy-agent](https://www.npmjs.com/package/http-proxy-agent)
-
-Licenses: MIT
-
-Copyright (c) 2013 Nathan Rajlich <nathan@tootallnate.net>
-
-
-## http-timer 4.0.6
-
-PURL: pkg:npm/%40szmarczak/http-timer@4.0.6
-Upstream: [https://www.npmjs.com/package/%40szmarczak/http-timer](https://www.npmjs.com/package/%40szmarczak/http-timer)
-
-Licenses: MIT
-
-Copyright (c) 2018 Szymon Marczak
-
-
-## http-timer 5.0.1
-
-PURL: pkg:npm/%40szmarczak/http-timer@5.0.1
-Upstream: [https://www.npmjs.com/package/%40szmarczak/http-timer](https://www.npmjs.com/package/%40szmarczak/http-timer)
-
-Licenses: MIT
-
-Copyright (c) 2018 Szymon Marczak
-
-
-## http2-wrapper 1.0.3
-
-PURL: pkg:npm/http2-wrapper@1.0.3
-Upstream: [https://www.npmjs.com/package/http2-wrapper](https://www.npmjs.com/package/http2-wrapper)
-
-Licenses: MIT
-
-Copyright (c) 2018 Szymon Marczak
-
-
-## http2-wrapper 2.2.1
-
-PURL: pkg:npm/http2-wrapper@2.2.1
-Upstream: [https://www.npmjs.com/package/http2-wrapper](https://www.npmjs.com/package/http2-wrapper)
-
-Licenses: MIT
-
-Copyright (c) 2018 Szymon Marczak
-
-
-## https-proxy-agent 5.0.1
-
-PURL: pkg:npm/https-proxy-agent@5.0.1
-Upstream: [https://www.npmjs.com/package/https-proxy-agent](https://www.npmjs.com/package/https-proxy-agent)
-
-Licenses: MIT
-
-Copyright (c) 2013 Nathan Rajlich <nathan@tootallnate.net>
-
-
-## https-proxy-agent 7.0.6
-
-PURL: pkg:npm/https-proxy-agent@7.0.6
-Upstream: [https://www.npmjs.com/package/https-proxy-agent](https://www.npmjs.com/package/https-proxy-agent)
-
-Licenses: MIT
-
-Copyright (c) 2013 Nathan Rajlich <nathan@tootallnate.net>
-
-
-## human-signals 2.1.0
-
-PURL: pkg:npm/human-signals@2.1.0
+PURL: pkg:npm/human-signals@5.0.0
 Upstream: [https://www.npmjs.com/package/human-signals](https://www.npmjs.com/package/human-signals)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
-
-
-## human-signals 3.0.1
-
-PURL: pkg:npm/human-signals@3.0.1
-Upstream: [https://www.npmjs.com/package/human-signals](https://www.npmjs.com/package/human-signals)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## human-signals 4.3.1
-
-PURL: pkg:npm/human-signals@4.3.1
-Upstream: [https://www.npmjs.com/package/human-signals](https://www.npmjs.com/package/human-signals)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## humanize-ms 1.2.1
-
-PURL: pkg:npm/humanize-ms@1.2.1
-Upstream: [https://www.npmjs.com/package/humanize-ms](https://www.npmjs.com/package/humanize-ms)
-
-Licenses: MIT
-
-Copyright (c) dead-horse
-
-
-## husky 3.1.0
-
-PURL: pkg:npm/husky@3.1.0
-Upstream: [https://www.npmjs.com/package/husky](https://www.npmjs.com/package/husky)
-
-Licenses: MIT
-
-Copyright (c) 2017
-
-
-## husky 8.0.3
-
-PURL: pkg:npm/husky@8.0.3
-Upstream: [https://www.npmjs.com/package/husky](https://www.npmjs.com/package/husky)
-
-Licenses: MIT
-
-Copyright (c) 2017
-
-
-## icons 1.6.0
-
-PURL: pkg:npm/%40storybook/icons@1.6.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fstorybookjs%2Ficons.git
-Upstream: [https://www.npmjs.com/package/%40storybook/icons](https://www.npmjs.com/package/%40storybook/icons)
-
-Licenses: MIT
-
-Copyright (c) 2022 Tim Mikeladze
 
 
 ## iconv-lite 0.4.24
 
 PURL: pkg:npm/iconv-lite@0.4.24
-Upstream: [https://www.npmjs.com/package/iconv-lite](https://www.npmjs.com/package/iconv-lite)
-
-Licenses: MIT
-
-Copyright (c) 2011 Alexander Shtuchkin
-
-
-## iconv-lite 0.6.3
-
-PURL: pkg:npm/iconv-lite@0.6.3
 Upstream: [https://www.npmjs.com/package/iconv-lite](https://www.npmjs.com/package/iconv-lite)
 
 Licenses: MIT
@@ -8819,26 +6539,6 @@ Licenses: BSD-3-Clause
 Copyright 2008 Fair Oaks Labs, Inc.
 
 
-## ignore-walk 5.0.1
-
-PURL: pkg:npm/ignore-walk@5.0.1
-Upstream: [https://www.npmjs.com/package/ignore-walk](https://www.npmjs.com/package/ignore-walk)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## ignore-walk 6.0.5
-
-PURL: pkg:npm/ignore-walk@6.0.5
-Upstream: [https://www.npmjs.com/package/ignore-walk](https://www.npmjs.com/package/ignore-walk)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
 ## ignore 5.3.2
 
 PURL: pkg:npm/ignore@5.3.2
@@ -8849,60 +6549,20 @@ Licenses: MIT
 Copyright (c) kael
 
 
-## ignore 7.0.5
+## immutable 4.3.7
 
-PURL: pkg:npm/ignore@7.0.5
-Upstream: [https://www.npmjs.com/package/ignore](https://www.npmjs.com/package/ignore)
+PURL: pkg:npm/immutable@4.3.7
+Upstream: [https://www.npmjs.com/package/immutable](https://www.npmjs.com/package/immutable)
 
 Licenses: MIT
 
-Copyright (c) kael
+Copyright (c) 2014-present, Lee Byron and other contributors.
 
 
-## import-fresh 2.0.0
+## import-fresh 3.3.0
 
-PURL: pkg:npm/import-fresh@2.0.0
+PURL: pkg:npm/import-fresh@3.3.0
 Upstream: [https://www.npmjs.com/package/import-fresh](https://www.npmjs.com/package/import-fresh)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## import-fresh 3.3.1
-
-PURL: pkg:npm/import-fresh@3.3.1
-Upstream: [https://www.npmjs.com/package/import-fresh](https://www.npmjs.com/package/import-fresh)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## import-from 4.0.0
-
-PURL: pkg:npm/import-from@4.0.0
-Upstream: [https://www.npmjs.com/package/import-from](https://www.npmjs.com/package/import-from)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## import-lazy 4.0.0
-
-PURL: pkg:npm/import-lazy@4.0.0
-Upstream: [https://www.npmjs.com/package/import-lazy](https://www.npmjs.com/package/import-lazy)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## import-local 3.2.0
-
-PURL: pkg:npm/import-local@3.2.0
-Upstream: [https://www.npmjs.com/package/import-local](https://www.npmjs.com/package/import-local)
 
 Licenses: MIT
 
@@ -8927,46 +6587,6 @@ Upstream: [https://www.npmjs.com/package/imurmurhash](https://www.npmjs.com/pack
 Licenses: MIT
 
 Copyright (c) Jens Taylor
-
-
-## indent-string 3.2.0
-
-PURL: pkg:npm/indent-string@3.2.0
-Upstream: [https://www.npmjs.com/package/indent-string](https://www.npmjs.com/package/indent-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## indent-string 4.0.0
-
-PURL: pkg:npm/indent-string@4.0.0
-Upstream: [https://www.npmjs.com/package/indent-string](https://www.npmjs.com/package/indent-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## indent-string 5.0.0
-
-PURL: pkg:npm/indent-string@5.0.0
-Upstream: [https://www.npmjs.com/package/indent-string](https://www.npmjs.com/package/indent-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## infer-owner 1.0.4
-
-PURL: pkg:npm/infer-owner@1.0.4
-Upstream: [https://www.npmjs.com/package/infer-owner](https://www.npmjs.com/package/infer-owner)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc. and Contributors
 
 
 ## inflight 1.0.6
@@ -8999,66 +6619,6 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## ini 2.0.0
-
-PURL: pkg:npm/ini@2.0.0
-Upstream: [https://www.npmjs.com/package/ini](https://www.npmjs.com/package/ini)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## ini 3.0.1
-
-PURL: pkg:npm/ini@3.0.1
-Upstream: [https://www.npmjs.com/package/ini](https://www.npmjs.com/package/ini)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## init-package-json 3.0.2
-
-PURL: pkg:npm/init-package-json@3.0.2
-Upstream: [https://www.npmjs.com/package/init-package-json](https://www.npmjs.com/package/init-package-json)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## inquirer-autosubmit-prompt 0.2.0
-
-PURL: pkg:npm/inquirer-autosubmit-prompt@0.2.0
-Upstream: [https://www.npmjs.com/package/inquirer-autosubmit-prompt](https://www.npmjs.com/package/inquirer-autosubmit-prompt)
-
-Licenses: MIT
-
-Copyright (c) 2019 Yao Ding
-
-
-## inquirer 6.5.2
-
-PURL: pkg:npm/inquirer@6.5.2
-Upstream: [https://www.npmjs.com/package/inquirer](https://www.npmjs.com/package/inquirer)
-
-Licenses: MIT
-
-Copyright (c) 2023 Simon Boudrias
-
-
-## inquirer 7.3.3
-
-PURL: pkg:npm/inquirer@7.3.3
-Upstream: [https://www.npmjs.com/package/inquirer](https://www.npmjs.com/package/inquirer)
-
-Licenses: MIT
-
-Copyright (c) 2023 Simon Boudrias
-
-
 ## inquirer 9.3.7
 
 PURL: pkg:npm/inquirer@9.3.7
@@ -9069,39 +6629,9 @@ Licenses: MIT
 Copyright (c) 2023 Simon Boudrias
 
 
-## installed-package-contents 1.0.7
+## internal-slot 1.0.7
 
-PURL: pkg:npm/%40npmcli/installed-package-contents@1.0.7
-Upstream: [https://www.npmjs.com/package/%40npmcli/installed-package-contents](https://www.npmjs.com/package/%40npmcli/installed-package-contents)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## integration 8.0.4
-
-PURL: pkg:npm/%40vanilla-extract/integration@8.0.4
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/integration](https://www.npmjs.com/package/%40vanilla-extract/integration)
-
-Licenses: MIT
-
-Copyright (c) 2021 SEEK
-
-
-## interceptors 0.37.6
-
-PURL: pkg:npm/%40mswjs/interceptors@0.37.6
-Upstream: [https://www.npmjs.com/package/%40mswjs/interceptors](https://www.npmjs.com/package/%40mswjs/interceptors)
-
-Licenses: MIT
-
-Copyright (c) 2018–present Artem Zakharchenko
-
-
-## internal-slot 1.1.0
-
-PURL: pkg:npm/internal-slot@1.1.0
+PURL: pkg:npm/internal-slot@1.0.7
 Upstream: [https://www.npmjs.com/package/internal-slot](https://www.npmjs.com/package/internal-slot)
 
 Licenses: MIT
@@ -9109,59 +6639,19 @@ Licenses: MIT
 Copyright (c) 2019 Jordan Harband
 
 
-## into-stream 6.0.0
+## ipaddr.js 1.9.1
 
-PURL: pkg:npm/into-stream@6.0.0
-Upstream: [https://www.npmjs.com/package/into-stream](https://www.npmjs.com/package/into-stream)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## invariant 2.2.4
-
-PURL: pkg:npm/invariant@2.2.4
-Upstream: [https://www.npmjs.com/package/invariant](https://www.npmjs.com/package/invariant)
+PURL: pkg:npm/ipaddr.js@1.9.1
+Upstream: [https://www.npmjs.com/package/ipaddr.js](https://www.npmjs.com/package/ipaddr.js)
 
 Licenses: MIT
 
-Copyright (c) 2013-present, Facebook, Inc.
+Copyright (C) 2011-2017 whitequark <whitequark@whitequark.org>
 
 
-## ip-address 9.0.5
+## is-array-buffer 3.0.4
 
-PURL: pkg:npm/ip-address@9.0.5
-Upstream: [https://www.npmjs.com/package/ip-address](https://www.npmjs.com/package/ip-address)
-
-Licenses: MIT
-
-Copyright (C) 2011 by Beau Gunderson
-
-
-## ip-regex 4.3.0
-
-PURL: pkg:npm/ip-regex@4.3.0
-Upstream: [https://www.npmjs.com/package/ip-regex](https://www.npmjs.com/package/ip-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-arguments 1.2.0
-
-PURL: pkg:npm/is-arguments@1.2.0
-Upstream: [https://www.npmjs.com/package/is-arguments](https://www.npmjs.com/package/is-arguments)
-
-Licenses: MIT
-
-Copyright (c) 2014 Jordan Harband
-
-
-## is-array-buffer 3.0.5
-
-PURL: pkg:npm/is-array-buffer@3.0.5
+PURL: pkg:npm/is-array-buffer@3.0.4
 Upstream: [https://www.npmjs.com/package/is-array-buffer](https://www.npmjs.com/package/is-array-buffer)
 
 Licenses: MIT
@@ -9169,29 +6659,9 @@ Licenses: MIT
 Copyright (c) 2015 Chen Gengyuan, Inspect JS
 
 
-## is-arrayish 0.2.1
+## is-bigint 1.0.4
 
-PURL: pkg:npm/is-arrayish@0.2.1
-Upstream: [https://www.npmjs.com/package/is-arrayish](https://www.npmjs.com/package/is-arrayish)
-
-Licenses: MIT
-
-Copyright (c) 2015 JD Ballard
-
-
-## is-async-function 2.1.1
-
-PURL: pkg:npm/is-async-function@2.1.1
-Upstream: [https://www.npmjs.com/package/is-async-function](https://www.npmjs.com/package/is-async-function)
-
-Licenses: MIT
-
-Copyright (c) 2021 Jordan Harband
-
-
-## is-bigint 1.1.0
-
-PURL: pkg:npm/is-bigint@1.1.0
+PURL: pkg:npm/is-bigint@1.0.4
 Upstream: [https://www.npmjs.com/package/is-bigint](https://www.npmjs.com/package/is-bigint)
 
 Licenses: MIT
@@ -9199,9 +6669,19 @@ Licenses: MIT
 Copyright (c) 2018 Jordan Harband
 
 
-## is-boolean-object 1.2.2
+## is-binary-path 2.1.0
 
-PURL: pkg:npm/is-boolean-object@1.2.2
+PURL: pkg:npm/is-binary-path@2.1.0
+Upstream: [https://www.npmjs.com/package/is-binary-path](https://www.npmjs.com/package/is-binary-path)
+
+Licenses: MIT
+
+Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com), Paul Miller (https://paulmillr.com)
+
+
+## is-boolean-object 1.1.2
+
+PURL: pkg:npm/is-boolean-object@1.1.2
 Upstream: [https://www.npmjs.com/package/is-boolean-object](https://www.npmjs.com/package/is-boolean-object)
 
 Licenses: MIT
@@ -9209,14 +6689,14 @@ Licenses: MIT
 Copyright (c) 2015 Jordan Harband
 
 
-## is-bun-module 2.0.0
+## is-builtin-module 3.2.1
 
-PURL: pkg:npm/is-bun-module@2.0.0
-Upstream: [https://www.npmjs.com/package/is-bun-module](https://www.npmjs.com/package/is-bun-module)
+PURL: pkg:npm/is-builtin-module@3.2.1
+Upstream: [https://www.npmjs.com/package/is-builtin-module](https://www.npmjs.com/package/is-builtin-module)
 
 Licenses: MIT
 
-Copyright (c) 2024 SunsetTechuila
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## is-callable 1.2.7
@@ -9229,29 +6709,9 @@ Licenses: MIT
 Copyright (c) 2015 Jordan Harband
 
 
-## is-ci 3.0.1
+## is-core-module 2.15.1
 
-PURL: pkg:npm/is-ci@3.0.1
-Upstream: [https://www.npmjs.com/package/is-ci](https://www.npmjs.com/package/is-ci)
-
-Licenses: MIT
-
-Copyright (c) 2016-2021 Thomas Watson Steen
-
-
-## is-cidr 4.0.2
-
-PURL: pkg:npm/is-cidr@4.0.2
-Upstream: [https://www.npmjs.com/package/is-cidr](https://www.npmjs.com/package/is-cidr)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) silverwind
-
-
-## is-core-module 2.16.1
-
-PURL: pkg:npm/is-core-module@2.16.1
+PURL: pkg:npm/is-core-module@2.15.1
 Upstream: [https://www.npmjs.com/package/is-core-module](https://www.npmjs.com/package/is-core-module)
 
 Licenses: MIT
@@ -9259,9 +6719,9 @@ Licenses: MIT
 Copyright (c) 2014 Dave Justice
 
 
-## is-data-view 1.0.2
+## is-data-view 1.0.1
 
-PURL: pkg:npm/is-data-view@1.0.2
+PURL: pkg:npm/is-data-view@1.0.1
 Upstream: [https://www.npmjs.com/package/is-data-view](https://www.npmjs.com/package/is-data-view)
 
 Licenses: MIT
@@ -9269,24 +6729,14 @@ Licenses: MIT
 Copyright (c) 2024 Inspect JS
 
 
-## is-date-object 1.1.0
+## is-date-object 1.0.5
 
-PURL: pkg:npm/is-date-object@1.1.0
+PURL: pkg:npm/is-date-object@1.0.5
 Upstream: [https://www.npmjs.com/package/is-date-object](https://www.npmjs.com/package/is-date-object)
 
 Licenses: MIT
 
 Copyright (c) 2015 Jordan Harband
-
-
-## is-directory 0.3.1
-
-PURL: pkg:npm/is-directory@0.3.1
-Upstream: [https://www.npmjs.com/package/is-directory](https://www.npmjs.com/package/is-directory)
-
-Licenses: MIT
-
-Copyright (c) 2014-2016, Jon Schlinkert.
 
 
 ## is-docker 2.2.1
@@ -9319,36 +6769,6 @@ Licenses: MIT
 Copyright (c) 2014-2016, Jon Schlinkert
 
 
-## is-finalizationregistry 1.1.1
-
-PURL: pkg:npm/is-finalizationregistry@1.1.1
-Upstream: [https://www.npmjs.com/package/is-finalizationregistry](https://www.npmjs.com/package/is-finalizationregistry)
-
-Licenses: MIT
-
-Copyright (c) 2020 Inspect JS
-
-
-## is-fullwidth-code-point 1.0.0
-
-PURL: pkg:npm/is-fullwidth-code-point@1.0.0
-Upstream: [https://www.npmjs.com/package/is-fullwidth-code-point](https://www.npmjs.com/package/is-fullwidth-code-point)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-fullwidth-code-point 2.0.0
-
-PURL: pkg:npm/is-fullwidth-code-point@2.0.0
-Upstream: [https://www.npmjs.com/package/is-fullwidth-code-point](https://www.npmjs.com/package/is-fullwidth-code-point)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## is-fullwidth-code-point 3.0.0
 
 PURL: pkg:npm/is-fullwidth-code-point@3.0.0
@@ -9357,26 +6777,6 @@ Upstream: [https://www.npmjs.com/package/is-fullwidth-code-point](https://www.np
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-fullwidth-code-point 4.0.0
-
-PURL: pkg:npm/is-fullwidth-code-point@4.0.0
-Upstream: [https://www.npmjs.com/package/is-fullwidth-code-point](https://www.npmjs.com/package/is-fullwidth-code-point)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-generator-function 1.1.0
-
-PURL: pkg:npm/is-generator-function@1.1.0
-Upstream: [https://www.npmjs.com/package/is-generator-function](https://www.npmjs.com/package/is-generator-function)
-
-Licenses: MIT
-
-Copyright (c) 2014 Jordan Harband
 
 
 ## is-glob 4.0.3
@@ -9399,16 +6799,6 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## is-installed-globally 0.4.0
-
-PURL: pkg:npm/is-installed-globally@0.4.0
-Upstream: [https://www.npmjs.com/package/is-installed-globally](https://www.npmjs.com/package/is-installed-globally)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
 ## is-interactive 1.0.0
 
 PURL: pkg:npm/is-interactive@1.0.0
@@ -9417,46 +6807,6 @@ Upstream: [https://www.npmjs.com/package/is-interactive](https://www.npmjs.com/p
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-interactive 2.0.0
-
-PURL: pkg:npm/is-interactive@2.0.0
-Upstream: [https://www.npmjs.com/package/is-interactive](https://www.npmjs.com/package/is-interactive)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-lambda 1.0.1
-
-PURL: pkg:npm/is-lambda@1.0.1
-Upstream: [https://www.npmjs.com/package/is-lambda](https://www.npmjs.com/package/is-lambda)
-
-Licenses: MIT
-
-Copyright (c) 2016-2017 Thomas Watson Steen
-
-
-## is-map 2.0.3
-
-PURL: pkg:npm/is-map@2.0.3
-Upstream: [https://www.npmjs.com/package/is-map](https://www.npmjs.com/package/is-map)
-
-Licenses: MIT
-
-Copyright (c) 2019 Inspect JS
-
-
-## is-name-taken 2.0.0
-
-PURL: pkg:npm/is-name-taken@2.0.0
-Upstream: [https://www.npmjs.com/package/is-name-taken](https://www.npmjs.com/package/is-name-taken)
-
-Licenses: MIT
-
-Copyright (c) Connor White
 
 
 ## is-negative-zero 2.0.3
@@ -9469,19 +6819,9 @@ Licenses: MIT
 Copyright (c) 2014 Jordan Harband
 
 
-## is-npm 6.0.0
+## is-number-object 1.0.7
 
-PURL: pkg:npm/is-npm@6.0.0
-Upstream: [https://www.npmjs.com/package/is-npm](https://www.npmjs.com/package/is-npm)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## is-number-object 1.1.1
-
-PURL: pkg:npm/is-number-object@1.1.1
+PURL: pkg:npm/is-number-object@1.0.7
 Upstream: [https://www.npmjs.com/package/is-number-object](https://www.npmjs.com/package/is-number-object)
 
 Licenses: MIT
@@ -9499,56 +6839,6 @@ Licenses: MIT
 Copyright (c) 2014-present, Jon Schlinkert.
 
 
-## is-obj 1.0.1
-
-PURL: pkg:npm/is-obj@1.0.1
-Upstream: [https://www.npmjs.com/package/is-obj](https://www.npmjs.com/package/is-obj)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-obj 2.0.0
-
-PURL: pkg:npm/is-obj@2.0.0
-Upstream: [https://www.npmjs.com/package/is-obj](https://www.npmjs.com/package/is-obj)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-observable 1.1.0
-
-PURL: pkg:npm/is-observable@1.1.0
-Upstream: [https://www.npmjs.com/package/is-observable](https://www.npmjs.com/package/is-observable)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-path-cwd 2.2.0
-
-PURL: pkg:npm/is-path-cwd@2.2.0
-Upstream: [https://www.npmjs.com/package/is-path-cwd](https://www.npmjs.com/package/is-path-cwd)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-path-cwd 3.0.0
-
-PURL: pkg:npm/is-path-cwd@3.0.0
-Upstream: [https://www.npmjs.com/package/is-path-cwd](https://www.npmjs.com/package/is-path-cwd)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## is-path-inside 3.0.3
 
 PURL: pkg:npm/is-path-inside@3.0.3
@@ -9559,29 +6849,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## is-path-inside 4.0.0
+## is-plain-object 2.0.4
 
-PURL: pkg:npm/is-path-inside@4.0.0
-Upstream: [https://www.npmjs.com/package/is-path-inside](https://www.npmjs.com/package/is-path-inside)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-plain-obj 1.1.0
-
-PURL: pkg:npm/is-plain-obj@1.1.0
-Upstream: [https://www.npmjs.com/package/is-plain-obj](https://www.npmjs.com/package/is-plain-obj)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-plain-object 5.0.0
-
-PURL: pkg:npm/is-plain-object@5.0.0
+PURL: pkg:npm/is-plain-object@2.0.4
 Upstream: [https://www.npmjs.com/package/is-plain-object](https://www.npmjs.com/package/is-plain-object)
 
 Licenses: MIT
@@ -9589,29 +6859,9 @@ Licenses: MIT
 Copyright (c) 2014-2017, Jon Schlinkert.
 
 
-## is-potential-custom-element-name 1.0.1
+## is-regex 1.1.4
 
-PURL: pkg:npm/is-potential-custom-element-name@1.0.1
-Upstream: [https://www.npmjs.com/package/is-potential-custom-element-name](https://www.npmjs.com/package/is-potential-custom-element-name)
-
-Licenses: MIT
-
-Copyright (c) Mathias Bynens
-
-
-## is-promise 2.2.2
-
-PURL: pkg:npm/is-promise@2.2.2
-Upstream: [https://www.npmjs.com/package/is-promise](https://www.npmjs.com/package/is-promise)
-
-Licenses: MIT
-
-Copyright (c) 2014 Forbes Lindesay
-
-
-## is-regex 1.2.1
-
-PURL: pkg:npm/is-regex@1.2.1
+PURL: pkg:npm/is-regex@1.1.4
 Upstream: [https://www.npmjs.com/package/is-regex](https://www.npmjs.com/package/is-regex)
 
 Licenses: MIT
@@ -9619,54 +6869,14 @@ Licenses: MIT
 Copyright (c) 2014 Jordan Harband
 
 
-## is-regexp 1.0.0
+## is-shared-array-buffer 1.0.3
 
-PURL: pkg:npm/is-regexp@1.0.0
-Upstream: [https://www.npmjs.com/package/is-regexp](https://www.npmjs.com/package/is-regexp)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus
-
-
-## is-scoped 3.0.0
-
-PURL: pkg:npm/is-scoped@3.0.0
-Upstream: [https://www.npmjs.com/package/is-scoped](https://www.npmjs.com/package/is-scoped)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## is-set 2.0.3
-
-PURL: pkg:npm/is-set@2.0.3
-Upstream: [https://www.npmjs.com/package/is-set](https://www.npmjs.com/package/is-set)
-
-Licenses: MIT
-
-Copyright (c) 2019 Inspect JS
-
-
-## is-shared-array-buffer 1.0.4
-
-PURL: pkg:npm/is-shared-array-buffer@1.0.4
+PURL: pkg:npm/is-shared-array-buffer@1.0.3
 Upstream: [https://www.npmjs.com/package/is-shared-array-buffer](https://www.npmjs.com/package/is-shared-array-buffer)
 
 Licenses: MIT
 
 Copyright (c) 2021 Inspect JS
-
-
-## is-stream 1.1.0
-
-PURL: pkg:npm/is-stream@1.1.0
-Upstream: [https://www.npmjs.com/package/is-stream](https://www.npmjs.com/package/is-stream)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## is-stream 2.0.1
@@ -9689,9 +6899,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## is-string 1.1.1
+## is-string 1.0.7
 
-PURL: pkg:npm/is-string@1.1.1
+PURL: pkg:npm/is-string@1.0.7
 Upstream: [https://www.npmjs.com/package/is-string](https://www.npmjs.com/package/is-string)
 
 Licenses: MIT
@@ -9699,9 +6909,9 @@ Licenses: MIT
 Copyright (c) 2015 Jordan Harband
 
 
-## is-symbol 1.1.1
+## is-symbol 1.0.4
 
-PURL: pkg:npm/is-symbol@1.1.1
+PURL: pkg:npm/is-symbol@1.0.4
 Upstream: [https://www.npmjs.com/package/is-symbol](https://www.npmjs.com/package/is-symbol)
 
 Licenses: MIT
@@ -9709,34 +6919,14 @@ Licenses: MIT
 Copyright (c) 2015 Jordan Harband
 
 
-## is-text-path 1.0.1
+## is-typed-array 1.1.13
 
-PURL: pkg:npm/is-text-path@1.0.1
-Upstream: [https://www.npmjs.com/package/is-text-path](https://www.npmjs.com/package/is-text-path)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-typed-array 1.1.15
-
-PURL: pkg:npm/is-typed-array@1.1.15
+PURL: pkg:npm/is-typed-array@1.1.13
 Upstream: [https://www.npmjs.com/package/is-typed-array](https://www.npmjs.com/package/is-typed-array)
 
 Licenses: MIT
 
 Copyright (c) 2015 Jordan Harband
-
-
-## is-typedarray 1.0.0
-
-PURL: pkg:npm/is-typedarray@1.0.0
-Upstream: [https://www.npmjs.com/package/is-typedarray](https://www.npmjs.com/package/is-typedarray)
-
-Licenses: MIT
-
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 
 
 ## is-unicode-supported 0.1.0
@@ -9749,54 +6939,14 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## is-unicode-supported 1.3.0
+## is-weakref 1.0.2
 
-PURL: pkg:npm/is-unicode-supported@1.3.0
-Upstream: [https://www.npmjs.com/package/is-unicode-supported](https://www.npmjs.com/package/is-unicode-supported)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## is-url-superb 6.1.0
-
-PURL: pkg:npm/is-url-superb@6.1.0
-Upstream: [https://www.npmjs.com/package/is-url-superb](https://www.npmjs.com/package/is-url-superb)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## is-weakmap 2.0.2
-
-PURL: pkg:npm/is-weakmap@2.0.2
-Upstream: [https://www.npmjs.com/package/is-weakmap](https://www.npmjs.com/package/is-weakmap)
-
-Licenses: MIT
-
-Copyright (c) 2019 Inspect JS
-
-
-## is-weakref 1.1.1
-
-PURL: pkg:npm/is-weakref@1.1.1
+PURL: pkg:npm/is-weakref@1.0.2
 Upstream: [https://www.npmjs.com/package/is-weakref](https://www.npmjs.com/package/is-weakref)
 
 Licenses: MIT
 
 Copyright (c) 2020 Inspect JS
-
-
-## is-weakset 2.0.4
-
-PURL: pkg:npm/is-weakset@2.0.4
-Upstream: [https://www.npmjs.com/package/is-weakset](https://www.npmjs.com/package/is-weakset)
-
-Licenses: MIT
-
-Copyright (c) 2019 Inspect JS
 
 
 ## is-wsl 2.2.0
@@ -9806,33 +6956,13 @@ Upstream: [https://www.npmjs.com/package/is-wsl](https://www.npmjs.com/package/i
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## is-yarn-global 0.4.1
-
-PURL: pkg:npm/is-yarn-global@0.4.1
-Upstream: [https://www.npmjs.com/package/is-yarn-global](https://www.npmjs.com/package/is-yarn-global)
-
-Licenses: MIT
-
-Copyright (c) 2018 LitoMore
-
-
-## is 4.6.0
-
-PURL: pkg:npm/%40sindresorhus/is@4.6.0
-Upstream: [https://www.npmjs.com/package/%40sindresorhus/is](https://www.npmjs.com/package/%40sindresorhus/is)
-
-Licenses: MIT
-
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## is 5.6.0
+## is-wsl 3.1.0
 
-PURL: pkg:npm/%40sindresorhus/is@5.6.0
-Upstream: [https://www.npmjs.com/package/%40sindresorhus/is](https://www.npmjs.com/package/%40sindresorhus/is)
+PURL: pkg:npm/is-wsl@3.1.0
+Upstream: [https://www.npmjs.com/package/is-wsl](https://www.npmjs.com/package/is-wsl)
 
 Licenses: MIT
 
@@ -9846,7 +6976,7 @@ Upstream: [https://www.npmjs.com/package/isarray](https://www.npmjs.com/package/
 
 Licenses: MIT
 
-Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
+Copyright (c) Julian Gruber
 
 
 ## isarray 2.0.5
@@ -9856,7 +6986,17 @@ Upstream: [https://www.npmjs.com/package/isarray](https://www.npmjs.com/package/
 
 Licenses: MIT
 
-Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
+Copyright (c) Julian Gruber
+
+
+## isbinaryfile 5.0.2
+
+PURL: pkg:npm/isbinaryfile@5.0.2
+Upstream: [https://www.npmjs.com/package/isbinaryfile](https://www.npmjs.com/package/isbinaryfile)
+
+Licenses: MIT
+
+Copyright (c) 2019 Garen J. Torikian
 
 
 ## isexe 2.0.0
@@ -9869,114 +7009,24 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## isexe 3.1.1
+## isexe 4.0.0
 
-PURL: pkg:npm/isexe@3.1.1
+PURL: pkg:npm/isexe@4.0.0
 Upstream: [https://www.npmjs.com/package/isexe](https://www.npmjs.com/package/isexe)
 
-Licenses: ISC
+Licenses: BlueOak-1.0.0
 
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## issue-parser 6.0.0
+## isobject 3.0.1
 
-PURL: pkg:npm/issue-parser@6.0.0
-Upstream: [https://www.npmjs.com/package/issue-parser](https://www.npmjs.com/package/issue-parser)
-
-Licenses: MIT
-
-Copyright (c) 2017 Pierre Vanduynslager
-
-
-## issue-regex 4.3.0
-
-PURL: pkg:npm/issue-regex@4.3.0
-Upstream: [https://www.npmjs.com/package/issue-regex](https://www.npmjs.com/package/issue-regex)
+PURL: pkg:npm/isobject@3.0.1
+Upstream: [https://www.npmjs.com/package/isobject](https://www.npmjs.com/package/isobject)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## istanbul-lib-coverage 2.0.6
-
-PURL: pkg:npm/%40types/istanbul-lib-coverage@2.0.6
-Upstream: [https://www.npmjs.com/package/%40types/istanbul-lib-coverage](https://www.npmjs.com/package/%40types/istanbul-lib-coverage)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## istanbul-lib-coverage 3.2.2
-
-PURL: pkg:npm/istanbul-lib-coverage@3.2.2
-Upstream: [https://www.npmjs.com/package/istanbul-lib-coverage](https://www.npmjs.com/package/istanbul-lib-coverage)
-
-Licenses: BSD-3-Clause
-
-Copyright 2012-2015 Yahoo! Inc.
-
-
-## istanbul-lib-report 3.0.1
-
-PURL: pkg:npm/istanbul-lib-report@3.0.1
-Upstream: [https://www.npmjs.com/package/istanbul-lib-report](https://www.npmjs.com/package/istanbul-lib-report)
-
-Licenses: BSD-3-Clause
-
-Copyright 2012-2015 Yahoo! Inc.
-
-
-## istanbul-lib-report 3.0.3
-
-PURL: pkg:npm/%40types/istanbul-lib-report@3.0.3
-Upstream: [https://www.npmjs.com/package/%40types/istanbul-lib-report](https://www.npmjs.com/package/%40types/istanbul-lib-report)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## istanbul-lib-source-maps 5.0.6
-
-PURL: pkg:npm/istanbul-lib-source-maps@5.0.6
-Upstream: [https://www.npmjs.com/package/istanbul-lib-source-maps](https://www.npmjs.com/package/istanbul-lib-source-maps)
-
-Licenses: BSD-3-Clause
-
-Copyright 2015 Yahoo! Inc.
-
-
-## istanbul-reports 3.0.4
-
-PURL: pkg:npm/%40types/istanbul-reports@3.0.4
-Upstream: [https://www.npmjs.com/package/%40types/istanbul-reports](https://www.npmjs.com/package/%40types/istanbul-reports)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## istanbul-reports 3.1.7
-
-PURL: pkg:npm/istanbul-reports@3.1.7
-Upstream: [https://www.npmjs.com/package/istanbul-reports](https://www.npmjs.com/package/istanbul-reports)
-
-Licenses: BSD-3-Clause
-
-Copyright 2012-2015 Yahoo! Inc.
-
-
-## iterator.prototype 1.1.5
-
-PURL: pkg:npm/iterator.prototype@1.1.5
-Upstream: [https://www.npmjs.com/package/iterator.prototype](https://www.npmjs.com/package/iterator.prototype)
-
-Licenses: MIT
-
-Copyright (c) 2022 Jordan Harband
+Copyright (c) 2014-2017, Jon Schlinkert.
 
 
 ## jackspeak 3.4.3
@@ -9989,174 +7039,24 @@ Licenses: BlueOak-1.0.0
 copyright in it.
 
 
-## javascript-stringify 2.1.0
+## js-beautify 1.15.1
 
-PURL: pkg:npm/javascript-stringify@2.1.0
-Upstream: [https://www.npmjs.com/package/javascript-stringify](https://www.npmjs.com/package/javascript-stringify)
-
-Licenses: MIT
-
-Copyright (c) 2013 Blake Embrey (hello@blakeembrey.com)
-
-
-## jest-axe 3.5.9
-
-PURL: pkg:npm/%40types/jest-axe@3.5.9
-Upstream: [https://www.npmjs.com/package/%40types/jest-axe](https://www.npmjs.com/package/%40types/jest-axe)
+PURL: pkg:npm/js-beautify@1.15.1
+Upstream: [https://www.npmjs.com/package/js-beautify](https://www.npmjs.com/package/js-beautify)
 
 Licenses: MIT
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) 2007-2018 Einar Lielmanis, Liam Newman, and contributors.
 
 
-## jest-canvas-mock 2.5.2
+## js-cookie 3.0.5
 
-PURL: pkg:npm/jest-canvas-mock@2.5.2
-Upstream: [https://www.npmjs.com/package/jest-canvas-mock](https://www.npmjs.com/package/jest-canvas-mock)
-
-Licenses: MIT
-
-Copyright (c) hustcc
-
-
-## jest-diff 27.5.1
-
-PURL: pkg:npm/jest-diff@27.5.1
-Upstream: [https://www.npmjs.com/package/jest-diff](https://www.npmjs.com/package/jest-diff)
+PURL: pkg:npm/js-cookie@3.0.5
+Upstream: [https://www.npmjs.com/package/js-cookie](https://www.npmjs.com/package/js-cookie)
 
 Licenses: MIT
 
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## jest-diff 29.7.0
-
-PURL: pkg:npm/jest-diff@29.7.0
-Upstream: [https://www.npmjs.com/package/jest-diff](https://www.npmjs.com/package/jest-diff)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## jest-dom 6.6.3
-
-PURL: pkg:npm/%40testing-library/jest-dom@6.6.3
-Upstream: [https://www.npmjs.com/package/%40testing-library/jest-dom](https://www.npmjs.com/package/%40testing-library/jest-dom)
-
-Licenses: MIT
-
-Copyright (c) 2017 Kent C. Dodds
-
-
-## jest-dom 6.9.1
-
-PURL: pkg:npm/%40testing-library/jest-dom@6.9.1
-Upstream: [https://www.npmjs.com/package/%40testing-library/jest-dom](https://www.npmjs.com/package/%40testing-library/jest-dom)
-
-Licenses: MIT
-
-Copyright (c) 2017 Kent C. Dodds
-
-
-## jest-extended 4.0.2
-
-PURL: pkg:npm/jest-extended@4.0.2
-Upstream: [https://www.npmjs.com/package/jest-extended](https://www.npmjs.com/package/jest-extended)
-
-Licenses: MIT
-
-Copyright (c) 2017-present Matt Phillips <matt@mattphillips.io> (mattphillips.io)
-
-
-## jest-get-type 27.5.1
-
-PURL: pkg:npm/jest-get-type@27.5.1
-Upstream: [https://www.npmjs.com/package/jest-get-type](https://www.npmjs.com/package/jest-get-type)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## jest-get-type 29.6.3
-
-PURL: pkg:npm/jest-get-type@29.6.3
-Upstream: [https://www.npmjs.com/package/jest-get-type](https://www.npmjs.com/package/jest-get-type)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## jest-matcher-utils 27.5.1
-
-PURL: pkg:npm/jest-matcher-utils@27.5.1
-Upstream: [https://www.npmjs.com/package/jest-matcher-utils](https://www.npmjs.com/package/jest-matcher-utils)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## jest-matcher-utils 29.7.0
-
-PURL: pkg:npm/jest-matcher-utils@29.7.0
-Upstream: [https://www.npmjs.com/package/jest-matcher-utils](https://www.npmjs.com/package/jest-matcher-utils)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## jest-message-util 29.7.0
-
-PURL: pkg:npm/jest-message-util@29.7.0
-Upstream: [https://www.npmjs.com/package/jest-message-util](https://www.npmjs.com/package/jest-message-util)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## jest-util 29.7.0
-
-PURL: pkg:npm/jest-util@29.7.0
-Upstream: [https://www.npmjs.com/package/jest-util](https://www.npmjs.com/package/jest-util)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## jest 27.5.2
-
-PURL: pkg:npm/%40types/jest@27.5.2
-Upstream: [https://www.npmjs.com/package/%40types/jest](https://www.npmjs.com/package/%40types/jest)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## jest 29.5.14
-
-PURL: pkg:npm/%40types/jest@29.5.14
-Upstream: [https://www.npmjs.com/package/%40types/jest](https://www.npmjs.com/package/%40types/jest)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## jju 1.4.0
-
-PURL: pkg:npm/jju@1.4.0
-Upstream: [https://www.npmjs.com/package/jju](https://www.npmjs.com/package/jju)
-
-Licenses: MIT
-
-Copyright (c) 2013 Alex Kocharin
+Copyright (c) 2018 Copyright 2018 Klaus Hartl, Fagner Brack, GitHub Contributors
 
 
 ## js-tokens 4.0.0
@@ -10169,24 +7069,14 @@ Licenses: MIT
 Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
 
 
-## js-tokens 9.0.1
+## js-tokens 9.0.0
 
-PURL: pkg:npm/js-tokens@9.0.1
+PURL: pkg:npm/js-tokens@9.0.0
 Upstream: [https://www.npmjs.com/package/js-tokens](https://www.npmjs.com/package/js-tokens)
 
 Licenses: MIT
 
 Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
-
-
-## js-yaml 3.14.1
-
-PURL: pkg:npm/js-yaml@3.14.1
-Upstream: [https://www.npmjs.com/package/js-yaml](https://www.npmjs.com/package/js-yaml)
-
-Licenses: MIT
-
-Copyright (C) 2011-2015 by Vitaly Puzrin
 
 
 ## js-yaml 4.1.0
@@ -10199,9 +7089,9 @@ Licenses: MIT
 Copyright (C) 2011-2015 by Vitaly Puzrin
 
 
-## js 9.32.0
+## js 8.57.1
 
-PURL: pkg:npm/%40eslint/js@9.32.0
+PURL: pkg:npm/%40eslint/js@8.57.1
 Upstream: [https://www.npmjs.com/package/%40eslint/js](https://www.npmjs.com/package/%40eslint/js)
 
 Licenses: MIT
@@ -10209,39 +7099,9 @@ Licenses: MIT
 Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 
 
-## jsbn 1.1.0
-
-PURL: pkg:npm/jsbn@1.1.0
-Upstream: [https://www.npmjs.com/package/jsbn](https://www.npmjs.com/package/jsbn)
-
-Licenses: MIT
-
-Copyright (c) Tom Wu
-
-
-## jsdom 24.1.3
-
-PURL: pkg:npm/jsdom@24.1.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fjsdom%2Fjsdom.git
-Upstream: [https://www.npmjs.com/package/jsdom](https://www.npmjs.com/package/jsdom)
-
-Licenses: MIT
-
-Copyright (c) 2010 Elijah Insua
-
-
 ## jsesc 3.0.2
 
 PURL: pkg:npm/jsesc@3.0.2
-Upstream: [https://www.npmjs.com/package/jsesc](https://www.npmjs.com/package/jsesc)
-
-Licenses: MIT
-
-Copyright (c) Mathias Bynens
-
-
-## jsesc 3.1.0
-
-PURL: pkg:npm/jsesc@3.1.0
 Upstream: [https://www.npmjs.com/package/jsesc](https://www.npmjs.com/package/jsesc)
 
 Licenses: MIT
@@ -10257,26 +7117,6 @@ Upstream: [https://www.npmjs.com/package/json-buffer](https://www.npmjs.com/pack
 Licenses: MIT
 
 Copyright (c) 2013 Dominic Tarr
-
-
-## json-parse-better-errors 1.0.2
-
-PURL: pkg:npm/json-parse-better-errors@1.0.2
-Upstream: [https://www.npmjs.com/package/json-parse-better-errors](https://www.npmjs.com/package/json-parse-better-errors)
-
-Licenses: MIT
-
-Copyright 2017 Kat Marchán
-
-
-## json-parse-even-better-errors 2.3.1
-
-PURL: pkg:npm/json-parse-even-better-errors@2.3.1
-Upstream: [https://www.npmjs.com/package/json-parse-even-better-errors](https://www.npmjs.com/package/json-parse-even-better-errors)
-
-Licenses: MIT
-
-Copyright 2017 Kat Marchán
 
 
 ## json-schema-traverse 0.4.1
@@ -10319,36 +7159,6 @@ Licenses: MIT
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 
 
-## json-stable-stringify 1.2.1
-
-PURL: pkg:npm/json-stable-stringify@1.2.1
-Upstream: [https://www.npmjs.com/package/json-stable-stringify](https://www.npmjs.com/package/json-stable-stringify)
-
-Licenses: MIT
-
-Copyright (c) 2013 contributors
-
-
-## json-stringify-nice 1.1.4
-
-PURL: pkg:npm/json-stringify-nice@1.1.4
-Upstream: [https://www.npmjs.com/package/json-stringify-nice](https://www.npmjs.com/package/json-stringify-nice)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## json-stringify-safe 5.0.1
-
-PURL: pkg:npm/json-stringify-safe@5.0.1
-Upstream: [https://www.npmjs.com/package/json-stringify-safe](https://www.npmjs.com/package/json-stringify-safe)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
 ## json5 0.0.29
 
 PURL: pkg:npm/%40types/json5@0.0.29
@@ -10389,59 +7199,9 @@ Licenses: MIT
 Copyright (c) 2012-2015, JP Richardson <jprichardson@gmail.com>
 
 
-## jsonify 0.0.1
+## k8s.io/apiextensions-apiserver v0.26.3
 
-PURL: pkg:npm/jsonify@0.0.1
-Upstream: [https://www.npmjs.com/package/jsonify](https://www.npmjs.com/package/jsonify)
-
-Licenses: LicenseRef-Public-Domain
-
-Copyright (c) Douglas Crockford
-
-
-## jsonparse 1.3.1
-
-PURL: pkg:npm/jsonparse@1.3.1
-Upstream: [https://www.npmjs.com/package/jsonparse](https://www.npmjs.com/package/jsonparse)
-
-Licenses: MIT
-
-Copyright (c) 2012 Tim Caswell
-
-
-## jsx-ast-utils 3.3.5
-
-PURL: pkg:npm/jsx-ast-utils@3.3.5
-Upstream: [https://www.npmjs.com/package/jsx-ast-utils](https://www.npmjs.com/package/jsx-ast-utils)
-
-Licenses: MIT
-
-Copyright (c) 2016 Ethan Cohen
-
-
-## just-diff-apply 5.5.0
-
-PURL: pkg:npm/just-diff-apply@5.5.0
-Upstream: [https://www.npmjs.com/package/just-diff-apply](https://www.npmjs.com/package/just-diff-apply)
-
-Licenses: MIT
-
-Copyright (c) 2016 angus croll
-
-
-## just-diff 5.2.0
-
-PURL: pkg:npm/just-diff@5.2.0
-Upstream: [https://www.npmjs.com/package/just-diff](https://www.npmjs.com/package/just-diff)
-
-Licenses: MIT
-
-Copyright (c) 2016 angus croll
-
-
-## k8s.io/apiextensions-apiserver v0.35.2
-
-PURL: pkg:golang/k8s.io/apiextensions-apiserver@v0.35.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/k8s.io/apiextensions-apiserver@v0.26.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/apiextensions-apiserver](https://pkg.go.dev/k8s.io/apiextensions-apiserver)
 
 Licenses: Apache-2.0
@@ -10449,9 +7209,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## k8s.io/apimachinery v0.35.2
+## k8s.io/apimachinery v0.32.3
 
-PURL: pkg:golang/k8s.io/apimachinery@v0.35.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/k8s.io/apimachinery@v0.32.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/apimachinery](https://pkg.go.dev/k8s.io/apimachinery)
 
 Licenses: Apache-2.0
@@ -10459,9 +7219,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## k8s.io/api v0.35.2
+## k8s.io/api v0.32.3
 
-PURL: pkg:golang/k8s.io/api@v0.35.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/k8s.io/api@v0.32.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/api](https://pkg.go.dev/k8s.io/api)
 
 Licenses: Apache-2.0
@@ -10469,9 +7229,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## k8s.io/client-go v0.35.2
+## k8s.io/client-go v0.32.3
 
-PURL: pkg:golang/k8s.io/client-go@v0.35.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/k8s.io/client-go@v0.32.3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/client-go](https://pkg.go.dev/k8s.io/client-go)
 
 Licenses: Apache-2.0
@@ -10489,9 +7249,9 @@ Licenses: Apache-2.0
 Copyright [yyyy] [name of copyright owner]
 
 
-## k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
+## k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f
 
-PURL: pkg:golang/k8s.io/kube-openapi@v0.0.0-20250910181357-589584f1c912?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/k8s.io/kube-openapi@v0.0.0-20241105132330-32ad38e42d3f?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/kube-openapi](https://pkg.go.dev/k8s.io/kube-openapi)
 
 Licenses: Apache-2.0
@@ -10499,24 +7259,14 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## k8s.io/utils v0.0.0-20260108192941-914a6e750570
+## k8s.io/utils v0.0.0-20241210054802-24370beab758
 
-PURL: pkg:golang/k8s.io/utils@v0.0.0-20260108192941-914a6e750570?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/k8s.io/utils@v0.0.0-20241210054802-24370beab758?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/k8s.io/utils](https://pkg.go.dev/k8s.io/utils)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
-
-
-## keyv 3.1.4
-
-PURL: pkg:npm/%40types/keyv@3.1.4
-Upstream: [https://www.npmjs.com/package/%40types/keyv](https://www.npmjs.com/package/%40types/keyv)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
 
 
 ## keyv 4.5.4
@@ -10539,36 +7289,6 @@ Licenses: MIT
 Copyright (c) 2014-2017, Jon Schlinkert.
 
 
-## klaw-sync 6.0.0
-
-PURL: pkg:npm/klaw-sync@6.0.0
-Upstream: [https://www.npmjs.com/package/klaw-sync](https://www.npmjs.com/package/klaw-sync)
-
-Licenses: MIT
-
-Copyright (c) 2017 Mani Maghsoudlou
-
-
-## knative.dev/networking v0.0.0-20251217020127-11890a5dabea
-
-PURL: pkg:golang/knative.dev/networking@v0.0.0-20251217020127-11890a5dabea?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/knative.dev/networking](https://pkg.go.dev/knative.dev/networking)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## knative.dev/pkg v0.0.0-20251216153728-9c8140b780d1
-
-PURL: pkg:golang/knative.dev/pkg@v0.0.0-20251216153728-9c8140b780d1?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/knative.dev/pkg](https://pkg.go.dev/knative.dev/pkg)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
 ## kolorist 1.8.0
 
 PURL: pkg:npm/kolorist@1.8.0
@@ -10579,34 +7299,14 @@ Licenses: MIT
 Copyright (c) 2020-present Marvin Hagemeister
 
 
-## language-core 2.4.23
+## lazystream 1.0.1
 
-PURL: pkg:npm/%40volar/language-core@2.4.23
-Upstream: [https://www.npmjs.com/package/%40volar/language-core](https://www.npmjs.com/package/%40volar/language-core)
-
-Licenses: MIT
-
-Copyright (c) 2021-present Johnson Chu
-
-
-## language-tags 1.0.9
-
-PURL: pkg:npm/language-tags@1.0.9
-Upstream: [https://www.npmjs.com/package/language-tags](https://www.npmjs.com/package/language-tags)
+PURL: pkg:npm/lazystream@1.0.1
+Upstream: [https://www.npmjs.com/package/lazystream](https://www.npmjs.com/package/lazystream)
 
 Licenses: MIT
 
-Copyright (c) Matthew Caruana Galizia
-
-
-## latest-version 7.0.0
-
-PURL: pkg:npm/latest-version@7.0.0
-Upstream: [https://www.npmjs.com/package/latest-version](https://www.npmjs.com/package/latest-version)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2013 J. Pommerening, contributors.
 
 
 ## levn 0.4.1
@@ -10619,126 +7319,6 @@ Licenses: MIT
 Copyright (c) George Zahariev
 
 
-## libnpmaccess 6.0.4
-
-PURL: pkg:npm/libnpmaccess@6.0.4
-Upstream: [https://www.npmjs.com/package/libnpmaccess](https://www.npmjs.com/package/libnpmaccess)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## libnpmdiff 4.0.5
-
-PURL: pkg:npm/libnpmdiff@4.0.5
-Upstream: [https://www.npmjs.com/package/libnpmdiff](https://www.npmjs.com/package/libnpmdiff)
-
-Licenses: ISC
-
-Copyright (c) GitHub Inc.
-
-
-## libnpmexec 4.0.14
-
-PURL: pkg:npm/libnpmexec@4.0.14
-Upstream: [https://www.npmjs.com/package/libnpmexec](https://www.npmjs.com/package/libnpmexec)
-
-Licenses: ISC
-
-Copyright (c) GitHub Inc.
-
-
-## libnpmfund 3.0.5
-
-PURL: pkg:npm/libnpmfund@3.0.5
-Upstream: [https://www.npmjs.com/package/libnpmfund](https://www.npmjs.com/package/libnpmfund)
-
-Licenses: ISC
-
-Copyright (c) npm Inc.
-
-
-## libnpmhook 8.0.4
-
-PURL: pkg:npm/libnpmhook@8.0.4
-Upstream: [https://www.npmjs.com/package/libnpmhook](https://www.npmjs.com/package/libnpmhook)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## libnpmorg 4.0.4
-
-PURL: pkg:npm/libnpmorg@4.0.4
-Upstream: [https://www.npmjs.com/package/libnpmorg](https://www.npmjs.com/package/libnpmorg)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## libnpmpack 4.1.3
-
-PURL: pkg:npm/libnpmpack@4.1.3
-Upstream: [https://www.npmjs.com/package/libnpmpack](https://www.npmjs.com/package/libnpmpack)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## libnpmpublish 6.0.5
-
-PURL: pkg:npm/libnpmpublish@6.0.5
-Upstream: [https://www.npmjs.com/package/libnpmpublish](https://www.npmjs.com/package/libnpmpublish)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## libnpmsearch 5.0.4
-
-PURL: pkg:npm/libnpmsearch@5.0.4
-Upstream: [https://www.npmjs.com/package/libnpmsearch](https://www.npmjs.com/package/libnpmsearch)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## libnpmteam 4.0.4
-
-PURL: pkg:npm/libnpmteam@4.0.4
-Upstream: [https://www.npmjs.com/package/libnpmteam](https://www.npmjs.com/package/libnpmteam)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## libnpmversion 3.0.7
-
-PURL: pkg:npm/libnpmversion@3.0.7
-Upstream: [https://www.npmjs.com/package/libnpmversion](https://www.npmjs.com/package/libnpmversion)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## lilconfig 2.0.6
-
-PURL: pkg:npm/lilconfig@2.0.6
-Upstream: [https://www.npmjs.com/package/lilconfig](https://www.npmjs.com/package/lilconfig)
-
-Licenses: MIT
-
-Copyright (c) 2022 Anton Kastritskiy
-
-
 ## lines-and-columns 1.2.4
 
 PURL: pkg:npm/lines-and-columns@1.2.4
@@ -10749,109 +7329,9 @@ Licenses: MIT
 Copyright (c) 2015 Brian Donovan
 
 
-## lint-staged 13.1.0
+## local-pkg 0.5.0
 
-PURL: pkg:npm/lint-staged@13.1.0
-Upstream: [https://www.npmjs.com/package/lint-staged](https://www.npmjs.com/package/lint-staged)
-
-Licenses: MIT
-
-Copyright (c) 2016 Andrey Okonetchnikov
-
-
-## lint-staged 9.5.0
-
-PURL: pkg:npm/lint-staged@9.5.0
-Upstream: [https://www.npmjs.com/package/lint-staged](https://www.npmjs.com/package/lint-staged)
-
-Licenses: MIT
-
-Copyright (c) 2016 Andrey Okonetchnikov
-
-
-## listr-input 0.2.1
-
-PURL: pkg:npm/listr-input@0.2.1
-Upstream: [https://www.npmjs.com/package/listr-input](https://www.npmjs.com/package/listr-input)
-
-Licenses: MIT
-
-Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## listr-silent-renderer 1.1.1
-
-PURL: pkg:npm/listr-silent-renderer@1.1.1
-Upstream: [https://www.npmjs.com/package/listr-silent-renderer](https://www.npmjs.com/package/listr-silent-renderer)
-
-Licenses: MIT
-
-Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## listr-update-renderer 0.5.0
-
-PURL: pkg:npm/listr-update-renderer@0.5.0
-Upstream: [https://www.npmjs.com/package/listr-update-renderer](https://www.npmjs.com/package/listr-update-renderer)
-
-Licenses: MIT
-
-Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## listr-verbose-renderer 0.5.0
-
-PURL: pkg:npm/listr-verbose-renderer@0.5.0
-Upstream: [https://www.npmjs.com/package/listr-verbose-renderer](https://www.npmjs.com/package/listr-verbose-renderer)
-
-Licenses: MIT
-
-Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## listr 0.14.3
-
-PURL: pkg:npm/listr@0.14.3
-Upstream: [https://www.npmjs.com/package/listr](https://www.npmjs.com/package/listr)
-
-Licenses: MIT
-
-Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## listr2 5.0.8
-
-PURL: pkg:npm/listr2@5.0.8
-Upstream: [https://www.npmjs.com/package/listr2](https://www.npmjs.com/package/listr2)
-
-Licenses: MIT
-
-Copyright (c) Cenk Kilic <cenk@kilic.dev> (https://srcs.kilic.dev), Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## load-json-file 4.0.0
-
-PURL: pkg:npm/load-json-file@4.0.0
-Upstream: [https://www.npmjs.com/package/load-json-file](https://www.npmjs.com/package/load-json-file)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## loader-utils 2.0.4
-
-PURL: pkg:npm/loader-utils@2.0.4
-Upstream: [https://www.npmjs.com/package/loader-utils](https://www.npmjs.com/package/loader-utils)
-
-Licenses: MIT
-
-Copyright JS Foundation and other contributors
-
-
-## local-pkg 1.1.2
-
-PURL: pkg:npm/local-pkg@1.1.2
+PURL: pkg:npm/local-pkg@0.5.0
 Upstream: [https://www.npmjs.com/package/local-pkg](https://www.npmjs.com/package/local-pkg)
 
 Licenses: MIT
@@ -10859,24 +7339,14 @@ Licenses: MIT
 Copyright (c) 2021 Anthony Fu <https://github.com/antfu>
 
 
-## locate-path 2.0.0
+## locate-path 3.0.0
 
-PURL: pkg:npm/locate-path@2.0.0
+PURL: pkg:npm/locate-path@3.0.0
 Upstream: [https://www.npmjs.com/package/locate-path](https://www.npmjs.com/package/locate-path)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## locate-path 5.0.0
-
-PURL: pkg:npm/locate-path@5.0.0
-Upstream: [https://www.npmjs.com/package/locate-path](https://www.npmjs.com/package/locate-path)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## locate-path 6.0.0
@@ -10886,7 +7356,7 @@ Upstream: [https://www.npmjs.com/package/locate-path](https://www.npmjs.com/pack
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## locate-path 7.2.0
@@ -10896,12 +7366,12 @@ Upstream: [https://www.npmjs.com/package/locate-path](https://www.npmjs.com/pack
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## lodash-es 4.18.1
+## lodash-es 4.17.21
 
-PURL: pkg:npm/lodash-es@4.18.1
+PURL: pkg:npm/lodash-es@4.17.21
 Upstream: [https://www.npmjs.com/package/lodash-es](https://www.npmjs.com/package/lodash-es)
 
 Licenses: MIT
@@ -10909,30 +7379,10 @@ Licenses: MIT
 Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
 
 
-## lodash.capitalize 4.2.1
-
-PURL: pkg:npm/lodash.capitalize@4.2.1
-Upstream: [https://www.npmjs.com/package/lodash.capitalize](https://www.npmjs.com/package/lodash.capitalize)
-
-Licenses: MIT
-
-Copyright jQuery Foundation and other contributors <https://jquery.org/>
-
-
 ## lodash.debounce 4.0.8
 
 PURL: pkg:npm/lodash.debounce@4.0.8
 Upstream: [https://www.npmjs.com/package/lodash.debounce](https://www.npmjs.com/package/lodash.debounce)
-
-Licenses: MIT
-
-Copyright jQuery Foundation and other contributors <https://jquery.org/>
-
-
-## lodash.escaperegexp 4.1.2
-
-PURL: pkg:npm/lodash.escaperegexp@4.1.2
-Upstream: [https://www.npmjs.com/package/lodash.escaperegexp](https://www.npmjs.com/package/lodash.escaperegexp)
 
 Licenses: MIT
 
@@ -10949,36 +7399,6 @@ Licenses: MIT
 Copyright JS Foundation and other contributors <https://js.foundation/>
 
 
-## lodash.ismatch 4.4.0
-
-PURL: pkg:npm/lodash.ismatch@4.4.0
-Upstream: [https://www.npmjs.com/package/lodash.ismatch](https://www.npmjs.com/package/lodash.ismatch)
-
-Licenses: MIT
-
-Copyright jQuery Foundation and other contributors <https://jquery.org/>
-
-
-## lodash.isplainobject 4.0.6
-
-PURL: pkg:npm/lodash.isplainobject@4.0.6
-Upstream: [https://www.npmjs.com/package/lodash.isplainobject](https://www.npmjs.com/package/lodash.isplainobject)
-
-Licenses: MIT
-
-Copyright jQuery Foundation and other contributors <https://jquery.org/>
-
-
-## lodash.isstring 4.0.1
-
-PURL: pkg:npm/lodash.isstring@4.0.1
-Upstream: [https://www.npmjs.com/package/lodash.isstring](https://www.npmjs.com/package/lodash.isstring)
-
-Licenses: MIT
-
-Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
-
-
 ## lodash.merge 4.6.2
 
 PURL: pkg:npm/lodash.merge@4.6.2
@@ -10989,74 +7409,14 @@ Licenses: MIT
 Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
 
 
-## lodash.merge 4.6.9
+## lodash 4.17.21
 
-PURL: pkg:npm/%40types/lodash.merge@4.6.9
-Upstream: [https://www.npmjs.com/package/%40types/lodash.merge](https://www.npmjs.com/package/%40types/lodash.merge)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## lodash.uniqby 4.7.0
-
-PURL: pkg:npm/lodash.uniqby@4.7.0
-Upstream: [https://www.npmjs.com/package/lodash.uniqby](https://www.npmjs.com/package/lodash.uniqby)
-
-Licenses: MIT
-
-Copyright jQuery Foundation and other contributors <https://jquery.org/>
-
-
-## lodash.zip 4.2.0
-
-PURL: pkg:npm/lodash.zip@4.2.0
-Upstream: [https://www.npmjs.com/package/lodash.zip](https://www.npmjs.com/package/lodash.zip)
-
-Licenses: MIT
-
-Copyright jQuery Foundation and other contributors <https://jquery.org/>
-
-
-## lodash 4.17.16
-
-PURL: pkg:npm/%40types/lodash@4.17.16
-Upstream: [https://www.npmjs.com/package/%40types/lodash](https://www.npmjs.com/package/%40types/lodash)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## lodash 4.18.1
-
-PURL: pkg:npm/lodash@4.18.1
+PURL: pkg:npm/lodash@4.17.21
 Upstream: [https://www.npmjs.com/package/lodash](https://www.npmjs.com/package/lodash)
 
 Licenses: MIT
 
 Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
-
-
-## log-symbols 1.0.2
-
-PURL: pkg:npm/log-symbols@1.0.2
-Upstream: [https://www.npmjs.com/package/log-symbols](https://www.npmjs.com/package/log-symbols)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## log-symbols 3.0.0
-
-PURL: pkg:npm/log-symbols@3.0.0
-Upstream: [https://www.npmjs.com/package/log-symbols](https://www.npmjs.com/package/log-symbols)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## log-symbols 4.1.0
@@ -11069,59 +7429,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## log-symbols 5.1.0
+## loupe 2.3.7
 
-PURL: pkg:npm/log-symbols@5.1.0
-Upstream: [https://www.npmjs.com/package/log-symbols](https://www.npmjs.com/package/log-symbols)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## log-update 2.3.0
-
-PURL: pkg:npm/log-update@2.3.0
-Upstream: [https://www.npmjs.com/package/log-update](https://www.npmjs.com/package/log-update)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## log-update 4.0.0
-
-PURL: pkg:npm/log-update@4.0.0
-Upstream: [https://www.npmjs.com/package/log-update](https://www.npmjs.com/package/log-update)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## logger 0.3.0
-
-PURL: pkg:npm/%40open-draft/logger@0.3.0
-Upstream: [https://www.npmjs.com/package/%40open-draft/logger](https://www.npmjs.com/package/%40open-draft/logger)
-
-Licenses: MIT
-
-Copyright (c) 2023—present Artem Zakharchenko
-
-
-## loose-envify 1.4.0
-
-PURL: pkg:npm/loose-envify@1.4.0
-Upstream: [https://www.npmjs.com/package/loose-envify](https://www.npmjs.com/package/loose-envify)
-
-Licenses: MIT
-
-Copyright (c) 2015 Andres Suarez <zertosh@gmail.com>
-
-
-## loupe 3.2.1
-
-PURL: pkg:npm/loupe@3.2.1
+PURL: pkg:npm/loupe@2.3.7
 Upstream: [https://www.npmjs.com/package/loupe](https://www.npmjs.com/package/loupe)
 
 Licenses: MIT
@@ -11129,24 +7439,14 @@ Licenses: MIT
 Copyright (c) 2011-2013 Jake Luer jake@alogicalparadox.com
 
 
-## lowercase-keys 2.0.0
+## lower-case 2.0.2
 
-PURL: pkg:npm/lowercase-keys@2.0.0
-Upstream: [https://www.npmjs.com/package/lowercase-keys](https://www.npmjs.com/package/lowercase-keys)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## lowercase-keys 3.0.0
-
-PURL: pkg:npm/lowercase-keys@3.0.0
-Upstream: [https://www.npmjs.com/package/lowercase-keys](https://www.npmjs.com/package/lowercase-keys)
+PURL: pkg:npm/lower-case@2.0.2
+Upstream: [https://www.npmjs.com/package/lower-case](https://www.npmjs.com/package/lower-case)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
 ## lru-cache 10.4.3
@@ -11156,7 +7456,7 @@ Upstream: [https://www.npmjs.com/package/lru-cache](https://www.npmjs.com/packag
 
 Licenses: ISC
 
-Copyright (c) 2010-2023 Isaac Z. Schlueter and Contributors
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 
 ## lru-cache 5.1.1
@@ -11166,157 +7466,17 @@ Upstream: [https://www.npmjs.com/package/lru-cache](https://www.npmjs.com/packag
 
 Licenses: ISC
 
-Copyright (c) 2010-2023 Isaac Z. Schlueter and Contributors
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## lru-cache 6.0.0
+## magic-string 0.30.11
 
-PURL: pkg:npm/lru-cache@6.0.0
-Upstream: [https://www.npmjs.com/package/lru-cache](https://www.npmjs.com/package/lru-cache)
-
-Licenses: ISC
-
-Copyright (c) 2010-2023 Isaac Z. Schlueter and Contributors
-
-
-## lru-cache 7.18.3
-
-PURL: pkg:npm/lru-cache@7.18.3
-Upstream: [https://www.npmjs.com/package/lru-cache](https://www.npmjs.com/package/lru-cache)
-
-Licenses: ISC
-
-Copyright (c) 2010-2023 Isaac Z. Schlueter and Contributors
-
-
-## lz-string 1.5.0
-
-PURL: pkg:npm/lz-string@1.5.0
-Upstream: [https://www.npmjs.com/package/lz-string](https://www.npmjs.com/package/lz-string)
-
-Licenses: MIT
-
-Copyright (c) 2013 pieroxy
-
-
-## magic-string 0.30.17
-
-PURL: pkg:npm/magic-string@0.30.17
+PURL: pkg:npm/magic-string@0.30.11
 Upstream: [https://www.npmjs.com/package/magic-string](https://www.npmjs.com/package/magic-string)
 
 Licenses: MIT
 
 Copyright 2018 Rich Harris
-
-
-## magic-string 0.30.21
-
-PURL: pkg:npm/magic-string@0.30.21
-Upstream: [https://www.npmjs.com/package/magic-string](https://www.npmjs.com/package/magic-string)
-
-Licenses: MIT
-
-Copyright 2018 Rich Harris
-
-
-## magicast 0.3.5
-
-PURL: pkg:npm/magicast@0.3.5
-Upstream: [https://www.npmjs.com/package/magicast](https://www.npmjs.com/package/magicast)
-
-Licenses: MIT
-
-Copyright (c) Pooya Parsa <pooya@pi0.io> and Anthony Fu <https://github.com/antfu>
-
-
-## make-dir 3.1.0
-
-PURL: pkg:npm/make-dir@3.1.0
-Upstream: [https://www.npmjs.com/package/make-dir](https://www.npmjs.com/package/make-dir)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## make-dir 4.0.0
-
-PURL: pkg:npm/make-dir@4.0.0
-Upstream: [https://www.npmjs.com/package/make-dir](https://www.npmjs.com/package/make-dir)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## make-fetch-happen 10.2.1
-
-PURL: pkg:npm/make-fetch-happen@10.2.1
-Upstream: [https://www.npmjs.com/package/make-fetch-happen](https://www.npmjs.com/package/make-fetch-happen)
-
-Licenses: ISC
-
-Copyright 2017-2022 (c) npm, Inc.
-
-
-## make-fetch-happen 14.0.3
-
-PURL: pkg:npm/make-fetch-happen@14.0.3
-Upstream: [https://www.npmjs.com/package/make-fetch-happen](https://www.npmjs.com/package/make-fetch-happen)
-
-Licenses: ISC
-
-Copyright 2017-2022 (c) npm, Inc.
-
-
-## map-obj 1.0.1
-
-PURL: pkg:npm/map-obj@1.0.1
-Upstream: [https://www.npmjs.com/package/map-obj](https://www.npmjs.com/package/map-obj)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## map-obj 4.3.0
-
-PURL: pkg:npm/map-obj@4.3.0
-Upstream: [https://www.npmjs.com/package/map-obj](https://www.npmjs.com/package/map-obj)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## map-workspaces 2.0.4
-
-PURL: pkg:npm/%40npmcli/map-workspaces@2.0.4
-Upstream: [https://www.npmjs.com/package/%40npmcli/map-workspaces](https://www.npmjs.com/package/%40npmcli/map-workspaces)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## marked-terminal 5.2.0
-
-PURL: pkg:npm/marked-terminal@5.2.0?vcs_url=https%3A%2F%2Fgithub.com%2Fmikaelbr%2Fmarked-terminal.git
-Upstream: [https://www.npmjs.com/package/marked-terminal](https://www.npmjs.com/package/marked-terminal)
-
-Licenses: MIT
-
-Copyright (c) 2017 Mikael Brevik
-
-
-## marked 4.3.0
-
-PURL: pkg:npm/marked@4.3.0
-Upstream: [https://www.npmjs.com/package/marked](https://www.npmjs.com/package/marked)
-
-Licenses: MIT
-
-Copyright (c) 2018+, MarkedJS (https://github.com/markedjs/)
 
 
 ## math-intrinsics 1.1.0
@@ -11329,44 +7489,24 @@ Licenses: MIT
 Copyright (c) 2024 ECMAScript Shims
 
 
-## mdx 2.0.13
+## media-typer 0.3.0
 
-PURL: pkg:npm/%40types/mdx@2.0.13
-Upstream: [https://www.npmjs.com/package/%40types/mdx](https://www.npmjs.com/package/%40types/mdx)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## media-query-parser 2.0.2
-
-PURL: pkg:npm/media-query-parser@2.0.2
-Upstream: [https://www.npmjs.com/package/media-query-parser](https://www.npmjs.com/package/media-query-parser)
+PURL: pkg:npm/media-typer@0.3.0
+Upstream: [https://www.npmjs.com/package/media-typer](https://www.npmjs.com/package/media-typer)
 
 Licenses: MIT
 
-Copyright (c) Tom Golden
+Copyright (c) 2014 Douglas Christopher Wilson
 
 
-## meow 12.1.1
+## merge-descriptors 1.0.3
 
-PURL: pkg:npm/meow@12.1.1
-Upstream: [https://www.npmjs.com/package/meow](https://www.npmjs.com/package/meow)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## meow 8.1.2
-
-PURL: pkg:npm/meow@8.1.2
-Upstream: [https://www.npmjs.com/package/meow](https://www.npmjs.com/package/meow)
+PURL: pkg:npm/merge-descriptors@1.0.3
+Upstream: [https://www.npmjs.com/package/merge-descriptors](https://www.npmjs.com/package/merge-descriptors)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
 
 
 ## merge-stream 2.0.0
@@ -11399,14 +7539,14 @@ Licenses: MIT
 Copyright (c) Travis Clarke
 
 
-## metavuln-calculator 3.1.1
+## methods 1.1.2
 
-PURL: pkg:npm/%40npmcli/metavuln-calculator@3.1.1
-Upstream: [https://www.npmjs.com/package/%40npmcli/metavuln-calculator](https://www.npmjs.com/package/%40npmcli/metavuln-calculator)
+PURL: pkg:npm/methods@1.1.2
+Upstream: [https://www.npmjs.com/package/methods](https://www.npmjs.com/package/methods)
 
-Licenses: ISC
+Licenses: MIT
 
-Copyright (c) npm, Inc.
+Copyright (c) 2013-2014 TJ Holowaychuk <tj@vision-media.ca>
 
 
 ## micromatch 4.0.8
@@ -11429,6 +7569,16 @@ Licenses: MIT
 Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 
+## mime-db 1.53.0
+
+PURL: pkg:npm/mime-db@1.53.0
+Upstream: [https://www.npmjs.com/package/mime-db](https://www.npmjs.com/package/mime-db)
+
+Licenses: MIT
+
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
+
+
 ## mime-types 2.1.35
 
 PURL: pkg:npm/mime-types@2.1.35
@@ -11439,24 +7589,24 @@ Licenses: MIT
 Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 
-## mime 3.0.0
+## mime 1.3.5
 
-PURL: pkg:npm/mime@3.0.0
+PURL: pkg:npm/%40types/mime@1.3.5
+Upstream: [https://www.npmjs.com/package/%40types/mime](https://www.npmjs.com/package/%40types/mime)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
+
+
+## mime 1.6.0
+
+PURL: pkg:npm/mime@1.6.0
 Upstream: [https://www.npmjs.com/package/mime](https://www.npmjs.com/package/mime)
 
 Licenses: MIT
 
 Copyright (c) 2010 Benjamin Thomas, Robert Kieffer
-
-
-## mimic-fn 1.2.0
-
-PURL: pkg:npm/mimic-fn@1.2.0
-Upstream: [https://www.npmjs.com/package/mimic-fn](https://www.npmjs.com/package/mimic-fn)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## mimic-fn 2.1.0
@@ -11466,7 +7616,7 @@ Upstream: [https://www.npmjs.com/package/mimic-fn](https://www.npmjs.com/package
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## mimic-fn 4.0.0
@@ -11476,57 +7626,7 @@ Upstream: [https://www.npmjs.com/package/mimic-fn](https://www.npmjs.com/package
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## mimic-response 1.0.1
-
-PURL: pkg:npm/mimic-response@1.0.1
-Upstream: [https://www.npmjs.com/package/mimic-response](https://www.npmjs.com/package/mimic-response)
-
-Licenses: MIT
-
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## mimic-response 3.1.0
-
-PURL: pkg:npm/mimic-response@3.1.0
-Upstream: [https://www.npmjs.com/package/mimic-response](https://www.npmjs.com/package/mimic-response)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## mimic-response 4.0.0
-
-PURL: pkg:npm/mimic-response@4.0.0
-Upstream: [https://www.npmjs.com/package/mimic-response](https://www.npmjs.com/package/mimic-response)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## min-indent 1.0.1
-
-PURL: pkg:npm/min-indent@1.0.1
-Upstream: [https://www.npmjs.com/package/min-indent](https://www.npmjs.com/package/min-indent)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com), James Kyle <me@thejameskyle.com> (thejameskyle.com)
-
-
-## minimatch 10.0.3
-
-PURL: pkg:npm/minimatch@10.0.3
-Upstream: [https://www.npmjs.com/package/minimatch](https://www.npmjs.com/package/minimatch)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
 
 
 ## minimatch 3.1.2
@@ -11539,19 +7639,29 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## minimatch 5.1.2
-
-PURL: pkg:npm/%40types/minimatch@5.1.2
-Upstream: [https://www.npmjs.com/package/%40types/minimatch](https://www.npmjs.com/package/%40types/minimatch)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
 ## minimatch 5.1.6
 
 PURL: pkg:npm/minimatch@5.1.6
+Upstream: [https://www.npmjs.com/package/minimatch](https://www.npmjs.com/package/minimatch)
+
+Licenses: ISC
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+
+## minimatch 8.0.4
+
+PURL: pkg:npm/minimatch@8.0.4
+Upstream: [https://www.npmjs.com/package/minimatch](https://www.npmjs.com/package/minimatch)
+
+Licenses: ISC
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+
+## minimatch 9.0.1
+
+PURL: pkg:npm/minimatch@9.0.1
 Upstream: [https://www.npmjs.com/package/minimatch](https://www.npmjs.com/package/minimatch)
 
 Licenses: ISC
@@ -11569,26 +7679,6 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## minimist-options 4.1.0
-
-PURL: pkg:npm/minimist-options@4.1.0
-Upstream: [https://www.npmjs.com/package/minimist-options](https://www.npmjs.com/package/minimist-options)
-
-Licenses: MIT
-
-Copyright (c) Vadim Demedes <vdemedes@gmail.com> (vadimdemedes.com)
-
-
-## minimist 1.2.5
-
-PURL: pkg:npm/%40types/minimist@1.2.5
-Upstream: [https://www.npmjs.com/package/%40types/minimist](https://www.npmjs.com/package/%40types/minimist)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
 ## minimist 1.2.8
 
 PURL: pkg:npm/minimist@1.2.8
@@ -11599,104 +7689,14 @@ Licenses: MIT
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 
 
-## minipass-collect 1.0.2
+## minipass 4.2.8
 
-PURL: pkg:npm/minipass-collect@1.0.2
-Upstream: [https://www.npmjs.com/package/minipass-collect](https://www.npmjs.com/package/minipass-collect)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-collect 2.0.1
-
-PURL: pkg:npm/minipass-collect@2.0.1
-Upstream: [https://www.npmjs.com/package/minipass-collect](https://www.npmjs.com/package/minipass-collect)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-fetch 2.1.2
-
-PURL: pkg:npm/minipass-fetch@2.1.2
-Upstream: [https://www.npmjs.com/package/minipass-fetch](https://www.npmjs.com/package/minipass-fetch)
-
-Licenses: MIT
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-fetch 4.0.1
-
-PURL: pkg:npm/minipass-fetch@4.0.1
-Upstream: [https://www.npmjs.com/package/minipass-fetch](https://www.npmjs.com/package/minipass-fetch)
-
-Licenses: MIT
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-flush 1.0.5
-
-PURL: pkg:npm/minipass-flush@1.0.5
-Upstream: [https://www.npmjs.com/package/minipass-flush](https://www.npmjs.com/package/minipass-flush)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-json-stream 1.0.2
-
-PURL: pkg:npm/minipass-json-stream@1.0.2
-Upstream: [https://www.npmjs.com/package/minipass-json-stream](https://www.npmjs.com/package/minipass-json-stream)
-
-Licenses: MIT
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-pipeline 1.2.4
-
-PURL: pkg:npm/minipass-pipeline@1.2.4
-Upstream: [https://www.npmjs.com/package/minipass-pipeline](https://www.npmjs.com/package/minipass-pipeline)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass-sized 1.0.3
-
-PURL: pkg:npm/minipass-sized@1.0.3
-Upstream: [https://www.npmjs.com/package/minipass-sized](https://www.npmjs.com/package/minipass-sized)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## minipass 3.3.6
-
-PURL: pkg:npm/minipass@3.3.6
+PURL: pkg:npm/minipass@4.2.8
 Upstream: [https://www.npmjs.com/package/minipass](https://www.npmjs.com/package/minipass)
 
 Licenses: ISC
 
-Copyright (c) 2017-2022 npm, Inc., Isaac Z. Schlueter, and Contributors
-
-
-## minipass 5.0.0
-
-PURL: pkg:npm/minipass@5.0.0
-Upstream: [https://www.npmjs.com/package/minipass](https://www.npmjs.com/package/minipass)
-
-Licenses: ISC
-
-Copyright (c) 2017-2022 npm, Inc., Isaac Z. Schlueter, and Contributors
+Copyright (c) 2017-2023 npm, Inc., Isaac Z. Schlueter, and Contributors
 
 
 ## minipass 7.1.2
@@ -11706,57 +7706,17 @@ Upstream: [https://www.npmjs.com/package/minipass](https://www.npmjs.com/package
 
 Licenses: ISC
 
-Copyright (c) 2017-2022 npm, Inc., Isaac Z. Schlueter, and Contributors
+Copyright (c) 2017-2023 npm, Inc., Isaac Z. Schlueter, and Contributors
 
 
-## minizlib 2.1.2
+## minipass 7.1.3
 
-PURL: pkg:npm/minizlib@2.1.2
-Upstream: [https://www.npmjs.com/package/minizlib](https://www.npmjs.com/package/minizlib)
+PURL: pkg:npm/minipass@7.1.3
+Upstream: [https://www.npmjs.com/package/minipass](https://www.npmjs.com/package/minipass)
 
-Licenses: MIT
+Licenses: BlueOak-1.0.0
 
-Copyright Isaac Z. Schlueter and Contributors
-
-
-## minizlib 3.0.2
-
-PURL: pkg:npm/minizlib@3.0.2
-Upstream: [https://www.npmjs.com/package/minizlib](https://www.npmjs.com/package/minizlib)
-
-Licenses: MIT
-
-Copyright Isaac Z. Schlueter and Contributors
-
-
-## mkdirp-infer-owner 2.0.0
-
-PURL: pkg:npm/mkdirp-infer-owner@2.0.0
-Upstream: [https://www.npmjs.com/package/mkdirp-infer-owner](https://www.npmjs.com/package/mkdirp-infer-owner)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## mkdirp 1.0.4
-
-PURL: pkg:npm/mkdirp@1.0.4
-Upstream: [https://www.npmjs.com/package/mkdirp](https://www.npmjs.com/package/mkdirp)
-
-Licenses: MIT
-
-Copyright James Halliday (mail@substack.net) and Isaac Z. Schlueter (i@izs.me)
-
-
-## mkdirp 3.0.1
-
-PURL: pkg:npm/mkdirp@3.0.1
-Upstream: [https://www.npmjs.com/package/mkdirp](https://www.npmjs.com/package/mkdirp)
-
-Licenses: MIT
-
-Copyright James Halliday (mail@substack.net) and Isaac Z. Schlueter (i@izs.me)
+Copyright (c) 2017-2023 npm, Inc., Isaac Z. Schlueter, and Contributors
 
 
 ## mkdocs-include-markdown-plugin 7.2.0
@@ -11779,54 +7739,14 @@ Licenses: MIT
 Copyright (c) traefiklabs
 
 
-## mlly 1.8.0
+## mlly 1.7.2
 
-PURL: pkg:npm/mlly@1.8.0
+PURL: pkg:npm/mlly@1.7.2
 Upstream: [https://www.npmjs.com/package/mlly](https://www.npmjs.com/package/mlly)
 
 Licenses: MIT
 
 Copyright (c) Pooya Parsa <pooya@pi0.io>
-
-
-## mocker 3.2.4
-
-PURL: pkg:npm/%40vitest/mocker@3.2.4?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fmocker
-Upstream: [https://www.npmjs.com/package/%40vitest/mocker](https://www.npmjs.com/package/%40vitest/mocker)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present Vitest Team
-
-
-## mocker 4.0.3
-
-PURL: pkg:npm/%40vitest/mocker@4.0.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fmocker
-Upstream: [https://www.npmjs.com/package/%40vitest/mocker](https://www.npmjs.com/package/%40vitest/mocker)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present Vitest Team
-
-
-## modern-ahocorasick 1.1.0
-
-PURL: pkg:npm/modern-ahocorasick@1.1.0
-Upstream: [https://www.npmjs.com/package/modern-ahocorasick](https://www.npmjs.com/package/modern-ahocorasick)
-
-Licenses: MIT
-
-Copyright (c) 2023 ice breaker
-
-
-## modify-values 1.0.1
-
-PURL: pkg:npm/modify-values@1.0.1
-Upstream: [https://www.npmjs.com/package/modify-values](https://www.npmjs.com/package/modify-values)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## module-importer 1.0.1
@@ -11839,54 +7759,24 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## module 2.0.2
+## moment 2.30.1
 
-PURL: pkg:npm/%40bconnorwhite/module@2.0.2
-Upstream: [https://www.npmjs.com/package/%40bconnorwhite/module](https://www.npmjs.com/package/%40bconnorwhite/module)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## moo-color 1.0.3
-
-PURL: pkg:npm/moo-color@1.0.3
-Upstream: [https://www.npmjs.com/package/moo-color](https://www.npmjs.com/package/moo-color)
+PURL: pkg:npm/moment@2.30.1
+Upstream: [https://www.npmjs.com/package/moment](https://www.npmjs.com/package/moment)
 
 Licenses: MIT
 
-Copyright (c) 2018 archco
+Copyright (c) JS Foundation and other contributors
 
 
-## motion-dom 11.18.1
+## ms 2.0.0
 
-PURL: pkg:npm/motion-dom@11.18.1
-Upstream: [https://www.npmjs.com/package/motion-dom](https://www.npmjs.com/package/motion-dom)
-
-Licenses: MIT
-
-Copyright (c) 2024 [Motion](https://motion.dev) B.V.
-
-
-## motion-utils 11.18.1
-
-PURL: pkg:npm/motion-utils@11.18.1
-Upstream: [https://www.npmjs.com/package/motion-utils](https://www.npmjs.com/package/motion-utils)
+PURL: pkg:npm/ms@2.0.0
+Upstream: [https://www.npmjs.com/package/ms](https://www.npmjs.com/package/ms)
 
 Licenses: MIT
 
-Copyright (c) 2024 [Motion](https://motion.dev) B.V.
-
-
-## move-file 2.0.1
-
-PURL: pkg:npm/%40npmcli/move-file@2.0.1
-Upstream: [https://www.npmjs.com/package/%40npmcli/move-file](https://www.npmjs.com/package/%40npmcli/move-file)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2020 Vercel, Inc.
 
 
 ## ms 2.1.3
@@ -11899,59 +7789,9 @@ Licenses: MIT
 Copyright (c) 2020 Vercel, Inc.
 
 
-## msw 2.7.3
-
-PURL: pkg:npm/msw@2.7.3?vcs_url=https%3A%2F%2Fgithub.com%2Fmswjs%2Fmsw
-Upstream: [https://www.npmjs.com/package/msw](https://www.npmjs.com/package/msw)
-
-Licenses: MIT
-
-Copyright (c) 2018–present Artem Zakharchenko
-
-
-## muggle-string 0.4.1
-
-PURL: pkg:npm/muggle-string@0.4.1
-Upstream: [https://www.npmjs.com/package/muggle-string](https://www.npmjs.com/package/muggle-string)
-
-Licenses: MIT
-
-Copyright (c) 2022-present Johnson Chu
-
-
-## mute-stream 0.0.7
-
-PURL: pkg:npm/mute-stream@0.0.7
-Upstream: [https://www.npmjs.com/package/mute-stream](https://www.npmjs.com/package/mute-stream)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## mute-stream 0.0.8
-
-PURL: pkg:npm/mute-stream@0.0.8
-Upstream: [https://www.npmjs.com/package/mute-stream](https://www.npmjs.com/package/mute-stream)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
 ## mute-stream 1.0.0
 
 PURL: pkg:npm/mute-stream@1.0.0
-Upstream: [https://www.npmjs.com/package/mute-stream](https://www.npmjs.com/package/mute-stream)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## mute-stream 2.0.0
-
-PURL: pkg:npm/mute-stream@2.0.0
 Upstream: [https://www.npmjs.com/package/mute-stream](https://www.npmjs.com/package/mute-stream)
 
 Licenses: ISC
@@ -11969,14 +7809,14 @@ Licenses: BSD-3-Clause
 Copyright (c) 2015, Daniel Martí. All rights reserved.
 
 
-## name-from-folder 1.0.1
+## mz 2.7.0
 
-PURL: pkg:npm/%40npmcli/name-from-folder@1.0.1
-Upstream: [https://www.npmjs.com/package/%40npmcli/name-from-folder](https://www.npmjs.com/package/%40npmcli/name-from-folder)
+PURL: pkg:npm/mz@2.7.0
+Upstream: [https://www.npmjs.com/package/mz](https://www.npmjs.com/package/mz)
 
-Licenses: ISC
+Licenses: MIT
 
-Copyright npm, Inc.
+Copyright (c) 2014-2016 Jonathan Ong me@jongleberry.com and Contributors
 
 
 ## nanoid 3.3.11
@@ -11989,16 +7829,6 @@ Licenses: MIT
 Copyright 2017 Andrey Sitnik <andrey@sitnik.ru>
 
 
-## napi-postinstall 0.3.2
-
-PURL: pkg:npm/napi-postinstall@0.3.2
-Upstream: [https://www.npmjs.com/package/napi-postinstall](https://www.npmjs.com/package/napi-postinstall)
-
-Licenses: MIT
-
-Copyright (c) 2021-present UnTS
-
-
 ## natural-compare 1.4.0
 
 PURL: pkg:npm/natural-compare@1.4.0
@@ -12009,9 +7839,9 @@ Licenses: MIT
 Copyright (c) Lauri Rooden
 
 
-## negotiator 0.6.4
+## negotiator 0.6.3
 
-PURL: pkg:npm/negotiator@0.6.4
+PURL: pkg:npm/negotiator@0.6.3
 Upstream: [https://www.npmjs.com/package/negotiator](https://www.npmjs.com/package/negotiator)
 
 Licenses: MIT
@@ -12019,119 +7849,39 @@ Licenses: MIT
 Copyright (c) 2012-2014 Federico Romero
 
 
-## negotiator 1.0.0
+## no-case 3.0.4
 
-PURL: pkg:npm/negotiator@1.0.0
-Upstream: [https://www.npmjs.com/package/negotiator](https://www.npmjs.com/package/negotiator)
-
-Licenses: MIT
-
-Copyright (c) 2012-2014 Federico Romero
-
-
-## neo-async 2.6.2
-
-PURL: pkg:npm/neo-async@2.6.2
-Upstream: [https://www.npmjs.com/package/neo-async](https://www.npmjs.com/package/neo-async)
+PURL: pkg:npm/no-case@3.0.4
+Upstream: [https://www.npmjs.com/package/no-case](https://www.npmjs.com/package/no-case)
 
 Licenses: MIT
 
-Copyright (c) 2014-2018 Suguru Motegi
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
-## nerf-dart 1.0.0
+## node-forge 1.3.1
 
-PURL: pkg:npm/nerf-dart@1.0.0
-Upstream: [https://www.npmjs.com/package/nerf-dart](https://www.npmjs.com/package/nerf-dart)
+PURL: pkg:npm/node-forge@1.3.1
+Upstream: [https://www.npmjs.com/package/node-forge](https://www.npmjs.com/package/node-forge)
 
-Licenses: MIT
+Licenses: BSD-3-Clause, GPL-2.0-only
 
-Copyright (c) Stephan Bönnemann
-
-
-## new-github-release-url 2.0.0
-
-PURL: pkg:npm/new-github-release-url@2.0.0
-Upstream: [https://www.npmjs.com/package/new-github-release-url](https://www.npmjs.com/package/new-github-release-url)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2010, Digital Bazaar, Inc.
 
 
-## nice-try 1.0.5
+## node-forge 1.3.11
 
-PURL: pkg:npm/nice-try@1.0.5
-Upstream: [https://www.npmjs.com/package/nice-try](https://www.npmjs.com/package/nice-try)
+PURL: pkg:npm/%40types/node-forge@1.3.11
+Upstream: [https://www.npmjs.com/package/%40types/node-forge](https://www.npmjs.com/package/%40types/node-forge)
 
 Licenses: MIT
 
-Copyright (c) 2018 Tobias Reich
+Copyright (c) Microsoft Corporation.
 
 
-## node-core-library 5.18.0
+## node-releases 2.0.18
 
-PURL: pkg:npm/%40rushstack/node-core-library@5.18.0?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Frushstack.git%23libraries%2Fnode-core-library
-Upstream: [https://www.npmjs.com/package/%40rushstack/node-core-library](https://www.npmjs.com/package/%40rushstack/node-core-library)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## node-emoji 1.11.0
-
-PURL: pkg:npm/node-emoji@1.11.0
-Upstream: [https://www.npmjs.com/package/node-emoji](https://www.npmjs.com/package/node-emoji)
-
-Licenses: MIT
-
-Copyright (c) 2014 Daniel Bugl
-
-
-## node-fetch 2.7.0
-
-PURL: pkg:npm/node-fetch@2.7.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbitinn%2Fnode-fetch.git
-Upstream: [https://www.npmjs.com/package/node-fetch](https://www.npmjs.com/package/node-fetch)
-
-Licenses: MIT
-
-Copyright (c) 2016 David Frank
-
-
-## node-gyp 11.2.0
-
-PURL: pkg:npm/node-gyp@11.2.0
-Upstream: [https://www.npmjs.com/package/node-gyp](https://www.npmjs.com/package/node-gyp)
-
-Licenses: MIT
-
-Copyright (c) 2012 Nathan Rajlich <nathan@tootallnate.net>
-
-
-## node-gyp 2.0.0
-
-PURL: pkg:npm/%40npmcli/node-gyp@2.0.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/node-gyp](https://www.npmjs.com/package/%40npmcli/node-gyp)
-
-Licenses: ISC
-
-Copyright (c) GitHub Inc.
-
-
-## node-gyp 9.4.1
-
-PURL: pkg:npm/node-gyp@9.4.1
-Upstream: [https://www.npmjs.com/package/node-gyp](https://www.npmjs.com/package/node-gyp)
-
-Licenses: MIT
-
-Copyright (c) 2012 Nathan Rajlich <nathan@tootallnate.net>
-
-
-## node-releases 2.0.19
-
-PURL: pkg:npm/node-releases@2.0.19
+PURL: pkg:npm/node-releases@2.0.18
 Upstream: [https://www.npmjs.com/package/node-releases](https://www.npmjs.com/package/node-releases)
 
 Licenses: MIT
@@ -12139,19 +7889,9 @@ Licenses: MIT
 Copyright (c) 2017 Sergey Rubanov (https://github.com/chicoxyzzy)
 
 
-## node 0.16.6
+## node 22.7.5
 
-PURL: pkg:npm/%40humanfs/node@0.16.6
-Upstream: [https://www.npmjs.com/package/%40humanfs/node](https://www.npmjs.com/package/%40humanfs/node)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## node 22.14.0
-
-PURL: pkg:npm/%40types/node@22.14.0
+PURL: pkg:npm/%40types/node@22.7.5
 Upstream: [https://www.npmjs.com/package/%40types/node](https://www.npmjs.com/package/%40types/node)
 
 Licenses: MIT
@@ -12159,29 +7899,9 @@ Licenses: MIT
 Copyright (c) Microsoft Corporation.
 
 
-## node 22.15.18
+## nopt 7.2.1
 
-PURL: pkg:npm/%40types/node@22.15.18
-Upstream: [https://www.npmjs.com/package/%40types/node](https://www.npmjs.com/package/%40types/node)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## node 24.10.4
-
-PURL: pkg:npm/%40types/node@24.10.4
-Upstream: [https://www.npmjs.com/package/%40types/node](https://www.npmjs.com/package/%40types/node)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## nopt 6.0.0
-
-PURL: pkg:npm/nopt@6.0.0
+PURL: pkg:npm/nopt@7.2.1
 Upstream: [https://www.npmjs.com/package/nopt](https://www.npmjs.com/package/nopt)
 
 Licenses: ISC
@@ -12189,54 +7909,14 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## nopt 8.1.0
+## nopt 9.0.0
 
-PURL: pkg:npm/nopt@8.1.0
+PURL: pkg:npm/nopt@9.0.0
 Upstream: [https://www.npmjs.com/package/nopt](https://www.npmjs.com/package/nopt)
 
 Licenses: ISC
 
 Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## normalize-package-data 2.4.4
-
-PURL: pkg:npm/%40types/normalize-package-data@2.4.4
-Upstream: [https://www.npmjs.com/package/%40types/normalize-package-data](https://www.npmjs.com/package/%40types/normalize-package-data)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## normalize-package-data 2.5.0
-
-PURL: pkg:npm/normalize-package-data@2.5.0
-Upstream: [https://www.npmjs.com/package/normalize-package-data](https://www.npmjs.com/package/normalize-package-data)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Meryn Stol ("Author")
-
-
-## normalize-package-data 3.0.3
-
-PURL: pkg:npm/normalize-package-data@3.0.3
-Upstream: [https://www.npmjs.com/package/normalize-package-data](https://www.npmjs.com/package/normalize-package-data)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Meryn Stol ("Author")
-
-
-## normalize-package-data 4.0.1
-
-PURL: pkg:npm/normalize-package-data@4.0.1
-Upstream: [https://www.npmjs.com/package/normalize-package-data](https://www.npmjs.com/package/normalize-package-data)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Meryn Stol ("Author")
 
 
 ## normalize-path 3.0.0
@@ -12249,194 +7929,14 @@ Licenses: MIT
 Copyright (c) 2014-2018, Jon Schlinkert.
 
 
-## normalize-url 6.1.0
+## normalize-range 0.1.2
 
-PURL: pkg:npm/normalize-url@6.1.0
-Upstream: [https://www.npmjs.com/package/normalize-url](https://www.npmjs.com/package/normalize-url)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## normalize-url 8.0.1
-
-PURL: pkg:npm/normalize-url@8.0.1
-Upstream: [https://www.npmjs.com/package/normalize-url](https://www.npmjs.com/package/normalize-url)
+PURL: pkg:npm/normalize-range@0.1.2
+Upstream: [https://www.npmjs.com/package/normalize-range](https://www.npmjs.com/package/normalize-range)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## np 8.0.4
-
-PURL: pkg:npm/np@8.0.4
-Upstream: [https://www.npmjs.com/package/np](https://www.npmjs.com/package/np)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## npm-audit-report 3.0.0
-
-PURL: pkg:npm/npm-audit-report@3.0.0
-Upstream: [https://www.npmjs.com/package/npm-audit-report](https://www.npmjs.com/package/npm-audit-report)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## npm-bundled 1.1.2
-
-PURL: pkg:npm/npm-bundled@1.1.2
-Upstream: [https://www.npmjs.com/package/npm-bundled](https://www.npmjs.com/package/npm-bundled)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc. and Contributors
-
-
-## npm-bundled 2.0.1
-
-PURL: pkg:npm/npm-bundled@2.0.1
-Upstream: [https://www.npmjs.com/package/npm-bundled](https://www.npmjs.com/package/npm-bundled)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc. and Contributors
-
-
-## npm-conf 2.3.1
-
-PURL: pkg:npm/%40pnpm/npm-conf@2.3.1
-Upstream: [https://www.npmjs.com/package/%40pnpm/npm-conf](https://www.npmjs.com/package/%40pnpm/npm-conf)
-
-Licenses: MIT
-
-Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com/kevva)
-
-
-## npm-install-checks 5.0.0
-
-PURL: pkg:npm/npm-install-checks@5.0.0
-Upstream: [https://www.npmjs.com/package/npm-install-checks](https://www.npmjs.com/package/npm-install-checks)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) Robert Kowalski and Isaac Z. Schlueter ("Authors")
-
-
-## npm-name 7.1.1
-
-PURL: pkg:npm/npm-name@7.1.1
-Upstream: [https://www.npmjs.com/package/npm-name](https://www.npmjs.com/package/npm-name)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## npm-normalize-package-bin 1.0.1
-
-PURL: pkg:npm/npm-normalize-package-bin@1.0.1
-Upstream: [https://www.npmjs.com/package/npm-normalize-package-bin](https://www.npmjs.com/package/npm-normalize-package-bin)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## npm-normalize-package-bin 2.0.0
-
-PURL: pkg:npm/npm-normalize-package-bin@2.0.0
-Upstream: [https://www.npmjs.com/package/npm-normalize-package-bin](https://www.npmjs.com/package/npm-normalize-package-bin)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## npm-package-arg 9.1.2
-
-PURL: pkg:npm/npm-package-arg@9.1.2
-Upstream: [https://www.npmjs.com/package/npm-package-arg](https://www.npmjs.com/package/npm-package-arg)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## npm-packlist 5.1.3
-
-PURL: pkg:npm/npm-packlist@5.1.3
-Upstream: [https://www.npmjs.com/package/npm-packlist](https://www.npmjs.com/package/npm-packlist)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## npm-pick-manifest 7.0.2
-
-PURL: pkg:npm/npm-pick-manifest@7.0.2
-Upstream: [https://www.npmjs.com/package/npm-pick-manifest](https://www.npmjs.com/package/npm-pick-manifest)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## npm-profile 6.2.1
-
-PURL: pkg:npm/npm-profile@6.2.1
-Upstream: [https://www.npmjs.com/package/npm-profile](https://www.npmjs.com/package/npm-profile)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## npm-registry-fetch 13.3.1
-
-PURL: pkg:npm/npm-registry-fetch@13.3.1
-Upstream: [https://www.npmjs.com/package/npm-registry-fetch](https://www.npmjs.com/package/npm-registry-fetch)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## npm-run-path 2.0.2
-
-PURL: pkg:npm/npm-run-path@2.0.2
-Upstream: [https://www.npmjs.com/package/npm-run-path](https://www.npmjs.com/package/npm-run-path)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## npm-run-path 3.1.0
-
-PURL: pkg:npm/npm-run-path@3.1.0
-Upstream: [https://www.npmjs.com/package/npm-run-path](https://www.npmjs.com/package/npm-run-path)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## npm-run-path 4.0.1
-
-PURL: pkg:npm/npm-run-path@4.0.1
-Upstream: [https://www.npmjs.com/package/npm-run-path](https://www.npmjs.com/package/npm-run-path)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) James Talmage <james@talmage.io> (github.com/jamestalmage)
 
 
 ## npm-run-path 5.3.0
@@ -12449,64 +7949,14 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## npm-user-validate 1.0.1
+## nth-check 2.1.1
 
-PURL: pkg:npm/npm-user-validate@1.0.1
-Upstream: [https://www.npmjs.com/package/npm-user-validate](https://www.npmjs.com/package/npm-user-validate)
+PURL: pkg:npm/nth-check@2.1.1
+Upstream: [https://www.npmjs.com/package/nth-check](https://www.npmjs.com/package/nth-check)
 
 Licenses: BSD-2-Clause
 
-Copyright (c) Robert Kowalski
-
-
-## npm 8.19.4
-
-PURL: pkg:npm/npm@8.19.4
-Upstream: [https://www.npmjs.com/package/npm](https://www.npmjs.com/package/npm)
-
-Licenses: Artistic-2.0
-
-Copyright (c) npm, Inc. and Contributors
-
-
-## npm 9.0.2
-
-PURL: pkg:npm/%40semantic-release/npm@9.0.2?vcs_url=https%3A%2F%2Fgithub.com%2Fsemantic-release%2Fnpm.git
-Upstream: [https://www.npmjs.com/package/%40semantic-release/npm](https://www.npmjs.com/package/%40semantic-release/npm)
-
-Licenses: MIT
-
-Copyright (c) 2017 Contributors
-
-
-## npmlog 6.0.2
-
-PURL: pkg:npm/npmlog@6.0.2
-Upstream: [https://www.npmjs.com/package/npmlog](https://www.npmjs.com/package/npmlog)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## number-is-nan 1.0.1
-
-PURL: pkg:npm/number-is-nan@1.0.1
-Upstream: [https://www.npmjs.com/package/number-is-nan](https://www.npmjs.com/package/number-is-nan)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## nwsapi 2.2.20
-
-PURL: pkg:npm/nwsapi@2.2.20
-Upstream: [https://www.npmjs.com/package/nwsapi](https://www.npmjs.com/package/nwsapi)
-
-Licenses: MIT
-
-Copyright (c) 2007-2025 Diego Perini (http://www.iport.it/)
+Copyright (c) Felix Böhm
 
 
 ## object-assign 4.1.1
@@ -12519,24 +7969,14 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## object-inspect 1.13.4
+## object-inspect 1.13.2
 
-PURL: pkg:npm/object-inspect@1.13.4
+PURL: pkg:npm/object-inspect@1.13.2
 Upstream: [https://www.npmjs.com/package/object-inspect](https://www.npmjs.com/package/object-inspect)
 
 Licenses: MIT
 
 Copyright (c) 2013 James Halliday
-
-
-## object-is 1.1.6
-
-PURL: pkg:npm/object-is@1.1.6
-Upstream: [https://www.npmjs.com/package/object-is](https://www.npmjs.com/package/object-is)
-
-Licenses: MIT
-
-Copyright (c) 2014 Jordan Harband
 
 
 ## object-keys 1.1.1
@@ -12549,34 +7989,24 @@ Licenses: MIT
 Copyright (C) 2013 Jordan Harband
 
 
-## object-schema 2.1.6
+## object-schema 2.0.3
 
-PURL: pkg:npm/%40eslint/object-schema@2.1.6
-Upstream: [https://www.npmjs.com/package/%40eslint/object-schema](https://www.npmjs.com/package/%40eslint/object-schema)
+PURL: pkg:npm/%40humanwhocodes/object-schema@2.0.3
+Upstream: [https://www.npmjs.com/package/%40humanwhocodes/object-schema](https://www.npmjs.com/package/%40humanwhocodes/object-schema)
 
-Licenses: Apache-2.0
+Licenses: BSD-3-Clause
 
-copyright notice that is included in or attached to the work
+Copyright (c) 2019, Human Who Codes
 
 
-## object.assign 4.1.7
+## object.assign 4.1.5
 
-PURL: pkg:npm/object.assign@4.1.7
+PURL: pkg:npm/object.assign@4.1.5
 Upstream: [https://www.npmjs.com/package/object.assign](https://www.npmjs.com/package/object.assign)
 
 Licenses: MIT
 
 Copyright (c) 2014 Jordan Harband
-
-
-## object.entries 1.1.9
-
-PURL: pkg:npm/object.entries@1.1.9
-Upstream: [https://www.npmjs.com/package/object.entries](https://www.npmjs.com/package/object.entries)
-
-Licenses: MIT
-
-Copyright (c) 2015 Jordan Harband
 
 
 ## object.fromentries 2.0.8
@@ -12599,14 +8029,34 @@ Licenses: MIT
 Copyright (c) 2023 ECMAScript Shims
 
 
-## object.values 1.2.1
+## object.values 1.2.0
 
-PURL: pkg:npm/object.values@1.2.1
+PURL: pkg:npm/object.values@1.2.0
 Upstream: [https://www.npmjs.com/package/object.values](https://www.npmjs.com/package/object.values)
 
 Licenses: MIT
 
 Copyright (c) 2015 Jordan Harband
+
+
+## on-finished 2.4.1
+
+PURL: pkg:npm/on-finished@2.4.1
+Upstream: [https://www.npmjs.com/package/on-finished](https://www.npmjs.com/package/on-finished)
+
+Licenses: MIT
+
+Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
+
+
+## on-headers 1.0.2
+
+PURL: pkg:npm/on-headers@1.0.2
+Upstream: [https://www.npmjs.com/package/on-headers](https://www.npmjs.com/package/on-headers)
+
+Licenses: MIT
+
+Copyright (c) 2014 Douglas Christopher Wilson
 
 
 ## once 1.4.0
@@ -12617,26 +8067,6 @@ Upstream: [https://www.npmjs.com/package/once](https://www.npmjs.com/package/onc
 Licenses: ISC
 
 Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## once 2.0.0
-
-PURL: pkg:npm/%40tootallnate/once@2.0.0
-Upstream: [https://www.npmjs.com/package/%40tootallnate/once](https://www.npmjs.com/package/%40tootallnate/once)
-
-Licenses: MIT
-
-Copyright (c) 2020 Nathan Rajlich
-
-
-## onetime 2.0.1
-
-PURL: pkg:npm/onetime@2.0.1
-Upstream: [https://www.npmjs.com/package/onetime](https://www.npmjs.com/package/onetime)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## onetime 5.1.2
@@ -12659,9 +8089,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## open 7.4.2
+## open 10.1.0
 
-PURL: pkg:npm/open@7.4.2
+PURL: pkg:npm/open@10.1.0
 Upstream: [https://www.npmjs.com/package/open](https://www.npmjs.com/package/open)
 
 Licenses: MIT
@@ -12669,44 +8099,14 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## open 9.1.0
+## open 8.4.2
 
-PURL: pkg:npm/open@9.1.0
+PURL: pkg:npm/open@8.4.2
 Upstream: [https://www.npmjs.com/package/open](https://www.npmjs.com/package/open)
 
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## openapi-types 18.1.1
-
-PURL: pkg:npm/%40octokit/openapi-types@18.1.1
-Upstream: [https://www.npmjs.com/package/%40octokit/openapi-types](https://www.npmjs.com/package/%40octokit/openapi-types)
-
-Licenses: MIT
-
-Copyright 2020 Gregor Martynus
-
-
-## opencollective-postinstall 2.0.3
-
-PURL: pkg:npm/opencollective-postinstall@2.0.3
-Upstream: [https://www.npmjs.com/package/opencollective-postinstall](https://www.npmjs.com/package/opencollective-postinstall)
-
-Licenses: MIT
-
-Copyright (c) 2018 Open Collective
-
-
-## opener 1.5.2
-
-PURL: pkg:npm/opener@1.5.2
-Upstream: [https://www.npmjs.com/package/opener](https://www.npmjs.com/package/opener)
-
-Licenses: MIT, WTFPL
-
-Copyright © 2012–2020 Domenic Denicola <d@domenic.me>
 
 
 ## optionator 0.9.4
@@ -12729,130 +8129,10 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## org-regex 1.0.0
-
-PURL: pkg:npm/org-regex@1.0.0
-Upstream: [https://www.npmjs.com/package/org-regex](https://www.npmjs.com/package/org-regex)
-
-Licenses: MIT
-
-Copyright (c) 2019 Siddharth Doshi
-
-
 ## os-tmpdir 1.0.2
 
 PURL: pkg:npm/os-tmpdir@1.0.2
 Upstream: [https://www.npmjs.com/package/os-tmpdir](https://www.npmjs.com/package/os-tmpdir)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## outvariant 1.4.3
-
-PURL: pkg:npm/outvariant@1.4.3
-Upstream: [https://www.npmjs.com/package/outvariant](https://www.npmjs.com/package/outvariant)
-
-Licenses: MIT
-
-Copyright (c) 2021–present Artem Zakharchenko
-
-
-## ow 1.1.1
-
-PURL: pkg:npm/ow@1.1.1
-Upstream: [https://www.npmjs.com/package/ow](https://www.npmjs.com/package/ow)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## own-keys 1.0.1
-
-PURL: pkg:npm/own-keys@1.0.1
-Upstream: [https://www.npmjs.com/package/own-keys](https://www.npmjs.com/package/own-keys)
-
-Licenses: MIT
-
-Copyright (c) 2024 Jordan Harband
-
-
-## p-cancelable 2.1.1
-
-PURL: pkg:npm/p-cancelable@2.1.1
-Upstream: [https://www.npmjs.com/package/p-cancelable](https://www.npmjs.com/package/p-cancelable)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-cancelable 3.0.0
-
-PURL: pkg:npm/p-cancelable@3.0.0
-Upstream: [https://www.npmjs.com/package/p-cancelable](https://www.npmjs.com/package/p-cancelable)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-each-series 2.2.0
-
-PURL: pkg:npm/p-each-series@2.2.0
-Upstream: [https://www.npmjs.com/package/p-each-series](https://www.npmjs.com/package/p-each-series)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-filter 2.1.0
-
-PURL: pkg:npm/p-filter@2.1.0
-Upstream: [https://www.npmjs.com/package/p-filter](https://www.npmjs.com/package/p-filter)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-finally 1.0.0
-
-PURL: pkg:npm/p-finally@1.0.0
-Upstream: [https://www.npmjs.com/package/p-finally](https://www.npmjs.com/package/p-finally)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-finally 2.0.1
-
-PURL: pkg:npm/p-finally@2.0.1
-Upstream: [https://www.npmjs.com/package/p-finally](https://www.npmjs.com/package/p-finally)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-is-promise 3.0.0
-
-PURL: pkg:npm/p-is-promise@3.0.0
-Upstream: [https://www.npmjs.com/package/p-is-promise](https://www.npmjs.com/package/p-is-promise)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-limit 1.3.0
-
-PURL: pkg:npm/p-limit@1.3.0
-Upstream: [https://www.npmjs.com/package/p-limit](https://www.npmjs.com/package/p-limit)
 
 Licenses: MIT
 
@@ -12866,7 +8146,7 @@ Upstream: [https://www.npmjs.com/package/p-limit](https://www.npmjs.com/package/
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## p-limit 3.1.0
@@ -12876,7 +8156,7 @@ Upstream: [https://www.npmjs.com/package/p-limit](https://www.npmjs.com/package/
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## p-limit 4.0.0
@@ -12886,27 +8166,27 @@ Upstream: [https://www.npmjs.com/package/p-limit](https://www.npmjs.com/package/
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## p-locate 2.0.0
+## p-limit 5.0.0
 
-PURL: pkg:npm/p-locate@2.0.0
+PURL: pkg:npm/p-limit@5.0.0
+Upstream: [https://www.npmjs.com/package/p-limit](https://www.npmjs.com/package/p-limit)
+
+Licenses: MIT
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+
+## p-locate 3.0.0
+
+PURL: pkg:npm/p-locate@3.0.0
 Upstream: [https://www.npmjs.com/package/p-locate](https://www.npmjs.com/package/p-locate)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-locate 4.1.0
-
-PURL: pkg:npm/p-locate@4.1.0
-Upstream: [https://www.npmjs.com/package/p-locate](https://www.npmjs.com/package/p-locate)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## p-locate 5.0.0
@@ -12916,7 +8196,7 @@ Upstream: [https://www.npmjs.com/package/p-locate](https://www.npmjs.com/package
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## p-locate 6.0.0
@@ -12926,107 +8206,7 @@ Upstream: [https://www.npmjs.com/package/p-locate](https://www.npmjs.com/package
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-lock 2.1.0
-
-PURL: pkg:npm/p-lock@2.1.0
-Upstream: [https://www.npmjs.com/package/p-lock](https://www.npmjs.com/package/p-lock)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## p-map 2.1.0
-
-PURL: pkg:npm/p-map@2.1.0
-Upstream: [https://www.npmjs.com/package/p-map](https://www.npmjs.com/package/p-map)
-
-Licenses: MIT
-
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-map 3.0.0
-
-PURL: pkg:npm/p-map@3.0.0
-Upstream: [https://www.npmjs.com/package/p-map](https://www.npmjs.com/package/p-map)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-map 4.0.0
-
-PURL: pkg:npm/p-map@4.0.0
-Upstream: [https://www.npmjs.com/package/p-map](https://www.npmjs.com/package/p-map)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-map 5.5.0
-
-PURL: pkg:npm/p-map@5.5.0
-Upstream: [https://www.npmjs.com/package/p-map](https://www.npmjs.com/package/p-map)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-map 7.0.3
-
-PURL: pkg:npm/p-map@7.0.3
-Upstream: [https://www.npmjs.com/package/p-map](https://www.npmjs.com/package/p-map)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-memoize 7.1.1
-
-PURL: pkg:npm/p-memoize@7.1.1
-Upstream: [https://www.npmjs.com/package/p-memoize](https://www.npmjs.com/package/p-memoize)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-reduce 2.1.0
-
-PURL: pkg:npm/p-reduce@2.1.0
-Upstream: [https://www.npmjs.com/package/p-reduce](https://www.npmjs.com/package/p-reduce)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## p-timeout 6.1.4
-
-PURL: pkg:npm/p-timeout@6.1.4
-Upstream: [https://www.npmjs.com/package/p-timeout](https://www.npmjs.com/package/p-timeout)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## p-try 1.0.0
-
-PURL: pkg:npm/p-try@1.0.0
-Upstream: [https://www.npmjs.com/package/p-try](https://www.npmjs.com/package/p-try)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## p-try 2.2.0
@@ -13049,44 +8229,14 @@ Licenses: BlueOak-1.0.0
 copyright in it.
 
 
-## package-json 2.0.0
+## param-case 3.0.4
 
-PURL: pkg:npm/%40npmcli/package-json@2.0.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/package-json](https://www.npmjs.com/package/%40npmcli/package-json)
-
-Licenses: ISC
-
-Copyright GitHub Inc.
-
-
-## package-json 8.1.1
-
-PURL: pkg:npm/package-json@8.1.1
-Upstream: [https://www.npmjs.com/package/package-json](https://www.npmjs.com/package/package-json)
+PURL: pkg:npm/param-case@3.0.4
+Upstream: [https://www.npmjs.com/package/param-case](https://www.npmjs.com/package/param-case)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## package-name-conflict 1.0.3
-
-PURL: pkg:npm/package-name-conflict@1.0.3
-Upstream: [https://www.npmjs.com/package/package-name-conflict](https://www.npmjs.com/package/package-name-conflict)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## pacote 13.6.2
-
-PURL: pkg:npm/pacote@13.6.2
-Upstream: [https://www.npmjs.com/package/pacote](https://www.npmjs.com/package/pacote)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter, Kat Marchán, npm, Inc., and Contributors
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
 ## parent-module 1.0.1
@@ -13099,76 +8249,6 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## parse-conflict-json 2.0.2
-
-PURL: pkg:npm/parse-conflict-json@2.0.2
-Upstream: [https://www.npmjs.com/package/parse-conflict-json](https://www.npmjs.com/package/parse-conflict-json)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## parse-json-object 1.1.0
-
-PURL: pkg:npm/parse-json-object@1.1.0
-Upstream: [https://www.npmjs.com/package/parse-json-object](https://www.npmjs.com/package/parse-json-object)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## parse-json-object 2.0.1
-
-PURL: pkg:npm/parse-json-object@2.0.1
-Upstream: [https://www.npmjs.com/package/parse-json-object](https://www.npmjs.com/package/parse-json-object)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## parse-json 4.0.0
-
-PURL: pkg:npm/parse-json@4.0.0
-Upstream: [https://www.npmjs.com/package/parse-json](https://www.npmjs.com/package/parse-json)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## parse-json 4.0.2
-
-PURL: pkg:npm/%40types/parse-json@4.0.2
-Upstream: [https://www.npmjs.com/package/%40types/parse-json](https://www.npmjs.com/package/%40types/parse-json)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## parse-json 5.2.0
-
-PURL: pkg:npm/parse-json@5.2.0
-Upstream: [https://www.npmjs.com/package/parse-json](https://www.npmjs.com/package/parse-json)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## parse5 7.2.1
-
-PURL: pkg:npm/parse5@7.2.1
-Upstream: [https://www.npmjs.com/package/parse5](https://www.npmjs.com/package/parse5)
-
-Licenses: MIT
-
-Copyright (c) 2013-2019 Ivan Nikulin (ifaaan@gmail.com, https://github.com/inikulin)
-
-
 ## parseargs 0.11.0
 
 PURL: pkg:npm/%40pkgjs/parseargs@0.11.0
@@ -13179,9 +8259,9 @@ Licenses: MIT
 copyright notice that is included in or attached to the work
 
 
-## parser 7.27.0
+## parser 7.25.7
 
-PURL: pkg:npm/%40babel/parser@7.27.0
+PURL: pkg:npm/%40babel/parser@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/parser](https://www.npmjs.com/package/%40babel/parser)
 
 Licenses: MIT
@@ -13189,54 +8269,24 @@ Licenses: MIT
 Copyright (C) 2012-2014 by various contributors (see AUTHORS)
 
 
-## parser 7.28.0
+## parseurl 1.3.3
 
-PURL: pkg:npm/%40babel/parser@7.28.0
-Upstream: [https://www.npmjs.com/package/%40babel/parser](https://www.npmjs.com/package/%40babel/parser)
-
-Licenses: MIT
-
-Copyright (C) 2012-2014 by various contributors (see AUTHORS)
-
-
-## parser 7.28.5
-
-PURL: pkg:npm/%40babel/parser@7.28.5
-Upstream: [https://www.npmjs.com/package/%40babel/parser](https://www.npmjs.com/package/%40babel/parser)
+PURL: pkg:npm/parseurl@1.3.3
+Upstream: [https://www.npmjs.com/package/parseurl](https://www.npmjs.com/package/parseurl)
 
 Licenses: MIT
 
-Copyright (C) 2012-2014 by various contributors (see AUTHORS)
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 
-## parser 8.38.0
+## pascal-case 3.1.2
 
-PURL: pkg:npm/%40typescript-eslint/parser@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Fparser
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/parser](https://www.npmjs.com/package/%40typescript-eslint/parser)
-
-Licenses: MIT
-
-Copyright (c) 2019 typescript-eslint and other contributors
-
-
-## patch-package 8.0.0
-
-PURL: pkg:npm/patch-package@8.0.0
-Upstream: [https://www.npmjs.com/package/patch-package](https://www.npmjs.com/package/patch-package)
+PURL: pkg:npm/pascal-case@3.1.2
+Upstream: [https://www.npmjs.com/package/pascal-case](https://www.npmjs.com/package/pascal-case)
 
 Licenses: MIT
 
-Copyright (c) 2017-Present David Sheldrick
-
-
-## path-browserify 1.0.1
-
-PURL: pkg:npm/path-browserify@1.0.1
-Upstream: [https://www.npmjs.com/package/path-browserify](https://www.npmjs.com/package/path-browserify)
-
-Licenses: MIT
-
-Copyright (c) 2013 James Halliday
+Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
 ## path-exists 3.0.0
@@ -13246,7 +8296,7 @@ Upstream: [https://www.npmjs.com/package/path-exists](https://www.npmjs.com/pack
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## path-exists 4.0.0
@@ -13256,7 +8306,7 @@ Upstream: [https://www.npmjs.com/package/path-exists](https://www.npmjs.com/pack
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## path-exists 5.0.0
@@ -13266,23 +8316,13 @@ Upstream: [https://www.npmjs.com/package/path-exists](https://www.npmjs.com/pack
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## path-is-absolute 1.0.1
 
 PURL: pkg:npm/path-is-absolute@1.0.1
 Upstream: [https://www.npmjs.com/package/path-is-absolute](https://www.npmjs.com/package/path-is-absolute)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## path-key 2.0.1
-
-PURL: pkg:npm/path-key@2.0.1
-Upstream: [https://www.npmjs.com/package/path-key](https://www.npmjs.com/package/path-key)
 
 Licenses: MIT
 
@@ -13329,9 +8369,9 @@ Licenses: BlueOak-1.0.0
 copyright in it.
 
 
-## path-to-regexp 6.3.0
+## path-to-regexp 0.1.10
 
-PURL: pkg:npm/path-to-regexp@6.3.0
+PURL: pkg:npm/path-to-regexp@0.1.10
 Upstream: [https://www.npmjs.com/package/path-to-regexp](https://www.npmjs.com/package/path-to-regexp)
 
 Licenses: MIT
@@ -13339,19 +8379,9 @@ Licenses: MIT
 Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
 
-## path-type 4.0.0
+## pathe 1.1.2
 
-PURL: pkg:npm/path-type@4.0.0
-Upstream: [https://www.npmjs.com/package/path-type](https://www.npmjs.com/package/path-type)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## pathe 2.0.3
-
-PURL: pkg:npm/pathe@2.0.3
+PURL: pkg:npm/pathe@1.1.2
 Upstream: [https://www.npmjs.com/package/pathe](https://www.npmjs.com/package/pathe)
 
 Licenses: MIT
@@ -13359,14 +8389,24 @@ Licenses: MIT
 Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
 
 
-## pathval 2.0.1
+## pathval 1.1.1
 
-PURL: pkg:npm/pathval@2.0.1
+PURL: pkg:npm/pathval@1.1.1
 Upstream: [https://www.npmjs.com/package/pathval](https://www.npmjs.com/package/pathval)
 
 Licenses: MIT
 
 Copyright (c) 2011-2013 Jake Luer jake@alogicalparadox.com
+
+
+## picocolors 1.1.0
+
+PURL: pkg:npm/picocolors@1.1.0
+Upstream: [https://www.npmjs.com/package/picocolors](https://www.npmjs.com/package/picocolors)
+
+Licenses: ISC
+
+Copyright (c) 2021-2024 Oleksii Raspopov, Kostiantyn Denysov, Anton Verinov
 
 
 ## picocolors 1.1.1
@@ -13389,44 +8429,14 @@ Licenses: MIT
 Copyright (c) 2017-present, Jon Schlinkert.
 
 
-## picomatch 4.0.2
+## picomatch 4.0.4
 
-PURL: pkg:npm/picomatch@4.0.2
+PURL: pkg:npm/picomatch@4.0.4
 Upstream: [https://www.npmjs.com/package/picomatch](https://www.npmjs.com/package/picomatch)
 
 Licenses: MIT
 
 Copyright (c) 2017-present, Jon Schlinkert.
-
-
-## picomatch 4.0.3
-
-PURL: pkg:npm/picomatch@4.0.3
-Upstream: [https://www.npmjs.com/package/picomatch](https://www.npmjs.com/package/picomatch)
-
-Licenses: MIT
-
-Copyright (c) 2017-present, Jon Schlinkert.
-
-
-## pidtree 0.6.0
-
-PURL: pkg:npm/pidtree@0.6.0
-Upstream: [https://www.npmjs.com/package/pidtree](https://www.npmjs.com/package/pidtree)
-
-Licenses: MIT
-
-Copyright (c) 2018 Simone Primarosa
-
-
-## pify 3.0.0
-
-PURL: pkg:npm/pify@3.0.0
-Upstream: [https://www.npmjs.com/package/pify](https://www.npmjs.com/package/pify)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## pip 23.0.1
@@ -13439,24 +8449,14 @@ Licenses: MIT
 Copyright (c) The pip developers
 
 
-## pkg-conf 2.1.0
+## pirates 4.0.6
 
-PURL: pkg:npm/pkg-conf@2.1.0
-Upstream: [https://www.npmjs.com/package/pkg-conf](https://www.npmjs.com/package/pkg-conf)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## pkg-dir 4.2.0
-
-PURL: pkg:npm/pkg-dir@4.2.0
-Upstream: [https://www.npmjs.com/package/pkg-dir](https://www.npmjs.com/package/pkg-dir)
+PURL: pkg:npm/pirates@4.0.6
+Upstream: [https://www.npmjs.com/package/pirates](https://www.npmjs.com/package/pirates)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2016-2018 Ari Porad
 
 
 ## pkg-dir 7.0.0
@@ -13466,42 +8466,32 @@ Upstream: [https://www.npmjs.com/package/pkg-dir](https://www.npmjs.com/package/
 
 Licenses: MIT
 
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+
+## pkg-types 1.2.1
+
+PURL: pkg:npm/pkg-types@1.2.1
+Upstream: [https://www.npmjs.com/package/pkg-types](https://www.npmjs.com/package/pkg-types)
+
+Licenses: MIT
+
+Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
+
+
+## pkg-up 3.1.0
+
+PURL: pkg:npm/pkg-up@3.1.0
+Upstream: [https://www.npmjs.com/package/pkg-up](https://www.npmjs.com/package/pkg-up)
+
+Licenses: MIT
+
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## pkg-types 1.3.1
+## plugin-bugfix-firefox-class-in-computed-class-key 7.25.7
 
-PURL: pkg:npm/pkg-types@1.3.1
-Upstream: [https://www.npmjs.com/package/pkg-types](https://www.npmjs.com/package/pkg-types)
-
-Licenses: MIT
-
-Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
-
-
-## pkg-types 2.3.0
-
-PURL: pkg:npm/pkg-types@2.3.0
-Upstream: [https://www.npmjs.com/package/pkg-types](https://www.npmjs.com/package/pkg-types)
-
-Licenses: MIT
-
-Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev>
-
-
-## please-upgrade-node 3.2.0
-
-PURL: pkg:npm/please-upgrade-node@3.2.0
-Upstream: [https://www.npmjs.com/package/please-upgrade-node](https://www.npmjs.com/package/please-upgrade-node)
-
-Licenses: MIT
-
-Copyright (c) 2017
-
-
-## plugin-bugfix-firefox-class-in-computed-class-key 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-bugfix-firefox-class-in-computed-class-key@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-firefox-class-in-computed-class-key
+PURL: pkg:npm/%40babel/plugin-bugfix-firefox-class-in-computed-class-key@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-firefox-class-in-computed-class-key
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-bugfix-firefox-class-in-computed-class-key](https://www.npmjs.com/package/%40babel/plugin-bugfix-firefox-class-in-computed-class-key)
 
 Licenses: MIT
@@ -13509,9 +8499,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-bugfix-safari-class-field-initializer-scope 7.25.9
+## plugin-bugfix-safari-class-field-initializer-scope 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-bugfix-safari-class-field-initializer-scope@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-safari-class-field-initializer-scope
+PURL: pkg:npm/%40babel/plugin-bugfix-safari-class-field-initializer-scope@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-safari-class-field-initializer-scope
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-bugfix-safari-class-field-initializer-scope](https://www.npmjs.com/package/%40babel/plugin-bugfix-safari-class-field-initializer-scope)
 
 Licenses: MIT
@@ -13519,9 +8509,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-bugfix-safari-id-destructuring-collision-in-function-expression 7.25.9
+## plugin-bugfix-safari-id-destructuring-collision-in-function-expression 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-safari-id-destructuring-collision-in-function-expression
+PURL: pkg:npm/%40babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-safari-id-destructuring-collision-in-function-expression
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression](https://www.npmjs.com/package/%40babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression)
 
 Licenses: MIT
@@ -13529,9 +8519,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-bugfix-v8-spread-parameters-in-optional-chaining 7.25.9
+## plugin-bugfix-v8-spread-parameters-in-optional-chaining 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-v8-spread-parameters-in-optional-chaining
+PURL: pkg:npm/%40babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-v8-spread-parameters-in-optional-chaining
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining](https://www.npmjs.com/package/%40babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining)
 
 Licenses: MIT
@@ -13539,9 +8529,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-bugfix-v8-static-class-fields-redefine-readonly 7.25.9
+## plugin-bugfix-v8-static-class-fields-redefine-readonly 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-bugfix-v8-static-class-fields-redefine-readonly@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-v8-static-class-fields-redefine-readonly
+PURL: pkg:npm/%40babel/plugin-bugfix-v8-static-class-fields-redefine-readonly@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-bugfix-v8-static-class-fields-redefine-readonly
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-bugfix-v8-static-class-fields-redefine-readonly](https://www.npmjs.com/package/%40babel/plugin-bugfix-v8-static-class-fields-redefine-readonly)
 
 Licenses: MIT
@@ -13549,14 +8539,24 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-kit 0.3.4
+## plugin-proposal-decorators 7.25.7
 
-PURL: pkg:npm/%40eslint/plugin-kit@0.3.4
-Upstream: [https://www.npmjs.com/package/%40eslint/plugin-kit](https://www.npmjs.com/package/%40eslint/plugin-kit)
+PURL: pkg:npm/%40babel/plugin-proposal-decorators@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-proposal-decorators
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-proposal-decorators](https://www.npmjs.com/package/%40babel/plugin-proposal-decorators)
 
-Licenses: Apache-2.0
+Licenses: MIT
 
-copyright notice that is included in or attached to the work
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-proposal-function-sent 7.25.7
+
+PURL: pkg:npm/%40babel/plugin-proposal-function-sent@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-proposal-function-sent
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-proposal-function-sent](https://www.npmjs.com/package/%40babel/plugin-proposal-function-sent)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
 ## plugin-proposal-private-property-in-object 7.21.0-placeholder-for-preset-env.2
@@ -13569,39 +8569,89 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-react 4.7.0
+## plugin-proposal-throw-expressions 7.25.7
 
-PURL: pkg:npm/%40vitejs/plugin-react@4.7.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite-plugin-react.git%23packages%2Fplugin-react
-Upstream: [https://www.npmjs.com/package/%40vitejs/plugin-react](https://www.npmjs.com/package/%40vitejs/plugin-react)
-
-Licenses: MIT
-
-Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
-
-
-## plugin-react 5.1.2
-
-PURL: pkg:npm/%40vitejs/plugin-react@5.1.2?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite-plugin-react.git%23packages%2Fplugin-react
-Upstream: [https://www.npmjs.com/package/%40vitejs/plugin-react](https://www.npmjs.com/package/%40vitejs/plugin-react)
+PURL: pkg:npm/%40babel/plugin-proposal-throw-expressions@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-proposal-throw-expressions
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-proposal-throw-expressions](https://www.npmjs.com/package/%40babel/plugin-proposal-throw-expressions)
 
 Licenses: MIT
 
-Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-retry 4.1.6
+## plugin-syntax-async-generators 7.8.4
 
-PURL: pkg:npm/%40octokit/plugin-retry@4.1.6
-Upstream: [https://www.npmjs.com/package/%40octokit/plugin-retry](https://www.npmjs.com/package/%40octokit/plugin-retry)
+PURL: pkg:npm/%40babel/plugin-syntax-async-generators@7.8.4
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-async-generators](https://www.npmjs.com/package/%40babel/plugin-syntax-async-generators)
 
 Licenses: MIT
 
-Copyright (c) 2018 Octokit contributors
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-syntax-import-assertions 7.26.0
+## plugin-syntax-class-properties 7.12.13
 
-PURL: pkg:npm/%40babel/plugin-syntax-import-assertions@7.26.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-import-assertions
+PURL: pkg:npm/%40babel/plugin-syntax-class-properties@7.12.13?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-class-properties
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-class-properties](https://www.npmjs.com/package/%40babel/plugin-syntax-class-properties)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-class-static-block 7.14.5
+
+PURL: pkg:npm/%40babel/plugin-syntax-class-static-block@7.14.5?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-class-static-block
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-class-static-block](https://www.npmjs.com/package/%40babel/plugin-syntax-class-static-block)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-decorators 7.25.7
+
+PURL: pkg:npm/%40babel/plugin-syntax-decorators@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-decorators
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-decorators](https://www.npmjs.com/package/%40babel/plugin-syntax-decorators)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-dynamic-import 7.8.3
+
+PURL: pkg:npm/%40babel/plugin-syntax-dynamic-import@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-dynamic-import](https://www.npmjs.com/package/%40babel/plugin-syntax-dynamic-import)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-export-namespace-from 7.8.3
+
+PURL: pkg:npm/%40babel/plugin-syntax-export-namespace-from@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-export-namespace-from](https://www.npmjs.com/package/%40babel/plugin-syntax-export-namespace-from)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-function-sent 7.25.7
+
+PURL: pkg:npm/%40babel/plugin-syntax-function-sent@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-function-sent
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-function-sent](https://www.npmjs.com/package/%40babel/plugin-syntax-function-sent)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-import-assertions 7.25.7
+
+PURL: pkg:npm/%40babel/plugin-syntax-import-assertions@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-import-assertions
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-import-assertions](https://www.npmjs.com/package/%40babel/plugin-syntax-import-assertions)
 
 Licenses: MIT
@@ -13609,9 +8659,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-syntax-import-attributes 7.26.0
+## plugin-syntax-import-attributes 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-syntax-import-attributes@7.26.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-import-attributes
+PURL: pkg:npm/%40babel/plugin-syntax-import-attributes@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-import-attributes
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-import-attributes](https://www.npmjs.com/package/%40babel/plugin-syntax-import-attributes)
 
 Licenses: MIT
@@ -13619,30 +8669,110 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-syntax-jsx 7.25.9
+## plugin-syntax-import-meta 7.10.4
 
-PURL: pkg:npm/%40babel/plugin-syntax-jsx@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-jsx
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-jsx](https://www.npmjs.com/package/%40babel/plugin-syntax-jsx)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-syntax-typescript 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-syntax-typescript@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-typescript
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-typescript](https://www.npmjs.com/package/%40babel/plugin-syntax-typescript)
+PURL: pkg:npm/%40babel/plugin-syntax-import-meta@7.10.4?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-import-meta
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-import-meta](https://www.npmjs.com/package/%40babel/plugin-syntax-import-meta)
 
 Licenses: MIT
 
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-syntax-typescript 7.27.1
+## plugin-syntax-json-strings 7.8.3
 
-PURL: pkg:npm/%40babel/plugin-syntax-typescript@7.27.1?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-typescript
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-typescript](https://www.npmjs.com/package/%40babel/plugin-syntax-typescript)
+PURL: pkg:npm/%40babel/plugin-syntax-json-strings@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-json-strings](https://www.npmjs.com/package/%40babel/plugin-syntax-json-strings)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-logical-assignment-operators 7.10.4
+
+PURL: pkg:npm/%40babel/plugin-syntax-logical-assignment-operators@7.10.4?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-logical-assignment-operators
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-logical-assignment-operators](https://www.npmjs.com/package/%40babel/plugin-syntax-logical-assignment-operators)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-nullish-coalescing-operator 7.8.3
+
+PURL: pkg:npm/%40babel/plugin-syntax-nullish-coalescing-operator@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-nullish-coalescing-operator](https://www.npmjs.com/package/%40babel/plugin-syntax-nullish-coalescing-operator)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-numeric-separator 7.10.4
+
+PURL: pkg:npm/%40babel/plugin-syntax-numeric-separator@7.10.4?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-numeric-separator
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-numeric-separator](https://www.npmjs.com/package/%40babel/plugin-syntax-numeric-separator)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-object-rest-spread 7.8.3
+
+PURL: pkg:npm/%40babel/plugin-syntax-object-rest-spread@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-object-rest-spread](https://www.npmjs.com/package/%40babel/plugin-syntax-object-rest-spread)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-optional-catch-binding 7.8.3
+
+PURL: pkg:npm/%40babel/plugin-syntax-optional-catch-binding@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-optional-catch-binding](https://www.npmjs.com/package/%40babel/plugin-syntax-optional-catch-binding)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-optional-chaining 7.8.3
+
+PURL: pkg:npm/%40babel/plugin-syntax-optional-chaining@7.8.3
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-optional-chaining](https://www.npmjs.com/package/%40babel/plugin-syntax-optional-chaining)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-private-property-in-object 7.14.5
+
+PURL: pkg:npm/%40babel/plugin-syntax-private-property-in-object@7.14.5?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-private-property-in-object
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-private-property-in-object](https://www.npmjs.com/package/%40babel/plugin-syntax-private-property-in-object)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-throw-expressions 7.25.7
+
+PURL: pkg:npm/%40babel/plugin-syntax-throw-expressions@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-throw-expressions
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-throw-expressions](https://www.npmjs.com/package/%40babel/plugin-syntax-throw-expressions)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-syntax-top-level-await 7.14.5
+
+PURL: pkg:npm/%40babel/plugin-syntax-top-level-await@7.14.5?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-syntax-top-level-await
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-syntax-top-level-await](https://www.npmjs.com/package/%40babel/plugin-syntax-top-level-await)
 
 Licenses: MIT
 
@@ -13659,19 +8789,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-throttling 5.2.3
+## plugin-transform-arrow-functions 7.25.7
 
-PURL: pkg:npm/%40octokit/plugin-throttling@5.2.3
-Upstream: [https://www.npmjs.com/package/%40octokit/plugin-throttling](https://www.npmjs.com/package/%40octokit/plugin-throttling)
-
-Licenses: MIT
-
-Copyright (c) 2018 Octokit contributors
-
-
-## plugin-transform-arrow-functions 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-transform-arrow-functions@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-arrow-functions
+PURL: pkg:npm/%40babel/plugin-transform-arrow-functions@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-arrow-functions
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-arrow-functions](https://www.npmjs.com/package/%40babel/plugin-transform-arrow-functions)
 
 Licenses: MIT
@@ -13679,9 +8799,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-async-generator-functions 7.26.8
+## plugin-transform-async-generator-functions 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-async-generator-functions@7.26.8?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-async-generator-functions
+PURL: pkg:npm/%40babel/plugin-transform-async-generator-functions@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-async-generator-functions
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-async-generator-functions](https://www.npmjs.com/package/%40babel/plugin-transform-async-generator-functions)
 
 Licenses: MIT
@@ -13689,9 +8809,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-async-to-generator 7.25.9
+## plugin-transform-async-to-generator 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-async-to-generator@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-async-to-generator
+PURL: pkg:npm/%40babel/plugin-transform-async-to-generator@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-async-to-generator
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-async-to-generator](https://www.npmjs.com/package/%40babel/plugin-transform-async-to-generator)
 
 Licenses: MIT
@@ -13699,9 +8819,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-block-scoped-functions 7.26.5
+## plugin-transform-block-scoped-functions 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-block-scoped-functions@7.26.5?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-block-scoped-functions
+PURL: pkg:npm/%40babel/plugin-transform-block-scoped-functions@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-block-scoped-functions
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-block-scoped-functions](https://www.npmjs.com/package/%40babel/plugin-transform-block-scoped-functions)
 
 Licenses: MIT
@@ -13709,9 +8829,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-block-scoping 7.27.0
+## plugin-transform-block-scoping 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-block-scoping@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-block-scoping
+PURL: pkg:npm/%40babel/plugin-transform-block-scoping@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-block-scoping
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-block-scoping](https://www.npmjs.com/package/%40babel/plugin-transform-block-scoping)
 
 Licenses: MIT
@@ -13719,9 +8839,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-class-properties 7.25.9
+## plugin-transform-class-properties 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-class-properties@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-class-properties
+PURL: pkg:npm/%40babel/plugin-transform-class-properties@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-class-properties
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-class-properties](https://www.npmjs.com/package/%40babel/plugin-transform-class-properties)
 
 Licenses: MIT
@@ -13729,9 +8849,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-class-static-block 7.26.0
+## plugin-transform-class-static-block 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-class-static-block@7.26.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-class-static-block
+PURL: pkg:npm/%40babel/plugin-transform-class-static-block@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-class-static-block
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-class-static-block](https://www.npmjs.com/package/%40babel/plugin-transform-class-static-block)
 
 Licenses: MIT
@@ -13739,9 +8859,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-classes 7.25.9
+## plugin-transform-classes 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-classes@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-classes
+PURL: pkg:npm/%40babel/plugin-transform-classes@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-classes
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-classes](https://www.npmjs.com/package/%40babel/plugin-transform-classes)
 
 Licenses: MIT
@@ -13749,9 +8869,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-computed-properties 7.25.9
+## plugin-transform-computed-properties 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-computed-properties@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-computed-properties
+PURL: pkg:npm/%40babel/plugin-transform-computed-properties@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-computed-properties
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-computed-properties](https://www.npmjs.com/package/%40babel/plugin-transform-computed-properties)
 
 Licenses: MIT
@@ -13759,9 +8879,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-destructuring 7.25.9
+## plugin-transform-destructuring 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-destructuring@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-destructuring
+PURL: pkg:npm/%40babel/plugin-transform-destructuring@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-destructuring
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-destructuring](https://www.npmjs.com/package/%40babel/plugin-transform-destructuring)
 
 Licenses: MIT
@@ -13769,9 +8889,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-dotall-regex 7.25.9
+## plugin-transform-dotall-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-dotall-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-dotall-regex
+PURL: pkg:npm/%40babel/plugin-transform-dotall-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-dotall-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-dotall-regex](https://www.npmjs.com/package/%40babel/plugin-transform-dotall-regex)
 
 Licenses: MIT
@@ -13779,9 +8899,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-duplicate-keys 7.25.9
+## plugin-transform-duplicate-keys 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-duplicate-keys@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-duplicate-keys
+PURL: pkg:npm/%40babel/plugin-transform-duplicate-keys@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-duplicate-keys
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-duplicate-keys](https://www.npmjs.com/package/%40babel/plugin-transform-duplicate-keys)
 
 Licenses: MIT
@@ -13789,9 +8909,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-duplicate-named-capturing-groups-regex 7.25.9
+## plugin-transform-duplicate-named-capturing-groups-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-duplicate-named-capturing-groups-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-duplicate-named-capturing-groups-regex
+PURL: pkg:npm/%40babel/plugin-transform-duplicate-named-capturing-groups-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-duplicate-named-capturing-groups-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-duplicate-named-capturing-groups-regex](https://www.npmjs.com/package/%40babel/plugin-transform-duplicate-named-capturing-groups-regex)
 
 Licenses: MIT
@@ -13799,9 +8919,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-dynamic-import 7.25.9
+## plugin-transform-dynamic-import 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-dynamic-import@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-dynamic-import
+PURL: pkg:npm/%40babel/plugin-transform-dynamic-import@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-dynamic-import
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-dynamic-import](https://www.npmjs.com/package/%40babel/plugin-transform-dynamic-import)
 
 Licenses: MIT
@@ -13809,9 +8929,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-exponentiation-operator 7.26.3
+## plugin-transform-exponentiation-operator 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-exponentiation-operator@7.26.3?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-exponentiation-operator
+PURL: pkg:npm/%40babel/plugin-transform-exponentiation-operator@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-exponentiation-operator
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-exponentiation-operator](https://www.npmjs.com/package/%40babel/plugin-transform-exponentiation-operator)
 
 Licenses: MIT
@@ -13819,9 +8939,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-export-namespace-from 7.25.9
+## plugin-transform-export-namespace-from 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-export-namespace-from@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-export-namespace-from
+PURL: pkg:npm/%40babel/plugin-transform-export-namespace-from@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-export-namespace-from
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-export-namespace-from](https://www.npmjs.com/package/%40babel/plugin-transform-export-namespace-from)
 
 Licenses: MIT
@@ -13829,9 +8949,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-for-of 7.26.9
+## plugin-transform-for-of 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-for-of@7.26.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-for-of
+PURL: pkg:npm/%40babel/plugin-transform-for-of@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-for-of
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-for-of](https://www.npmjs.com/package/%40babel/plugin-transform-for-of)
 
 Licenses: MIT
@@ -13839,9 +8959,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-function-name 7.25.9
+## plugin-transform-function-name 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-function-name@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-function-name
+PURL: pkg:npm/%40babel/plugin-transform-function-name@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-function-name
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-function-name](https://www.npmjs.com/package/%40babel/plugin-transform-function-name)
 
 Licenses: MIT
@@ -13849,9 +8969,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-json-strings 7.25.9
+## plugin-transform-json-strings 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-json-strings@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-json-strings
+PURL: pkg:npm/%40babel/plugin-transform-json-strings@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-json-strings
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-json-strings](https://www.npmjs.com/package/%40babel/plugin-transform-json-strings)
 
 Licenses: MIT
@@ -13859,9 +8979,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-literals 7.25.9
+## plugin-transform-literals 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-literals@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-literals
+PURL: pkg:npm/%40babel/plugin-transform-literals@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-literals
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-literals](https://www.npmjs.com/package/%40babel/plugin-transform-literals)
 
 Licenses: MIT
@@ -13869,9 +8989,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-logical-assignment-operators 7.25.9
+## plugin-transform-logical-assignment-operators 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-logical-assignment-operators@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-logical-assignment-operators
+PURL: pkg:npm/%40babel/plugin-transform-logical-assignment-operators@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-logical-assignment-operators
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-logical-assignment-operators](https://www.npmjs.com/package/%40babel/plugin-transform-logical-assignment-operators)
 
 Licenses: MIT
@@ -13879,9 +8999,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-member-expression-literals 7.25.9
+## plugin-transform-member-expression-literals 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-member-expression-literals@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-member-expression-literals
+PURL: pkg:npm/%40babel/plugin-transform-member-expression-literals@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-member-expression-literals
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-member-expression-literals](https://www.npmjs.com/package/%40babel/plugin-transform-member-expression-literals)
 
 Licenses: MIT
@@ -13889,9 +9009,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-modules-amd 7.25.9
+## plugin-transform-modules-amd 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-modules-amd@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-amd
+PURL: pkg:npm/%40babel/plugin-transform-modules-amd@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-amd
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-modules-amd](https://www.npmjs.com/package/%40babel/plugin-transform-modules-amd)
 
 Licenses: MIT
@@ -13899,9 +9019,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-modules-commonjs 7.26.3
+## plugin-transform-modules-commonjs 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-modules-commonjs@7.26.3?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-commonjs
+PURL: pkg:npm/%40babel/plugin-transform-modules-commonjs@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-commonjs
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-modules-commonjs](https://www.npmjs.com/package/%40babel/plugin-transform-modules-commonjs)
 
 Licenses: MIT
@@ -13909,9 +9029,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-modules-systemjs 7.25.9
+## plugin-transform-modules-systemjs 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-modules-systemjs@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-systemjs
+PURL: pkg:npm/%40babel/plugin-transform-modules-systemjs@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-systemjs
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-modules-systemjs](https://www.npmjs.com/package/%40babel/plugin-transform-modules-systemjs)
 
 Licenses: MIT
@@ -13919,9 +9039,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-modules-umd 7.25.9
+## plugin-transform-modules-umd 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-modules-umd@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-umd
+PURL: pkg:npm/%40babel/plugin-transform-modules-umd@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-modules-umd
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-modules-umd](https://www.npmjs.com/package/%40babel/plugin-transform-modules-umd)
 
 Licenses: MIT
@@ -13929,9 +9049,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-named-capturing-groups-regex 7.25.9
+## plugin-transform-named-capturing-groups-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-named-capturing-groups-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-named-capturing-groups-regex
+PURL: pkg:npm/%40babel/plugin-transform-named-capturing-groups-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-named-capturing-groups-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-named-capturing-groups-regex](https://www.npmjs.com/package/%40babel/plugin-transform-named-capturing-groups-regex)
 
 Licenses: MIT
@@ -13939,9 +9059,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-new-target 7.25.9
+## plugin-transform-new-target 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-new-target@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-new-target
+PURL: pkg:npm/%40babel/plugin-transform-new-target@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-new-target
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-new-target](https://www.npmjs.com/package/%40babel/plugin-transform-new-target)
 
 Licenses: MIT
@@ -13949,9 +9069,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-nullish-coalescing-operator 7.26.6
+## plugin-transform-nullish-coalescing-operator 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-nullish-coalescing-operator@7.26.6?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-nullish-coalescing-operator
+PURL: pkg:npm/%40babel/plugin-transform-nullish-coalescing-operator@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-nullish-coalescing-operator
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-nullish-coalescing-operator](https://www.npmjs.com/package/%40babel/plugin-transform-nullish-coalescing-operator)
 
 Licenses: MIT
@@ -13959,9 +9079,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-numeric-separator 7.25.9
+## plugin-transform-numeric-separator 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-numeric-separator@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-numeric-separator
+PURL: pkg:npm/%40babel/plugin-transform-numeric-separator@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-numeric-separator
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-numeric-separator](https://www.npmjs.com/package/%40babel/plugin-transform-numeric-separator)
 
 Licenses: MIT
@@ -13969,9 +9089,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-object-rest-spread 7.25.9
+## plugin-transform-object-rest-spread 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-object-rest-spread@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-object-rest-spread
+PURL: pkg:npm/%40babel/plugin-transform-object-rest-spread@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-object-rest-spread
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-object-rest-spread](https://www.npmjs.com/package/%40babel/plugin-transform-object-rest-spread)
 
 Licenses: MIT
@@ -13979,9 +9099,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-object-super 7.25.9
+## plugin-transform-object-super 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-object-super@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-object-super
+PURL: pkg:npm/%40babel/plugin-transform-object-super@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-object-super
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-object-super](https://www.npmjs.com/package/%40babel/plugin-transform-object-super)
 
 Licenses: MIT
@@ -13989,9 +9109,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-optional-catch-binding 7.25.9
+## plugin-transform-optional-catch-binding 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-optional-catch-binding@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-optional-catch-binding
+PURL: pkg:npm/%40babel/plugin-transform-optional-catch-binding@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-optional-catch-binding
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-optional-catch-binding](https://www.npmjs.com/package/%40babel/plugin-transform-optional-catch-binding)
 
 Licenses: MIT
@@ -13999,9 +9119,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-optional-chaining 7.25.9
+## plugin-transform-optional-chaining 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-optional-chaining@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-optional-chaining
+PURL: pkg:npm/%40babel/plugin-transform-optional-chaining@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-optional-chaining
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-optional-chaining](https://www.npmjs.com/package/%40babel/plugin-transform-optional-chaining)
 
 Licenses: MIT
@@ -14009,9 +9129,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-parameters 7.25.9
+## plugin-transform-parameters 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-parameters@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-parameters
+PURL: pkg:npm/%40babel/plugin-transform-parameters@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-parameters
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-parameters](https://www.npmjs.com/package/%40babel/plugin-transform-parameters)
 
 Licenses: MIT
@@ -14019,9 +9139,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-private-methods 7.25.9
+## plugin-transform-private-methods 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-private-methods@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-private-methods
+PURL: pkg:npm/%40babel/plugin-transform-private-methods@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-private-methods
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-private-methods](https://www.npmjs.com/package/%40babel/plugin-transform-private-methods)
 
 Licenses: MIT
@@ -14029,9 +9149,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-private-property-in-object 7.25.9
+## plugin-transform-private-property-in-object 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-private-property-in-object@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-private-property-in-object
+PURL: pkg:npm/%40babel/plugin-transform-private-property-in-object@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-private-property-in-object
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-private-property-in-object](https://www.npmjs.com/package/%40babel/plugin-transform-private-property-in-object)
 
 Licenses: MIT
@@ -14039,9 +9159,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-property-literals 7.25.9
+## plugin-transform-property-literals 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-property-literals@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-property-literals
+PURL: pkg:npm/%40babel/plugin-transform-property-literals@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-property-literals
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-property-literals](https://www.npmjs.com/package/%40babel/plugin-transform-property-literals)
 
 Licenses: MIT
@@ -14049,49 +9169,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-react-display-name 7.25.9
+## plugin-transform-regenerator 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-react-display-name@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-display-name
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-react-display-name](https://www.npmjs.com/package/%40babel/plugin-transform-react-display-name)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-react-jsx-development 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-transform-react-jsx-development@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-jsx-development
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx-development](https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx-development)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-react-jsx 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-transform-react-jsx@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-jsx
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx](https://www.npmjs.com/package/%40babel/plugin-transform-react-jsx)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-react-pure-annotations 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-transform-react-pure-annotations@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-react-pure-annotations
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-react-pure-annotations](https://www.npmjs.com/package/%40babel/plugin-transform-react-pure-annotations)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-regenerator 7.27.0
-
-PURL: pkg:npm/%40babel/plugin-transform-regenerator@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-regenerator
+PURL: pkg:npm/%40babel/plugin-transform-regenerator@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-regenerator
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-regenerator](https://www.npmjs.com/package/%40babel/plugin-transform-regenerator)
 
 Licenses: MIT
@@ -14099,19 +9179,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-regexp-modifiers 7.26.0
+## plugin-transform-reserved-words 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-regexp-modifiers@7.26.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-regexp-modifiers
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-regexp-modifiers](https://www.npmjs.com/package/%40babel/plugin-transform-regexp-modifiers)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-reserved-words 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-transform-reserved-words@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-reserved-words
+PURL: pkg:npm/%40babel/plugin-transform-reserved-words@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-reserved-words
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-reserved-words](https://www.npmjs.com/package/%40babel/plugin-transform-reserved-words)
 
 Licenses: MIT
@@ -14119,9 +9189,19 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-shorthand-properties 7.25.9
+## plugin-transform-runtime 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-shorthand-properties@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-shorthand-properties
+PURL: pkg:npm/%40babel/plugin-transform-runtime@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-runtime
+Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-runtime](https://www.npmjs.com/package/%40babel/plugin-transform-runtime)
+
+Licenses: MIT
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+
+## plugin-transform-shorthand-properties 7.25.7
+
+PURL: pkg:npm/%40babel/plugin-transform-shorthand-properties@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-shorthand-properties
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-shorthand-properties](https://www.npmjs.com/package/%40babel/plugin-transform-shorthand-properties)
 
 Licenses: MIT
@@ -14129,9 +9209,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-spread 7.25.9
+## plugin-transform-spread 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-spread@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-spread
+PURL: pkg:npm/%40babel/plugin-transform-spread@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-spread
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-spread](https://www.npmjs.com/package/%40babel/plugin-transform-spread)
 
 Licenses: MIT
@@ -14139,9 +9219,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-sticky-regex 7.25.9
+## plugin-transform-sticky-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-sticky-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-sticky-regex
+PURL: pkg:npm/%40babel/plugin-transform-sticky-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-sticky-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-sticky-regex](https://www.npmjs.com/package/%40babel/plugin-transform-sticky-regex)
 
 Licenses: MIT
@@ -14149,9 +9229,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-template-literals 7.26.8
+## plugin-transform-template-literals 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-template-literals@7.26.8?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-template-literals
+PURL: pkg:npm/%40babel/plugin-transform-template-literals@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-template-literals
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-template-literals](https://www.npmjs.com/package/%40babel/plugin-transform-template-literals)
 
 Licenses: MIT
@@ -14159,9 +9239,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-typeof-symbol 7.27.0
+## plugin-transform-typeof-symbol 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-typeof-symbol@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-typeof-symbol
+PURL: pkg:npm/%40babel/plugin-transform-typeof-symbol@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-typeof-symbol
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-typeof-symbol](https://www.npmjs.com/package/%40babel/plugin-transform-typeof-symbol)
 
 Licenses: MIT
@@ -14169,19 +9249,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-typescript 7.27.0
+## plugin-transform-unicode-escapes 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-typescript@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-typescript
-Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-typescript](https://www.npmjs.com/package/%40babel/plugin-transform-typescript)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## plugin-transform-unicode-escapes 7.25.9
-
-PURL: pkg:npm/%40babel/plugin-transform-unicode-escapes@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-escapes
+PURL: pkg:npm/%40babel/plugin-transform-unicode-escapes@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-escapes
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-unicode-escapes](https://www.npmjs.com/package/%40babel/plugin-transform-unicode-escapes)
 
 Licenses: MIT
@@ -14189,9 +9259,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-unicode-property-regex 7.25.9
+## plugin-transform-unicode-property-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-unicode-property-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-property-regex
+PURL: pkg:npm/%40babel/plugin-transform-unicode-property-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-property-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-unicode-property-regex](https://www.npmjs.com/package/%40babel/plugin-transform-unicode-property-regex)
 
 Licenses: MIT
@@ -14199,9 +9269,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-unicode-regex 7.25.9
+## plugin-transform-unicode-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-unicode-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-regex
+PURL: pkg:npm/%40babel/plugin-transform-unicode-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-unicode-regex](https://www.npmjs.com/package/%40babel/plugin-transform-unicode-regex)
 
 Licenses: MIT
@@ -14209,9 +9279,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## plugin-transform-unicode-sets-regex 7.25.9
+## plugin-transform-unicode-sets-regex 7.25.7
 
-PURL: pkg:npm/%40babel/plugin-transform-unicode-sets-regex@7.25.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-sets-regex
+PURL: pkg:npm/%40babel/plugin-transform-unicode-sets-regex@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-plugin-transform-unicode-sets-regex
 Upstream: [https://www.npmjs.com/package/%40babel/plugin-transform-unicode-sets-regex](https://www.npmjs.com/package/%40babel/plugin-transform-unicode-sets-regex)
 
 Licenses: MIT
@@ -14219,49 +9289,19 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## pluginutils 1.0.0-beta.27
+## plugin-vue 5.1.4
 
-PURL: pkg:npm/%40rolldown/pluginutils@1.0.0-beta.27
-Upstream: [https://www.npmjs.com/package/%40rolldown/pluginutils](https://www.npmjs.com/package/%40rolldown/pluginutils)
-
-Licenses: MIT
-
-Copyright (c) 2024-present VoidZero Inc. & Contributors
-
-
-## pluginutils 1.0.0-beta.53
-
-PURL: pkg:npm/%40rolldown/pluginutils@1.0.0-beta.53
-Upstream: [https://www.npmjs.com/package/%40rolldown/pluginutils](https://www.npmjs.com/package/%40rolldown/pluginutils)
+PURL: pkg:npm/%40vitejs/plugin-vue@5.1.4?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite-plugin-vue.git%23packages%2Fplugin-vue
+Upstream: [https://www.npmjs.com/package/%40vitejs/plugin-vue](https://www.npmjs.com/package/%40vitejs/plugin-vue)
 
 Licenses: MIT
 
-Copyright (c) 2024-present VoidZero Inc. & Contributors
+Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
 
 
-## pluginutils 5.1.4
+## possible-typed-array-names 1.0.0
 
-PURL: pkg:npm/%40rollup/pluginutils@5.1.4
-Upstream: [https://www.npmjs.com/package/%40rollup/pluginutils](https://www.npmjs.com/package/%40rollup/pluginutils)
-
-Licenses: MIT
-
-Copyright (c) 2019 RollupJS Plugin Contributors (https://github.com/rollup/plugins/graphs/contributors)
-
-
-## pluginutils 5.3.0
-
-PURL: pkg:npm/%40rollup/pluginutils@5.3.0
-Upstream: [https://www.npmjs.com/package/%40rollup/pluginutils](https://www.npmjs.com/package/%40rollup/pluginutils)
-
-Licenses: MIT
-
-Copyright (c) 2019 RollupJS Plugin Contributors (https://github.com/rollup/plugins/graphs/contributors)
-
-
-## possible-typed-array-names 1.1.0
-
-PURL: pkg:npm/possible-typed-array-names@1.1.0
+PURL: pkg:npm/possible-typed-array-names@1.0.0
 Upstream: [https://www.npmjs.com/package/possible-typed-array-names](https://www.npmjs.com/package/possible-typed-array-names)
 
 Licenses: MIT
@@ -14269,9 +9309,19 @@ Licenses: MIT
 Copyright (c) 2024 Jordan Harband
 
 
-## postcss 8.5.3
+## postcss-value-parser 4.2.0
 
-PURL: pkg:npm/postcss@8.5.3
+PURL: pkg:npm/postcss-value-parser@4.2.0
+Upstream: [https://www.npmjs.com/package/postcss-value-parser](https://www.npmjs.com/package/postcss-value-parser)
+
+Licenses: MIT
+
+Copyright (c) Bogdan Chadkin <trysound@yandex.ru>
+
+
+## postcss 8.4.47
+
+PURL: pkg:npm/postcss@8.4.47
 Upstream: [https://www.npmjs.com/package/postcss](https://www.npmjs.com/package/postcss)
 
 Licenses: MIT
@@ -14299,9 +9349,9 @@ Licenses: MIT
 Copyright (c) George Zahariev
 
 
-## preset-env 7.26.9
+## preset-env 7.25.7
 
-PURL: pkg:npm/%40babel/preset-env@7.26.9?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-preset-env
+PURL: pkg:npm/%40babel/preset-env@7.25.7?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-preset-env
 Upstream: [https://www.npmjs.com/package/%40babel/preset-env](https://www.npmjs.com/package/%40babel/preset-env)
 
 Licenses: MIT
@@ -14319,56 +9369,6 @@ Licenses: MIT
 Copyright (c) 2020 Babel
 
 
-## preset-react 7.26.3
-
-PURL: pkg:npm/%40babel/preset-react@7.26.3?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-preset-react
-Upstream: [https://www.npmjs.com/package/%40babel/preset-react](https://www.npmjs.com/package/%40babel/preset-react)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## preset-typescript 7.27.0
-
-PURL: pkg:npm/%40babel/preset-typescript@7.27.0?vcs_url=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel.git%23packages%2Fbabel-preset-typescript
-Upstream: [https://www.npmjs.com/package/%40babel/preset-typescript](https://www.npmjs.com/package/%40babel/preset-typescript)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## prettier 3.5.3
-
-PURL: pkg:npm/prettier@3.5.3
-Upstream: [https://www.npmjs.com/package/prettier](https://www.npmjs.com/package/prettier)
-
-Licenses: MIT
-
-Copyright © James Long and contributors
-
-
-## prettier 3.6.2
-
-PURL: pkg:npm/prettier@3.6.2
-Upstream: [https://www.npmjs.com/package/prettier](https://www.npmjs.com/package/prettier)
-
-Licenses: MIT
-
-Copyright © James Long and contributors
-
-
-## pretty-format 27.5.1
-
-PURL: pkg:npm/pretty-format@27.5.1
-Upstream: [https://www.npmjs.com/package/pretty-format](https://www.npmjs.com/package/pretty-format)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
 ## pretty-format 29.7.0
 
 PURL: pkg:npm/pretty-format@29.7.0
@@ -14376,177 +9376,17 @@ Upstream: [https://www.npmjs.com/package/pretty-format](https://www.npmjs.com/pa
 
 Licenses: MIT
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
-## pretty-format 3.2.4
+## process 0.11.10
 
-PURL: pkg:npm/%40vitest/pretty-format@3.2.4
-Upstream: [https://www.npmjs.com/package/%40vitest/pretty-format](https://www.npmjs.com/package/%40vitest/pretty-format)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
-
-
-## pretty-format 4.0.3
-
-PURL: pkg:npm/%40vitest/pretty-format@4.0.3
-Upstream: [https://www.npmjs.com/package/%40vitest/pretty-format](https://www.npmjs.com/package/%40vitest/pretty-format)
+PURL: pkg:npm/process@0.11.10
+Upstream: [https://www.npmjs.com/package/process](https://www.npmjs.com/package/process)
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
-
-
-## private 1.0.9
-
-PURL: pkg:npm/%40vanilla-extract/private@1.0.9
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/private](https://www.npmjs.com/package/%40vanilla-extract/private)
-
-Licenses: MIT
-
-Copyright (c) 2021 SEEK
-
-
-## problem-matcher 0.1.1
-
-PURL: pkg:npm/%40rushstack/problem-matcher@0.1.1?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Frushstack.git%23libraries%2Fproblem-matcher
-Upstream: [https://www.npmjs.com/package/%40rushstack/problem-matcher](https://www.npmjs.com/package/%40rushstack/problem-matcher)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## proc-log 2.0.1
-
-PURL: pkg:npm/proc-log@2.0.1
-Upstream: [https://www.npmjs.com/package/proc-log](https://www.npmjs.com/package/proc-log)
-
-Licenses: ISC
-
-Copyright (c) GitHub, Inc.
-
-
-## proc-log 5.0.0
-
-PURL: pkg:npm/proc-log@5.0.0
-Upstream: [https://www.npmjs.com/package/proc-log](https://www.npmjs.com/package/proc-log)
-
-Licenses: ISC
-
-Copyright (c) GitHub, Inc.
-
-
-## progress 2.0.3
-
-PURL: pkg:npm/progress@2.0.3
-Upstream: [https://www.npmjs.com/package/progress](https://www.npmjs.com/package/progress)
-
-Licenses: MIT
-
-Copyright (c) 2017 TJ Holowaychuk <tj@vision-media.ca>
-
-
-## project-service 8.38.0
-
-PURL: pkg:npm/%40typescript-eslint/project-service@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Fproject-service
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/project-service](https://www.npmjs.com/package/%40typescript-eslint/project-service)
-
-Licenses: MIT
-
-Copyright (c) 2025 typescript-eslint and other contributors
-
-
-## promise-all-reject-late 1.0.1
-
-PURL: pkg:npm/promise-all-reject-late@1.0.1
-Upstream: [https://www.npmjs.com/package/promise-all-reject-late](https://www.npmjs.com/package/promise-all-reject-late)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## promise-call-limit 1.0.2
-
-PURL: pkg:npm/promise-call-limit@1.0.2
-Upstream: [https://www.npmjs.com/package/promise-call-limit](https://www.npmjs.com/package/promise-call-limit)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## promise-inflight 1.0.1
-
-PURL: pkg:npm/promise-inflight@1.0.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fiarna%2Fpromise-inflight.git
-Upstream: [https://www.npmjs.com/package/promise-inflight](https://www.npmjs.com/package/promise-inflight)
-
-Licenses: ISC
-
-Copyright (c) 2017, Rebecca Turner <me@re-becca.org>
-
-
-## promise-retry 2.0.1
-
-PURL: pkg:npm/promise-retry@2.0.1
-Upstream: [https://www.npmjs.com/package/promise-retry](https://www.npmjs.com/package/promise-retry)
-
-Licenses: MIT
-
-Copyright (c) 2014 IndigoUnited
-
-
-## promise-spawn 3.0.0
-
-PURL: pkg:npm/%40npmcli/promise-spawn@3.0.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/promise-spawn](https://www.npmjs.com/package/%40npmcli/promise-spawn)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## promisify 1.1.3
-
-PURL: pkg:npm/%40gar/promisify@1.1.3
-Upstream: [https://www.npmjs.com/package/%40gar/promisify](https://www.npmjs.com/package/%40gar/promisify)
-
-Licenses: MIT
-
-Copyright © 2020-2022 Michael Garvin
-
-
-## promzard 0.3.0
-
-PURL: pkg:npm/promzard@0.3.0
-Upstream: [https://www.npmjs.com/package/promzard](https://www.npmjs.com/package/promzard)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## prop-types 15.7.14
-
-PURL: pkg:npm/%40types/prop-types@15.7.14
-Upstream: [https://www.npmjs.com/package/%40types/prop-types](https://www.npmjs.com/package/%40types/prop-types)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## prop-types 15.8.1
-
-PURL: pkg:npm/prop-types@15.8.1
-Upstream: [https://www.npmjs.com/package/prop-types](https://www.npmjs.com/package/prop-types)
-
-Licenses: MIT
-
-Copyright (c) 2013-present, Facebook, Inc.
+Copyright (c) 2013 Roman Shtylman <shtylman@gmail.com>
 
 
 ## proto-list 1.2.4
@@ -14559,24 +9399,24 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## psl 1.15.0
+## proxy-addr 2.0.7
 
-PURL: pkg:npm/psl@1.15.0
-Upstream: [https://www.npmjs.com/package/psl](https://www.npmjs.com/package/psl)
-
-Licenses: MIT
-
-Copyright (c) 2017 Lupo Montero lupomontero@gmail.com
-
-
-## pump 3.0.2
-
-PURL: pkg:npm/pump@3.0.2
-Upstream: [https://www.npmjs.com/package/pump](https://www.npmjs.com/package/pump)
+PURL: pkg:npm/proxy-addr@2.0.7
+Upstream: [https://www.npmjs.com/package/proxy-addr](https://www.npmjs.com/package/proxy-addr)
 
 Licenses: MIT
 
-Copyright (c) 2014 Mathias Buus
+Copyright (c) 2014-2016 Douglas Christopher Wilson
+
+
+## proxy-from-env 2.1.0
+
+PURL: pkg:npm/proxy-from-env@2.1.0
+Upstream: [https://www.npmjs.com/package/proxy-from-env](https://www.npmjs.com/package/proxy-from-env)
+
+Licenses: MIT
+
+Copyright (C) 2016-2018 Rob Wu <rob@robwu.nl>
 
 
 ## punycode 2.3.1
@@ -14587,16 +9427,6 @@ Upstream: [https://www.npmjs.com/package/punycode](https://www.npmjs.com/package
 Licenses: MIT
 
 Copyright (c) Mathias Bynens
-
-
-## pupa 3.1.0
-
-PURL: pkg:npm/pupa@3.1.0
-Upstream: [https://www.npmjs.com/package/pupa](https://www.npmjs.com/package/pupa)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## pymdown-extensions 7.0
@@ -14629,64 +9459,54 @@ Licenses: MIT
 Copyright (c) Waylan Limberg
 
 
-## q 1.5.1
+## qs 6.13.0
 
-PURL: pkg:npm/q@1.5.1
-Upstream: [https://www.npmjs.com/package/q](https://www.npmjs.com/package/q)
+PURL: pkg:npm/qs@6.13.0
+Upstream: [https://www.npmjs.com/package/qs](https://www.npmjs.com/package/qs)
 
-Licenses: MIT
+Licenses: BSD-3-Clause
 
-Copyright 2009–2017 Kristopher Michael Kowal. All rights reserved.
-
-
-## qrcode-terminal 0.12.0
-
-PURL: pkg:npm/qrcode-terminal@0.12.0
-Upstream: [https://www.npmjs.com/package/qrcode-terminal](https://www.npmjs.com/package/qrcode-terminal)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
+Copyright (c) 2014, Nathan LaFreniere and other [contributors](https://github.com/ljharb/qs/graphs/contributors)
 
 
-## quansync 0.2.11
+## qs 6.9.16
 
-PURL: pkg:npm/quansync@0.2.11
-Upstream: [https://www.npmjs.com/package/quansync](https://www.npmjs.com/package/quansync)
+PURL: pkg:npm/%40types/qs@6.9.16
+Upstream: [https://www.npmjs.com/package/%40types/qs](https://www.npmjs.com/package/%40types/qs)
 
 Licenses: MIT
 
-Copyright (c) 2025-PRESENT Anthony Fu <https://github.com/antfu> and Kevin Deng <https://github.com/sxzz>
+Copyright (c) Microsoft Corporation.
 
 
-## query-string 6.14.1
+## quasar-app-extension-testing-unit-vitest 1.1.0
 
-PURL: pkg:npm/query-string@6.14.1
+PURL: pkg:npm/%40quasar/quasar-app-extension-testing-unit-vitest@1.1.0?vcs_url=https%3A%2F%2Fgithub.com%2Fquasarframework%2Fquasar-testing
+Upstream: [https://www.npmjs.com/package/%40quasar/quasar-app-extension-testing-unit-vitest](https://www.npmjs.com/package/%40quasar/quasar-app-extension-testing-unit-vitest)
+
+Licenses: MIT
+
+Copyright (c) 2018 Quasar Framework
+
+
+## quasar 2.17.0
+
+PURL: pkg:npm/quasar@2.17.0
+Upstream: [https://www.npmjs.com/package/quasar](https://www.npmjs.com/package/quasar)
+
+Licenses: MIT
+
+Copyright (c) 2015-present Razvan Stoenescu
+
+
+## query-string 8.2.0
+
+PURL: pkg:npm/query-string@8.2.0
 Upstream: [https://www.npmjs.com/package/query-string](https://www.npmjs.com/package/query-string)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (http://sindresorhus.com)
-
-
-## query 1.2.0
-
-PURL: pkg:npm/%40npmcli/query@1.2.0
-Upstream: [https://www.npmjs.com/package/%40npmcli/query](https://www.npmjs.com/package/%40npmcli/query)
-
-Licenses: ISC
-
-Copyright npm, Inc.
-
-
-## querystringify 2.2.0
-
-PURL: pkg:npm/querystringify@2.2.0
-Upstream: [https://www.npmjs.com/package/querystringify](https://www.npmjs.com/package/querystringify)
-
-Licenses: MIT
-
-Copyright (c) 2015 Unshift.io, Arnout Kazemier,  the Contributors.
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## queue-microtask 1.2.3
@@ -14699,184 +9519,54 @@ Licenses: MIT
 Copyright (c) Feross Aboukhadijeh
 
 
-## quick-lru 4.0.1
+## queue-tick 1.0.1
 
-PURL: pkg:npm/quick-lru@4.0.1
-Upstream: [https://www.npmjs.com/package/quick-lru](https://www.npmjs.com/package/quick-lru)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## quick-lru 5.1.1
-
-PURL: pkg:npm/quick-lru@5.1.1
-Upstream: [https://www.npmjs.com/package/quick-lru](https://www.npmjs.com/package/quick-lru)
+PURL: pkg:npm/queue-tick@1.0.1
+Upstream: [https://www.npmjs.com/package/queue-tick](https://www.npmjs.com/package/queue-tick)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2021 Mathias Buus
 
 
-## rc 1.2.8
+## randombytes 2.1.0
 
-PURL: pkg:npm/rc@1.2.8
-Upstream: [https://www.npmjs.com/package/rc](https://www.npmjs.com/package/rc)
-
-Licenses: Apache-2.0, BSD-2-Clause, MIT
-
-Copyright (c) Dominic Tarr
-
-
-## react-chartjs-2 5.3.0
-
-PURL: pkg:npm/react-chartjs-2@5.3.0?vcs_url=https%3A%2F%2Fgithub.com%2Freactchartjs%2Freact-chartjs-2.git
-Upstream: [https://www.npmjs.com/package/react-chartjs-2](https://www.npmjs.com/package/react-chartjs-2)
+PURL: pkg:npm/randombytes@2.1.0
+Upstream: [https://www.npmjs.com/package/randombytes](https://www.npmjs.com/package/randombytes)
 
 Licenses: MIT
 
-Copyright 2020 Jeremy Ayerst
+Copyright (c) 2017 crypto-browserify
 
 
-## react-docgen-typescript 2.2.2
+## range-parser 1.2.1
 
-PURL: pkg:npm/react-docgen-typescript@2.2.2?vcs_url=https%3A%2F%2Fgithub.com%2Fstyleguidist%2Freact-docgen-typescript.git
-Upstream: [https://www.npmjs.com/package/react-docgen-typescript](https://www.npmjs.com/package/react-docgen-typescript)
-
-Licenses: MIT
-
-Copyright (c) 2016 Pavel Vasek
-
-
-## react-docgen 8.0.2
-
-PURL: pkg:npm/react-docgen@8.0.2
-Upstream: [https://www.npmjs.com/package/react-docgen](https://www.npmjs.com/package/react-docgen)
+PURL: pkg:npm/range-parser@1.2.1
+Upstream: [https://www.npmjs.com/package/range-parser](https://www.npmjs.com/package/range-parser)
 
 Licenses: MIT
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) 2012-2014 TJ Holowaychuk <tj@vision-media.ca>
 
 
-## react-dom 18.2.0
+## range-parser 1.2.7
 
-PURL: pkg:npm/%40types/react-dom@18.2.0
-Upstream: [https://www.npmjs.com/package/%40types/react-dom](https://www.npmjs.com/package/%40types/react-dom)
+PURL: pkg:npm/%40types/range-parser@1.2.7
+Upstream: [https://www.npmjs.com/package/%40types/range-parser](https://www.npmjs.com/package/%40types/range-parser)
 
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
 
 
-## react-dom 18.3.1
+## raw-body 2.5.2
 
-PURL: pkg:npm/react-dom@18.3.1?vcs_url=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact.git%23packages%2Freact-dom
-Upstream: [https://www.npmjs.com/package/react-dom](https://www.npmjs.com/package/react-dom)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react-dom 18.3.6
-
-PURL: pkg:npm/%40types/react-dom@18.3.6?vcs_url=https%3A%2F%2Fgithub.com%2FDefinitelyTyped%2FDefinitelyTyped.git%23types%2Freact-dom
-Upstream: [https://www.npmjs.com/package/%40types/react-dom](https://www.npmjs.com/package/%40types/react-dom)
+PURL: pkg:npm/raw-body@2.5.2
+Upstream: [https://www.npmjs.com/package/raw-body](https://www.npmjs.com/package/raw-body)
 
 Licenses: MIT
 
-Copyright (c) Microsoft Corporation.
-
-
-## react-dom 19.1.0
-
-PURL: pkg:npm/react-dom@19.1.0?vcs_url=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact.git%23packages%2Freact-dom
-Upstream: [https://www.npmjs.com/package/react-dom](https://www.npmjs.com/package/react-dom)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react-error-boundary 4.1.2
-
-PURL: pkg:npm/react-error-boundary@4.1.2?vcs_url=https%3A%2F%2Fgithub.com%2Fbvaughn%2Freact-error-boundary
-Upstream: [https://www.npmjs.com/package/react-error-boundary](https://www.npmjs.com/package/react-error-boundary)
-
-Licenses: MIT
-
-Copyright (c) 2020 Brian Vaughn
-
-
-## react-fast-compare 3.2.2
-
-PURL: pkg:npm/react-fast-compare@3.2.2
-Upstream: [https://www.npmjs.com/package/react-fast-compare](https://www.npmjs.com/package/react-fast-compare)
-
-Licenses: MIT
-
-Copyright (c) 2018 Formidable Labs
-
-
-## react-helmet-async 2.0.5
-
-PURL: pkg:npm/react-helmet-async@2.0.5
-Upstream: [https://www.npmjs.com/package/react-helmet-async](https://www.npmjs.com/package/react-helmet-async)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## react-icons 5.5.0
-
-PURL: pkg:npm/react-icons@5.5.0
-Upstream: [https://www.npmjs.com/package/react-icons](https://www.npmjs.com/package/react-icons)
-
-Licenses: MIT
-
-Copyright 2018 kamijin_fanta <kamijin@live.jp>
-
-
-## react-infinite-scroll-hook 4.1.1
-
-PURL: pkg:npm/react-infinite-scroll-hook@4.1.1?vcs_url=https%3A%2F%2Fgithub.com%2Fonderonur%2Freact-infinite-scroll-hook.git
-Upstream: [https://www.npmjs.com/package/react-infinite-scroll-hook](https://www.npmjs.com/package/react-infinite-scroll-hook)
-
-Licenses: MIT
-
-Copyright (c) 2020 onderonur
-
-
-## react-intersection-observer-hook 2.1.1
-
-PURL: pkg:npm/react-intersection-observer-hook@2.1.1?vcs_url=https%3A%2F%2Fgithub.com%2Fonderonur%2Freact-intersection-observer-hook.git
-Upstream: [https://www.npmjs.com/package/react-intersection-observer-hook](https://www.npmjs.com/package/react-intersection-observer-hook)
-
-Licenses: MIT
-
-Copyright (c) 2019 onderonur
-
-
-## react-is 16.13.1
-
-PURL: pkg:npm/react-is@16.13.1
-Upstream: [https://www.npmjs.com/package/react-is](https://www.npmjs.com/package/react-is)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react-is 17.0.2
-
-PURL: pkg:npm/react-is@17.0.2
-Upstream: [https://www.npmjs.com/package/react-is](https://www.npmjs.com/package/react-is)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) 2013-2014 Jonathan Ong <me@jongleberry.com>
 
 
 ## react-is 18.3.1
@@ -14889,244 +9579,14 @@ Licenses: MIT
 Copyright (c) Facebook, Inc. and its affiliates.
 
 
-## react-refresh 0.17.0
+## reactivity 3.5.11
 
-PURL: pkg:npm/react-refresh@0.17.0
-Upstream: [https://www.npmjs.com/package/react-refresh](https://www.npmjs.com/package/react-refresh)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## react-refresh 0.18.0
-
-PURL: pkg:npm/react-refresh@0.18.0
-Upstream: [https://www.npmjs.com/package/react-refresh](https://www.npmjs.com/package/react-refresh)
+PURL: pkg:npm/%40vue/reactivity@3.5.11
+Upstream: [https://www.npmjs.com/package/%40vue/reactivity](https://www.npmjs.com/package/%40vue/reactivity)
 
 Licenses: MIT
 
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## react-router-dom 5.3.3
-
-PURL: pkg:npm/%40types/react-router-dom@5.3.3
-Upstream: [https://www.npmjs.com/package/%40types/react-router-dom](https://www.npmjs.com/package/%40types/react-router-dom)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## react-router-dom 6.22.1
-
-PURL: pkg:npm/react-router-dom@6.22.1?vcs_url=https%3A%2F%2Fgithub.com%2Fremix-run%2Freact-router%23packages%2Freact-router-dom
-Upstream: [https://www.npmjs.com/package/react-router-dom](https://www.npmjs.com/package/react-router-dom)
-
-Licenses: MIT
-
-Copyright (c) React Training LLC 2015-2019
-
-
-## react-router 5.1.20
-
-PURL: pkg:npm/%40types/react-router@5.1.20
-Upstream: [https://www.npmjs.com/package/%40types/react-router](https://www.npmjs.com/package/%40types/react-router)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## react-router 6.22.1
-
-PURL: pkg:npm/react-router@6.22.1?vcs_url=https%3A%2F%2Fgithub.com%2Fremix-run%2Freact-router%23packages%2Freact-router
-Upstream: [https://www.npmjs.com/package/react-router](https://www.npmjs.com/package/react-router)
-
-Licenses: MIT
-
-Copyright (c) React Training LLC 2015-2019
-
-
-## react 14.3.1
-
-PURL: pkg:npm/%40testing-library/react@14.3.1?vcs_url=https%3A%2F%2Fgithub.com%2Ftesting-library%2Freact-testing-library
-Upstream: [https://www.npmjs.com/package/%40testing-library/react](https://www.npmjs.com/package/%40testing-library/react)
-
-Licenses: MIT
-
-Copyright (c) 2017-Present Kent C. Dodds
-
-
-## react 18.2.0
-
-PURL: pkg:npm/%40types/react@18.2.0
-Upstream: [https://www.npmjs.com/package/%40types/react](https://www.npmjs.com/package/%40types/react)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## react 18.3.1
-
-PURL: pkg:npm/react@18.3.1
-Upstream: [https://www.npmjs.com/package/react](https://www.npmjs.com/package/react)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react 18.3.20
-
-PURL: pkg:npm/%40types/react@18.3.20
-Upstream: [https://www.npmjs.com/package/%40types/react](https://www.npmjs.com/package/%40types/react)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## react 19.1.0
-
-PURL: pkg:npm/%40types/react@19.1.0
-Upstream: [https://www.npmjs.com/package/%40types/react](https://www.npmjs.com/package/%40types/react)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## react 19.1.0
-
-PURL: pkg:npm/react@19.1.0
-Upstream: [https://www.npmjs.com/package/react](https://www.npmjs.com/package/react)
-
-Licenses: MIT
-
-Copyright (c) Facebook, Inc. and its affiliates.
-
-
-## react 2.3.0
-
-PURL: pkg:npm/%40mdx-js/react@2.3.0?vcs_url=https%3A%2F%2Fgithub.com%2Fmdx-js%2Fmdx%23packages%2Freact
-Upstream: [https://www.npmjs.com/package/%40mdx-js/react](https://www.npmjs.com/package/%40mdx-js/react)
-
-Licenses: MIT
-
-Copyright (c) 2017 Compositor and Vercel, Inc.
-
-
-## react 3.1.0
-
-PURL: pkg:npm/%40mdx-js/react@3.1.0?vcs_url=https%3A%2F%2Fgithub.com%2Fmdx-js%2Fmdx%23packages%2Freact%2F
-Upstream: [https://www.npmjs.com/package/%40mdx-js/react](https://www.npmjs.com/package/%40mdx-js/react)
-
-Licenses: MIT
-
-Copyright (c) 2017 Compositor and Vercel, Inc.
-
-
-## read-cmd-shim 3.0.1
-
-PURL: pkg:npm/read-cmd-shim@3.0.1
-Upstream: [https://www.npmjs.com/package/read-cmd-shim](https://www.npmjs.com/package/read-cmd-shim)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner <me@re-becca.org>
-
-
-## read-file-safe 1.0.10
-
-PURL: pkg:npm/read-file-safe@1.0.10
-Upstream: [https://www.npmjs.com/package/read-file-safe](https://www.npmjs.com/package/read-file-safe)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## read-json-safe 1.0.5
-
-PURL: pkg:npm/read-json-safe@1.0.5
-Upstream: [https://www.npmjs.com/package/read-json-safe](https://www.npmjs.com/package/read-json-safe)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## read-package-json-fast 2.0.3
-
-PURL: pkg:npm/read-package-json-fast@2.0.3
-Upstream: [https://www.npmjs.com/package/read-package-json-fast](https://www.npmjs.com/package/read-package-json-fast)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc. and Contributors
-
-
-## read-package-json 5.0.2
-
-PURL: pkg:npm/read-package-json@5.0.2
-Upstream: [https://www.npmjs.com/package/read-package-json](https://www.npmjs.com/package/read-package-json)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## read-pkg-up 7.0.1
-
-PURL: pkg:npm/read-pkg-up@7.0.1
-Upstream: [https://www.npmjs.com/package/read-pkg-up](https://www.npmjs.com/package/read-pkg-up)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## read-pkg-up 9.1.0
-
-PURL: pkg:npm/read-pkg-up@9.1.0
-Upstream: [https://www.npmjs.com/package/read-pkg-up](https://www.npmjs.com/package/read-pkg-up)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## read-pkg 5.2.0
-
-PURL: pkg:npm/read-pkg@5.2.0
-Upstream: [https://www.npmjs.com/package/read-pkg](https://www.npmjs.com/package/read-pkg)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## read-pkg 7.1.0
-
-PURL: pkg:npm/read-pkg@7.1.0
-Upstream: [https://www.npmjs.com/package/read-pkg](https://www.npmjs.com/package/read-pkg)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## read 1.0.7
-
-PURL: pkg:npm/read@1.0.7
-Upstream: [https://www.npmjs.com/package/read](https://www.npmjs.com/package/read)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
+Copyright (c) 2018-present, Yuxi (Evan) You
 
 
 ## readable-stream 2.3.8
@@ -15149,64 +9609,44 @@ Licenses: MIT
 Copyright Node.js contributors. All rights reserved.
 
 
-## readdir-scoped-modules 1.1.0
+## readable-stream 4.5.2
 
-PURL: pkg:npm/readdir-scoped-modules@1.1.0
-Upstream: [https://www.npmjs.com/package/readdir-scoped-modules](https://www.npmjs.com/package/readdir-scoped-modules)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## recast 0.23.11
-
-PURL: pkg:npm/recast@0.23.11
-Upstream: [https://www.npmjs.com/package/recast](https://www.npmjs.com/package/recast)
+PURL: pkg:npm/readable-stream@4.5.2
+Upstream: [https://www.npmjs.com/package/readable-stream](https://www.npmjs.com/package/readable-stream)
 
 Licenses: MIT
 
-Copyright (c) 2012 Ben Newman <bn@cs.stanford.edu>
+Copyright Node.js contributors. All rights reserved.
 
 
-## recipes 0.5.7
+## readdir-glob 1.1.3
 
-PURL: pkg:npm/%40vanilla-extract/recipes@0.5.7?vcs_url=https%3A%2F%2Fgithub.com%2Fvanilla-extract-css%2Fvanilla-extract.git%23packages%2Frecipes
-Upstream: [https://www.npmjs.com/package/%40vanilla-extract/recipes](https://www.npmjs.com/package/%40vanilla-extract/recipes)
+PURL: pkg:npm/readdir-glob@1.1.3
+Upstream: [https://www.npmjs.com/package/readdir-glob](https://www.npmjs.com/package/readdir-glob)
 
-Licenses: MIT
+Licenses: Apache-2.0
 
-Copyright (c) 2021 SEEK
-
-
-## redent 3.0.0
-
-PURL: pkg:npm/redent@3.0.0
-Upstream: [https://www.npmjs.com/package/redent](https://www.npmjs.com/package/redent)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+copyright notice that is included in or attached to the work
 
 
-## redeyed 2.1.1
+## readdirp 3.6.0
 
-PURL: pkg:npm/redeyed@2.1.1
-Upstream: [https://www.npmjs.com/package/redeyed](https://www.npmjs.com/package/redeyed)
+PURL: pkg:npm/readdirp@3.6.0
+Upstream: [https://www.npmjs.com/package/readdirp](https://www.npmjs.com/package/readdirp)
 
 Licenses: MIT
 
-Copyright 2012 Thorsten Lorenz.
+Copyright (c) 2012-2019 Thorsten Lorenz, Paul Miller (https://paulmillr.com)
 
 
-## reflect.getprototypeof 1.0.10
+## recrawl-sync 2.2.3
 
-PURL: pkg:npm/reflect.getprototypeof@1.0.10
-Upstream: [https://www.npmjs.com/package/reflect.getprototypeof](https://www.npmjs.com/package/reflect.getprototypeof)
+PURL: pkg:npm/recrawl-sync@2.2.3
+Upstream: [https://www.npmjs.com/package/recrawl-sync](https://www.npmjs.com/package/recrawl-sync)
 
 Licenses: MIT
 
-Copyright (c) 2021 ECMAScript Shims
+Copyright (c) 2018 Alec Larson
 
 
 ## regenerate-unicode-properties 10.2.0
@@ -15249,9 +9689,9 @@ Licenses: MIT
 Copyright (c) 2014-present, Facebook, Inc.
 
 
-## regexp.prototype.flags 1.5.4
+## regexp.prototype.flags 1.5.3
 
-PURL: pkg:npm/regexp.prototype.flags@1.5.4
+PURL: pkg:npm/regexp.prototype.flags@1.5.3
 Upstream: [https://www.npmjs.com/package/regexp.prototype.flags](https://www.npmjs.com/package/regexp.prototype.flags)
 
 Licenses: MIT
@@ -15259,9 +9699,9 @@ Licenses: MIT
 Copyright (C) 2014 Jordan Harband
 
 
-## regexpp 4.12.1
+## regexpp 4.11.1
 
-PURL: pkg:npm/%40eslint-community/regexpp@4.12.1
+PURL: pkg:npm/%40eslint-community/regexpp@4.11.1
 Upstream: [https://www.npmjs.com/package/%40eslint-community/regexpp](https://www.npmjs.com/package/%40eslint-community/regexpp)
 
 Licenses: MIT
@@ -15269,44 +9709,14 @@ Licenses: MIT
 Copyright (c) 2018 Toru Nagashima
 
 
-## regexpu-core 6.2.0
+## regexpu-core 6.1.1
 
-PURL: pkg:npm/regexpu-core@6.2.0
+PURL: pkg:npm/regexpu-core@6.1.1
 Upstream: [https://www.npmjs.com/package/regexpu-core](https://www.npmjs.com/package/regexpu-core)
 
 Licenses: MIT
 
 Copyright (c) Mathias Bynens
-
-
-## registry-auth-token 4.2.2
-
-PURL: pkg:npm/registry-auth-token@4.2.2
-Upstream: [https://www.npmjs.com/package/registry-auth-token](https://www.npmjs.com/package/registry-auth-token)
-
-Licenses: MIT
-
-Copyright (c) 2016 Espen Hovlandsdal
-
-
-## registry-auth-token 5.1.0
-
-PURL: pkg:npm/registry-auth-token@5.1.0
-Upstream: [https://www.npmjs.com/package/registry-auth-token](https://www.npmjs.com/package/registry-auth-token)
-
-Licenses: MIT
-
-Copyright (c) 2016 Espen Hovlandsdal
-
-
-## registry-url 6.0.1
-
-PURL: pkg:npm/registry-url@6.0.1
-Upstream: [https://www.npmjs.com/package/registry-url](https://www.npmjs.com/package/registry-url)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## regjsgen 0.8.0
@@ -15319,9 +9729,9 @@ Licenses: MIT
 Copyright (c) Benjamin Tan
 
 
-## regjsparser 0.12.0
+## regjsparser 0.11.1
 
-PURL: pkg:npm/regjsparser@0.12.0
+PURL: pkg:npm/regjsparser@0.11.1
 Upstream: [https://www.npmjs.com/package/regjsparser](https://www.npmjs.com/package/regjsparser)
 
 Licenses: BSD-2-Clause
@@ -15329,14 +9739,24 @@ Licenses: BSD-2-Clause
 Copyright (c) 'Julian Viereck'
 
 
-## release-notes-generator 10.0.3
+## relateurl 0.2.7
 
-PURL: pkg:npm/%40semantic-release/release-notes-generator@10.0.3?vcs_url=https%3A%2F%2Fgithub.com%2Fsemantic-release%2Frelease-notes-generator.git
-Upstream: [https://www.npmjs.com/package/%40semantic-release/release-notes-generator](https://www.npmjs.com/package/%40semantic-release/release-notes-generator)
+PURL: pkg:npm/relateurl@0.2.7
+Upstream: [https://www.npmjs.com/package/relateurl](https://www.npmjs.com/package/relateurl)
 
 Licenses: MIT
 
-Copyright (c) 2017 Pierre-Denis Vanduynslager
+Copyright (c) Steven Vachon <contact@svachon.com> (svachon.com)
+
+
+## relative 1.0.0
+
+PURL: pkg:npm/%40cush/relative@1.0.0
+Upstream: [https://www.npmjs.com/package/%40cush/relative](https://www.npmjs.com/package/%40cush/relative)
+
+Licenses: MIT
+
+Copyright (c) 2018 Alec Larson
 
 
 ## remapping 2.3.0
@@ -15349,34 +9769,14 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## remapping 2.3.5
+## render-ssr-error 1.0.3
 
-PURL: pkg:npm/%40jridgewell/remapping@2.3.5
-Upstream: [https://www.npmjs.com/package/%40jridgewell/remapping](https://www.npmjs.com/package/%40jridgewell/remapping)
-
-Licenses: MIT
-
-Copyright 2024 Justin Ridgewell <justin@ridgewell.name>
-
-
-## request-error 3.0.3
-
-PURL: pkg:npm/%40octokit/request-error@3.0.3
-Upstream: [https://www.npmjs.com/package/%40octokit/request-error](https://www.npmjs.com/package/%40octokit/request-error)
+PURL: pkg:npm/%40quasar/render-ssr-error@1.0.3
+Upstream: [https://www.npmjs.com/package/%40quasar/render-ssr-error](https://www.npmjs.com/package/%40quasar/render-ssr-error)
 
 Licenses: MIT
 
-Copyright (c) 2019 Octokit contributors
-
-
-## request 6.2.8
-
-PURL: pkg:npm/%40octokit/request@6.2.8
-Upstream: [https://www.npmjs.com/package/%40octokit/request](https://www.npmjs.com/package/%40octokit/request)
-
-Licenses: MIT
-
-Copyright (c) 2018 Octokit contributors
+Copyright (c) Razvan Stoenescu
 
 
 ## require-directory 2.1.1
@@ -15399,69 +9799,19 @@ Licenses: MIT
 Copyright (c) Vsevolod Strukchinsky <floatdrop@gmail.com> (github.com/floatdrop)
 
 
-## require-like 0.1.2
+## reselect 4.1.8
 
-PURL: pkg:npm/require-like@0.1.2
-Upstream: [https://www.npmjs.com/package/require-like](https://www.npmjs.com/package/require-like)
-
-Licenses: 
-
-Copyright (c) 2011 Felix Geisendörfer (felix@debuggable.com)
-
-
-## requires-port 1.0.0
-
-PURL: pkg:npm/requires-port@1.0.0
-Upstream: [https://www.npmjs.com/package/requires-port](https://www.npmjs.com/package/requires-port)
+PURL: pkg:npm/reselect@4.1.8
+Upstream: [https://www.npmjs.com/package/reselect](https://www.npmjs.com/package/reselect)
 
 Licenses: MIT
 
-Copyright (c) 2015 Unshift.io, Arnout Kazemier,  the Contributors.
-
-
-## resolve-alpn 1.2.1
-
-PURL: pkg:npm/resolve-alpn@1.2.1
-Upstream: [https://www.npmjs.com/package/resolve-alpn](https://www.npmjs.com/package/resolve-alpn)
-
-Licenses: MIT
-
-Copyright (c) 2018 Szymon Marczak
-
-
-## resolve-cwd 3.0.0
-
-PURL: pkg:npm/resolve-cwd@3.0.0
-Upstream: [https://www.npmjs.com/package/resolve-cwd](https://www.npmjs.com/package/resolve-cwd)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## resolve-from 3.0.0
-
-PURL: pkg:npm/resolve-from@3.0.0
-Upstream: [https://www.npmjs.com/package/resolve-from](https://www.npmjs.com/package/resolve-from)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2015-2018 Reselect Contributors
 
 
 ## resolve-from 4.0.0
 
 PURL: pkg:npm/resolve-from@4.0.0
-Upstream: [https://www.npmjs.com/package/resolve-from](https://www.npmjs.com/package/resolve-from)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## resolve-from 5.0.0
-
-PURL: pkg:npm/resolve-from@5.0.0
 Upstream: [https://www.npmjs.com/package/resolve-from](https://www.npmjs.com/package/resolve-from)
 
 Licenses: MIT
@@ -15489,94 +9839,14 @@ Licenses: MIT
 Copyright 2019 Justin Ridgewell <jridgewell@google.com>
 
 
-## resolve 1.20.6
+## resolve 1.22.8
 
-PURL: pkg:npm/%40types/resolve@1.20.6
-Upstream: [https://www.npmjs.com/package/%40types/resolve](https://www.npmjs.com/package/%40types/resolve)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## resolve 1.22.10
-
-PURL: pkg:npm/resolve@1.22.10?vcs_url=git%3A%2F%2Fgithub.com%2Fbrowserify%2Fresolve.git
+PURL: pkg:npm/resolve@1.22.8?vcs_url=git%3A%2F%2Fgithub.com%2Fbrowserify%2Fresolve.git
 Upstream: [https://www.npmjs.com/package/resolve](https://www.npmjs.com/package/resolve)
 
 Licenses: MIT
 
 Copyright (c) 2012 James Halliday
-
-
-## resolve 1.22.11
-
-PURL: pkg:npm/resolve@1.22.11?vcs_url=ssh%3A%2F%2Fgithub.com%2Fbrowserify%2Fresolve.git
-Upstream: [https://www.npmjs.com/package/resolve](https://www.npmjs.com/package/resolve)
-
-Licenses: MIT
-
-Copyright (c) 2012 James Halliday
-
-
-## resolve 2.0.0-next.5
-
-PURL: pkg:npm/resolve@2.0.0-next.5?vcs_url=git%3A%2F%2Fgithub.com%2Fbrowserify%2Fresolve.git
-Upstream: [https://www.npmjs.com/package/resolve](https://www.npmjs.com/package/resolve)
-
-Licenses: MIT
-
-Copyright (c) 2012 James Halliday
-
-
-## resolver-binding-linux-x64-gnu 1.11.1
-
-PURL: pkg:npm/%40unrs/resolver-binding-linux-x64-gnu@1.11.1
-Upstream: [https://www.npmjs.com/package/%40unrs/resolver-binding-linux-x64-gnu](https://www.npmjs.com/package/%40unrs/resolver-binding-linux-x64-gnu)
-
-Licenses: MIT
-
-Copyright (c) JounQin
-
-
-## responselike 1.0.3
-
-PURL: pkg:npm/%40types/responselike@1.0.3
-Upstream: [https://www.npmjs.com/package/%40types/responselike](https://www.npmjs.com/package/%40types/responselike)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## responselike 2.0.1
-
-PURL: pkg:npm/responselike@2.0.1
-Upstream: [https://www.npmjs.com/package/responselike](https://www.npmjs.com/package/responselike)
-
-Licenses: MIT
-
-Copyright (c) 2017 Luke Childs
-
-
-## responselike 3.0.0
-
-PURL: pkg:npm/responselike@3.0.0
-Upstream: [https://www.npmjs.com/package/responselike](https://www.npmjs.com/package/responselike)
-
-Licenses: MIT
-
-Copyright (c) 2017 Luke Childs
-
-
-## restore-cursor 2.0.0
-
-PURL: pkg:npm/restore-cursor@2.0.0
-Upstream: [https://www.npmjs.com/package/restore-cursor](https://www.npmjs.com/package/restore-cursor)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
 ## restore-cursor 3.1.0
@@ -15589,74 +9859,14 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## retry 0.12.0
+## reusify 1.0.4
 
-PURL: pkg:npm/retry@0.12.0
-Upstream: [https://www.npmjs.com/package/retry](https://www.npmjs.com/package/retry)
-
-Licenses: MIT
-
-Copyright (c) 2011:
-
-
-## retry 0.3.1
-
-PURL: pkg:npm/%40humanwhocodes/retry@0.3.1
-Upstream: [https://www.npmjs.com/package/%40humanwhocodes/retry](https://www.npmjs.com/package/%40humanwhocodes/retry)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## retry 0.4.2
-
-PURL: pkg:npm/%40humanwhocodes/retry@0.4.2
-Upstream: [https://www.npmjs.com/package/%40humanwhocodes/retry](https://www.npmjs.com/package/%40humanwhocodes/retry)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## reusify 1.1.0
-
-PURL: pkg:npm/reusify@1.1.0
+PURL: pkg:npm/reusify@1.0.4
 Upstream: [https://www.npmjs.com/package/reusify](https://www.npmjs.com/package/reusify)
 
 Licenses: MIT
 
-Copyright (c) 2015-2024 Matteo Collina
-
-
-## rfdc 1.4.1
-
-PURL: pkg:npm/rfdc@1.4.1
-Upstream: [https://www.npmjs.com/package/rfdc](https://www.npmjs.com/package/rfdc)
-
-Licenses: MIT
-
-Copyright 2019 "David Mark Clements <david.mark.clements@gmail.com>"
-
-
-## rig-package 0.6.0
-
-PURL: pkg:npm/%40rushstack/rig-package@0.6.0
-Upstream: [https://www.npmjs.com/package/%40rushstack/rig-package](https://www.npmjs.com/package/%40rushstack/rig-package)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## rimraf 2.7.1
-
-PURL: pkg:npm/rimraf@2.7.1
-Upstream: [https://www.npmjs.com/package/rimraf](https://www.npmjs.com/package/rimraf)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
+Copyright (c) 2015 Matteo Collina
 
 
 ## rimraf 3.0.2
@@ -15669,9 +9879,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## rollup-linux-x64-gnu 4.39.0
+## rollup-linux-x64-gnu 4.24.0
 
-PURL: pkg:npm/%40rollup/rollup-linux-x64-gnu@4.39.0
+PURL: pkg:npm/%40rollup/rollup-linux-x64-gnu@4.24.0
 Upstream: [https://www.npmjs.com/package/%40rollup/rollup-linux-x64-gnu](https://www.npmjs.com/package/%40rollup/rollup-linux-x64-gnu)
 
 Licenses: MIT
@@ -15679,19 +9889,19 @@ Licenses: MIT
 Copyright (c) Lukas Taegert-Atkinson
 
 
-## rollup-linux-x64-gnu 4.52.5
+## rollup-plugin-visualizer 5.12.0
 
-PURL: pkg:npm/%40rollup/rollup-linux-x64-gnu@4.52.5
-Upstream: [https://www.npmjs.com/package/%40rollup/rollup-linux-x64-gnu](https://www.npmjs.com/package/%40rollup/rollup-linux-x64-gnu)
+PURL: pkg:npm/rollup-plugin-visualizer@5.12.0
+Upstream: [https://www.npmjs.com/package/rollup-plugin-visualizer](https://www.npmjs.com/package/rollup-plugin-visualizer)
 
 Licenses: MIT
 
-Copyright (c) Lukas Taegert-Atkinson
+Copyright (c) 2016 Denis Bardadym
 
 
-## rollup 4.39.0
+## rollup 4.24.0
 
-PURL: pkg:npm/rollup@4.39.0
+PURL: pkg:npm/rollup@4.24.0
 Upstream: [https://www.npmjs.com/package/rollup](https://www.npmjs.com/package/rollup)
 
 Licenses: MIT
@@ -15699,64 +9909,14 @@ Licenses: MIT
 Copyright (c) 2017 [these people](https://github.com/rollup/rollup/graphs/contributors)
 
 
-## rollup 4.52.5
+## run-applescript 7.0.0
 
-PURL: pkg:npm/rollup@4.52.5
-Upstream: [https://www.npmjs.com/package/rollup](https://www.npmjs.com/package/rollup)
-
-Licenses: MIT
-
-Copyright (c) 2017 [these people](https://github.com/rollup/rollup/graphs/contributors)
-
-
-## router 1.15.1
-
-PURL: pkg:npm/%40remix-run/router@1.15.1
-Upstream: [https://www.npmjs.com/package/%40remix-run/router](https://www.npmjs.com/package/%40remix-run/router)
-
-Licenses: MIT
-
-Copyright (c) React Training LLC 2015-2019
-
-
-## rrweb-cssom 0.7.1
-
-PURL: pkg:npm/rrweb-cssom@0.7.1
-Upstream: [https://www.npmjs.com/package/rrweb-cssom](https://www.npmjs.com/package/rrweb-cssom)
-
-Licenses: MIT
-
-Copyright (c) Nikita Vasilyev
-
-
-## rrweb-cssom 0.8.0
-
-PURL: pkg:npm/rrweb-cssom@0.8.0
-Upstream: [https://www.npmjs.com/package/rrweb-cssom](https://www.npmjs.com/package/rrweb-cssom)
-
-Licenses: MIT
-
-Copyright (c) Nikita Vasilyev
-
-
-## run-applescript 5.0.0
-
-PURL: pkg:npm/run-applescript@5.0.0
+PURL: pkg:npm/run-applescript@7.0.0
 Upstream: [https://www.npmjs.com/package/run-applescript](https://www.npmjs.com/package/run-applescript)
 
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## run-async 2.4.1
-
-PURL: pkg:npm/run-async@2.4.1
-Upstream: [https://www.npmjs.com/package/run-async](https://www.npmjs.com/package/run-async)
-
-Licenses: MIT
-
-Copyright (c) 2014 Simon Boudrias
 
 
 ## run-async 3.0.0
@@ -15769,16 +9929,6 @@ Licenses: MIT
 Copyright (c) 2014 Simon Boudrias
 
 
-## run-node 1.0.0
-
-PURL: pkg:npm/run-node@1.0.0
-Upstream: [https://www.npmjs.com/package/run-node](https://www.npmjs.com/package/run-node)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## run-parallel 1.2.0
 
 PURL: pkg:npm/run-parallel@1.2.0
@@ -15789,29 +9939,39 @@ Licenses: MIT
 Copyright (c) Feross Aboukhadijeh
 
 
-## run-script 4.2.1
+## runner 1.6.1
 
-PURL: pkg:npm/%40npmcli/run-script@4.2.1
-Upstream: [https://www.npmjs.com/package/%40npmcli/run-script](https://www.npmjs.com/package/%40npmcli/run-script)
-
-Licenses: ISC
-
-Copyright (c) npm, Inc.
-
-
-## runner 4.0.3
-
-PURL: pkg:npm/%40vitest/runner@4.0.3
+PURL: pkg:npm/%40vitest/runner@1.6.1
 Upstream: [https://www.npmjs.com/package/%40vitest/runner](https://www.npmjs.com/package/%40vitest/runner)
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
-## runtime 7.27.0
+## runtime-core 3.5.11
 
-PURL: pkg:npm/%40babel/runtime@7.27.0
+PURL: pkg:npm/%40vue/runtime-core@3.5.11
+Upstream: [https://www.npmjs.com/package/%40vue/runtime-core](https://www.npmjs.com/package/%40vue/runtime-core)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## runtime-dom 3.5.11
+
+PURL: pkg:npm/%40vue/runtime-dom@3.5.11
+Upstream: [https://www.npmjs.com/package/%40vue/runtime-dom](https://www.npmjs.com/package/%40vue/runtime-dom)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## runtime 7.25.7
+
+PURL: pkg:npm/%40babel/runtime@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/runtime](https://www.npmjs.com/package/%40babel/runtime)
 
 Licenses: MIT
@@ -15819,9 +9979,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## rxjs 6.6.7
+## rxjs 7.8.1
 
-PURL: pkg:npm/rxjs@6.6.7
+PURL: pkg:npm/rxjs@7.8.1
 Upstream: [https://www.npmjs.com/package/rxjs](https://www.npmjs.com/package/rxjs)
 
 Licenses: Apache-2.0
@@ -15829,19 +9989,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## rxjs 7.8.2
+## safe-array-concat 1.1.2
 
-PURL: pkg:npm/rxjs@7.8.2
-Upstream: [https://www.npmjs.com/package/rxjs](https://www.npmjs.com/package/rxjs)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## safe-array-concat 1.1.3
-
-PURL: pkg:npm/safe-array-concat@1.1.3
+PURL: pkg:npm/safe-array-concat@1.1.2
 Upstream: [https://www.npmjs.com/package/safe-array-concat](https://www.npmjs.com/package/safe-array-concat)
 
 Licenses: MIT
@@ -15869,19 +10019,9 @@ Licenses: MIT
 Copyright (c) Feross Aboukhadijeh
 
 
-## safe-push-apply 1.0.0
+## safe-regex-test 1.0.3
 
-PURL: pkg:npm/safe-push-apply@1.0.0
-Upstream: [https://www.npmjs.com/package/safe-push-apply](https://www.npmjs.com/package/safe-push-apply)
-
-Licenses: MIT
-
-Copyright (c) 2024 Jordan Harband
-
-
-## safe-regex-test 1.1.0
-
-PURL: pkg:npm/safe-regex-test@1.1.0
+PURL: pkg:npm/safe-regex-test@1.0.3
 Upstream: [https://www.npmjs.com/package/safe-regex-test](https://www.npmjs.com/package/safe-regex-test)
 
 Licenses: MIT
@@ -15899,14 +10039,44 @@ Licenses: MIT
 Copyright (c) 2018 Nikita Skovoroda <chalkerx@gmail.com>
 
 
-## saxes 6.0.0
+## sass-embedded-linux-musl-x64 1.79.4
 
-PURL: pkg:npm/saxes@6.0.0
-Upstream: [https://www.npmjs.com/package/saxes](https://www.npmjs.com/package/saxes)
+PURL: pkg:npm/sass-embedded-linux-musl-x64@1.79.4
+Upstream: [https://www.npmjs.com/package/sass-embedded-linux-musl-x64](https://www.npmjs.com/package/sass-embedded-linux-musl-x64)
+
+Licenses: MIT
+
+Copyright (c) Google Inc.
+
+
+## sass-embedded-linux-x64 1.79.4
+
+PURL: pkg:npm/sass-embedded-linux-x64@1.79.4
+Upstream: [https://www.npmjs.com/package/sass-embedded-linux-x64](https://www.npmjs.com/package/sass-embedded-linux-x64)
+
+Licenses: MIT
+
+Copyright (c) Google Inc.
+
+
+## sass-embedded 1.79.4
+
+PURL: pkg:npm/sass-embedded@1.79.4
+Upstream: [https://www.npmjs.com/package/sass-embedded](https://www.npmjs.com/package/sass-embedded)
+
+Licenses: MIT
+
+Copyright (c) 2019, Google LLC
+
+
+## sax 1.1.4
+
+PURL: pkg:npm/sax@1.1.4
+Upstream: [https://www.npmjs.com/package/sax](https://www.npmjs.com/package/sax)
 
 Licenses: ISC
 
-Copyright (c) Louis-Dominique Dubeau
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 
 ## scc 1.1.0
@@ -15919,54 +10089,14 @@ Licenses: MIT
 Copyright (c) 2019 Ryan Tsao
 
 
-## scheduler 0.23.2
+## schema-utils 4.2.0
 
-PURL: pkg:npm/scheduler@0.23.2
-Upstream: [https://www.npmjs.com/package/scheduler](https://www.npmjs.com/package/scheduler)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## scheduler 0.26.0
-
-PURL: pkg:npm/scheduler@0.26.0
-Upstream: [https://www.npmjs.com/package/scheduler](https://www.npmjs.com/package/scheduler)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## scheduler 0.26.0
-
-PURL: pkg:npm/%40types/scheduler@0.26.0
-Upstream: [https://www.npmjs.com/package/%40types/scheduler](https://www.npmjs.com/package/%40types/scheduler)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## schema-utils 2.7.1
-
-PURL: pkg:npm/schema-utils@2.7.1
+PURL: pkg:npm/schema-utils@4.2.0
 Upstream: [https://www.npmjs.com/package/schema-utils](https://www.npmjs.com/package/schema-utils)
 
 Licenses: MIT
 
 Copyright JS Foundation and other contributors
-
-
-## schema 0.1.3
-
-PURL: pkg:npm/%40istanbuljs/schema@0.1.3
-Upstream: [https://www.npmjs.com/package/%40istanbuljs/schema](https://www.npmjs.com/package/%40istanbuljs/schema)
-
-Licenses: MIT
-
-Copyright (c) 2019 CFWare, LLC
 
 
 ## schemas 29.6.3
@@ -15979,84 +10109,14 @@ Licenses: MIT
 Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
-## scope-manager 8.38.0
+## selfsigned 2.4.1
 
-PURL: pkg:npm/%40typescript-eslint/scope-manager@8.38.0
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/scope-manager](https://www.npmjs.com/package/%40typescript-eslint/scope-manager)
-
-Licenses: MIT
-
-Copyright (c) 2019 typescript-eslint and other contributors
-
-
-## scoped-regex 3.0.0
-
-PURL: pkg:npm/scoped-regex@3.0.0
-Upstream: [https://www.npmjs.com/package/scoped-regex](https://www.npmjs.com/package/scoped-regex)
+PURL: pkg:npm/selfsigned@2.4.1
+Upstream: [https://www.npmjs.com/package/selfsigned](https://www.npmjs.com/package/selfsigned)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## semantic-release 19.0.5
-
-PURL: pkg:npm/semantic-release@19.0.5
-Upstream: [https://www.npmjs.com/package/semantic-release](https://www.npmjs.com/package/semantic-release)
-
-Licenses: MIT
-
-Copyright (c) 2017 Contributors
-
-
-## semver-compare 1.0.0
-
-PURL: pkg:npm/semver-compare@1.0.0
-Upstream: [https://www.npmjs.com/package/semver-compare](https://www.npmjs.com/package/semver-compare)
-
-Licenses: MIT
-
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-
-
-## semver-diff 3.1.1
-
-PURL: pkg:npm/semver-diff@3.1.1
-Upstream: [https://www.npmjs.com/package/semver-diff](https://www.npmjs.com/package/semver-diff)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## semver-diff 4.0.0
-
-PURL: pkg:npm/semver-diff@4.0.0
-Upstream: [https://www.npmjs.com/package/semver-diff](https://www.npmjs.com/package/semver-diff)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## semver-regex 3.1.4
-
-PURL: pkg:npm/semver-regex@3.1.4
-Upstream: [https://www.npmjs.com/package/semver-regex](https://www.npmjs.com/package/semver-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## semver 5.7.2
-
-PURL: pkg:npm/semver@5.7.2
-Upstream: [https://www.npmjs.com/package/semver](https://www.npmjs.com/package/semver)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
+Copyright (c) 2013 José F. Romaniello
 
 
 ## semver 6.3.1
@@ -16069,9 +10129,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## semver 7.5.4
+## semver 7.6.3
 
-PURL: pkg:npm/semver@7.5.4
+PURL: pkg:npm/semver@7.6.3
 Upstream: [https://www.npmjs.com/package/semver](https://www.npmjs.com/package/semver)
 
 Licenses: ISC
@@ -16079,14 +10139,74 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## semver 7.7.1
+## semver 7.7.4
 
-PURL: pkg:npm/semver@7.7.1
+PURL: pkg:npm/semver@7.7.4
 Upstream: [https://www.npmjs.com/package/semver](https://www.npmjs.com/package/semver)
 
 Licenses: ISC
 
 Copyright (c) Isaac Z. Schlueter and Contributors
+
+
+## send 0.17.4
+
+PURL: pkg:npm/%40types/send@0.17.4
+Upstream: [https://www.npmjs.com/package/%40types/send](https://www.npmjs.com/package/%40types/send)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
+
+
+## send 0.19.0
+
+PURL: pkg:npm/send@0.19.0
+Upstream: [https://www.npmjs.com/package/send](https://www.npmjs.com/package/send)
+
+Licenses: MIT
+
+Copyright (c) 2012 TJ Holowaychuk
+
+
+## serialize-javascript 6.0.2
+
+PURL: pkg:npm/serialize-javascript@6.0.2
+Upstream: [https://www.npmjs.com/package/serialize-javascript](https://www.npmjs.com/package/serialize-javascript)
+
+Licenses: BSD-3-Clause
+
+Copyright 2014 Yahoo! Inc.
+
+
+## serve-static 1.15.7
+
+PURL: pkg:npm/%40types/serve-static@1.15.7
+Upstream: [https://www.npmjs.com/package/%40types/serve-static](https://www.npmjs.com/package/%40types/serve-static)
+
+Licenses: MIT
+
+Copyright (c) Microsoft Corporation.
+
+
+## serve-static 1.16.2
+
+PURL: pkg:npm/serve-static@1.16.2
+Upstream: [https://www.npmjs.com/package/serve-static](https://www.npmjs.com/package/serve-static)
+
+Licenses: MIT
+
+Copyright (c) 2010 Sencha Inc.
+
+
+## server-renderer 3.5.11
+
+PURL: pkg:npm/%40vue/server-renderer@3.5.11?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvuejs%2Fcore.git%23packages%2Fserver-renderer
+Upstream: [https://www.npmjs.com/package/%40vue/server-renderer](https://www.npmjs.com/package/%40vue/server-renderer)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
 
 
 ## set-array 1.2.1
@@ -16097,16 +10217,6 @@ Upstream: [https://www.npmjs.com/package/%40jridgewell/set-array](https://www.np
 Licenses: MIT
 
 Copyright 2022 Justin Ridgewell <jridgewell@google.com>
-
-
-## set-blocking 2.0.0
-
-PURL: pkg:npm/set-blocking@2.0.0
-Upstream: [https://www.npmjs.com/package/set-blocking](https://www.npmjs.com/package/set-blocking)
-
-Licenses: ISC
-
-Copyright (c) 2016, Contributors
 
 
 ## set-function-length 1.2.2
@@ -16129,14 +10239,14 @@ Licenses: MIT
 Copyright (c) Jordan Harband and contributors
 
 
-## set-proto 1.0.0
+## setprototypeof 1.2.0
 
-PURL: pkg:npm/set-proto@1.0.0
-Upstream: [https://www.npmjs.com/package/set-proto](https://www.npmjs.com/package/set-proto)
+PURL: pkg:npm/setprototypeof@1.2.0
+Upstream: [https://www.npmjs.com/package/setprototypeof](https://www.npmjs.com/package/setprototypeof)
 
-Licenses: MIT
+Licenses: ISC
 
-Copyright (c) 2024 Jordan Harband
+Copyright (c) 2015, Wes Todd
 
 
 ## setuptools 66.1.1
@@ -16149,34 +10259,24 @@ Licenses: MIT
 Copyright (c) Python Packaging Authority
 
 
-## shallowequal 1.1.0
+## shallow-clone 3.0.1
 
-PURL: pkg:npm/shallowequal@1.1.0
-Upstream: [https://www.npmjs.com/package/shallowequal](https://www.npmjs.com/package/shallowequal)
+PURL: pkg:npm/shallow-clone@3.0.1
+Upstream: [https://www.npmjs.com/package/shallow-clone](https://www.npmjs.com/package/shallow-clone)
 
 Licenses: MIT
 
-Copyright (c) 2017 Alberto Leal <mailforalberto@gmail.com> (github.com/dashed)
+Copyright (c) 2015-present, Jon Schlinkert.
 
 
-## shared 3.5.24
+## shared 3.5.11
 
-PURL: pkg:npm/%40vue/shared@3.5.24
+PURL: pkg:npm/%40vue/shared@3.5.11
 Upstream: [https://www.npmjs.com/package/%40vue/shared](https://www.npmjs.com/package/%40vue/shared)
 
 Licenses: MIT
 
 Copyright (c) 2018-present, Yuxi (Evan) You
-
-
-## shebang-command 1.2.0
-
-PURL: pkg:npm/shebang-command@1.2.0
-Upstream: [https://www.npmjs.com/package/shebang-command](https://www.npmjs.com/package/shebang-command)
-
-Licenses: MIT
-
-Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com/kevva)
 
 
 ## shebang-command 2.0.0
@@ -16189,16 +10289,6 @@ Licenses: MIT
 Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com/kevva)
 
 
-## shebang-regex 1.0.0
-
-PURL: pkg:npm/shebang-regex@1.0.0
-Upstream: [https://www.npmjs.com/package/shebang-regex](https://www.npmjs.com/package/shebang-regex)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## shebang-regex 3.0.0
 
 PURL: pkg:npm/shebang-regex@3.0.0
@@ -16209,39 +10299,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## side-channel-list 1.0.0
+## side-channel 1.0.6
 
-PURL: pkg:npm/side-channel-list@1.0.0
-Upstream: [https://www.npmjs.com/package/side-channel-list](https://www.npmjs.com/package/side-channel-list)
-
-Licenses: MIT
-
-Copyright (c) 2024 Jordan Harband
-
-
-## side-channel-map 1.0.1
-
-PURL: pkg:npm/side-channel-map@1.0.1
-Upstream: [https://www.npmjs.com/package/side-channel-map](https://www.npmjs.com/package/side-channel-map)
-
-Licenses: MIT
-
-Copyright (c) 2024 Jordan Harband
-
-
-## side-channel-weakmap 1.0.2
-
-PURL: pkg:npm/side-channel-weakmap@1.0.2
-Upstream: [https://www.npmjs.com/package/side-channel-weakmap](https://www.npmjs.com/package/side-channel-weakmap)
-
-Licenses: MIT
-
-Copyright (c) 2019 Jordan Harband
-
-
-## side-channel 1.1.0
-
-PURL: pkg:npm/side-channel@1.1.0
+PURL: pkg:npm/side-channel@1.0.6
 Upstream: [https://www.npmjs.com/package/side-channel](https://www.npmjs.com/package/side-channel)
 
 Licenses: MIT
@@ -16266,7 +10326,7 @@ Upstream: [https://www.npmjs.com/package/signal-exit](https://www.npmjs.com/pack
 
 Licenses: ISC
 
-Copyright (c) 2015, Contributors
+Copyright (c) 2015-2023 Benjamin Coe, Isaac Z. Schlueter, and Contributors
 
 
 ## signal-exit 4.1.0
@@ -16276,42 +10336,12 @@ Upstream: [https://www.npmjs.com/package/signal-exit](https://www.npmjs.com/pack
 
 Licenses: ISC
 
-Copyright (c) 2015, Contributors
+Copyright (c) 2015-2023 Benjamin Coe, Isaac Z. Schlueter, and Contributors
 
 
-## signale 1.4.0
+## sigs.k8s.io/gateway-api v0.4.0
 
-PURL: pkg:npm/signale@1.4.0
-Upstream: [https://www.npmjs.com/package/signale](https://www.npmjs.com/package/signale)
-
-Licenses: MIT
-
-Copyright (c) Klaus Sinani <klaussinani@gmail.com>
-
-
-## sigs.k8s.io/controller-runtime v0.23.3
-
-PURL: pkg:golang/sigs.k8s.io/controller-runtime@v0.23.3?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/sigs.k8s.io/controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## sigs.k8s.io/gateway-api/conformance v1.5.1
-
-PURL: pkg:golang/sigs.k8s.io/gateway-api/conformance@v1.5.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/sigs.k8s.io/gateway-api/conformance](https://pkg.go.dev/sigs.k8s.io/gateway-api/conformance)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## sigs.k8s.io/gateway-api v1.5.1
-
-PURL: pkg:golang/sigs.k8s.io/gateway-api@v1.5.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/sigs.k8s.io/gateway-api@v0.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/gateway-api](https://pkg.go.dev/sigs.k8s.io/gateway-api)
 
 Licenses: Apache-2.0
@@ -16319,9 +10349,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730
+## sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3
 
-PURL: pkg:golang/sigs.k8s.io/json@v0.0.0-20250730193827-2d320260d730?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/sigs.k8s.io/json@v0.0.0-20241010143419-9aa6b5e7a4b3?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/json](https://pkg.go.dev/sigs.k8s.io/json)
 
 Licenses: Apache-2.0
@@ -16329,29 +10359,19 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## sigs.k8s.io/randfill v1.0.0
+## sigs.k8s.io/structured-merge-diff/v4 v4.4.2
 
-PURL: pkg:golang/sigs.k8s.io/randfill@v1.0.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/sigs.k8s.io/randfill](https://pkg.go.dev/sigs.k8s.io/randfill)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## sigs.k8s.io/structured-merge-diff/v6 v6.3.2
-
-PURL: pkg:golang/sigs.k8s.io/structured-merge-diff/v6@v6.3.2?goarch=amd64&goos=linux&type=module
-Upstream: [https://pkg.go.dev/sigs.k8s.io/structured-merge-diff/v6](https://pkg.go.dev/sigs.k8s.io/structured-merge-diff/v6)
+PURL: pkg:golang/sigs.k8s.io/structured-merge-diff/v4@v4.4.2?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/sigs.k8s.io/structured-merge-diff/v4](https://pkg.go.dev/sigs.k8s.io/structured-merge-diff/v4)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
 
 
-## sigs.k8s.io/yaml v1.6.0
+## sigs.k8s.io/yaml v1.4.0
 
-PURL: pkg:golang/sigs.k8s.io/yaml@v1.6.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/sigs.k8s.io/yaml@v1.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/sigs.k8s.io/yaml](https://pkg.go.dev/sigs.k8s.io/yaml)
 
 Licenses: MIT
@@ -16369,16 +10389,6 @@ Licenses: MIT
 Copyright (c) Benjamin Peterson
 
 
-## slash 2.0.0
-
-PURL: pkg:npm/slash@2.0.0
-Upstream: [https://www.npmjs.com/package/slash](https://www.npmjs.com/package/slash)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## slash 3.0.0
 
 PURL: pkg:npm/slash@3.0.0
@@ -16389,104 +10399,14 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## slash 4.0.0
+## snapshot 1.6.1
 
-PURL: pkg:npm/slash@4.0.0
-Upstream: [https://www.npmjs.com/package/slash](https://www.npmjs.com/package/slash)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## slice-ansi 0.0.4
-
-PURL: pkg:npm/slice-ansi@0.0.4
-Upstream: [https://www.npmjs.com/package/slice-ansi](https://www.npmjs.com/package/slice-ansi)
-
-Licenses: MIT
-
-Copyright (c) DC <threedeecee@gmail.com>
-
-
-## slice-ansi 3.0.0
-
-PURL: pkg:npm/slice-ansi@3.0.0
-Upstream: [https://www.npmjs.com/package/slice-ansi](https://www.npmjs.com/package/slice-ansi)
-
-Licenses: MIT
-
-Copyright (c) DC <threedeecee@gmail.com>
-
-
-## slice-ansi 4.0.0
-
-PURL: pkg:npm/slice-ansi@4.0.0
-Upstream: [https://www.npmjs.com/package/slice-ansi](https://www.npmjs.com/package/slice-ansi)
-
-Licenses: MIT
-
-Copyright (c) DC <threedeecee@gmail.com>
-
-
-## slice-ansi 5.0.0
-
-PURL: pkg:npm/slice-ansi@5.0.0
-Upstream: [https://www.npmjs.com/package/slice-ansi](https://www.npmjs.com/package/slice-ansi)
-
-Licenses: MIT
-
-Copyright (c) DC <threedeecee@gmail.com>
-
-
-## smart-buffer 4.2.0
-
-PURL: pkg:npm/smart-buffer@4.2.0
-Upstream: [https://www.npmjs.com/package/smart-buffer](https://www.npmjs.com/package/smart-buffer)
-
-Licenses: MIT
-
-Copyright (c) 2013-2017 Josh Glazebrook
-
-
-## snapshot 4.0.3
-
-PURL: pkg:npm/%40vitest/snapshot@4.0.3
+PURL: pkg:npm/%40vitest/snapshot@1.6.1
 Upstream: [https://www.npmjs.com/package/%40vitest/snapshot](https://www.npmjs.com/package/%40vitest/snapshot)
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
-
-
-## socks-proxy-agent 7.0.0
-
-PURL: pkg:npm/socks-proxy-agent@7.0.0
-Upstream: [https://www.npmjs.com/package/socks-proxy-agent](https://www.npmjs.com/package/socks-proxy-agent)
-
-Licenses: MIT
-
-Copyright (c) Nathan Rajlich
-
-
-## socks-proxy-agent 8.0.5
-
-PURL: pkg:npm/socks-proxy-agent@8.0.5
-Upstream: [https://www.npmjs.com/package/socks-proxy-agent](https://www.npmjs.com/package/socks-proxy-agent)
-
-Licenses: MIT
-
-Copyright (c) Nathan Rajlich
-
-
-## socks 2.8.4
-
-PURL: pkg:npm/socks@2.8.4
-Upstream: [https://www.npmjs.com/package/socks](https://www.npmjs.com/package/socks)
-
-Licenses: MIT
-
-Copyright (c) 2013 Josh Glazebrook
+Copyright (c) 2021-Present Vitest Team
 
 
 ## source-map-js 1.2.1
@@ -16499,6 +10419,26 @@ Licenses: BSD-3-Clause
 Copyright (c) 2009-2011, Mozilla Foundation and contributors
 
 
+## source-map-support 0.5.21
+
+PURL: pkg:npm/source-map-support@0.5.21
+Upstream: [https://www.npmjs.com/package/source-map-support](https://www.npmjs.com/package/source-map-support)
+
+Licenses: MIT
+
+Copyright (c) 2014 Evan Wallace
+
+
+## source-map 0.3.6
+
+PURL: pkg:npm/%40jridgewell/source-map@0.3.6
+Upstream: [https://www.npmjs.com/package/%40jridgewell/source-map](https://www.npmjs.com/package/%40jridgewell/source-map)
+
+Licenses: MIT
+
+Copyright 2019 Justin Ridgewell <jridgewell@google.com>
+
+
 ## source-map 0.6.1
 
 PURL: pkg:npm/source-map@0.6.1
@@ -16509,14 +10449,14 @@ Licenses: BSD-3-Clause
 Copyright (c) 2009-2011, Mozilla Foundation and contributors
 
 
-## source-map 2.4.23
+## source-map 0.7.4
 
-PURL: pkg:npm/%40volar/source-map@2.4.23
-Upstream: [https://www.npmjs.com/package/%40volar/source-map](https://www.npmjs.com/package/%40volar/source-map)
+PURL: pkg:npm/source-map@0.7.4
+Upstream: [https://www.npmjs.com/package/source-map](https://www.npmjs.com/package/source-map)
 
-Licenses: MIT
+Licenses: BSD-3-Clause
 
-Copyright (c) 2021-present Johnson Chu
+Copyright (c) 2009-2011, Mozilla Foundation and contributors
 
 
 ## sourcemap-codec 1.5.0
@@ -16529,139 +10469,19 @@ Licenses: MIT
 Copyright (c) 2015 Rich Harris
 
 
-## sourcemap-codec 1.5.5
+## split-on-first 3.0.0
 
-PURL: pkg:npm/%40jridgewell/sourcemap-codec@1.5.5
-Upstream: [https://www.npmjs.com/package/%40jridgewell/sourcemap-codec](https://www.npmjs.com/package/%40jridgewell/sourcemap-codec)
-
-Licenses: MIT
-
-Copyright (c) 2015 Rich Harris
-
-
-## spawn-error-forwarder 1.0.0
-
-PURL: pkg:npm/spawn-error-forwarder@1.0.0
-Upstream: [https://www.npmjs.com/package/spawn-error-forwarder](https://www.npmjs.com/package/spawn-error-forwarder)
-
-Licenses: MIT
-
-Copyright (c) 2014 Ben Drucker
-
-
-## spdx-correct 3.2.0
-
-PURL: pkg:npm/spdx-correct@3.2.0
-Upstream: [https://www.npmjs.com/package/spdx-correct](https://www.npmjs.com/package/spdx-correct)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## spdx-exceptions 2.5.0
-
-PURL: pkg:npm/spdx-exceptions@2.5.0
-Upstream: [https://www.npmjs.com/package/spdx-exceptions](https://www.npmjs.com/package/spdx-exceptions)
-
-Licenses: CC-BY-3.0
-
-Copyright (c) The Linux Foundation
-
-
-## spdx-expression-parse 3.0.1
-
-PURL: pkg:npm/spdx-expression-parse@3.0.1
-Upstream: [https://www.npmjs.com/package/spdx-expression-parse](https://www.npmjs.com/package/spdx-expression-parse)
-
-Licenses: MIT
-
-Copyright (c) 2015 Kyle E. Mitchell & other authors listed in AUTHORS
-
-
-## spdx-license-ids 3.0.21
-
-PURL: pkg:npm/spdx-license-ids@3.0.21
-Upstream: [https://www.npmjs.com/package/spdx-license-ids](https://www.npmjs.com/package/spdx-license-ids)
-
-Licenses: CC0-1.0
-
-Copyright (c) Shinnosuke Watanabe
-
-
-## spec 1.0.0
-
-PURL: pkg:npm/%40standard-schema/spec@1.0.0
-Upstream: [https://www.npmjs.com/package/%40standard-schema/spec](https://www.npmjs.com/package/%40standard-schema/spec)
-
-Licenses: MIT
-
-Copyright (c) 2024 Colin McDonnell
-
-
-## split-on-first 1.1.0
-
-PURL: pkg:npm/split-on-first@1.1.0
+PURL: pkg:npm/split-on-first@3.0.0
 Upstream: [https://www.npmjs.com/package/split-on-first](https://www.npmjs.com/package/split-on-first)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## split 1.0.1
+## spy 1.6.1
 
-PURL: pkg:npm/split@1.0.1
-Upstream: [https://www.npmjs.com/package/split](https://www.npmjs.com/package/split)
-
-Licenses: MIT
-
-Copyright (c) 2011 Dominic Tarr
-
-
-## split2 1.0.0
-
-PURL: pkg:npm/split2@1.0.0
-Upstream: [https://www.npmjs.com/package/split2](https://www.npmjs.com/package/split2)
-
-Licenses: ISC
-
-Copyright (c) 2014-2018, Matteo Collina <hello@matteocollina.com>
-
-
-## split2 3.2.2
-
-PURL: pkg:npm/split2@3.2.2
-Upstream: [https://www.npmjs.com/package/split2](https://www.npmjs.com/package/split2)
-
-Licenses: ISC
-
-Copyright (c) 2014-2018, Matteo Collina <hello@matteocollina.com>
-
-
-## sprintf-js 1.0.3
-
-PURL: pkg:npm/sprintf-js@1.0.3
-Upstream: [https://www.npmjs.com/package/sprintf-js](https://www.npmjs.com/package/sprintf-js)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2007-present, Alexandru Mărășteanu <hello@alexei.ro>
-
-
-## sprintf-js 1.1.3
-
-PURL: pkg:npm/sprintf-js@1.1.3
-Upstream: [https://www.npmjs.com/package/sprintf-js](https://www.npmjs.com/package/sprintf-js)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2007-present, Alexandru Mărășteanu <hello@alexei.ro>
-
-
-## spy 3.2.4
-
-PURL: pkg:npm/%40vitest/spy@3.2.4
+PURL: pkg:npm/%40vitest/spy@1.6.1
 Upstream: [https://www.npmjs.com/package/%40vitest/spy](https://www.npmjs.com/package/%40vitest/spy)
 
 Licenses: MIT
@@ -16669,64 +10489,24 @@ Licenses: MIT
 Copyright (c) 2021-Present Vitest Team
 
 
-## spy 4.0.3
+## ssl-certificate 1.0.0
 
-PURL: pkg:npm/%40vitest/spy@4.0.3
-Upstream: [https://www.npmjs.com/package/%40vitest/spy](https://www.npmjs.com/package/%40vitest/spy)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present Vitest Team
-
-
-## ssri 12.0.0
-
-PURL: pkg:npm/ssri@12.0.0
-Upstream: [https://www.npmjs.com/package/ssri](https://www.npmjs.com/package/ssri)
-
-Licenses: ISC
-
-Copyright 2021 (c) npm, Inc.
-
-
-## ssri 9.0.1
-
-PURL: pkg:npm/ssri@9.0.1
-Upstream: [https://www.npmjs.com/package/ssri](https://www.npmjs.com/package/ssri)
-
-Licenses: ISC
-
-Copyright 2021 (c) npm, Inc.
-
-
-## stable-hash-x 0.2.0
-
-PURL: pkg:npm/stable-hash-x@0.2.0
-Upstream: [https://www.npmjs.com/package/stable-hash-x](https://www.npmjs.com/package/stable-hash-x)
+PURL: pkg:npm/%40quasar/ssl-certificate@1.0.0
+Upstream: [https://www.npmjs.com/package/%40quasar/ssl-certificate](https://www.npmjs.com/package/%40quasar/ssl-certificate)
 
 Licenses: MIT
 
-Copyright (c) 2025-present UnTS
+Copyright (c) Razvan Stoenescu
 
 
-## stack-utils 2.0.3
+## stack-trace 1.0.0-pre2
 
-PURL: pkg:npm/%40types/stack-utils@2.0.3
-Upstream: [https://www.npmjs.com/package/%40types/stack-utils](https://www.npmjs.com/package/%40types/stack-utils)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## stack-utils 2.0.6
-
-PURL: pkg:npm/stack-utils@2.0.6
-Upstream: [https://www.npmjs.com/package/stack-utils](https://www.npmjs.com/package/stack-utils)
+PURL: pkg:npm/stack-trace@1.0.0-pre2
+Upstream: [https://www.npmjs.com/package/stack-trace](https://www.npmjs.com/package/stack-trace)
 
 Licenses: MIT
 
-Copyright (c) 2016-2022 Isaac Z. Schlueter <i@izs.me>, James Talmage <james@talmage.io> (github.com/jamestalmage), and Contributors
+Copyright (c) 2011 Felix Geisendörfer (felix@debuggable.com)
 
 
 ## stackback 0.0.2
@@ -16739,16 +10519,6 @@ Licenses: MIT
 Copyright (c) Roman Shtylman
 
 
-## statuses 1.0.1
-
-PURL: pkg:npm/%40bundled-es-modules/statuses@1.0.1
-Upstream: [https://www.npmjs.com/package/%40bundled-es-modules/statuses](https://www.npmjs.com/package/%40bundled-es-modules/statuses)
-
-Licenses: ISC
-
-Copyright (c) Pascal Schilp
-
-
 ## statuses 2.0.1
 
 PURL: pkg:npm/statuses@2.0.1
@@ -16759,19 +10529,9 @@ Licenses: MIT
 Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 
-## statuses 2.0.5
+## std-env 3.7.0
 
-PURL: pkg:npm/%40types/statuses@2.0.5
-Upstream: [https://www.npmjs.com/package/%40types/statuses](https://www.npmjs.com/package/%40types/statuses)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## std-env 3.9.0
-
-PURL: pkg:npm/std-env@3.9.0
+PURL: pkg:npm/std-env@3.7.0
 Upstream: [https://www.npmjs.com/package/std-env](https://www.npmjs.com/package/std-env)
 
 Licenses: MIT
@@ -16779,94 +10539,14 @@ Licenses: MIT
 Copyright (c) Pooya Parsa <pooya@pi0.io>
 
 
-## stop-iteration-iterator 1.1.0
+## streamx 2.20.1
 
-PURL: pkg:npm/stop-iteration-iterator@1.1.0
-Upstream: [https://www.npmjs.com/package/stop-iteration-iterator](https://www.npmjs.com/package/stop-iteration-iterator)
-
-Licenses: MIT
-
-Copyright (c) 2023 Jordan Harband
-
-
-## stream-combiner2 1.1.1
-
-PURL: pkg:npm/stream-combiner2@1.1.1
-Upstream: [https://www.npmjs.com/package/stream-combiner2](https://www.npmjs.com/package/stream-combiner2)
+PURL: pkg:npm/streamx@2.20.1
+Upstream: [https://www.npmjs.com/package/streamx](https://www.npmjs.com/package/streamx)
 
 Licenses: MIT
 
-Copyright (c) 2012 'Dominic Tarr'
-
-
-## stream-to-observable 0.3.1
-
-PURL: pkg:npm/%40samverschueren/stream-to-observable@0.3.1
-Upstream: [https://www.npmjs.com/package/%40samverschueren/stream-to-observable](https://www.npmjs.com/package/%40samverschueren/stream-to-observable)
-
-Licenses: MIT
-
-Copyright (c) James Talmage <james@talmage.io> (github.com/jamestalmage), Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
-
-
-## strict-event-emitter 0.5.1
-
-PURL: pkg:npm/strict-event-emitter@0.5.1
-Upstream: [https://www.npmjs.com/package/strict-event-emitter](https://www.npmjs.com/package/strict-event-emitter)
-
-Licenses: MIT
-
-Copyright (c) Artem Zakharchenko
-
-
-## strict-uri-encode 2.0.0
-
-PURL: pkg:npm/strict-uri-encode@2.0.0
-Upstream: [https://www.npmjs.com/package/strict-uri-encode](https://www.npmjs.com/package/strict-uri-encode)
-
-Licenses: MIT
-
-Copyright (c) Kevin Martensson <kevinmartensson@gmail.com> (github.com/kevva)
-
-
-## string-argv 0.3.2
-
-PURL: pkg:npm/string-argv@0.3.2
-Upstream: [https://www.npmjs.com/package/string-argv](https://www.npmjs.com/package/string-argv)
-
-Licenses: MIT
-
-Copyright 2014 Anthony McCormick
-
-
-## string-locale-compare 1.1.0
-
-PURL: pkg:npm/%40isaacs/string-locale-compare@1.1.0
-Upstream: [https://www.npmjs.com/package/%40isaacs/string-locale-compare](https://www.npmjs.com/package/%40isaacs/string-locale-compare)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter
-
-
-## string-width 1.0.2
-
-PURL: pkg:npm/string-width@1.0.2
-Upstream: [https://www.npmjs.com/package/string-width](https://www.npmjs.com/package/string-width)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## string-width 2.1.1
-
-PURL: pkg:npm/string-width@2.1.1
-Upstream: [https://www.npmjs.com/package/string-width](https://www.npmjs.com/package/string-width)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2019 Mathias Buus
 
 
 ## string-width 4.2.3
@@ -16889,39 +10569,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## string.prototype.includes 2.0.1
+## string.prototype.trim 1.2.9
 
-PURL: pkg:npm/string.prototype.includes@2.0.1
-Upstream: [https://www.npmjs.com/package/string.prototype.includes](https://www.npmjs.com/package/string.prototype.includes)
-
-Licenses: MIT
-
-Copyright Mathias Bynens <https://mathiasbynens.be/>
-
-
-## string.prototype.matchall 4.0.12
-
-PURL: pkg:npm/string.prototype.matchall@4.0.12
-Upstream: [https://www.npmjs.com/package/string.prototype.matchall](https://www.npmjs.com/package/string.prototype.matchall)
-
-Licenses: MIT
-
-Copyright (c) 2015 Jordan Harband
-
-
-## string.prototype.repeat 1.0.0
-
-PURL: pkg:npm/string.prototype.repeat@1.0.0
-Upstream: [https://www.npmjs.com/package/string.prototype.repeat](https://www.npmjs.com/package/string.prototype.repeat)
-
-Licenses: MIT
-
-Copyright (c) Mathias Bynens
-
-
-## string.prototype.trim 1.2.10
-
-PURL: pkg:npm/string.prototype.trim@1.2.10
+PURL: pkg:npm/string.prototype.trim@1.2.9
 Upstream: [https://www.npmjs.com/package/string.prototype.trim](https://www.npmjs.com/package/string.prototype.trim)
 
 Licenses: MIT
@@ -16929,9 +10579,9 @@ Licenses: MIT
 Copyright (c) 2015 Jordan Harband
 
 
-## string.prototype.trimend 1.0.9
+## string.prototype.trimend 1.0.8
 
-PURL: pkg:npm/string.prototype.trimend@1.0.9
+PURL: pkg:npm/string.prototype.trimend@1.0.8
 Upstream: [https://www.npmjs.com/package/string.prototype.trimend](https://www.npmjs.com/package/string.prototype.trimend)
 
 Licenses: MIT
@@ -16969,46 +10619,6 @@ Licenses: MIT
 Copyright Node.js contributors. All rights reserved.
 
 
-## stringify-object 3.3.0
-
-PURL: pkg:npm/stringify-object@3.3.0
-Upstream: [https://www.npmjs.com/package/stringify-object](https://www.npmjs.com/package/stringify-object)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) 2015, Yeoman team
-
-
-## strip-ansi 3.0.1
-
-PURL: pkg:npm/strip-ansi@3.0.1
-Upstream: [https://www.npmjs.com/package/strip-ansi](https://www.npmjs.com/package/strip-ansi)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## strip-ansi 4.0.0
-
-PURL: pkg:npm/strip-ansi@4.0.0
-Upstream: [https://www.npmjs.com/package/strip-ansi](https://www.npmjs.com/package/strip-ansi)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## strip-ansi 5.2.0
-
-PURL: pkg:npm/strip-ansi@5.2.0
-Upstream: [https://www.npmjs.com/package/strip-ansi](https://www.npmjs.com/package/strip-ansi)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## strip-ansi 6.0.1
 
 PURL: pkg:npm/strip-ansi@6.0.1
@@ -17039,60 +10649,10 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## strip-eof 1.0.0
-
-PURL: pkg:npm/strip-eof@1.0.0
-Upstream: [https://www.npmjs.com/package/strip-eof](https://www.npmjs.com/package/strip-eof)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## strip-final-newline 2.0.0
-
-PURL: pkg:npm/strip-final-newline@2.0.0
-Upstream: [https://www.npmjs.com/package/strip-final-newline](https://www.npmjs.com/package/strip-final-newline)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
 ## strip-final-newline 3.0.0
 
 PURL: pkg:npm/strip-final-newline@3.0.0
 Upstream: [https://www.npmjs.com/package/strip-final-newline](https://www.npmjs.com/package/strip-final-newline)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## strip-indent 3.0.0
-
-PURL: pkg:npm/strip-indent@3.0.0
-Upstream: [https://www.npmjs.com/package/strip-indent](https://www.npmjs.com/package/strip-indent)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## strip-indent 4.0.0
-
-PURL: pkg:npm/strip-indent@4.0.0
-Upstream: [https://www.npmjs.com/package/strip-indent](https://www.npmjs.com/package/strip-indent)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## strip-json-comments 2.0.1
-
-PURL: pkg:npm/strip-json-comments@2.0.1
-Upstream: [https://www.npmjs.com/package/strip-json-comments](https://www.npmjs.com/package/strip-json-comments)
 
 Licenses: MIT
 
@@ -17109,14 +10669,34 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## supports-color 2.0.0
+## strip-literal 2.1.0
 
-PURL: pkg:npm/supports-color@2.0.0
-Upstream: [https://www.npmjs.com/package/supports-color](https://www.npmjs.com/package/supports-color)
+PURL: pkg:npm/strip-literal@2.1.0
+Upstream: [https://www.npmjs.com/package/strip-literal](https://www.npmjs.com/package/strip-literal)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2022 Anthony Fu <https://github.com/antfu>
+
+
+## structured-clone 1.2.0
+
+PURL: pkg:npm/%40ungap/structured-clone@1.2.0
+Upstream: [https://www.npmjs.com/package/%40ungap/structured-clone](https://www.npmjs.com/package/%40ungap/structured-clone)
+
+Licenses: ISC
+
+Copyright (c) 2021, Andrea Giammarchi, @WebReflection
+
+
+## sucrase 3.35.0
+
+PURL: pkg:npm/sucrase@3.35.0
+Upstream: [https://www.npmjs.com/package/sucrase](https://www.npmjs.com/package/sucrase)
+
+Licenses: MIT
+
+Copyright (c) 2012-2018 various contributors (see AUTHORS)
 
 
 ## supports-color 5.5.0
@@ -17149,16 +10729,6 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 
-## supports-hyperlinks 2.3.0
-
-PURL: pkg:npm/supports-hyperlinks@2.3.0
-Upstream: [https://www.npmjs.com/package/supports-hyperlinks](https://www.npmjs.com/package/supports-hyperlinks)
-
-Licenses: MIT
-
-Copyright (c) James Talmage <james@talmage.io> (github.com/jamestalmage)
-
-
 ## supports-preserve-symlinks-flag 1.0.0
 
 PURL: pkg:npm/supports-preserve-symlinks-flag@1.0.0
@@ -17169,89 +10739,19 @@ Licenses: MIT
 Copyright (c) 2022 Inspect JS
 
 
-## swr 2.3.3
+## tar-stream 3.1.7
 
-PURL: pkg:npm/swr@2.3.3
-Upstream: [https://www.npmjs.com/package/swr](https://www.npmjs.com/package/swr)
-
-Licenses: MIT
-
-Copyright (c) 2023 Vercel, Inc.
-
-
-## symbol-observable 1.2.0
-
-PURL: pkg:npm/symbol-observable@1.2.0
-Upstream: [https://www.npmjs.com/package/symbol-observable](https://www.npmjs.com/package/symbol-observable)
+PURL: pkg:npm/tar-stream@3.1.7
+Upstream: [https://www.npmjs.com/package/tar-stream](https://www.npmjs.com/package/tar-stream)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2014 Mathias Buus
 
 
-## symbol-observable 4.0.0
+## template 7.25.7
 
-PURL: pkg:npm/symbol-observable@4.0.0
-Upstream: [https://www.npmjs.com/package/symbol-observable](https://www.npmjs.com/package/symbol-observable)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## symbol-tree 3.2.4
-
-PURL: pkg:npm/symbol-tree@3.2.4
-Upstream: [https://www.npmjs.com/package/symbol-tree](https://www.npmjs.com/package/symbol-tree)
-
-Licenses: MIT
-
-Copyright (c) 2015 Joris van der Wel
-
-
-## tabbable 6.2.0
-
-PURL: pkg:npm/tabbable@6.2.0
-Upstream: [https://www.npmjs.com/package/tabbable](https://www.npmjs.com/package/tabbable)
-
-Licenses: MIT
-
-Copyright (c) 2015 David Clark
-
-
-## tar 6.2.1
-
-PURL: pkg:npm/tar@6.2.1
-Upstream: [https://www.npmjs.com/package/tar](https://www.npmjs.com/package/tar)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## tar 7.4.3
-
-PURL: pkg:npm/tar@7.4.3
-Upstream: [https://www.npmjs.com/package/tar](https://www.npmjs.com/package/tar)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
-## temp-dir 2.0.0
-
-PURL: pkg:npm/temp-dir@2.0.0
-Upstream: [https://www.npmjs.com/package/temp-dir](https://www.npmjs.com/package/temp-dir)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## template 7.27.0
-
-PURL: pkg:npm/%40babel/template@7.27.0
+PURL: pkg:npm/%40babel/template@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/template](https://www.npmjs.com/package/%40babel/template)
 
 Licenses: MIT
@@ -17259,64 +10759,34 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## template 7.27.2
+## terser 5.34.1
 
-PURL: pkg:npm/%40babel/template@7.27.2
-Upstream: [https://www.npmjs.com/package/%40babel/template](https://www.npmjs.com/package/%40babel/template)
+PURL: pkg:npm/terser@5.34.1
+Upstream: [https://www.npmjs.com/package/terser](https://www.npmjs.com/package/terser)
 
-Licenses: MIT
+Licenses: BSD-2-Clause
 
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## tempy 1.0.1
-
-PURL: pkg:npm/tempy@1.0.1
-Upstream: [https://www.npmjs.com/package/tempy](https://www.npmjs.com/package/tempy)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright 2012-2018 (c) Mihai Bazon <mihai.bazon@gmail.com>
 
 
-## terminal-link 3.0.0
+## test-utils 2.4.6
 
-PURL: pkg:npm/terminal-link@3.0.0
-Upstream: [https://www.npmjs.com/package/terminal-link](https://www.npmjs.com/package/terminal-link)
+PURL: pkg:npm/%40vue/test-utils@2.4.6
+Upstream: [https://www.npmjs.com/package/%40vue/test-utils](https://www.npmjs.com/package/%40vue/test-utils)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2021-present vuejs
 
 
-## terminal 0.19.3
+## text-decoder 1.2.0
 
-PURL: pkg:npm/%40rushstack/terminal@0.19.3?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Frushstack.git%23libraries%2Fterminal
-Upstream: [https://www.npmjs.com/package/%40rushstack/terminal](https://www.npmjs.com/package/%40rushstack/terminal)
+PURL: pkg:npm/text-decoder@1.2.0
+Upstream: [https://www.npmjs.com/package/text-decoder](https://www.npmjs.com/package/text-decoder)
 
-Licenses: MIT
+Licenses: Apache-2.0
 
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## test-exclude 7.0.1
-
-PURL: pkg:npm/test-exclude@7.0.1
-Upstream: [https://www.npmjs.com/package/test-exclude](https://www.npmjs.com/package/test-exclude)
-
-Licenses: ISC
-
-Copyright (c) 2016, Contributors
-
-
-## text-extensions 1.9.0
-
-PURL: pkg:npm/text-extensions@1.9.0
-Upstream: [https://www.npmjs.com/package/text-extensions](https://www.npmjs.com/package/text-extensions)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+copyright notice that is included in or attached to the work
 
 
 ## text-table 0.2.0
@@ -17329,54 +10799,24 @@ Licenses: MIT
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 
 
-## through 2.3.8
+## thenify-all 1.6.0
 
-PURL: pkg:npm/through@2.3.8
-Upstream: [https://www.npmjs.com/package/through](https://www.npmjs.com/package/through)
-
-Licenses: MIT
-
-Copyright (c) Dominic Tarr
-
-
-## through2 2.0.5
-
-PURL: pkg:npm/through2@2.0.5
-Upstream: [https://www.npmjs.com/package/through2](https://www.npmjs.com/package/through2)
+PURL: pkg:npm/thenify-all@1.6.0
+Upstream: [https://www.npmjs.com/package/thenify-all](https://www.npmjs.com/package/thenify-all)
 
 Licenses: MIT
 
-Copyright (c) Rod Vagg
+Copyright (c) 2014 Jonathan Ong me@jongleberry.com
 
 
-## through2 4.0.2
+## thenify 3.3.1
 
-PURL: pkg:npm/through2@4.0.2
-Upstream: [https://www.npmjs.com/package/through2](https://www.npmjs.com/package/through2)
-
-Licenses: MIT
-
-Copyright (c) Rod Vagg
-
-
-## tiny-invariant 1.3.3
-
-PURL: pkg:npm/tiny-invariant@1.3.3
-Upstream: [https://www.npmjs.com/package/tiny-invariant](https://www.npmjs.com/package/tiny-invariant)
+PURL: pkg:npm/thenify@3.3.1
+Upstream: [https://www.npmjs.com/package/thenify](https://www.npmjs.com/package/thenify)
 
 Licenses: MIT
 
-Copyright (c) 2019 Alexander Reardon
-
-
-## tiny-relative-date 1.3.0
-
-PURL: pkg:npm/tiny-relative-date@1.3.0
-Upstream: [https://www.npmjs.com/package/tiny-relative-date](https://www.npmjs.com/package/tiny-relative-date)
-
-Licenses: MIT
-
-Copyright (c) 2017 Joseph Wynn
+Copyright (c) 2014-2016 Jonathan Ong me@jongleberry.com and contributors
 
 
 ## tinybench 2.9.0
@@ -17389,104 +10829,24 @@ Licenses: MIT
 Copyright (c) 2022 Tinylibs
 
 
-## tinycolor2 1.4.6
+## tinypool 0.8.4
 
-PURL: pkg:npm/%40types/tinycolor2@1.4.6
-Upstream: [https://www.npmjs.com/package/%40types/tinycolor2](https://www.npmjs.com/package/%40types/tinycolor2)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## tinycolor2 1.6.0
-
-PURL: pkg:npm/tinycolor2@1.6.0
-Upstream: [https://www.npmjs.com/package/tinycolor2](https://www.npmjs.com/package/tinycolor2)
+PURL: pkg:npm/tinypool@0.8.4
+Upstream: [https://www.npmjs.com/package/tinypool](https://www.npmjs.com/package/tinypool)
 
 Licenses: MIT
 
-Copyright (c), Brian Grinstead, http://briangrinstead.com
+Copyright (c) 2020 James M Snell and the Piscina contributors
 
 
-## tinyexec 0.3.2
+## tinyspy 2.2.1
 
-PURL: pkg:npm/tinyexec@0.3.2
-Upstream: [https://www.npmjs.com/package/tinyexec](https://www.npmjs.com/package/tinyexec)
-
-Licenses: MIT
-
-Copyright (c) 2024 Tinylibs
-
-
-## tinyglobby 0.2.12
-
-PURL: pkg:npm/tinyglobby@0.2.12
-Upstream: [https://www.npmjs.com/package/tinyglobby](https://www.npmjs.com/package/tinyglobby)
-
-Licenses: MIT
-
-Copyright (c) 2024 Madeline Gurriarán
-
-
-## tinyglobby 0.2.14
-
-PURL: pkg:npm/tinyglobby@0.2.14
-Upstream: [https://www.npmjs.com/package/tinyglobby](https://www.npmjs.com/package/tinyglobby)
-
-Licenses: MIT
-
-Copyright (c) 2024 Madeline Gurriarán
-
-
-## tinyglobby 0.2.15
-
-PURL: pkg:npm/tinyglobby@0.2.15
-Upstream: [https://www.npmjs.com/package/tinyglobby](https://www.npmjs.com/package/tinyglobby)
-
-Licenses: MIT
-
-Copyright (c) 2024 Madeline Gurriarán
-
-
-## tinyrainbow 2.0.0
-
-PURL: pkg:npm/tinyrainbow@2.0.0
-Upstream: [https://www.npmjs.com/package/tinyrainbow](https://www.npmjs.com/package/tinyrainbow)
-
-Licenses: MIT
-
-Copyright (c) 2022 Tinylibs
-
-
-## tinyrainbow 3.0.3
-
-PURL: pkg:npm/tinyrainbow@3.0.3
-Upstream: [https://www.npmjs.com/package/tinyrainbow](https://www.npmjs.com/package/tinyrainbow)
-
-Licenses: MIT
-
-Copyright (c) 2022 Tinylibs
-
-
-## tinyspy 4.0.4
-
-PURL: pkg:npm/tinyspy@4.0.4
+PURL: pkg:npm/tinyspy@2.2.1
 Upstream: [https://www.npmjs.com/package/tinyspy](https://www.npmjs.com/package/tinyspy)
 
 Licenses: MIT
 
 Copyright (c) 2022 Tinylibs
-
-
-## titleize 3.0.0
-
-PURL: pkg:npm/titleize@3.0.0
-Upstream: [https://www.npmjs.com/package/titleize](https://www.npmjs.com/package/titleize)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## tmp 0.0.33
@@ -17499,6 +10859,16 @@ Licenses: MIT
 Copyright (c) 2014 KARASZI István
 
 
+## to-fast-properties 2.0.0
+
+PURL: pkg:npm/to-fast-properties@2.0.0
+Upstream: [https://www.npmjs.com/package/to-fast-properties](https://www.npmjs.com/package/to-fast-properties)
+
+Licenses: MIT
+
+Copyright (c) 2014 Petka Antonov
+
+
 ## to-regex-range 5.0.1
 
 PURL: pkg:npm/to-regex-range@5.0.1
@@ -17509,44 +10879,14 @@ Licenses: MIT
 Copyright (c) 2015-present, Jon Schlinkert.
 
 
-## tough-cookie 4.0.5
+## toidentifier 1.0.1
 
-PURL: pkg:npm/%40types/tough-cookie@4.0.5
-Upstream: [https://www.npmjs.com/package/%40types/tough-cookie](https://www.npmjs.com/package/%40types/tough-cookie)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
-## tough-cookie 4.1.4
-
-PURL: pkg:npm/tough-cookie@4.1.4
-Upstream: [https://www.npmjs.com/package/tough-cookie](https://www.npmjs.com/package/tough-cookie)
-
-Licenses: BSD-3-Clause
-
-Copyright (c) 2015, Salesforce.com, Inc.
-
-
-## tr46 0.0.3
-
-PURL: pkg:npm/tr46@0.0.3
-Upstream: [https://www.npmjs.com/package/tr46](https://www.npmjs.com/package/tr46)
+PURL: pkg:npm/toidentifier@1.0.1
+Upstream: [https://www.npmjs.com/package/toidentifier](https://www.npmjs.com/package/toidentifier)
 
 Licenses: MIT
 
-Copyright (c) Sebastian Mayr
-
-
-## tr46 5.1.0
-
-PURL: pkg:npm/tr46@5.1.0
-Upstream: [https://www.npmjs.com/package/tr46](https://www.npmjs.com/package/tr46)
-
-Licenses: MIT
-
-Copyright (c) Sebastian Mayr
+Copyright (c) 2016 Douglas Christopher Wilson <doug@somethingdoug.com>
 
 
 ## trace-mapping 0.3.25
@@ -17559,29 +10899,9 @@ Licenses: MIT
 Copyright 2022 Justin Ridgewell <justin@ridgewell.name>
 
 
-## trace-mapping 0.3.29
+## traverse 7.25.7
 
-PURL: pkg:npm/%40jridgewell/trace-mapping@0.3.29
-Upstream: [https://www.npmjs.com/package/%40jridgewell/trace-mapping](https://www.npmjs.com/package/%40jridgewell/trace-mapping)
-
-Licenses: MIT
-
-Copyright 2022 Justin Ridgewell <justin@ridgewell.name>
-
-
-## traverse 0.6.8
-
-PURL: pkg:npm/traverse@0.6.8
-Upstream: [https://www.npmjs.com/package/traverse](https://www.npmjs.com/package/traverse)
-
-Licenses: MIT
-
-Copyright (c) 2010 James Halliday and contributors
-
-
-## traverse 7.27.0
-
-PURL: pkg:npm/%40babel/traverse@7.27.0
+PURL: pkg:npm/%40babel/traverse@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/traverse](https://www.npmjs.com/package/%40babel/traverse)
 
 Licenses: MIT
@@ -17589,79 +10909,29 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## traverse 7.28.0
+## ts-essentials 9.4.2
 
-PURL: pkg:npm/%40babel/traverse@7.28.0
-Upstream: [https://www.npmjs.com/package/%40babel/traverse](https://www.npmjs.com/package/%40babel/traverse)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## traverse 7.28.5
-
-PURL: pkg:npm/%40babel/traverse@7.28.5
-Upstream: [https://www.npmjs.com/package/%40babel/traverse](https://www.npmjs.com/package/%40babel/traverse)
+PURL: pkg:npm/ts-essentials@9.4.2
+Upstream: [https://www.npmjs.com/package/ts-essentials](https://www.npmjs.com/package/ts-essentials)
 
 Licenses: MIT
 
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
+Copyright (c) 2018-2019 Chris Kaczor (github.com/krzkaczor)
 
 
-## treeverse 2.0.0
+## ts-interface-checker 0.1.13
 
-PURL: pkg:npm/treeverse@2.0.0
-Upstream: [https://www.npmjs.com/package/treeverse](https://www.npmjs.com/package/treeverse)
+PURL: pkg:npm/ts-interface-checker@0.1.13
+Upstream: [https://www.npmjs.com/package/ts-interface-checker](https://www.npmjs.com/package/ts-interface-checker)
 
-Licenses: ISC
+Licenses: Apache-2.0
 
-Copyright (c) npm, Inc. and Contributors
-
-
-## trim-newlines 3.0.1
-
-PURL: pkg:npm/trim-newlines@3.0.1
-Upstream: [https://www.npmjs.com/package/trim-newlines](https://www.npmjs.com/package/trim-newlines)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+copyright notice that is included in or attached to the work
 
 
-## ts-api-utils 2.1.0
+## tsconfck 3.1.3
 
-PURL: pkg:npm/ts-api-utils@2.1.0?vcs_url=https%3A%2F%2Fgithub.com%2FJoshuaKGoldberg%2Fts-api-utils
-Upstream: [https://www.npmjs.com/package/ts-api-utils](https://www.npmjs.com/package/ts-api-utils)
-
-Licenses: MIT
-
-Copyright (c) JoshuaKGoldberg
-
-
-## ts-command-line 5.1.3
-
-PURL: pkg:npm/%40rushstack/ts-command-line@5.1.3
-Upstream: [https://www.npmjs.com/package/%40rushstack/ts-command-line](https://www.npmjs.com/package/%40rushstack/ts-command-line)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## ts-dedent 2.2.0
-
-PURL: pkg:npm/ts-dedent@2.2.0
-Upstream: [https://www.npmjs.com/package/ts-dedent](https://www.npmjs.com/package/ts-dedent)
-
-Licenses: MIT
-
-Copyright (c) 2018 Tamino Martinius
-
-
-## tsconfck 3.1.5
-
-PURL: pkg:npm/tsconfck@3.1.5?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fdominikg%2Ftsconfck.git%23packages%2Ftsconfck
+PURL: pkg:npm/tsconfck@3.1.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fdominikg%2Ftsconfck.git%23packages%2Ftsconfck
 Upstream: [https://www.npmjs.com/package/tsconfck](https://www.npmjs.com/package/tsconfck)
 
 Licenses: MIT
@@ -17679,56 +10949,6 @@ Licenses: MIT
 Copyright (c) 2016 Jonas Kello
 
 
-## tsconfig-paths 4.2.0
-
-PURL: pkg:npm/tsconfig-paths@4.2.0
-Upstream: [https://www.npmjs.com/package/tsconfig-paths](https://www.npmjs.com/package/tsconfig-paths)
-
-Licenses: MIT
-
-Copyright (c) 2016 Jonas Kello
-
-
-## tsconfig-utils 8.38.0
-
-PURL: pkg:npm/%40typescript-eslint/tsconfig-utils@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Ftsconfig-utils
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/tsconfig-utils](https://www.npmjs.com/package/%40typescript-eslint/tsconfig-utils)
-
-Licenses: MIT
-
-Copyright (c) 2025 typescript-eslint and other contributors
-
-
-## tsconfig 1.0.2
-
-PURL: pkg:npm/%40octokit/tsconfig@1.0.2
-Upstream: [https://www.npmjs.com/package/%40octokit/tsconfig](https://www.npmjs.com/package/%40octokit/tsconfig)
-
-Licenses: MIT
-
-Copyright (c) Gregor Martynus
-
-
-## tsdoc-config 0.18.0
-
-PURL: pkg:npm/%40microsoft/tsdoc-config@0.18.0
-Upstream: [https://www.npmjs.com/package/%40microsoft/tsdoc-config](https://www.npmjs.com/package/%40microsoft/tsdoc-config)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
-## tsdoc 0.16.0
-
-PURL: pkg:npm/%40microsoft/tsdoc@0.16.0
-Upstream: [https://www.npmjs.com/package/%40microsoft/tsdoc](https://www.npmjs.com/package/%40microsoft/tsdoc)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-
-
 ## tslib 1.14.1
 
 PURL: pkg:npm/tslib@1.14.1
@@ -17739,9 +10959,9 @@ Licenses: 0BSD
 Copyright (c) Microsoft Corporation.
 
 
-## tslib 2.8.1
+## tslib 2.7.0
 
-PURL: pkg:npm/tslib@2.8.1
+PURL: pkg:npm/tslib@2.7.0
 Upstream: [https://www.npmjs.com/package/tslib](https://www.npmjs.com/package/tslib)
 
 Licenses: 0BSD
@@ -17759,19 +10979,19 @@ Licenses: MIT
 Copyright (c) George Zahariev
 
 
-## type-fest 0.16.0
+## type-detect 4.1.0
 
-PURL: pkg:npm/type-fest@0.16.0
-Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
+PURL: pkg:npm/type-detect@4.1.0
+Upstream: [https://www.npmjs.com/package/type-detect](https://www.npmjs.com/package/type-detect)
 
-Licenses: CC0-1.0, MIT
+Licenses: MIT
 
-Copyright (c) Sindre Sorhus
+Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com> (http://alogicalparadox.com)
 
 
-## type-fest 0.18.1
+## type-fest 0.20.2
 
-PURL: pkg:npm/type-fest@0.18.1
+PURL: pkg:npm/type-fest@0.20.2
 Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
 
 Licenses: CC0-1.0, MIT
@@ -17789,46 +11009,6 @@ Licenses: CC0-1.0, MIT
 Copyright (c) Sindre Sorhus
 
 
-## type-fest 0.6.0
-
-PURL: pkg:npm/type-fest@0.6.0
-Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
-
-Licenses: CC0-1.0, MIT
-
-Copyright (c) Sindre Sorhus
-
-
-## type-fest 0.8.1
-
-PURL: pkg:npm/type-fest@0.8.1
-Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
-
-Licenses: CC0-1.0, MIT
-
-Copyright (c) Sindre Sorhus
-
-
-## type-fest 1.4.0
-
-PURL: pkg:npm/type-fest@1.4.0
-Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
-
-Licenses: CC0-1.0, MIT
-
-Copyright (c) Sindre Sorhus
-
-
-## type-fest 2.19.0
-
-PURL: pkg:npm/type-fest@2.19.0
-Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
-
-Licenses: CC0-1.0, MIT
-
-Copyright (c) Sindre Sorhus
-
-
 ## type-fest 3.13.1
 
 PURL: pkg:npm/type-fest@3.13.1
@@ -17839,9 +11019,9 @@ Licenses: CC0-1.0, MIT
 Copyright (c) Sindre Sorhus
 
 
-## type-fest 4.39.1
+## type-fest 4.26.1
 
-PURL: pkg:npm/type-fest@4.39.1
+PURL: pkg:npm/type-fest@4.26.1
 Upstream: [https://www.npmjs.com/package/type-fest](https://www.npmjs.com/package/type-fest)
 
 Licenses: CC0-1.0, MIT
@@ -17849,24 +11029,14 @@ Licenses: CC0-1.0, MIT
 Copyright (c) Sindre Sorhus
 
 
-## type-utils 8.38.0
+## type-is 1.6.18
 
-PURL: pkg:npm/%40typescript-eslint/type-utils@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Ftype-utils
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/type-utils](https://www.npmjs.com/package/%40typescript-eslint/type-utils)
-
-Licenses: MIT
-
-Copyright (c) 2021 typescript-eslint and other contributors
-
-
-## type 3.0.6
-
-PURL: pkg:npm/%40inquirer/type@3.0.6?vcs_url=https%3A%2F%2Fgithub.com%2FSBoudrias%2FInquirer.js.git
-Upstream: [https://www.npmjs.com/package/%40inquirer/type](https://www.npmjs.com/package/%40inquirer/type)
+PURL: pkg:npm/type-is@1.6.18
+Upstream: [https://www.npmjs.com/package/type-is](https://www.npmjs.com/package/type-is)
 
 Licenses: MIT
 
-Copyright (c) 2025 Simon Boudrias
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 
 ## typebox 0.27.8
@@ -17879,9 +11049,9 @@ Licenses: MIT
 Copyright (c) 2017-2023 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 
-## typed-array-buffer 1.0.3
+## typed-array-buffer 1.0.2
 
-PURL: pkg:npm/typed-array-buffer@1.0.3
+PURL: pkg:npm/typed-array-buffer@1.0.2
 Upstream: [https://www.npmjs.com/package/typed-array-buffer](https://www.npmjs.com/package/typed-array-buffer)
 
 Licenses: MIT
@@ -17889,9 +11059,9 @@ Licenses: MIT
 Copyright (c) 2023 Jordan Harband
 
 
-## typed-array-byte-length 1.0.3
+## typed-array-byte-length 1.0.1
 
-PURL: pkg:npm/typed-array-byte-length@1.0.3
+PURL: pkg:npm/typed-array-byte-length@1.0.1
 Upstream: [https://www.npmjs.com/package/typed-array-byte-length](https://www.npmjs.com/package/typed-array-byte-length)
 
 Licenses: MIT
@@ -17899,9 +11069,9 @@ Licenses: MIT
 Copyright (c) 2020 Inspect JS
 
 
-## typed-array-byte-offset 1.0.4
+## typed-array-byte-offset 1.0.2
 
-PURL: pkg:npm/typed-array-byte-offset@1.0.4
+PURL: pkg:npm/typed-array-byte-offset@1.0.2
 Upstream: [https://www.npmjs.com/package/typed-array-byte-offset](https://www.npmjs.com/package/typed-array-byte-offset)
 
 Licenses: MIT
@@ -17909,9 +11079,9 @@ Licenses: MIT
 Copyright (c) 2020 Inspect JS
 
 
-## typed-array-length 1.0.7
+## typed-array-length 1.0.6
 
-PURL: pkg:npm/typed-array-length@1.0.7
+PURL: pkg:npm/typed-array-length@1.0.6
 Upstream: [https://www.npmjs.com/package/typed-array-length](https://www.npmjs.com/package/typed-array-length)
 
 Licenses: MIT
@@ -17919,59 +11089,9 @@ Licenses: MIT
 Copyright (c) 2020 Inspect JS
 
 
-## typedarray-to-buffer 3.1.5
+## types 7.25.7
 
-PURL: pkg:npm/typedarray-to-buffer@3.1.5
-Upstream: [https://www.npmjs.com/package/typedarray-to-buffer](https://www.npmjs.com/package/typedarray-to-buffer)
-
-Licenses: MIT
-
-Copyright (c) Feross Aboukhadijeh
-
-
-## types-eslintrc 1.0.3
-
-PURL: pkg:npm/types-eslintrc@1.0.3
-Upstream: [https://www.npmjs.com/package/types-eslintrc](https://www.npmjs.com/package/types-eslintrc)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## types-json 1.2.2
-
-PURL: pkg:npm/types-json@1.2.2
-Upstream: [https://www.npmjs.com/package/types-json](https://www.npmjs.com/package/types-json)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## types-pkg-json 1.2.1
-
-PURL: pkg:npm/types-pkg-json@1.2.1
-Upstream: [https://www.npmjs.com/package/types-pkg-json](https://www.npmjs.com/package/types-pkg-json)
-
-Licenses: MIT
-
-Copyright (c) Connor White
-
-
-## types 29.6.3
-
-PURL: pkg:npm/%40jest/types@29.6.3
-Upstream: [https://www.npmjs.com/package/%40jest/types](https://www.npmjs.com/package/%40jest/types)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## types 7.27.0
-
-PURL: pkg:npm/%40babel/types@7.27.0
+PURL: pkg:npm/%40babel/types@7.25.7
 Upstream: [https://www.npmjs.com/package/%40babel/types](https://www.npmjs.com/package/%40babel/types)
 
 Licenses: MIT
@@ -17979,109 +11099,9 @@ Licenses: MIT
 Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
 
-## types 7.28.2
+## ufo 1.5.4
 
-PURL: pkg:npm/%40babel/types@7.28.2
-Upstream: [https://www.npmjs.com/package/%40babel/types](https://www.npmjs.com/package/%40babel/types)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## types 7.28.5
-
-PURL: pkg:npm/%40babel/types@7.28.5
-Upstream: [https://www.npmjs.com/package/%40babel/types](https://www.npmjs.com/package/%40babel/types)
-
-Licenses: MIT
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-
-## types 8.38.0
-
-PURL: pkg:npm/%40typescript-eslint/types@8.38.0
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/types](https://www.npmjs.com/package/%40typescript-eslint/types)
-
-Licenses: MIT
-
-Copyright (c) 2019 typescript-eslint and other contributors
-
-
-## types 9.3.2
-
-PURL: pkg:npm/%40octokit/types@9.3.2
-Upstream: [https://www.npmjs.com/package/%40octokit/types](https://www.npmjs.com/package/%40octokit/types)
-
-Licenses: MIT
-
-Copyright (c) Gregor Martynus
-
-
-## typescript-eslint 8.38.0
-
-PURL: pkg:npm/typescript-eslint@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Ftypescript-eslint
-Upstream: [https://www.npmjs.com/package/typescript-eslint](https://www.npmjs.com/package/typescript-eslint)
-
-Licenses: MIT
-
-Copyright (c) 2019 typescript-eslint and other contributors
-
-
-## typescript-estree 8.38.0
-
-PURL: pkg:npm/%40typescript-eslint/typescript-estree@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Ftypescript-estree
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/typescript-estree](https://www.npmjs.com/package/%40typescript-eslint/typescript-estree)
-
-Licenses: MIT
-
-Copyright (c) 2019 typescript-eslint and other contributors
-
-
-## typescript 2.4.23
-
-PURL: pkg:npm/%40volar/typescript@2.4.23
-Upstream: [https://www.npmjs.com/package/%40volar/typescript](https://www.npmjs.com/package/%40volar/typescript)
-
-Licenses: MIT
-
-Copyright (c) 2021-present Johnson Chu
-
-
-## typescript 5.8.2
-
-PURL: pkg:npm/typescript@5.8.2?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2FTypeScript.git
-Upstream: [https://www.npmjs.com/package/typescript](https://www.npmjs.com/package/typescript)
-
-Licenses: Apache-2.0
-
-Copyright (c) Microsoft Corp.
-
-
-## typescript 5.8.3
-
-PURL: pkg:npm/typescript@5.8.3?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2FTypeScript.git
-Upstream: [https://www.npmjs.com/package/typescript](https://www.npmjs.com/package/typescript)
-
-Licenses: Apache-2.0
-
-Copyright (c) Microsoft Corp.
-
-
-## typescript 5.9.3
-
-PURL: pkg:npm/typescript@5.9.3?vcs_url=https%3A%2F%2Fgithub.com%2Fmicrosoft%2FTypeScript.git
-Upstream: [https://www.npmjs.com/package/typescript](https://www.npmjs.com/package/typescript)
-
-Licenses: Apache-2.0
-
-Copyright (c) Microsoft Corp.
-
-
-## ufo 1.6.1
-
-PURL: pkg:npm/ufo@1.6.1
+PURL: pkg:npm/ufo@1.5.4
 Upstream: [https://www.npmjs.com/package/ufo](https://www.npmjs.com/package/ufo)
 
 Licenses: MIT
@@ -18089,19 +11109,9 @@ Licenses: MIT
 Copyright (c) Pooya Parsa <pooya@pi0.io>
 
 
-## uglify-js 3.19.3
+## unbox-primitive 1.0.2
 
-PURL: pkg:npm/uglify-js@3.19.3
-Upstream: [https://www.npmjs.com/package/uglify-js](https://www.npmjs.com/package/uglify-js)
-
-Licenses: BSD-2-Clause
-
-Copyright 2012-2024 (c) Mihai Bazon <mihai.bazon@gmail.com>
-
-
-## unbox-primitive 1.1.0
-
-PURL: pkg:npm/unbox-primitive@1.1.0
+PURL: pkg:npm/unbox-primitive@1.0.2
 Upstream: [https://www.npmjs.com/package/unbox-primitive](https://www.npmjs.com/package/unbox-primitive)
 
 Licenses: MIT
@@ -18109,19 +11119,9 @@ Licenses: MIT
 Copyright (c) 2019 Jordan Harband
 
 
-## undici-types 6.21.0
+## undici-types 6.19.8
 
-PURL: pkg:npm/undici-types@6.21.0
-Upstream: [https://www.npmjs.com/package/undici-types](https://www.npmjs.com/package/undici-types)
-
-Licenses: MIT
-
-Copyright (c) Matteo Collina and Undici contributors
-
-
-## undici-types 7.16.0
-
-PURL: pkg:npm/undici-types@7.16.0
+PURL: pkg:npm/undici-types@6.19.8
 Upstream: [https://www.npmjs.com/package/undici-types](https://www.npmjs.com/package/undici-types)
 
 Licenses: MIT
@@ -18169,86 +11169,6 @@ Licenses: MIT
 Copyright (c) Mathias Bynens
 
 
-## unique-filename 2.0.1
-
-PURL: pkg:npm/unique-filename@2.0.1
-Upstream: [https://www.npmjs.com/package/unique-filename](https://www.npmjs.com/package/unique-filename)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## unique-filename 4.0.0
-
-PURL: pkg:npm/unique-filename@4.0.0
-Upstream: [https://www.npmjs.com/package/unique-filename](https://www.npmjs.com/package/unique-filename)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## unique-slug 3.0.0
-
-PURL: pkg:npm/unique-slug@3.0.0
-Upstream: [https://www.npmjs.com/package/unique-slug](https://www.npmjs.com/package/unique-slug)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## unique-slug 5.0.0
-
-PURL: pkg:npm/unique-slug@5.0.0
-Upstream: [https://www.npmjs.com/package/unique-slug](https://www.npmjs.com/package/unique-slug)
-
-Licenses: ISC
-
-Copyright npm, Inc
-
-
-## unique-string 2.0.0
-
-PURL: pkg:npm/unique-string@2.0.0
-Upstream: [https://www.npmjs.com/package/unique-string](https://www.npmjs.com/package/unique-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## unique-string 3.0.0
-
-PURL: pkg:npm/unique-string@3.0.0
-Upstream: [https://www.npmjs.com/package/unique-string](https://www.npmjs.com/package/unique-string)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## universal-user-agent 6.0.1
-
-PURL: pkg:npm/universal-user-agent@6.0.1
-Upstream: [https://www.npmjs.com/package/universal-user-agent](https://www.npmjs.com/package/universal-user-agent)
-
-Licenses: ISC
-
-Copyright (c) 2018, Gregor Martynus (https://github.com/gr2m)
-
-
-## universalify 0.2.0
-
-PURL: pkg:npm/universalify@0.2.0
-Upstream: [https://www.npmjs.com/package/universalify](https://www.npmjs.com/package/universalify)
-
-Licenses: MIT
-
-Copyright (c) 2017, Ryan Zimmerman <opensrc@ryanzim.com>
-
-
 ## universalify 2.0.1
 
 PURL: pkg:npm/universalify@2.0.1
@@ -18259,64 +11179,24 @@ Licenses: MIT
 Copyright (c) 2017, Ryan Zimmerman <opensrc@ryanzim.com>
 
 
-## unplugin 2.3.11
+## unpipe 1.0.0
 
-PURL: pkg:npm/unplugin@2.3.11
-Upstream: [https://www.npmjs.com/package/unplugin](https://www.npmjs.com/package/unplugin)
-
-Licenses: MIT
-
-Copyright (c) 2021-PRESENT Nuxt Contrib
-
-
-## unrs-resolver 1.11.1
-
-PURL: pkg:npm/unrs-resolver@1.11.1
-Upstream: [https://www.npmjs.com/package/unrs-resolver](https://www.npmjs.com/package/unrs-resolver)
+PURL: pkg:npm/unpipe@1.0.0
+Upstream: [https://www.npmjs.com/package/unpipe](https://www.npmjs.com/package/unpipe)
 
 Licenses: MIT
 
-Copyright (c) JounQin
+Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
 
 
-## until 2.1.0
+## update-browserslist-db 1.1.1
 
-PURL: pkg:npm/%40open-draft/until@2.1.0
-Upstream: [https://www.npmjs.com/package/%40open-draft/until](https://www.npmjs.com/package/%40open-draft/until)
-
-Licenses: MIT
-
-Copyright (c) 2021 Artem Zakharchenko
-
-
-## untildify 4.0.0
-
-PURL: pkg:npm/untildify@4.0.0
-Upstream: [https://www.npmjs.com/package/untildify](https://www.npmjs.com/package/untildify)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-
-## update-browserslist-db 1.1.3
-
-PURL: pkg:npm/update-browserslist-db@1.1.3
+PURL: pkg:npm/update-browserslist-db@1.1.1
 Upstream: [https://www.npmjs.com/package/update-browserslist-db](https://www.npmjs.com/package/update-browserslist-db)
 
 Licenses: MIT
 
 Copyright 2022 Andrey Sitnik <andrey@sitnik.ru> and other contributors
-
-
-## update-notifier 6.0.2
-
-PURL: pkg:npm/update-notifier@6.0.2
-Upstream: [https://www.npmjs.com/package/update-notifier](https://www.npmjs.com/package/update-notifier)
-
-Licenses: BSD-2-Clause
-
-Copyright Google
 
 
 ## uri-js 4.4.1
@@ -18329,56 +11209,6 @@ Licenses: BSD-2-Clause
 Copyright 2011 Gary Court. All rights reserved.
 
 
-## url-join 4.0.1
-
-PURL: pkg:npm/url-join@4.0.1
-Upstream: [https://www.npmjs.com/package/url-join](https://www.npmjs.com/package/url-join)
-
-Licenses: MIT
-
-Copyright (c) 2015 José F. Romaniello
-
-
-## url-parse 1.5.10
-
-PURL: pkg:npm/url-parse@1.5.10
-Upstream: [https://www.npmjs.com/package/url-parse](https://www.npmjs.com/package/url-parse)
-
-Licenses: MIT
-
-Copyright (c) 2015 Unshift.io, Arnout Kazemier,  the Contributors.
-
-
-## use-sync-external-store 1.5.0
-
-PURL: pkg:npm/use-sync-external-store@1.5.0?vcs_url=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact.git%23packages%2Fuse-sync-external-store
-Upstream: [https://www.npmjs.com/package/use-sync-external-store](https://www.npmjs.com/package/use-sync-external-store)
-
-Licenses: MIT
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-
-## usehooks-ts 2.16.0
-
-PURL: pkg:npm/usehooks-ts@2.16.0?vcs_url=https%3A%2F%2Fgithub.com%2Fjuliencrn%2Fusehooks-ts
-Upstream: [https://www.npmjs.com/package/usehooks-ts](https://www.npmjs.com/package/usehooks-ts)
-
-Licenses: MIT
-
-Copyright (c) 2020 Julien CARON
-
-
-## user-event 14.6.1
-
-PURL: pkg:npm/%40testing-library/user-event@14.6.1?vcs_url=https%3A%2F%2Fgithub.com%2Ftesting-library%2Fuser-event
-Upstream: [https://www.npmjs.com/package/%40testing-library/user-event](https://www.npmjs.com/package/%40testing-library/user-event)
-
-Licenses: MIT
-
-Copyright (c) 2020 Giorgio Polvara
-
-
 ## util-deprecate 1.0.2
 
 PURL: pkg:npm/util-deprecate@1.0.2
@@ -18389,109 +11219,59 @@ Licenses: MIT
 Copyright (c) 2014 Nathan Rajlich <nathan@tootallnate.net>
 
 
-## utils 0.2.9
+## utils-merge 1.0.1
 
-PURL: pkg:npm/%40floating-ui/utils@0.2.9
-Upstream: [https://www.npmjs.com/package/%40floating-ui/utils](https://www.npmjs.com/package/%40floating-ui/utils)
+PURL: pkg:npm/utils-merge@1.0.1
+Upstream: [https://www.npmjs.com/package/utils-merge](https://www.npmjs.com/package/utils-merge)
 
 Licenses: MIT
 
-Copyright (c) 2021-present Floating UI contributors
+Copyright (c) 2013-2017 Jared Hanson
 
 
-## utils 3.2.4
+## utils 1.6.1
 
-PURL: pkg:npm/%40vitest/utils@3.2.4
+PURL: pkg:npm/%40vitest/utils@1.6.1
 Upstream: [https://www.npmjs.com/package/%40vitest/utils](https://www.npmjs.com/package/%40vitest/utils)
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
-## utils 4.0.3
+## varint 6.0.0
 
-PURL: pkg:npm/%40vitest/utils@4.0.3
-Upstream: [https://www.npmjs.com/package/%40vitest/utils](https://www.npmjs.com/package/%40vitest/utils)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
-
-
-## utils 8.38.0
-
-PURL: pkg:npm/%40typescript-eslint/utils@8.38.0?vcs_url=https%3A%2F%2Fgithub.com%2Ftypescript-eslint%2Ftypescript-eslint.git%23packages%2Futils
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/utils](https://www.npmjs.com/package/%40typescript-eslint/utils)
+PURL: pkg:npm/varint@6.0.0
+Upstream: [https://www.npmjs.com/package/varint](https://www.npmjs.com/package/varint)
 
 Licenses: MIT
 
-Copyright (c) 2019 typescript-eslint and other contributors
+Copyright (c) Chris Dickinson
 
 
-## v8-coverage 1.0.2
+## vary 1.1.2
 
-PURL: pkg:npm/%40bcoe/v8-coverage@1.0.2
-Upstream: [https://www.npmjs.com/package/%40bcoe/v8-coverage](https://www.npmjs.com/package/%40bcoe/v8-coverage)
-
-Licenses: MIT
-
-Copyright © 2015-2017 Charles Samborski
-
-
-## vali-date 1.0.0
-
-PURL: pkg:npm/vali-date@1.0.0
-Upstream: [https://www.npmjs.com/package/vali-date](https://www.npmjs.com/package/vali-date)
+PURL: pkg:npm/vary@1.1.2
+Upstream: [https://www.npmjs.com/package/vary](https://www.npmjs.com/package/vary)
 
 Licenses: MIT
 
-Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
+Copyright (c) 2014-2017 Douglas Christopher Wilson
 
 
-## validate-npm-package-license 3.0.4
+## vite-jsconfig-paths 2.0.1
 
-PURL: pkg:npm/validate-npm-package-license@3.0.4
-Upstream: [https://www.npmjs.com/package/validate-npm-package-license](https://www.npmjs.com/package/validate-npm-package-license)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## validate-npm-package-name 3.0.0
-
-PURL: pkg:npm/validate-npm-package-name@3.0.0
-Upstream: [https://www.npmjs.com/package/validate-npm-package-name](https://www.npmjs.com/package/validate-npm-package-name)
-
-Licenses: ISC
-
-Copyright (c) 2015, npm, Inc
-
-
-## validate-npm-package-name 4.0.0
-
-PURL: pkg:npm/validate-npm-package-name@4.0.0
-Upstream: [https://www.npmjs.com/package/validate-npm-package-name](https://www.npmjs.com/package/validate-npm-package-name)
-
-Licenses: ISC
-
-Copyright (c) 2015, npm, Inc
-
-
-## visitor-keys 8.38.0
-
-PURL: pkg:npm/%40typescript-eslint/visitor-keys@8.38.0
-Upstream: [https://www.npmjs.com/package/%40typescript-eslint/visitor-keys](https://www.npmjs.com/package/%40typescript-eslint/visitor-keys)
+PURL: pkg:npm/vite-jsconfig-paths@2.0.1
+Upstream: [https://www.npmjs.com/package/vite-jsconfig-paths](https://www.npmjs.com/package/vite-jsconfig-paths)
 
 Licenses: MIT
 
-Copyright (c) 2019 typescript-eslint and other contributors
+Copyright (c) Eliezer Peña
 
 
-## vite-node 3.2.4
+## vite-node 1.6.1
 
-PURL: pkg:npm/vite-node@3.2.4
+PURL: pkg:npm/vite-node@1.6.1
 Upstream: [https://www.npmjs.com/package/vite-node](https://www.npmjs.com/package/vite-node)
 
 Licenses: MIT
@@ -18499,9 +11279,19 @@ Licenses: MIT
 Copyright (c) 2021-Present Vitest Team
 
 
-## vite-tsconfig-paths 5.1.4
+## vite-plugin 1.7.0
 
-PURL: pkg:npm/vite-tsconfig-paths@5.1.4
+PURL: pkg:npm/%40quasar/vite-plugin@1.7.0?vcs_url=https%3A%2F%2Fgithub.com%2Fquasarframework%2Fquasar
+Upstream: [https://www.npmjs.com/package/%40quasar/vite-plugin](https://www.npmjs.com/package/%40quasar/vite-plugin)
+
+Licenses: MIT
+
+Copyright (c) 2021-present Razvan Stoenescu
+
+
+## vite-tsconfig-paths 4.3.2
+
+PURL: pkg:npm/vite-tsconfig-paths@4.3.2
 Upstream: [https://www.npmjs.com/package/vite-tsconfig-paths](https://www.npmjs.com/package/vite-tsconfig-paths)
 
 Licenses: MIT
@@ -18509,94 +11299,104 @@ Licenses: MIT
 Copyright (c) Alec Larson
 
 
-## vite 5.4.19
+## vite 5.4.8
 
-PURL: pkg:npm/vite@5.4.19?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite.git%23packages%2Fvite
+PURL: pkg:npm/vite@5.4.8?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite.git%23packages%2Fvite
 Upstream: [https://www.npmjs.com/package/vite](https://www.npmjs.com/package/vite)
 
 Licenses: MIT
 
-Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
+Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
 
 
-## vite 7.1.12
+## vitest 1.6.1
 
-PURL: pkg:npm/vite@7.1.12?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite.git%23packages%2Fvite
-Upstream: [https://www.npmjs.com/package/vite](https://www.npmjs.com/package/vite)
-
-Licenses: MIT
-
-Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
-
-
-## vite 7.1.3
-
-PURL: pkg:npm/vite@7.1.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite.git%23packages%2Fvite
-Upstream: [https://www.npmjs.com/package/vite](https://www.npmjs.com/package/vite)
-
-Licenses: MIT
-
-Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
-
-
-## vite 7.2.2
-
-PURL: pkg:npm/vite@7.2.2?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitejs%2Fvite.git%23packages%2Fvite
-Upstream: [https://www.npmjs.com/package/vite](https://www.npmjs.com/package/vite)
-
-Licenses: MIT
-
-Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
-
-
-## vitest-canvas-mock 0.3.3
-
-PURL: pkg:npm/vitest-canvas-mock@0.3.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fwobsoriano%2Fvitest-canvas-mock.git
-Upstream: [https://www.npmjs.com/package/vitest-canvas-mock](https://www.npmjs.com/package/vitest-canvas-mock)
-
-Licenses: MIT
-
-Copyright (c) 2022 Robert Soriano <https://github.com/wobsoriano>
-
-
-## vitest 4.0.3
-
-PURL: pkg:npm/vitest@4.0.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fvitest
+PURL: pkg:npm/vitest@1.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fvitest
 Upstream: [https://www.npmjs.com/package/vitest](https://www.npmjs.com/package/vitest)
 
 Licenses: MIT
 
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+Copyright (c) 2021-Present Vitest Team
 
 
-## vscode-uri 3.1.0
+## vue-chartjs 5.3.1
 
-PURL: pkg:npm/vscode-uri@3.1.0
-Upstream: [https://www.npmjs.com/package/vscode-uri](https://www.npmjs.com/package/vscode-uri)
-
-Licenses: MIT
-
-Copyright (c) Microsoft
-
-
-## w3c-xmlserializer 5.0.0
-
-PURL: pkg:npm/w3c-xmlserializer@5.0.0
-Upstream: [https://www.npmjs.com/package/w3c-xmlserializer](https://www.npmjs.com/package/w3c-xmlserializer)
+PURL: pkg:npm/vue-chartjs@5.3.1
+Upstream: [https://www.npmjs.com/package/vue-chartjs](https://www.npmjs.com/package/vue-chartjs)
 
 Licenses: MIT
 
-Copyright © Sebastian Mayr
+Copyright (c) 2016 Jakub Juszczak
 
 
-## walk-up-path 1.0.0
+## vue-component-type-helpers 2.1.6
 
-PURL: pkg:npm/walk-up-path@1.0.0
-Upstream: [https://www.npmjs.com/package/walk-up-path](https://www.npmjs.com/package/walk-up-path)
+PURL: pkg:npm/vue-component-type-helpers@2.1.6
+Upstream: [https://www.npmjs.com/package/vue-component-type-helpers](https://www.npmjs.com/package/vue-component-type-helpers)
 
-Licenses: ISC
+Licenses: MIT
 
-Copyright (c) Isaac Z. Schlueter
+Copyright (c) 2023-present Johnson Chu
+
+
+## vue-eslint-parser 9.4.3
+
+PURL: pkg:npm/vue-eslint-parser@9.4.3?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvuejs%2Fvue-eslint-parser.git
+Upstream: [https://www.npmjs.com/package/vue-eslint-parser](https://www.npmjs.com/package/vue-eslint-parser)
+
+Licenses: MIT
+
+Copyright (c) 2016 Toru Nagashima
+
+
+## vue-router 4.4.5
+
+PURL: pkg:npm/vue-router@4.4.5?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvuejs%2Frouter.git
+Upstream: [https://www.npmjs.com/package/vue-router](https://www.npmjs.com/package/vue-router)
+
+Licenses: MIT
+
+Copyright (c) 2019-present Eduardo San Martin Morote
+
+
+## vue 3.5.11
+
+PURL: pkg:npm/vue@3.5.11?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvuejs%2Fcore.git
+Upstream: [https://www.npmjs.com/package/vue](https://www.npmjs.com/package/vue)
+
+Licenses: MIT
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+
+## vuex-map-fields 1.4.1
+
+PURL: pkg:npm/vuex-map-fields@1.4.1
+Upstream: [https://www.npmjs.com/package/vuex-map-fields](https://www.npmjs.com/package/vuex-map-fields)
+
+Licenses: MIT
+
+Copyright (c) 2016 Markus Oberlehner
+
+
+## vuex 4.1.0
+
+PURL: pkg:npm/vuex@4.1.0?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvuejs%2Fvuex.git
+Upstream: [https://www.npmjs.com/package/vuex](https://www.npmjs.com/package/vuex)
+
+Licenses: MIT
+
+Copyright (c) 2015-present Evan You
+
+
+## wasm 0.1.1
+
+PURL: pkg:npm/%40one-ini/wasm@0.1.1
+Upstream: [https://www.npmjs.com/package/%40one-ini/wasm](https://www.npmjs.com/package/%40one-ini/wasm)
+
+Licenses: MIT
+
+Copyright (c) 2019 Jed Mao
 
 
 ## watchdog 4.0.0
@@ -18619,26 +11419,6 @@ Licenses: MIT
 Copyright (C) 2012 by Jun Woong.
 
 
-## web-worker 4.0.2
-
-PURL: pkg:npm/%40vitest/web-worker@4.0.2?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fvitest-dev%2Fvitest.git%23packages%2Fweb-worker
-Upstream: [https://www.npmjs.com/package/%40vitest/web-worker](https://www.npmjs.com/package/%40vitest/web-worker)
-
-Licenses: MIT
-
-Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
-
-
-## webidl-conversions 3.0.1
-
-PURL: pkg:npm/webidl-conversions@3.0.1
-Upstream: [https://www.npmjs.com/package/webidl-conversions](https://www.npmjs.com/package/webidl-conversions)
-
-Licenses: BSD-2-Clause
-
-Copyright (c) 2014, Domenic Denicola
-
-
 ## webidl-conversions 7.0.0
 
 PURL: pkg:npm/webidl-conversions@7.0.0
@@ -18649,29 +11429,19 @@ Licenses: BSD-2-Clause
 Copyright (c) 2014, Domenic Denicola
 
 
-## webpack-virtual-modules 0.6.2
+## webpack-merge 6.0.1
 
-PURL: pkg:npm/webpack-virtual-modules@0.6.2
-Upstream: [https://www.npmjs.com/package/webpack-virtual-modules](https://www.npmjs.com/package/webpack-virtual-modules)
-
-Licenses: MIT
-
-Copyright (c) 2017 SysGears
-
-
-## whatwg-encoding 3.1.1
-
-PURL: pkg:npm/whatwg-encoding@3.1.1
-Upstream: [https://www.npmjs.com/package/whatwg-encoding](https://www.npmjs.com/package/whatwg-encoding)
+PURL: pkg:npm/webpack-merge@6.0.1
+Upstream: [https://www.npmjs.com/package/webpack-merge](https://www.npmjs.com/package/webpack-merge)
 
 Licenses: MIT
 
-Copyright © Domenic Denicola <d@domenic.me>
+Copyright (c) 2015 Juho Vepsalainen
 
 
-## whatwg-mimetype 4.0.0
+## whatwg-mimetype 3.0.0
 
-PURL: pkg:npm/whatwg-mimetype@4.0.0
+PURL: pkg:npm/whatwg-mimetype@3.0.0
 Upstream: [https://www.npmjs.com/package/whatwg-mimetype](https://www.npmjs.com/package/whatwg-mimetype)
 
 Licenses: MIT
@@ -18679,29 +11449,9 @@ Licenses: MIT
 Copyright © Domenic Denicola <d@domenic.me>
 
 
-## whatwg-url 14.2.0
+## which-boxed-primitive 1.0.2
 
-PURL: pkg:npm/whatwg-url@14.2.0
-Upstream: [https://www.npmjs.com/package/whatwg-url](https://www.npmjs.com/package/whatwg-url)
-
-Licenses: MIT
-
-Copyright (c) Sebastian Mayr
-
-
-## whatwg-url 5.0.0
-
-PURL: pkg:npm/whatwg-url@5.0.0
-Upstream: [https://www.npmjs.com/package/whatwg-url](https://www.npmjs.com/package/whatwg-url)
-
-Licenses: MIT
-
-Copyright (c) Sebastian Mayr
-
-
-## which-boxed-primitive 1.1.1
-
-PURL: pkg:npm/which-boxed-primitive@1.1.1
+PURL: pkg:npm/which-boxed-primitive@1.0.2
 Upstream: [https://www.npmjs.com/package/which-boxed-primitive](https://www.npmjs.com/package/which-boxed-primitive)
 
 Licenses: MIT
@@ -18709,44 +11459,14 @@ Licenses: MIT
 Copyright (c) 2019 Jordan Harband
 
 
-## which-builtin-type 1.2.1
+## which-typed-array 1.1.15
 
-PURL: pkg:npm/which-builtin-type@1.2.1
-Upstream: [https://www.npmjs.com/package/which-builtin-type](https://www.npmjs.com/package/which-builtin-type)
-
-Licenses: MIT
-
-Copyright (c) 2020 ECMAScript Shims
-
-
-## which-collection 1.0.2
-
-PURL: pkg:npm/which-collection@1.0.2
-Upstream: [https://www.npmjs.com/package/which-collection](https://www.npmjs.com/package/which-collection)
-
-Licenses: MIT
-
-Copyright (c) 2019 Inspect JS
-
-
-## which-typed-array 1.1.19
-
-PURL: pkg:npm/which-typed-array@1.1.19
+PURL: pkg:npm/which-typed-array@1.1.15
 Upstream: [https://www.npmjs.com/package/which-typed-array](https://www.npmjs.com/package/which-typed-array)
 
 Licenses: MIT
 
 Copyright (c) 2015 Jordan Harband
-
-
-## which 1.3.1
-
-PURL: pkg:npm/which@1.3.1
-Upstream: [https://www.npmjs.com/package/which](https://www.npmjs.com/package/which)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
 
 
 ## which 2.0.2
@@ -18759,9 +11479,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## which 5.0.0
+## which 6.0.1
 
-PURL: pkg:npm/which@5.0.0
+PURL: pkg:npm/which@6.0.1
 Upstream: [https://www.npmjs.com/package/which](https://www.npmjs.com/package/which)
 
 Licenses: ISC
@@ -18779,24 +11499,14 @@ Licenses: MIT
 Copyright (c) 2016 Mathias Buus
 
 
-## wide-align 1.1.5
+## wildcard 2.0.1
 
-PURL: pkg:npm/wide-align@1.1.5
-Upstream: [https://www.npmjs.com/package/wide-align](https://www.npmjs.com/package/wide-align)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner <me@re-becca.org>
-
-
-## widest-line 4.0.1
-
-PURL: pkg:npm/widest-line@4.0.1
-Upstream: [https://www.npmjs.com/package/widest-line](https://www.npmjs.com/package/widest-line)
+PURL: pkg:npm/wildcard@2.0.1
+Upstream: [https://www.npmjs.com/package/wildcard](https://www.npmjs.com/package/wildcard)
 
 Licenses: MIT
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+Copyright (c) 2023 Damon Oehlman &lt;damon.oehlman@gmail.com&gt;
 
 
 ## word-wrap 1.2.5
@@ -18807,26 +11517,6 @@ Upstream: [https://www.npmjs.com/package/word-wrap](https://www.npmjs.com/packag
 Licenses: MIT
 
 Copyright (c) 2014-2016, Jon Schlinkert
-
-
-## wordwrap 1.0.0
-
-PURL: pkg:npm/wordwrap@1.0.0
-Upstream: [https://www.npmjs.com/package/wordwrap](https://www.npmjs.com/package/wordwrap)
-
-Licenses: MIT
-
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-
-
-## wrap-ansi 3.0.1
-
-PURL: pkg:npm/wrap-ansi@3.0.1
-Upstream: [https://www.npmjs.com/package/wrap-ansi](https://www.npmjs.com/package/wrap-ansi)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
 ## wrap-ansi 6.2.0
@@ -18869,74 +11559,14 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## write-file-atomic 3.0.3
+## xml-name-validator 4.0.0
 
-PURL: pkg:npm/write-file-atomic@3.0.3
-Upstream: [https://www.npmjs.com/package/write-file-atomic](https://www.npmjs.com/package/write-file-atomic)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner
-
-
-## write-file-atomic 4.0.2
-
-PURL: pkg:npm/write-file-atomic@4.0.2
-Upstream: [https://www.npmjs.com/package/write-file-atomic](https://www.npmjs.com/package/write-file-atomic)
-
-Licenses: ISC
-
-Copyright (c) 2015, Rebecca Turner
-
-
-## ws 8.18.1
-
-PURL: pkg:npm/ws@8.18.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fwebsockets%2Fws.git
-Upstream: [https://www.npmjs.com/package/ws](https://www.npmjs.com/package/ws)
-
-Licenses: MIT
-
-Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
-
-
-## xdg-basedir 5.1.0
-
-PURL: pkg:npm/xdg-basedir@5.1.0
-Upstream: [https://www.npmjs.com/package/xdg-basedir](https://www.npmjs.com/package/xdg-basedir)
-
-Licenses: MIT
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-
-## xml-name-validator 5.0.0
-
-PURL: pkg:npm/xml-name-validator@5.0.0
+PURL: pkg:npm/xml-name-validator@4.0.0
 Upstream: [https://www.npmjs.com/package/xml-name-validator](https://www.npmjs.com/package/xml-name-validator)
 
 Licenses: Apache-2.0
 
 copyright notice that is included in or attached to the work
-
-
-## xmlchars 2.2.0
-
-PURL: pkg:npm/xmlchars@2.2.0
-Upstream: [https://www.npmjs.com/package/xmlchars](https://www.npmjs.com/package/xmlchars)
-
-Licenses: MIT
-
-Copyright Louis-Dominique Dubeau and contributors to xmlchars
-
-
-## xtend 4.0.2
-
-PURL: pkg:npm/xtend@4.0.2
-Upstream: [https://www.npmjs.com/package/xtend](https://www.npmjs.com/package/xtend)
-
-Licenses: MIT
-
-Copyright (c) 2012-2014 Raynos.
 
 
 ## y18n 5.0.8
@@ -18959,16 +11589,6 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## yallist 4.0.0
-
-PURL: pkg:npm/yallist@4.0.0
-Upstream: [https://www.npmjs.com/package/yallist](https://www.npmjs.com/package/yallist)
-
-Licenses: ISC
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-
 ## yallist 5.0.0
 
 PURL: pkg:npm/yallist@5.0.0
@@ -18979,46 +11599,6 @@ Licenses: BlueOak-1.0.0
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## yaml 1.10.2
-
-PURL: pkg:npm/yaml@1.10.2
-Upstream: [https://www.npmjs.com/package/yaml](https://www.npmjs.com/package/yaml)
-
-Licenses: ISC
-
-Copyright Eemeli Aro <eemeli@gmail.com>
-
-
-## yaml 2.7.1
-
-PURL: pkg:npm/yaml@2.7.1
-Upstream: [https://www.npmjs.com/package/yaml](https://www.npmjs.com/package/yaml)
-
-Licenses: ISC
-
-Copyright Eemeli Aro <eemeli@gmail.com>
-
-
-## yargs-parser 20.2.9
-
-PURL: pkg:npm/yargs-parser@20.2.9
-Upstream: [https://www.npmjs.com/package/yargs-parser](https://www.npmjs.com/package/yargs-parser)
-
-Licenses: ISC
-
-Copyright (c) 2016, Contributors
-
-
-## yargs-parser 21.0.3
-
-PURL: pkg:npm/%40types/yargs-parser@21.0.3
-Upstream: [https://www.npmjs.com/package/%40types/yargs-parser](https://www.npmjs.com/package/%40types/yargs-parser)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
-
-
 ## yargs-parser 21.1.1
 
 PURL: pkg:npm/yargs-parser@21.1.1
@@ -19027,26 +11607,6 @@ Upstream: [https://www.npmjs.com/package/yargs-parser](https://www.npmjs.com/pac
 Licenses: ISC
 
 Copyright (c) 2016, Contributors
-
-
-## yargs 16.2.0
-
-PURL: pkg:npm/yargs@16.2.0
-Upstream: [https://www.npmjs.com/package/yargs](https://www.npmjs.com/package/yargs)
-
-Licenses: MIT
-
-Copyright 2010 James Halliday (mail@substack.net); Modified work Copyright 2014 Contributors (ben@npmjs.com)
-
-
-## yargs 17.0.33
-
-PURL: pkg:npm/%40types/yargs@17.0.33
-Upstream: [https://www.npmjs.com/package/%40types/yargs](https://www.npmjs.com/package/%40types/yargs)
-
-Licenses: MIT
-
-Copyright (c) Microsoft Corporation.
 
 
 ## yargs 17.7.2
@@ -19069,9 +11629,9 @@ Licenses: MIT
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 
-## yocto-queue 1.2.1
+## yocto-queue 1.1.1
 
-PURL: pkg:npm/yocto-queue@1.2.1
+PURL: pkg:npm/yocto-queue@1.1.1
 Upstream: [https://www.npmjs.com/package/yocto-queue](https://www.npmjs.com/package/yocto-queue)
 
 Licenses: MIT
@@ -19087,6 +11647,16 @@ Upstream: [https://www.npmjs.com/package/yoctocolors-cjs](https://www.npmjs.com/
 Licenses: MIT
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+
+## zip-stream 6.0.1
+
+PURL: pkg:npm/zip-stream@6.0.1
+Upstream: [https://www.npmjs.com/package/zip-stream](https://www.npmjs.com/package/zip-stream)
+
+Licenses: MIT
+
+Copyright (c) 2014 Chris Talkington, contributors.
 
 
 ---
