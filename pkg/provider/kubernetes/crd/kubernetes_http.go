@@ -130,7 +130,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 					r.TLS.Options, err = p.resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name)
 					if err != nil {
-						logger.Errorf("Invalid reference to TLSOption %q: when allowCrossNamespace is disabled, @kubernetescrd references are disallowed", ingressRoute.Spec.TLS.Options.Name)
+						logger.WithError(err).Errorf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
 					}
 				}
