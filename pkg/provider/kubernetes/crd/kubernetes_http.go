@@ -125,39 +125,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
-					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
+					tlsOptions := ingressRoute.Spec.TLS.Options
+					ctxTLSOption := log.With(ctx, log.Str("TLSOption", tlsOptions.Name))
 
-					if strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
-						if !p.AllowCrossNamespace && strings.HasSuffix(tlsOptionsName, providerNamespaceSeparator+providerName) {
-							logger.Errorf("Invalid reference to TLSOption %q: when allowCrossNamespace is disabled, @kubernetescrd references are disallowed",
-								ingressRoute.Spec.TLS.Options.Name)
-							continue
-						}
-
-						if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, ingressRoute.Namespace) {
-							logger.Errorf("TLSOption %q reference is not allowed: namespace %q is not in crossProviderNamespaces",
-								ingressRoute.Spec.TLS.Options.Name, ingressRoute.Namespace)
-							continue
-						}
-
-						if len(ingressRoute.Spec.TLS.Options.Namespace) > 0 {
-							logger.
-								WithField("TLSOption", ingressRoute.Spec.TLS.Options.Name).
-								Warnf("Namespace %q is ignored in cross-provider context", ingressRoute.Spec.TLS.Options.Namespace)
-						}
-					} else {
-						ns := namespaceOrParentNamespace(ingressRoute.Spec.TLS.Options.Namespace, ingressRoute.Namespace)
-
-						if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, ns) {
-							logger.Errorf("Invalid reference to TLSOption %s/%s: when allowCrossNamespace is disabled, cross-namespace are disallowed",
-								ingressRoute.Spec.TLS.Options.Name)
-							continue
-						}
-
-						tlsOptionsName = makeID(ns, tlsOptionsName)
+					r.TLS.Options, err = p.resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name)
+					if err != nil {
+						logger.Errorf("Invalid reference to TLSOption %q: when allowCrossNamespace is disabled, @kubernetescrd references are disallowed", ingressRoute.Spec.TLS.Options.Name)
+						continue
 					}
-
-					r.TLS.Options = tlsOptionsName
 				}
 			}
 
@@ -174,35 +149,14 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	var mds []string
 
 	for _, mi := range middlewares {
-		if strings.Contains(mi.Name, providerNamespaceSeparator) {
-			if !p.AllowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
-				// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-				// if the provider namespace kubernetescrd is used,
-				// we don't allow this format to avoid cross-namespace references.
-				return nil, fmt.Errorf("invalid reference to middleware %s: when allowCrossNamespace is disabled @kubernetescrd provider references are disallowed", mi.Name)
-			}
+		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, mi.Name))
 
-			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, ingRouteNamespace) {
-				return nil, fmt.Errorf("IngressRoute in namespace %q references middlewares but namespace is not in crossProviderNamespaces", ingRouteNamespace)
-			}
-
-			if len(mi.Namespace) > 0 {
-				log.FromContext(ctx).
-					WithField(log.MiddlewareName, mi.Name).
-					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
-			}
-
-			mds = append(mds, mi.Name)
-			continue
+		middlewareRef, err := p.resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name)
+		if err != nil {
+			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
 
-		ns := namespaceOrParentNamespace(mi.Namespace, ingRouteNamespace)
-
-		if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteNamespace, ns) {
-			return nil, fmt.Errorf("middleware %s/%s is not in the IngressRoute namespace %s", mi.Namespace, mi.Name, ingRouteNamespace)
-		}
-
-		mds = append(mds, provider.Normalize(makeID(ns, mi.Name)))
+		mds = append(mds, middlewareRef)
 	}
 
 	return mds, nil
