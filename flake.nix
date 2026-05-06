@@ -39,6 +39,8 @@
             pkgs-golangci.golangci-lint
           ];
         };
+
+        formatter = pkgs.nixfmt;
       }
     );
 }
