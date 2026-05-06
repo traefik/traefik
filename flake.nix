@@ -3,7 +3,7 @@
 
   inputs = {
     # Main nixpkgs (used for gnused)
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz";
 
     # Pinned nixpkgs for kubernetes-controller-tools
     # Search: https://www.nixhub.io/packages/kubernetes-controller-tools
