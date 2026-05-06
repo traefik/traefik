@@ -133,7 +133,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					} else {
 						ns := namespaceOrParentNamespace(ingressRouteTCP.Spec.TLS.Options.Namespace, ingressRouteTCP.Namespace)
 
-						if !p.AllowCrossNamespace && ns != ingressRouteTCP.Namespace {
+						if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
 							logger.Errorf("Invalid reference to TLSOption %s/%s: when allowCrossNamespace is disabled, cross-namespace are disallowed",
 								ingressRouteTCP.Spec.TLS.Options.Name)
 							continue
