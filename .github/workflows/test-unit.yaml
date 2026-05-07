@@ -86,6 +86,7 @@ jobs:
           safe-chain setup-ci
 
       - name: UI unit tests
+        working-directory: ./webui
         run: |
-          yarn --cwd webui install --mode skip-build
-          yarn --cwd webui test:unit:ci
+          yarn install --mode skip-build
+          yarn test:unit:ci
