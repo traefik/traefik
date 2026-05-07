@@ -52,6 +52,7 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	CrossProviderNamespaces   []string            `description:"List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	// Deprecated: please use DisableClusterScopeResources.
 	DisableIngressClassLookup    bool `description:"Disables the lookup of IngressClasses (Deprecated, please use DisableClusterScopeResources)." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	DisableClusterScopeResources bool `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
@@ -88,6 +89,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	if p.AllowExternalNameServices {
 		logger.Info().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+	}
+
+	if p.CrossProviderNamespaces != nil {
+		logger.Warn().Msgf("Cross-provider Middleware, TLSOption and ServersTransport references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -256,6 +261,19 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse annotations")
 			continue
+		}
+
+		// Middlewares and TLS options always contain cross-provider references.
+		if rtConfig != nil && rtConfig.Router != nil && p.CrossProviderNamespaces != nil && !slices.Contains(p.CrossProviderNamespaces, ingress.Namespace) {
+			if len(rtConfig.Router.Middlewares) > 0 {
+				logger.Error().Msgf("Skipping Ingress: cross-provider middleware reference is not allowed from namespace %q", ingress.Namespace)
+				continue
+			}
+
+			if rtConfig.Router.TLS != nil && rtConfig.Router.TLS.Options != "" {
+				logger.Error().Msgf("Skipping Ingress: cross-provider TLS option reference is not allowed from namespace %q", ingress.Namespace)
+				continue
+			}
 		}
 
 		err = getCertificates(ctxIngress, ingress, client, certConfigs)
@@ -569,6 +587,10 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		}
 
 		if svcConfig.Service.ServersTransport != "" {
+			if p.CrossProviderNamespaces != nil && !slices.Contains(p.CrossProviderNamespaces, namespace) {
+				return nil, fmt.Errorf("cross-provider serversTransport reference is not allowed from namespace %q", namespace)
+			}
+
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
 

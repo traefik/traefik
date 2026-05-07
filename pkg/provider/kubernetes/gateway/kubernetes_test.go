@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -8333,4 +8334,236 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	}
 
 	return k8sObjects, gwObjects
+}
+
+func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		allowList []string
+		namespace string
+		want      bool
+	}{
+		{desc: "nil allowList allows any namespace", allowList: nil, namespace: "ns-a", want: true},
+		{desc: "empty allowList denies every namespace", allowList: []string{}, namespace: "ns-a", want: false},
+		{desc: "namespace in allowList is accepted", allowList: []string{"ns-a"}, namespace: "ns-a", want: true},
+		{desc: "namespace not in allowList is rejected", allowList: []string{"ns-b"}, namespace: "ns-a", want: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			got := isCrossProviderNamespaceAllowed(test.allowList, test.namespace)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_HTTPRoute verifies that the
+// CrossProviderNamespaces option gates `@otherProvider` TraefikService
+// backendRefs declared on a Gateway HTTPRoute. The check is anchored on the
+// HTTPRoute's namespace; when the route is rejected, the whole router is
+// dropped from the dynamic configuration.
+func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantError               bool
+	}{
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantError: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantError: true},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantError: false},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantError: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/simple_cross_provider.yml"})
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				EntryPoints:             map[string]Entrypoint{"web": {Address: ":80"}},
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+				client:                  client,
+			}
+
+			conf := p.loadConfigurationFromGateways(t.Context())
+
+			router, ok := conf.HTTP.Routers["httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3"]
+			require.True(t, ok)
+
+			service, ok := conf.HTTP.Services[router.Service]
+			require.True(t, ok)
+			require.NotNil(t, service.Weighted)
+			require.Len(t, service.Weighted.Services, 2)
+
+			var hasError bool
+			for _, wrrService := range service.Weighted.Services {
+				// Whenever a service fails to be loaded, a placeholder service is added to the WRR to server a 500 status code.
+				if wrrService.Status != nil && *wrrService.Status == http.StatusInternalServerError {
+					hasError = true
+					break
+				}
+			}
+
+			assert.Equal(t, test.wantError, hasError)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_TCPRoute verifies that the option also gates
+// cross-provider TraefikService backendRefs declared on a Gateway TCPRoute.
+func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantError               bool
+	}{
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantError: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantError: true},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantError: false},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantError: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "tcproute/simple_cross_provider.yml"})
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = true
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				EntryPoints:             map[string]Entrypoint{"tcp": {Address: ":9000"}},
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+				client:                  client,
+				ExperimentalChannel:     true,
+			}
+
+			conf := p.loadConfigurationFromGateways(t.Context())
+
+			router, ok := conf.TCP.Routers["tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb"]
+			require.True(t, ok)
+
+			service, ok := conf.TCP.Services[router.Service]
+			require.True(t, ok)
+			require.NotNil(t, service.Weighted)
+			require.Len(t, service.Weighted.Services, 2)
+
+			var hasError bool
+			for _, wrrService := range service.Weighted.Services {
+				if strings.Contains(wrrService.Name, "@") {
+					continue
+				}
+
+				lbService, ok := conf.TCP.Services[wrrService.Name]
+				require.True(t, ok)
+				require.NotNil(t, lbService)
+				require.NotNil(t, lbService.LoadBalancer)
+
+				if len(lbService.LoadBalancer.Servers) == 0 {
+					hasError = true
+				}
+			}
+
+			assert.Equal(t, test.wantError, hasError)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_TLSRoute verifies that the option also gates
+// cross-provider TraefikService backendRefs declared on a Gateway TLSRoute.
+func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantError               bool
+	}{
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantError: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantError: true},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantError: false},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantError: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "tlsroute/simple_cross_provider.yml"})
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = true
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				EntryPoints:             map[string]Entrypoint{"tls": {Address: ":9000"}},
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+				client:                  client,
+				ExperimentalChannel:     true,
+			}
+
+			conf := p.loadConfigurationFromGateways(t.Context())
+
+			router, ok := conf.TCP.Routers["tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb"]
+			require.True(t, ok)
+
+			service, ok := conf.TCP.Services[router.Service]
+			require.True(t, ok)
+			require.NotNil(t, service.Weighted)
+			require.Len(t, service.Weighted.Services, 2)
+
+			var hasError bool
+			for _, wrrService := range service.Weighted.Services {
+				if strings.Contains(wrrService.Name, "@") {
+					continue
+				}
+
+				lbService, ok := conf.TCP.Services[wrrService.Name]
+				require.True(t, ok)
+				require.NotNil(t, lbService)
+				require.NotNil(t, lbService.LoadBalancer)
+
+				if len(lbService.LoadBalancer.Servers) == 0 {
+					hasError = true
+				}
+			}
+
+			assert.Equal(t, test.wantError, hasError)
+		})
+	}
 }

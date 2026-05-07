@@ -160,7 +160,18 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 				router.Service = errWrrName
 
 			case len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef):
-				router.Service = string(routeRule.BackendRefs[0].Name)
+				if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
+					condition = metav1.Condition{
+						Type:               string(gatev1.RouteConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: route.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.RouteReasonRefNotPermitted),
+						Message:            fmt.Sprintf("Cannot load HTTPRoute BackendRef %s: internal service reference is not allowed: HTTPRoute namespace %q is not in crossProviderNamespaces", routeRule.BackendRefs[0].Name, route.Namespace),
+					}
+				} else {
+					router.Service = string(routeRule.BackendRefs[0].Name)
+				}
 
 			default:
 				var serviceCondition *metav1.Condition
@@ -295,6 +306,10 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	// Support for cross-provider references (e.g: api@internal).
 	// This provides the same behavior as for IngressRoutes.
 	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, namespace) {
+			return "", nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), namespace)
+		}
+
 		return string(backendRef.Name), nil, nil
 	}
 
