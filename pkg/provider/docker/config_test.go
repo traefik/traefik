@@ -4924,3 +4924,88 @@ func mapKeys[K comparable, V any](m map[K]V) []K {
 	}
 	return out
 }
+
+func TestStripRouterConstraintLabels(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			desc:     "empty input returns empty output",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			desc: "no constraint labels: input passed through unchanged",
+			input: map[string]string{
+				"traefik.http.routers.r1.rule":        "Host(`a`)",
+				"traefik.http.routers.r1.entrypoints": "web",
+				"non-traefik-key":                     "x",
+			},
+			expected: map[string]string{
+				"traefik.http.routers.r1.rule":        "Host(`a`)",
+				"traefik.http.routers.r1.entrypoints": "web",
+				"non-traefik-key":                     "x",
+			},
+		},
+		{
+			desc: "strips http/tcp/udp router constraint labels",
+			input: map[string]string{
+				"traefik.http.routers.r1.rule":       "Host(`a`)",
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`int`)",
+				"traefik.tcp.routers.t1.rule":        "HostSNI(`b`)",
+				"traefik.tcp.routers.t1.constraint":  "Label(`tier`,`ext`)",
+				"traefik.udp.routers.u1.entrypoints": "udp",
+				"traefik.udp.routers.u1.constraint":  "Label(`tier`,`int`)",
+			},
+			expected: map[string]string{
+				"traefik.http.routers.r1.rule":       "Host(`a`)",
+				"traefik.tcp.routers.t1.rule":        "HostSNI(`b`)",
+				"traefik.udp.routers.u1.entrypoints": "udp",
+			},
+		},
+		{
+			desc: "preserves other labels containing the word constraint",
+			input: map[string]string{
+				"traefik.constraint-label":              "traefik-public",
+				"traefik.http.routers.r1.constraint":    "Label(`tier`,`int`)",
+				"traefik.http.middlewares.x.constraint": "should-not-strip",
+				"random.constraint":                     "should-not-strip",
+			},
+			expected: map[string]string{
+				"traefik.constraint-label":              "traefik-public",
+				"traefik.http.middlewares.x.constraint": "should-not-strip",
+				"random.constraint":                     "should-not-strip",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			got := stripRouterConstraintLabels(test.input)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestIsRouterConstraintLabel(t *testing.T) {
+	cases := map[string]bool{
+		"traefik.http.routers.r1.constraint":       true,
+		"traefik.tcp.routers.t1.constraint":        true,
+		"traefik.udp.routers.u1.constraint":        true,
+		"traefik.http.routers.r1.rule":             false,
+		"traefik.http.middlewares.m1.constraint":   false,
+		"traefik.constraint-label":                 false,
+		"random":                                   false,
+		"":                                         false,
+		"traefik.http.routers.r1.constraint.extra": false,
+	}
+	for k, want := range cases {
+		t.Run(k, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, want, isRouterConstraintLabel(k))
+		})
+	}
+}
