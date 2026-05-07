@@ -24,6 +24,7 @@ import { LAPTOP_BP } from '.'
 import IconButton from 'components/buttons/IconButton'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
+import InstanceBadge from 'components/InstanceBadge'
 import TooltipText from 'components/TooltipText'
 import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
@@ -229,6 +230,7 @@ export const SideNav = ({
           {!!version && !isSmallAndResponsive && (
             <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
+          {!isSmallAndResponsive && <InstanceBadge />}
         </Flex>
         {ROUTES.map((section, index) => (
           <Flex
