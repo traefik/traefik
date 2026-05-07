@@ -51,6 +51,7 @@ services:
 | <a id="opt-providers-docker-httpClientTimeout" href="#opt-providers-docker-httpClientTimeout" title="#opt-providers-docker-httpClientTimeout">`providers.docker.httpClientTimeout`</a> | Defines the client timeout (in seconds) for HTTP connections. If its value is 0, no timeout is set. |  0   | No   |
 | <a id="opt-providers-docker-watch" href="#opt-providers-docker-watch" title="#opt-providers-docker-watch">`providers.docker.watch`</a> | Instructs Traefik to watch Docker events or not. |  True   | No   |
 | <a id="opt-providers-docker-constraints" href="#opt-providers-docker-constraints" title="#opt-providers-docker-constraints">`providers.docker.constraints`</a> | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  |  ""   | No   |
+| <a id="opt-providers-docker-routerLabels" href="#opt-providers-docker-routerLabels" title="#opt-providers-docker-routerLabels">`providers.docker.routerLabels`</a> | A map of `key=value` labels that the per-router `traefik.<router>.constraint` label expression is evaluated against. Routers whose `constraint` does not match are dropped before configuration registration. See [here](#routerlabels) for more information. | `{}` | No |
 | <a id="opt-providers-docker-allowEmptyServices" href="#opt-providers-docker-allowEmptyServices" title="#opt-providers-docker-allowEmptyServices">`providers.docker.allowEmptyServices`</a> |  Instructs the provider to create any [servers load balancer](../../../reference/routing-configuration/http/load-balancing/service.md#service-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers. |  false   | No   |
 | <a id="opt-providers-docker-tls-ca" href="#opt-providers-docker-tls-ca" title="#opt-providers-docker-tls-ca">`providers.docker.tls.ca`</a> | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.  |  ""   | No   |
 | <a id="opt-providers-docker-tls-cert" href="#opt-providers-docker-tls-cert" title="#opt-providers-docker-tls-cert">`providers.docker.tls.cert`</a> | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required. |   ""  | Yes   |
@@ -325,6 +326,57 @@ providers:
 --providers.docker.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
+
+
+### `routerLabels`
+
+The `routerLabels` option is a static-config map that pairs with the per-router
+`traefik.<protocol>.routers.<router_name>.constraint` dynamic label.
+It allows multiple Traefik instances pointed at the same Docker endpoint
+to selectively load only the routers intended for them, without filtering at the
+service-discovery layer.
+
+Each router's `constraint` value is parsed as a constraint expression
+(`Label`, `LabelRegex`, `&&`, `||`, `!`) and evaluated against `routerLabels`.
+Routers whose expression does not match are silently dropped before
+configuration registration. The `constraint` label itself is stripped from the
+parsed configuration so it is not surfaced as an unknown router field.
+
+If a router does not declare `traefik.<protocol>.routers.<router_name>.constraint`,
+it is loaded normally — `routerLabels` only filters routers that opt in.
+
+!!! tip "Distinct from the provider-wide `constraints` option"
+
+    The provider-wide `constraints` option filters whole *services* and runs
+    *before* router parsing. `routerLabels` + per-router `constraint` filters
+    individual *routers* within a service that is otherwise loaded.
+
+??? example "routerLabels + per-router constraint Examples"
+
+    ```yaml tab="File (YAML) — Traefik static config"
+    providers:
+      docker:
+        routerLabels:
+          tier: ext
+    ```
+
+    ```toml tab="File (TOML) — Traefik static config"
+    [providers.docker.routerLabels]
+      tier = "ext"
+    ```
+
+    ```bash tab="CLI — Traefik static config"
+    --providers.docker.routerLabels.tier=ext
+    ```
+
+    ```yaml tab="Docker service labels (dynamic config)"
+    # Same service publishes two routers. Only the one whose constraint
+    # matches the running Traefik's routerLabels is loaded.
+    - "traefik.http.routers.public.rule=Host(`example.com`)"
+    - "traefik.http.routers.public.constraint=Label(`tier`,`ext`)"
+    - "traefik.http.routers.admin.rule=Host(`admin.internal`)"
+    - "traefik.http.routers.admin.constraint=Label(`tier`,`int`)"
+    ```
 
 ## Routing Configuration
 
