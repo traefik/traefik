@@ -134,7 +134,7 @@ export const SideNav = ({
   isResponsive?: boolean
 }) => {
   const windowSize = useWindowSize()
-  const { version } = useContext(VersionContext)
+  const { version, dashboardName, dashboardNamePosition } = useContext(VersionContext)
 
   const { http, tcp, udp, certificates } = useTotals()
 
@@ -230,8 +230,13 @@ export const SideNav = ({
           {!!version && !isSmallAndResponsive && (
             <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
-          {!isSmallAndResponsive && <InstanceBadge />}
+          {!isSmallAndResponsive && dashboardNamePosition !== 'below' && <InstanceBadge />}
         </Flex>
+        {!isSmallAndResponsive && dashboardNamePosition === "below" && !!dashboardName && (
+          <Flex data-testid="instance-badge-below" css={{ pl: '$3', mb: '$4' }}>
+            <InstanceBadge />
+          </Flex>
+        )}
         {ROUTES.map((section, index) => (
           <Flex
             key={`nav-section-${index}`}

@@ -12,7 +12,7 @@ const mockVerifySignature = vi.mocked(verifySignature)
 
 const createWrapper = (showHubButton: boolean) => {
   return ({ children }: { children: ReactNode }) => (
-    <VersionContext.Provider value={{ showHubButton, version: '1.0.0', dashboardName: '' }}>
+    <VersionContext.Provider value={{ showHubButton, version: '1.0.0', dashboardName: '', dashboardNamePosition: 'side' }}>
       {children}
     </VersionContext.Provider>
   )
