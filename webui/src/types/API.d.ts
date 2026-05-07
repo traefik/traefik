@@ -5,5 +5,6 @@ namespace API {
     disableDashboardAd: boolean
     startDate: string
     dashboardName?: string
+    dashboardNamePosition?: 'side' | 'below'
   }
 }
