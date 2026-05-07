@@ -87,5 +87,5 @@ jobs:
 
       - name: UI unit tests
         run: |
-          yarn --cwd webui install --ignore-scripts
+          yarn --cwd webui install --mode skip-build
           yarn --cwd webui test:unit:ci
