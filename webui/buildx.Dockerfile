@@ -10,7 +10,7 @@ ENV VITE_APP_BASE_API_URL="/api"
 
 WORKDIR $WEBUI_DIR
 
-RUN corepack enable
+RUN npm i -g corepack
 RUN yarn workspaces focus --all --production
 
 COPY . $WEBUI_DIR/
