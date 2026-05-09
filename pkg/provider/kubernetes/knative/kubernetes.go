@@ -296,7 +296,6 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 			entrypoints = p.PrivateEntrypoints
 		}
 
-		// TODO: support rewrite host
 		for pi, path := range rule.HTTP.Paths {
 			routerKey := fmt.Sprintf("%s-%s-rule-%d-path-%d", ingress.Namespace, ingress.Name, ri, pi)
 			router := &dynamic.Router{
@@ -306,21 +305,32 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 				Service:     routerKey + "-wrr",
 			}
 
-			if len(path.AppendHeaders) > 0 {
+			wrr, services, err := p.buildWeightedRoundRobin(routerKey, path.Splits)
+			if err != nil {
+				logger.Error().Err(err).Msg("Error building weighted round robin")
+				continue
+			}
+
+			customHeaders := make(map[string]string)
+			maps.Copy(customHeaders, path.AppendHeaders)
+
+			if path.RewriteHost != "" {
+				customHeaders["Host"] = path.RewriteHost
+
+				for _, split := range path.Splits {
+					maps.Copy(customHeaders, split.AppendHeaders)
+				}
+			}
+
+			if len(customHeaders) > 0 {
 				midKey := fmt.Sprintf("%s-append-headers", routerKey)
 
 				router.Middlewares = append(router.Middlewares, midKey)
 				conf.Middlewares[midKey] = &dynamic.Middleware{
 					Headers: &dynamic.Headers{
-						CustomRequestHeaders: path.AppendHeaders,
+						CustomRequestHeaders: customHeaders,
 					},
 				}
-			}
-
-			wrr, services, err := p.buildWeightedRoundRobin(routerKey, path.Splits)
-			if err != nil {
-				logger.Error().Err(err).Msg("Error building weighted round robin")
-				continue
 			}
 
 			// TODO: support Ingress#HTTPOption to check if HTTP router should redirect to the HTTPS one.

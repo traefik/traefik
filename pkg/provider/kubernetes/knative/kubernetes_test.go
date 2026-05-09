@@ -188,6 +188,62 @@ func Test_loadConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc:    "Domain Mapping with rewriteHost",
+			paths:   []string{"domain_mapping.yaml", "services.yaml"},
+			wantLen: 1,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-custom-another-domain-com-rule-0-path-0": {
+							EntryPoints: []string{"http", "https"},
+							Service:     "default-custom-another-domain-com-rule-0-path-0-wrr",
+							Rule:        `(Host("custom.another-domain.com"))`,
+							Middlewares: []string{"default-custom-another-domain-com-rule-0-path-0-append-headers"},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-custom-another-domain-com-rule-0-path-0-split-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.38.208:80",
+									},
+								},
+							},
+						},
+						"default-custom-another-domain-com-rule-0-path-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-custom-another-domain-com-rule-0-path-0-split-0",
+										Weight: ptr.To(100),
+										Headers: map[string]string{
+											"K-Original-Host": "custom.another-domain.com",
+										},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-custom-another-domain-com-rule-0-path-0-append-headers": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{
+									"Host":              "helloworld-go.default.svc.cluster.local",
+									"K-Original-Host":   "custom.another-domain.com",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:    "TLS",
 			paths:   []string{"tls.yaml", "services.yaml"},
 			wantLen: 1,
