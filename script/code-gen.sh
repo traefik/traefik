@@ -19,7 +19,7 @@ kube::codegen::gen_helpers \
   --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
   "${CURRENT_DIR}"
 
-kube::codegen::gen_client \
+kube::codegen::gen_client \ 
     --with-applyconfig \
     --with-watch \
     --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
