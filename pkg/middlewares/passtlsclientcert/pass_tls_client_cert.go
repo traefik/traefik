@@ -30,7 +30,8 @@ const (
 )
 
 var attributeTypeNames = map[string]string{
-	"0.9.2342.19200300.100.1.25": "DC", // Domain component OID - RFC 2247
+	"0.9.2342.19200300.100.1.25": "DC",  // Domain component OID - RFC 2247
+	"0.9.2342.19200300.100.1.1":  "UID", // User ID OID
 }
 
 // IssuerDistinguishedNameOptions is a struct for specifying the configuration
@@ -74,6 +75,7 @@ type SubjectDistinguishedNameOptions struct {
 	OrganizationalUnitName bool
 	SerialNumber           bool
 	StateOrProvinceName    bool
+	UID                    bool
 }
 
 func newSubjectDistinguishedNameOptions(info *dynamic.TLSClientCertificateSubjectDNInfo) *SubjectDistinguishedNameOptions {
@@ -90,6 +92,7 @@ func newSubjectDistinguishedNameOptions(info *dynamic.TLSClientCertificateSubjec
 		OrganizationalUnitName: info.OrganizationalUnit,
 		SerialNumber:           info.SerialNumber,
 		StateOrProvinceName:    info.Province,
+		UID:                    info.UID,
 	}
 }
 
@@ -269,9 +272,18 @@ func getSubjectDNInfo(ctx context.Context, options *SubjectDistinguishedNameOpti
 
 	// Manage non standard attributes
 	for _, name := range cs.Names {
+
+		switch attributeTypeNames[name.Type.String()] {
 		// Domain Component - RFC 2247
-		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
+		case "DC":
+			if options.DomainComponent {
+				_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
+			}
+		// User ID
+		case "UID":
+			if options.UID {
+				_, _ = fmt.Fprintf(content, "UID=%s%s", name.Value, subFieldSeparator)
+			}
 		}
 	}
 
