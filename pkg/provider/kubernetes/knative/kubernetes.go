@@ -54,7 +54,8 @@ type Provider struct {
 	PublicService      ServiceRef      `description:"Kubernetes service used to expose the networking controller publicly." json:"publicService,omitempty" toml:"publicService,omitempty" yaml:"publicService,omitempty" export:"true"`
 	PrivateEntrypoints []string        `description:"Entrypoint names used to expose the Ingress privately. If empty local Ingresses are skipped." json:"privateEntrypoints,omitempty" toml:"privateEntrypoints,omitempty" yaml:"privateEntrypoints,omitempty" export:"true"`
 	PrivateService     ServiceRef      `description:"Kubernetes service used to expose the networking controller privately." json:"privateService,omitempty" toml:"privateService,omitempty" yaml:"privateService,omitempty" export:"true"`
-	ThrottleDuration   ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
+	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
+	AllowExternalNameServices bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 
 	client            *clientWrapper
 	lastConfiguration safe.Safe
@@ -77,6 +78,11 @@ func (p *Provider) Init() error {
 // Provide allows the knative provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
+
+	if p.AllowExternalNameServices {
+		logger.Info().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+	}
+
 	ctxLog := logger.WithContext(context.Background())
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -404,6 +410,36 @@ func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOr
 	service, err := p.client.GetService(namespace, serviceName)
 	if err != nil {
 		return nil, fmt.Errorf("getting service %s/%s: %w", namespace, serviceName, err)
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		if !p.AllowExternalNameServices {
+			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, serviceName)
+		}
+
+		scheme := "http"
+		var portNum int
+
+		for _, sp := range service.Spec.Ports {
+			if sp.Name == port.String() || strconv.Itoa(int(sp.Port)) == port.String() {
+				if sp.AppProtocol != nil && *sp.AppProtocol == knativenetworking.AppProtocolH2C {
+					scheme = "h2c"
+				}
+				portNum = int(sp.Port)
+				break
+			}
+		}
+
+		if portNum == 0 {
+			p, err := strconv.Atoi(port.String())
+			if err != nil {
+				return nil, errors.New("service port not found")
+			}
+			portNum = p
+		}
+
+		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(portNum))
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", scheme, hostPort)}}, nil
 	}
 
 	var svcPort *corev1.ServicePort
