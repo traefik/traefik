@@ -434,32 +434,6 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) resolveReference(ctx context.Context, parentNs, ns, name string) (string, error) {
-	if strings.Contains(name, providerNamespaceSeparator) {
-		if !p.AllowCrossNamespace && strings.HasSuffix(name, providerNamespaceSeparator+providerName) {
-			return "", errors.New("when allowCrossNamespace is disabled, @kubernetescrd references are disallowed")
-		}
-
-		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, parentNs) {
-			return "", fmt.Errorf("namespace %q is not in crossProviderNamespaces", parentNs)
-		}
-
-		if ns != "" {
-			log.FromContext(ctx).Warnf("Namespace %q is ignored in cross-provider context", ns)
-		}
-
-		return name, nil
-	}
-
-	ns = namespaceOrParentNamespace(ns, parentNs)
-
-	if !isNamespaceAllowed(p.AllowCrossNamespace, parentNs, ns) {
-		return "", errors.New("allowCrossNamespace is disabled, cross-namespace are disallowed")
-	}
-
-	return provider.Normalize(ns + "-" + name), nil
-}
-
 func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return "", nil, nil, nil
@@ -493,7 +467,7 @@ func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace st
 	for _, mi := range chain.Middlewares {
 		ctxMid := log.With(ctx, log.Str("middlewareRef", mi.Namespace+"/"+mi.Name))
 
-		middlewareRef, err := p.resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name)
+		middlewareRef, err := resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -1233,4 +1207,30 @@ func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool 
 	}
 
 	return slices.Contains(allowList, namespace)
+}
+
+func resolveReference(ctx context.Context, parentNs, ns, name string, crossProviderNamespaces []string, allowCrossNamespace bool) (string, error) {
+	if strings.Contains(name, providerNamespaceSeparator) {
+		if !allowCrossNamespace && strings.HasSuffix(name, providerNamespaceSeparator+providerName) {
+			return "", errors.New("when allowCrossNamespace is disabled, @kubernetescrd references are disallowed")
+		}
+
+		if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNs) {
+			return "", fmt.Errorf("namespace %q is not in crossProviderNamespaces", parentNs)
+		}
+
+		if ns != "" {
+			log.FromContext(ctx).Warnf("Namespace %q is ignored in cross-provider context", ns)
+		}
+
+		return name, nil
+	}
+
+	ns = namespaceOrParentNamespace(ns, parentNs)
+
+	if !isNamespaceAllowed(allowCrossNamespace, parentNs, ns) {
+		return "", errors.New("allowCrossNamespace is disabled, cross-namespace are disallowed")
+	}
+
+	return provider.Normalize(ns + "-" + name), nil
 }
