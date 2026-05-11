@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v5/certcrypto/compat"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -515,11 +515,11 @@ func TestInitAccount(t *testing.T) {
 			desc: "Existing account with all information",
 			account: &Account{
 				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				KeyType: compat.EC256,
 			},
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				KeyType: compat.EC256,
 			},
 		},
 		{
@@ -528,19 +528,19 @@ func TestInitAccount(t *testing.T) {
 			keyType: "EC256",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				KeyType: compat.EC256,
 			},
 		},
 		{
 			desc: "Existing account with no email",
 			account: &Account{
-				KeyType: certcrypto.RSA4096,
+				KeyType: compat.RSA4096,
 			},
 			email:   "foo@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				KeyType: compat.EC256,
 			},
 		},
 		{
@@ -552,7 +552,7 @@ func TestInitAccount(t *testing.T) {
 			keyType: "EC256",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				KeyType: compat.EC256,
 			},
 		},
 		{
@@ -563,7 +563,7 @@ func TestInitAccount(t *testing.T) {
 			email: "bar@foo.net",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: certcrypto.RSA4096,
+				KeyType: compat.RSA4096,
 			},
 		},
 	}
