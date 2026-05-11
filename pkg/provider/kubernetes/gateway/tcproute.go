@@ -136,6 +136,19 @@ func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1alpha2.TC
 		routerName := makeRouterName("", routeKey)
 
 		if len(rule.BackendRefs) == 1 && isInternalService(rule.BackendRefs[0]) {
+			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
+				condition = metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteReasonRefNotPermitted),
+					Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s: internal service reference is not allowed: TCPRoute namespace %q is not in crossProviderNamespaces", rule.BackendRefs[0].Name, route.Namespace),
+				}
+
+				continue
+			}
+
 			router.Service = string(rule.BackendRefs[0].Name)
 			conf.TCP.Routers[routerName] = &router
 			continue
@@ -224,7 +237,7 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 	}
 
 	if group != groupCore || kind != kindService {
-		name, err := p.loadTCPBackendRef(backendRef)
+		name, err := p.loadTCPBackendRef(route.Namespace, backendRef)
 		if err != nil {
 			return serviceName, nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -296,10 +309,14 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1alpha2.TCPRoute
 	return lb, nil
 }
 
-func (p *Provider) loadTCPBackendRef(backendRef gatev1.BackendRef) (string, error) {
+func (p *Provider) loadTCPBackendRef(routeNamespace string, backendRef gatev1.BackendRef) (string, error) {
 	// Support for cross-provider references (e.g: api@internal).
 	// This provides the same behavior as for IngressRoutes.
 	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, routeNamespace) {
+			return "", fmt.Errorf("TraefikService %q reference is not allowed: route namespace %q is not in crossProviderNamespaces", string(backendRef.Name), routeNamespace)
+		}
+
 		return string(backendRef.Name), nil
 	}
 
