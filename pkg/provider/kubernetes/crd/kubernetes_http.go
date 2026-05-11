@@ -140,7 +140,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptions := ingressRoute.Spec.TLS.Options
 					ctxTLSOption := log.Ctx(ctx).With().Str("TLSOption", tlsOptions.Name).Logger().WithContext(ctx)
 
-					r.TLS.Options, err = p.resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name)
+					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 					if err != nil {
 						logger.Error().Err(err).Msgf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
@@ -163,7 +163,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	for _, mi := range middlewares {
 		ctxMid := log.Ctx(ctx).With().Str(logs.MiddlewareName, mi.Name).Logger().WithContext(ctx)
 
-		middlewareRef, err := p.resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name)
+		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
