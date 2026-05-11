@@ -71,6 +71,7 @@ spec:
                 commonName: true
                 serialNumber: true
                 domainComponent: true
+                uid: true
               issuer:
                 country: true
                 province: true
@@ -98,6 +99,7 @@ spec:
             commonName = true
             serialNumber = true
             domainComponent = true
+            uid = true
           [http.middlewares.test-passtlsclientcert.passTLSClientCert.info.issuer]
             country = true
             province = true
@@ -123,6 +125,7 @@ spec:
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.uid=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
@@ -148,6 +151,7 @@ spec:
         "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true",
         "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true",
         "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true",
+        "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.uid=true",
         "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true",
         "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true",
         "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true",
@@ -180,6 +184,7 @@ spec:
             commonName: true
             serialNumber: true
             domainComponent: true
+            uid: true
           issuer:
             country: true
             province: true
@@ -220,6 +225,7 @@ spec:
 | <a id="opt-info-subject-commonName" href="#opt-info-subject-commonName" title="#opt-info-subject-commonName">`info.subject.commonName`</a> | Add the `commonName` information into the subject.<br /> The data is taken from the subject part with the `CN` key.| false      | No      |
 | <a id="opt-info-subject-serialNumber" href="#opt-info-subject-serialNumber" title="#opt-info-subject-serialNumber">`info.subject.serialNumber`</a> | Add the `serialNumber` information into the subject.<br /> The data is taken from the subject part with the `SN` key.| false      | No      |
 | <a id="opt-info-subject-domainComponent" href="#opt-info-subject-domainComponent" title="#opt-info-subject-domainComponent">`info.subject.domainComponent`</a> | Add the `domainComponent` information into the subject.<br />The data is taken from the subject part with the `DC` key. <br />More information about `info` [here](#info). | false      | No      |
+| <a id="opt-info-subject-uid" href="#opt-info-subject-uid" title="#opt-info-subject-uid">`info.subject.uid`</a> | Add the `UID` information into the subject.<br />The data is taken from the subject part with the `UID` key. <br />More information about `info` [here](#info). | false      | No      |
 | <a id="opt-info-issuer" href="#opt-info-issuer" title="#opt-info-issuer">`info.issuer`</a> | The `info.issuer` selects the specific client certificate issuer details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header. <br />More information about `info` [here](#info). | false      | No      |
 | <a id="opt-info-issuer-country" href="#opt-info-issuer-country" title="#opt-info-issuer-country">`info.issuer.country`</a> | Add the `country` information into the issuer.<br /> The data is taken from the issuer part with the `C` key. <br />More information about `info` [here](#info). | false      | No      |
 | <a id="opt-info-issuer-province" href="#opt-info-issuer-province" title="#opt-info-issuer-province">`info.issuer.province`</a> | Add the `province` information into the issuer.<br />The data is taken from the issuer part with the `ST` key. <br />More information about `info` [here](#info). | false      | No      |
