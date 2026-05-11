@@ -1,3 +1,10 @@
+## [v3.7.1](https://github.com/traefik/traefik/tree/v3.7.1) (2026-05-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.0...v3.7.1)
+
+**Bug fixes:**
+- **[k8s/ingress, k8s/crd, k8s/gatewayapi]** Add CrossProviderNamespaces option  ([#13094](https://github.com/traefik/traefik/pull/13094) @rtribotte)
+- **[k8s/crd]** Fix cross-provider ref check for Kubernetes CRD provider ([#13121](https://github.com/traefik/traefik/pull/13121) @rtribotte)
+
 ## [v3.6.17](https://github.com/traefik/traefik/tree/v3.6.17) (2026-05-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.16...v3.6.17)
 
