@@ -472,6 +472,27 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			},
 			expected: map[string][]string{},
 		},
+		{
+			desc: "Regular GET includes Allow-Headers, Allow-Methods, Max-Age",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginList:  []string{"*"},
+				AccessControlAllowMethods:     []string{"GET", "POST", "OPTIONS"},
+				AccessControlAllowHeaders:     []string{"X-Foo", "Content-Type"},
+				AccessControlMaxAge:           1728000,
+				AccessControlAllowCredentials: true,
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"http://example.com"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin":      {"*"},
+				"Access-Control-Allow-Credentials": {"true"},
+				"Access-Control-Allow-Headers":     {"X-Foo,Content-Type"},
+				"Access-Control-Allow-Methods":     {"GET,POST,OPTIONS"},
+				"Access-Control-Max-Age":           {"1728000"},
+			},
+		},
 	}
 
 	for _, test := range testCases {

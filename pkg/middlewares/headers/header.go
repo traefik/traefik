@@ -95,6 +95,20 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
 	}
 
+	allowHeaders := strings.Join(s.headers.AccessControlAllowHeaders, ",")
+	if allowHeaders != "" {
+		res.Header.Set("Access-Control-Allow-Headers", allowHeaders)
+	}
+
+	allowMethods := strings.Join(s.headers.AccessControlAllowMethods, ",")
+	if allowMethods != "" {
+		res.Header.Set("Access-Control-Allow-Methods", allowMethods)
+	}
+
+	if s.headers.AccessControlMaxAge != 0 {
+		res.Header.Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
+	}
+
 	if !s.headers.AddVaryHeader {
 		return nil
 	}
