@@ -68,6 +68,7 @@ type IngressConfig struct {
 	ProxyConnectTimeout      *int    `annotation:"nginx.ingress.kubernetes.io/proxy-connect-timeout"`
 	ProxyReadTimeout         *int    `annotation:"nginx.ingress.kubernetes.io/proxy-read-timeout"`
 	ProxySendTimeout         *int    `annotation:"nginx.ingress.kubernetes.io/proxy-send-timeout"`
+	UpstreamKeepaliveTimeout *int    `annotation:"nginx.ingress.kubernetes.io/upstream-keepalive-timeout"`
 	ProxyNextUpstream        *string `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream"`
 	ProxyNextUpstreamTries   *int    `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream-tries"`
 	ProxyNextUpstreamTimeout *int    `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream-timeout"`

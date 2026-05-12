@@ -564,7 +564,7 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
 				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
 				WriteTimeout:    ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)) * time.Second),
-				IdleConnTimeout: ptypes.Duration(time.Duration(p.UpstreamKeepaliveTimeout) * time.Second),
+				IdleConnTimeout: ptypes.Duration(time.Duration(ptr.Deref(cfg.UpstreamKeepaliveTimeout, p.UpstreamKeepaliveTimeout)) * time.Second),
 			},
 		},
 	}
