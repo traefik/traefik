@@ -904,7 +904,7 @@ func TestConnectionTimeouts(t *testing.T) {
 		readTimeout               ptypes.Duration
 		writeTimeout              ptypes.Duration
 		serverWriteDelay          time.Duration
-		serverReadDelay           time.Duration
+		serverReads               bool
 		expectedReadTimeoutError  bool
 		expectedWriteTimeoutError bool
 	}{
@@ -920,129 +920,88 @@ func TestConnectionTimeouts(t *testing.T) {
 			serverWriteDelay: 100 * time.Millisecond,
 		},
 		{
-			desc:             "no read timeout set - should succeed",
+			desc:             "no read timeout - should succeed regardless of delay",
 			serverWriteDelay: 100 * time.Millisecond,
 		},
 		{
-			desc:                      "write timeout - server delays longer than client timeout",
+			desc:                      "write timeout triggered when reader stops reading",
 			writeTimeout:              ptypes.Duration(50 * time.Millisecond),
-			serverReadDelay:           150 * time.Millisecond,
 			expectedWriteTimeoutError: true,
 		},
 		{
-			desc:            "write succeeds with sufficient timeout",
-			writeTimeout:    ptypes.Duration(100 * time.Millisecond),
-			serverReadDelay: 50 * time.Millisecond,
+			desc:         "write succeeds within timeout",
+			writeTimeout: ptypes.Duration(500 * time.Millisecond),
+			serverReads:  true,
 		},
 		{
-			desc:            "no write timeout set - should succeed",
-			serverReadDelay: 50 * time.Millisecond,
+			desc:        "no write timeout - should succeed",
+			serverReads: true,
 		},
 	}
 
 	for _, test := range testcases {
 		t.Run(test.desc, func(t *testing.T) {
-			ln, err := net.Listen("tcp", "127.0.0.1:0")
-			require.NoError(t, err, "failed to create listener")
-			defer ln.Close()
+			// net.Pipe has no OS buffering: reads and writes block until the other side is ready,
+			// which allow us to have read and write deadlines.
+			client, server := net.Pipe()
+			defer client.Close()
+			defer server.Close()
 
-			acceptDone := make(chan struct{})
+			serverDone := make(chan struct{})
 			go func() {
-				defer close(acceptDone)
-				srvConn, err := ln.Accept()
-				if err != nil {
-					return
-				}
-				defer srvConn.Close()
-
-				_, err = srvConn.Write([]byte("HELLO1"))
-				require.NoError(t, err)
+				defer close(serverDone)
+				_, _ = server.Write([]byte("HELLO1"))
 				if test.serverWriteDelay > 0 {
 					time.Sleep(test.serverWriteDelay)
 				}
-				_, err = srvConn.Write([]byte("HELLO2"))
-				if err != nil && !errors.Is(err, net.ErrClosed) {
-					t.Logf("server write error: %v", err)
-				}
-
-				buf := make([]byte, 6)
-				_, err = srvConn.Read(buf)
-				require.NoError(t, err)
-				require.Equal(t, "HELLO3", string(buf))
-				// For write timeout test: close connection after reading HELLO3.
-				// Note: Testing write timeout reliably with real TCP is difficult because
-				// TCP send buffers are large. We just verify the connection closes.
-				if test.writeTimeout > 0 && test.serverReadDelay > 0 {
-					srvConn.Close()
-					return
-				}
-				_, err = srvConn.Read(buf)
-				if err != nil && !errors.Is(err, net.ErrClosed) {
-					t.Logf("server read error: %v", err)
+				_, _ = server.Write([]byte("HELLO2"))
+				if test.serverReads {
+					buf := make([]byte, 5)
+					_, _ = server.Read(buf)
+				} else if test.writeTimeout > 0 {
+					// Don't read; block until client closes after write timeout fires.
+					buf := make([]byte, 1)
+					_, _ = server.Read(buf)
 				}
 			}()
 
-			cfg := &dynamic.ForwardingTimeouts{
-				ReadTimeout:  test.readTimeout,
-				WriteTimeout: test.writeTimeout,
+			conn := &connWithTimeouts{
+				Conn:         client,
+				readTimeout:  time.Duration(test.readTimeout),
+				writeTimeout: time.Duration(test.writeTimeout),
 			}
-			d := &net.Dialer{}
-			dialFn := customDialContext(d, cfg)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			conn, err := dialFn(ctx, "tcp", ln.Addr().String())
-			require.NoError(t, err, "failed to dial server")
-			require.NotNil(t, conn)
-			defer func() {
-				_ = conn.Close()
-			}()
-
-			// Attempt to read from the connection - this tests the read timeout behavior.
 			buf := make([]byte, 6)
-			_, err = conn.Read(buf)
+			_, err := conn.Read(buf)
 			require.NoError(t, err)
 			require.Equal(t, "HELLO1", string(buf))
+
 			_, readErr := conn.Read(buf)
-
 			if test.expectedReadTimeoutError {
-				require.Error(t, readErr, "expected read to timeout")
+				require.Error(t, readErr)
 				var netErr net.Error
-				ok := errors.As(readErr, &netErr)
-				require.True(t, ok, "expected net.Error, got %T: %v", readErr, readErr)
+				require.ErrorAs(t, readErr, &netErr)
 				require.True(t, netErr.Timeout(), "expected timeout error from Read, got: %v", readErr)
-			} else if readErr != nil && !errors.Is(readErr, io.EOF) {
-				var netErr net.Error
-				if errors.As(readErr, &netErr) && netErr.Timeout() {
-					t.Fatalf("unexpected timeout error on read: %v", readErr)
-				}
+				client.Close()
+				<-serverDone
+				return
 			}
+			require.True(t, readErr == nil || errors.Is(readErr, io.EOF), "unexpected read error: %v", readErr)
 
-			_, err = conn.Write([]byte("HELLO3"))
-			require.NoError(t, err)
-			// Skip second write for write timeout test - the server already closed.
-			// Note: Testing write timeout reliably with real TCP is difficult because
-			// TCP send buffers are large and writes return as soon as data is buffered.
-			// This test case demonstrates the server closes the connection properly.
-			if !(test.writeTimeout > 0 && test.serverReadDelay > 0) {
-				_, writeErr := conn.Write([]byte("HELLO4"))
-
+			if test.writeTimeout > 0 || test.serverReads {
+				_, writeErr := conn.Write([]byte("HELLO"))
 				if test.expectedWriteTimeoutError {
-					require.Error(t, writeErr, "expected write to fail (timeout or connection closed)")
-				} else if writeErr != nil && !errors.Is(writeErr, io.EOF) {
+					require.Error(t, writeErr)
 					var netErr net.Error
-					if errors.As(writeErr, &netErr) && netErr.Timeout() {
-						t.Fatalf("unexpected timeout error on write: %v", writeErr)
-					}
+					require.ErrorAs(t, writeErr, &netErr)
+					require.True(t, netErr.Timeout(), "expected timeout error from Write, got: %v", writeErr)
+				} else {
+					require.NoError(t, writeErr)
 				}
 			}
 
-			select {
-			case <-acceptDone:
-			case <-time.After(6 * time.Second):
-				t.Error("accept goroutine did not finish in time")
-			}
+			client.Close()
+			<-serverDone
 		})
 	}
 }
@@ -1133,142 +1092,6 @@ func TestConnectionTimeoutsAreDefined(t *testing.T) {
 			} else {
 				_, ok := conn.(*connWithTimeouts)
 				require.False(t, ok, "should not wrap connection when no timeouts set")
-			}
-		})
-	}
-}
-
-func TestConnectionTimeoutsAlternative(t *testing.T) {
-	testcases := []struct {
-		desc                    string
-		readTimeout             ptypes.Duration
-		writeTimeout            ptypes.Duration
-		serverWriteDelay        time.Duration
-		serverReadDelay         time.Duration
-		expectedReadTimeoutErr  bool
-		expectedWriteTimeoutErr bool
-	}{
-		{
-			desc:                   "read timeout - server takes longer than timeout",
-			readTimeout:            ptypes.Duration(50 * time.Millisecond),
-			serverWriteDelay:       200 * time.Millisecond,
-			expectedReadTimeoutErr: true,
-		},
-		{
-			desc:             "read timeout - server responds within timeout",
-			readTimeout:      ptypes.Duration(200 * time.Millisecond),
-			serverWriteDelay: 50 * time.Millisecond,
-		},
-		{
-			desc:             "no read timeout - should succeed regardless of delay",
-			serverWriteDelay: 50 * time.Millisecond,
-		},
-		{
-			desc:            "write timeout - server takes longer than timeout",
-			writeTimeout:    ptypes.Duration(50 * time.Millisecond),
-			serverReadDelay: 300 * time.Millisecond,
-		},
-		{
-			desc:            "write timeout - server responds within timeout",
-			writeTimeout:    ptypes.Duration(200 * time.Millisecond),
-			serverReadDelay: 50 * time.Millisecond,
-		},
-		{
-			desc:            "no write timeout - should succeed regardless of delay",
-			serverReadDelay: 50 * time.Millisecond,
-		},
-	}
-
-	for _, test := range testcases {
-		t.Run(test.desc, func(t *testing.T) {
-			ln, err := net.Listen("tcp", "127.0.0.1:0")
-			require.NoError(t, err, "failed to create listener")
-			defer ln.Close()
-
-			serverErrCh := make(chan error, 1)
-			go func() {
-				srvConn, err := ln.Accept()
-				if err != nil {
-					serverErrCh <- err
-					return
-				}
-
-				if test.serverWriteDelay > 0 {
-					time.Sleep(test.serverWriteDelay)
-				}
-				_, err = srvConn.Write([]byte("HELLO"))
-				if err != nil {
-					srvConn.Close()
-					serverErrCh <- err
-					return
-				}
-
-				if test.serverReadDelay > 0 {
-					time.Sleep(test.serverReadDelay)
-				}
-				buf := make([]byte, 1024)
-				_, err = srvConn.Read(buf)
-				srvConn.Close()
-				serverErrCh <- err
-			}()
-
-			cfg := &dynamic.ForwardingTimeouts{
-				ReadTimeout:  test.readTimeout,
-				WriteTimeout: test.writeTimeout,
-			}
-
-			dialer := &net.Dialer{Timeout: 5 * time.Second}
-			dialFn := customDialContext(dialer, cfg)
-
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			conn, err := dialFn(ctx, "tcp", ln.Addr().String())
-			require.NoError(t, err, "failed to dial")
-			require.NotNil(t, conn)
-			defer conn.Close()
-
-			select {
-			case err := <-serverErrCh:
-				require.NoError(t, err, "server error")
-			default:
-			}
-
-			if test.readTimeout > 0 {
-				buf := make([]byte, 5)
-				readStart := time.Now()
-				_, err = conn.Read(buf)
-				elapsed := time.Since(readStart)
-
-				if test.expectedReadTimeoutErr {
-					require.Error(t, err, "expected read timeout error")
-					var netErr net.Error
-					ok := errors.As(err, &netErr)
-					require.True(t, ok, "expected net.Error, got %T", err)
-					require.True(t, netErr.Timeout(), "expected timeout error")
-					require.GreaterOrEqual(t, elapsed, test.readTimeout,
-						"timeout should trigger after configured duration")
-				} else if err != nil && !errors.Is(err, io.EOF) {
-					require.Fail(t, "unexpected error", err)
-				}
-			}
-
-			if test.writeTimeout > 0 {
-				writeStart := time.Now()
-				_, err = conn.Write([]byte("WORLD"))
-				elapsed := time.Since(writeStart)
-
-				if test.expectedWriteTimeoutErr {
-					require.Error(t, err, "expected write timeout error")
-					var netErr net.Error
-					ok := errors.As(err, &netErr)
-					require.True(t, ok, "expected net.Error, got %T", err)
-					require.True(t, netErr.Timeout(), "expected timeout error")
-					require.GreaterOrEqual(t, elapsed, test.writeTimeout,
-						"timeout should trigger after configured duration")
-				} else if err != nil && !errors.Is(err, io.EOF) {
-					require.Fail(t, "unexpected error", err)
-				}
 			}
 		})
 	}
