@@ -9,6 +9,9 @@ env:
   GOLANGCI_LINT_VERSION: v2.10.1
   MISSPELL_VERSION: v0.7.0
 
+permissions:
+  contents: read
+
 jobs:
 
   lint:
