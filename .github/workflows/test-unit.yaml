@@ -9,6 +9,9 @@ on:
       - '**.md'
       - 'script/gcg/**'
 
+permissions:
+  contents: read
+
 jobs:
   generate-packages:
     name: List Go Packages
