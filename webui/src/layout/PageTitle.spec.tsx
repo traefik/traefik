@@ -24,7 +24,7 @@ describe('<PageTitle />', () => {
 
   it('should render with dashboard name', async () => {
     renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: 'MyDashboard', dashboardNamePosition: 'side' }}>
+      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: 'MyDashboard' }}>
         <PageTitle />
       </VersionContext.Provider>,
     )
@@ -36,7 +36,7 @@ describe('<PageTitle />', () => {
 
   it('should render with page title and dashboard name', async () => {
     renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: 'MyDashboard', dashboardNamePosition: 'side' }}>
+      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: 'MyDashboard' }}>
         <PageTitle title="Dashboard" />
       </VersionContext.Provider>,
     )

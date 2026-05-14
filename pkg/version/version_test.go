@@ -12,72 +12,38 @@ import (
 )
 
 // TestVersionHandler_DashboardName exercises the /api/version JSON envelope's
-// DashboardName + DashboardNamePosition fields under several configurations,
-// including the empty-string default (omitempty must drop both keys).
+// DashboardName field, including the empty-string default (omitempty must drop
+// the key).
 func TestVersionHandler_DashboardName(t *testing.T) {
-	type apiVersionResponse struct {
-		Version               string `json:"Version"`
-		DashboardName         string `json:"dashboardName,omitempty"`
-		DashboardNamePosition string `json:"dashboardNamePosition,omitempty"`
-	}
-
 	cases := []struct {
-		desc                  string
-		dashboardName         string
-		dashboardNamePosition string
-		wantName              string
-		wantPosition          string
-		// wantNameKey/wantPosKey assert presence/absence of the JSON keys
+		desc          string
+		dashboardName string
+		wantName      string
+		// wantNameKey asserts presence/absence of the JSON key
 		wantNameKey bool
-		wantPosKey  bool
 	}{
 		{
-			desc:                  "all empty defaults: both keys absent (omitempty)",
-			dashboardName:         "",
-			dashboardNamePosition: "",
-			wantName:              "",
-			wantPosition:          "",
-			wantNameKey:           false,
-			wantPosKey:            false,
+			desc:          "empty default: key absent (omitempty)",
+			dashboardName: "",
+			wantName:      "",
+			wantNameKey:   false,
 		},
 		{
-			desc:                  "name only, no position",
-			dashboardName:         "int",
-			dashboardNamePosition: "",
-			wantName:              "int",
-			wantNameKey:           true,
-			wantPosKey:            false,
-		},
-		{
-			desc:                  "name + side position",
-			dashboardName:         "int",
-			dashboardNamePosition: "side",
-			wantName:              "int",
-			wantPosition:          "side",
-			wantNameKey:           true,
-			wantPosKey:            true,
-		},
-		{
-			desc:                  "name + below position",
-			dashboardName:         "ext",
-			dashboardNamePosition: "below",
-			wantName:              "ext",
-			wantPosition:          "below",
-			wantNameKey:           true,
-			wantPosKey:            true,
+			desc:          "name set",
+			dashboardName: "int",
+			wantName:      "int",
+			wantNameKey:   true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			// snapshot+restore package-globals
-			origName, origPos := DashboardName, DashboardNamePosition
+			// snapshot+restore package-global
+			origName := DashboardName
 			defer func() {
 				DashboardName = origName
-				DashboardNamePosition = origPos
 			}()
 			DashboardName = tc.dashboardName
-			DashboardNamePosition = tc.dashboardNamePosition
 
 			router := mux.NewRouter()
 			Handler{}.Append(router)
@@ -97,27 +63,19 @@ func TestVersionHandler_DashboardName(t *testing.T) {
 				_, present := raw["dashboardName"]
 				assert.False(t, present, "dashboardName key should be absent when empty")
 			}
-			if tc.wantPosKey {
-				assert.Equal(t, tc.wantPosition, raw["dashboardNamePosition"])
-			} else {
-				_, present := raw["dashboardNamePosition"]
-				assert.False(t, present, "dashboardNamePosition key should be absent when empty")
-			}
 		})
 	}
 }
 
 // TestVersionHandler_ConcurrentReads ensures the handler is safe under
-// concurrent /api/version reads while a config rewrites the package globals.
-// Not a strict race detector run, but exercises the field paths.
+// concurrent /api/version reads while a config rewrites the package global.
+// Not a strict race detector run, but exercises the field path.
 func TestVersionHandler_ConcurrentReads(t *testing.T) {
-	origName, origPos := DashboardName, DashboardNamePosition
+	origName := DashboardName
 	defer func() {
 		DashboardName = origName
-		DashboardNamePosition = origPos
 	}()
 	DashboardName = "int"
-	DashboardNamePosition = "below"
 
 	router := mux.NewRouter()
 	Handler{}.Append(router)
@@ -128,6 +86,5 @@ func TestVersionHandler_ConcurrentReads(t *testing.T) {
 		router.ServeHTTP(rr, req)
 		require.Equal(t, http.StatusOK, rr.Code)
 		assert.Contains(t, rr.Body.String(), `"dashboardName":"int"`)
-		assert.Contains(t, rr.Body.String(), `"dashboardNamePosition":"below"`)
 	}
 }
