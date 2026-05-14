@@ -8,7 +8,7 @@ import { renderWithProviders } from 'utils/test'
 describe('<InstanceBadge />', () => {
   it('renders nothing when dashboardName is empty', () => {
     renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: '', dashboardNamePosition: 'side' }}>
+      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: '' }}>
         <InstanceBadge />
       </VersionContext.Provider>,
     )
@@ -18,7 +18,7 @@ describe('<InstanceBadge />', () => {
 
   it('renders the badge with the dashboardName text when set', () => {
     renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: 'int', dashboardNamePosition: 'side' }}>
+      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: 'int' }}>
         <InstanceBadge />
       </VersionContext.Provider>,
     )
@@ -32,7 +32,7 @@ describe('<InstanceBadge />', () => {
   it('truncates with ellipsis when dashboardName exceeds 32 grapheme clusters', () => {
     const longName = 'a'.repeat(40)
     renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: longName, dashboardNamePosition: 'side' }}>
+      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: longName }}>
         <InstanceBadge />
       </VersionContext.Provider>,
     )
@@ -45,7 +45,7 @@ describe('<InstanceBadge />', () => {
   it('handles multi-byte unicode safely (no surrogate pair split)', () => {
     const emojiName = '🌍🌎🌏'
     renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: emojiName, dashboardNamePosition: 'side' }}>
+      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: emojiName }}>
         <InstanceBadge />
       </VersionContext.Provider>,
     )
