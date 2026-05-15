@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:57cb351b-021b-47b9-901c-b8458c99a492",
+  "serialNumber": "urn:uuid:877e8f0e-e928-4465-a7c0-a9bee785bc77",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-05-06T17:29:51Z",
+    "timestamp": "2026-05-15T12:12:22Z",
     "tools": [
       {
         "vendor": "CycloneDX",
@@ -14,23 +14,23 @@
         "hashes": [
           {
             "alg": "MD5",
-            "content": "c3cc70e177d010615aa6861a84775eb4"
+            "content": "5cbe2de00012f8e574204a2a8b825f7c"
           },
           {
             "alg": "SHA-1",
-            "content": "cb0ac870f79f2e01ec81f0972245ddae461ef63d"
+            "content": "86d45b6d9516e7d2280db99c5f7e55a84b64b024"
           },
           {
             "alg": "SHA-256",
-            "content": "e7eb7612b2713cd8e6e298f3094165272c798c9a71ae35e1a648d8f6f7fe646e"
+            "content": "357aca25e11e75a1e89658848804a00345fc633a5349dfbd9fa49f8424ec23e5"
           },
           {
             "alg": "SHA-384",
-            "content": "51ef91ff56835760f67730b5acd62f69546d56f7fe1ff8462da7e52f852cdcff48a2876696cd4498d5323b509021ce09"
+            "content": "12c7da47b08764462375b55314e6b0c5d1cbfc3bf0371bbdfb5352dd686a7ad1d245c17e21a55477ab1ecc32606aef09"
           },
           {
             "alg": "SHA-512",
-            "content": "26bb15173b706255fc8d46bbc86bb963a9edfad9a8d213e91fb74835bb2ad0316def91e157300b737ea39a901ba7b6119d22ec29b7269546161c38e9c0bb4463"
+            "content": "47fb843388db2fd2ce77d20db361e65f000f3996b6336bc02c92be0ecaa46481176f779801091032d7ed1e2148ad5f44be4d08ae000e3631b03774a09473372e"
           }
         ],
         "externalReferences": [
@@ -10703,12 +10703,12 @@
       "purl": "pkg:golang/sigs.k8s.io/yaml@v1.4.0?goarch=amd64&goos=linux&type=module"
     },
     {
-      "bom-ref": "pkg:golang/std@go1.25.9?type=module",
+      "bom-ref": "pkg:golang/std@go1.25.10?type=module",
       "type": "library",
       "name": "std",
-      "version": "go1.25.9",
+      "version": "go1.25.10",
       "scope": "required",
-      "purl": "pkg:golang/std@go1.25.9?goarch=amd64&goos=linux&type=module"
+      "purl": "pkg:golang/std@go1.25.10?goarch=amd64&goos=linux&type=module"
     },
     {
       "type": "library",
@@ -42612,7 +42612,7 @@
         "pkg:golang/k8s.io/utils@v0.0.0-20241210054802-24370beab758?type=module",
         "pkg:golang/mvdan.cc/xurls/v2@v2.5.0?type=module",
         "pkg:golang/sigs.k8s.io/gateway-api@v0.4.0?type=module",
-        "pkg:golang/std@go1.25.9?type=module"
+        "pkg:golang/std@go1.25.10?type=module"
       ]
     },
     {
@@ -47166,7 +47166,7 @@
       ]
     },
     {
-      "ref": "pkg:golang/std@go1.25.9?type=module"
+      "ref": "pkg:golang/std@go1.25.10?type=module"
     }
   ]
 }

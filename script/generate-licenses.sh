@@ -10,7 +10,7 @@ set -euo pipefail
 #   - jq: Merges individual SBOMs into one
 #   - assimilis: Generates human-readable attribution files from the merged SBOM
 
-ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-1dcb76ae31a3750e882f2e3dcb803459c1c2dd19}"
+ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-81e7c914faaed8e2fe52e39cd02cc946416bf22a}"
 CYCLONEDX_GOMOD_VERSION="${CYCLONEDX_GOMOD_VERSION:-v1.10.0}"
 CYCLONEDX_PY_VERSION="${CYCLONEDX_PY_VERSION:-7.3.0}"
 REPO_NAME="${REPO_NAME:-traefik}"
