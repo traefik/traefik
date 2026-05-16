@@ -148,13 +148,13 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 	}
 }
 
-func TestTrustedIPsStrategy_GetIP(t *testing.T) {
+func TestPoolStrategy_GetIP(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		trustedIPs    []string
 		xForwardedFor string
+		remoteAddr    string
 		expected      string
-		useRemote     bool
 	}{
 		{
 			desc:          "Trust all IPs",
@@ -180,6 +180,37 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "",
 		},
+		{
+			desc:       "X-Forwarded-For absent, RemoteAddr not in pool",
+			trustedIPs: []string{"10.0.0.2", "10.0.0.1"},
+			remoteAddr: "10.2.3.1:123",
+			expected:   "10.2.3.1",
+		},
+		{
+			desc:       "X-Forwarded-For absent, RemoteAddr in pool",
+			trustedIPs: []string{"10.0.0.2", "10.0.0.1"},
+			remoteAddr: "10.0.0.1:123",
+			expected:   "",
+		},
+		{
+			desc:       "X-Forwarded-For absent, RemoteAddr not in pool with CIDR",
+			trustedIPs: []string{"10.0.0.1/24"},
+			remoteAddr: "10.2.3.1:123",
+			expected:   "10.2.3.1",
+		},
+		{
+			desc:       "X-Forwarded-For absent, RemoteAddr in pool with CIDR",
+			trustedIPs: []string{"10.0.0.1/24"},
+			remoteAddr: "10.0.0.5:123",
+			expected:   "",
+		},
+		{
+			desc:          "X-Forwarded-For present but all IPs in pool, do not fallback",
+			trustedIPs:    []string{"10.0.0.2", "10.0.0.1"},
+			xForwardedFor: "10.0.0.2,10.0.0.1",
+			remoteAddr:    "10.2.3.1:123",
+			expected:      "",
+		},
 	}
 
 	for _, test := range testCases {
@@ -191,7 +222,12 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 
 			strategy := PoolStrategy{Checker: checker}
 			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
-			req.Header.Set(xForwardedFor, test.xForwardedFor)
+			if test.xForwardedFor != "" {
+				req.Header.Set(xForwardedFor, test.xForwardedFor)
+			}
+			if test.remoteAddr != "" {
+				req.RemoteAddr = test.remoteAddr
+			}
 			actual := strategy.GetIP(req)
 			assert.Equal(t, test.expected, actual)
 		})
