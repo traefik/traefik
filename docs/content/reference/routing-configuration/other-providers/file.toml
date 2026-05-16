@@ -375,14 +375,18 @@
         port = "foobar"
         permanent = true
     [http.middlewares.Middleware22]
-      [http.middlewares.Middleware22.replacePath]
-        path = "foobar"
+      [http.middlewares.Middleware22.redirectTrailingSlash]
+        mode = "foobar"
+        permanent = true
     [http.middlewares.Middleware23]
-      [http.middlewares.Middleware23.replacePathRegex]
+      [http.middlewares.Middleware23.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware24]
+      [http.middlewares.Middleware24.replacePathRegex]
         regex = "foobar"
         replacement = "foobar"
-    [http.middlewares.Middleware24]
-      [http.middlewares.Middleware24.retry]
+    [http.middlewares.Middleware25]
+      [http.middlewares.Middleware25.retry]
         attempts = 42
         timeout = "42s"
         initialInterval = "42s"
@@ -390,12 +394,12 @@
         status = ["foobar", "foobar"]
         disableRetryOnNetworkError = true
         retryNonIdempotentMethod = true
-    [http.middlewares.Middleware25]
-      [http.middlewares.Middleware25.stripPrefix]
+    [http.middlewares.Middleware26]
+      [http.middlewares.Middleware26.stripPrefix]
         prefixes = ["foobar", "foobar"]
         forceSlash = true
-    [http.middlewares.Middleware26]
-      [http.middlewares.Middleware26.stripPrefixRegex]
+    [http.middlewares.Middleware27]
+      [http.middlewares.Middleware27.stripPrefixRegex]
         regex = ["foobar", "foobar"]
   [http.serversTransports]
     [http.serversTransports.ServersTransport0]

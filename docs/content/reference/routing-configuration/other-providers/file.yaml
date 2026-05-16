@@ -433,13 +433,17 @@ http:
         port: foobar
         permanent: true
     Middleware22:
+      redirectTrailingSlash:
+        mode: foobar
+        permanent: true
+    Middleware23:
       replacePath:
         path: foobar
-    Middleware23:
+    Middleware24:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware24:
+    Middleware25:
       retry:
         attempts: 42
         timeout: 42s
@@ -450,13 +454,13 @@ http:
           - foobar
         disableRetryOnNetworkError: true
         retryNonIdempotentMethod: true
-    Middleware25:
+    Middleware26:
       stripPrefix:
         prefixes:
           - foobar
           - foobar
         forceSlash: true
-    Middleware26:
+    Middleware27:
       stripPrefixRegex:
         regex:
           - foobar

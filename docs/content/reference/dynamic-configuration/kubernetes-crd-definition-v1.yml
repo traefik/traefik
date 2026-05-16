@@ -2156,6 +2156,20 @@ spec:
                     description: Scheme defines the scheme of the new URL.
                     type: string
                 type: object
+              redirectTrailingSlash:
+                description: |-
+                  RedirectTrailingSlash holds the redirect trailing slash middleware configuration.
+                  This middleware redirects requests to add or remove a trailing slash from the path.
+                properties:
+                  mode:
+                    description: Mode controls whether a trailing slash is added or
+                      removed.
+                    type: string
+                  permanent:
+                    description: Permanent enables a permanent redirect (301/308)
+                      instead of temporary (302/307).
+                    type: boolean
+                type: object
               replacePath:
                 description: |-
                   ReplacePath holds the replace path middleware configuration.

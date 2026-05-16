@@ -959,6 +959,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.RedirectScheme)
 		**out = **in
 	}
+	if in.RedirectTrailingSlash != nil {
+		in, out := &in.RedirectTrailingSlash, &out.RedirectTrailingSlash
+		*out = new(dynamic.RedirectTrailingSlash)
+		**out = **in
+	}
 	if in.BasicAuth != nil {
 		in, out := &in.BasicAuth, &out.BasicAuth
 		*out = new(BasicAuth)

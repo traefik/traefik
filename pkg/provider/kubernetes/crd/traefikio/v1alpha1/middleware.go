@@ -39,8 +39,9 @@ type MiddlewareSpec struct {
 	EncodedCharacters *dynamic.EncodedCharacters `json:"encodedCharacters,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`
-	RedirectRegex     *dynamic.RedirectRegex     `json:"redirectRegex,omitempty"`
-	RedirectScheme    *dynamic.RedirectScheme    `json:"redirectScheme,omitempty"`
+	RedirectRegex        *dynamic.RedirectRegex        `json:"redirectRegex,omitempty"`
+	RedirectScheme       *dynamic.RedirectScheme       `json:"redirectScheme,omitempty"`
+	RedirectTrailingSlash *dynamic.RedirectTrailingSlash `json:"redirectTrailingSlash,omitempty"`
 	BasicAuth         *BasicAuth                 `json:"basicAuth,omitempty"`
 	DigestAuth        *DigestAuth                `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
