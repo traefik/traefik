@@ -315,6 +315,7 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 		ReadBufferSize:        64 * 1024,
 		WriteBufferSize:       64 * 1024,
 		TLSClientConfig:       tlsConfig,
+		DisableCompression:    cfg.DisableCompression,
 	}
 
 	if cfg.ForwardingTimeouts != nil {

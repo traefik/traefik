@@ -1,11 +1,14 @@
 package service
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -743,6 +746,86 @@ type roundTripperFn func(req *http.Request) (*http.Response, error)
 
 func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error) {
 	return r(request)
+}
+
+func TestDisableCompression(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		disableCompression   bool
+		expectContentEncoding string
+		expectGzipBody       bool
+	}{
+		{
+			desc:                 "default: transport decompresses and strips header",
+			expectContentEncoding: "",
+			expectGzipBody:       false,
+		},
+		{
+			desc:                 "disable compression: passthrough gzipped response",
+			disableCompression:   true,
+			expectContentEncoding: "gzip",
+			expectGzipBody:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				var buf bytes.Buffer
+				gw := gzip.NewWriter(&buf)
+				_, err := gw.Write([]byte("hello"))
+				require.NoError(t, err)
+				require.NoError(t, gw.Close())
+
+				rw.Header().Set("Content-Encoding", "gzip")
+				rw.Header().Set("Content-Type", "text/plain")
+				rw.WriteHeader(http.StatusOK)
+				_, err = rw.Write(buf.Bytes())
+				require.NoError(t, err)
+			}))
+			defer srv.Close()
+
+			transportManager := NewTransportManager(nil)
+
+			dynamicConf := map[string]*dynamic.ServersTransport{
+				"test": {
+					DisableCompression: test.disableCompression,
+				},
+			}
+
+			transportManager.Update(dynamicConf)
+
+			tr, err := transportManager.GetRoundTripper("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+
+			req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+			require.NoError(t, err)
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			assert.Equal(t, test.expectContentEncoding, resp.Header.Get("Content-Encoding"))
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			if test.expectGzipBody {
+				// The body should still be gzip compressed (gzip magic number)
+				require.True(t, len(body) >= 2)
+				assert.Equal(t, byte(0x1f), body[0])
+				assert.Equal(t, byte(0x8b), body[1])
+			} else {
+				// The body should have been decompressed by the transport
+				assert.Equal(t, "hello", string(body))
+			}
+		})
+	}
 }
 
 func TestKerberosRoundTripper(t *testing.T) {
