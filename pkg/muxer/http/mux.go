@@ -152,7 +152,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 		}
 
 		encodedCharacter := escapedPath[i : i+3]
-		if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+		if _, reserved := reservedCharacters[strings.ToUpper(encodedCharacter)]; reserved {
 			routingPathBuilder.WriteString(encodedCharacter)
 		} else {
 			// This should never happen as the standard library will reject requests containing invalid percent-encodings.

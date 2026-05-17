@@ -694,6 +694,16 @@ func TestRoutingPath(t *testing.T) {
 			path:                "/foo%20bar%2Fbaz%23qux",
 			expectedRoutingPath: "/foo bar%2Fbaz%23qux",
 		},
+		{
+			desc:                "lowercase reserved percent-encoded slash is kept encoded",
+			path:                "/foo%2fbar",
+			expectedRoutingPath: "/foo%2fbar",
+		},
+		{
+			desc:                "lowercase reserved percent-encoded asterisk is kept encoded",
+			path:                "/foo%2abar",
+			expectedRoutingPath: "/foo%2abar",
+		},
 	}
 
 	for _, test := range tests {
