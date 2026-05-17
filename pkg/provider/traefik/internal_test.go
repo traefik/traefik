@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	"github.com/traefik/traefik/v3/pkg/ready"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -35,6 +36,10 @@ func Test_createConfiguration(t *testing.T) {
 					Debug:     true,
 				},
 				Ping: &ping.Handler{
+					EntryPoint:    "test",
+					ManualRouting: false,
+				},
+				Ready: &ready.Handler{
 					EntryPoint:    "test",
 					ManualRouting: false,
 				},
@@ -124,6 +129,24 @@ func Test_createConfiguration(t *testing.T) {
 			desc: "ping_custom.json",
 			staticCfg: static.Configuration{
 				Ping: &ping.Handler{
+					EntryPoint:    "test",
+					ManualRouting: true,
+				},
+			},
+		},
+		{
+			desc: "ready_simple.json",
+			staticCfg: static.Configuration{
+				Ready: &ready.Handler{
+					EntryPoint:    "test",
+					ManualRouting: false,
+				},
+			},
+		},
+		{
+			desc: "ready_custom.json",
+			staticCfg: static.Configuration{
+				Ready: &ready.Handler{
 					EntryPoint:    "test",
 					ManualRouting: true,
 				},

@@ -321,6 +321,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		"internal",
 	)
 
+	if staticConfiguration.Ready != nil {
+		watcher.SetOnFirstConfigApplied(staticConfiguration.Ready.SetReady)
+	}
+
 	// TLS
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		ctx := context.Background()

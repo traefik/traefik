@@ -31,6 +31,9 @@ type ConfigurationWatcher struct {
 	configurationTransformers []func(context.Context, dynamic.Configurations) dynamic.Configurations
 
 	routinesPool *safe.Pool
+
+	onFirstConfigApplied func()
+	firstConfigApplied   bool
 }
 
 // NewConfigurationWatcher creates a new ConfigurationWatcher.
@@ -71,6 +74,11 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 // AddTransformer registers a function to modify configurations before they are applied.
 func (c *ConfigurationWatcher) AddTransformer(transformer func(context.Context, dynamic.Configurations) dynamic.Configurations) {
 	c.configurationTransformers = append(c.configurationTransformers, transformer)
+}
+
+// SetOnFirstConfigApplied sets a callback to be called when the first configuration is applied.
+func (c *ConfigurationWatcher) SetOnFirstConfigApplied(callback func()) {
+	c.onFirstConfigApplied = callback
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {
@@ -179,6 +187,13 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 
 			for _, listener := range c.configurationListeners {
 				listener(conf)
+			}
+
+			if !c.firstConfigApplied {
+				c.firstConfigApplied = true
+				if c.onFirstConfigApplied != nil {
+					c.onFirstConfigApplied()
+				}
 			}
 
 			lastConfigurations = newConfigs

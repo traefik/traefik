@@ -1,0 +1,21 @@
+{
+  "http": {
+    "routers": {
+      "ready": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "ready@internal",
+        "rule": "PathPrefix(`/ready`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
+      }
+    },
+    "services": {
+      "noop": {},
+      "ready": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

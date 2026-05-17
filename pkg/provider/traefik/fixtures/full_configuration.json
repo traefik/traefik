@@ -41,6 +41,15 @@
         "ruleSyntax": "default",
         "priority": 9223372036854775807
       },
+      "ready": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "ready@internal",
+        "rule": "PathPrefix(`/ready`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
+      },
       "prometheus": {
         "entryPoints": [
           "test"
@@ -65,6 +74,7 @@
       "dashboard": {},
       "noop": {},
       "ping": {},
+      "ready": {},
       "prometheus": {},
       "rest": {}
     },

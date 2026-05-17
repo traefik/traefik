@@ -1,0 +1,10 @@
+{
+  "http": {
+    "services": {
+      "noop": {},
+      "ready": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}
