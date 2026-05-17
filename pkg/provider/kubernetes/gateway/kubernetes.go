@@ -1078,6 +1078,14 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 		return ""
 	}
 
+	// Gateway API spec: wildcard matches exactly one label.
+	// Reject multi-label subdomains (e.g. *.foo.com must not match baz.bar.foo.com).
+	// Wildcard route hostnames (e.g. *.bar.foo.com) are still allowed.
+	prefix := strings.TrimSuffix(string(h2), trimmedH1)
+	if !strings.HasPrefix(prefix, "*.") && strings.Contains(prefix, ".") {
+		return ""
+	}
+
 	// h1 is a wildcard that encompasses h2, so h2 is always
 	// the more specific hostname (the correct intersection).
 	return h2
