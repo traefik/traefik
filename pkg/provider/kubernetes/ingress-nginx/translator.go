@@ -606,6 +606,10 @@ func buildRule(host string, loc *location) string {
 		}
 	}
 
+	if len(rules) == 0 {
+		return `PathPrefix("/")`
+	}
+
 	return strings.Join(rules, " && ")
 }
 
