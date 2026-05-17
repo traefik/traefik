@@ -59,15 +59,21 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 			return nil, errors.New("no tls config")
 		},
 	}
-
+	quicConfig := &quic.Config{
+		Allow0RTT: config.HTTP3.Allow0RTT,
+	}
+	if config.HTTP3.InitialPacketSize > 0 {
+		if config.HTTP3.InitialPacketSize < 1200 {
+			return nil, fmt.Errorf("initial Packet Size can not be less than 1200. got %d", config.HTTP3.InitialPacketSize)
+		}
+		quicConfig.InitialPacketSize = uint16(config.HTTP3.InitialPacketSize)
+	}
 	h3.Server = &http3.Server{
-		Addr:      config.GetAddress(),
-		Port:      config.HTTP3.AdvertisedPort,
-		Handler:   httpsServer.Server.(*http.Server).Handler,
-		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
-		QUICConfig: &quic.Config{
-			Allow0RTT: false,
-		},
+		Addr:       config.GetAddress(),
+		Port:       config.HTTP3.AdvertisedPort,
+		Handler:    httpsServer.Server.(*http.Server).Handler,
+		TLSConfig:  &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
+		QUICConfig: quicConfig,
 	}
 
 	previousHandler := httpsServer.Server.(*http.Server).Handler
