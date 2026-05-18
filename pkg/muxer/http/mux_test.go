@@ -694,6 +694,13 @@ func TestRoutingPath(t *testing.T) {
 			path:                "/foo%20bar%2Fbaz%23qux",
 			expectedRoutingPath: "/foo bar%2Fbaz%23qux",
 		},
+		// #13173: lowercase percent-encoding of a reserved character is
+		// equivalent to uppercase per RFC 3986 section 2.1.
+		{
+			desc:                "lowercase reserved percent-encoded character is kept encoded",
+			path:                "/foo%2fbar",
+			expectedRoutingPath: "/foo%2fbar",
+		},
 	}
 
 	for _, test := range tests {

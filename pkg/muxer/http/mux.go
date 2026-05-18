@@ -152,7 +152,10 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 		}
 
 		encodedCharacter := escapedPath[i : i+3]
-		if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+		// Per RFC 3986 section 2.1, %2A and %2a are equivalent. The map
+		// is keyed in uppercase, so normalise before lookup or two
+		// RFC-equivalent paths would route differently.
+		if _, reserved := reservedCharacters[strings.ToUpper(encodedCharacter)]; reserved {
 			routingPathBuilder.WriteString(encodedCharacter)
 		} else {
 			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
