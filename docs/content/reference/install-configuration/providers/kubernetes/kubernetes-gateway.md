@@ -16,8 +16,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 !!! info "Using The Helm Chart"
 
-    When using the Traefik [Helm Chart](../../../../getting-started/kubernetes.md#install-traefik), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
-    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml).
+    When using the Traefik [Helm Chart](../../../../getting-started/kubernetes.md#install-traefik), the RBAC (Role-Based Access Control) are automatically managed for you.
 
 ## Requirements
 
@@ -30,10 +29,10 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
     ```
 
-2. Install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml).
+2. If you are not using the Helm Chart, install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml) for Gateway API.
 
     ```bash
-    # Install Traefik RBACs.
+    # Install Traefik RBACs for Gateway API.
     kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
