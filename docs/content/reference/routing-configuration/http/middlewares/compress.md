@@ -79,5 +79,4 @@ It will also set the `Content-Type` header according to the detected MIME type.
 
 ## GRPC application
 
-When `excludeRequestContentType` is `true` (the default), `application/grpc` requests are never compressed.
-When set to `false`, the request `Content-Type` is not checked and compression may be attempted based on the response `Content-Type`.
+Note that `application/grpc` is never compressed.
