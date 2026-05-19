@@ -182,6 +182,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			rule := buildGRPCMethodRule(test.method)
 			assert.Equal(t, test.expectedRule, rule)
 		})
