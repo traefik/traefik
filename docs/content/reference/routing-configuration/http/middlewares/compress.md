@@ -52,6 +52,7 @@ spec:
 | Field                        | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-excludedContentTypes" href="#opt-excludedContentTypes" title="#opt-excludedContentTypes">`excludedContentTypes`</a> | List of content types to compare the `Content-Type` header of the incoming requests and responses before compressing. <br /> The responses with content types defined in `excludedContentTypes` are not compressed. <br /> Content types are compared in a case-insensitive, whitespace-ignored manner. <br /> **The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.** | "" | No |
+| <a id="opt-excludeRequestContentType" href="#opt-excludeRequestContentType" title="#opt-excludeRequestContentType">`excludeRequestContentType`</a> | When `true`, the request `Content-Type` header is checked against the excluded content types list, and matching requests are passed through without compression. <br /> When `false`, only the response `Content-Type` is evaluated, and compression is applied regardless of the request content type. | true | No |
 | <a id="opt-defaultEncoding" href="#opt-defaultEncoding" title="#opt-defaultEncoding">`defaultEncoding`</a> | specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`). | "" | No |
 | <a id="opt-encodings" href="#opt-encodings" title="#opt-encodings">`encodings`</a> | Specifies the list of supported compression encodings. At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip). The order of the list also sets the priority, the top entry has the highest priority. | gzip, br, zstd | No |
 | <a id="opt-includedContentTypes" href="#opt-includedContentTypes" title="#opt-includedContentTypes">`includedContentTypes`</a> | List of content types to compare the `Content-Type` header of the responses before compressing. <br /> The responses with content types defined in `includedContentTypes` are compressed. <br /> Content types are compared in a case-insensitive, whitespace-ignored manner.<br /> **The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.** | "" | No |
@@ -68,6 +69,7 @@ If the `Accept-Encoding` request header is absent, the response won't be encoded
 If it is present, but its value is the empty string, then compression is turned off.
 - The response is not already compressed, that is the `Content-Encoding` response header is not already set.
 - The response`Content-Type` header is not one among the `excludedContentTypes` options, or is one among the `includedContentTypes` options.
+- When `excludeRequestContentType` is `true`, the request `Content-Type` header is also not one among the `excludedContentTypes` options.
 - The response body is larger than the configured minimum amount of bytes(option `minResponseBodyBytes`) (default is `1024`).
 
 ## Empty Content-Type Header
@@ -77,4 +79,5 @@ It will also set the `Content-Type` header according to the detected MIME type.
 
 ## GRPC application
 
-Note that `application/grpc` is never compressed.
+When `excludeRequestContentType` is `true` (the default), `application/grpc` requests are never compressed.
+When set to `false`, the request `Content-Type` is not checked and compression may be attempted based on the response `Content-Type`.

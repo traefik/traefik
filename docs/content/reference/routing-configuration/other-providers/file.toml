@@ -185,6 +185,7 @@
         minResponseBodyBytes = 42
         encodings = ["foobar", "foobar"]
         defaultEncoding = "foobar"
+        excludeRequestContentType = true
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.contentType]
         autoDetect = true

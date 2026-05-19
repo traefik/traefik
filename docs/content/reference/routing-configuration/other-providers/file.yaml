@@ -201,6 +201,7 @@ http:
           - foobar
           - foobar
         defaultEncoding: foobar
+        excludeRequestContentType: true
     Middleware07:
       contentType:
         autoDetect: true
