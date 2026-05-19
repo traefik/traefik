@@ -521,11 +521,9 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware19": {
 					Compress: &dynamic.Compress{
-						MinResponseBodyBytes: 42,
-						Encodings: []string{
-							"foobar",
-							"fiibar",
-						},
+						MinResponseBodyBytes:      42,
+						Encodings:                 []string{"foobar", "fiibar"},
+						ExcludeRequestContentType: true,
 					},
 				},
 				"Middleware2": {
@@ -1073,11 +1071,9 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware19": {
 					Compress: &dynamic.Compress{
-						MinResponseBodyBytes: 42,
-						Encodings: []string{
-							"foobar",
-							"fiibar",
-						},
+						MinResponseBodyBytes:      42,
+						Encodings:                 []string{"foobar", "fiibar"},
+						ExcludeRequestContentType: true,
 					},
 				},
 				"Middleware2": {
@@ -1475,6 +1471,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware19.Compress.Encodings":                                 "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware19.Compress.ExcludeRequestContentType":                 "true",
 		"traefik.HTTP.Middlewares.Middleware19.Compress.MinResponseBodyBytes":                      "42",
 		"traefik.HTTP.Middlewares.Middleware20.Plugin.tomato.aaa":                                  "foo1",
 		"traefik.HTTP.Middlewares.Middleware20.Plugin.tomato.bbb":                                  "foo2",
