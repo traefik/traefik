@@ -25,45 +25,6 @@ PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${PROJECT_DIR}"
 
-# ─── Install tools if not already available ───
-
-if ! command -v cyclonedx-gomod &>/dev/null; then
-    echo "Installing cyclonedx-gomod ${CYCLONEDX_GOMOD_VERSION}..."
-    go install "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@${CYCLONEDX_GOMOD_VERSION}"
-fi
-
-if ! command -v assimilis &>/dev/null; then
-    echo "Installing assimilis ${ASSIMILIS_VERSION}..."
-    go install "github.com/traefik/assimilis/cmd/assimilis@${ASSIMILIS_VERSION}"
-fi
-
-if ! command -v jq &>/dev/null; then
-    echo "Error: jq is required but not installed."
-    exit 1
-fi
-
-if ! command -v cyclonedx-py &>/dev/null; then
-    echo "Installing cyclonedx-py ${CYCLONEDX_PY_VERSION}..."
-    if command -v pipx &>/dev/null; then
-        pipx install "cyclonedx-bom==${CYCLONEDX_PY_VERSION#v}"
-    elif command -v brew &>/dev/null; then
-        brew install cyclonedx-py
-    else
-        echo "Error: cyclonedx-py is required. Install via pipx or brew."
-        exit 1
-    fi
-fi
-
-if ! command -v uv &>/dev/null; then
-    echo "Installing uv..."
-    if command -v brew &>/dev/null; then
-        brew install uv
-    else
-        echo "Error: uv is required. Install via brew or https://docs.astral.sh/uv/"
-        exit 1
-    fi
-fi
-
 # ─── Prepare output directory ───
 
 OUT_DIR="third_party"

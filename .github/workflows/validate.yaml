@@ -92,8 +92,10 @@ jobs:
 
       - name: Check for dependency changes
         id: deps-changed
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '^(go\.(mod|sum)|webui/yarn\.lock|docs/requirements\.txt)$'; then
+          if git diff --name-only "origin/$BASE_REF...HEAD" | grep -qE '^(go\.(mod|sum)|webui/yarn\.lock|docs/requirements\.txt)$'; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT

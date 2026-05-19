@@ -4,6 +4,7 @@
 
 ARG GO_VERSION=1.25
 FROM golang:${GO_VERSION}-bookworm
+COPY --from=ghcr.io/astral-sh/uv@sha256:2381d6aa60c326b71fd40023f921a0a3b8f91b14d5db6b90402e65a635053709 /uv /uvx /usr/local/bin/
 
 ARG NODE_MAJOR=24
 ARG YARN_VERSION=4.13.0
@@ -31,8 +32,6 @@ RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     && corepack enable \
     && corepack prepare "yarn@${YARN_VERSION}" --activate
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
-
 RUN pip install --break-system-packages "cyclonedx-bom==${CYCLONEDX_PY_VERSION}"
 
 RUN go install "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@${CYCLONEDX_GOMOD_VERSION}" \
@@ -48,3 +47,4 @@ ENV HOME=/tmp \
     XDG_CACHE_HOME=/tmp/.cache
 
 WORKDIR /src
+USER nobody:nogroup
