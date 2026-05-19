@@ -426,9 +426,9 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware05": {
 					Compress: &dynamic.Compress{
-						MinResponseBodyBytes:       42,
-						Encodings:                  []string{"foobar", "foobar"},
-						ExcludeRequestContentType:  true,
+						MinResponseBodyBytes:      42,
+						Encodings:                 []string{"foobar", "foobar"},
+						ExcludeRequestContentType: true,
 					},
 				},
 				"Middleware08": {
