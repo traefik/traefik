@@ -395,7 +395,6 @@ func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {
 		return `PathPrefix("/")`
 	}
 
-	// Determine if we should treat values as literals or regex patterns.
 	isExact := method.Type == nil || *method.Type == gatev1.GRPCMethodMatchExact
 
 	sExpr := "[^/]+"
