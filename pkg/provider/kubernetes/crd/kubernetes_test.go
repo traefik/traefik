@@ -1684,12 +1684,13 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 
 func TestLoadIngressRoutes(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		ingressClass        string
-		paths               []string
-		expected            *dynamic.Configuration
-		allowCrossNamespace bool
-		allowEmptyServices  bool
+		desc                    string
+		ingressClass            string
+		paths                   []string
+		expected                *dynamic.Configuration
+		allowCrossNamespace     bool
+		allowEmptyServices      bool
+		crossProviderNamespaces []string
 	}{
 		{
 			desc: "Empty",
@@ -1975,9 +1976,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "Simple Ingress Route with middleware crossprovider",
-			allowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_middleware_cross_provider.yml"},
+			desc:                    "Simple Ingress Route with middleware crossprovider",
+			crossProviderNamespaces: []string{"default"},
+			allowCrossNamespace:     true,
+			paths:                   []string{"services.yml", "with_middleware_cross_provider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5806,6 +5808,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				AllowCrossNamespace:       test.allowCrossNamespace,
 				AllowExternalNameServices: true,
 				AllowEmptyServices:        test.allowEmptyServices,
+				CrossProviderNamespaces:   test.crossProviderNamespaces,
 			}
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)

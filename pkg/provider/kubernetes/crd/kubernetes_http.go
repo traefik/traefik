@@ -140,7 +140,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptions := ingressRoute.Spec.TLS.Options
 					ctxTLSOption := log.Ctx(ctx).With().Str("TLSOption", tlsOptions.Name).Logger().WithContext(ctx)
 
-					r.TLS.Options, err = p.resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name)
+					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 					if err != nil {
 						logger.Error().Err(err).Msgf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
@@ -163,7 +163,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	for _, mi := range middlewares {
 		ctxMid := log.Ctx(ctx).With().Str(logs.MiddlewareName, mi.Name).Logger().WithContext(ctx)
 
-		middlewareRef, err := p.resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name)
+		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -639,14 +639,16 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.Ctx(ctx).With().Str(logs.ServiceName, service.Name).Logger().WithContext(ctx)
 
-	service = *service.DeepCopy()
-	service.Namespace = namespaceOrParentNamespace(service.Namespace, parentNamespace)
+	if !strings.Contains(service.Name, providerNamespaceSeparator) {
+		service = *service.DeepCopy()
+		service.Namespace = namespaceOrParentNamespace(service.Namespace, parentNamespace)
 
-	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
-		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+		if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
+			return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+		}
 	}
 
-	if !isCrossProviderNamespaceAllowed(c.crossProviderNamespaces, service.Namespace) {
+	if !isCrossProviderNamespaceAllowed(c.crossProviderNamespaces, parentNamespace) && strings.Contains(service.Name, providerNamespaceSeparator) {
 		return "", nil, fmt.Errorf("service %q reference is not allowed: namespace %q is not in crossProviderNamespaces", service.Name, parentNamespace)
 	}
 

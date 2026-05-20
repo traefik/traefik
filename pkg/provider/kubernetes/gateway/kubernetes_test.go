@@ -5104,9 +5104,9 @@ func TestLoadTLSRoutes(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
-							Service:     "tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
 							Rule:        `HostSNI("*")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
@@ -5114,7 +5114,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr": {
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
