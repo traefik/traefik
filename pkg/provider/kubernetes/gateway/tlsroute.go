@@ -20,7 +20,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration) {
+func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration, statusReport *statusReport) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTLSRoutes()
 	if err != nil {
@@ -29,16 +29,11 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 
 	for _, route := range routes {
-		logger := log.Ctx(ctx).With().
-			Str("tls_route", route.Name).
-			Str("namespace", route.Namespace).Logger()
-
 		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
 		if len(routeListeners) == 0 {
 			continue
 		}
 
-		var parentStatuses []gatev1.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
 				ParentRef:      parentRef,
@@ -82,7 +77,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
-			parentStatuses = append(parentStatuses, *parentStatus)
+			statusReport.RecordTLSRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, *parentStatus)
 		}
 
 		// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
@@ -97,17 +92,6 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 			conf.TCP.Services["deny-unknown-host"] = &dynamic.TCPService{
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 			}
-		}
-
-		routeStatus := gatev1.TLSRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
-		}
-		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
-			logger.Warn().
-				Err(err).
-				Msg("Unable to update TLSRoute status")
 		}
 	}
 }
