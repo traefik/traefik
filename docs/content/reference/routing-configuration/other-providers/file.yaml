@@ -485,6 +485,8 @@ http:
         idleConnTimeout: 42s
         readIdleTimeout: 42s
         pingTimeout: 42s
+        readTimeout: 42s
+        writeTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
       spiffe:
@@ -515,6 +517,8 @@ http:
         idleConnTimeout: 42s
         readIdleTimeout: 42s
         pingTimeout: 42s
+        readTimeout: 42s
+        writeTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
       spiffe:

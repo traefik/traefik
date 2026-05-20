@@ -149,6 +149,8 @@ func init() {
 					IdleConnTimeout:       42,
 					ReadIdleTimeout:       42,
 					PingTimeout:           42,
+					ReadTimeout:           42,
+					WriteTimeout:          42,
 				},
 			},
 		},
