@@ -17,6 +17,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	netv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/utils/ptr"
@@ -15818,6 +15820,74 @@ func TestNginxSizeToBytes(t *testing.T) {
 			assert.Equal(t, test.expected, size)
 		})
 	}
+}
+
+func TestLoadConfigurationUpdatesStatusForSSLPassthroughIngress(t *testing.T) {
+	t.Parallel()
+
+	k8sObjects := readResources(t, []string{
+		"services.yml",
+		"ingressclasses.yml",
+		"publish-service-loadbalancer.yml",
+		"ingresses/ingress-with-ssl-passthrough-empty-status.yml",
+	})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		PublishService:    "default/traefik-publish",
+		k8sClient:         client,
+		NonTLSEntryPoints: []string{"http"},
+		TLSEntryPoints:    []string{"https"},
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+	require.NotNil(t, conf)
+
+	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-ssl-passthrough", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
+}
+
+func TestLoadConfigurationUpdatesStatusForNormalIngress(t *testing.T) {
+	t.Parallel()
+
+	k8sObjects := readResources(t, []string{
+		"services.yml",
+		"ingressclasses.yml",
+		"publish-service-loadbalancer.yml",
+		"ingresses/ingress-with-host.yml",
+	})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		PublishService:    "default/traefik-publish",
+		k8sClient:         client,
+		NonTLSEntryPoints: []string{"http"},
+		TLSEntryPoints:    []string{"https"},
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+	require.NotNil(t, conf)
+
+	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-host", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
 }
 
 func TestProvider_validateConfiguration(t *testing.T) {

@@ -253,6 +253,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Logger()
 		ctxIng := logger.WithContext(ctx)
 
+		mc.ProcessedIngresses = append(mc.ProcessedIngresses, ing.Ingress)
+
 		// ssl-passthrough: handled per-rule. serversTransport is not needed for passthrough.
 		if ptr.Deref(ing.config.SSLPassthrough, false) {
 			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
