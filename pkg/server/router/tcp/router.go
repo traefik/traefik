@@ -48,7 +48,12 @@ type Router struct {
 	httpsTLSConfig *tls.Config // default TLS config
 	// hostHTTPTLSConfig contains TLS configs keyed by SNI.
 	// A nil config is the hint to set up a brokenTLSRouter.
-	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
+	hostHTTPTLSConfig map[string]namedTLSConfig // TLS configs keyed by SNI
+}
+
+type namedTLSConfig struct {
+	cfg  *tls.Config
+	name string
 }
 
 // NewRouter returns a new TCP router.
@@ -79,7 +84,7 @@ func NewRouter() (*Router, error) {
 func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
 	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
 		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
-			return tlsConfig, nil
+			return tlsConfig.cfg, nil
 		}
 
 		return r.httpsTLSConfig, nil
@@ -212,12 +217,15 @@ func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
 }
 
 // AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
-func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
+func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config, optionName string) {
 	if r.hostHTTPTLSConfig == nil {
-		r.hostHTTPTLSConfig = map[string]*tls.Config{}
+		r.hostHTTPTLSConfig = map[string]namedTLSConfig{}
 	}
 
-	r.hostHTTPTLSConfig[sniHost] = config
+	r.hostHTTPTLSConfig[sniHost] = namedTLSConfig{
+		cfg:  config,
+		name: optionName,
+	}
 }
 
 // GetConn creates a connection proxy with a peeked string.
@@ -262,12 +270,13 @@ func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
 func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		var tcpHandler tcp.Handler
-		if tlsConf == nil {
+		if tlsConf.cfg == nil {
 			tcpHandler = &brokenTLSRouter{}
 		} else {
 			tcpHandler = &tcp.TLSHandler{
-				Next:   handler,
-				Config: tlsConf,
+				Next:       handler,
+				Config:     tlsConf.cfg,
+				ConfigName: tlsConf.name,
 			}
 		}
 
@@ -285,8 +294,9 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 	}
 
 	r.httpsForwarder = &tcp.TLSHandler{
-		Next:   handler,
-		Config: r.httpsTLSConfig,
+		Next:       handler,
+		Config:     r.httpsTLSConfig,
+		ConfigName: "default",
 	}
 }
 

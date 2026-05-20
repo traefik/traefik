@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"expvar"
 	"fmt"
@@ -609,6 +610,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		HTTP2: &http.HTTP2Config{
 			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
+		},
+		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+			if tlsConn, ok := c.(*tls.Conn); ok {
+				if tlsConnWithConfigName, ok := tlsConn.NetConn().(tcp.TLSConnWithName); ok {
+					return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithConfigName.GetConfigName())
+				}
+			}
+
+			return ctx
 		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {

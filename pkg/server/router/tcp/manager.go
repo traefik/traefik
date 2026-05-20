@@ -11,7 +11,6 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
@@ -152,7 +151,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			// This is only about choosing the TLS configuration.
 			// The actual routing will be done further on by the HTTPS handler.
 			// See examples below.
-			router.AddHTTPTLSConfig("*", defaultTLSConf)
+			router.AddHTTPTLSConfig("*", defaultTLSConf, traefiktls.DefaultTLSConfigName)
 
 			// The server name (from a Host(SNI) rule) is the only parameter (available in HTTP routing rules) on which we can map a TLS config,
 			// because it is the only one accessible before decryption (we obtain it during the ClientHello).
@@ -208,10 +207,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
-	sniCheck := snicheck.New(tlsOptionsForHost, handlerHTTPS)
-
 	// Keep in mind that defaultTLSConf might be nil here.
-	router.SetHTTPSHandler(sniCheck, defaultTLSConf)
+	router.SetHTTPSHandler(handlerHTTPS, defaultTLSConf)
 
 	logger := log.FromContext(ctx)
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
@@ -228,12 +225,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				// we use nil config as a signal to insert a handler
 				// that enforces that TLS connection attempts to the corresponding (broken) router should fail.
 				logger.Debugf("Adding special closing route for %s because broken TLS options %s", hostSNI, optionsName)
-				router.AddHTTPTLSConfig(hostSNI, nil)
+				router.AddHTTPTLSConfig(hostSNI, nil, "")
 				continue
 			}
 
 			logger.Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
-			router.AddHTTPTLSConfig(hostSNI, config)
+			router.AddHTTPTLSConfig(hostSNI, config, optionsName)
 			continue
 		}
 
@@ -250,7 +247,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			logger.Debugf("Adding special closing route for %s because broken default TLS options", hostSNI)
 		}
 
-		router.AddHTTPTLSConfig(hostSNI, defaultTLSConf)
+		router.AddHTTPTLSConfig(hostSNI, defaultTLSConf, traefiktls.DefaultTLSConfigName)
 	}
 
 	m.addTCPHandlers(ctx, configs, router)
@@ -385,8 +382,9 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		}
 
 		handler = &tcp.TLSHandler{
-			Next:   handler,
-			Config: tlsConf,
+			Next:       handler,
+			Config:     tlsConf,
+			ConfigName: tlsOptionsName,
 		}
 
 		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)

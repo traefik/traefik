@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/denyrouterrecursion"
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v2/pkg/middlewares/snicheck"
 	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
 	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
@@ -226,6 +227,17 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	if router.DeniedEncodedPathCharacters != nil {
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
+		})
+	}
+
+	if router.TLS != nil {
+		routerTLSOptionsName := tls.DefaultTLSConfigName
+		if router.TLS.Options != "" && router.TLS.Options != tls.DefaultTLSConfigName {
+			routerTLSOptionsName = provider.GetQualifiedName(ctx, router.TLS.Options)
+		}
+
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return snicheck.New(routerTLSOptionsName, next), nil
 		})
 	}
 
