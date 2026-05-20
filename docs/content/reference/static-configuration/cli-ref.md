@@ -702,6 +702,9 @@ Allow ExternalName services. (Default: ```false```)
 `--providers.kubernetescrd.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`--providers.kubernetescrd.crossprovidernamespaces`:  
+List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references.
+
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -725,6 +728,9 @@ Enable Kubernetes gateway api provider with default settings. (Default: ```false
 
 `--providers.kubernetesgateway.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesgateway.crossprovidernamespaces`:  
+List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references.
 
 `--providers.kubernetesgateway.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -752,6 +758,9 @@ Allow ExternalName services. (Default: ```false```)
 
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesingress.crossprovidernamespaces`:  
+List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references.
 
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).

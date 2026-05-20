@@ -55,6 +55,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowCrossNamespace:       p.AllowCrossNamespace,
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
+			crossProviderNamespaces:   p.CrossProviderNamespaces,
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
@@ -124,27 +125,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
-					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
-					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
-					ns := ingressRoute.Spec.TLS.Options.Namespace
-					if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
-						if len(ns) == 0 {
-							ns = ingressRoute.Namespace
-						}
-						tlsOptionsName = makeID(ns, tlsOptionsName)
-					} else if len(ns) > 0 {
-						logger.
-							WithField("TLSOption", ingressRoute.Spec.TLS.Options.Name).
-							Warnf("Namespace %q is ignored in cross-provider context", ns)
-					}
+					tlsOptions := ingressRoute.Spec.TLS.Options
+					ctxTLSOption := log.With(ctx, log.Str("TLSOption", tlsOptions.Name))
 
-					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, ns) {
-						logger.Errorf("TLSOption %s/%s is not in the IngressRoute namespace %s",
-							ns, ingressRoute.Spec.TLS.Options.Name, ingressRoute.Namespace)
+					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+					if err != nil {
+						logger.WithError(err).Errorf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
 					}
-
-					r.TLS.Options = tlsOptionsName
 				}
 			}
 
@@ -161,36 +149,14 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	var mds []string
 
 	for _, mi := range middlewares {
-		name := mi.Name
+		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, mi.Name))
 
-		if !p.AllowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
-			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-			// if the provider namespace kubernetescrd is used,
-			// we don't allow this format to avoid cross-namespace references.
-			return nil, fmt.Errorf("invalid reference to middleware %s: when allowCrossNamespace is disabled @kubernetescrd provider references are disallowed", mi.Name)
+		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
 
-		if strings.Contains(name, providerNamespaceSeparator) {
-			if len(mi.Namespace) > 0 {
-				log.FromContext(ctx).
-					WithField(log.MiddlewareName, mi.Name).
-					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
-			}
-
-			mds = append(mds, name)
-			continue
-		}
-
-		ns := ingRouteNamespace
-		if len(mi.Namespace) > 0 {
-			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteNamespace, mi.Namespace) {
-				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRoute namespace %s", mi.Namespace, mi.Name, ingRouteNamespace)
-			}
-
-			ns = mi.Namespace
-		}
-
-		mds = append(mds, provider.Normalize(makeID(ns, name)))
+		mds = append(mds, middlewareRef)
 	}
 
 	return mds, nil
@@ -201,6 +167,7 @@ type configBuilder struct {
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
 	allowEmptyServices        bool
+	crossProviderNamespaces   []string
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -326,14 +293,18 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 		return "", nil
 	}
 
-	if !c.allowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
-		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-		// if the provider namespace kubernetescrd is used,
-		// we don't allow this format to avoid cross namespace references.
-		return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
-	}
-
 	if strings.Contains(serversTransportName, providerNamespaceSeparator) {
+		if !c.allowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
+			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+			// if the provider namespace kubernetescrd is used,
+			// we don't allow this format to avoid cross namespace references.
+			return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
+		}
+
+		if !isCrossProviderNamespaceAllowed(c.crossProviderNamespaces, parentNamespace) {
+			return "", fmt.Errorf("serversTransport %q reference is not allowed: namespace %q is not in crossProviderNamespaces", serversTransportName, parentNamespace)
+		}
+
 		return serversTransportName, nil
 	}
 
@@ -443,11 +414,17 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
-	service = *service.DeepCopy()
-	service.Namespace = namespaceOrFallback(service, parentNamespace)
+	if !strings.Contains(service.Name, providerNamespaceSeparator) {
+		service = *service.DeepCopy()
+		service.Namespace = namespaceOrParentNamespace(service.Namespace, parentNamespace)
 
-	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
-		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+		if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
+			return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+		}
+	}
+
+	if !isCrossProviderNamespaceAllowed(c.crossProviderNamespaces, parentNamespace) && strings.Contains(service.Name, providerNamespaceSeparator) {
+		return "", nil, fmt.Errorf("service %q reference is not allowed: namespace %q is not in crossProviderNamespaces", service.Name, parentNamespace)
 	}
 
 	switch service.Kind {
@@ -499,11 +476,12 @@ func fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSp
 	return provider.Normalize(name) + providerNamespaceSeparator + pName
 }
 
-func namespaceOrFallback(lb traefikv1alpha1.LoadBalancerSpec, fallback string) string {
-	if lb.Namespace != "" {
-		return lb.Namespace
+func namespaceOrParentNamespace(namespace, parentNamespace string) string {
+	if namespace != "" {
+		return namespace
 	}
-	return fallback
+
+	return parentNamespace
 }
 
 // getTLSHTTP mutates tlsConfigs.
@@ -511,6 +489,7 @@ func getTLSHTTP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRoute,
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}
+
 	if ingressRoute.Spec.TLS.SecretName == "" {
 		log.FromContext(ctx).Debugf("No secret name provided")
 		return nil

@@ -201,7 +201,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		},
 		{
 			desc:  "Simple Ingress Route, with foo entrypoint and crossprovider middleware",
-			paths: []string{"tcp/services.yml", "tcp/with_middleware_crossprovider.yml"},
+			paths: []string{"tcp/services.yml", "tcp/with_middleware_cross_provider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1473,12 +1473,13 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 
 func TestLoadIngressRoutes(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		ingressClass        string
-		paths               []string
-		expected            *dynamic.Configuration
-		allowCrossNamespace bool
-		allowEmptyServices  bool
+		desc                    string
+		ingressClass            string
+		paths                   []string
+		expected                *dynamic.Configuration
+		allowCrossNamespace     bool
+		allowEmptyServices      bool
+		crossProviderNamespaces []string
 	}{
 		{
 			desc: "Empty",
@@ -1664,9 +1665,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "Simple Ingress Route with middleware crossprovider",
-			allowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_middleware_crossprovider.yml"},
+			desc:                    "Simple Ingress Route with middleware crossprovider",
+			crossProviderNamespaces: []string{"default"},
+			allowCrossNamespace:     true,
+			paths:                   []string{"services.yml", "with_middleware_cross_provider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4291,6 +4293,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				AllowCrossNamespace:       test.allowCrossNamespace,
 				AllowExternalNameServices: true,
 				AllowEmptyServices:        test.allowEmptyServices,
+				CrossProviderNamespaces:   test.crossProviderNamespaces,
 			}
 
 			clientMock := newClientMock(test.paths...)
@@ -6209,6 +6212,312 @@ func TestCrossNamespace(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		allowList []string
+		namespace string
+		want      bool
+	}{
+		{desc: "nil allowList allows any namespace", allowList: nil, namespace: "ns-a", want: true},
+		{desc: "empty allowList denies every namespace", allowList: []string{}, namespace: "ns-a", want: false},
+		{desc: "namespace in allowList is accepted", allowList: []string{"ns-a"}, namespace: "ns-a", want: true},
+		{desc: "namespace not in allowList is rejected", allowList: []string{"ns-b"}, namespace: "ns-a", want: false},
+		{desc: "namespace among multiple allowed entries is accepted", allowList: []string{"ns-a", "ns-b"}, namespace: "ns-b", want: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			got := isCrossProviderNamespaceAllowed(test.allowList, test.namespace)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_HTTPMiddleware verifies that the
+// CrossProviderNamespaces option gates middleware references.
+// Plain in-namespace middleware references are not affected.
+func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantMiddlewares         []string
+		wantRouterDropped       bool
+	}{
+		{
+			desc:                    "nil: cross-provider middleware refs are accepted (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantMiddlewares:         []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
+		},
+		{
+			desc:                    "empty list: cross-provider middleware refs are rejected, IngressRoute is dropped",
+			crossProviderNamespaces: []string{},
+			wantRouterDropped:       true,
+		},
+		{
+			desc:                    "namespace allowed: cross-provider middleware refs are accepted",
+			crossProviderNamespaces: []string{"default"},
+			wantMiddlewares:         []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
+		},
+		{
+			desc:                    "namespace not allowed: cross-provider middleware refs are rejected, IngressRoute is dropped",
+			crossProviderNamespaces: []string{"other"},
+			wantRouterDropped:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				AllowCrossNamespace:     true,
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			clientMock := newClientMock("services.yml", "with_middleware_cross_provider.yml")
+			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
+
+			router, ok := conf.HTTP.Routers["default-test2-route-23c7f4c450289ee29016"]
+			if test.wantRouterDropped {
+				assert.False(t, ok)
+				return
+			}
+
+			assert.True(t, ok)
+			assert.Equal(t, test.wantMiddlewares, router.Middlewares)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_HTTPServiceTransitivity verifies that the option for a TraefikService chain
+// (here: IngressRoute -> Mirror / Weighted TraefikService -> @file service).
+func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantMirrorService       bool
+		wantWeightedService     bool
+	}{
+		{
+			desc:                    "nil: cross-provider service refs accepted (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantMirrorService:       true,
+			wantWeightedService:     true,
+		},
+		{
+			desc:                    "empty list: both Mirror and Weighted TraefikServices are rejected",
+			crossProviderNamespaces: []string{},
+			wantMirrorService:       false,
+			wantWeightedService:     false,
+		},
+		{
+			desc:                    "only the Mirror's namespace is allowed: Weighted is still rejected",
+			crossProviderNamespaces: []string{"foo"},
+			wantMirrorService:       true,
+			wantWeightedService:     false,
+		},
+		{
+			desc:                    "only the Weighted's namespace is allowed: Mirror is still rejected",
+			crossProviderNamespaces: []string{"bar"},
+			wantMirrorService:       false,
+			wantWeightedService:     true,
+		},
+		{
+			desc:                    "both namespaces allowed: both TraefikServices are accepted",
+			crossProviderNamespaces: []string{"foo", "bar"},
+			wantMirrorService:       true,
+			wantWeightedService:     true,
+		},
+		{
+			desc:                    "originating IngressRoute namespace alone is not enough: TraefikService namespace must also be allowed",
+			crossProviderNamespaces: []string{"default"},
+			wantMirrorService:       false,
+			wantWeightedService:     false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				AllowCrossNamespace:     true,
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			clientMock := newClientMock("services.yml", "with_service_cross_provider.yml")
+			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
+
+			_, mirrorOK := conf.HTTP.Services["foo-mirror-cp"]
+			_, weightedOK := conf.HTTP.Services["bar-weighted-cp"]
+
+			assert.Equal(t, test.wantMirrorService, mirrorOK)
+			assert.Equal(t, test.wantWeightedService, weightedOK)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_HTTPTLSOption verifies that the
+// CrossProviderNamespaces option gates @file references in IngressRoute tls.options.
+func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouterDropped       bool
+	}{
+		{
+			desc:                    "nil: cross-provider TLSOption ref is accepted (backward compatible)",
+			crossProviderNamespaces: nil,
+		},
+		{
+			desc:                    "empty list: cross-provider TLSOption ref is rejected, IngressRoute is dropped",
+			crossProviderNamespaces: []string{},
+			wantRouterDropped:       true,
+		},
+		{
+			desc:                    "namespace allowed: cross-provider TLSOption ref is accepted",
+			crossProviderNamespaces: []string{"default"},
+		},
+		{
+			desc:                    "namespace not allowed: cross-provider TLSOption ref is rejected, IngressRoute is dropped",
+			crossProviderNamespaces: []string{"other"},
+			wantRouterDropped:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				AllowCrossNamespace:     true,
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			clientMock := newClientMock("services.yml", "with_tls_option_cross_provider.yml")
+			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
+
+			router, ok := conf.HTTP.Routers["default-test-route-6b204d94623b3df4370c"]
+			if test.wantRouterDropped {
+				assert.False(t, ok)
+				return
+			}
+
+			require.True(t, ok)
+			require.NotNil(t, router.TLS)
+			assert.Equal(t, "foo@file", router.TLS.Options)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_TCPTLSOption verifies that the
+// CrossProviderNamespaces option gates @file references in IngressRouteTCP tls.options.
+func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouterDropped       bool
+	}{
+		{
+			desc:                    "nil: cross-provider TLSOption ref is accepted (backward compatible)",
+			crossProviderNamespaces: nil,
+		},
+		{
+			desc:                    "empty list: cross-provider TLSOption ref is rejected, IngressRouteTCP is dropped",
+			crossProviderNamespaces: []string{},
+			wantRouterDropped:       true,
+		},
+		{
+			desc:                    "namespace allowed: cross-provider TLSOption ref is accepted",
+			crossProviderNamespaces: []string{"default"},
+		},
+		{
+			desc:                    "namespace not allowed: cross-provider TLSOption ref is rejected, IngressRouteTCP is dropped",
+			crossProviderNamespaces: []string{"other"},
+			wantRouterDropped:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				AllowCrossNamespace:     true,
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			clientMock := newClientMock("tcp/services.yml", "tcp/with_tls_options_cross_provider.yml")
+			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
+
+			router, ok := conf.TCP.Routers["default-test.route-fdd3e9338e47a45efefc"]
+			if test.wantRouterDropped {
+				assert.False(t, ok)
+				return
+			}
+
+			require.True(t, ok)
+			require.NotNil(t, router.TLS)
+			assert.Equal(t, "foo@file", router.TLS.Options)
+		})
+	}
+}
+
+// TestCrossProviderNamespaces_HTTPServersTransport verifies that the
+// CrossProviderNamespaces option gates @file references in service.serversTransport.
+func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantServiceDropped      bool
+	}{
+		{
+			desc:                    "nil: cross-provider ServersTransport ref is accepted (backward compatible)",
+			crossProviderNamespaces: nil,
+		},
+		{
+			desc:                    "empty list: cross-provider ServersTransport ref is rejected, service is dropped",
+			crossProviderNamespaces: []string{},
+			wantServiceDropped:      true,
+		},
+		{
+			desc:                    "namespace allowed: cross-provider ServersTransport ref is accepted",
+			crossProviderNamespaces: []string{"default"},
+		},
+		{
+			desc:                    "namespace not allowed: cross-provider ServersTransport ref is rejected, service is dropped",
+			crossProviderNamespaces: []string{"other"},
+			wantServiceDropped:      true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				AllowCrossNamespace:     true,
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			clientMock := newClientMock("services.yml", "with_servers_transport_cross_provider.yml")
+			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
+
+			service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
+			if test.wantServiceDropped {
+				assert.False(t, ok)
+				return
+			}
+
+			require.True(t, ok)
+			require.NotNil(t, service.LoadBalancer)
+			assert.Equal(t, "foo@file", service.LoadBalancer.ServersTransport)
 		})
 	}
 }
