@@ -995,6 +995,8 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 	defer backend2.Close()
 	backend3 := startTestServer("9030", http.StatusOK, "server3")
 	defer backend3.Close()
+	backend5 := startTestServer("9050", http.StatusOK, "server5")
+	defer backend5.Close()
 
 	file := s.adaptFile("fixtures/https/https_domain_fronting.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -1082,6 +1084,34 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 			serverName:         "sitE1.www.snitest.com",
 			expectedContent:    "server1",
 			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Domain Fronting with ambiguous TLS options should produce a 421",
+			hostHeader:         "site4.www.snitest.com",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
+			desc:               "Domain Fronting with same non-default TLS options should not produce a 421",
+			hostHeader:         "site5.www.snitest.com",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server5",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "FQDN host header with empty SNI to non-default TLS options route should produce a 421",
+			hostHeader:         "site3.www.snitest.com.",
+			serverName:         "",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
+			desc:               "Non-FQDN host header with empty SNI matching FQDN route rule should produce a 421",
+			hostHeader:         "site6.www.snitest.com",
+			serverName:         "",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
 		},
 	}
 

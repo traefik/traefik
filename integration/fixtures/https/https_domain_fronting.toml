@@ -44,6 +44,47 @@
   [[http.services.service3.loadBalancer.servers]]
     url = "http://127.0.0.1:9030"
 
+[http.routers.router4]
+  rule = "Host(`site4.www.snitest.com`)"
+  service = "service4"
+  [http.routers.router4.tls]
+
+[http.routers.router4path]
+  rule = "Host(`site4.www.snitest.com`) && PathPrefix(`/foo`)"
+  service = "service4"
+  [http.routers.router4path.tls]
+    options = "mytls"
+
+[http.services.service4]
+  [[http.services.service4.loadBalancer.servers]]
+    url = "http://127.0.0.1:9040"
+
+[http.routers.router5]
+  rule = "Host(`site5.www.snitest.com`)"
+  service = "service5"
+  [http.routers.router5.tls]
+    options = "mytls"
+
+[http.routers.router5path]
+  rule = "Host(`site5.www.snitest.com`) && PathPrefix(`/bar`)"
+  service = "service5"
+  [http.routers.router5path.tls]
+    options = "mytls"
+
+[http.services.service5]
+  [[http.services.service5.loadBalancer.servers]]
+    url = "http://127.0.0.1:9050"
+
+[http.routers.router6]
+  rule = "Host(`site6.www.snitest.com.`)"
+  service = "service6"
+  [http.routers.router6.tls]
+    options = "mytls"
+
+[http.services.service6]
+  [[http.services.service6.loadBalancer.servers]]
+    url = "http://127.0.0.1:9060"
+
 [[tls.certificates]]
   certFile = "fixtures/https/wildcard.www.snitest.com.cert"
   keyFile = "fixtures/https/wildcard.www.snitest.com.key"
