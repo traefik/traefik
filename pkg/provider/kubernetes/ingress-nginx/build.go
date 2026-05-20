@@ -57,6 +57,16 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		Servers:  make(map[string]*server),
 		Certs:    make(map[string]certPair),
 	}
+	processedIngresses := make(map[string]struct{})
+	markProcessedIngress := func(ing *netv1.Ingress) {
+		key := ing.Namespace + "/" + ing.Name
+		if _, exists := processedIngresses[key]; exists {
+			return
+		}
+
+		processedIngresses[key] = struct{}{}
+		mc.ProcessedIngresses = append(mc.ProcessedIngresses, ing)
+	}
 
 	// Builder-local cache of TLS options resolved per ingress. Each Location
 	// that needs an option carries a pointer to the cached entry; the translator
@@ -253,8 +263,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Logger()
 		ctxIng := logger.WithContext(ctx)
 
-		mc.ProcessedIngresses = append(mc.ProcessedIngresses, ing.Ingress)
-
 		// ssl-passthrough: handled per-rule. serversTransport is not needed for passthrough.
 		if ptr.Deref(ing.config.SSLPassthrough, false) {
 			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
@@ -307,6 +315,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					Hostname:    rule.Host,
 					RouterKey:   routerKey,
 				})
+				markProcessedIngress(ing.Ingress)
 			}
 			continue
 		}
@@ -472,6 +481,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
 
 				srv.Locations = append(srv.Locations, loc)
+				markProcessedIngress(ing.Ingress)
 			}
 		}
 
@@ -514,6 +524,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
 					mc.DefaultBackendLocation = loc
+					markProcessedIngress(ing.Ingress)
 				}
 				continue
 			}
@@ -563,6 +574,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
 
 				srv.Locations = append(srv.Locations, loc)
+				markProcessedIngress(ing.Ingress)
 			}
 		}
 	}
