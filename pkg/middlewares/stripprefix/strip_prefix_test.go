@@ -191,10 +191,7 @@ func TestStripPrefix(t *testing.T) {
 				Prefixes: []string{"/api"},
 			},
 			path:               "/api./foo",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/foo",
-			expectedRawPath:    "",
-			expectedHeader:     "/api",
+			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
 			desc: "multiple dots in the path not stripped by the prefix",
@@ -202,10 +199,7 @@ func TestStripPrefix(t *testing.T) {
 				Prefixes: []string{"/api"},
 			},
 			path:               "/api../foo",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/foo",
-			expectedRawPath:    "",
-			expectedHeader:     "/api",
+			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
 			desc: "multiple dots in the path not stripped by the prefix with forceSlash",
@@ -214,10 +208,7 @@ func TestStripPrefix(t *testing.T) {
 				ForceSlash: true,
 			},
 			path:               "/api../foo",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/foo",
-			expectedRawPath:    "",
-			expectedHeader:     "/api",
+			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
 
