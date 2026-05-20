@@ -73,9 +73,6 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 				req.URL = req.URL.JoinPath()
 			}
 
-			if path != "" && !strings.HasPrefix(path, "/") {
-				path = "/" + path
-			}
 			// Stop here if the normalization of the path produces a different path.
 			if path != req.URL.Path {
 				http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

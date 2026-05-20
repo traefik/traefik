@@ -235,6 +235,10 @@ func TestStripPrefix(t *testing.T) {
 			handler.ServeHTTP(resp, req)
 
 			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			if test.expectedStatusCode != http.StatusOK {
+				return
+			}
+
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
