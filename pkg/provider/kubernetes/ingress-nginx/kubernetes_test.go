@@ -15890,6 +15890,75 @@ func TestLoadConfigurationUpdatesStatusForNormalIngress(t *testing.T) {
 	assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
 }
 
+func TestLoadConfigurationDoesNotUpdateStatusForSkippedIngress(t *testing.T) {
+	t.Parallel()
+
+	k8sObjects := readResources(t, []string{
+		"services.yml",
+		"secrets.yml",
+		"ingressclasses.yml",
+		"publish-service-loadbalancer.yml",
+		"ingresses/ingress-with-auth-tls-secret-missing.yml",
+	})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		PublishService:    "default/traefik-publish",
+		k8sClient:         client,
+		NonTLSEntryPoints: []string{"http"},
+		TLSEntryPoints:    []string{"https"},
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+	require.NotNil(t, conf)
+
+	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-auth-tls-secret-missing", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Empty(t, ing.Status.LoadBalancer.Ingress)
+}
+
+func TestLoadConfigurationDoesNotUpdateStatusForSkippedSSLPassthroughIngress(t *testing.T) {
+	t.Parallel()
+
+	k8sObjects := readResources(t, []string{
+		"services.yml",
+		"ingressclasses.yml",
+		"publish-service-loadbalancer.yml",
+		"ingresses/ingress-with-ssl-passthrough-no-root.yml",
+	})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		PublishService:    "default/traefik-publish",
+		k8sClient:         client,
+		NonTLSEntryPoints: []string{"http"},
+		TLSEntryPoints:    []string{"https"},
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+	require.NotNil(t, conf)
+
+	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-ssl-passthrough-no-root", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.Empty(t, ing.Status.LoadBalancer.Ingress)
+}
+
 func TestProvider_validateConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                            string
