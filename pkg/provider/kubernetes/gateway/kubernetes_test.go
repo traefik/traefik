@@ -7586,11 +7586,9 @@ func Test_findMatchingHostnames(t *testing.T) {
 			wantOk:           true,
 		},
 		{
-			desc:             "Matching subsubdomain with listener wildcard",
+			desc:             "Non matching subsubdomain with listener wildcard",
 			listenerHostname: ptr.To(gatev1.Hostname("*.foo.com")),
 			routeHostnames:   []gatev1.Hostname{"baz.bar.foo.com"},
-			want:             []gatev1.Hostname{"baz.bar.foo.com"},
-			wantOk:           true,
 		},
 		{
 			desc:             "Matching subdomain with route hostname wildcard",
@@ -7600,11 +7598,9 @@ func Test_findMatchingHostnames(t *testing.T) {
 			wantOk:           true,
 		},
 		{
-			desc:             "Matching subsubdomain with route hostname wildcard",
+			desc:             "Non matching subsubdomain with route hostname wildcard",
 			listenerHostname: ptr.To(gatev1.Hostname("baz.bar.foo.com")),
 			routeHostnames:   []gatev1.Hostname{"*.foo.com"},
-			want:             []gatev1.Hostname{"baz.bar.foo.com"},
-			wantOk:           true,
 		},
 		{
 			desc:             "Non matching root domain with listener wildcard",
@@ -7641,6 +7637,11 @@ func Test_findMatchingHostnames(t *testing.T) {
 			routeHostnames:   []gatev1.Hostname{"*.bar.foo.com"},
 			want:             []gatev1.Hostname{"*.bar.foo.com"},
 			wantOk:           true,
+		},
+		{
+			desc:             "Non matching multi-label concrete hostname under deeper wildcard listener",
+			listenerHostname: ptr.To(gatev1.Hostname("*.bar.foo.com")),
+			routeHostnames:   []gatev1.Hostname{"baz.qux.bar.foo.com"},
 		},
 	}
 
