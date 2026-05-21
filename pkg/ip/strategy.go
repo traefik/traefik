@@ -70,22 +70,37 @@ type PoolStrategy struct {
 // GetIP checks the list of Forwarded IPs (most recent first) against the
 // Checker pool of IPs. It returns the first IP that is not in the pool, or the
 // empty string otherwise.
+// If the X-Forwarded-For header is absent, it falls back to the request's
+// RemoteAddr.
 func (s *PoolStrategy) GetIP(req *http.Request) string {
 	if s.Checker == nil {
 		return ""
 	}
 
 	xff := req.Header.Get(xForwardedFor)
-	xffs := strings.Split(xff, ",")
+	if xff != "" {
+		xffs := strings.Split(xff, ",")
 
-	for i := len(xffs) - 1; i >= 0; i-- {
-		xffTrimmed := strings.TrimSpace(xffs[i])
-		if len(xffTrimmed) == 0 {
-			continue
+		for i := len(xffs) - 1; i >= 0; i-- {
+			xffTrimmed := strings.TrimSpace(xffs[i])
+			if len(xffTrimmed) == 0 {
+				continue
+			}
+			if contain, _ := s.Checker.Contains(xffTrimmed); !contain {
+				return xffTrimmed
+			}
 		}
-		if contain, _ := s.Checker.Contains(xffTrimmed); !contain {
-			return xffTrimmed
-		}
+
+		return ""
+	}
+
+	ip, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		ip = req.RemoteAddr
+	}
+
+	if contain, _ := s.Checker.Contains(ip); !contain {
+		return ip
 	}
 
 	return ""
