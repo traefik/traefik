@@ -109,6 +109,10 @@ type ServiceTCP struct {
 	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
 	// By default, NodePortLB is false.
 	NodePortLB bool `json:"nodePortLB,omitempty"`
+	// HealthCheck defines health checks for ExternalName services.
+	HealthCheck *TCPServerHealthCheck `json:"healthCheck,omitempty"`
+	// PassiveHealthCheck defines passive health checks for ExternalName services.
+	PassiveHealthCheck *PassiveServerHealthCheck `json:"passiveHealthCheck,omitempty"`
 }
 
 // +genclient
@@ -136,4 +140,23 @@ type IngressRouteTCPList struct {
 
 	// Items is the list of IngressRouteTCP.
 	Items []IngressRouteTCP `json:"items"`
+}
+
+type TCPServerHealthCheck struct {
+	// Port defines the server URL port for the health check endpoint.
+	Port int `json:"port,omitempty"`
+	// Send defines the expected request to send to the server.
+	Send string `json:"send,omitempty"`
+	// Expect defines the expected response from the server.
+	Expect string `json:"expect,omitempty"`
+	// Interval defines the frequency of the health check calls for healthy targets.
+	// Default: 30s
+	Interval *intstr.IntOrString `json:"interval,omitempty"`
+	// UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+	// When UnhealthyInterval is not defined, it defaults to the Interval value.
+	// Default: 30s
+	UnhealthyInterval *intstr.IntOrString `json:"unhealthyInterval,omitempty"`
+	// Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+	// Default: 5s
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 }
