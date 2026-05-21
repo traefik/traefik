@@ -26,7 +26,6 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 		expectedPath    string
 		expectedRawPath string
 		expectedQuery   string
-		notAppendXFF    bool
 	}{
 		{
 			name:           "Basic proxy",
@@ -38,18 +37,6 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 			expectedHost:   "example.com",
 			expectedPath:   "/test",
 			expectedQuery:  "param=value",
-		},
-		{
-			name:           "Basic proxy - notAppendXFF",
-			target:         testhelpers.MustParseURL("http://example.com"),
-			passHostHeader: false,
-			preservePath:   false,
-			incomingURL:    "http://localhost/test?param=value",
-			expectedScheme: "http",
-			expectedHost:   "example.com",
-			expectedPath:   "/test",
-			expectedQuery:  "param=value",
-			notAppendXFF:   true,
 		},
 		{
 			name:           "HTTPS target",
@@ -102,9 +89,6 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 			rewriteRequest := rewriteRequestBuilder(test.target, test.passHostHeader, test.preservePath)
 
 			ctx := t.Context()
-			if test.notAppendXFF {
-				ctx = SetNotAppendXFF(ctx)
-			}
 
 			reqIn := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
 			reqIn = reqIn.WithContext(ctx)
@@ -118,12 +102,7 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 			}
 			rewriteRequest(pr)
 
-			if test.notAppendXFF {
-				assert.Equal(t, "1.2.3.4", reqOut.Header.Get("X-Forwarded-For"))
-			} else {
-				// When not disabled, X-Forwarded-For should have RemoteAddr appended
-				assert.Equal(t, "1.2.3.4, 127.0.0.1", reqOut.Header.Get("X-Forwarded-For"))
-			}
+			assert.Equal(t, "1.2.3.4", reqOut.Header.Get("X-Forwarded-For"))
 			assert.Equal(t, test.expectedScheme, reqOut.URL.Scheme)
 			assert.Equal(t, test.expectedHost, reqOut.Host)
 			assert.Equal(t, test.expectedPath, reqOut.URL.Path)

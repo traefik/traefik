@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -121,10 +120,6 @@ func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	x.removeConnectionHeaders(r)
 
-	if x.notAppendXForwardedFor {
-		r = r.WithContext(httputil.SetNotAppendXFF(r.Context()))
-	}
-
 	x.next.ServeHTTP(w, r)
 }
 
@@ -136,7 +131,8 @@ func (x *XForwarded) isTrustedIP(ip string) bool {
 }
 
 func (x *XForwarded) rewrite(outreq *http.Request) {
-	if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
+	clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr)
+	if err == nil {
 		clientIP = removeIPv6Zone(clientIP)
 
 		if unsafeHeader(outreq.Header).Get(xRealIP) == "" {
@@ -174,7 +170,11 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 	// Per https://www.rfc-editor.org/rfc/rfc2616#section-4.2, the Forwarded IPs list is in
 	// the same order as the values in the X-Forwarded-For header(s).
-	if xffs := unsafeHeader(outreq.Header).Values(XForwardedFor); len(xffs) > 0 {
+	xffs := unsafeHeader(outreq.Header).Values(XForwardedFor)
+	if !x.notAppendXForwardedFor && clientIP != "" {
+		xffs = append(xffs, clientIP)
+	}
+	if len(xffs) > 0 {
 		unsafeHeader(outreq.Header).Set(XForwardedFor, strings.Join(xffs, ", "))
 	}
 

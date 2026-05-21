@@ -212,23 +212,6 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	outReq.Header.SetMethod(req.Method)
 
-	if !proxyhttputil.ShouldNotAppendXFF(req.Context()) {
-		if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-			// If we aren't the first proxy retain prior
-			// X-Forwarded-For information as a comma+space
-			// separated list and fold multiple headers into one.
-			prior, ok := req.Header["X-Forwarded-For"]
-			if len(prior) > 0 {
-				clientIP = strings.Join(prior, ", ") + ", " + clientIP
-			}
-
-			omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
-			if !omit {
-				outReq.Header.Set("X-Forwarded-For", clientIP)
-			}
-		}
-	}
-
 	if err := p.roundTrip(rw, req, outReq, reqUpType); err != nil {
 		proxyhttputil.ErrorHandler(rw, req, err)
 	}
