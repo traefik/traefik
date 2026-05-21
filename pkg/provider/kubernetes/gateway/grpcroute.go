@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -394,14 +395,23 @@ func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {
 		return `PathPrefix("/")`
 	}
 
+	matchType := ptr.Deref(method.Type, gatev1.GRPCMethodMatchExact)
+
+	quoteIfExact := func(v string) string {
+		if matchType == gatev1.GRPCMethodMatchExact {
+			return regexp.QuoteMeta(v)
+		}
+		return v
+	}
+
 	sExpr := "[^/]+"
 	if s := ptr.Deref(method.Service, ""); s != "" {
-		sExpr = s
+		sExpr = quoteIfExact(s)
 	}
 
 	mExpr := "[^/]+"
 	if m := ptr.Deref(method.Method, ""); m != "" {
-		mExpr = m
+		mExpr = quoteIfExact(m)
 	}
 
 	return fmt.Sprintf("PathRegexp(%q)", fmt.Sprintf("/%s/%s", sExpr, mExpr))

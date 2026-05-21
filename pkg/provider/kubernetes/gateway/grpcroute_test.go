@@ -128,6 +128,38 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 			expectedRule: `PathRegexp("/foo/bar")`,
 		},
 		{
+			desc: "Exact dotted service matching",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
+				Service: ptr.To("my.service.example"),
+			},
+			expectedRule: `PathRegexp("/my\\.service\\.example/[^/]+")`,
+		},
+		{
+			desc: "nil Type (defaults to Exact) with dotted service",
+			method: &gatev1.GRPCMethodMatch{
+				Service: ptr.To("my.service.example"),
+			},
+			expectedRule: `PathRegexp("/my\\.service\\.example/[^/]+")`,
+		},
+		{
+			desc: "Exact dotted method matching",
+			method: &gatev1.GRPCMethodMatch{
+				Type:   ptr.To(gatev1.GRPCMethodMatchExact),
+				Method: ptr.To("my.method"),
+			},
+			expectedRule: `PathRegexp("/[^/]+/my\\.method")`,
+		},
+		{
+			desc: "Exact dotted service and method matching",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
+				Service: ptr.To("my.service.example"),
+				Method:  ptr.To("MyMethod"),
+			},
+			expectedRule: `PathRegexp("/my\\.service\\.example/MyMethod")`,
+		},
+		{
 			desc: "Regexp service matching",
 			method: &gatev1.GRPCMethodMatch{
 				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
