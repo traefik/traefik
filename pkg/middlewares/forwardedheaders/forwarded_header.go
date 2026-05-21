@@ -240,29 +240,16 @@ func DeleteXForwardedHeaders(headers http.Header) {
 // removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
 // like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
 func removeIPv6Zone(clientIP string) string {
-	if before, _, found := strings.Cut(clientIP, "%"); found {
-		return before
+	if i := strings.LastIndexByte(clientIP, '%'); i > 0 {
+		return clientIP[:i]
 	}
 	return clientIP
 }
 
 // isWebsocketRequest returns whether the specified HTTP request is a websocket handshake request.
 func isWebsocketRequest(req *http.Request) bool {
-	containsHeader := func(name, value string) bool {
-		h := unsafeHeader(req.Header).Get(name)
-		for {
-			before, after, found := strings.Cut(h, ",")
-			if strings.EqualFold(value, strings.TrimSpace(before)) {
-				return true
-			}
-			if !found {
-				return false
-			}
-			h = after
-		}
-	}
-
-	return containsHeader(connection, "upgrade") && containsHeader(upgrade, "websocket")
+	return httpguts.HeaderValuesContainsToken(req.Header[connection], upgrade) &&
+		httpguts.HeaderValuesContainsToken(req.Header[upgrade], "Websocket")
 }
 
 func forwardedPort(req *http.Request) string {
@@ -274,7 +261,7 @@ func forwardedPort(req *http.Request) string {
 		return port
 	}
 
-	if unsafeHeader(req.Header).Get(XForwardedProto) == "https" || unsafeHeader(req.Header).Get(XForwardedProto) == "wss" {
+	if proto := unsafeHeader(req.Header).Get(XForwardedProto); proto == "https" || proto == "wss" {
 		return "443"
 	}
 
