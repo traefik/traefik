@@ -1,8 +1,11 @@
 package passtlsclientcert
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"net"
 	"net/http"
@@ -655,6 +658,30 @@ func Test_getSANs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetSubjectDNInfoWithUID(t *testing.T) {
+	t.Parallel()
+
+	subject := &pkix.Name{
+		CommonName: "client.example.com",
+		Names: []pkix.AttributeTypeAndValue{
+			{
+				Type:  asn1.ObjectIdentifier{0, 9, 2342, 19200300, 100, 1, 1},
+				Value: "user-001",
+			},
+		},
+	}
+
+	options := &SubjectDistinguishedNameOptions{
+		UID:        true,
+		CommonName: true,
+	}
+
+	got := getSubjectDNInfo(context.Background(), options, subject)
+	expected := "UID=user-001,CN=client.example.com,"
+
+	assert.Equal(t, expected, got)
 }
 
 func getCleanCertContents(certContents []string) string {

@@ -374,6 +374,7 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
+            uid: true
           issuer:
             country: true
             province: true

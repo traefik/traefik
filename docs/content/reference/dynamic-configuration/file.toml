@@ -303,6 +303,7 @@
             commonName = true
             serialNumber = true
             domainComponent = true
+            uid = true
           [http.middlewares.Middleware16.passTLSClientCert.info.issuer]
             country = true
             province = true

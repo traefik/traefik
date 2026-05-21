@@ -865,6 +865,8 @@ type TLSClientCertificateSubjectDNInfo struct {
 	SerialNumber bool `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
 	// DomainComponent defines whether to add the domainComponent information into the subject.
 	DomainComponent bool `json:"domainComponent,omitempty" toml:"domainComponent,omitempty" yaml:"domainComponent,omitempty" export:"true"`
+	// UID defines whether to add the UID information into the subject.
+	UID bool `json:"uid,omitempty" toml:"uid,omitempty" yaml:"uid,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

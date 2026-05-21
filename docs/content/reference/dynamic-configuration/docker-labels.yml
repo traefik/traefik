@@ -126,6 +126,7 @@
 - "traefik.http.middlewares.middleware16.passtlsclientcert.info.subject.organizationalunit=true"
 - "traefik.http.middlewares.middleware16.passtlsclientcert.info.subject.province=true"
 - "traefik.http.middlewares.middleware16.passtlsclientcert.info.subject.serialnumber=true"
+- "traefik.http.middlewares.middleware16.passtlsclientcert.info.subject.uid=true"
 - "traefik.http.middlewares.middleware16.passtlsclientcert.pem=true"
 - "traefik.http.middlewares.middleware17.plugin.pluginconf0.name0=foobar"
 - "traefik.http.middlewares.middleware17.plugin.pluginconf0.name1=foobar"

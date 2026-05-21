@@ -1083,6 +1083,10 @@ spec:
                             description: SerialNumber defines whether to add the serialNumber
                               information into the subject.
                             type: boolean
+                          uid:
+                            description: UID defines whether to add the UID information
+                              into the subject.
+                            type: boolean
                         type: object
                     type: object
                   pem:

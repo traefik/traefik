@@ -1439,6 +1439,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.CommonName":          "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.SerialNumber":        "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.DomainComponent":     "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.UID":                 "false",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Country":              "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Province":             "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Locality":             "true",
