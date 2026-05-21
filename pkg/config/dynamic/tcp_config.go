@@ -157,6 +157,8 @@ type TCPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
 	Port    string `json:"-" toml:"-" yaml:"-"`
 	TLS     bool   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	// Weight defines the weight of the server for load balancing.
+	Weight  *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
