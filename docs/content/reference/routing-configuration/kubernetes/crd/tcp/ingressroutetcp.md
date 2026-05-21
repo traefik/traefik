@@ -12,9 +12,97 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 !!! note "General"
     If both HTTP routers and TCP routers are connected to the same EntryPoint, the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
-## Configuration Example
+## Configuration Examples
 
-You can declare an `IngressRouteTCP` as detailed below:
+### Basic TCP Routing
+
+The following example demonstrates a minimal `IngressRouteTCP` that routes all incoming TCP connections on the `footcp` entry point to a Kubernetes Service named `foo` on port `8080`.
+
+```yaml tab="IngressRouteTCP"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mytcproute
+  namespace: apps
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  - match: HostSNI(`*`)
+    services:
+    - name: foo
+      port: 8080
+```
+
+```yaml tab="Service"
+apiVersion: v1
+kind: Service
+metadata:
+  name: foo
+  namespace: apps
+
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: foo
+```
+
+### TCP Routing with TLS Termination
+
+The following example shows an `IngressRouteTCP` that terminates TLS on the entry point before forwarding the decrypted traffic to the backend service.
+
+```yaml tab="IngressRouteTCP"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mytcproute-tls
+  namespace: apps
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  - match: HostSNI(`example.com`)
+    services:
+    - name: foo
+      port: 8080
+
+  tls:
+    secretName: mytlscert
+```
+
+```yaml tab="Service"
+apiVersion: v1
+kind: Service
+metadata:
+  name: foo
+  namespace: apps
+
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: foo
+```
+
+```yaml tab="Secret"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mytlscert
+  namespace: apps
+
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t...
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ==...
+```
+
+### Complete Configuration Reference
+
+You can declare an `IngressRouteTCP` with all available options as detailed below:
 
 ```yaml tab="IngressRouteTCP"
 apiVersion: traefik.io/v1alpha1
@@ -49,7 +137,7 @@ spec:
     certResolver: foo
     domains:
     - main: example.net
-      sans:                       
+      sans:
       - a.example.net
       - b.example.net
     passthrough: false
