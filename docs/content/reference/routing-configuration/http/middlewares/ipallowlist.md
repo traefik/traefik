@@ -5,7 +5,9 @@ description: "Learn how to use IPAllowList in HTTP middleware for limiting clien
 
 `ipAllowList` accepts / refuses requests based on the client IP.
 
-## Configuration Example
+## Configuration Examples
+
+### Allowing Defined IPs
 
 ```yaml tab="Structured (YAML)"
 # Accepts request from defined IP
@@ -52,11 +54,63 @@ spec:
       - 192.168.1.7
 ```
 
+### Customizing the Rejection Status Code
+
+```yaml tab="Structured (YAML)"
+# Rejects requests with a 404 instead of 403
+http:
+  middlewares:
+    test-ipallowlist:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"
+        rejectStatusCode: 404
+```
+
+```toml tab="Structured (TOML)"
+# Rejects requests with a 404 instead of 403
+[http.middlewares]
+  [http.middlewares.test-ipallowlist.ipAllowList]
+    sourceRange = ["127.0.0.1/32"]
+    rejectStatusCode = 404
+```
+
+```yaml tab="Labels"
+# Rejects requests with a 404 instead of 403
+labels:
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32"
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
+```
+
+```json tab="Tags"
+// Rejects requests with a 404 instead of 403
+{
+  "Tags" : [
+    "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32",
+    "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
+  ]
+}
+```
+
+```yaml tab="Kubernetes"
+# Rejects requests with a 404 instead of 403
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ipallowlist
+spec:
+  ipAllowList:
+    sourceRange:
+      - 127.0.0.1/32
+    rejectStatusCode: 404
+```
+
 ## Configuration Options
 
 | Field      | Description     | Default | Required |
 |:-----------|:------------------------------|:--------|:---------|
 | <a id="opt-sourceRange" href="#opt-sourceRange" title="#opt-sourceRange">`sourceRange`</a> | List of allowed IPs (or ranges of allowed IPs by using CIDR notation). |      | Yes      |
+| <a id="opt-rejectStatusCode" href="#opt-rejectStatusCode" title="#opt-rejectStatusCode">`rejectStatusCode`</a> | HTTP status code used for refused requests. | 403      | No      |
 | <a id="opt-ipStrategy-depth" href="#opt-ipStrategy-depth" title="#opt-ipStrategy-depth">`ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br /> If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`ipStrategy](#ipstrategy), and [`depth`](#example-of-depth--x-forwarded-for) below. | 0      | No      |
 | <a id="opt-ipStrategy-excludedIPs" href="#opt-ipStrategy-excludedIPs" title="#opt-ipStrategy-excludedIPs">`ipStrategy.excludedIPs`</a> | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`ipStrategy](#ipstrategy), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
 | <a id="opt-ipStrategy-ipv6Subnet" href="#opt-ipStrategy-ipv6Subnet" title="#opt-ipStrategy-ipv6Subnet">`ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
