@@ -560,6 +560,7 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	nst := namedServersTransport{
 		name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
+			MaxIdleConnsPerHost: p.UpstreamKeepaliveConnections,
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
 				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
