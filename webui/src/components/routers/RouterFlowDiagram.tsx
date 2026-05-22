@@ -112,7 +112,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
     ? data.service
     : `${data.service ?? 'unknown'}@${data.provider ?? 'unknown'}`
 
-  const { data: serviceData, error: serviceDataError } = useResourceDetail(serviceSlug ?? '', 'services')
+  const { data: serviceData, error: serviceDataError } = useResourceDetail(serviceSlug ?? '', 'services', protocol)
 
   return (
     <Flex gap={2} data-testid="router-structure">
