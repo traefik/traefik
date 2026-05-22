@@ -62,8 +62,14 @@ type Provider struct {
 	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	lastConfiguration safe.Safe
+	routerConfigCache map[string]routerConfigCacheEntry
 
 	routerTransform k8s.RouterTransform
+}
+
+type routerConfigCacheEntry struct {
+	config *RouterConfig
+	err    error
 }
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
@@ -245,6 +251,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	}
 
 	ingresses := client.GetIngresses()
+	seenRouterConfigKeys := make(map[string]struct{}, len(ingresses))
 
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
@@ -259,7 +266,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			logger.Error().Err(err).Msg("Error while updating ingress status")
 		}
 
-		rtConfig, err := parseRouterConfig(ingress.Annotations)
+		rtConfig, err := p.getRouterConfig(ingress, seenRouterConfigKeys)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse annotations")
 			continue
@@ -439,7 +446,46 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 	}
 
+	p.pruneRouterConfigCache(seenRouterConfigKeys)
+
 	return conf
+}
+
+func (p *Provider) getRouterConfig(ingress *netv1.Ingress, seen map[string]struct{}) (*RouterConfig, error) {
+	key := routerConfigCacheKey(ingress)
+	if key == "" {
+		return parseRouterConfig(ingress.Annotations)
+	}
+
+	seen[key] = struct{}{}
+
+	if entry, ok := p.routerConfigCache[key]; ok {
+		return entry.config.DeepCopy(), entry.err
+	}
+
+	config, err := parseRouterConfig(ingress.Annotations)
+	if p.routerConfigCache == nil {
+		p.routerConfigCache = map[string]routerConfigCacheEntry{}
+	}
+
+	p.routerConfigCache[key] = routerConfigCacheEntry{config: config.DeepCopy(), err: err}
+	return config, err
+}
+
+func (p *Provider) pruneRouterConfigCache(seen map[string]struct{}) {
+	for key := range p.routerConfigCache {
+		if _, ok := seen[key]; !ok {
+			delete(p.routerConfigCache, key)
+		}
+	}
+}
+
+func routerConfigCacheKey(ingress *netv1.Ingress) string {
+	if ingress.ResourceVersion == "" {
+		return ""
+	}
+
+	return ingress.Namespace + "/" + ingress.Name + "/" + ingress.ResourceVersion
 }
 
 func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {

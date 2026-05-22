@@ -33,6 +33,97 @@ var _ provider.Provider = (*Provider)(nil)
 
 func pointer[T any](v T) *T { return &v }
 
+func TestGetRouterConfigUsesResourceVersionCache(t *testing.T) {
+	p := &Provider{}
+	ing := &netv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "testing",
+			Name:            "ingress",
+			ResourceVersion: "1",
+			Annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/router.entrypoints": "web",
+				"traefik.ingress.kubernetes.io/router.tls.options": "default",
+			},
+		},
+	}
+
+	seen := map[string]struct{}{}
+	cfg, err := p.getRouterConfig(ing, seen)
+	require.NoError(t, err)
+
+	cfg.Router.EntryPoints[0] = "websecure"
+	cfg.Router.TLS.Options = "custom"
+
+	cfg, err = p.getRouterConfig(ing, seen)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"web"}, cfg.Router.EntryPoints)
+	assert.Equal(t, "default", cfg.Router.TLS.Options)
+	assert.Len(t, p.routerConfigCache, 1)
+
+	p.pruneRouterConfigCache(map[string]struct{}{})
+
+	assert.Empty(t, p.routerConfigCache)
+}
+
+func TestGetRouterConfigInvalidatesOnResourceVersionChange(t *testing.T) {
+	p := &Provider{}
+	ing := &netv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "testing",
+			Name:            "ingress",
+			ResourceVersion: "1",
+			Annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/router.entrypoints": "web",
+			},
+		},
+	}
+
+	// First rebuild caches the parsed annotations under the resourceVersion key.
+	seen := map[string]struct{}{}
+	cfg, err := p.getRouterConfig(ing, seen)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"web"}, cfg.Router.EntryPoints)
+	p.pruneRouterConfigCache(seen)
+
+	// A spec change bumps the resourceVersion, which must yield a cache miss and re-parse.
+	ing.ResourceVersion = "2"
+	ing.Annotations["traefik.ingress.kubernetes.io/router.entrypoints"] = "websecure"
+
+	seen = map[string]struct{}{}
+	cfg, err = p.getRouterConfig(ing, seen)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"websecure"}, cfg.Router.EntryPoints)
+
+	// The stale entry for resourceVersion "1" is pruned, leaving only the current one.
+	p.pruneRouterConfigCache(seen)
+	assert.Len(t, p.routerConfigCache, 1)
+	_, ok := p.routerConfigCache["testing/ingress/2"]
+	assert.True(t, ok)
+}
+
+func TestGetRouterConfigCachesNilConfig(t *testing.T) {
+	p := &Provider{}
+	ing := &netv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "testing",
+			Name:            "ingress",
+			ResourceVersion: "1",
+		},
+	}
+
+	seen := map[string]struct{}{}
+	cfg, err := p.getRouterConfig(ing, seen)
+	require.NoError(t, err)
+	assert.Nil(t, cfg)
+
+	// The nil result (no router annotations) is cached and the DeepCopy on read stays nil-safe.
+	cfg, err = p.getRouterConfig(ing, seen)
+	require.NoError(t, err)
+	assert.Nil(t, cfg)
+	assert.Len(t, p.routerConfigCache, 1)
+}
+
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
 		desc                         string
