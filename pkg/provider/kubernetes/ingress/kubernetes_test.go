@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -1622,6 +1623,28 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress with invalid pathmatcher annotation",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2235,6 +2258,109 @@ func TestGetCertificates(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, test.result, tlsConfigs)
 			}
+		})
+	}
+}
+
+func Test_loadRouter(t *testing.T) {
+	implementationSpecific := netv1.PathTypeImplementationSpecific
+	exact := netv1.PathTypeExact
+
+	testCases := []struct {
+		desc        string
+		rule        netv1.IngressRule
+		path        netv1.HTTPIngressPath
+		rtConfig    *RouterConfig
+		expectedRt  *dynamic.Router
+		expectedErr string
+	}{
+		{
+			desc: "nil rtConfig falls back to default PathPrefix",
+			path: netv1.HTTPIngressPath{Path: "/bar"},
+			expectedRt: &dynamic.Router{
+				Rule:    "PathPrefix(`/bar`)",
+				Service: "svc",
+			},
+		},
+		{
+			desc:     "empty pathMatcher falls back to default PathPrefix",
+			path:     netv1.HTTPIngressPath{Path: "/bar"},
+			rtConfig: &RouterConfig{Router: &RouterIng{PathMatcher: ""}},
+			expectedRt: &dynamic.Router{
+				Rule:    "PathPrefix(`/bar`)",
+				Service: "svc",
+			},
+		},
+		{
+			desc:     "valid pathMatcher Path",
+			path:     netv1.HTTPIngressPath{Path: "/bar", PathType: &implementationSpecific},
+			rtConfig: &RouterConfig{Router: &RouterIng{PathMatcher: "Path"}},
+			expectedRt: &dynamic.Router{
+				Rule:    "Path(`/bar`)",
+				Service: "svc",
+			},
+		},
+		{
+			desc:     "valid pathMatcher PathPrefix",
+			path:     netv1.HTTPIngressPath{Path: "/bar", PathType: &implementationSpecific},
+			rtConfig: &RouterConfig{Router: &RouterIng{PathMatcher: "PathPrefix"}},
+			expectedRt: &dynamic.Router{
+				Rule:    "PathPrefix(`/bar`)",
+				Service: "svc",
+			},
+		},
+		{
+			desc:     "valid pathMatcher PathRegexp",
+			path:     netv1.HTTPIngressPath{Path: "/bar", PathType: &implementationSpecific},
+			rtConfig: &RouterConfig{Router: &RouterIng{PathMatcher: "PathRegexp"}},
+			expectedRt: &dynamic.Router{
+				Rule:    "PathRegexp(`/bar`)",
+				Service: "svc",
+			},
+		},
+		{
+			desc:     "pathMatcher annotation ignored on Exact pathType",
+			path:     netv1.HTTPIngressPath{Path: "/bar", PathType: &exact},
+			rtConfig: &RouterConfig{Router: &RouterIng{PathMatcher: "PathPrefix"}},
+			expectedRt: &dynamic.Router{
+				Rule:    "Path(`/bar`)",
+				Service: "svc",
+			},
+		},
+		{
+			desc:        "rule-injection payload rejected",
+			path:        netv1.HTTPIngressPath{Path: "/bar", PathType: &implementationSpecific},
+			rtConfig:    &RouterConfig{Router: &RouterIng{PathMatcher: `Host("victim.local") || PathPrefix`}},
+			expectedErr: `invalid router path matcher "Host(\"victim.local\") || PathPrefix": must be one of Path, PathPrefix, PathRegexp`,
+		},
+		{
+			desc:        "lowercase pathMatcher rejected (case-sensitive)",
+			path:        netv1.HTTPIngressPath{Path: "/bar", PathType: &implementationSpecific},
+			rtConfig:    &RouterConfig{Router: &RouterIng{PathMatcher: "path"}},
+			expectedErr: `invalid router path matcher "path": must be one of Path, PathPrefix, PathRegexp`,
+		},
+		{
+			desc:        "unknown matcher rejected",
+			path:        netv1.HTTPIngressPath{Path: "/bar", PathType: &implementationSpecific},
+			rtConfig:    &RouterConfig{Router: &RouterIng{PathMatcher: "Query"}},
+			expectedErr: `invalid router path matcher "Query": must be one of Path, PathPrefix, PathRegexp`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rt, err := loadRouter(test.rule, test.path, test.rtConfig, "svc")
+
+			if test.expectedErr != "" {
+				require.EqualError(t, err, test.expectedErr)
+				assert.Nil(t, rt)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedRt, rt)
 		})
 	}
 }
