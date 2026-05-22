@@ -75,6 +75,57 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 	}
 }
 
+func TestNewServiceHealthChecker_maxConcurrency(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		config            *dynamic.ServerHealthCheck
+		expMaxConcurrency int
+	}{
+		{
+			desc:              "default value",
+			config:            &dynamic.ServerHealthCheck{},
+			expMaxConcurrency: dynamic.DefaultHealthCheckMaxConcurrency,
+		},
+		{
+			desc: "zero value",
+			config: &dynamic.ServerHealthCheck{
+				MaxConcurrency: 0,
+			},
+			expMaxConcurrency: dynamic.DefaultHealthCheckMaxConcurrency,
+		},
+		{
+			desc: "out of range value",
+			config: &dynamic.ServerHealthCheck{
+				MaxConcurrency: -1,
+			},
+			expMaxConcurrency: dynamic.DefaultHealthCheckMaxConcurrency,
+		},
+		{
+			desc: "custom value",
+			config: &dynamic.ServerHealthCheck{
+				MaxConcurrency: 20,
+			},
+			expMaxConcurrency: 20,
+		},
+		{
+			desc: "sequential mode",
+			config: &dynamic.ServerHealthCheck{
+				MaxConcurrency: 1,
+			},
+			expMaxConcurrency: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
+			assert.Equal(t, test.expMaxConcurrency, healthChecker.maxConcurrency)
+		})
+	}
+}
+
 func TestServiceHealthChecker_newRequest(t *testing.T) {
 	testCases := []struct {
 		desc        string
