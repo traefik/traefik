@@ -62,6 +62,8 @@ const (
 
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-timeout
 	defaultUpstreamKeepaliveTimeout = 60
+	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-connections
+	defaultUpstreamKeepaliveConnections = 320
 )
 
 var (
@@ -99,20 +101,21 @@ type Provider struct {
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
 	// Configuration options available within the NGINX Ingress Controller ConfigMap.
-	ProxyRequestBuffering    bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
-	ClientBodyBufferSize     int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
-	ProxyBodySize            int64    `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
-	ProxyBuffering           bool     `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
-	ProxyBufferSize          int64    `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
-	ProxyBuffersNumber       int      `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
-	ProxyConnectTimeout      int      `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
-	ProxyReadTimeout         int      `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
-	ProxySendTimeout         int      `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
-	ProxyNextUpstream        string   `description:"Defines in which cases a request should be retried." json:"proxyNextUpstream,omitempty" toml:"proxyNextUpstream,omitempty" yaml:"proxyNextUpstream,omitempty" export:"true"`
-	ProxyNextUpstreamTries   int      `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
-	ProxyNextUpstreamTimeout int      `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
-	CustomHTTPErrors         []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
-	UpstreamKeepaliveTimeout int      `description:"Defines the idle timeout for keep-alive connections to upstream servers. Timeout value is unitless and in seconds." json:"upstreamKeepaliveTimeout,omitempty" toml:"upstreamKeepaliveTimeout,omitempty" yaml:"upstreamKeepaliveTimeout,omitempty" export:"true"`
+	ProxyRequestBuffering        bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
+	ClientBodyBufferSize         int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
+	ProxyBodySize                int64    `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
+	ProxyBuffering               bool     `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
+	ProxyBufferSize              int64    `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
+	ProxyBuffersNumber           int      `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
+	ProxyConnectTimeout          int      `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	ProxyReadTimeout             int      `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
+	ProxySendTimeout             int      `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
+	ProxyNextUpstream            string   `description:"Defines in which cases a request should be retried." json:"proxyNextUpstream,omitempty" toml:"proxyNextUpstream,omitempty" yaml:"proxyNextUpstream,omitempty" export:"true"`
+	ProxyNextUpstreamTries       int      `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
+	ProxyNextUpstreamTimeout     int      `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
+	CustomHTTPErrors             []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
+	UpstreamKeepaliveTimeout     int      `description:"Defines the idle timeout for keep-alive connections to upstream servers. Timeout value is unitless and in seconds." json:"upstreamKeepaliveTimeout,omitempty" toml:"upstreamKeepaliveTimeout,omitempty" yaml:"upstreamKeepaliveTimeout,omitempty" export:"true"`
+	UpstreamKeepaliveConnections int      `description:"Defines the maximum number of idle keep-alive connections to upstream servers." json:"upstreamKeepaliveConnections,omitempty" toml:"upstreamKeepaliveConnections,omitempty" yaml:"upstreamKeepaliveConnections,omitempty" export:"true"`
 
 	AllowCrossNamespaceResources bool     `description:"Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces." json:"allowCrossNamespaceResources,omitempty" toml:"allowCrossNamespaceResources,omitempty" yaml:"allowCrossNamespaceResources,omitempty" export:"true"`
 	GlobalAllowedResponseHeaders []string `description:"List of allowed response headers inside the custom headers annotations." json:"globalAllowedResponseHeaders,omitempty" toml:"globalAllowedResponseHeaders,omitempty" yaml:"globalAllowedResponseHeaders,omitempty" export:"true"`
@@ -159,6 +162,7 @@ func (p *Provider) SetDefaults() {
 	p.ProxyNextUpstream = defaultProxyNextUpstream
 	p.ProxyNextUpstreamTries = defaultProxyNextUpstreamTries
 	p.UpstreamKeepaliveTimeout = defaultUpstreamKeepaliveTimeout
+	p.UpstreamKeepaliveConnections = defaultUpstreamKeepaliveConnections
 	p.StrictValidatePathType = true
 }
 
