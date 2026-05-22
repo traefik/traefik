@@ -66,6 +66,11 @@ type Provider struct {
 	routerTransform k8s.RouterTransform
 }
 
+type serviceCacheEntry struct {
+	service *dynamic.Service
+	err     error
+}
+
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
@@ -245,6 +250,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	}
 
 	ingresses := client.GetIngresses()
+	serviceCache := make(map[string]serviceCacheEntry)
 
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
@@ -300,7 +306,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
-			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
+			service, err := p.loadServiceCached(client, ingress.Namespace, *ingress.Spec.DefaultBackend, serviceCache)
 			if err != nil {
 				logger.Error().
 					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
@@ -374,7 +380,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				service, err := p.loadService(client, ingress.Namespace, pa.Backend)
+				service, err := p.loadServiceCached(client, ingress.Namespace, pa.Backend, serviceCache)
 				if err != nil {
 					logger.Error().
 						Str("serviceName", pa.Backend.Service.Name).
@@ -440,6 +446,30 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	}
 
 	return conf
+}
+
+func (p *Provider) loadServiceCached(client Client, namespace string, backend netv1.IngressBackend, cache map[string]serviceCacheEntry) (*dynamic.Service, error) {
+	key := serviceCacheKey(namespace, backend)
+	if key == "" {
+		return p.loadService(client, namespace, backend)
+	}
+
+	if entry, ok := cache[key]; ok {
+		return entry.service.DeepCopy(), entry.err
+	}
+
+	service, err := p.loadService(client, namespace, backend)
+	cache[key] = serviceCacheEntry{service: service.DeepCopy(), err: err}
+
+	return service, err
+}
+
+func serviceCacheKey(namespace string, backend netv1.IngressBackend) string {
+	if backend.Service == nil {
+		return ""
+	}
+
+	return namespace + "/" + backend.Service.Name + "/" + portString(backend.Service.Port)
 }
 
 func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {
