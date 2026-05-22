@@ -322,6 +322,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// RedirectTrailingSlash
+	if config.RedirectTrailingSlash != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return redirect.NewRedirectTrailingSlash(ctx, next, *config.RedirectTrailingSlash, middlewareName)
+		}
+	}
+
 	// ReplacePath
 	if config.ReplacePath != nil {
 		if middleware != nil {
