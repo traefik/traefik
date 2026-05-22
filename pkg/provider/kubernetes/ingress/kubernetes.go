@@ -283,7 +283,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule:     "PathPrefix(`/`)",
+				Rule:     `PathPrefix("/")`,
 				Priority: math.MinInt32,
 				Service:  "default-backend",
 			}
@@ -454,10 +454,10 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
-		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
+		return fmt.Sprintf("HostRegexp(%q)", strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
 	}
 
-	return "Host(`" + host + "`)"
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
@@ -723,7 +723,7 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 			matcher = "Path"
 		}
 
-		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
+		rules = append(rules, fmt.Sprintf("%s(%q)", matcher, pa.Path))
 	}
 
 	rt := &dynamic.Router{
