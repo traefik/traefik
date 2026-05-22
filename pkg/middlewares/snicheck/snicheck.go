@@ -11,11 +11,12 @@ import (
 type SNICheck struct {
 	next       http.Handler
 	tlsOptions string
+	routerName string
 }
 
 // New creates a new SNICheck.
-func New(tlsOptions string, next http.Handler) *SNICheck {
-	return &SNICheck{next: next, tlsOptions: tlsOptions}
+func New(routerName, tlsOptions string, next http.Handler) *SNICheck {
+	return &SNICheck{next: next, tlsOptions: tlsOptions, routerName: routerName}
 }
 
 func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -27,6 +28,7 @@ func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	tlsOptionsUsed := tcp.GetTLSOptionsNameInContext(req.Context())
 	if s.tlsOptions != tlsOptionsUsed {
 		log.WithoutContext().
+			WithField("routerName", s.routerName).
 			WithField("req.Host", req.Host).
 			WithField("req.TLS.ServerName", req.TLS.ServerName).
 			Debugf("TLS options difference: SNI:%s, Header:%s", tlsOptionsUsed, s.tlsOptions)

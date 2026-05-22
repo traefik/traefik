@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -621,6 +622,16 @@ func Test_Routing(t *testing.T) {
 					_, err = fmt.Fprint(w, "HTTPS")
 					require.NoError(t, err)
 				}),
+
+				ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+					if tlsConn, ok := c.(*tls.Conn); ok {
+						if tlsConnWithConfigName, ok := tlsConn.NetConn().(tcp2.TLSConnWithName); ok {
+							return tcp2.AddTLSOptionsNameInContext(ctx, tlsConnWithConfigName.GetConfigName())
+						}
+					}
+
+					return ctx
+				},
 			}
 
 			stoppedHTTPS := make(chan struct{})
@@ -812,7 +823,8 @@ func routerHTTPSPathPrefix(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "PathPrefix(`/`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls10",
+				Options:         "tls10",
+				ResolvedOptions: "tls10",
 			},
 		},
 	}
@@ -826,7 +838,8 @@ func routerHTTPS(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "Host(`foo.bar`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls12",
+				Options:         "tls12",
+				ResolvedOptions: "tls12",
 			},
 		},
 	}

@@ -231,13 +231,8 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	}
 
 	if router.TLS != nil {
-		routerTLSOptionsName := tls.DefaultTLSConfigName
-		if router.TLS.Options != "" && router.TLS.Options != tls.DefaultTLSConfigName {
-			routerTLSOptionsName = provider.GetQualifiedName(ctx, router.TLS.Options)
-		}
-
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return snicheck.New(routerTLSOptionsName, next), nil
+			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
 		})
 	}
 

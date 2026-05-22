@@ -125,7 +125,8 @@ func TestRuntimeConfiguration(t *testing.T) {
 						Service:     "foo-service",
 						Rule:        "Host(`bar.foo`)",
 						TLS: &dynamic.RouterTLSConfig{
-							Options: "foo",
+							Options:         "foo",
+							ResolvedOptions: "default",
 						},
 					},
 				},
@@ -135,7 +136,8 @@ func TestRuntimeConfiguration(t *testing.T) {
 						Service:     "foo-service",
 						Rule:        "Host(`bar.foo`) && PathPrefix(`/path`)",
 						TLS: &dynamic.RouterTLSConfig{
-							Options: "bar",
+							Options:         "bar",
+							ResolvedOptions: "default",
 						},
 					},
 				},

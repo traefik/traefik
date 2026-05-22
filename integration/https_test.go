@@ -254,7 +254,7 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	assert.ErrorContains(s.T(), err, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	// with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS options instead", tr4.TLSClientConfig.ServerName)))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("found different TLS options for routers on the same host, so using the default TLS options instead"))
 	require.NoError(s.T(), err)
 }
 
@@ -1124,7 +1124,7 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 		if test.expectedError {
 			assert.Error(s.T(), err)
 		} else {
-			require.NoError(s.T(), err)
+			require.NoError(s.T(), err, fmt.Errorf("test %s failed with: %w", test.desc, err))
 		}
 	}
 }
