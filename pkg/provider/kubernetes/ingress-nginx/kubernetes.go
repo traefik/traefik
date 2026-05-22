@@ -267,29 +267,53 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	// Phase 1: build the metamodel from k8s resources.
 	mc := p.build(ctx, ingressClasses)
 
-	// Update ingress statuses (requires k8s access, must happen in Phase 1 context).
+	p.updateIngressStatuses(ctx, mc)
+
+	// Phase 2: translate the metamodel into a Traefik dynamic.Configuration.
+	return p.translate(ctx, mc)
+}
+
+func (p *Provider) updateIngressStatuses(ctx context.Context, mc *model) {
+	if p.PublishService == "" && len(p.PublishStatusAddress) == 0 {
+		return
+	}
+
+	ingresses := p.k8sClient.ListIngresses()
+	ingressesByKey := make(map[string]*netv1.Ingress, len(ingresses))
+	for _, ing := range ingresses {
+		ingressesByKey[ingressKey(ing.Namespace, ing.Name)] = ing
+	}
+
+	processed := make(map[string]struct{})
 	for _, server := range mc.Servers {
 		for _, loc := range server.Locations {
 			if loc.IngressName == "" {
 				continue
 			}
-			// Retrieve the original ingress to update its status.
-			for _, ing := range p.k8sClient.ListIngresses() {
-				if ing.Namespace == loc.Namespace && ing.Name == loc.IngressName {
-					if err := p.updateIngressStatus(ing); err != nil {
-						log.Ctx(ctx).Error().Err(err).
-							Str("namespace", ing.Namespace).
-							Str("ingress", ing.Name).
-							Msg("Error while updating ingress status")
-					}
-					break
-				}
+
+			key := ingressKey(loc.Namespace, loc.IngressName)
+			if _, ok := processed[key]; ok {
+				continue
+			}
+			processed[key] = struct{}{}
+
+			ing, ok := ingressesByKey[key]
+			if !ok {
+				continue
+			}
+
+			if err := p.updateIngressStatus(ing); err != nil {
+				log.Ctx(ctx).Error().Err(err).
+					Str("namespace", ing.Namespace).
+					Str("ingress", ing.Name).
+					Msg("Error while updating ingress status")
 			}
 		}
 	}
+}
 
-	// Phase 2: translate the metamodel into a Traefik dynamic.Configuration.
-	return p.translate(ctx, mc)
+func ingressKey(namespace, name string) string {
+	return namespace + "/" + name
 }
 
 func (p *Provider) validateConfiguration() error {
