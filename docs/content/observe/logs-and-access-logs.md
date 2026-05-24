@@ -176,5 +176,29 @@ When using the `json` format, you can customize which fields are included in you
 - **Request Fields:** You can choose to `keep`, `drop`, or `redact` any of the standard request fields. A complete list of available fields like `ClientHost`, `RequestMethod`, and `Duration` can be found in the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md#json-format-fields).
 - **Request Headers:** You can also specify which request headers should be included in the logs, and whether their values should be `kept`, `dropped`, or `redacted`.
 
-!!! info
-    For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
+## Custom JSON Template
+
+When using the `json` format, you can set `jsonTemplate` to a [Go `text/template`](https://pkg.go.dev/text/template) string to fully control the field names and output order of each access log line.
+
+String fields **auto-escape** their content, so embedding them inside JSON string literals is safe by default — no helper needed:
+
+```yaml tab="Structured (YAML)"
+accessLog:
+  format: json
+  jsonTemplate: >-
+    {"time":"{{ (index . "StartUTC").Format "2006-01-02T15:04:05Z07:00" }}",
+     "status":{{ index . "DownstreamStatus" }},
+     "method":"{{ index . "RequestMethod" }}",
+     "path":"{{ index . "RequestPath" }}",
+     "client_ip":"{{ index . "ClientHost" }}",
+     "duration_ms":{{ (index . "Duration").Milliseconds }}}
+```
+
+The `json` template function is also available when you want the complete JSON value (including its own surrounding quotes):
+`{{ json (index . "RequestPath") }}` → `"/foo\"bar"`.
+
+!!! warning
+    The template must produce valid JSON on every request.
+    If the rendered output is not valid JSON, the log line is dropped with an error.
+
+For the full list of available fields, built-in keys, and configuration options, see the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md#json-template).
