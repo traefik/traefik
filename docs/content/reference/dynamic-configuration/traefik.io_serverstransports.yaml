@@ -55,6 +55,10 @@ spec:
                 items:
                   type: string
                 type: array
+              disableCompression:
+                description: DisableCompression disables compression handling for
+                  connections with backend servers.
+                type: boolean
               disableHTTP2:
                 description: DisableHTTP2 disables HTTP/2 for connections with backend
                   servers.

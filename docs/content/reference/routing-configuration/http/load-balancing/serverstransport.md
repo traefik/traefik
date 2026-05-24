@@ -23,6 +23,7 @@ http:
         - "/path/to/rootca2.pem"
       maxIdleConnsPerHost: 100
       disableHTTP2: true
+      disableCompression: true
       peerCertURI: "spiffe://example.org/peer"
       forwardingTimeouts:
         dialTimeout: "30s"
@@ -50,6 +51,7 @@ http:
   rootcas = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
   maxIdleConnsPerHost = 100
   disableHTTP2 = true
+  disableCompression = true
   peerCertURI = "spiffe://example.org/peer"
   cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
   minVersion = "VersionTLS12"
@@ -113,6 +115,7 @@ labels:
 | <a id="opt-maxVersion" href="#opt-maxVersion" title="#opt-maxVersion">`maxVersion`</a> | Defines the maximum TLS version to use when contacting backend servers. | "" | No |
 | <a id="opt-maxIdleConnsPerHost" href="#opt-maxIdleConnsPerHost" title="#opt-maxIdleConnsPerHost">`maxIdleConnsPerHost`</a> | Maximum idle (keep-alive) connections to keep per-host.                                                                                  | 200     | No       |
 | <a id="opt-disableHTTP2" href="#opt-disableHTTP2" title="#opt-disableHTTP2">`disableHTTP2`</a> | Disables HTTP/2 for connections with servers.                                                                                            | false   | No       |
+| <a id="opt-disableCompression" href="#opt-disableCompression" title="#opt-disableCompression">`disableCompression`</a> | Disables compression handling for connections with servers. | false | No |
 | <a id="opt-peerCertURI" href="#opt-peerCertURI" title="#opt-peerCertURI">`peerCertURI`</a> | Defines the URI used to match against SAN URIs during the server's certificate verification.                                             | ""      | No       |
 | <a id="opt-forwardingTimeouts-dialTimeout" href="#opt-forwardingTimeouts-dialTimeout" title="#opt-forwardingTimeouts-dialTimeout">`forwardingTimeouts.dialTimeout`</a> | Amount of time to wait until a connection to a server can be established.<br />0 = no timeout                                            | 30s     | No       |
 | <a id="opt-forwardingTimeouts-responseHeaderTimeout" href="#opt-forwardingTimeouts-responseHeaderTimeout" title="#opt-forwardingTimeouts-responseHeaderTimeout">`forwardingTimeouts.responseHeaderTimeout`</a> | Amount of time to wait for a server's response headers after fully writing the request (including its body, if any).<br />0 = no timeout | 0s      | No       |

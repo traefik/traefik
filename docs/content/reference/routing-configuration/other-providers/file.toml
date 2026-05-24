@@ -407,6 +407,7 @@
       maxVersion = "foobar"
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
+      disableCompression = true
       peerCertURI = "foobar"
 
       [[http.serversTransports.ServersTransport0.certificates]]
@@ -434,6 +435,7 @@
       maxVersion = "foobar"
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
+      disableCompression = true
       peerCertURI = "foobar"
 
       [[http.serversTransports.ServersTransport1.certificates]]
