@@ -1,0 +1,92 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: HostSNI(`foo.com`)
+    services:
+    - name: nodeport-svc-tcp-local
+      port: 8000
+      nodePortLB: true
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: traefik-node-1
+status:
+  addresses:
+    - type: InternalIP
+      address: 172.16.4.4
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: traefik-node-2
+status:
+  addresses:
+    - type: InternalIP
+      address: 172.16.4.5
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: traefik-node-3
+status:
+  addresses:
+    - type: InternalIP
+      address: 172.16.4.6
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodeport-svc-tcp-local
+  namespace: default
+
+spec:
+  ports:
+    - name: tcp
+      port: 8000
+      nodePort: 32456
+  type: NodePort
+  externalTrafficPolicy: Local
+  clusterIP: 10.10.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: nodeport-svc-tcp-local-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: nodeport-svc-tcp-local
+
+addressType: IPv4
+ports:
+  - name: tcp
+    port: 8000
+endpoints:
+  - addresses:
+      - 10.10.0.10
+    conditions:
+      ready: true
+    nodeName: traefik-node-1
+  - addresses:
+      - 10.10.0.11
+    conditions:
+      ready: true
+    nodeName: traefik-node-2
+  - addresses:
+      - 10.10.0.12
+    conditions:
+      ready: false
+    nodeName: traefik-node-3
