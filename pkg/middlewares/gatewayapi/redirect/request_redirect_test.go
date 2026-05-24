@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"k8s.io/utils/ptr"
 )
 
 func TestRequestRedirectHandler(t *testing.T) {
@@ -23,7 +22,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "wrong status code",
 			config: dynamic.RequestRedirect{
-				Path:       ptr.To("/baz"),
+				Path:       new("/baz"),
 				StatusCode: http.StatusOK,
 			},
 			url:     "http://foo.com:80/foo/bar",
@@ -32,7 +31,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace path",
 			config: dynamic.RequestRedirect{
-				Path: ptr.To("/baz"),
+				Path: new("/baz"),
 			},
 			url:        "http://foo.com:80/foo/bar",
 			wantURL:    "http://foo.com:80/baz",
@@ -41,7 +40,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace path without trailing slash",
 			config: dynamic.RequestRedirect{
-				Path: ptr.To("/baz"),
+				Path: new("/baz"),
 			},
 			url:        "http://foo.com:80/foo/bar/",
 			wantURL:    "http://foo.com:80/baz",
@@ -50,7 +49,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace path with trailing slash",
 			config: dynamic.RequestRedirect{
-				Path: ptr.To("/baz/"),
+				Path: new("/baz/"),
 			},
 			url:        "http://foo.com:80/foo/bar",
 			wantURL:    "http://foo.com:80/baz/",
@@ -59,7 +58,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "only hostname",
 			config: dynamic.RequestRedirect{
-				Hostname: ptr.To("bar.com"),
+				Hostname: new("bar.com"),
 			},
 			url:        "http://foo.com:8080/foo/",
 			wantURL:    "http://bar.com:8080/foo/",
@@ -68,8 +67,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace prefix path",
 			config: dynamic.RequestRedirect{
-				Path:       ptr.To("/baz"),
-				PathPrefix: ptr.To("/foo"),
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
 			},
 			url:        "http://foo.com:80/foo/bar",
 			wantURL:    "http://foo.com:80/baz/bar",
@@ -78,8 +77,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace prefix path with trailing slash",
 			config: dynamic.RequestRedirect{
-				Path:       ptr.To("/baz"),
-				PathPrefix: ptr.To("/foo"),
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
 			},
 			url:        "http://foo.com:80/foo/bar/",
 			wantURL:    "http://foo.com:80/baz/bar/",
@@ -88,8 +87,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace prefix path without slash prefix",
 			config: dynamic.RequestRedirect{
-				Path:       ptr.To("baz"),
-				PathPrefix: ptr.To("/foo"),
+				Path:       new("baz"),
+				PathPrefix: new("/foo"),
 			},
 			url:        "http://foo.com:80/foo/bar",
 			wantURL:    "http://foo.com:80/baz/bar",
@@ -98,8 +97,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "replace prefix path without slash prefix",
 			config: dynamic.RequestRedirect{
-				Path:       ptr.To("/baz"),
-				PathPrefix: ptr.To("/foo/"),
+				Path:       new("/baz"),
+				PathPrefix: new("/foo/"),
 			},
 			url:        "http://foo.com:80/foo/bar",
 			wantURL:    "http://foo.com:80/baz/bar",
@@ -108,9 +107,9 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "simple redirection",
 			config: dynamic.RequestRedirect{
-				Scheme:   ptr.To("https"),
-				Hostname: ptr.To("foobar.com"),
-				Port:     ptr.To("443"),
+				Scheme:   new("https"),
+				Hostname: new("foobar.com"),
+				Port:     new("443"),
 			},
 			url:        "http://foo.com:80",
 			wantURL:    "https://foobar.com:443",
@@ -119,7 +118,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "HTTP to HTTPS permanent",
 			config: dynamic.RequestRedirect{
-				Scheme:     ptr.To("https"),
+				Scheme:     new("https"),
 				StatusCode: http.StatusMovedPermanently,
 			},
 			url:        "http://foo",
@@ -129,7 +128,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "HTTPS to HTTP permanent",
 			config: dynamic.RequestRedirect{
-				Scheme:     ptr.To("http"),
+				Scheme:     new("http"),
 				StatusCode: http.StatusMovedPermanently,
 			},
 			url:        "https://foo",
@@ -139,8 +138,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "HTTP to HTTPS",
 			config: dynamic.RequestRedirect{
-				Scheme: ptr.To("https"),
-				Port:   ptr.To("443"),
+				Scheme: new("https"),
+				Port:   new("443"),
 			},
 			url:        "http://foo:80",
 			wantURL:    "https://foo:443",
@@ -149,8 +148,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "HTTP to HTTPS, with X-Forwarded-Proto",
 			config: dynamic.RequestRedirect{
-				Scheme: ptr.To("https"),
-				Port:   ptr.To("443"),
+				Scheme: new("https"),
+				Port:   new("443"),
 			},
 			url:        "http://foo:80",
 			wantURL:    "https://foo:443",
@@ -159,8 +158,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "HTTPS to HTTP",
 			config: dynamic.RequestRedirect{
-				Scheme: ptr.To("http"),
-				Port:   ptr.To("80"),
+				Scheme: new("http"),
+				Port:   new("80"),
 			},
 			url:        "https://foo:443",
 			wantURL:    "http://foo:80",
@@ -169,8 +168,8 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "HTTP to HTTP",
 			config: dynamic.RequestRedirect{
-				Scheme: ptr.To("http"),
-				Port:   ptr.To("88"),
+				Scheme: new("http"),
+				Port:   new("88"),
 			},
 			url:        "http://foo:80",
 			wantURL:    "http://foo:88",
