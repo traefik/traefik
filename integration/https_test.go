@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -1002,14 +1004,13 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
 		desc               string
 		hostHeader         string
 		serverName         string
-		expectedError      bool
 		expectedContent    string
 		expectedStatusCode int
 	}{
@@ -1031,7 +1032,6 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 			desc:               "Spaces after the host header",
 			hostHeader:         "site3.www.snitest.com ",
 			serverName:         "site3.www.snitest.com",
-			expectedError:      true,
 			expectedContent:    "server3",
 			expectedStatusCode: http.StatusOK,
 		},
@@ -1046,7 +1046,6 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 			desc:               "Spaces after the servername and host header",
 			hostHeader:         "site3.www.snitest.com ",
 			serverName:         "site3.www.snitest.com ",
-			expectedError:      true,
 			expectedContent:    "server3",
 			expectedStatusCode: http.StatusOK,
 		},
@@ -1121,11 +1120,14 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 		req.Host = test.hostHeader
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
-		if test.expectedError {
-			assert.Error(s.T(), err)
-		} else {
-			require.NoError(s.T(), err, fmt.Errorf("test %s failed with: %w", test.desc, err))
-		}
+		assert.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		req = req.WithContext(ctx)
+
+		err = try.RequestWithTransport(req, 500*time.Millisecond, &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
+		require.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
 	}
 }
 

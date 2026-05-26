@@ -76,7 +76,7 @@ func Request(req *http.Request, timeout time.Duration, conditions ...ResponseCon
 // the condition on the response.
 // ResponseCondition may be nil, in which case only the request against the URL must
 // succeed.
-func RequestWithTransport(req *http.Request, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) error {
+func RequestWithTransport(req *http.Request, timeout time.Duration, transport http.RoundTripper, conditions ...ResponseCondition) error {
 	resp, err := doTryRequest(req, timeout, transport, conditions...)
 
 	if resp != nil && resp.Body != nil {

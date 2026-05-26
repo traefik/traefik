@@ -60,8 +60,12 @@ type ConnData struct {
 	alpnProtos []string
 }
 
+type remoteAddr interface {
+	RemoteAddr() net.Addr
+}
+
 // NewConnData builds a connData struct from the given parameters.
-func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (ConnData, error) {
+func NewConnData(serverName string, conn remoteAddr, alpnProtos []string) (ConnData, error) {
 	remoteIP, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
 		return ConnData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)

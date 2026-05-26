@@ -194,9 +194,7 @@ func resolveTLSOptions(cfg dynamic.Configuration) dynamic.Configuration {
 
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
 		if len(tlsConfigs) == 1 {
-			var optionsName string
-			for k, v := range tlsConfigs {
-				optionsName = k
+			for optionsName, v := range tlsConfigs {
 				log.WithoutContext().Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
 				for _, s := range v {
 					rts[s].TLS.ResolvedOptions = optionsName

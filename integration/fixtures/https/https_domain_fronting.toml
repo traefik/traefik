@@ -7,6 +7,10 @@
 
 [entryPoints.websecure]
   address = ":4443"
+[entryPoints.websecure.http3]
+
+[experimental]
+http3=true
 
 [api]
   insecure = true
@@ -91,4 +95,4 @@
 
 [tls.options]
   [tls.options.mytls]
-    maxVersion = "VersionTLS12"
+    maxVersion = "VersionTLS13"

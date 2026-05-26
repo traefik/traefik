@@ -80,14 +80,23 @@ func NewRouter() (*Router, error) {
 	}, nil
 }
 
-// GetTLSGetClientInfo is called after a ClientHello is received from a client.
-func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
-			return tlsConfig.cfg, nil
+// GetTLSConfigMatcherFunc is called after a ClientHello is received from a client.
+func (r *Router) GetTLSConfigMatcherFunc() func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
+	return func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
+		h, _ := r.muxerHTTPS.Match(connData)
+		if h == nil {
+			h, _ = r.muxerHTTPS.Match(connData)
+			if h == nil {
+				// No route matched.
+				return r.httpsTLSConfig, "default", nil
+			}
 		}
 
-		return r.httpsTLSConfig, nil
+		if tlsHandler, ok := h.(*tcp.TLSHandler); ok {
+			return tlsHandler.Config, tlsHandler.ConfigName, nil
+		}
+
+		return nil, "", errors.New("invalid handler")
 	}
 }
 
