@@ -33,7 +33,7 @@
 				"web"
 			],
 			"service": "default-whoami-80",
-			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
+			"rule": "Host(\"whoami.test.keep\") \u0026\u0026 PathPrefix(\"/keep\")",
 			"status": "enabled",
 			"using": [
 				"web"
