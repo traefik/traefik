@@ -514,7 +514,11 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 		}
 	}
 
-	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
+	tcpListener, ok := listener.(*net.TCPListener)
+	if !ok {
+		return nil, fmt.Errorf("socket activation listener for entrypoint %q has unexpected type %T, want *net.TCPListener", name, listener)
+	}
+	listener = tcpKeepAliveListener{tcpListener}
 
 	if config.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(ctx, config, listener)
