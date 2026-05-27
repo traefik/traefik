@@ -118,7 +118,9 @@ func (c *HTTP2Config) SetDefaults() {
 
 // HTTP3Config is the HTTP3 configuration of an entry point.
 type HTTP3Config struct {
-	AdvertisedPort int `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
+	AdvertisedPort    int  `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
+	Allow0RTT         bool `description:"Allow0RTT allows the application to decide if a 0-RTT connection attempt should be accepted. Be aware that this option is disabled by default due to it allowing the bypassing of IP allow-lists during QUIC handshakes." json:"allow0RTT,omitempty" toml:"allow0RTT,omitempty" yaml:"allow0RTT,omitempty" export:"true"`
+	InitialPacketSize int  `description:"InitialPacketSize is the initial size (and the lower limit) for packets sent in bytes. Values below 1200 are invalid." json:"initialPacketSize,omitempty" toml:"initialPacketSize,omitempty" yaml:"initialPacketSize,omitempty" export:"true"`
 }
 
 // Redirections is a set of redirection for an entry point.

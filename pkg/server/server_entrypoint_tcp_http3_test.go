@@ -215,6 +215,69 @@ func TestHTTP30RTT(t *testing.T) {
 	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
 }
 
+func TestHTTP3InitialPacketSize(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3: &static.HTTP3Config{
+			InitialPacketSize: 1200,
+		},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("*", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	})
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	conn, err := tls.Dial("tcp", entryPoint.listener.Addr().String(), &tls.Config{
+		InsecureSkipVerify: true,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = conn.Close()
+		entryPoint.Shutdown(ctx)
+	})
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8090", nil)
+	require.NoError(t, err)
+
+	err = request.Write(conn)
+	require.NoError(t, err)
+
+	_, err = http.ReadResponse(bufio.NewReader(conn), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, entryPoint.http3Server.QUICConfig.InitialPacketSize, uint16(1200))
+}
+
 type clientSessionCache struct {
 	cache tls.ClientSessionCache
 

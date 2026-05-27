@@ -98,6 +98,7 @@ entryPoints:
       maxConcurrentStreams: 42
     http3:
       advertisedPort: 42
+      initialPacketSize: 1200
     udp:
       timeout: 42s
     observability:
