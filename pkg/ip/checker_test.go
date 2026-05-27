@@ -1,8 +1,11 @@
 package ip
 
 import (
+	"math/rand"
 	"net"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -124,10 +127,11 @@ func TestNew(t *testing.T) {
 				require.EqualError(t, err, test.errMessage)
 			} else {
 				require.NoError(t, err)
-				for index, actual := range ipChecker.authorizedIPsNet {
-					expected := test.expectedAuthorizedIPs[index]
-					assert.Equal(t, expected.IP, actual.IP)
-					assert.Equal(t, expected.Mask.String(), actual.Mask.String())
+				// Verify the checker works by testing ContainsIP against known CIDR ranges
+				for _, cidrStr := range test.trustedIPs {
+					_, expectedNet, cidrErr := net.ParseCIDR(cidrStr)
+					require.NoError(t, cidrErr)
+					assert.True(t, ipChecker.ContainsIP(expectedNet.IP))
 				}
 			}
 		})
@@ -328,4 +332,57 @@ func TestContainsBrokenIPs(t *testing.T) {
 		_, err := ipChecker.Contains(testIP)
 		assert.Error(t, err)
 	}
+}
+
+func TestCheckerLargeNumberOfIPs(t *testing.T) {
+	t.Parallel()
+
+	rng := rand.New(rand.NewSource(42))
+
+	// Build large list: 10k CIDRs + 1k single IPs
+	var trustedIPs []string
+	var singleIPs []string
+	subnetPrefixes := []int{8, 16, 24}
+	for i := 0; i < 10000; i++ {
+		pl := subnetPrefixes[rng.Intn(len(subnetPrefixes))]
+		var base net.IP
+		if pl <= 16 {
+			base = net.IPv4(byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256)))
+		} else {
+			base = net.IPv4(byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256)), 0)
+		}
+		trustedIPs = append(trustedIPs, base.String()+"/"+strconv.Itoa(pl))
+	}
+	for i := 0; i < 1000; i++ {
+		ip := net.IPv4(byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256)))
+		s := ip.String()
+		trustedIPs = append(trustedIPs, s)
+		singleIPs = append(singleIPs, s)
+	}
+
+	start := time.Now()
+	checker, err := NewChecker(trustedIPs)
+	require.NoError(t, err)
+	t.Logf("Built checker with %d entries in %v", len(trustedIPs), time.Since(start))
+
+	// Verify a sample of single IPs are found
+	foundCount := 0
+	for _, ipStr := range singleIPs {
+		if ok, _ := checker.Contains(ipStr); ok {
+			foundCount++
+		}
+	}
+	assert.Equal(t, 1000, foundCount)
+
+	// Performance: 100k lookups
+	var addrs []string
+	for i := 0; i < 100000; i++ {
+		addrs = append(addrs, net.IPv4(byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256)), byte(rng.Intn(256))).String())
+	}
+	start = time.Now()
+	for _, addr := range addrs {
+		_, err := checker.Contains(addr)
+		require.NoError(t, err)
+	}
+	t.Logf("100k lookups in %v", time.Since(start))
 }

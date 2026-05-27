@@ -6,12 +6,13 @@ import (
 	"net"
 	"net/netip"
 	"strings"
+
+	"github.com/phemmer/go-iptrie"
 )
 
 // Checker allows to check that addresses are in a trusted IPs.
 type Checker struct {
-	authorizedIPs    []*net.IP
-	authorizedIPsNet []*net.IPNet
+	trie *iptrie.Trie
 }
 
 // NewChecker builds a new Checker given a list of CIDR-Strings to trusted IPs.
@@ -20,19 +21,24 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 		return nil, errors.New("no trusted IPs provided")
 	}
 
-	checker := &Checker{}
+	checker := &Checker{trie: iptrie.NewTrie()}
 
 	for _, ipMask := range trustedIPs {
 		if ipAddr := net.ParseIP(ipMask); ipAddr != nil {
-			checker.authorizedIPs = append(checker.authorizedIPs, &ipAddr)
-			continue
+			addr, ok := netip.AddrFromSlice(ipAddr)
+			if !ok {
+				return nil, fmt.Errorf("parsing trusted IPs %s", ipAddr)
+			}
+			checker.trie.Insert(netip.PrefixFrom(addr, 32*(len(ipAddr)/4)), struct{}{})
+		} else {
+			_, ipAddr, err := net.ParseCIDR(ipMask)
+			if err != nil {
+				return nil, fmt.Errorf("parsing CIDR trusted IPs %s: %w", ipAddr, err)
+			}
+			addr, _ := netip.AddrFromSlice(ipAddr.IP)
+			ones, _ := ipAddr.Mask.Size()
+			checker.trie.Insert(netip.PrefixFrom(addr, ones), struct{}{})
 		}
-
-		_, ipAddr, err := net.ParseCIDR(ipMask)
-		if err != nil {
-			return nil, fmt.Errorf("parsing CIDR trusted IPs %s: %w", ipAddr, err)
-		}
-		checker.authorizedIPsNet = append(checker.authorizedIPsNet, ipAddr)
 	}
 
 	return checker, nil
@@ -76,19 +82,11 @@ func (ip *Checker) Contains(addr string) (bool, error) {
 
 // ContainsIP checks if provided address is in the trusted IPs.
 func (ip *Checker) ContainsIP(addr net.IP) bool {
-	for _, authorizedIP := range ip.authorizedIPs {
-		if authorizedIP.Equal(addr) {
-			return true
-		}
+	a, ok := netip.AddrFromSlice(addr)
+	if !ok {
+		return false
 	}
-
-	for _, authorizedNet := range ip.authorizedIPsNet {
-		if authorizedNet.Contains(addr) {
-			return true
-		}
-	}
-
-	return false
+	return ip.trie.Contains(a)
 }
 
 func parseIP(addr string) (net.IP, error) {
