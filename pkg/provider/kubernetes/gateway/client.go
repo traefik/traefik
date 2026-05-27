@@ -38,6 +38,7 @@ type clientWrapper struct {
 
 	factoryNamespace    kinformers.SharedInformerFactory
 	factoryGatewayClass gateinformers.SharedInformerFactory
+	factoryNode         kinformers.SharedInformerFactory
 	factoriesGateway    map[string]gateinformers.SharedInformerFactory
 	factoriesKube       map[string]kinformers.SharedInformerFactory
 	factoriesSecret     map[string]kinformers.SharedInformerFactory
@@ -258,7 +259,29 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
+	c.factoryNode = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+	_, err = c.factoryNode.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	c.factoryNode.Start(stopCh)
+
+	for t, ok := range c.factoryNode.WaitForCacheSync(stopCh) {
+		if !ok {
+			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
+		}
+	}
+
 	return eventCh, nil
+}
+
+func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
+	nodes, err := c.factoryNode.Core().V1().Nodes().Lister().List(labels.Everything())
+	if err != nil {
+		return nil, false, err
+	}
+	return nodes, len(nodes) > 0, nil
 }
 
 func (c *clientWrapper) ListNamespaces(selector labels.Selector) ([]string, error) {
