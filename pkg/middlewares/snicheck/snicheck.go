@@ -9,14 +9,18 @@ import (
 
 // SNICheck is an HTTP handler that checks whether the TLS configuration for the server name is the same as for the host header.
 type SNICheck struct {
-	next       http.Handler
-	tlsOptions string
-	routerName string
+	next           http.Handler
+	tlsOptionsName string
+	routerName     string
 }
 
 // New creates a new SNICheck.
-func New(routerName, tlsOptions string, next http.Handler) *SNICheck {
-	return &SNICheck{next: next, tlsOptions: tlsOptions, routerName: routerName}
+func New(routerName, tlsOptionsName string, next http.Handler) *SNICheck {
+	return &SNICheck{
+		next:           next,
+		tlsOptionsName: tlsOptionsName,
+		routerName:     routerName,
+	}
 }
 
 func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -25,13 +29,13 @@ func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tlsOptionsUsed := tcp.GetTLSOptionsNameInContext(req.Context())
-	if s.tlsOptions != tlsOptionsUsed {
+	tlsOptionsNameUsed := tcp.GetTLSOptionsName(req.Context())
+	if s.tlsOptionsName != tlsOptionsNameUsed {
 		log.WithoutContext().
 			WithField("routerName", s.routerName).
 			WithField("req.Host", req.Host).
 			WithField("req.TLS.ServerName", req.TLS.ServerName).
-			Debugf("TLS options difference: SNI:%s, Header:%s", tlsOptionsUsed, s.tlsOptions)
+			Debugf("TLS options difference: SNI:%s, Header:%s", tlsOptionsNameUsed, s.tlsOptionsName)
 		http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
 		return
 	}

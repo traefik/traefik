@@ -14,9 +14,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
-
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 type http3server struct {
@@ -100,7 +99,7 @@ func (e *http3server) getConfig(info *tls.ClientHelloInfo) (*tls.Config, error) 
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
-	connData, err := tcpmuxer.NewConnData(info.ServerName, info.Conn, info.SupportedProtos)
+	connData, err := tcpmuxer.NewConnData(info.ServerName, info.Conn.RemoteAddr(), info.SupportedProtos)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +112,7 @@ func (e *http3server) getConfigName(c *quic.Conn) (string, error) {
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
-	connData, err := tcpmuxer.NewConnData(c.ConnectionState().TLS.ServerName, c, []string{c.ConnectionState().TLS.NegotiatedProtocol})
+	connData, err := tcpmuxer.NewConnData(c.ConnectionState().TLS.ServerName, c.RemoteAddr(), []string{c.ConnectionState().TLS.NegotiatedProtocol})
 	if err != nil {
 		return "", err
 	}

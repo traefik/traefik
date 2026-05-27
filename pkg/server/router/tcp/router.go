@@ -22,6 +22,11 @@ import (
 // errClientHelloRead is used as a sentinel error to break the TLS handshake once we have read the ClientHello.
 var errClientHelloRead = errors.New("client hello successfully read")
 
+type namedTLSConfig struct {
+	cfg  *tls.Config
+	name string
+}
+
 // Router is a TCP router.
 type Router struct {
 	acmeTLSPassthrough bool
@@ -49,11 +54,6 @@ type Router struct {
 	// hostHTTPTLSConfig contains TLS configs keyed by SNI.
 	// A nil config is the hint to set up a brokenTLSRouter.
 	hostHTTPTLSConfig map[string]namedTLSConfig // TLS configs keyed by SNI
-}
-
-type namedTLSConfig struct {
-	cfg  *tls.Config
-	name string
 }
 
 // NewRouter returns a new TCP router.
@@ -108,7 +108,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// we would block forever on clientHelloInfo,
 	// which is why we want to detect and handle that case first and foremost.
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
-		connData, err := tcpmuxer.NewConnData("", conn, nil)
+		connData, err := tcpmuxer.NewConnData("", conn.RemoteAddr(), nil)
 		if err != nil {
 			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 			conn.Close()
@@ -150,7 +150,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		log.WithoutContext().Errorf("Error while setting deadline: %v", err)
 	}
 
-	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
+	connData, err := tcpmuxer.NewConnData(hello.serverName, conn.RemoteAddr(), hello.protos)
 	if err != nil {
 		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 		conn.Close()

@@ -14,27 +14,24 @@ type TLSHandler struct {
 
 // ServeTCP terminates the TLS connection.
 func (t *TLSHandler) ServeTCP(conn WriteCloser) {
-	t.Next.ServeTCP(tls.Server(TLSConnWithName{WriteCloser: conn, ConfigName: t.ConfigName}, t.Config))
+	t.Next.ServeTCP(tls.Server(TLSConnWithOptionsName{WriteCloser: conn, ConfigName: t.ConfigName}, t.Config))
 }
 
-type TLSConnWithName struct {
+// TLSConnWithOptionsName is a TLS connection that also carries the name of the TLS config used.
+type TLSConnWithOptionsName struct {
 	WriteCloser
 
 	ConfigName string
 }
 
-func (t *TLSConnWithName) GetConfigName() string {
-	return t.ConfigName
-}
-
-type optionKey struct{}
+type tlsOptionsNameKey struct{}
 
 func AddTLSOptionsNameInContext(ctx context.Context, name string) context.Context {
-	return context.WithValue(ctx, optionKey{}, name)
+	return context.WithValue(ctx, tlsOptionsNameKey{}, name)
 }
 
-func GetTLSOptionsNameInContext(ctx context.Context) string {
-	if name, ok := ctx.Value(optionKey{}).(string); ok {
+func GetTLSOptionsName(ctx context.Context) string {
+	if name, ok := ctx.Value(tlsOptionsNameKey{}).(string); ok {
 		return name
 	}
 

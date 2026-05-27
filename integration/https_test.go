@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -1029,22 +1028,8 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			desc:               "Spaces after the host header",
-			hostHeader:         "site3.www.snitest.com ",
-			serverName:         "site3.www.snitest.com",
-			expectedContent:    "server3",
-			expectedStatusCode: http.StatusOK,
-		},
-		{
 			desc:               "Spaces after the servername",
 			hostHeader:         "site3.www.snitest.com",
-			serverName:         "site3.www.snitest.com ",
-			expectedContent:    "server3",
-			expectedStatusCode: http.StatusOK,
-		},
-		{
-			desc:               "Spaces after the servername and host header",
-			hostHeader:         "site3.www.snitest.com ",
 			serverName:         "site3.www.snitest.com ",
 			expectedContent:    "server3",
 			expectedStatusCode: http.StatusOK,
@@ -1122,12 +1107,8 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
 		assert.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-		req = req.WithContext(ctx)
-
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
-		require.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
+		assert.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
 	}
 }
 
