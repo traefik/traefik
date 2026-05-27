@@ -140,12 +140,12 @@ func doTryRequest(request *http.Request, timeout time.Duration, transport http.R
 func doRequest(action timedAction, timeout time.Duration, request *http.Request, transport http.RoundTripper, conditions ...ResponseCondition) (*http.Response, error) {
 	var resp *http.Response
 	return resp, action(timeout, func() error {
-		var err error
-		client := http.DefaultClient
+		var client http.Client
 		if transport != nil {
 			client.Transport = transport
 		}
 
+		var err error
 		resp, err = client.Do(request)
 		if err != nil {
 			return err
