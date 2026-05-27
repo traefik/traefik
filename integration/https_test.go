@@ -1105,10 +1105,10 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 		req.Host = test.hostHeader
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
-		assert.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
+		assert.NoError(s.T(), err, "test %s failed with: %v", test.desc, err)
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
-		assert.NoError(s.T(), err, fmt.Sprintf("test %s failed with: %v", test.desc, err))
+		assert.NoError(s.T(), err, "test %s failed with: %v", test.desc, err)
 	}
 }
 
