@@ -283,7 +283,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			rt := &dynamic.Router{
-				Rule:     "PathPrefix(`/`)",
+				Rule:     `PathPrefix("/")`,
 				Priority: math.MinInt32,
 				Service:  "default-backend",
 			}
@@ -349,7 +349,14 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
 				conf.HTTP.Services[serviceName] = service
 
-				rt := loadRouter(rule, pa, rtConfig, serviceName)
+				rt, err := loadRouter(rule, pa, rtConfig, serviceName)
+				if err != nil {
+					log.FromContext(ctxIngress).
+						WithField("serviceName", pa.Backend.Service.Name).
+						WithField("path", pa.Path).
+						Errorf("Skipping path: %s", err)
+					continue
+				}
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
@@ -447,10 +454,10 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
-		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
+		return fmt.Sprintf("HostRegexp(%q)", strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
 	}
 
-	return "Host(`" + host + "`)"
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
@@ -693,7 +700,7 @@ func makeRouterKeyWithHash(key, rule string) (string, error) {
 	return dupKey, nil
 }
 
-func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) (*dynamic.Router, error) {
 	var rules []string
 	if len(rule.Host) > 0 {
 		rules = []string{buildHostRule(rule.Host)}
@@ -704,13 +711,19 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 
 		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == netv1.PathTypeImplementationSpecific {
 			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
+				switch rtConfig.Router.PathMatcher {
+				case "Path", "PathPrefix":
+				default:
+					return nil, fmt.Errorf("invalid router path matcher %q: must be one of Path, PathPrefix", rtConfig.Router.PathMatcher)
+				}
+
 				matcher = rtConfig.Router.PathMatcher
 			}
 		} else if *pa.PathType == netv1.PathTypeExact {
 			matcher = "Path"
 		}
 
-		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
+		rules = append(rules, fmt.Sprintf("%s(%q)", matcher, pa.Path))
 	}
 
 	rt := &dynamic.Router{
@@ -728,7 +741,7 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 		}
 	}
 
-	return rt
+	return rt, nil
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
