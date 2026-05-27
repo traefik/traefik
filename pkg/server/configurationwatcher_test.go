@@ -992,3 +992,103 @@ func TestConfigurationWatcher_MultipleTransformers(t *testing.T) {
 	assert.Equal(t, 1, callCount1)
 	assert.Equal(t, 1, callCount2)
 }
+
+// TestReadinessCallbackFiresOnceAfterAllProviders verifies that the readiness
+// callback fires exactly once — when all expected providers have emitted at
+// least one configuration and the merged config has been applied (router swap).
+// Even though subsequent config applies keep happening, the callback must not
+// fire again: readiness is a one-shot transition.
+func TestReadinessCallbackFiresOnceAfterAllProviders(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+
+	config := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
+			th.WithServices(th.WithService("bar", th.WithServiceServersLoadBalancer())),
+		),
+	}
+
+	pvd := &mockProvider{
+		wait: 5 * time.Millisecond,
+		messages: []dynamic.Message{
+			{ProviderName: "p1", Configuration: config},
+			{ProviderName: "p2", Configuration: config},
+			{ProviderName: "p3", Configuration: config},
+		},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+
+	// readyCount tracks how many times the callback was invoked.
+	// We expect exactly 1: the moment all 3 providers have reported.
+	var readyCount int
+	var mu sync.Mutex
+	watcher.SetReadinessTracking(3, func() {
+		mu.Lock()
+		defer mu.Unlock()
+		readyCount++
+	})
+
+	watcher.AddListener(func(_ dynamic.Configuration) {})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+	t.Cleanup(routinesPool.Stop)
+
+	assert.Eventually(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return readyCount == 1
+	}, time.Second, 10*time.Millisecond)
+
+	// Wait a bit more to make sure no extra invocations happen after the first.
+	time.Sleep(50 * time.Millisecond)
+	mu.Lock()
+	assert.Equal(t, 1, readyCount)
+	mu.Unlock()
+}
+
+// TestReadinessCallbackDoesNotFireWithMissingProviders verifies that the
+// readiness callback is NOT invoked when fewer providers than expected have
+// emitted configuration. Here we expect 3 providers but only 2 send messages,
+// so the endpoint must stay not-ready (503).
+func TestReadinessCallbackDoesNotFireWithMissingProviders(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+
+	config := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
+			th.WithServices(th.WithService("bar", th.WithServiceServersLoadBalancer())),
+		),
+	}
+
+	pvd := &mockProvider{
+		wait: 5 * time.Millisecond,
+		messages: []dynamic.Message{
+			{ProviderName: "p1", Configuration: config},
+			{ProviderName: "p2", Configuration: config},
+		},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+
+	var ready bool
+	var mu sync.Mutex
+	watcher.SetReadinessTracking(3, func() {
+		mu.Lock()
+		defer mu.Unlock()
+		ready = true
+	})
+
+	watcher.AddListener(func(_ dynamic.Configuration) {})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+	t.Cleanup(routinesPool.Stop)
+
+	// Only 2 of 3 expected providers emitted — callback must not fire.
+	time.Sleep(100 * time.Millisecond)
+	mu.Lock()
+	assert.False(t, ready)
+	mu.Unlock()
+}
