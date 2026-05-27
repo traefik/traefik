@@ -712,9 +712,9 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == netv1.PathTypeImplementationSpecific {
 			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
 				switch rtConfig.Router.PathMatcher {
-				case "Path", "PathPrefix", "PathRegexp":
+				case "Path", "PathPrefix":
 				default:
-					return nil, fmt.Errorf("invalid router path matcher %q: must be one of Path, PathPrefix, PathRegexp", rtConfig.Router.PathMatcher)
+					return nil, fmt.Errorf("invalid router path matcher %q: must be one of Path, PathPrefix", rtConfig.Router.PathMatcher)
 				}
 
 				matcher = rtConfig.Router.PathMatcher
