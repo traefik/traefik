@@ -81,8 +81,8 @@ func NewRouter() (*Router, error) {
 	}, nil
 }
 
-// GetTLSConfigMatcherFunc is called after a ClientHello is received from a client.
-func (r *Router) GetTLSConfigMatcherFunc() func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
+// GetHTTP3TLSConfigMatcherFunc is called after a ClientHello is received from a client with HTTP/3.
+func (r *Router) GetHTTP3TLSConfigMatcherFunc() func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
 	return func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
 		h, _ := r.muxerHTTPS.Match(connData)
 		if h == nil {

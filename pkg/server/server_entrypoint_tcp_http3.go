@@ -87,7 +87,7 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	e.getter = rt.GetTLSConfigMatcherFunc()
+	e.getter = rt.GetHTTP3TLSConfigMatcherFunc()
 }
 
 func (e *http3server) Shutdown(_ context.Context) error {

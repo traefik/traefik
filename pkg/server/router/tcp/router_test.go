@@ -21,7 +21,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v2/pkg/tcp"
+	traefiktcp "github.com/traefik/traefik/v2/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 )
@@ -53,7 +53,7 @@ func (h *httpForwarder) Close() error {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
+func (h *httpForwarder) ServeTCP(conn traefiktcp.WriteCloser) {
 	h.connChan <- conn
 }
 

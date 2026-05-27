@@ -138,15 +138,14 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		delete(conf.TLS.Options, traefiktls.DefaultTLSConfigName)
 	}
 
-	return resolveTLSOptions(conf)
+	return resolveHTTPTLSOptions(conf)
 }
 
-func resolveTLSOptions(cfg dynamic.Configuration) dynamic.Configuration {
+func resolveHTTPTLSOptions(cfg dynamic.Configuration) dynamic.Configuration {
 	if cfg.HTTP == nil || len(cfg.HTTP.Routers) == 0 {
 		return cfg
 	}
 
-	ctx := context.Background()
 	rts := make(map[string]*dynamic.Router)
 
 	// Keyed by domain, then by options reference.
@@ -163,7 +162,7 @@ func resolveTLSOptions(cfg dynamic.Configuration) dynamic.Configuration {
 			continue
 		}
 
-		ctxRouter := log.With(provider.AddInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
+		ctxRouter := log.With(provider.AddInContext(context.Background(), routerHTTPName), log.Str(log.RouterName, routerHTTPName))
 		logger := log.FromContext(ctxRouter)
 
 		tlsOptionsName := traefiktls.DefaultTLSConfigName
