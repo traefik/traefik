@@ -52,7 +52,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		Addr:      configuration.GetAddress(),
 		Port:      configuration.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
-		TLSConfig: &tls.Config{GetConfigForClient: h3.getConfig},
+		TLSConfig: &tls.Config{GetConfigForClient: h3.getConfigForClient},
 		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},
@@ -95,13 +95,13 @@ func (e *http3server) Shutdown(_ context.Context) error {
 	return e.Server.Close()
 }
 
-func (e *http3server) getConfig(info *tls.ClientHelloInfo) (*tls.Config, error) {
+func (e *http3server) getConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
 	connData, err := tcpmuxer.NewConnData(info.ServerName, info.Conn.RemoteAddr(), info.SupportedProtos)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating ConnData from client hello: %w", err)
 	}
 
 	conf, _, err := e.getter(connData)
@@ -114,8 +114,9 @@ func (e *http3server) getConfigName(c *quic.Conn) (string, error) {
 
 	connData, err := tcpmuxer.NewConnData(c.ConnectionState().TLS.ServerName, c.RemoteAddr(), []string{c.ConnectionState().TLS.NegotiatedProtocol})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("creating ConnData from quic Conn: %w", err)
 	}
+
 	_, name, err := e.getter(connData)
 	return name, err
 }

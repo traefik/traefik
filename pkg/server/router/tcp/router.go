@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
 // errClientHelloRead is used as a sentinel error to break the TLS handshake once we have read the ClientHello.
@@ -85,11 +86,7 @@ func (r *Router) GetTLSConfigMatcherFunc() func(connData tcpmuxer.ConnData) (*tl
 	return func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
 		h, _ := r.muxerHTTPS.Match(connData)
 		if h == nil {
-			h, _ = r.muxerHTTPS.Match(connData)
-			if h == nil {
-				// No route matched.
-				return r.httpsTLSConfig, "default", nil
-			}
+			return r.httpsTLSConfig, traefiktls.DefaultTLSConfigName, nil
 		}
 
 		if tlsHandler, ok := h.(*tcp.TLSHandler); ok {
