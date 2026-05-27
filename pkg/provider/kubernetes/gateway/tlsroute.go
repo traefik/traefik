@@ -152,6 +152,19 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute
 		routerName := makeRouterName("", routeKey)
 
 		if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0]) {
+			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
+				condition = metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteReasonRefNotPermitted),
+					Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s: internal service reference is not allowed: TLSRoute namespace %q is not in crossProviderNamespaces", routeRule.BackendRefs[0].Name, route.Namespace),
+				}
+
+				continue
+			}
+
 			router.Service = string(routeRule.BackendRefs[0].Name)
 			conf.TCP.Routers[routerName] = &router
 			continue
@@ -240,7 +253,7 @@ func (p *Provider) loadTLSService(route *gatev1.TLSRoute, backendRef gatev1.Back
 	}
 
 	if group != groupCore || kind != kindService {
-		name, err := p.loadTCPBackendRef(backendRef)
+		name, err := p.loadTCPBackendRef(route.Namespace, backendRef)
 		if err != nil {
 			return serviceName, nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),

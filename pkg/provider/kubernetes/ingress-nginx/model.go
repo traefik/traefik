@@ -29,9 +29,17 @@ type model struct {
 	DefaultBackendLocation *location
 
 	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all ingresses.
-	// The map key is the certificate PEM, the value is the matching private key PEM.
-	// Using the cert PEM as the key naturally deduplicates certificates that appear in multiple ingresses.
-	Certs map[string]string
+	// The map key is "<namespace>/<secretName>", which deduplicates by Secret identity
+	// rather than by certificate PEM (so two distinct Secrets with the same cert
+	// content remain separate entries, matching ingress-nginx behavior).
+	Certs map[string]certPair
+}
+
+// certPair holds the certificate and private key PEM bytes for a single
+// Kubernetes Secret resolved from a TLS section.
+type certPair struct {
+	Cert string
+	Key  string
 }
 
 // backend represents a resolved upstream service.

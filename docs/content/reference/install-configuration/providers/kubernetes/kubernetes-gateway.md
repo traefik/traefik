@@ -16,8 +16,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 !!! info "Using The Helm Chart"
 
-    When using the Traefik [Helm Chart](../../../../getting-started/kubernetes.md#install-traefik), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
-    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L323).
+    When using the Traefik [Helm Chart](../../../../getting-started/kubernetes.md#install-traefik), the RBAC (Role-Based Access Control) are automatically managed for you.
 
 ## Requirements
 
@@ -30,10 +29,10 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
     ```
 
-2. Install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml).
+2. If you are not using the Helm Chart, install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml) for Gateway API.
 
     ```bash
-    # Install Traefik RBACs.
+    # Install Traefik RBACs for Gateway API.
     kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
@@ -82,6 +81,7 @@ providers:
 | <a id="opt-providers-kubernetesGateway-statusAddress-ip" href="#opt-providers-kubernetesGateway-statusAddress-ip" title="#opt-providers-kubernetesGateway-statusAddress-ip">`providers.kubernetesGateway.`<br />`statusAddress.ip`</a> | IP address copied to the Gateway `status.addresses`, and currently only supports one IP value (IPv4 or IPv6).                                                                                                                                                                                                                                                                                         | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-statusAddress-service-namespace" href="#opt-providers-kubernetesGateway-statusAddress-service-namespace" title="#opt-providers-kubernetesGateway-statusAddress-service-namespace">`providers.kubernetesGateway.`<br />`statusAddress.service.namespace`</a> | The namespace of the Kubernetes service to copy status addresses from.<br />When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the Gateway `status.addresses`.                                                                                                                           | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-statusAddress-service-name" href="#opt-providers-kubernetesGateway-statusAddress-service-name" title="#opt-providers-kubernetesGateway-statusAddress-service-name">`providers.kubernetesGateway.`<br />`statusAddress.service.name`</a> | The name of the Kubernetes service to copy status addresses from.<br />When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the Gateway `status.addresses`.                                                                                                                                | ""      | No       |
+| <a id="opt-providers-kubernetesGateway-crossProviderNamespaces" href="#opt-providers-kubernetesGateway-crossProviderNamespaces" title="#opt-providers-kubernetesGateway-crossProviderNamespaces">`providers.kubernetesGateway.crossProviderNamespaces`</a> | List of namespaces from which Gateway API routes (`HTTPRoute`, `TCPRoute`, `TLSRoute`) are allowed to declare a `backendRef` of kind `TraefikService`.<br />When unset, all namespaces are allowed. When set to `[]`, every such backendRef is rejected and the route is dropped.                                                                                                                     | []      | No       |
 
 <!-- markdownlint-enable MD013 -->
 

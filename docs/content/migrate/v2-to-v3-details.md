@@ -680,7 +680,7 @@ It can be configured in the install configuration.
 ##### Configure the Syntax Per Router
 
 The rule syntax can also be configured on a per-router basis.
-This allows to have heterogeneous router configurations and ease migration.
+This allows you to have heterogeneous router configurations and ease migration.
 
 ??? example "An example router with syntax configuration"
 
