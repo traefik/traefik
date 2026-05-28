@@ -102,7 +102,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 
 	router.AddHTTPTLSConfig("*", &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
-	})
+	}, traefiktls.DefaultTLSConfigName)
 	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
@@ -164,7 +164,7 @@ func TestHTTP30RTT(t *testing.T) {
 
 	router.AddHTTPTLSConfig("example.com", &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
-	})
+	}, traefiktls.DefaultTLSConfigName)
 	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)

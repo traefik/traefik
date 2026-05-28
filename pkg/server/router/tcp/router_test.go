@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -20,7 +21,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v2/pkg/tcp"
+	traefiktcp "github.com/traefik/traefik/v2/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 )
@@ -52,7 +53,7 @@ func (h *httpForwarder) Close() error {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
+func (h *httpForwarder) ServeTCP(conn traefiktcp.WriteCloser) {
 	h.connChan <- conn
 }
 
@@ -621,6 +622,16 @@ func Test_Routing(t *testing.T) {
 					_, err = fmt.Fprint(w, "HTTPS")
 					require.NoError(t, err)
 				}),
+
+				ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+					if tlsConn, ok := c.(*tls.Conn); ok {
+						if tlsConnWithOptionsName, ok := tlsConn.NetConn().(traefiktcp.TLSConn); ok {
+							return traefiktcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+						}
+					}
+
+					return ctx
+				},
 			}
 
 			stoppedHTTPS := make(chan struct{})
@@ -812,7 +823,8 @@ func routerHTTPSPathPrefix(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "PathPrefix(`/`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls10",
+				Options:         "tls10",
+				ResolvedOptions: "tls10",
 			},
 		},
 	}
@@ -826,7 +838,8 @@ func routerHTTPS(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "Host(`foo.bar`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls12",
+				Options:         "tls12",
+				ResolvedOptions: "tls12",
 			},
 		},
 	}
