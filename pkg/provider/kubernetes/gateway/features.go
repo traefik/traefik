@@ -15,6 +15,7 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 		Insert(features.HTTPRouteExtendedFeatures.Intersection(extendedHTTPRouteFeatures()).UnsortedList()...).
 		Insert(features.ReferenceGrantCoreFeatures.UnsortedList()...).
 		Insert(features.BackendTLSPolicyCoreFeatures.UnsortedList()...).
+		Insert(features.BackendTLSPolicyExtendedFeatures.Intersection(extendedBackendTLSPolicyFeatures()).UnsortedList()...).
 		Insert(features.GRPCRouteCoreFeatures.UnsortedList()...).
 		Insert(features.TLSRouteCoreFeatures.UnsortedList()...).
 		Insert(features.TLSRouteExtendedFeatures.Intersection(extendedTLSRouteFeatures()).UnsortedList()...)
@@ -54,5 +55,12 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteBackendProtocolWebSocketFeature,
 		features.HTTPRouteDestinationPortMatchingFeature,
 		features.HTTPRouteBackendRequestHeaderModificationFeature,
+	)
+}
+
+// extendedBackendTLSPolicyFeatures returns the supported extended BackendTLSPolicy features.
+func extendedBackendTLSPolicyFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.BackendTLSPolicySanValidationFeature,
 	)
 }

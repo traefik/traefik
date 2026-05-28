@@ -574,6 +574,18 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 		ServerName: string(policy.Spec.Validation.Hostname),
 	}
 
+	if len(policy.Spec.Validation.SubjectAltNames) > 0 {
+		st.InsecureSkipVerify = true
+		for _, san := range policy.Spec.Validation.SubjectAltNames {
+			switch san.Type {
+			case gatev1.HostnameSubjectAltNameType:
+				st.PeerCertSANs = append(st.PeerCertSANs, string(san.Hostname))
+			case gatev1.URISubjectAltNameType:
+				st.PeerCertSANs = append(st.PeerCertSANs, string(san.URI))
+			}
+		}
+	}
+
 	if policy.Spec.Validation.WellKnownCACertificates != nil {
 		return st, metav1.Condition{
 			Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
