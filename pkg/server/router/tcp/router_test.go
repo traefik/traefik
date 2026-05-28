@@ -625,8 +625,8 @@ func Test_Routing(t *testing.T) {
 
 				ConnContext: func(ctx context.Context, c net.Conn) context.Context {
 					if tlsConn, ok := c.(*tls.Conn); ok {
-						if tlsConnWithConfigName, ok := tlsConn.NetConn().(traefiktcp.TLSConnWithOptionsName); ok {
-							return traefiktcp.AddTLSOptionsNameInContext(ctx, tlsConnWithConfigName.ConfigName)
+						if tlsConnWithOptionsName, ok := tlsConn.NetConn().(traefiktcp.TLSConn); ok {
+							return traefiktcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
 						}
 					}
 

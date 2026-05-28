@@ -5,23 +5,23 @@ import (
 	"crypto/tls"
 )
 
+// TLSConn is a TLS connection that also carries the name of the TLS config used.
+type TLSConn struct {
+	WriteCloser
+
+	TLSOptionsName string
+}
+
 // TLSHandler handles TLS connections.
 type TLSHandler struct {
-	Next       Handler
-	Config     *tls.Config
-	ConfigName string
+	Next           Handler
+	Config         *tls.Config
+	TLSOptionsName string
 }
 
 // ServeTCP terminates the TLS connection.
 func (t *TLSHandler) ServeTCP(conn WriteCloser) {
-	t.Next.ServeTCP(tls.Server(TLSConnWithOptionsName{WriteCloser: conn, ConfigName: t.ConfigName}, t.Config))
-}
-
-// TLSConnWithOptionsName is a TLS connection that also carries the name of the TLS config used.
-type TLSConnWithOptionsName struct {
-	WriteCloser
-
-	ConfigName string
+	t.Next.ServeTCP(tls.Server(TLSConn{WriteCloser: conn, TLSOptionsName: t.TLSOptionsName}, t.Config))
 }
 
 type tlsOptionsNameKey struct{}

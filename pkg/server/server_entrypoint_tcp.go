@@ -613,8 +613,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		},
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
 			if tlsConn, ok := c.(*tls.Conn); ok {
-				if tlsConnWithConfigName, ok := tlsConn.NetConn().(tcp.TLSConnWithOptionsName); ok {
-					return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithConfigName.ConfigName)
+				if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
+					return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
 				}
 			}
 

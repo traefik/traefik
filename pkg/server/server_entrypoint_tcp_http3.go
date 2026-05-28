@@ -44,7 +44,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	h3 := &http3server{
 		http3conn: conn,
 		getter: func(data tcpmuxer.ConnData) (*tls.Config, string, error) {
-			return nil, "", errors.New("no tls config")
+			return nil, "", errors.New("no TLS config")
 		},
 	}
 
@@ -52,17 +52,17 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		Addr:      configuration.GetAddress(),
 		Port:      configuration.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
-		TLSConfig: &tls.Config{GetConfigForClient: h3.getConfigForClient},
+		TLSConfig: &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
 		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},
 		ConnContext: func(ctx context.Context, c *quic.Conn) context.Context {
-			name, err := h3.getConfigName(c)
+			tlsOptionsName, err := h3.getTLSOptionsName(c)
 			if err != nil {
-				log.WithoutContext().Errorf("Error getting name for client: %v", err)
+				log.WithoutContext().Errorf("Error getting TLS options name for client: %v", err)
 				return ctx
 			}
-			return tcp.AddTLSOptionsNameInContext(ctx, name)
+			return tcp.AddTLSOptionsNameInContext(ctx, tlsOptionsName)
 		},
 	}
 
@@ -87,7 +87,7 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	e.getter = rt.GetHTTP3TLSConfigMatcherFunc()
+	e.getter = rt.HTTP3TLSConfigMatcherFunc()
 }
 
 func (e *http3server) Shutdown(_ context.Context) error {
@@ -95,7 +95,7 @@ func (e *http3server) Shutdown(_ context.Context) error {
 	return e.Server.Close()
 }
 
-func (e *http3server) getConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
+func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
@@ -108,7 +108,7 @@ func (e *http3server) getConfigForClient(info *tls.ClientHelloInfo) (*tls.Config
 	return conf, err
 }
 
-func (e *http3server) getConfigName(c *quic.Conn) (string, error) {
+func (e *http3server) getTLSOptionsName(c *quic.Conn) (string, error) {
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 

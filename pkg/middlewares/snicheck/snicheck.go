@@ -10,16 +10,16 @@ import (
 // SNICheck is an HTTP handler that checks whether the TLS configuration for the server name is the same as for the host header.
 type SNICheck struct {
 	next           http.Handler
-	tlsOptionsName string
 	routerName     string
+	tlsOptionsName string
 }
 
 // New creates a new SNICheck.
 func New(routerName, tlsOptionsName string, next http.Handler) *SNICheck {
 	return &SNICheck{
 		next:           next,
-		tlsOptionsName: tlsOptionsName,
 		routerName:     routerName,
+		tlsOptionsName: tlsOptionsName,
 	}
 }
 

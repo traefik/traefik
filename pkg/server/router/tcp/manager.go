@@ -156,6 +156,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
 		}
 
+		// Even if the TLS options mismatch between the configured and the resolved one is handled in the aggregator
+		// we also have to handle it here to be able to mark the router in error.
 		tlsOptionsName := traefiktls.DefaultTLSConfigName
 		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
 			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
@@ -178,7 +180,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			if tlsConf == nil {
 				// we use nil config as a signal to insert a handler
 				// that enforces that TLS connection attempts to the corresponding (broken) router should fail.
-				logger.Debugf("Adding special closing route for %s because broken TLS options %s", domain, routerHTTPConfig.TLS.ResolvedOptions)
+				logger.Debugf("Adding special closing route for %s because of a broken TLS options %s", domain, routerHTTPConfig.TLS.ResolvedOptions)
 				router.AddHTTPTLSConfig(domain, nil, "")
 				continue
 			}
@@ -323,9 +325,9 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		}
 
 		handler = &tcp.TLSHandler{
-			Next:       handler,
-			Config:     tlsConf,
-			ConfigName: tlsOptionsName,
+			Next:           handler,
+			Config:         tlsConf,
+			TLSOptionsName: tlsOptionsName,
 		}
 
 		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
