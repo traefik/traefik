@@ -48,6 +48,8 @@ func (s *stripPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), s.name, typeName))
+
 	for _, prefix := range s.prefixes {
 		if strings.HasPrefix(req.URL.Path, prefix) {
 			req.URL.Path = s.getPathStripped(req.URL.Path, prefix)
@@ -65,6 +67,7 @@ func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 			// Stop here if the normalization of the path produces a different path.
 			if path != req.URL.Path {
+				logger.Debugf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
 				http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
 			}
