@@ -171,7 +171,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.PeerCertSANs) > 0 || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
@@ -226,6 +226,12 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		if cfg.PeerCertURI != "" {
 			config.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
 				return traefiktls.VerifyPeerCertificate(cfg.PeerCertURI, config, rawCerts)
+			}
+		}
+
+		if len(cfg.PeerCertSANs) > 0 {
+			config.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+				return traefiktls.VerifyPeerCertificateSANs(cfg.PeerCertSANs, config, rawCerts)
 			}
 		}
 	}

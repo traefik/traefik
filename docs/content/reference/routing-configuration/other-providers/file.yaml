@@ -487,6 +487,9 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      peerCertSANs:
+        - foobar
+        - foobar
       spiffe:
         ids:
           - foobar
@@ -517,6 +520,9 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      peerCertSANs:
+        - foobar
+        - foobar
       spiffe:
         ids:
           - foobar

@@ -408,6 +408,7 @@
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
+      peerCertSANs = ["foobar", "foobar"]
 
       [[http.serversTransports.ServersTransport0.certificates]]
         certFile = "foobar"
@@ -435,6 +436,7 @@
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
+      peerCertSANs = ["foobar", "foobar"]
 
       [[http.serversTransports.ServersTransport1.certificates]]
         certFile = "foobar"
