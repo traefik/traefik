@@ -159,6 +159,26 @@ func VerifyPeerCertificate(uri string, cfg *tls.Config, rawCerts [][]byte) error
 	return nil
 }
 
+// VerifyPeerCertificateSANs verifies the chain certificates and their SANs (hostnames or URIs).
+func VerifyPeerCertificateSANs(sans []string, cfg *tls.Config, rawCerts [][]byte) error {
+	cert, err := verifyChain(cfg.ClientCAs, rawCerts)
+	if err != nil {
+		return err
+	}
+
+	for _, san := range sans {
+		if verifyServerCertMatchesURI(san, cert) == nil {
+			return nil
+		}
+
+		if cert.VerifyHostname(san) == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("peer certificate mismatch: none of the SANs %v match the certificate", sans)
+}
+
 // verifyServerCertMatchesURI verifies that the given certificate contains the specified URI in its SANs.
 func verifyServerCertMatchesURI(uri string, cert *x509.Certificate) error {
 	if cert == nil {

@@ -814,3 +814,78 @@ func TestKerberosRoundTripper(t *testing.T) {
 		})
 	}
 }
+
+func TestPeerCertSANsVerification(t *testing.T) {
+	// This test verifies the BackendTLSPolicy SAN validation behavior:
+	// Traefik connects to a backend whose cert SAN is "example.com" but
+	// ServerName (SNI) is set to something different ("other.example.com").
+	// With PeerCertSANs set, verification must pass against the SAN, not the ServerName.
+	testCases := []struct {
+		desc      string
+		transport *dynamic.ServersTransport
+		wantError bool
+	}{
+		{
+			desc: "PeerCertSANs matches cert SAN — should succeed",
+			transport: &dynamic.ServersTransport{
+				// ServerName is used for SNI only, not cert verification
+				ServerName:         "other.example.com",
+				InsecureSkipVerify: true,
+				RootCAs:            []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				PeerCertSANs:       []string{"example.com"},
+			},
+			wantError: false,
+		},
+		{
+			desc: "PeerCertSANs does not match cert SAN — should fail",
+			transport: &dynamic.ServersTransport{
+				ServerName:         "other.example.com",
+				InsecureSkipVerify: true,
+				RootCAs:            []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				PeerCertSANs:       []string{"wrong.example.com"},
+			},
+			wantError: true,
+		},
+		{
+			desc: "no PeerCertSANs, ServerName matches cert — should succeed normally",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			},
+			wantError: false,
+		},
+	}
+
+	// LocalhostCert is valid for "example.com" — this is the cert the test server serves.
+	// We set ServerName to "other.example.com" to prove SNI and cert auth are decoupled.
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+			srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
+			srv.StartTLS()
+			defer srv.Close()
+
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{
+				"test": test.transport,
+			})
+
+			tr, err := transportManager.GetRoundTripper("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+			_, err = client.Get(srv.URL)
+
+			if test.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

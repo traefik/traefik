@@ -1855,6 +1855,11 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 		*out = new(ForwardingTimeouts)
 		**out = **in
 	}
+	if in.PeerCertSANs != nil {
+		in, out := &in.PeerCertSANs, &out.PeerCertSANs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Spiffe != nil {
 		in, out := &in.Spiffe, &out.Spiffe
 		*out = new(Spiffe)
