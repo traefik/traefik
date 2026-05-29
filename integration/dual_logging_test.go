@@ -21,6 +21,7 @@ const traefikTestOTLPLogFile = "traefik_otlp.log"
 // DualLoggingSuite tests that both OTLP and stdout logging can work together.
 type DualLoggingSuite struct {
 	BaseSuite
+
 	otlpLogs  []string
 	collector *httptest.Server
 }

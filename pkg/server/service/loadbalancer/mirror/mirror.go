@@ -45,36 +45,13 @@ func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int
 	}
 }
 
-func (m *Mirroring) inc() uint64 {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	m.total++
-	return m.total
-}
-
 type mirrorHandler struct {
 	http.Handler
+
 	percent int
 
 	lock  sync.RWMutex
 	count uint64
-}
-
-func (m *Mirroring) getActiveMirrors() []http.Handler {
-	total := m.inc()
-
-	var mirrors []http.Handler
-	for _, handler := range m.mirrorHandlers {
-		handler.lock.Lock()
-		if handler.count*100 < total*uint64(handler.percent) {
-			handler.count++
-			handler.lock.Unlock()
-			mirrors = append(mirrors, handler)
-		} else {
-			handler.lock.Unlock()
-		}
-	}
-	return mirrors
 }
 
 func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -163,6 +140,30 @@ func (m *Mirroring) RegisterStatusUpdater(fn func(up bool)) error {
 	}
 
 	return nil
+}
+
+func (m *Mirroring) inc() uint64 {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.total++
+	return m.total
+}
+
+func (m *Mirroring) getActiveMirrors() []http.Handler {
+	total := m.inc()
+
+	var mirrors []http.Handler
+	for _, handler := range m.mirrorHandlers {
+		handler.lock.Lock()
+		if handler.count*100 < total*uint64(handler.percent) {
+			handler.count++
+			handler.lock.Unlock()
+			mirrors = append(mirrors, handler)
+		} else {
+			handler.lock.Unlock()
+		}
+	}
+	return mirrors
 }
 
 type blackHoleResponseWriter struct{}

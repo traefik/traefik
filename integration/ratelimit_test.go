@@ -13,6 +13,7 @@ import (
 
 type RateLimitSuite struct {
 	BaseSuite
+
 	ServerIP      string
 	RedisEndpoint string
 }

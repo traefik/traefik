@@ -64,27 +64,6 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// modifyCustomRequestHeaders sets or deletes custom request headers.
-func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
-	// Loop through Custom request headers
-	for header, value := range s.headers.CustomRequestHeaders {
-		switch {
-		// Handling https://github.com/golang/go/commit/ecdbffd4ec68b509998792f120868fec319de59b.
-		case value == "" && header == forward.XForwardedFor:
-			req.Header[header] = nil
-
-		case value == "":
-			req.Header.Del(header)
-
-		case strings.EqualFold(header, "Host"):
-			req.Host = value
-
-		default:
-			req.Header.Set(header, value)
-		}
-	}
-}
-
 // PostRequestModifyResponseHeaders set or delete response headers.
 // This method is called AFTER the response is generated from the backend
 // and can merge/override headers from the backend response.
@@ -132,6 +111,27 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 
 	res.Header.Set("Vary", varyHeader)
 	return nil
+}
+
+// modifyCustomRequestHeaders sets or deletes custom request headers.
+func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
+	// Loop through Custom request headers
+	for header, value := range s.headers.CustomRequestHeaders {
+		switch {
+		// Handling https://github.com/golang/go/commit/ecdbffd4ec68b509998792f120868fec319de59b.
+		case value == "" && header == forward.XForwardedFor:
+			req.Header[header] = nil
+
+		case value == "":
+			req.Header.Del(header)
+
+		case strings.EqualFold(header, "Host"):
+			req.Host = value
+
+		default:
+			req.Header.Set(header, value)
+		}
+	}
 }
 
 // processCorsHeaders processes the incoming request,

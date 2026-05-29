@@ -109,4 +109,4 @@ labels:
     There must be one (and only one) UDP [service](../service.md) referenced per UDP router.
     Services are the target for the router.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

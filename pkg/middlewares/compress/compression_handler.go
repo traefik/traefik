@@ -156,6 +156,7 @@ func (c *CompressionHandler) putCompressionWriter(writer *compressionWriterWrapp
 
 type compressionWriterWrapper struct {
 	CompressionWriter
+
 	algo string
 }
 

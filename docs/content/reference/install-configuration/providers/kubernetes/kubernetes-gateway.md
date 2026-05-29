@@ -16,12 +16,12 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 !!! info "Using The Helm Chart"
 
-    When using the Traefik [Helm Chart](../../../../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
-    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L323).
+    When using the Traefik [Helm Chart](../../../../getting-started/kubernetes.md#install-traefik), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
+    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml).
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 1. Install/update the Kubernetes Gateway API CRDs.
 
@@ -75,13 +75,14 @@ providers:
 | <a id="opt-providers-kubernetesGateway-token" href="#opt-providers-kubernetesGateway-token" title="#opt-providers-kubernetesGateway-token">`providers.kubernetesGateway.token`</a> | Bearer token used for the Kubernetes client configuration.                                                                                                                                                                                                                                                                                                                                            | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-certAuthFilePath" href="#opt-providers-kubernetesGateway-certAuthFilePath" title="#opt-providers-kubernetesGateway-certAuthFilePath">`providers.kubernetesGateway.certAuthFilePath`</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration.                                                                                                                                                                                                                                                                                                            | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-namespaces" href="#opt-providers-kubernetesGateway-namespaces" title="#opt-providers-kubernetesGateway-namespaces">`providers.kubernetesGateway.namespaces`</a> | Array of namespaces to watch.<br />If left empty, watch all namespaces.                                                                                                                                                                                                                                                                                                                               | []      | No       |
-| <a id="opt-providers-kubernetesGateway-labelselector" href="#opt-providers-kubernetesGateway-labelselector" title="#opt-providers-kubernetesGateway-labelselector">`providers.kubernetesGateway.labelselector`</a> | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](./kubernetes-crd.md#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No       |
+| <a id="opt-providers-kubernetesGateway-labelselector" href="#opt-providers-kubernetesGateway-labelselector" title="#opt-providers-kubernetesGateway-labelselector">`providers.kubernetesGateway.labelselector`</a> | Allow filtering on `GatewayClass` only. If left empty, Traefik processes all GatewayClass objects in the configured namespaces.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-throttleDuration" href="#opt-providers-kubernetesGateway-throttleDuration" title="#opt-providers-kubernetesGateway-throttleDuration">`providers.kubernetesGateway.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.                                                                                                                            | 0s      | No       |
 | <a id="opt-providers-kubernetesGateway-nativeLBByDefault" href="#opt-providers-kubernetesGateway-nativeLBByDefault" title="#opt-providers-kubernetesGateway-nativeLBByDefault">`providers.kubernetesGateway.nativeLBByDefault`</a> | Defines whether to use Native Kubernetes load-balancing mode by default. For more information, please check out the `traefik.io/service.nativelb` service annotation documentation.                                                                                                                                                                                                                   | false   | No       |
 | <a id="opt-providers-kubernetesGateway-statusAddress-hostname" href="#opt-providers-kubernetesGateway-statusAddress-hostname" title="#opt-providers-kubernetesGateway-statusAddress-hostname">`providers.kubernetesGateway.`<br />`statusAddress.hostname`</a> | Hostname copied to the Gateway `status.addresses`.                                                                                                                                                                                                                                                                                                                                                    | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-statusAddress-ip" href="#opt-providers-kubernetesGateway-statusAddress-ip" title="#opt-providers-kubernetesGateway-statusAddress-ip">`providers.kubernetesGateway.`<br />`statusAddress.ip`</a> | IP address copied to the Gateway `status.addresses`, and currently only supports one IP value (IPv4 or IPv6).                                                                                                                                                                                                                                                                                         | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-statusAddress-service-namespace" href="#opt-providers-kubernetesGateway-statusAddress-service-namespace" title="#opt-providers-kubernetesGateway-statusAddress-service-namespace">`providers.kubernetesGateway.`<br />`statusAddress.service.namespace`</a> | The namespace of the Kubernetes service to copy status addresses from.<br />When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the Gateway `status.addresses`.                                                                                                                           | ""      | No       |
 | <a id="opt-providers-kubernetesGateway-statusAddress-service-name" href="#opt-providers-kubernetesGateway-statusAddress-service-name" title="#opt-providers-kubernetesGateway-statusAddress-service-name">`providers.kubernetesGateway.`<br />`statusAddress.service.name`</a> | The name of the Kubernetes service to copy status addresses from.<br />When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the Gateway `status.addresses`.                                                                                                                                | ""      | No       |
+| <a id="opt-providers-kubernetesGateway-crossProviderNamespaces" href="#opt-providers-kubernetesGateway-crossProviderNamespaces" title="#opt-providers-kubernetesGateway-crossProviderNamespaces">`providers.kubernetesGateway.crossProviderNamespaces`</a> | List of namespaces from which Gateway API routes (`HTTPRoute`, `TCPRoute`, `TLSRoute`) are allowed to declare a `backendRef` of kind `TraefikService`.<br />When unset, all namespaces are allowed. When set to `[]`, every such backendRef is rejected and the route is dropped.                                                                                                                     | []      | No       |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -127,14 +128,14 @@ providers:
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kubernetes-gateway.md).
+See the dedicated section in [routing](../../../../reference/routing-configuration/kubernetes/gateway-api.md).
 
 !!! tip "Routing Configuration"
 
     When using the Kubernetes Gateway API provider, Traefik uses the Gateway API
     CRDs to retrieve its routing configuration.
     Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/),
-    and the dedicated [routing section](../../../../routing/providers/kubernetes-gateway.md)
+    and the dedicated [routing section](../../../../reference/routing-configuration/kubernetes/gateway-api.md)
     in the Traefik documentation.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

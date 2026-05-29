@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Text } from '@traefiklabs/faency'
+import { Badge, Box, Flex, Text } from '@traefik-labs/faency'
 import { FiShield } from 'react-icons/fi'
 
 import { BooleanState, DetailSection, EmptyPlaceholder, ItemBlock } from './DetailSections'

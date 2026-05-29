@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"sync"
@@ -74,6 +75,7 @@ func unique(src []string) []string {
 // RouterInfo holds information about a currently running HTTP router.
 type RouterInfo struct {
 	*dynamic.Router // dynamic configuration
+
 	// Err contains all the errors that occurred during router's creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
@@ -91,10 +93,8 @@ type RouterInfo struct {
 // AddError adds err to r.Err, if it does not already exist.
 // If critical is set, r is marked as disabled.
 func (r *RouterInfo) AddError(err error, critical bool) {
-	for _, value := range r.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(r.Err, err.Error()) {
+		return
 	}
 
 	r.Err = append(r.Err, err.Error())
@@ -112,6 +112,7 @@ func (r *RouterInfo) AddError(err error, critical bool) {
 // MiddlewareInfo holds information about a currently running middleware.
 type MiddlewareInfo struct {
 	*dynamic.Middleware // dynamic configuration
+
 	// Err contains all the errors that occurred during service creation.
 	Err    []string `json:"error,omitempty"`
 	Status string   `json:"status,omitempty"`
@@ -121,10 +122,8 @@ type MiddlewareInfo struct {
 // AddError adds err to s.Err, if it does not already exist.
 // If critical is set, m is marked as disabled.
 func (m *MiddlewareInfo) AddError(err error, critical bool) {
-	for _, value := range m.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(m.Err, err.Error()) {
+		return
 	}
 
 	m.Err = append(m.Err, err.Error())
@@ -142,6 +141,7 @@ func (m *MiddlewareInfo) AddError(err error, critical bool) {
 // ServiceInfo holds information about a currently running service.
 type ServiceInfo struct {
 	*dynamic.Service // dynamic configuration
+
 	// Err contains all the errors that occurred during service creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
@@ -157,10 +157,8 @@ type ServiceInfo struct {
 // AddError adds err to s.Err, if it does not already exist.
 // If critical is set, s is marked as disabled.
 func (s *ServiceInfo) AddError(err error, critical bool) {
-	for _, value := range s.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(s.Err, err.Error()) {
+		return
 	}
 
 	s.Err = append(s.Err, err.Error())
@@ -197,9 +195,5 @@ func (s *ServiceInfo) GetAllStatus() map[string]string {
 		return nil
 	}
 
-	allStatus := make(map[string]string, len(s.serverStatus))
-	for k, v := range s.serverStatus {
-		allStatus[k] = v
-	}
-	return allStatus
+	return maps.Clone(s.serverStatus)
 }

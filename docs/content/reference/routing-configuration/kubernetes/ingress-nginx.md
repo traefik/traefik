@@ -24,7 +24,7 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 **Best Practices:**
 
 - Use IngressClass to specify which Ingresses should be handled by this provider
-- Configure `watchNamespace` to limit discovery to specific namespaces
+- Configure `watchNamespace` to limit discovery to a single namespace
 - Use `watchNamespaceSelector` to target Ingresses based on namespace labels
 
 ## Routing Configuration
@@ -252,6 +252,15 @@ This provider watches for incoming Ingress events and automatically translates N
 This section lists all known NGINX Ingress annotations.
 The following annotations are organized by category for easier navigation.
 
+### Coming Soon: More Annotations in Active Development
+
+ Several annotations currently listed as unsupported are actively being implemented and will become available in upcoming release.
+
+!!! tip "Preview upcoming annotation support"
+    You can follow the progress and explore annotations that are already available in the next version of Traefik by visiting the **[experimental documentation (master branch)](https://doc.traefik.io/traefik/master/reference/routing-configuration/kubernetes/ingress-nginx/)**.
+
+    The experimental page reflects the state of the `master` branch and may include annotations not yet available in the current stable release. Features shown there are subject to change before the final release.
+
 ### Authentication
 
 | Annotation                                            | Limitations / Notes                                                                        |
@@ -283,9 +292,11 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioaffinity" href="#opt-nginx-ingress-kubernetes-ioaffinity" title="#opt-nginx-ingress-kubernetes-ioaffinity">`nginx.ingress.kubernetes.io/affinity`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioaffinity-mode" href="#opt-nginx-ingress-kubernetes-ioaffinity-mode" title="#opt-nginx-ingress-kubernetes-ioaffinity-mode">`nginx.ingress.kubernetes.io/affinity-mode`</a> | Only persistent mode supported; balanced/canary not supported.                             |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-name" href="#opt-nginx-ingress-kubernetes-iosession-cookie-name" title="#opt-nginx-ingress-kubernetes-iosession-cookie-name">`nginx.ingress.kubernetes.io/session-cookie-name`</a> |                                                                                            |
+| <a id="opt-nginx-ingress-kubernetes-iosession-cookie-secure" href="#opt-nginx-ingress-kubernetes-iosession-cookie-secure" title="#opt-nginx-ingress-kubernetes-iosession-cookie-secure">`nginx.ingress.kubernetes.io/session-cookie-secure`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-path" href="#opt-nginx-ingress-kubernetes-iosession-cookie-path" title="#opt-nginx-ingress-kubernetes-iosession-cookie-path">`nginx.ingress.kubernetes.io/session-cookie-path`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-domain" href="#opt-nginx-ingress-kubernetes-iosession-cookie-domain" title="#opt-nginx-ingress-kubernetes-iosession-cookie-domain">`nginx.ingress.kubernetes.io/session-cookie-domain`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-samesite" href="#opt-nginx-ingress-kubernetes-iosession-cookie-samesite" title="#opt-nginx-ingress-kubernetes-iosession-cookie-samesite">`nginx.ingress.kubernetes.io/session-cookie-samesite`</a> |                                                                                            |
+| <a id="opt-nginx-ingress-kubernetes-iosession-cookie-max-age" href="#opt-nginx-ingress-kubernetes-iosession-cookie-max-age" title="#opt-nginx-ingress-kubernetes-iosession-cookie-max-age">`nginx.ingress.kubernetes.io/session-cookie-max-age`</a> |                                                                                            |
 
 ### Load Balancing & Backend
 
@@ -304,6 +315,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-headers" href="#opt-nginx-ingress-kubernetes-iocors-allow-headers" title="#opt-nginx-ingress-kubernetes-iocors-allow-headers">`nginx.ingress.kubernetes.io/cors-allow-headers`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-methods" href="#opt-nginx-ingress-kubernetes-iocors-allow-methods" title="#opt-nginx-ingress-kubernetes-iocors-allow-methods">`nginx.ingress.kubernetes.io/cors-allow-methods`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-origin" href="#opt-nginx-ingress-kubernetes-iocors-allow-origin" title="#opt-nginx-ingress-kubernetes-iocors-allow-origin">`nginx.ingress.kubernetes.io/cors-allow-origin`</a> |                                                                                            |
+| <a id="opt-nginx-ingress-kubernetes-iocors-expose-headers" href="#opt-nginx-ingress-kubernetes-iocors-expose-headers" title="#opt-nginx-ingress-kubernetes-iocors-expose-headers">`nginx.ingress.kubernetes.io/cors-expose-headers`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-max-age" href="#opt-nginx-ingress-kubernetes-iocors-max-age" title="#opt-nginx-ingress-kubernetes-iocors-max-age">`nginx.ingress.kubernetes.io/cors-max-age`</a> |                                                                                            |
 
 ### Routing

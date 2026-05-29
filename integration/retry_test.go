@@ -15,6 +15,7 @@ import (
 
 type RetrySuite struct {
 	BaseSuite
+
 	whoamiIP string
 }
 

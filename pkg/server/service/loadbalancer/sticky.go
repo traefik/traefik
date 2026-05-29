@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -144,7 +145,7 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 }
 
 func convertSameSite(sameSite string) http.SameSite {
-	switch sameSite {
+	switch strings.ToLower(sameSite) {
 	case "none":
 		return http.SameSiteNoneMode
 	case "lax":

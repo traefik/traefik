@@ -193,6 +193,7 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        errorRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.errors.statusRewrites]
           name0 = 42
           name1 = 42
@@ -207,6 +208,7 @@
         headerField = "foobar"
         forwardBody = true
         maxBodySize = 42
+        maxResponseBodySize = 42
         preserveLocationHeader = true
         preserveRequestMethod = true
         [http.middlewares.Middleware10.forwardAuth.tls]

@@ -121,7 +121,7 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 }
 
 func getPathParam(uri *url.URL) (string, error) {
-	exp := regexp.MustCompile(fmt.Sprintf(`^%s([^/]+)/?$`, http01.ChallengePath("")))
+	exp := regexp.MustCompile(fmt.Sprintf(`^%s([^/]+)/?$`, http01.PathPrefix))
 	parts := exp.FindStringSubmatch(uri.Path)
 
 	if len(parts) != 2 {

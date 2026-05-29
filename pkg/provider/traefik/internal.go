@@ -161,11 +161,16 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 			continue
 		}
 
+		rule := "HostRegexp(`^.+$`)"
+		if ep.AllowACMEByPass {
+			rule = "HostRegexp(`^.+$`) && !PathPrefix(`/.well-known/acme-challenge/`)"
+		}
+
 		rtName := provider.Normalize(name + "-to-" + def.EntryPoint.To)
 		mdName := "redirect-" + rtName
 
 		rt := &dynamic.Router{
-			Rule: "HostRegexp(`^.+$`)",
+			Rule: rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
 			EntryPoints: []string{name},
@@ -231,13 +236,25 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			}
 		}
 
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil && ep.HTTP.EncodedCharacters == nil {
 			continue
 		}
 
 		httpModel := &dynamic.Model{
 			DefaultRuleSyntax: defaultRuleSyntax,
 			Middlewares:       ep.HTTP.Middlewares,
+		}
+
+		if ep.HTTP.EncodedCharacters != nil {
+			httpModel.DeniedEncodedPathCharacters = &dynamic.RouterDeniedEncodedPathCharacters{
+				AllowEncodedSlash:         ep.HTTP.EncodedCharacters.AllowEncodedSlash,
+				AllowEncodedBackSlash:     ep.HTTP.EncodedCharacters.AllowEncodedBackSlash,
+				AllowEncodedPercent:       ep.HTTP.EncodedCharacters.AllowEncodedPercent,
+				AllowEncodedQuestionMark:  ep.HTTP.EncodedCharacters.AllowEncodedQuestionMark,
+				AllowEncodedSemicolon:     ep.HTTP.EncodedCharacters.AllowEncodedSemicolon,
+				AllowEncodedHash:          ep.HTTP.EncodedCharacters.AllowEncodedHash,
+				AllowEncodedNullCharacter: ep.HTTP.EncodedCharacters.AllowEncodedNullCharacter,
+			}
 		}
 
 		if ep.Observability != nil {

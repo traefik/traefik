@@ -1,4 +1,4 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiShield } from 'react-icons/fi'
@@ -59,7 +59,7 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
         </Tooltip>
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.priority} isTruncated />
+        <TooltipText text={row.priorityStr ?? row.priority} isTruncated />
       </AriaTd>
     </ClickableRow>
   )

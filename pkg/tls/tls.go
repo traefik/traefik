@@ -61,5 +61,6 @@ type GeneratedCert struct {
 // CertAndStores allows mapping a TLS certificate to a list of entry points.
 type CertAndStores struct {
 	Certificate `yaml:",inline" export:"true"`
-	Stores      []string `json:"stores,omitempty" toml:"stores,omitempty" yaml:"stores,omitempty" export:"true"`
+
+	Stores []string `json:"stores,omitempty" toml:"stores,omitempty" yaml:"stores,omitempty" export:"true"`
 }

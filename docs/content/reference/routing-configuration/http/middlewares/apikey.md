@@ -53,4 +53,4 @@ stringData:
 | <a id="opt-secretNonBase64Encoded" href="#opt-secretNonBase64Encoded" title="#opt-secretNonBase64Encoded">`secretNonBase64Encoded`</a> | Defines whether the secret sent by the client is base64 encoded. | false   | No       |
 | <a id="opt-secretValues" href="#opt-secretValues" title="#opt-secretValues">`secretValues`</a> | Contain the hash of the API keys. <br /> Supported hashing algorithms are Bcrypt, SHA1 and MD5. <br /> The hash should be generated using `htpasswd`.<br />Can reference a Kubernetes Secret using the URN format: `urn:k8s:secret:[name]:[valueKey]` | []      | Yes      |
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

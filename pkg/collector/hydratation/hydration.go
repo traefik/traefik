@@ -18,7 +18,7 @@ const (
 )
 
 // Hydrate hydrates a configuration.
-func Hydrate(element interface{}) error {
+func Hydrate(element any) error {
 	field := reflect.ValueOf(element)
 	return fill(field)
 }
@@ -81,7 +81,7 @@ func fill(field reflect.Value) error {
 	return nil
 }
 
-func setTyped(field reflect.Value, i interface{}) {
+func setTyped(field reflect.Value, i any) {
 	baseValue := reflect.ValueOf(i)
 	if field.Kind().String() == field.Type().String() {
 		field.Set(baseValue)

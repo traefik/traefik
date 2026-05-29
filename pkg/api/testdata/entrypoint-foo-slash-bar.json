@@ -1,7 +1,5 @@
 {
 	"address": ":81",
-	"http": {
-		"encodedCharacters": {}
-	},
+	"http": {},
 	"name": "foo / bar"
 }

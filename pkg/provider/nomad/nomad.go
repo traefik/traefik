@@ -263,6 +263,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+// Namespace returns the namespace of the Nomad provider.
+func (p *Provider) Namespace() string {
+	return p.namespace
+}
+
 func (p *Provider) pollOrWatch(ctx context.Context) (<-chan *api.Events, error) {
 	if p.Watch {
 		return p.client.EventStream().Stream(ctx,
@@ -570,9 +575,4 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
-}
-
-// Namespace returns the namespace of the Nomad provider.
-func (p *Provider) Namespace() string {
-	return p.namespace
 }

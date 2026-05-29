@@ -46,8 +46,8 @@ func TestReuseService(t *testing.T) {
 		th.WithMiddlewares(th.WithMiddleware("basicauth",
 			th.WithBasicAuth(&dynamic.BasicAuth{Users: []string{"foo:bar"}}),
 		)),
-		th.WithLoadBalancerServices(th.WithService("bar",
-			th.WithServers(th.WithServer(testServer.URL))),
+		th.WithServices(
+			th.WithService("bar", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer(testServer.URL)))),
 		),
 	)
 
@@ -98,8 +98,8 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
-					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithServers(th.WithServer(testServerURL))),
+					th.WithServices(
+						th.WithService("bar", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer(testServerURL)))),
 					),
 				)
 			},
@@ -121,7 +121,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
-					th.WithLoadBalancerServices(th.WithService("bar")),
+					th.WithServices(
+						th.WithService("bar", th.WithServiceServersLoadBalancer()),
+					),
 				)
 			},
 			expectedStatusCode: http.StatusServiceUnavailable,
@@ -135,23 +137,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
-					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithSticky("test")),
+					th.WithServices(
+						th.WithService("bar", th.WithServiceServersLoadBalancer(th.WithSticky("test"))),
 					),
-				)
-			},
-			expectedStatusCode: http.StatusServiceUnavailable,
-		},
-		{
-			desc: "Empty Backend LB",
-			config: func(testServerURL string) *dynamic.HTTPConfiguration {
-				return th.BuildConfiguration(
-					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("web"),
-						th.WithServiceName("bar"),
-						th.WithRule(routeRule)),
-					),
-					th.WithLoadBalancerServices(th.WithService("bar")),
 				)
 			},
 			expectedStatusCode: http.StatusServiceUnavailable,
@@ -165,8 +153,8 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
-					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithSticky("test")),
+					th.WithServices(
+						th.WithService("bar", th.WithServiceServersLoadBalancer(th.WithSticky("test"))),
 					),
 				)
 			},
@@ -254,6 +242,61 @@ func TestInternalServices(t *testing.T) {
 	entryPointsHandlers["web"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
+}
+
+func TestRecursionService(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	defer testServer.Close()
+
+	staticConfig := static.Configuration{
+		EntryPoints: map[string]*static.EntryPoint{
+			"web": {},
+		},
+	}
+
+	dynamicConfigs := th.BuildConfiguration(
+		th.WithRouters(
+			th.WithRouter("foo@provider1",
+				th.WithEntryPoints("web"),
+				th.WithServiceName("bar"),
+				th.WithRule("Path(`/ok`)")),
+		),
+		th.WithMiddlewares(th.WithMiddleware("customerror",
+			th.WithErrorPage(&dynamic.ErrorPage{Service: "bar"}),
+		)),
+		th.WithServices(
+			th.WithService("bar@provider1", th.WithServiceWRR(th.WithWRRServices(th.WithWRRService("foo")))),
+			th.WithService("foo@provider1", th.WithServiceWRR(th.WithWRRServices(th.WithWRRService("bar")))),
+		),
+	)
+
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil)
+	tlsManager := tls.NewManager(nil)
+
+	dialerManager := tcp.NewDialerManager(nil)
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+	factory, err := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, dialerManager)
+	require.NoError(t, err)
+
+	rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs})
+	entryPointsHandlers, _ := factory.CreateRouters(rtConf)
+
+	// Test that the /ok path returns a status 404.
+	responseRecorderOk := &httptest.ResponseRecorder{}
+	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/ok", nil)
+	entryPointsHandlers["web"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
+
+	assert.Equal(t, http.StatusNotFound, responseRecorderOk.Result().StatusCode, "status code")
+
+	require.NotNil(t, rtConf.Routers["foo@provider1"])
+	assert.Contains(t, rtConf.Routers["foo@provider1"].Err, "building HTTP service \"foo\": building HTTP service \"bar\": could not instantiate service bar@provider1: recursion detected in service:bar@provider1->service:foo@provider1->service:bar@provider1")
+	require.NotNil(t, rtConf.Services["bar@provider1"])
+	assert.Contains(t, rtConf.Services["bar@provider1"].Err, "could not instantiate service bar@provider1: recursion detected in service:bar@provider1->service:foo@provider1->service:bar@provider1")
 }
 
 type proxyBuilderMock struct{}

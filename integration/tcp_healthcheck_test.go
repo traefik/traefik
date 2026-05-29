@@ -15,6 +15,7 @@ import (
 // TCPHealthCheckSuite test suite for TCP health checks.
 type TCPHealthCheckSuite struct {
 	BaseSuite
+
 	whoamitcp1IP string
 	whoamitcp2IP string
 }

@@ -5,6 +5,62 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
 
 # Traefik & KV Stores
 
+## Configuration Examples
+
+??? example "Configuring KV Store & Deploying / Exposing one Service"
+
+    Enabling a KV store provider (example: Consul)
+
+    ```yaml tab="Structured (YAML)"
+    providers:
+      consul:
+        endpoints:
+          - "127.0.0.1:8500"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    [providers.consul]
+      endpoints = ["127.0.0.1:8500"]
+    ```
+
+    ```bash tab="CLI"
+    --providers.consul.endpoints=127.0.0.1:8500
+    ```
+
+    Setting keys in the KV store (example: Consul)
+
+    ```bash
+    consul kv put traefik/http/routers/my-router/rule "Host(`example.com`)"
+    consul kv put traefik/http/routers/my-router/service "my-service"
+    consul kv put traefik/http/services/my-service/loadbalancer/servers/0/url "http://127.0.0.1:8080"
+    ```
+
+??? example "Specify a Custom Port for the Service"
+
+    Forward requests for `http://example.com` to `http://127.0.0.1:12345`:
+
+    ```bash
+    consul kv put traefik/http/routers/my-router/rule "Host(`example.com`)"
+    consul kv put traefik/http/routers/my-router/service "my-service"
+    consul kv put traefik/http/services/my-service/loadbalancer/servers/0/url "http://127.0.0.1:12345"
+    ```
+
+??? example "Specifying more than one router and service"
+
+    Forwarding requests to more than one service requires defining multiple routers and services.
+
+    In this example, requests are forwarded for `http://example-a.com` to `http://127.0.0.1:8000` in addition to `http://example-b.com` forwarding to `http://127.0.0.1:9000`:
+
+    ```bash
+    consul kv put traefik/http/routers/www-router/rule "Host(`example-a.com`)"
+    consul kv put traefik/http/routers/www-router/service "www-service"
+    consul kv put traefik/http/services/www-service/loadbalancer/servers/0/url "http://127.0.0.1:8000"
+    
+    consul kv put traefik/http/routers/admin-router/rule "Host(`example-b.com`)"
+    consul kv put traefik/http/routers/admin-router/service "admin-service"
+    consul kv put traefik/http/services/admin-service/loadbalancer/servers/0/url "http://127.0.0.1:9000"
+    ```
+
 ## Configuration Options
 
 !!! info "Keys"
@@ -93,15 +149,6 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
-##### Configuration Example
-    
-```bash
-# Declaring a middleware
-traefik/http/middlewares/myAddPrefix/addPrefix/prefix=/foobar
-# Referencing a middleware
-traefik/http/routers/<router_name>/middlewares/0=myAddPrefix
-```
-
 #### ServerTransport
 
 ##### Configuration Options
@@ -109,17 +156,6 @@ traefik/http/routers/<router_name>/middlewares/0=myAddPrefix
 | Key (Path)                                                      | Description                                                      |  Value                                   |
 |-----------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------|
 | <a id="opt-traefikhttpserversTransportsserversTransportNamest-option" href="#opt-traefikhttpserversTransportsserversTransportNamest-option" title="#opt-traefikhttpserversTransportsserversTransportNamest-option">`traefik/http/serversTransports/<serversTransportName>/st_option`</a> | With  `st_option` the ServerTransport option to set (ex `maxIdleConnsPerHost`).<br/> More information about available options in the dedicated [ServerTransport section](../http/load-balancing/serverstransport.md). | ServerTransport Options |
-
-##### Configuration Example
-    
-```bash
-# Declaring a ServerTransport
-traefik/http/serversTransports/myServerTransport/maxIdleConnsPerHost=-1
-traefik/http/serversTransports/myServerTransport/certificates/0/certFile=mypath/cert.pem
-traefik/http/serversTransports/myServerTransport/certificates/0/keyFile=mypath/key.pem
-# Referencing a middleware
-traefik/http/services/myService/serversTransports/0=myServerTransport
-```
 
 ### TCP
 
@@ -170,15 +206,6 @@ More information about available middlewares in the dedicated [middlewares secti
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
-##### Configuration Example
-    
-```bash
-# Declaring a middleware
-traefik/tcp/middlewares/test-inflightconn/amount=10
-# Referencing a middleware
-traefik/tcp/routers/<router_name>/middlewares/0=test-inflightconn
-```
-
 #### ServerTransport
 
 ##### Configuration Options
@@ -186,15 +213,6 @@ traefik/tcp/routers/<router_name>/middlewares/0=test-inflightconn
 | Key (Path)                                                      | Description                                                      |  Value                                   |
 |-----------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------|
 | <a id="opt-traefiktcpserversTransportsserversTransportNamest-option" href="#opt-traefiktcpserversTransportsserversTransportNamest-option" title="#opt-traefiktcpserversTransportsserversTransportNamest-option">`traefik/tcp/serversTransports/<serversTransportName>/st_option`</a> | With  `st_option` the ServerTransport option to set (ex `maxIdleConnsPerHost`).<br/> More information about available options in the dedicated [ServerTransport section](../tcp/serverstransport.md). | ServerTransport Options |
-
-##### Configuration Example
-    
-```bash
-# Declaring a ServerTransport
-traefik/tcp/serversTransports/myServerTransport/maxIdleConnsPerHost=-1
-# Referencing a middleware
-traefik/tcp/services/myService/serversTransports/0=myServerTransport
-```
 
 ### UDP
 

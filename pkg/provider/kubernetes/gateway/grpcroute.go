@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -391,20 +392,30 @@ func buildGRPCMatchRule(hostnames []gatev1.Hostname, match gatev1.GRPCRouteMatch
 
 func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {
 	if method == nil {
-		return "PathPrefix(`/`)"
+		return `PathPrefix("/")`
 	}
+
+	isExact := method.Type == nil || *method.Type == gatev1.GRPCMethodMatchExact
 
 	sExpr := "[^/]+"
 	if s := ptr.Deref(method.Service, ""); s != "" {
-		sExpr = s
+		if isExact {
+			sExpr = regexp.QuoteMeta(s)
+		} else {
+			sExpr = s
+		}
 	}
 
 	mExpr := "[^/]+"
 	if m := ptr.Deref(method.Method, ""); m != "" {
-		mExpr = m
+		if isExact {
+			mExpr = regexp.QuoteMeta(m)
+		} else {
+			mExpr = m
+		}
 	}
 
-	return fmt.Sprintf("PathRegexp(`/%s/%s`)", sExpr, mExpr)
+	return fmt.Sprintf("PathRegexp(%q)", fmt.Sprintf("/%s/%s", sExpr, mExpr))
 }
 
 func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
@@ -412,9 +423,9 @@ func buildGRPCHeaderRules(headers []gatev1.GRPCHeaderMatch) []string {
 	for _, header := range headers {
 		switch ptr.Deref(header.Type, gatev1.GRPCHeaderMatchExact) {
 		case gatev1.GRPCHeaderMatchExact:
-			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
+			rules = append(rules, fmt.Sprintf("Header(%q,%q)", header.Name, header.Value))
 		case gatev1.GRPCHeaderMatchRegularExpression:
-			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
+			rules = append(rules, fmt.Sprintf("HeaderRegexp(%q,%q)", header.Name, header.Value))
 		}
 	}
 

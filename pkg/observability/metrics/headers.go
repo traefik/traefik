@@ -36,14 +36,14 @@ func (c MultiCounterWithHeaders) With(headers http.Header, labelValues ...string
 	return next
 }
 
-// NewCounterWithNoopHeaders returns a CounterWithNoopHeaders.
-func NewCounterWithNoopHeaders(counter metrics.Counter) CounterWithNoopHeaders {
-	return CounterWithNoopHeaders{counter: counter}
-}
-
 // CounterWithNoopHeaders is a counter that satisfies CounterWithHeaders but ignores the given http.Header.
 type CounterWithNoopHeaders struct {
 	counter metrics.Counter
+}
+
+// NewCounterWithNoopHeaders returns a CounterWithNoopHeaders.
+func NewCounterWithNoopHeaders(counter metrics.Counter) CounterWithNoopHeaders {
+	return CounterWithNoopHeaders{counter: counter}
 }
 
 // Add adds the given delta value to the counter value.

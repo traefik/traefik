@@ -3,6 +3,7 @@ package tcp
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -37,13 +38,7 @@ func alpn(tree *matchersTree, protos ...string) error {
 	}
 
 	tree.matcher = func(meta ConnData) bool {
-		for _, alpnProto := range meta.alpnProtos {
-			if alpnProto == proto {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(meta.alpnProtos, proto)
 	}
 
 	return nil

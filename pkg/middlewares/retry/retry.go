@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"net"
 	"net/http"
@@ -249,10 +250,7 @@ func (r *responseWriter) WriteHeader(code int) {
 	// to write headers to the backend : we are not going to perform any further retry.
 	// So it is now safe to alter current response headers with headers collected during
 	// the latest try before writing headers to client.
-	headers := r.responseWriter.Header()
-	for header, value := range r.headers {
-		headers[header] = value
-	}
+	maps.Copy(r.responseWriter.Header(), r.headers)
 
 	r.responseWriter.WriteHeader(code)
 

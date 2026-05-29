@@ -69,4 +69,4 @@ spec:
 | <a id="opt-allow" href="#opt-allow" title="#opt-allow">`allow`</a> | The `allow` option sets the expression to evaluate that determines if the request should be authorized. | ""      | No (one of `allow` or `forwardHeaders` must be set) |
 | <a id="opt-forwardHeaders" href="#opt-forwardHeaders" title="#opt-forwardHeaders">`forwardHeaders`</a> | The `forwardHeaders` option sets the HTTP headers to add to requests and populates them with the result of the given expression. | ""      | No (one of `allow` or `forwardHeaders` must be set) |   
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

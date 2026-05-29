@@ -149,7 +149,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 		},
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(helmSecret, secret)
+	kubeClient := kubefake.NewClientset(helmSecret, secret)
 
 	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
 	discovery.FakedServerVersion = &kversion.Info{
@@ -224,7 +224,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 		}},
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(emptyEndpointSlice, filledEndpointSlice)
+	kubeClient := kubefake.NewClientset(emptyEndpointSlice, filledEndpointSlice)
 
 	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
 	discovery.FakedServerVersion = &kversion.Info{

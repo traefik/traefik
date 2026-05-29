@@ -2,24 +2,27 @@ site_name: Traefik
 site_description: Traefik Documentation
 site_author: traefik.io
 site_url: https://doc.traefik.io/traefik
-dev_addr: 0.0.0.0:8000
+dev_addr: localhost:8000
 
 repo_name: 'GitHub'
 repo_url: 'https://github.com/traefik/traefik'
 
 docs_dir: 'content'
 
-product: proxy
 
-# https://squidfunk.github.io/mkdocs-material/
+# Use custom version of mkdocs-material
+# See https://github.com/traefik/mkdocs-material
 theme:
   name: 'traefik-labs'
+  product: proxy
   language: en
   include_sidebar: true
   favicon: assets/img/traefikproxy-icon-color.png
   logo: assets/img/traefikproxy-vertical-logo-color.svg
   feature:
     tabs: false
+  features:
+    - content.code.copy
   palette:
     primary: 'cyan'
     accent: 'cyan'
@@ -27,22 +30,33 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: 'Traefik Labs • Copyright &copy; 2016-2025'
+copyright: 'Traefik Labs • Copyright &copy; 2016-2026'
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
   - assets/js/extra.js
+  - assets/js/banner.js
 
 extra_css:
   - assets/css/menu-icons.css
+  - assets/css/code-copy.css
+  - assets/css/content-width.css
+  - assets/css/banner.css
 
 plugins:
   - search
   - exclude:
       glob:
         - "**/include-*.md"
+  - include-markdown:
+      encoding: utf-8
   - redirects:
       redirect_maps:
+        ## Getting-Started
+        'getting-started/concepts.md': 'getting-started/configuration-overview.md'
+        'getting-started/install-traefik.md': 'getting-started/index.md'
+        'getting-started/quick-start-with-kubernetes.md': 'getting-started/kubernetes.md'
+        'getting-started/quick-start.md': 'getting-started/docker.md'
         # Providers
         'providers/overview.md': 'reference/install-configuration/providers/overview.md'
         'providers/docker.md': 'reference/install-configuration/providers/docker.md'
@@ -96,6 +110,7 @@ plugins:
         'https/acme.md': 'reference/install-configuration/tls/certificate-resolvers/acme.md'
         'https/tailscale.md': 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
         'https/spiffe.md': 'reference/install-configuration/tls/spiffe.md'
+        'https/ocsp.md': 'reference/install-configuration/tls/ocsp.md'
         # Middlewares
         'middlewares/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
         # HTTP
@@ -130,12 +145,15 @@ plugins:
         'middlewares/tcp/ipwhitelist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         'middlewares/tcp/ipallowlist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         ## User Guides
-        'user-guides/crd-acme/index.md': 'expose/kubernetes.md'
-        'user-guides/cert-manager.md': 'expose/kubernetes.md'
-        'user-guides/docker-compose/basic-example/index.md': 'expose/docker.md'
-        'user-guides/docker-compose/acme-tls/index.md': 'expose/docker.md'
-        'user-guides/docker-compose/acme-http/index.md': 'expose/docker.md'
-        'user-guides/docker-compose/acme-dns/index.md': 'expose/docker.md'
+        'user-guides/crd-acme/index.md': 'expose/kubernetes/basic.md'
+        'user-guides/cert-manager.md': 'expose/kubernetes/advanced.md'
+        'user-guides/docker-compose/basic-example/index.md': 'expose/docker/basic.md'
+        'user-guides/docker-compose/acme-tls/index.md': 'expose/docker/basic.md'
+        'user-guides/docker-compose/acme-http/index.md': 'expose/docker/basic.md'
+        'user-guides/docker-compose/acme-dns/index.md': 'expose/docker/basic.md'
+        'user-guides/fastproxy.md': 'reference/install-configuration/experimental/fastproxy.md'
+        'user-guides/grpc.md': 'expose/overview.md#exposing-grpc-services'
+        'user-guides/websocket.md': 'expose/overview.md#exposing-websocket-services'
         # References
         # Static Configuration
         'reference/static-configuration/overview.md': 'reference/install-configuration/configuration-options.md'
@@ -151,6 +169,11 @@ plugins:
         "reference/dynamic-configuration/nomad.md": 'reference/routing-configuration/other-providers/nomad.md'
         'reference/dynamic-configuration/ecs.md': 'reference/routing-configuration/other-providers/ecs.md'
         'reference/dynamic-configuration/kv.md': 'reference/routing-configuration/other-providers/kv.md'
+        'reference/dynamic-configuration/kv-ref.md': 'reference/routing-configuration/other-providers/kv.md'
+        'reference/install-configuration/cli-options-list.md': 'reference/install-configuration/configuration-options.md'
+        'reference/install-configuration/observability/healthcheck/cli.md': 'reference/install-configuration/observability/healthcheck.md'
+        'reference/install-configuration/observability/healthcheck/ping.md': 'reference/install-configuration/observability/healthcheck.md'
+        'reference/install-configuration/observability/options-list.md': 'reference/install-configuration/configuration-options.md'
         ## Plugins
         'plugins/index.md': "extend/extend-traefik.md"
         ## Migration
@@ -176,15 +199,13 @@ markdown_extensions:
   - pymdownx.tasklist
   - pymdownx.snippets:
       check_paths: true
-  - markdown_include.include:
-      base_path: content/includes/
-      encoding: utf-8
   - toc:
       permalink: true
 
 # Page tree
 nav:
   - 'What is Traefik': 'index.md'
+  - 'Features': 'features/index.md'
   - 'Getting Started':
       - 'Overview': 'getting-started/index.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
@@ -197,9 +218,15 @@ nav:
       - 'Swarm': 'setup/swarm.md'
   - 'Expose':
       - 'Overview': 'expose/overview.md'
-      - 'Kubernetes': 'expose/kubernetes.md'
-      - 'Docker': 'expose/docker.md'
-      - 'Swarm': 'expose/swarm.md'
+      - 'Kubernetes':
+        - 'Basic': 'expose/kubernetes/basic.md'
+        - 'Advanced': 'expose/kubernetes/advanced.md'
+      - 'Docker':
+        - 'Basic': 'expose/docker/basic.md'
+        - 'Advanced': 'expose/docker/advanced.md'
+      - 'Swarm':
+        - 'Basic': 'expose/swarm/basic.md'
+        - 'Advanced': 'expose/swarm/advanced.md'
   - 'Secure':
       - '<span class="nav-link-with-icon">Secure Access with JWT <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-jwt.md'
       - '<span class="nav-link-with-icon">Secure Access with OIDC <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-oidc.md'
@@ -259,6 +286,9 @@ nav:
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
+      - 'Experimental':
+          - 'FastProxy': 'reference/install-configuration/experimental/fastproxy.md'
+          - 'Plugins': 'reference/install-configuration/experimental/plugins.md'
       - 'Options List': 'reference/install-configuration/configuration-options.md'
     - 'Routing Configuration':
         - 'Common Configuration' :
@@ -364,12 +394,6 @@ nav:
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
         - 'Features': 'deprecation/features.md'
-  - 'User Guides':
-      - 'FastProxy': 'user-guides/fastproxy.md'
-      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
-      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
-      - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'WebSocket Examples': 'user-guides/websocket.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
@@ -380,4 +404,5 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
+      - 'Maintainer''s Guidelines': 'contributing/maintainers-guidelines.md'
   - 'FAQ': 'getting-started/faq.md'

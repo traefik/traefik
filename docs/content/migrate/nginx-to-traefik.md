@@ -154,6 +154,10 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
     ```
 Install Traefik with the Kubernetes Ingress NGINX provider enabled. Both controllers will serve the same Ingress resources simultaneously.
 
+!!! warning "Read the status race condition note first"
+
+    Running both controllers against the same Ingresses creates contention on the `status.loadBalancer.ingress[]` field. Before installing, review the [Ingress Status Race Condition](#status-race) section in Step 3 and decide which mitigation to apply (disable `publishService` on Traefik, or use a transitional IngressClass).
+
 ### Add Traefik Helm Repository
 
 ```bash
@@ -166,7 +170,7 @@ helm repo update
 ```bash
 helm upgrade --install traefik traefik/traefik \
   --namespace traefik --create-namespace \
-  --set providers.kubernetesIngressNginx.enabled=true
+  --set providers.kubernetesIngressNGINX.enabled=true
 ```
 
 Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) for more configuration:
@@ -174,7 +178,7 @@ Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/mast
 ```yaml tab="traefik-values.yaml"
 ...
 providers:
-  kubernetesIngressNginx:
+  kubernetesIngressNGINX:
     enabled: true
  ...
 ```
@@ -279,11 +283,20 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 
     Some ISPs ignore DNS TTL values to reduce traffic costs, caching records longer than specified. After removing NGINX from DNS, keep NGINX running for at least 24-48 hours before uninstalling to avoid dropping traffic from users whose ISPs have stale DNS caches.
 
-??? info "ExternalDNS Users"
+<a id="status-race"></a>
 
-    If you use [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to automatically manage DNS records based on Ingress status, both NGINX and Traefik will compete to update the Ingress status with their LoadBalancer IPs when `publishService` is enabled. Traefik typically wins because it updates faster, which can cause unexpected traffic shifts.
+!!! warning "Ingress Status Race Condition During Coexistence"
 
-    **Recommended approach for ExternalDNS:**
+    While both controllers manage the same Ingress resources (same `ingressClassName: nginx`), they will both attempt to write the LoadBalancer address into `status.loadBalancer.ingress[]` on every Ingress they own. Each controller overwrites the other in a tight reconciliation loop, with no error reported in the logs (just repeated `Updated ingress status` info lines on both sides).
+
+    Routing itself is not affected: both controllers correctly serve traffic during the coexistence window. The flapping status field affects anything that watches it:
+
+    - [ExternalDNS](https://github.com/kubernetes-sigs/external-dns), which may shift DNS records back and forth between the two LoadBalancer IPs.
+    - kube-state-metrics, monitoring dashboards, and alerting rules that observe Ingress status.
+    - GitOps tools such as ArgoCD or Flux, which will report a permanent drift on every affected Ingress.
+    - Custom operators reconciling on the Ingress status field.
+
+    **Recommended mitigation (option 1): disable status publishing on Traefik during coexistence**
 
     1. **[Install Traefik](#step-1-install-traefik-alongside-nginx) with `publishService` disabled**:
 
@@ -296,9 +309,11 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
               enabled: false  # Disable to prevent status updates
         ```
 
-    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname
+        Traefik keeps serving the Ingresses normally. It only stops writing the status field, leaving NGINX as the sole writer.
 
-    3. **Switch DNS via NGINX** - Configure NGINX to publish Traefik's service address:
+    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname.
+
+    3. **Switch DNS via NGINX** (ExternalDNS users only). Configure NGINX to publish Traefik's service address so ExternalDNS points traffic to Traefik:
 
         ```yaml
         # nginx-values.yaml
@@ -307,11 +322,13 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
             pathOverride: "traefik/traefik"  # Points to Traefik's service
         ```
 
-        This makes NGINX update the Ingress status with Traefik's LoadBalancer IP, causing ExternalDNS to point traffic to Traefik.
+    4. **Verify traffic flows through Traefik**. At this point, you can still roll back by removing the `pathOverride`.
 
-    4. **Verify traffic flows through Traefik** - At this point, you can still rollback by removing the `pathOverride`
+    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-4-uninstall-ingress-nginx-controller).
 
-    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-5-uninstall-nginx-ingress-controller)
+    **Alternative mitigation (option 2): use a transitional IngressClass**
+
+    Give the migrating NGINX a distinct IngressClass (for example `nginx-migration`) so the two controllers never own the same Ingress at the same time. This is the approach SUSE documents for RKE2 migrations: see [SUSE: Migrate from Ingress NGINX to Traefik](https://documentation.suse.com/cloudnative/rke2/latest/en/reference/ingress_migration.html). This avoids any contention on `status.loadBalancer.ingress[]` entirely, at the cost of a short traffic-cutover step instead of a progressive DNS shift.
 
 ### Option B: External Load Balancer with Weighted Traffic
 
@@ -442,6 +459,42 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
     ```
 
     For more details, see the [GKE LoadBalancer Service parameters documentation](https://cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters).
+
+??? note "OVHcloud"
+
+    OVHcloud supports static IP on OVHcloud Public Load Balancer, it is based on Openstack Octavia which allocates floating IPs to LoadBalancer services. This requires the [Openstack Cloud Controller Manager](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md) to be installed in your cluster. If you are using OVHcloud Managed Kubernetes Service (MKS), the Openstack Cloud Controller Manager is already installed and managed for you.
+    
+    To retain your existing floating IP when migrating from NGINX to Traefik:
+
+    **Identify the existing public IP:**
+    
+    ```bash
+    NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
+  -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
+     
+    echo "NGINX IP: $NGINX_IP"
+    ```
+    
+    **Edit your existing NGINX LoadBalancer service to ensure that the floating IP is not released when the loadbalancer service is deleted:**
+    
+    
+    kubectl annotate svc my-lb-svc loadbalancer.openstack.org/keep-floatingip=true
+    ```
+    
+    The `keep-floatingip` annotation prevents the floating IP from being released when the service is deleted or modified.
+
+    **Delete the NGINX LoadBalancer service to release the floating IP**
+
+    **Update `traefik-values.yaml`:**
+    
+    ```yaml
+    service:
+      type: LoadBalancer
+      spec:
+        loadBalancerIP: "<your-existing-floating-ip>"
+    ```
+
+    To learn more, see the [OVHcloud MKS Public Load Balancer annotations documentation](https://help.ovhcloud.com/csm/en-public-cloud-kubernetes-expose-applications-using-load-balancer?id=kb_article_view&sysparm_article=KB0062878#supported-annotations-features).
 
 ??? note "Other Cloud Providers"
 

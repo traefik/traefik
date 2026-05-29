@@ -123,4 +123,4 @@ This provides fine-grained control over certificate generation and takes precede
 
 Every domain must have A/AAAA records pointing to Traefik.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

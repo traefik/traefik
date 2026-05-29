@@ -62,7 +62,7 @@ func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 
 // loadConfigFiles tries to decode the given configuration file and all default locations for the configuration file.
 // It stops as soon as decoding one of them is successful.
-func loadConfigFiles(configFile string, element interface{}) (string, error) {
+func loadConfigFiles(configFile string, element any) (string, error) {
 	finder := cli.Finder{
 		BasePaths:  []string{"/etc/traefik/traefik", "$XDG_CONFIG_HOME/traefik", "$HOME/.config/traefik", "./traefik"},
 		Extensions: []string{"toml", "yaml", "yml"},

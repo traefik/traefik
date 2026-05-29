@@ -65,7 +65,7 @@ func DetailedTracingEnabled(ctx context.Context) bool {
 }
 
 // SetStatusErrorf flags the span as in error and log an event.
-func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
+func SetStatusErrorf(ctx context.Context, format string, args ...any) {
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
 	}

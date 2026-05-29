@@ -31,6 +31,6 @@ func EncodeConfiguration(conf *dynamic.Configuration) (map[string]string, error)
 
 // Decode converts the labels to an element.
 // labels -> [ node -> node + metadata (type) ] -> element (node).
-func Decode(labels map[string]string, element interface{}, filters ...string) error {
+func Decode(labels map[string]string, element any, filters ...string) error {
 	return parser.Decode(labels, element, parser.DefaultRootName, filters...)
 }

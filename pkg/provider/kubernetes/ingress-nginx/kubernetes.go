@@ -22,12 +22,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 )
 
@@ -79,6 +79,9 @@ type Provider struct {
 
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
+
+	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
+	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
@@ -230,7 +233,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		// Add the default backend service router to the configuration.
 		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
-			Rule: "PathPrefix(`/`)",
+			Rule: `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -238,7 +241,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		}
 
 		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
-			Rule: "PathPrefix(`/`)",
+			Rule: `PathPrefix("/")`,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
@@ -307,7 +310,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -321,7 +324,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			conf.HTTP.Routers[defaultBackendName] = rt
 
 			rtTLS := &dynamic.Router{
-				Rule: "PathPrefix(`/`)",
+				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
@@ -373,18 +376,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					continue
 				}
 
-				port := backend.Service.Port.Name
-				if len(backend.Service.Port.Name) == 0 {
-					port = strconv.Itoa(int(backend.Service.Port.Number))
-				}
-
-				serviceName := provider.Normalize(ingress.Namespace + "-" + backend.Service.Name + "-" + port)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + backend.Service.Name + "-" + portString(backend.Service.Port))
 				conf.TCP.Services[serviceName] = service
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host), "-")
 
 				conf.TCP.Routers[routerKey] = &dynamic.TCPRouter{
-					Rule: fmt.Sprintf("HostSNI(`%s`)", rule.Host),
+					Rule: fmt.Sprintf("HostSNI(%q)", rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -447,13 +445,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					continue
 				}
 
-				portString := pa.Backend.Service.Port.Name
-				if len(pa.Backend.Service.Port.Name) == 0 {
-					portString = strconv.Itoa(int(pa.Backend.Service.Port.Number))
-				}
-
 				// TODO: if no service, do not add middlewares and 503.
-				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 
 				service, err := p.buildService(ingress.Namespace, pa.Backend, ingressConfig)
 				if err != nil {
@@ -509,7 +502,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
+			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on",
 		},
 	}
 
@@ -587,6 +580,24 @@ func (p *Provider) buildPassthroughService(namespace string, backend netv1.Ingre
 	return &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
+func getServicePort(service *corev1.Service, backend netv1.IngressBackend) (corev1.ServicePort, bool) {
+	for _, p := range service.Spec.Ports {
+		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
+		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
+			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
+			return p, true
+		}
+	}
+
+	// If the port is not found and the service is of type ExternalName, we return the port defined in the backend.
+	// If this is a named port, the port value will be 0 to be consistent with ingress-nginx.
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return corev1.ServicePort{TargetPort: intstr.Parse(portString(backend.Service.Port))}, true
+	}
+
+	return corev1.ServicePort{}, false
+}
+
 func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg ingressConfig) ([]backendAddress, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
@@ -597,30 +608,18 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	var portName string
-	var portSpec corev1.ServicePort
-	var match bool
-	for _, p := range service.Spec.Ports {
-		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
-		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
-			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
-			portName = p.Name
-			portSpec = p
-			match = true
-			break
-		}
-	}
+	servicePort, match := getServicePort(service, backend)
 	if !match {
 		return nil, errors.New("service port not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
 	}
 
 	// When service upstream is set to true we return the service ClusterIP as the backend address.
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))}}, nil
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
 	}
 
 	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, backend.Service.Name)
@@ -633,7 +632,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if portName == *p.Name {
+			if servicePort.Name == *p.Name {
 				port = *p.Port
 				break
 			}
@@ -643,7 +642,10 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !k8s.EndpointServing(endpoint) {
+			// The Serving condition allows to track if the Pod can receive traffic.
+			// It is set to true when the Pod is Ready or Terminating.
+			// From the go documentation, a nil value should be interpreted as "true".
+			if !ptr.Deref(endpoint.Conditions.Serving, true) {
 				continue
 			}
 
@@ -655,7 +657,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 				uniqAddresses[address] = struct{}{}
 				addresses = append(addresses, backendAddress{
 					Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
-					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false),
 				})
 			}
 		}
@@ -798,7 +800,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	return nil
 }
@@ -924,7 +926,7 @@ func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *
 		Headers: &dynamic.Headers{
 			AccessControlAllowCredentials: ptr.Deref(ingressConfig.EnableCORSAllowCredentials, true),
 			AccessControlExposeHeaders:    ptr.Deref(ingressConfig.CORSExposeHeaders, []string{}),
-			AccessControlAllowHeaders:     ptr.Deref(ingressConfig.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"}),
+			AccessControlAllowHeaders:     ptr.Deref(ingressConfig.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
 			AccessControlAllowMethods:     ptr.Deref(ingressConfig.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
 			AccessControlAllowOriginList:  ptr.Deref(ingressConfig.CORSAllowOrigin, []string{"*"}),
 			AccessControlMaxAge:           int64(ptr.Deref(ingressConfig.CORSMaxAge, 1728000)),
@@ -934,7 +936,7 @@ func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
 }
 
-func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
 		forceSSLRedirect = *ingressConfig.ForceSSLRedirect
@@ -946,7 +948,9 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
 		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
 		httpRouter := &dynamic.Router{
-			Rule: rt.Rule,
+			// Only attach to entryPoint which do not activate TLS.
+			EntryPoints: p.NonTLSEntryPoints,
+			Rule:        rt.Rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
 			Middlewares: rt.Middlewares,
@@ -997,7 +1001,14 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 		return errors.New("empty auth-url found in ingress annotations")
 	}
 
-	authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
+	var authResponseHeaders []string
+	if raw := ptr.Deref(ingressConfig.AuthResponseHeaders, ""); raw != "" {
+		for h := range strings.SplitSeq(raw, ",") {
+			if trimmed := strings.TrimSpace(h); trimmed != "" {
+				authResponseHeaders = append(authResponseHeaders, trimmed)
+			}
+		}
+	}
 
 	forwardMiddlewareName := routerName + "-forward-auth"
 	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
@@ -1032,8 +1043,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	}
 
 	// Trim lines and filter out blanks
-	rawLines := strings.Split(string(authFileContent), "\n")
-	for _, rawLine := range rawLines {
+	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
 			users = append(users, line)
@@ -1057,10 +1067,10 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 
 		switch pathType {
 		case netv1.PathTypeExact:
-			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
+			rules = append(rules, fmt.Sprintf("Path(%q)", pa.Path))
 		case netv1.PathTypePrefix:
 			if ptr.Deref(config.UseRegex, false) {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", regexp.QuoteMeta(pa.Path)))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", fmt.Sprintf("^%s", pa.Path)))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
@@ -1073,10 +1083,10 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
+		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
-	return fmt.Sprintf("Host(`%s`)", host)
+	return fmt.Sprintf("Host(%q)", host)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
@@ -1087,20 +1097,20 @@ func buildHostRule(host string) string {
 // Kubernetes Ingress API.
 func buildPrefixRule(path string) string {
 	if path == "/" {
-		return "PathPrefix(`/`)"
+		return `PathPrefix("/")`
 	}
 
 	path = strings.TrimSuffix(path, "/")
-	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
+	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, fmt.Sprintf("%s/", path))
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
 	// non-blocking write to pendingEvent. This guarantees that writing to
@@ -1126,4 +1136,11 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func portString(port netv1.ServiceBackendPort) string {
+	if port.Name == "" {
+		return strconv.Itoa(int(port.Number))
+	}
+	return port.Name
 }

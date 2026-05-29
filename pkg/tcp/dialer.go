@@ -74,6 +74,7 @@ func (d tcpDialer) DialContext(ctx context.Context, network, addr string, client
 
 type tcpTLSDialer struct {
 	tcpDialer
+
 	tlsConfig *tls.Config
 }
 

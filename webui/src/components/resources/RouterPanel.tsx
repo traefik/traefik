@@ -1,4 +1,4 @@
-import { Badge, Text } from '@traefiklabs/faency'
+import { Badge, Text } from '@traefik-labs/faency'
 import { FiInfo } from 'react-icons/fi'
 
 import { DetailSection, ItemBlock, LayoutTwoCols, ProviderName } from './DetailSections'
@@ -27,10 +27,10 @@ const RouterPanel = ({ data }: Props) => (
           <ProviderName css={{ ml: '$2' }}>{data.provider}</ProviderName>
         </ItemBlock>
       )}
-      {data.priority && (
+      {(data.priorityStr || data.priority) && (
         <ItemBlock title="Priority">
-          <Tooltip label={data.priority.toString()} action="copy">
-            <Text css={{ overflowWrap: 'break-word' }}>{data.priority.toString()}</Text>
+          <Tooltip label={data.priorityStr ?? data.priority?.toString() ?? ''} action="copy">
+            <Text css={{ overflowWrap: 'break-word' }}>{data.priorityStr ?? data.priority?.toString()}</Text>
           </Tooltip>
         </ItemBlock>
       )}

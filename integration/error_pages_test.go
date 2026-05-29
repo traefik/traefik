@@ -14,6 +14,7 @@ import (
 // ErrorPagesSuite test suites.
 type ErrorPagesSuite struct {
 	BaseSuite
+
 	ErrorPageIP string
 	BackendIP   string
 }

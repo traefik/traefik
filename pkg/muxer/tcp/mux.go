@@ -121,7 +121,7 @@ func GetRulePriority(rule string) int {
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
 func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler tcp.Handler) error {
-	var parse interface{}
+	var parse any
 	var err error
 	var matcherFuncs map[string]func(*matchersTree, ...string) error
 

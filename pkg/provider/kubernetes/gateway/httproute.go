@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"regexp"
@@ -159,7 +160,18 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 				router.Service = errWrrName
 
 			case len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef):
-				router.Service = string(routeRule.BackendRefs[0].Name)
+				if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
+					condition = metav1.Condition{
+						Type:               string(gatev1.RouteConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: route.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.RouteReasonRefNotPermitted),
+						Message:            fmt.Sprintf("Cannot load HTTPRoute BackendRef %s: internal service reference is not allowed: HTTPRoute namespace %q is not in crossProviderNamespaces", routeRule.BackendRefs[0].Name, route.Namespace),
+					}
+				} else {
+					router.Service = string(routeRule.BackendRefs[0].Name)
+				}
 
 			default:
 				var serviceCondition *metav1.Condition
@@ -294,6 +306,10 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	// Support for cross-provider references (e.g: api@internal).
 	// This provides the same behavior as for IngressRoutes.
 	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, namespace) {
+			return "", nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), namespace)
+		}
+
 		return string(backendRef.Name), nil, nil
 	}
 
@@ -627,12 +643,12 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 
 		wildcard := strings.Count(host, "*")
 		if wildcard == 0 {
-			rules = append(rules, fmt.Sprintf("Host(`%s`)", host))
+			rules = append(rules, fmt.Sprintf("Host(%q)", host))
 			continue
 		}
 
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
-		rules = append(rules, fmt.Sprintf("HostRegexp(`^%s$`)", host))
+		rules = append(rules, fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host)))
 	}
 
 	switch len(rules) {
@@ -670,7 +686,7 @@ func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (s
 	priority += pathPriority
 
 	if match.Method != nil {
-		matchRules = append(matchRules, fmt.Sprintf("Method(`%s`)", *match.Method))
+		matchRules = append(matchRules, fmt.Sprintf("Method(%q)", *match.Method))
 		priority += 1000
 	}
 
@@ -701,23 +717,23 @@ func buildPathRule(pathMatch gatev1.HTTPPathMatch) (string, int) {
 
 	switch pathType {
 	case gatev1.PathMatchExact:
-		return fmt.Sprintf("Path(`%s`)", pathValue), 100000
+		return fmt.Sprintf("Path(%q)", pathValue), 100000
 
 	case gatev1.PathMatchPathPrefix:
 		// PathPrefix(`/`) rule is a catch-all,
 		// here we ensure it would be evaluated last.
 		if pathValue == "/" {
-			return "PathPrefix(`/`)", 1
+			return `PathPrefix("/")`, 1
 		}
 
 		pv := strings.TrimSuffix(pathValue, "/")
-		return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", pv), 10000 + len(pathValue)*100
+		return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", pv, fmt.Sprintf("%s/", pv)), 10000 + len(pathValue)*100
 
 	case gatev1.PathMatchRegularExpression:
-		return fmt.Sprintf("PathRegexp(`%s`)", pathValue), 10000 + len(pathValue)*100
+		return fmt.Sprintf("PathRegexp(%q)", pathValue), 10000 + len(pathValue)*100
 
 	default:
-		return "PathPrefix(`/`)", 1
+		return `PathPrefix("/")`, 1
 	}
 }
 
@@ -730,9 +746,9 @@ func buildHeaderRules(headers []gatev1.HTTPHeaderMatch) ([]string, int) {
 		typ := ptr.Deref(header.Type, gatev1.HeaderMatchExact)
 		switch typ {
 		case gatev1.HeaderMatchExact:
-			rules = append(rules, fmt.Sprintf("Header(`%s`,`%s`)", header.Name, header.Value))
+			rules = append(rules, fmt.Sprintf("Header(%q,%q)", header.Name, header.Value))
 		case gatev1.HeaderMatchRegularExpression:
-			rules = append(rules, fmt.Sprintf("HeaderRegexp(`%s`,`%s`)", header.Name, header.Value))
+			rules = append(rules, fmt.Sprintf("HeaderRegexp(%q,%q)", header.Name, header.Value))
 		}
 		priority += 100
 	}
@@ -749,9 +765,9 @@ func buildQueryParamRules(queryParams []gatev1.HTTPQueryParamMatch) ([]string, i
 		typ := ptr.Deref(qp.Type, gatev1.QueryParamMatchExact)
 		switch typ {
 		case gatev1.QueryParamMatchExact:
-			rules = append(rules, fmt.Sprintf("Query(`%s`,`%s`)", qp.Name, qp.Value))
+			rules = append(rules, fmt.Sprintf("Query(%q,%q)", qp.Name, qp.Value))
 		case gatev1.QueryParamMatchRegularExpression:
-			rules = append(rules, fmt.Sprintf("QueryRegexp(`%s`,`%s`)", qp.Name, qp.Value))
+			rules = append(rules, fmt.Sprintf("QueryRegexp(%q,%q)", qp.Name, qp.Value))
 		}
 		priority += 10
 	}
@@ -911,28 +927,20 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 	if to.HTTP.Routers == nil {
 		to.HTTP.Routers = map[string]*dynamic.Router{}
 	}
-	for routerName, router := range from.HTTP.Routers {
-		to.HTTP.Routers[routerName] = router
-	}
+	maps.Copy(to.HTTP.Routers, from.HTTP.Routers)
 
 	if to.HTTP.Middlewares == nil {
 		to.HTTP.Middlewares = map[string]*dynamic.Middleware{}
 	}
-	for middlewareName, middleware := range from.HTTP.Middlewares {
-		to.HTTP.Middlewares[middlewareName] = middleware
-	}
+	maps.Copy(to.HTTP.Middlewares, from.HTTP.Middlewares)
 
 	if to.HTTP.Services == nil {
 		to.HTTP.Services = map[string]*dynamic.Service{}
 	}
-	for serviceName, service := range from.HTTP.Services {
-		to.HTTP.Services[serviceName] = service
-	}
+	maps.Copy(to.HTTP.Services, from.HTTP.Services)
 
 	if to.HTTP.ServersTransports == nil {
 		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
 	}
-	for name, serversTransport := range from.HTTP.ServersTransports {
-		to.HTTP.ServersTransports[name] = serversTransport
-	}
+	maps.Copy(to.HTTP.ServersTransports, from.HTTP.ServersTransports)
 }

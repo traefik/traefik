@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/server/recursion"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/leasttime"
@@ -122,6 +123,12 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, err
 	}
 
+	var errRecursion error
+	if ctx, errRecursion = recursion.CheckRecursion(ctx, "service", serviceName); errRecursion != nil {
+		conf.AddError(errRecursion, true)
+		return nil, errRecursion
+	}
+
 	var lb http.Handler
 
 	switch {
@@ -169,6 +176,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	m.services[serviceName] = lb
 
 	return lb, nil
+}
+
+// LaunchHealthCheck launches the health checks.
+func (m *Manager) LaunchHealthCheck(ctx context.Context) {
+	for serviceName, hc := range m.healthCheckers {
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
+		go hc.Launch(logger.WithContext(ctx))
+	}
 }
 
 func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName string, config *dynamic.Failover) (http.Handler, error) {
@@ -311,7 +326,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 	svcHandler, err := m.BuildHTTP(ctx, service.Name)
 	if err != nil {
-		return nil, fmt.Errorf("building HTTP service: %w", err)
+		return nil, fmt.Errorf("building HTTP service %q: %w", service.Name, err)
 	}
 
 	if service.Headers != nil {
@@ -358,13 +373,6 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 	}
 
 	return balancer, nil
-}
-
-type serverBalancer interface {
-	http.Handler
-	healthcheck.StatusSetter
-
-	AddServer(name string, handler http.Handler, server dynamic.Server)
 }
 
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
@@ -494,12 +502,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	return lb, nil
 }
 
-// LaunchHealthCheck launches the health checks.
-func (m *Manager) LaunchHealthCheck(ctx context.Context) {
-	for serviceName, hc := range m.healthCheckers {
-		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
-		go hc.Launch(logger.WithContext(ctx))
-	}
+type serverBalancer interface {
+	http.Handler
+	healthcheck.StatusSetter
+
+	AddServer(name string, handler http.Handler, server dynamic.Server)
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {

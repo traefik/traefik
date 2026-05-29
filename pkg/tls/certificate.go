@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
@@ -160,37 +159,19 @@ func VerifyPeerCertificate(uri string, cfg *tls.Config, rawCerts [][]byte) error
 	return nil
 }
 
-// verifyServerCertMatchesURI is used on tls connections dialed to a server
-// to ensure that the certificate it presented has the correct URI.
+// verifyServerCertMatchesURI verifies that the given certificate contains the specified URI in its SANs.
 func verifyServerCertMatchesURI(uri string, cert *x509.Certificate) error {
 	if cert == nil {
 		return errors.New("peer certificate mismatch: no peer certificate presented")
 	}
 
-	// Our certs will only ever have a single URI for now so only check that
-	if len(cert.URIs) < 1 {
-		return errors.New("peer certificate mismatch: peer certificate invalid")
+	for _, certURI := range cert.URIs {
+		if strings.EqualFold(certURI.String(), uri) {
+			return nil
+		}
 	}
 
-	gotURI := cert.URIs[0]
-
-	// Override the hostname since we rely on x509 constraints to limit ability to spoof the trust domain if needed
-	// (i.e. because a root is shared with other PKI or Consul clusters).
-	// This allows for seamless migrations between trust domains.
-
-	expectURI := &url.URL{}
-	id, err := url.Parse(uri)
-	if err != nil {
-		return fmt.Errorf("%q is not a valid URI", uri)
-	}
-	*expectURI = *id
-	expectURI.Host = gotURI.Host
-
-	if strings.EqualFold(gotURI.String(), expectURI.String()) {
-		return nil
-	}
-
-	return fmt.Errorf("peer certificate mismatch got %s, want %s", gotURI, uri)
+	return fmt.Errorf("peer certificate mismatch: no SAN URI in peer certificate matches %s", uri)
 }
 
 // verifyChain performs standard TLS verification without enforcing remote hostname matching.

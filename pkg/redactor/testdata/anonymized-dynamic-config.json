@@ -246,7 +246,8 @@
           "authResponseHeadersRegex": "foo",
           "authRequestHeaders": [
             "foo"
-          ]
+          ],
+          "maxResponseBodySize": 42
         },
         "inFlightReq": {
           "amount": 42,

@@ -9,10 +9,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/docker/docker/api/types/container"
-	eventtypes "github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
+	eventtypes "github.com/moby/moby/api/types/events"
+	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
@@ -50,10 +48,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
-	return createClient(ctx, p.ClientConfig)
-}
-
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -76,7 +70,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			builder := NewDynConfBuilder(p.Shared, dockerClient, false)
 
-			serverVersion, err := dockerClient.ServerVersion(ctx)
+			serverVersion, err := dockerClient.ServerVersion(ctx, client.ServerVersionOptions{})
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to retrieve information of the docker client and server host")
 				return err
@@ -97,12 +91,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			if p.Watch {
-				f := filters.NewArgs()
-				f.Add("type", "container")
-				options := eventtypes.ListOptions{
-					Filters: f,
-				}
-
 				startStopHandle := func(m eventtypes.Message) {
 					logger.Debug().Msgf("Provider event received %+v", m)
 					containers, err := p.listContainers(ctx, dockerClient)
@@ -125,16 +113,18 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					}
 				}
 
-				eventsc, errc := dockerClient.Events(ctx, options)
+				res := dockerClient.Events(ctx, client.EventsListOptions{
+					Filters: make(client.Filters).Add("type", string(eventtypes.ContainerEventType)),
+				})
 				for {
 					select {
-					case event := <-eventsc:
+					case event := <-res.Messages:
 						if event.Action == "start" ||
 							event.Action == "die" ||
 							strings.HasPrefix(string(event.Action), "health_status") {
 							startStopHandle(event)
 						}
-					case err := <-errc:
+					case err := <-res.Err:
 						if errors.Is(err, io.EOF) {
 							logger.Debug().Msg("Provider event stream closed")
 						}
@@ -160,8 +150,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
+	return createClient(ctx, p.ClientConfig)
+}
+
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{
+	containerList, err := dockerClient.ContainerList(ctx, client.ContainerListOptions{
 		All: true,
 	})
 	if err != nil {
@@ -170,7 +164,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 
 	var inspectedContainers []dockerData
 	// get inspect containers
-	for _, c := range containerList {
+	for _, c := range containerList.Items {
 		dData := inspectContainers(ctx, dockerClient, c.ID)
 		if len(dData.Name) == 0 {
 			continue

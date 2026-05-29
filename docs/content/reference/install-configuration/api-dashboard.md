@@ -3,12 +3,26 @@ title: "Traefik API & Dashboard Documentation"
 description: "Traefik Proxy exposes information through API handlers and showcase them on the Dashboard. Learn about the security, configuration, and endpoints of the APIs and Dashboard. Read the technical documentation."
 ---
 
-The dashboard is the central place that shows you the current active routes handled by Traefik.
+Traefik exposes a number of information through API endpoints, such as the configuration of your routers, services, middlewares, etc.
+
+The dashboard, which is the central place that displays the current active routes handled by Traefik, fetches the data from this API.
 
 <figure>
     <img src="../../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
     <figcaption>The dashboard in action</figcaption>
 </figure>
+
+## Security
+
+Enabling the API and the dashboard in production is not recommended, because it will expose all configuration elements,
+including sensitive data, for which access should be reserved to administrators.
+
+In production, it should be at least secured by authentication and authorizations.
+
+!!! info
+
+    It's recommended to NOT publicly exposing the API's port, keeping it restricted to internal networks
+    (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
 
 ## Configuration Example
 
@@ -156,11 +170,11 @@ enabling the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob
 | Field      | Description  | Default | Required |
 |:-----------|:---------------------------------|:--------|:---------|
 | <a id="opt-api" href="#opt-api" title="#opt-api">`api`</a> | Enable api/dashboard. When set to `true`, its sub option `api.dashboard` is also set to true.| false     | No      |
-| <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed. | / | No |
+| <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed.<br/>Please note that this option is incompatible with the [insecure mode](#opt-api-insecure). | / | No |
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | false      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disabledashboardad" href="#opt-api-disabledashboardad" title="#opt-api-disabledashboardad">`api.disabledashboardad`</a> | Disable the advertisement from the dashboard. | false      | No      |
-| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.| false      | No      |
+| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basepath).| false      | No      |
 
 ## Endpoints
 
@@ -187,6 +201,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | <a id="opt-apientrypoints" href="#opt-apientrypoints" title="#opt-apientrypoints">`/api/entrypoints`</a> | Lists all the entry points information.                                                     |
 | <a id="opt-apientrypointsname" href="#opt-apientrypointsname" title="#opt-apientrypointsname">`/api/entrypoints/{name}`</a> | Returns the information of the entry point specified by `name`.                             |
 | <a id="opt-apioverview" href="#opt-apioverview" title="#opt-apioverview">`/api/overview`</a> | Returns statistic information about HTTP, TCP and about enabled features and providers. |
+| <a id="opt-apisupport-dump" href="#opt-apisupport-dump" title="#opt-apisupport-dump">`/api/support-dump`</a> | Returns an archive that contains the anonymized static configuration and the runtime configuration. |
 | <a id="opt-apirawdata" href="#opt-apirawdata" title="#opt-apirawdata">`/api/rawdata`</a> | Returns information about dynamic configurations, errors, status and dependency relations.  |
 | <a id="opt-apiversion" href="#opt-apiversion" title="#opt-apiversion">`/api/version`</a> | Returns information about Traefik version.                                                  |
 | <a id="opt-debugvars" href="#opt-debugvars" title="#opt-debugvars">`/debug/vars`</a> | See the [expvar](https://golang.org/pkg/expvar/) Go documentation.                          |
@@ -203,23 +218,25 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 
 ## Dashboard
 
-The dashboard is available at the same location as the API, but by default on the path  `/dashboard/`.
+The dashboard is available by default on the path  `/dashboard/`.
 
 !!! note
 
-    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
+    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
 	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
-To securely access the dashboard, you need to define a routing configuration within Traefik. This involves setting up a router attached to the service `api@internal`, which allows you to:
+As mentioned above in the [Security](#security) section, it is important to secure access to both the dashboard and the API.
+You need to define a routing configuration within Traefik.
+This involves setting up a router attached to the service `api@internal`, which allows you to:
 
-- Implement security features using [middlewares](../../middlewares/overview.md), such as authentication ([basicAuth](../../middlewares/http/basicauth.md), [digestAuth](../../middlewares/http/digestauth.md),
-  [forwardAuth](../../middlewares/http/forwardauth.md)) or [allowlisting](../../middlewares/http/ipallowlist.md).
+- Implement security features using [middlewares](../../reference/routing-configuration/http/middlewares/overview.md), such as authentication ([basicAuth](../../reference/routing-configuration/http/middlewares/basicauth.md), [digestAuth](../../reference/routing-configuration/http/middlewares/digestauth.md),
+  [forwardAuth](../../reference/routing-configuration/http/middlewares/forwardauth.md)) or [allowlisting](../../reference/routing-configuration/http/middlewares/ipallowlist.md).
 
 - Define a [router rule](#dashboard-router-rule) for accessing the dashboard through Traefik.
 
 ### Dashboard Router Rule
 
-To ensure proper access to the dashboard, the [router rule](../../routing/routers/index.md#rule) you define must match requests intended for the `/api` and `/dashboard` paths. 
+To ensure proper access to the dashboard, the [router rule](../../reference/routing-configuration/http/routing/rules-and-priority.md#rules) you define must match requests intended for the `/api` and `/dashboard` paths. 
 We recommend using either a *Host-based rule* to match all requests on the desired domain or explicitly defining a rule that includes both path prefixes. 
 Here are some examples:
 
@@ -238,4 +255,4 @@ rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -184,13 +184,7 @@ func header(tree *matchersTree, headers ...string) error {
 	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, headerValue := range req.Header[key] {
-			if headerValue == value {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(req.Header[key], value)
 	}
 
 	return nil
@@ -205,13 +199,7 @@ func headerRegexp(tree *matchersTree, headers ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, headerValue := range req.Header[key] {
-			if re.MatchString(headerValue) {
-				return true
-			}
-		}
-
-		return false
+		return slices.ContainsFunc(req.Header[key], re.MatchString)
 	}
 
 	return nil

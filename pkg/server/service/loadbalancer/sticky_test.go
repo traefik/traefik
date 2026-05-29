@@ -136,3 +136,27 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
+
+func TestConvertSameSite_CaseInsensitive(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected http.SameSite
+	}{
+		{"none", http.SameSiteNoneMode},
+		{"None", http.SameSiteNoneMode},
+		{"NONE", http.SameSiteNoneMode},
+		{"lax", http.SameSiteLaxMode},
+		{"Lax", http.SameSiteLaxMode},
+		{"LAX", http.SameSiteLaxMode},
+		{"strict", http.SameSiteStrictMode},
+		{"Strict", http.SameSiteStrictMode},
+		{"STRICT", http.SameSiteStrictMode},
+		{"", http.SameSiteDefaultMode},
+		{"invalid", http.SameSiteDefaultMode},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, convertSameSite(tt.input))
+		})
+	}
+}

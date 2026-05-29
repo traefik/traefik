@@ -159,4 +159,4 @@ That's it! You've successfully deployed Traefik and configured routing in Docker
 - [Enable Metrics](../reference/install-configuration/observability/metrics.md)
 - [Learn more about Docker provider](../reference/install-configuration/providers/docker.md)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

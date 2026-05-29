@@ -34,6 +34,7 @@ RUN apk --no-cache --no-progress add \
 
 COPY ./scripts/verify.sh /verify.sh
 COPY ./scripts/lint.sh /lint.sh
+COPY ./scripts/lint-yaml.sh /lint-yaml.sh
 
 WORKDIR /app
 VOLUME ["/tmp","/app"]
