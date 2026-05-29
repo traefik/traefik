@@ -10,10 +10,10 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic/confighash"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -207,9 +207,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if err != nil {
 				return fmt.Errorf("loading configuration: %w", err)
 			}
-			if _, err := p.updateLastConfiguration(conf); err != nil {
-				return fmt.Errorf("updating last configuration: %w", err)
-			}
+			p.updateLastConfiguration(conf)
 
 			configurationChan <- dynamic.Message{
 				ProviderName:  p.name,
@@ -225,11 +223,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					if err != nil {
 						return fmt.Errorf("loading configuration: %w", err)
 					}
-					updated, err := p.updateLastConfiguration(conf)
-					if err != nil {
-						return fmt.Errorf("updating last configuration: %w", err)
-					}
-					if !updated {
+					if !p.updateLastConfiguration(conf) {
 						logger.Debug().Msgf("Skipping Nomad event %d with no changes", event.Index)
 						continue
 					}
@@ -320,18 +314,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 	return p.buildConfig(ctx, items), nil
 }
 
-func (p *Provider) updateLastConfiguration(conf *dynamic.Configuration) (bool, error) {
-	confHash, err := hashstructure.Hash(conf, nil)
-	if err != nil {
-		return false, fmt.Errorf("hashing the configuration: %w", err)
-	}
-
+func (p *Provider) updateLastConfiguration(conf *dynamic.Configuration) bool {
+	confHash := confighash.Hash(conf)
 	if p.lastConfiguration.Get() == confHash {
-		return false, nil
+		return false
 	}
-
 	p.lastConfiguration.Set(confHash)
-	return true, nil
+	return true
 }
 
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {

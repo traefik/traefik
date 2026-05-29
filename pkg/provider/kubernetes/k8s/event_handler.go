@@ -1,8 +1,10 @@
 package k8s
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 // ResourceEventHandler handles Add, Update or Delete Events for resources.
@@ -47,17 +49,28 @@ func objChanged(oldObj, newObj any) bool {
 		return false
 	}
 
-	if _, ok := oldObj.(*discoveryv1.EndpointSlice); ok {
-		return endpointSliceChanged(oldObj.(*discoveryv1.EndpointSlice), newObj.(*discoveryv1.EndpointSlice))
+	switch old := oldObj.(type) {
+	case *discoveryv1.EndpointSlice:
+		return endpointSliceChanged(old, newObj.(*discoveryv1.EndpointSlice))
+	case *corev1.Node:
+		return nodeChanged(old, newObj.(*corev1.Node))
 	}
 
 	return true
 }
 
-// In some Kubernetes versions leader election is done by updating an endpoint annotation every second,
-// if there are no changes to the endpoints addresses, ports, and there are no addresses defined for an endpoint
-// the event can safely be ignored and won't cause unnecessary config reloads.
-// TODO: check if Kubernetes is still using EndpointSlice for leader election, which seems to not be the case anymore.
+// endpointSliceChanged reports whether two EndpointSlices differ in fields that
+// Traefik consumes: ports, endpoint addresses, and per-endpoint readiness
+// conditions. Metadata-only updates (ResourceVersion bumps, label/annotation
+// churn, managedFields edits) are intentionally ignored to avoid spurious
+// configuration rebuilds.
+//
+// Conditions.Ready is consumed by the TCP/UDP/Gateway providers, while
+// Conditions.Serving and Conditions.Terminating are consumed by the HTTP
+// provider (server filtering and the Fenced behaviour); all three are compared
+// with nil / true / false treated as distinct values, since a nil value
+// defaults to "true" per the Kubernetes API spec but a downgrade to false is
+// load-bearing.
 func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
 	if len(a.Ports) != len(b.Ports) {
 		return true
@@ -65,10 +78,10 @@ func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
 
 	for i, aport := range a.Ports {
 		bport := b.Ports[i]
-		if aport.Name != bport.Name {
+		if !ptr.Equal(aport.Name, bport.Name) {
 			return true
 		}
-		if aport.Port != bport.Port {
+		if !ptr.Equal(aport.Port, bport.Port) {
 			return true
 		}
 	}
@@ -99,5 +112,58 @@ func endpointChanged(a, b discoveryv1.Endpoint) bool {
 		}
 	}
 
+	if !ptr.Equal(a.Conditions.Ready, b.Conditions.Ready) {
+		return true
+	}
+	if !ptr.Equal(a.Conditions.Serving, b.Conditions.Serving) {
+		return true
+	}
+	if !ptr.Equal(a.Conditions.Terminating, b.Conditions.Terminating) {
+		return true
+	}
+
 	return false
+}
+
+// nodeChanged reports whether two Node objects differ in any field Traefik
+// reads. Traefik only consumes Status.Addresses entries of type InternalIP and
+// ExternalIP (for NodePort load-balancer servers and IngressLoadBalancer
+// status), so kubelet status heartbeats (~10s) that rewrite conditions,
+// capacity, images, allocatable etc. without touching those addresses must not
+// drive a full configuration rebuild.
+//
+// Comparison is allocation-free: Nodes typically report 2-3 relevant
+// addresses, so an O(N*M) pairwise walk beats building two maps per call and
+// avoids the per-heartbeat GC churn that the map approach incurred under
+// kubelet's ~10s status cadence.
+func nodeChanged(a, b *corev1.Node) bool {
+	if relevantNodeAddressCount(a) != relevantNodeAddressCount(b) {
+		return true
+	}
+	for _, aa := range a.Status.Addresses {
+		if aa.Type != corev1.NodeInternalIP && aa.Type != corev1.NodeExternalIP {
+			continue
+		}
+		found := false
+		for _, ba := range b.Status.Addresses {
+			if ba.Type == aa.Type && ba.Address == aa.Address {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return true
+		}
+	}
+	return false
+}
+
+func relevantNodeAddressCount(n *corev1.Node) int {
+	c := 0
+	for _, addr := range n.Status.Addresses {
+		if addr.Type == corev1.NodeInternalIP || addr.Type == corev1.NodeExternalIP {
+			c++
+		}
+	}
+	return c
 }

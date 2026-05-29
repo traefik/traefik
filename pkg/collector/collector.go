@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic/confighash"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/version"
@@ -51,10 +51,7 @@ func createBody(staticConfiguration *static.Configuration) (*bytes.Buffer, error
 
 	log.Debug().Msgf("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
-	hashConf, err := hashstructure.Hash(staticConfiguration, nil)
-	if err != nil {
-		return nil, err
-	}
+	hashConf := confighash.Hash(staticConfiguration)
 
 	data := &data{
 		Version:       version.Version,

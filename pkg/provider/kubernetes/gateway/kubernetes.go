@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic/confighash"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
@@ -217,13 +217,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// But if we do in the future, we'll need to track more information about the dropped events.
 					conf := p.loadConfigurationFromGateways(ctxLog)
 
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
+					confHash := confighash.Hash(conf)
+					if p.lastConfiguration.Get() == confHash {
 						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
+					} else {
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
 							ProviderName:  ProviderName,
