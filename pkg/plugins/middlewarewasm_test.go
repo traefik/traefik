@@ -98,7 +98,12 @@ func TestSettingsWithoutSocket(t *testing.T) {
 
 			settings, config := test.getSettings(t)
 
-			builder := &wasmMiddlewareBuilder{path: "./fixtures/withoutsocket/plugin.wasm", cache: cache, settings: settings}
+			builder := &wasmMiddlewareBuilder{
+				path:      "./fixtures/withoutsocket/plugin.wasm",
+				cache:     cache,
+				settings:  settings,
+				instances: &wasmInstanceCache{m: make(map[string]*cachedWasmInstance)},
+			}
 
 			cfg := reflect.ValueOf(config)
 
@@ -116,4 +121,103 @@ func TestSettingsWithoutSocket(t *testing.T) {
 			assert.Equal(t, test.expected, rw.Body.String())
 		})
 	}
+}
+
+func newTestWasmBuilder(t *testing.T) *wasmMiddlewareBuilder {
+	t.Helper()
+
+	return &wasmMiddlewareBuilder{
+		path:      "./fixtures/withoutsocket/plugin.wasm",
+		cache:     wazero.NewCompilationCache(),
+		settings:  Settings{},
+		instances: &wasmInstanceCache{m: make(map[string]*cachedWasmInstance)},
+	}
+}
+
+func testNextHandler() http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusTeapot)
+	})
+}
+
+// TestWasmMiddlewareInstanceReuse verifies that re-publishing a middleware with
+// an unchanged guest config reuses the cached http-wasm instance (and therefore
+// its wazero runtime) instead of allocating a new one.
+func TestWasmMiddlewareInstanceReuse(t *testing.T) {
+	ctx := log.Logger.WithContext(t.Context())
+	builder := newTestWasmBuilder(t)
+	cfg := reflect.ValueOf(map[string]any{"envs": []string{}})
+
+	_, _, err := builder.buildMiddleware(ctx, testNextHandler(), cfg, "test")
+	require.NoError(t, err)
+	require.Len(t, builder.instances.m, 1)
+	first := builder.instances.m["test"]
+
+	// Second reload with the same name + config must reuse the same instance.
+	_, _, err = builder.buildMiddleware(ctx, testNextHandler(), cfg, "test")
+	require.NoError(t, err)
+	require.Len(t, builder.instances.m, 1)
+	second := builder.instances.m["test"]
+
+	assert.Same(t, first, second, "instance must be reused on unchanged config")
+	assert.Equal(t, first.mw, second.mw, "wazero-backed middleware must be reused")
+}
+
+// TestWasmMiddlewareConfigChangeRebuilds verifies that a changed guest config
+// for the same middleware name produces a fresh instance.
+func TestWasmMiddlewareConfigChangeRebuilds(t *testing.T) {
+	ctx := log.Logger.WithContext(t.Context())
+	builder := newTestWasmBuilder(t)
+
+	_, _, err := builder.buildMiddleware(ctx, testNextHandler(), reflect.ValueOf(map[string]any{"envs": []string{}}), "test")
+	require.NoError(t, err)
+	first := builder.instances.m["test"]
+
+	_, _, err = builder.buildMiddleware(ctx, testNextHandler(), reflect.ValueOf(map[string]any{"envs": []string{"PLUGIN_TEST"}}), "test")
+	require.NoError(t, err)
+	second := builder.instances.m["test"]
+
+	require.Len(t, builder.instances.m, 1, "one cache entry per middleware name")
+	assert.NotEqual(t, first.confHash, second.confHash, "config hash must change")
+	assert.NotSame(t, first, second, "a changed config must rebuild the instance")
+}
+
+// TestWasmMiddlewareConfigChangeEvictsOldInstance verifies that when the guest
+// config for a middleware name changes, the previous cached instance is
+// markEvicted'd so its wazero runtime will be closed once its last outstanding
+// handler is released. This is deterministic and does not depend on GC.
+func TestWasmMiddlewareConfigChangeEvictsOldInstance(t *testing.T) {
+	ctx := log.Logger.WithContext(t.Context())
+	builder := newTestWasmBuilder(t)
+
+	_, _, err := builder.buildMiddleware(ctx, testNextHandler(), reflect.ValueOf(map[string]any{"envs": []string{}}), "test")
+	require.NoError(t, err)
+	oldCI := builder.instances.m["test"]
+
+	_, _, err = builder.buildMiddleware(ctx, testNextHandler(), reflect.ValueOf(map[string]any{"envs": []string{"PLUGIN_TEST"}}), "test")
+	require.NoError(t, err)
+
+	oldCI.mu.Lock()
+	evicted := oldCI.evicted
+	oldCI.mu.Unlock()
+	assert.True(t, evicted, "old instance must be marked evicted when guest config changes")
+}
+
+// TestWasmMiddlewareNoRuntimeLeakOnReload reproduces the scenario from
+// https://github.com/traefik/traefik/issues/13235: a provider that re-publishes
+// the same middleware on every reload. With instance memoization, repeated
+// reloads of an unchanged middleware must not accumulate runtimes — exactly one
+// instance is created regardless of the number of reloads.
+func TestWasmMiddlewareNoRuntimeLeakOnReload(t *testing.T) {
+	ctx := log.Logger.WithContext(t.Context())
+	builder := newTestWasmBuilder(t)
+	cfg := reflect.ValueOf(map[string]any{"envs": []string{}})
+
+	const reloads = 50
+	for range reloads {
+		_, _, err := builder.buildMiddleware(ctx, testNextHandler(), cfg, "test")
+		require.NoError(t, err)
+	}
+
+	assert.Len(t, builder.instances.m, 1, "%d reloads of an unchanged middleware must create a single instance", reloads)
 }
