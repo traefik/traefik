@@ -60,6 +60,7 @@ kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
   name: service1-abc
+  namespace: default
   labels:
     kubernetes.io/service-name: service1
 

@@ -453,12 +453,12 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {
 	if p.ReportNodeInternalIPs {
-		nodes, nodesExists, err := k8sClient.GetNodes()
+		nodes, _, err := k8sClient.GetNodes()
 		if err != nil {
 			return fmt.Errorf("getting nodes: %w", err)
 		}
 
-		if !nodesExists || len(nodes) == 0 {
+		if len(nodes) == 0 {
 			return errors.New("no nodes found")
 		}
 
@@ -660,12 +660,12 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 				return nil, errors.New("nodes lookup is disabled")
 			}
 
-			nodes, nodesExists, nodesErr := client.GetNodes()
+			nodes, _, nodesErr := client.GetNodes()
 			if nodesErr != nil {
 				return nil, nodesErr
 			}
 
-			if !nodesExists || len(nodes) == 0 {
+			if len(nodes) == 0 {
 				return nil, fmt.Errorf("nodes not found in namespace %s", namespace)
 			}
 

@@ -3112,48 +3112,34 @@ func TestProviderInit(t *testing.T) {
 }
 
 func TestIngressEndpointReportNodeInternalIPs(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		expected []netv1.IngressLoadBalancerIngress
-	}{
-		{
-			desc: "Node Internal IP",
-			expected: []netv1.IngressLoadBalancerIngress{
-				{IP: "10.0.0.1"},
-				{IP: "10.0.0.2"},
-			},
-		},
+	t.Parallel()
+
+	expected := []netv1.IngressLoadBalancerIngress{
+		{IP: "10.0.0.1"},
+		{IP: "10.0.0.2"},
 	}
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	k8sObjects := readResources(t, []string{generateTestFilename("Node Internal IP")})
+	kubeClient := kubefake.NewClientset(k8sObjects...)
 
-			k8sObjects := readResources(t, []string{generateTestFilename("Node Internal IP")})
-			kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClientImpl(kubeClient)
 
-			client := newClientImpl(kubeClient)
+	stopCh := make(chan struct{})
+	eventCh, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
 
-			stopCh := make(chan struct{})
-			eventCh, err := client.WatchAll(nil, stopCh)
-			require.NoError(t, err)
-
-			if k8sObjects != nil {
-				// just wait for the first event
-				<-eventCh
-			}
-
-			p := Provider{
-				ReportNodeInternalIPs: true,
-			}
-			p.loadConfigurationFromIngresses(t.Context(), client)
-
-			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
-			require.NoError(t, err)
-
-			assert.ElementsMatch(t, test.expected, ingress.Status.LoadBalancer.Ingress)
-		})
+	if k8sObjects != nil {
+		// just wait for the first event
+		<-eventCh
 	}
+
+	p := Provider{ReportNodeInternalIPs: true}
+	p.loadConfigurationFromIngresses(t.Context(), client)
+
+	ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, expected, ingress.Status.LoadBalancer.Ingress)
 }
 
 func TestUpdateIngressStatusReportNodeInternalIPsErrors(t *testing.T) {
