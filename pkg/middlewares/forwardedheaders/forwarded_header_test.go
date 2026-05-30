@@ -236,7 +236,7 @@ func TestServeHTTP(t *testing.T) {
 			tls:              true,
 			addSchemeHeaders: true,
 			expectedHeaders: map[string]string{
-				xForwardedProto:  "https",
+				XForwardedProto:  "https",
 				xForwardedScheme: "https",
 				xScheme:          "https",
 			},
@@ -254,7 +254,7 @@ func TestServeHTTP(t *testing.T) {
 			websocket:        true,
 			addSchemeHeaders: true,
 			expectedHeaders: map[string]string{
-				xForwardedProto:  "ws",
+				XForwardedProto:  "ws",
 				xForwardedScheme: "ws",
 				xScheme:          "ws",
 			},
@@ -273,7 +273,7 @@ func TestServeHTTP(t *testing.T) {
 			websocket:        true,
 			addSchemeHeaders: true,
 			expectedHeaders: map[string]string{
-				xForwardedProto:  "wss",
+				XForwardedProto:  "wss",
 				xForwardedScheme: "wss",
 				xScheme:          "wss",
 			},
@@ -294,12 +294,12 @@ func TestServeHTTP(t *testing.T) {
 			insecure:         true,
 			addSchemeHeaders: true,
 			incomingHeaders: map[string][]string{
-				xForwardedProto:  {"https"},
+				XForwardedProto:  {"https"},
 				xForwardedScheme: {"external-https"},
 				xScheme:          {"external-https"},
 			},
 			expectedHeaders: map[string]string{
-				xForwardedProto:  "https",
+				XForwardedProto:  "https",
 				xForwardedScheme: "https",
 				xScheme:          "https",
 			},
