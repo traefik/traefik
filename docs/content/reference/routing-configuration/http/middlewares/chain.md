@@ -164,6 +164,177 @@ spec:
 ```
 
 
+## Real-World Example: API Gateway Middleware Stack
+
+The most common production pattern for API gateways behind Traefik is combining **authentication**, **rate limiting**, and **CORS headers** into a single reusable middleware stack. The `chain` middleware makes this straightforward.
+
+```yaml tab="Structured (YAML)"
+# Common API gateway middleware stack: auth + rate-limit + CORS
+http:
+  routers:
+    api-router:
+      service: api-service
+      middlewares:
+        - api-stack
+      rule: "Host(`api.example.com`)"
+
+  middlewares:
+    api-stack:
+      chain:
+        middlewares:
+          - api-auth
+          - api-ratelimit
+          - api-cors
+
+    api-auth:
+      basicAuth:
+        users:
+          - "admin:$2y$10$..."  # bcrypt hash
+
+    api-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    api-cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        accessControlAllowOriginList:
+          - "https://app.example.com"
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080"
+```
+
+```toml tab="Structured (TOML)"
+# Common API gateway middleware stack: auth + rate-limit + CORS
+[http.routers]
+  [http.routers.api-router]
+    service = "api-service"
+    middlewares = ["api-stack"]
+    rule = "Host(`api.example.com`)"
+
+[http.middlewares]
+  [http.middlewares.api-stack.chain]
+    middlewares = ["api-auth", "api-ratelimit", "api-cors"]
+
+  [http.middlewares.api-auth.basicAuth]
+    users = ["admin:$2y$10$..."]
+
+  [http.middlewares.api-ratelimit.rateLimit]
+    average = 100
+    burst = 50
+
+  [http.middlewares.api-cors.headers]
+    accessControlAllowMethods = ["GET", "POST", "OPTIONS"]
+    accessControlAllowOriginList = ["https://app.example.com"]
+
+[http.services]
+  [http.services.api-service]
+    [http.services.api-service.loadBalancer]
+      [[http.services.api-service.loadBalancer.servers]]
+        url = "http://127.0.0.1:8080"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.routers.api-router.service=api-service"
+  - "traefik.http.routers.api-router.middlewares=api-stack"
+  - "traefik.http.routers.api-router.rule=Host(`api.example.com`)"
+  - "traefik.http.middlewares.api-stack.chain.middlewares=api-auth,api-ratelimit,api-cors"
+  - "traefik.http.middlewares.api-auth.basicauth.users=admin:$2y$10$..."
+  - "traefik.http.middlewares.api-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=50"
+  - "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS"
+  - "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=https://app.example.com"
+  - "traefik.http.services.api-service.loadbalancer.server.port=8080"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.routers.api-router.service=api-service",
+    "traefik.http.routers.api-router.middlewares=api-stack",
+    "traefik.http.routers.api-router.rule=Host(`api.example.com`)",
+    "traefik.http.middlewares.api-stack.chain.middlewares=api-auth,api-ratelimit,api-cors",
+    "traefik.http.middlewares.api-auth.basicauth.users=admin:$2y$10$...",
+    "traefik.http.middlewares.api-ratelimit.ratelimit.average=100",
+    "traefik.http.middlewares.api-ratelimit.ratelimit.burst=50",
+    "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS",
+    "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=https://app.example.com",
+    "traefik.http.services.api-service.loadbalancer.server.port=8080"
+  ]
+}
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-ingress
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`api.example.com`)
+      kind: Rule
+      services:
+        - name: api-service
+          port: 8080
+      middlewares:
+        - name: api-stack
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-stack
+spec:
+  chain:
+    middlewares:
+    - name: api-auth
+    - name: api-ratelimit
+    - name: api-cors
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-auth
+spec:
+  basicAuth:
+    users:
+    - admin:$2y$10$...
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-ratelimit
+spec:
+  rateLimit:
+    average: 100
+    burst: 50
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-cors
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - OPTIONS
+    accessControlAllowOriginList:
+      - https://app.example.com
+```
+
 ## Configuration Options
 
 | Field | Description | Default | Required |
