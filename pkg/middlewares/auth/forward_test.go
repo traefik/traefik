@@ -97,6 +97,80 @@ func TestForwardAuthSuccess(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body))
 }
 
+func TestForwardAuth_headerWithUnderscoreStrippedFromAuthResponseHeaders(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Auth-User", "user@example.com")
+		fmt.Fprintln(w, "Success")
+	}))
+	t.Cleanup(server.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header["X_auth_user"])
+
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address:             server.URL,
+		AuthResponseHeaders: []string{"X-Auth-User"},
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header["X_auth_user"] = []string{"superadmin"}
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+	assert.Equal(t, "traefik\n", string(body))
+}
+
+func TestForwardAuth_headerWithUnderscoreStrippedFromAuthResponseHeadersRegex(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Auth-User", "user@example.com")
+		fmt.Fprintln(w, "Success")
+	}))
+	t.Cleanup(server.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header["X_auth_user"])
+
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address:                  server.URL,
+		AuthResponseHeadersRegex: "^X-Auth-",
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header["X_auth_user"] = []string{"superadmin"}
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+	assert.Equal(t, "traefik\n", string(body))
+}
+
 func TestForwardAuthRedirect(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)

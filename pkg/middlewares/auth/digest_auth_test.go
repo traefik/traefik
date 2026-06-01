@@ -52,7 +52,7 @@ func TestDigestAuthFail(t *testing.T) {
 }
 
 func TestDigestAuthUsersFromFile(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		desc            string
 		userFileContent string
 		expectedUsers   map[string]string
@@ -86,7 +86,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
+	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -150,6 +150,35 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			require.NotContains(t, "traefik", string(body))
 		})
 	}
+}
+
+func TestDigestAuthUserHeaderUnderscoreVariantStripped(t *testing.T) {
+	var nextCalled bool
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		nextCalled = true
+		assert.Empty(t, req.Header["X_webauth_user"])
+		assert.Equal(t, []string{"test"}, req.Header["X-Webauth-User"])
+	})
+
+	auth := dynamic.DigestAuth{
+		Users:       []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
+		HeaderField: "X-Webauth-User",
+	}
+	m, err := NewDigest(t.Context(), next, auth, "test")
+	require.NoError(t, err)
+
+	srv := httptest.NewServer(m)
+	t.Cleanup(srv.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, srv.URL, nil)
+	req.Header["X_webauth_user"] = []string{"superadmin"}
+
+	digestReq := newDigestRequest("test", "test", http.DefaultClient)
+	res, err := digestReq.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.True(t, nextCalled)
 }
 
 func TestDigestAuthUserHeaderCanonical(t *testing.T) {
