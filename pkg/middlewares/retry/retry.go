@@ -23,7 +23,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/utils/ptr"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -49,14 +48,14 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 	}
 }
 
-type shouldRetryContextKey struct{}
+type wroteRequestContextKey struct{}
 
-// ShouldRetry is a function allowing to enable/disable the retry middleware mechanism.
-type ShouldRetry func(shouldRetry bool)
+// WroteRequest is a function allowing to enable/disable the retry middleware mechanism.
+type WroteRequest func()
 
-// ContextShouldRetry returns the ShouldRetry function if it has been set by the Retry middleware in the chain.
-func ContextShouldRetry(ctx context.Context) ShouldRetry {
-	f, _ := ctx.Value(shouldRetryContextKey{}).(ShouldRetry)
+// ContextWroteRequest returns the WroteRequest function if it has been set by the Retry middleware in the chain.
+func ContextWroteRequest(ctx context.Context) WroteRequest {
+	f, _ := ctx.Value(wroteRequestContextKey{}).(WroteRequest)
 	return f
 }
 
@@ -64,13 +63,13 @@ func ContextShouldRetry(ctx context.Context) ShouldRetry {
 // by the retry middleware.
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if shouldRetry := ContextShouldRetry(req.Context()); shouldRetry != nil {
+		if wroteRequest := ContextWroteRequest(req.Context()); wroteRequest != nil {
 			trace := &httptrace.ClientTrace{
 				WroteHeaders: func() {
-					shouldRetry(false)
+					wroteRequest()
 				},
 				WroteRequest: func(httptrace.WroteRequestInfo) {
-					shouldRetry(false)
+					wroteRequest()
 				},
 			}
 			newCtx := httptrace.WithClientTrace(req.Context(), trace)
@@ -215,26 +214,30 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req = req.WithContext(tracingCtx)
 		}
 
-		remainAttempts := attempts < r.attempts
-
-		retryResponseWriter := newResponseWriter(rw, statusCodes, remainAttempts, start, r.timeout)
-
 		if reusableReq != nil {
 			req = reusableReq.Clone(req.Context())
 		}
 
+		if attempts == r.attempts {
+			r.next.ServeHTTP(rw, req)
+			return nil
+		}
+
+		retryResponseWriter := newResponseWriter(rw, statusCodes, start, r.timeout)
+
 		retryReq := req
-		if !r.disableRetryOnNetworkError {
-			var shouldRetry ShouldRetry = func(shouldRetry bool) {
-				timedOut := r.timeout > 0 && time.Since(start) >= r.timeout
-				retryResponseWriter.SetShouldRetry(shouldRetry && remainAttempts && !timedOut)
+		if statusCodes == nil && !r.disableRetryOnNetworkError {
+			var wroteRequest WroteRequest = func() {
+				retryResponseWriter.wroteRequest = true
 			}
-			retryReq = req.Clone(context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry))
+			retryReq = req.Clone(context.WithValue(req.Context(), wroteRequestContextKey{}, wroteRequest))
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
 
-		if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
+		//if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
+		// End the operation as soon as the client received something.
+		if retryResponseWriter.written {
 			return nil
 		}
 
@@ -279,55 +282,36 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, remainAttempts bool, start time.Time, timeout time.Duration) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, start time.Time, timeout time.Duration) *responseWriter {
 	return &responseWriter{
 		responseWriter:  rw,
 		headers:         make(http.Header),
 		statusCodeRange: statusCodeRanges,
-		remainAttempts:  remainAttempts,
 		start:           start,
 		timeout:         timeout,
 	}
 }
 
 type responseWriter struct {
-	responseWriter  http.ResponseWriter
-	headers         http.Header
-	shouldRetry     *bool
-	written         bool
-	statusCodeRange types.HTTPCodeRanges
-	remainAttempts  bool
-	start           time.Time
-	timeout         time.Duration
-}
+	responseWriter http.ResponseWriter
+	headers        http.Header
+	written        bool
+	wroteRequest   bool
+	shouldNotWrite bool
 
-func (r *responseWriter) ShouldRetry() bool {
-	return r.remainAttempts && (r.shouldRetry == nil || *r.shouldRetry)
-}
+	disableRetryOnNetworkError bool
+	statusCodeRange            types.HTTPCodeRanges
 
-func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
-	if r.shouldRetry == nil {
-		r.shouldRetry = &shouldRetry
-		return
-	}
-
-	// Allow upgrading from false to true (HTTP status code overrides TCP baseline),
-	// but not downgrading from true to false.
-	if shouldRetry {
-		r.shouldRetry = ptr.To(true)
-	}
+	start   time.Time
+	timeout time.Duration
 }
 
 func (r *responseWriter) Header() http.Header {
-	// After headers have been written to the downstream client and no retry is pending,
-	// return the real response writer's headers. During a retry (shouldRetry=true),
-	// even after written=true, return the internal headers map so that failed-attempt
-	// headers are discarded and not leaked to the client.
-	if r.written && !r.ShouldRetry() {
-		return r.responseWriter.Header()
+	if r.shouldNotWrite || !r.written {
+		return r.headers
 	}
 
-	return r.headers
+	return r.responseWriter.Header()
 }
 
 func (r *responseWriter) Write(buf []byte) (int, error) {
@@ -335,7 +319,7 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 		r.WriteHeader(http.StatusOK)
 	}
 
-	if r.ShouldRetry() {
+	if r.shouldNotWrite {
 		return len(buf), nil
 	}
 
@@ -343,12 +327,13 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 }
 
 func (r *responseWriter) WriteHeader(code int) {
-	if r.written {
+	if r.shouldNotWrite || r.written {
 		return
 	}
 
-	// If TCP-level retry has already been signaled, discard this response.
-	if r.shouldRetry != nil && *r.shouldRetry {
+	timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
+	if !timedOut && !r.disableRetryOnNetworkError && !r.wroteRequest {
+		r.shouldNotWrite = true
 		return
 	}
 
@@ -363,12 +348,11 @@ func (r *responseWriter) WriteHeader(code int) {
 		return
 	}
 
-	if r.statusCodeRange != nil {
-		timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
-		r.SetShouldRetry(r.statusCodeRange.Contains(code) && !timedOut)
+	if !timedOut && r.statusCodeRange != nil {
+		r.shouldNotWrite = r.statusCodeRange.Contains(code)
 	}
 
-	if r.ShouldRetry() {
+	if r.shouldNotWrite {
 		return
 	}
 
