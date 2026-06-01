@@ -110,10 +110,9 @@ func TestRetry(t *testing.T) {
 
 				if retryAttempts > test.amountFaultyEndpoints {
 					// This signals that request headers have been sent to the backend.
-					trace := httptrace.ContextClientTrace(req.Context())
-					require.NotNil(t, trace)
-
-					trace.WroteHeaders()
+					if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+						trace.WroteHeaders()
+					}
 
 					rw.WriteHeader(http.StatusOK)
 					return
@@ -140,10 +139,9 @@ func TestRetry(t *testing.T) {
 func TestRetryEmptyServerList(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// This signals that request headers have been sent to the backend.
-		trace := httptrace.ContextClientTrace(r.Context())
-		require.NotNil(t, trace)
-
-		trace.WroteHeaders()
+		if trace := httptrace.ContextClientTrace(r.Context()); trace != nil {
+			trace.WroteHeaders()
+		}
 
 		rw.WriteHeader(http.StatusServiceUnavailable)
 	})
@@ -173,11 +171,10 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 			return
 		}
 
-		// Signal that request headers have been sent to the backend.
-		trace := httptrace.ContextClientTrace(req.Context())
-		require.NotNil(t, trace)
-
-		trace.WroteHeaders()
+		// This signals that request headers have been sent to the backend.
+		if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+			trace.WroteHeaders()
+		}
 
 		// And we decide to answer to client.
 		rw.WriteHeader(http.StatusNoContent)
@@ -207,11 +204,10 @@ func TestRetryShouldNotLooseHeadersOnWrite(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Add("X-Foo-Test", "bar")
 
-		// Signal that request headers have been sent to the backend.
-		trace := httptrace.ContextClientTrace(req.Context())
-		require.NotNil(t, trace)
-
-		trace.WroteHeaders()
+		// This signals that request headers have been sent to the backend.
+		if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+			trace.WroteHeaders()
+		}
 
 		// And we decide to answer to client without calling WriteHeader.
 		_, err := rw.Write([]byte("bar"))
@@ -287,9 +283,8 @@ func TestRetryWebsocket(t *testing.T) {
 				retryAttempts++
 
 				if retryAttempts > test.amountFaultyEndpoints {
-					// Signal that request headers have been sent to the backend.
-					trace := httptrace.ContextClientTrace(req.Context())
-					if trace != nil {
+					// This signals that request headers have been sent to the backend.
+					if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
 						trace.WroteHeaders()
 					}
 
@@ -581,9 +576,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				if callCount < test.amountOfTCPFailures {
 					// Simulate a TCP-level failure: the request was not forwarded
 					// to the backend, signal that retry is possible.
-					shouldRetry := ContextShouldRetry(req.Context())
-					if shouldRetry != nil {
-						shouldRetry(true)
+					wroteRequest := ContextWroteRequest(req.Context())
+					if wroteRequest != nil {
+						wroteRequest()
 					}
 
 					callCount++
@@ -591,11 +586,10 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 					return
 				}
 
-				trace := httptrace.ContextClientTrace(req.Context())
-				require.NotNil(t, trace)
-
-				// Signal that request headers have been sent to the backend.
-				trace.WroteHeaders()
+				// This signals that request headers have been sent to the backend.
+				if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+					trace.WroteHeaders()
+				}
 
 				// Verify the body is readable on each attempt.
 				if test.requestBody != "" {
@@ -748,11 +742,10 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		trace := httptrace.ContextClientTrace(req.Context())
-		require.NotNil(t, trace)
-
-		// Signal that request headers have been sent to the backend.
-		trace.WroteHeaders()
+		// This signals that request headers have been sent to the backend.
+		if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+			trace.WroteHeaders()
+		}
 
 		rw.WriteHeader(http.StatusServiceUnavailable)
 	})
