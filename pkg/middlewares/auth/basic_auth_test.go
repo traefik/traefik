@@ -123,6 +123,42 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body))
 }
 
+func TestBasicAuthUserHeaderUnderscoreVariantStripped(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		headerKey string
+	}{
+		{desc: "fully underscored alias", headerKey: "X_webauth_user"},
+		{desc: "mixed underscore-dash alias", headerKey: "X_webauth-user"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var nextCalled bool
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCalled = true
+				assert.Empty(t, req.Header[http.CanonicalHeaderKey(test.headerKey)])
+				assert.Equal(t, []string{"test"}, req.Header["X-Webauth-User"])
+			})
+			auth := dynamic.BasicAuth{
+				Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+				HeaderField: "X-Webauth-User",
+			}
+			m, err := NewBasic(t.Context(), next, auth, "test")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
+			req.SetBasicAuth("test", "test")
+			req.Header[http.CanonicalHeaderKey(test.headerKey)] = []string{"superadmin"}
+			rw := httptest.NewRecorder()
+			m.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusOK, rw.Result().StatusCode)
+			assert.True(t, nextCalled)
+		})
+	}
+}
+
 func TestBasicAuthUserHeaderCanonical(t *testing.T) {
 	var nextCalled bool
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
