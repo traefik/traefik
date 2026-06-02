@@ -163,7 +163,8 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 
 	tcpService := &dynamic.TCPService{
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
-			Servers: servers,
+			Servers:  servers,
+			Strategy: dynamic.TCPBalancerStrategy(service.Strategy),
 		},
 	}
 

@@ -45,6 +45,9 @@ type ServiceTCPApplyConfiguration struct {
 	Port *intstr.IntOrString `json:"port,omitempty"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
 	Weight *int `json:"weight,omitempty"`
+	// Strategy defines the load balancing strategy to use.
+	// Default: wrr.
+	Strategy *string `json:"strategy,omitempty"`
 	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
 	// it has closed the writing capability of its connection, to close the reading capability as well,
 	// hence fully terminating the connection.
@@ -111,6 +114,14 @@ func (b *ServiceTCPApplyConfiguration) WithPort(value intstr.IntOrString) *Servi
 // If called multiple times, the Weight field is set to the value of the last call.
 func (b *ServiceTCPApplyConfiguration) WithWeight(value int) *ServiceTCPApplyConfiguration {
 	b.Weight = &value
+	return b
+}
+
+// WithStrategy sets the Strategy field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Strategy field is set to the value of the last call.
+func (b *ServiceTCPApplyConfiguration) WithStrategy(value string) *ServiceTCPApplyConfiguration {
+	b.Strategy = &value
 	return b
 }
 
