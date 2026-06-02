@@ -531,7 +531,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Status:              []string{"503"},
 				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
-			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusOK},
+			responseStatusCodes: []int{http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
 			amountOfTCPFailures: 1,
 			requestBody:         "test request body",
 			wantRetryAttempts:   2,
@@ -574,13 +574,6 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				time.Sleep(test.responseDelay)
 
 				if callCount < test.amountOfTCPFailures {
-					// Simulate a TCP-level failure: the request was not forwarded
-					// to the backend, signal that retry is possible.
-					wroteRequest := ContextWroteRequest(req.Context())
-					if wroteRequest != nil {
-						wroteRequest()
-					}
-
 					callCount++
 					rw.WriteHeader(http.StatusGatewayTimeout)
 					return

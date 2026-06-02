@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"sync/atomic"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -226,16 +227,15 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		retryResponseWriter := newResponseWriter(rw, statusCodes, start, r.timeout)
 
 		retryReq := req
-		if statusCodes == nil && !r.disableRetryOnNetworkError {
+		if !r.disableRetryOnNetworkError {
 			var wroteRequest WroteRequest = func() {
-				retryResponseWriter.wroteRequest = true
+				retryResponseWriter.wroteRequest.Store(true)
 			}
 			retryReq = req.Clone(context.WithValue(req.Context(), wroteRequestContextKey{}, wroteRequest))
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
 
-		//if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
 		// End the operation as soon as the client received something.
 		if retryResponseWriter.written {
 			return nil
@@ -295,15 +295,15 @@ func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRa
 type responseWriter struct {
 	responseWriter http.ResponseWriter
 	headers        http.Header
-	written        bool
-	wroteRequest   bool
-	shouldNotWrite bool
 
 	disableRetryOnNetworkError bool
 	statusCodeRange            types.HTTPCodeRanges
+	start                      time.Time
+	timeout                    time.Duration
 
-	start   time.Time
-	timeout time.Duration
+	wroteRequest   atomic.Bool
+	written        bool
+	shouldNotWrite bool
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -332,7 +332,7 @@ func (r *responseWriter) WriteHeader(code int) {
 	}
 
 	timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
-	if !timedOut && !r.disableRetryOnNetworkError && !r.wroteRequest {
+	if !timedOut && !r.disableRetryOnNetworkError && !r.wroteRequest.Load() {
 		r.shouldNotWrite = true
 		return
 	}
@@ -348,8 +348,8 @@ func (r *responseWriter) WriteHeader(code int) {
 		return
 	}
 
-	if !timedOut && r.statusCodeRange != nil {
-		r.shouldNotWrite = r.statusCodeRange.Contains(code)
+	if r.statusCodeRange != nil {
+		r.shouldNotWrite = !timedOut && r.statusCodeRange.Contains(code)
 	}
 
 	if r.shouldNotWrite {
