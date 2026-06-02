@@ -281,7 +281,7 @@ func (p *Provider) updateIngressStatuses(ctx context.Context, mc *model) {
 	ingresses := p.k8sClient.ListIngresses()
 	ingressesByKey := make(map[string]*netv1.Ingress, len(ingresses))
 	for _, ing := range ingresses {
-		ingressesByKey[ingressKey(ing.Namespace, ing.Name)] = ing
+		ingressesByKey[ing.Namespace+"/"+ing.Name] = ing
 	}
 
 	processed := make(map[string]struct{})
@@ -291,7 +291,7 @@ func (p *Provider) updateIngressStatuses(ctx context.Context, mc *model) {
 				continue
 			}
 
-			key := ingressKey(loc.Namespace, loc.IngressName)
+			key := loc.Namespace + "/" + loc.IngressName
 			if _, ok := processed[key]; ok {
 				continue
 			}
@@ -310,10 +310,6 @@ func (p *Provider) updateIngressStatuses(ctx context.Context, mc *model) {
 			}
 		}
 	}
-}
-
-func ingressKey(namespace, name string) string {
-	return namespace + "/" + name
 }
 
 func (p *Provider) validateConfiguration() error {
