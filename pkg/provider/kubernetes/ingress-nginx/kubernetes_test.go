@@ -16148,7 +16148,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-1-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
@@ -16157,7 +16160,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-1-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -16345,7 +16351,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -16505,10 +16514,16 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
