@@ -1004,8 +1004,8 @@ github.com/go-acme/esa-20240910/v3 v3.2.2 h1:dZ+HKddDMUcPr46gkFYdn5FbtJwIic59+ME
 github.com/go-acme/esa-20240910/v3 v3.2.2/go.mod h1:qn4WK9pNgXoS5ypmiZfCWSYdOtWcte9GDuhDjKP752A=
 github.com/go-acme/jdcloud-sdk-go v1.64.0 h1:AW9j5khk8tRYbpBJPxKmqdwIqgLs2Fz3HUK3hn2YXjs=
 github.com/go-acme/jdcloud-sdk-go v1.64.0/go.mod h1:qc/m8HNX1Zgd7GAv2DSEinup8fwy3Ted3/VVx7LB5bU=
-github.com/go-acme/lego/v5 v5.2.0 h1:7xxKY17pE5dRFfiJp4v09Cu79cgL/uXYct1yHY2NsKk=
-github.com/go-acme/lego/v5 v5.2.0/go.mod h1:H/hb7OJKmpVGa8zypgZh0ys5P4VUu++ZNgAEcOwq+OI=
+github.com/go-acme/lego/v5 v5.2.2 h1:KqFas/Ak2QDdU+Qm7MO9OEnS35zC000kPmM+5tLdZKk=
+github.com/go-acme/lego/v5 v5.2.2/go.mod h1:H/hb7OJKmpVGa8zypgZh0ys5P4VUu++ZNgAEcOwq+OI=
 github.com/go-acme/tencentclouddnspod v1.3.24 h1:uCSiOW1EJttcnOON+MVVyVDJguFL/Q4NIGkq1CrT9p8=
 github.com/go-acme/tencentclouddnspod v1.3.24/go.mod h1:RKcB2wSoZncjBA0OEFj59s1ko1XDy+ZsAtk+9uMxUF0=
 github.com/go-acme/tencentedgdeone v1.3.38 h1:5YsVl0H4A+cwtiUqR1eZbKFdr4OWfYp2KYJopifzKyQ=
