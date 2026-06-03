@@ -9,6 +9,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // ServersTransportTCP is the CRD implementation of a TCPServersTransport.
 // If no tcpServersTransport is specified, a default one named default@internal will be used.
@@ -20,7 +21,18 @@ type ServersTransportTCP struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec ServersTransportTCPSpec `json:"spec"`
+	Spec   ServersTransportTCPSpec   `json:"spec"`
+	Status ServersTransportTCPStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ServersTransportTCPStatus defines the observed state of ServersTransportTCP.
+type ServersTransportTCPStatus struct {
+	// Conditions lists the conditions of the ServersTransportTCP.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
