@@ -89,7 +89,7 @@ type Provider struct {
 
 func (p *Provider) SetDefaults() {
 	p.QPS = 50    // the default value for the QPS is 10x the default Kubernetes client QPS value.
-	p.Burst = 100 // the default value for the Burt is 10x the default Kubernetes client Burst value.
+	p.Burst = 100 // the default value for the Burst is 10x the default Kubernetes client Burst value.
 }
 
 // Entrypoint defines the available entry points.
