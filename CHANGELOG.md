@@ -1,3 +1,41 @@
+## [v3.6.18](https://github.com/traefik/traefik/tree/v3.6.18) (2026-06-03)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.17...v3.6.18)
+
+**Bug fixes:**
+- **[accesslogs]** Escape double quotes in quoted log fields ([#13180](https://github.com/traefik/traefik/pull/13180) @KaanSimsek)
+- **[k8s/gatewayapi]** Escape exact gRPC method matches ([#13201](https://github.com/traefik/traefik/pull/13201) @nickmnt)
+- **[logs, middleware]** Allow query parameters to be dropped from RequestPath in access log ([#13091](https://github.com/traefik/traefik/pull/13091) @calinelson)
+- **[k8s/gatewayapi]** Bump github.com/moby/spdystream to v0.5.1 ([#13252](https://github.com/traefik/traefik/pull/13252) @kevinpollet)
+- **[file]** Improve file provider behavior regarding dangling symlinks ([#12449](https://github.com/traefik/traefik/pull/12449) @fh-yuxiao-zeng)
+- **[server]** Bump github.com/bytedance/sonic to v1.15.1 ([#13254](https://github.com/traefik/traefik/pull/13254) @kevinpollet)
+- **[middleware, authentication]** Add error on basic auth build if users is empty ([#13195](https://github.com/traefik/traefik/pull/13195) @rtribotte)
+- **[k8s/ingress]** Avoid ingress path matcher injection and backport 11d251415 ([#13227](https://github.com/traefik/traefik/pull/13227) @rtribotte)
+- **[server]** Move snicheck to ctx instead of simulated routing ([#13214](https://github.com/traefik/traefik/pull/13214) @juliens)
+- **[middleware]** Reject requests with different paths after StripPrefix and StripPrefixRegex normalisation ([#13215](https://github.com/traefik/traefik/pull/13215) @rtribotte)
+- **[server]** Bump golang.org/x/net to v0.55.0 ([#13251](https://github.com/traefik/traefik/pull/13251) @kevinpollet)
+- **[k8s/gatewayapi]** Change default values and expose configuration for Kubernetes client QPS and Burst ([#13277](https://github.com/traefik/traefik/pull/13277) @kevinpollet)
+- **[server]** Bump golang.org/x/crypto to v0.52.0 ([#13276](https://github.com/traefik/traefik/pull/13276) @rtribotte)
+
+**Documentation:**
+- **[file]** Replace generated File routing reference page ([#13170](https://github.com/traefik/traefik/pull/13170) @sheddy-traefik)
+- **[middleware]** Remove whitespace in HTML tag ([#13160](https://github.com/traefik/traefik/pull/13160) @marbon87)
+- **[k8s/crd]** Fix typo in accesslogs field name ([#13177](https://github.com/traefik/traefik/pull/13177) @PlayMTL)
+- **[k8s/ingress-nginx]** Surface the Ingress status race condition during NGINX coexistence ([#13205](https://github.com/traefik/traefik/pull/13205) @emilevauge)
+- **[k8s/ingress-nginx]** Capitalize NGINX in kubernetesIngressNGINX ([#13236](https://github.com/traefik/traefik/pull/13236) @smellems)
+- Polish grammar in migration guides ([#13174](https://github.com/traefik/traefik/pull/13174) @quyentonndbs)
+- Add @LBF38 as a current maintainer ([#13225](https://github.com/traefik/traefik/pull/13225) @emilevauge)
+
+## [v2.11.47](https://github.com/traefik/traefik/tree/v2.11.47) (2026-06-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.46...v2.11.47)
+
+**Bug fixes:**
+- **[middleware, authentication]** Add error on basic auth build if users is empty ([#13195](https://github.com/traefik/traefik/pull/13195) @rtribotte)
+- **[k8s/ingress]** Avoid ingress path matcher injection and backport 11d251415 ([#13227](https://github.com/traefik/traefik/pull/13227) @rtribotte)
+- **[server]** Move snicheck to ctx instead of simulated routing ([#13214](https://github.com/traefik/traefik/pull/13214) @juliens)
+- **[middleware]** Reject requests with different paths after StripPrefix and StripPrefixRegex normalisation ([#13215](https://github.com/traefik/traefik/pull/13215) @rtribotte)
+- **[server]** Bump golang.org/x/net to v0.55.0 ([#13251](https://github.com/traefik/traefik/pull/13251) @kevinpollet)
+- **[server]** Bump golang.org/x/crypto to v0.52.0 ([#13276](https://github.com/traefik/traefik/pull/13276) @rtribotte)
+
 ## [v3.7.1](https://github.com/traefik/traefik/tree/v3.7.1) (2026-05-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.0...v3.7.1)
 

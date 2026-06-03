@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"expvar"
 	"fmt"
@@ -689,6 +690,15 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
 			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
 			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
+		},
+		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+			if tlsConn, ok := c.(*tls.Conn); ok {
+				if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
+					return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+				}
+			}
+
+			return ctx
 		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
