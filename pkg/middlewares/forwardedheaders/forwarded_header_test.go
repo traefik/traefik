@@ -24,6 +24,7 @@ func TestServeHTTP(t *testing.T) {
 		tls               bool
 		websocket         bool
 		host              string
+		absentHeaders     []string
 	}{
 		{
 			desc:            "all Empty",
@@ -242,6 +243,14 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc: "xForwardedScheme headers disabled keeps legacy headers absent",
+			tls:  true,
+			expectedHeaders: map[string]string{
+				XForwardedProto: "https",
+			},
+			absentHeaders: []string{xForwardedScheme, xScheme},
+		},
+		{
 			desc:      "xForwardedProto with websocket",
 			tls:       false,
 			websocket: true,
@@ -290,7 +299,7 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			desc:             "xForwardedScheme headers overwrite trusted values",
+			desc:             "xForwardedScheme headers overwrite in insecure mode",
 			insecure:         true,
 			addSchemeHeaders: true,
 			incomingHeaders: map[string][]string{
@@ -702,6 +711,10 @@ func TestServeHTTP(t *testing.T) {
 
 			for k, v := range test.expectedHeaders {
 				assert.Equal(t, v, req.Header.Get(k))
+			}
+
+			for _, header := range test.absentHeaders {
+				assert.NotContains(t, req.Header, http.CanonicalHeaderKey(header))
 			}
 		})
 	}

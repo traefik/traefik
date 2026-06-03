@@ -176,10 +176,8 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 	if x.addXForwardedSchemeHeaders {
 		scheme := unsafeHeader(outreq.Header).Get(XForwardedProto)
-		if scheme != "" {
-			unsafeHeader(outreq.Header).Set(xForwardedScheme, scheme)
-			unsafeHeader(outreq.Header).Set(xScheme, scheme)
-		}
+		unsafeHeader(outreq.Header).Set(xForwardedScheme, scheme)
+		unsafeHeader(outreq.Header).Set(xScheme, scheme)
 	}
 
 	if xfHost := unsafeHeader(outreq.Header).Get(XForwardedHost); xfHost == "" && outreq.Host != "" {
