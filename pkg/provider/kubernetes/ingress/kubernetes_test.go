@@ -3112,8 +3112,6 @@ func TestProviderInit(t *testing.T) {
 }
 
 func TestIngressEndpointReportNodeInternalIPs(t *testing.T) {
-	t.Parallel()
-
 	expected := []netv1.IngressLoadBalancerIngress{
 		{IP: "10.0.0.1"},
 		{IP: "10.0.0.2"},
