@@ -49,7 +49,10 @@ type clientWrapper struct {
 	experimentalChannel bool
 }
 
-func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
+func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
+	c.QPS = float32(qps)
+	c.Burst = burst
+
 	csGateway, err := gateclientset.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -75,7 +78,7 @@ func newClientImpl(csKube kclientset.Interface, csGateway gateclientset.Interfac
 
 // newInClusterClient returns a new Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
+func newInClusterClient(endpoint string, qps, burst int) (*clientWrapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
@@ -85,20 +88,20 @@ func newInClusterClient(endpoint string) (*clientWrapper, error) {
 		config.Host = endpoint
 	}
 
-	return createClientFromConfig(config)
+	return createClientFromConfig(config, qps, burst)
 }
 
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
+func newExternalClusterClientFromFile(file string, qps, burst int) (*clientWrapper, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
 		return nil, err
 	}
-	return createClientFromConfig(configFromFlags)
+	return createClientFromConfig(configFromFlags, qps, burst)
 }
 
 // newExternalClusterClient returns a new Provider client that may run outside of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent, qps, burst int) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
@@ -122,7 +125,7 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
 
-	return createClientFromConfig(config)
+	return createClientFromConfig(config, qps, burst)
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
