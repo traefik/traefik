@@ -13,7 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
+func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client, statuses *statusTracker) *dynamic.UDPConfiguration {
 	conf := &dynamic.UDPConfiguration{
 		Routers:  map[string]*dynamic.UDPRouter{},
 		Services: map[string]*dynamic.UDPService{},
@@ -29,6 +29,8 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue
 		}
+
+		statuses.visit(ingressRouteUDP.Namespace, ingressRouteUDP.Name)
 
 		ingressName := ingressRouteUDP.Name
 		if len(ingressName) == 0 {
@@ -47,6 +49,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 						Stringer("servicePort", &service.Port).
 						Err(err).
 						Msg("Cannot create service")
+					statuses.addError(ingressRouteUDP.Namespace, ingressRouteUDP.Name, err)
 					continue
 				}
 

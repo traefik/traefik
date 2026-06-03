@@ -34,6 +34,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -48,6 +50,58 @@ const (
 	ProviderName               = "kubernetescrd"
 	providerNamespaceSeparator = "@"
 )
+
+// statusTracker collects processing errors for a set of Kubernetes resources.
+type statusTracker struct {
+	errors map[string][]error
+	seen   map[string]bool
+}
+
+func newStatusTracker() *statusTracker {
+	return &statusTracker{
+		errors: make(map[string][]error),
+		seen:   make(map[string]bool),
+	}
+}
+
+func (t *statusTracker) visit(namespace, name string) {
+	t.seen[namespace+"/"+name] = true
+}
+
+func (t *statusTracker) addError(namespace, name string, err error) {
+	key := namespace + "/" + name
+	t.seen[key] = true
+	t.errors[key] = append(t.errors[key], err)
+}
+
+// configStatuses collects processing results for all CRD resource types.
+type configStatuses struct {
+	ingressRoutes        *statusTracker
+	ingressRoutesTCP     *statusTracker
+	ingressRoutesUDP     *statusTracker
+	middlewares          *statusTracker
+	middlewaresTCP       *statusTracker
+	serversTransports    *statusTracker
+	serversTransportsTCP *statusTracker
+	tlsOptions           *statusTracker
+	tlsStores            *statusTracker
+	traefikServices      *statusTracker
+}
+
+func newConfigStatuses() configStatuses {
+	return configStatuses{
+		ingressRoutes:        newStatusTracker(),
+		ingressRoutesTCP:     newStatusTracker(),
+		ingressRoutesUDP:     newStatusTracker(),
+		middlewares:          newStatusTracker(),
+		middlewaresTCP:       newStatusTracker(),
+		serversTransports:    newStatusTracker(),
+		serversTransportsTCP: newStatusTracker(),
+		tlsOptions:           newStatusTracker(),
+		tlsStores:            newStatusTracker(),
+		traefikServices:      newStatusTracker(),
+	}
+}
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -126,7 +180,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
+					conf, statuses := p.loadConfigurationFromCRD(ctxLog, k8sClient)
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
@@ -141,6 +195,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							Configuration: conf,
 						}
 					}
+
+					updateCRDStatuses(ctxLog, k8sClient, statuses)
 
 					// If we're throttling,
 					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
@@ -229,19 +285,21 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	return client, nil
 }
 
-func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
-	stores, tlsConfigs := buildTLSStores(ctx, client)
+func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) (*dynamic.Configuration, configStatuses) {
+	statuses := newConfigStatuses()
+
+	stores, tlsConfigs := buildTLSStores(ctx, client, statuses.tlsStores)
 	if tlsConfigs == nil {
 		tlsConfigs = make(map[string]*tls.CertAndStores)
 	}
 
 	conf := &dynamic.Configuration{
 		// TODO: choose between mutating and returning tlsConfigs
-		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
-		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
-		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
+		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs, statuses.ingressRoutes),
+		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs, statuses.ingressRoutesTCP),
+		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client, statuses.ingressRoutesUDP),
 		TLS: &dynamic.TLSConfiguration{
-			Options: buildTLSOptions(ctx, client),
+			Options: buildTLSOptions(ctx, client, statuses.tlsOptions),
 			Stores:  stores,
 		},
 	}
@@ -253,28 +311,33 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
 		logger := log.Ctx(ctx).With().Str(logs.MiddlewareName, id).Logger()
 		ctxMid := logger.WithContext(ctx)
+		statuses.middlewares.visit(middleware.Namespace, middleware.Name)
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading basic auth middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading digest auth middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading forward auth middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
@@ -291,30 +354,35 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading plugins middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		retry, err := createRetryMiddleware(middleware.Spec.Retry)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading retry middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		circuitBreaker, err := createCircuitBreakerMiddleware(middleware.Spec.CircuitBreaker)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading circuit breaker middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
 		chain, err := p.createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading chain middleware")
+			statuses.middlewares.addError(middleware.Namespace, middleware.Name, err)
 			continue
 		}
 
@@ -350,6 +418,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
 		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
+		statuses.middlewaresTCP.visit(middlewareTCP.Namespace, middlewareTCP.Name)
 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
@@ -367,10 +436,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, service := range client.GetTraefikServices() {
+		statuses.traefikServices.visit(service.Namespace, service.Name)
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
 		if err != nil {
 			log.Ctx(ctx).Error().Str(logs.ServiceName, service.Name).Err(err).
 				Msg("Error while building TraefikService")
+			statuses.traefikServices.addError(service.Namespace, service.Name, err)
 			continue
 		}
 	}
@@ -380,6 +451,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Str(logs.ServersTransportName, serversTransport.Name).
 			Str("namespace", serversTransport.Namespace).
 			Logger()
+		statuses.serversTransports.visit(serversTransport.Namespace, serversTransport.Name)
 
 		if len(serversTransport.Spec.RootCAsSecrets) > 0 {
 			logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
@@ -393,6 +465,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 					Err(err).
 					Str("secret", secret).
 					Msg("Error while loading CA Secret")
+				statuses.serversTransports.addError(serversTransport.Namespace, serversTransport.Name, err)
 				continue
 			}
 
@@ -401,7 +474,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		for _, rootCA := range serversTransport.Spec.RootCAs {
 			if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+				err := errors.New("both Secret and ConfigMap are defined for a RootCA")
 				logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+				statuses.serversTransports.addError(serversTransport.Namespace, serversTransport.Name, err)
 				continue
 			}
 
@@ -412,6 +487,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 						Err(err).
 						Str("secret", *rootCA.Secret).
 						Msg("Error while loading CA Secret")
+					statuses.serversTransports.addError(serversTransport.Namespace, serversTransport.Name, err)
 					continue
 				}
 
@@ -425,6 +501,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 					Err(err).
 					Str("configMap", *rootCA.ConfigMap).
 					Msg("Error while loading CA ConfigMap")
+				statuses.serversTransports.addError(serversTransport.Namespace, serversTransport.Name, err)
 				continue
 			}
 
@@ -436,6 +513,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
 			if err != nil {
 				logger.Error().Err(err).Msgf("Error while loading certificates %s", secret)
+				statuses.serversTransports.addError(serversTransport.Namespace, serversTransport.Name, err)
 				continue
 			}
 
@@ -547,6 +625,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
 		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransportTCP.Name).Logger()
+		statuses.serversTransportsTCP.visit(serversTransportTCP.Namespace, serversTransportTCP.Name)
 
 		var tcpServerTransport dynamic.TCPServersTransport
 		tcpServerTransport.SetDefaults()
@@ -589,6 +668,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 						Err(err).
 						Str("secret", secret).
 						Msg("Error while loading CA Secret")
+					statuses.serversTransportsTCP.addError(serversTransportTCP.Namespace, serversTransportTCP.Name, err)
 					continue
 				}
 
@@ -597,7 +677,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 			for _, rootCA := range serversTransportTCP.Spec.TLS.RootCAs {
 				if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+					err := errors.New("both Secret and ConfigMap are defined for a RootCA")
 					logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+					statuses.serversTransportsTCP.addError(serversTransportTCP.Namespace, serversTransportTCP.Name, err)
 					continue
 				}
 
@@ -608,6 +690,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 							Err(err).
 							Str("secret", *rootCA.Secret).
 							Msg("Error while loading CA Secret")
+						statuses.serversTransportsTCP.addError(serversTransportTCP.Namespace, serversTransportTCP.Name, err)
 						continue
 					}
 
@@ -621,6 +704,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 						Err(err).
 						Str("configMap", *rootCA.ConfigMap).
 						Msg("Error while loading CA ConfigMap")
+					statuses.serversTransportsTCP.addError(serversTransportTCP.Namespace, serversTransportTCP.Name, err)
 					continue
 				}
 
@@ -635,6 +719,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 						Err(err).
 						Str("certificates", secret).
 						Msg("Error while loading certificates")
+					statuses.serversTransportsTCP.addError(serversTransportTCP.Namespace, serversTransportTCP.Name, err)
 					continue
 				}
 
@@ -659,7 +744,154 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		conf.TCP.ServersTransports[id] = &tcpServerTransport
 	}
 
-	return conf
+	return conf, statuses
+}
+
+func updateCRDStatuses(ctx context.Context, client Client, statuses configStatuses) {
+	logger := log.Ctx(ctx)
+
+	writeStatus := func(err error, resource string) bool {
+		if err == nil {
+			return true
+		}
+		if kerror.IsForbidden(err) {
+			logger.Warn().Err(err).Msgf("Skipping CRD status updates: missing RBAC permissions to update %s status subresource. Grant update/patch on %s/status to the Traefik Role.", resource, resource)
+			return false
+		}
+		logger.Error().Err(err).Msgf("Failed to update %s status", resource)
+		return true
+	}
+
+	for _, ir := range client.GetIngressRoutes() {
+		if !statuses.ingressRoutes.seen[ir.Namespace+"/"+ir.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.ingressRoutes, ir.Namespace, ir.Name, ir.Generation)
+		if !writeStatus(client.UpdateIngressRouteStatus(ctx, ir.Namespace, ir.Name, conditions), "ingressroutes") {
+			return
+		}
+	}
+
+	for _, ir := range client.GetIngressRouteTCPs() {
+		if !statuses.ingressRoutesTCP.seen[ir.Namespace+"/"+ir.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.ingressRoutesTCP, ir.Namespace, ir.Name, ir.Generation)
+		if !writeStatus(client.UpdateIngressRouteTCPStatus(ctx, ir.Namespace, ir.Name, conditions), "ingressroutetcps") {
+			return
+		}
+	}
+
+	for _, ir := range client.GetIngressRouteUDPs() {
+		if !statuses.ingressRoutesUDP.seen[ir.Namespace+"/"+ir.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.ingressRoutesUDP, ir.Namespace, ir.Name, ir.Generation)
+		if !writeStatus(client.UpdateIngressRouteUDPStatus(ctx, ir.Namespace, ir.Name, conditions), "ingressrouteudps") {
+			return
+		}
+	}
+
+	for _, mw := range client.GetMiddlewares() {
+		if !statuses.middlewares.seen[mw.Namespace+"/"+mw.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.middlewares, mw.Namespace, mw.Name, mw.Generation)
+		if !writeStatus(client.UpdateMiddlewareStatus(ctx, mw.Namespace, mw.Name, conditions), "middlewares") {
+			return
+		}
+	}
+
+	for _, mw := range client.GetMiddlewareTCPs() {
+		if !statuses.middlewaresTCP.seen[mw.Namespace+"/"+mw.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.middlewaresTCP, mw.Namespace, mw.Name, mw.Generation)
+		if !writeStatus(client.UpdateMiddlewareTCPStatus(ctx, mw.Namespace, mw.Name, conditions), "middlewaretcps") {
+			return
+		}
+	}
+
+	for _, st := range client.GetServersTransports() {
+		if !statuses.serversTransports.seen[st.Namespace+"/"+st.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.serversTransports, st.Namespace, st.Name, st.Generation)
+		if !writeStatus(client.UpdateServersTransportStatus(ctx, st.Namespace, st.Name, conditions), "serverstransports") {
+			return
+		}
+	}
+
+	for _, st := range client.GetServersTransportTCPs() {
+		if !statuses.serversTransportsTCP.seen[st.Namespace+"/"+st.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.serversTransportsTCP, st.Namespace, st.Name, st.Generation)
+		if !writeStatus(client.UpdateServersTransportTCPStatus(ctx, st.Namespace, st.Name, conditions), "serverstransporttcps") {
+			return
+		}
+	}
+
+	for _, opt := range client.GetTLSOptions() {
+		if !statuses.tlsOptions.seen[opt.Namespace+"/"+opt.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.tlsOptions, opt.Namespace, opt.Name, opt.Generation)
+		if !writeStatus(client.UpdateTLSOptionStatus(ctx, opt.Namespace, opt.Name, conditions), "tlsoptions") {
+			return
+		}
+	}
+
+	for _, store := range client.GetTLSStores() {
+		if !statuses.tlsStores.seen[store.Namespace+"/"+store.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.tlsStores, store.Namespace, store.Name, store.Generation)
+		if !writeStatus(client.UpdateTLSStoreStatus(ctx, store.Namespace, store.Name, conditions), "tlsstores") {
+			return
+		}
+	}
+
+	for _, svc := range client.GetTraefikServices() {
+		if !statuses.traefikServices.seen[svc.Namespace+"/"+svc.Name] {
+			continue
+		}
+		conditions := buildResourceCondition(statuses.traefikServices, svc.Namespace, svc.Name, svc.Generation)
+		if !writeStatus(client.UpdateTraefikServiceStatus(ctx, svc.Namespace, svc.Name, conditions), "traefikservices") {
+			return
+		}
+	}
+}
+
+// buildResourceCondition returns a single "Valid" condition for a CRD resource.
+// If the tracker recorded no errors, the condition status is True; otherwise False with error details.
+func buildResourceCondition(tracker *statusTracker, namespace, name string, generation int64) []metav1.Condition {
+	errs := tracker.errors[namespace+"/"+name]
+	now := metav1.Now()
+
+	if len(errs) == 0 {
+		return []metav1.Condition{{
+			Type:               "Valid",
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: generation,
+			LastTransitionTime: now,
+			Reason:             "Processed",
+			Message:            "Resource processed successfully.",
+		}}
+	}
+
+	msgs := make([]string, 0, len(errs))
+	for _, err := range errs {
+		msgs = append(msgs, err.Error())
+	}
+	return []metav1.Condition{{
+		Type:               "Valid",
+		Status:             metav1.ConditionFalse,
+		ObservedGeneration: generation,
+		LastTransitionTime: now,
+		Reason:             "ProcessingError",
+		Message:            strings.Join(msgs, "; "),
+	}}
 }
 
 func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
@@ -1307,7 +1539,7 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
-func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
+func buildTLSOptions(ctx context.Context, client Client, statuses *statusTracker) map[string]tls.Options {
 	tlsOptionsCRDs := client.GetTLSOptions()
 	var tlsOptions map[string]tls.Options
 
@@ -1319,23 +1551,28 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 
 	for _, tlsOptionsCRD := range tlsOptionsCRDs {
 		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOptionsCRD.Name).Str("namespace", tlsOptionsCRD.Namespace).Logger()
+		statuses.visit(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		var clientCAs []types.FileOrContent
 
 		for _, secretName := range tlsOptionsCRD.Spec.ClientAuth.SecretNames {
 			secret, exists, err := client.GetSecret(tlsOptionsCRD.Namespace, secretName)
 			if err != nil {
 				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", tlsOptionsCRD.Namespace, secretName)
+				statuses.addError(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name, err)
 				continue
 			}
 
 			if !exists {
+				err = fmt.Errorf("secret %s/%s does not exist", tlsOptionsCRD.Namespace, secretName)
 				logger.Warn().Msgf("Secret %s/%s does not exist", tlsOptionsCRD.Namespace, secretName)
+				statuses.addError(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name, err)
 				continue
 			}
 
 			cert, err := getCABlocks(secret, tlsOptionsCRD.Namespace, secretName)
 			if err != nil {
 				logger.Error().Err(err).Msgf("Failed to extract CA from secret %s/%s", tlsOptionsCRD.Namespace, secretName)
+				statuses.addError(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name, err)
 				continue
 			}
 
@@ -1383,7 +1620,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
+func buildTLSStores(ctx context.Context, client Client, statuses *statusTracker) (map[string]tls.Store, map[string]*tls.CertAndStores) {
 	tlsStoreCRD := client.GetTLSStores()
 	if len(tlsStoreCRD) == 0 {
 		return nil, nil
@@ -1395,6 +1632,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 
 	for _, t := range tlsStoreCRD {
 		logger := log.Ctx(ctx).With().Str("TLSStore", t.Name).Str("namespace", t.Namespace).Logger()
+		statuses.visit(t.Namespace, t.Name)
 
 		id := makeID(t.Namespace, t.Name)
 
@@ -1412,16 +1650,20 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			secret, exists, err := client.GetSecret(t.Namespace, secretName)
 			if err != nil {
 				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", t.Namespace, secretName)
+				statuses.addError(t.Namespace, t.Name, err)
 				continue
 			}
 			if !exists {
+				err = fmt.Errorf("secret %s/%s does not exist", t.Namespace, secretName)
 				logger.Error().Msgf("Secret %s/%s does not exist", t.Namespace, secretName)
+				statuses.addError(t.Namespace, t.Name, err)
 				continue
 			}
 
 			cert, key, err := getCertificateBlocks(secret, t.Namespace, secretName)
 			if err != nil {
 				logger.Error().Err(err).Msg("Could not get certificate blocks")
+				statuses.addError(t.Namespace, t.Name, err)
 				continue
 			}
 

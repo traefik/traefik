@@ -1805,8 +1805,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
+			if len(test.paths) == 0 {
+				assert.Empty(t, statuses.ingressRoutesTCP.seen)
+			}
 		})
 	}
 }
@@ -6394,8 +6398,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 				CrossProviderNamespaces:   test.crossProviderNamespaces,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
+			if len(test.paths) == 0 {
+				assert.Empty(t, statuses.ingressRoutes.seen)
+			}
 		})
 	}
 }
@@ -6470,7 +6478,9 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	}
 
 	p := Provider{}
-	conf := p.loadConfigurationFromCRD(t.Context(), client)
+	conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
+	assertStatusInvariants(t, conf, statuses)
+	assert.NotEmpty(t, statuses.ingressRoutes.seen)
 
 	service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
 	require.True(t, ok)
@@ -7111,8 +7121,12 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
+			if len(test.paths) == 0 {
+				assert.Empty(t, statuses.ingressRoutesUDP.seen)
+			}
 		})
 	}
 }
@@ -8673,8 +8687,12 @@ func TestCrossNamespace(t *testing.T) {
 
 			p := Provider{AllowCrossNamespace: test.allowCrossNamespace}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
+			if len(test.paths) == 0 {
+				assert.Empty(t, statuses.ingressRoutes.seen)
+			}
 		})
 	}
 }
@@ -8760,7 +8778,8 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
+			assertStatusInvariants(t, conf, statuses)
 
 			router, ok := conf.HTTP.Routers["default-test2-route-23c7f4c450289ee29016"]
 			if test.wantRouterDropped {
@@ -8847,7 +8866,8 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
+			assertStatusInvariants(t, conf, statuses)
 
 			_, mirrorOK := conf.HTTP.Services["foo-mirror-cp"]
 			_, weightedOK := conf.HTTP.Services["bar-weighted-cp"]
@@ -8912,7 +8932,8 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
+			assertStatusInvariants(t, conf, statuses)
 
 			router, ok := conf.HTTP.Routers["default-test-route-6b204d94623b3df4370c"]
 			if test.wantRouterDropped {
@@ -8981,7 +9002,8 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
+			assertStatusInvariants(t, conf, statuses)
 
 			router, ok := conf.TCP.Routers["default-test.route-fdd3e9338e47a45efefc"]
 			if test.wantRouterDropped {
@@ -9050,7 +9072,8 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
+			assertStatusInvariants(t, conf, statuses)
 
 			service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
 			if test.wantServiceDropped {
@@ -9329,8 +9352,9 @@ func TestExternalNameService(t *testing.T) {
 
 			p := Provider{AllowExternalNameServices: test.allowExternalNameService}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
 		})
 	}
 }
@@ -9511,8 +9535,9 @@ func TestNativeLB(t *testing.T) {
 
 			p := Provider{}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
 		})
 	}
 }
@@ -9779,8 +9804,9 @@ func TestNodePortLB(t *testing.T) {
 				DisableClusterScopeResources: test.disableClusterScope,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
 		})
 	}
 }
@@ -10423,8 +10449,9 @@ func TestGlobalNativeLB(t *testing.T) {
 
 			p := Provider{NativeLBByDefault: test.NativeLBByDefault}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf, statuses := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+			assertStatusInvariants(t, conf, statuses)
 		})
 	}
 }

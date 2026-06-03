@@ -17,7 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
+func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores, statuses *statusTracker) *dynamic.TCPConfiguration {
 	conf := &dynamic.TCPConfiguration{
 		Routers:           map[string]*dynamic.TCPRouter{},
 		Middlewares:       map[string]*dynamic.TCPMiddleware{},
@@ -36,10 +36,13 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			continue
 		}
 
+		statuses.visit(ingressRouteTCP.Namespace, ingressRouteTCP.Name)
+
 		if ingressRouteTCP.Spec.TLS != nil && !ingressRouteTCP.Spec.TLS.Passthrough {
 			err := getTLSTCP(ctx, ingressRouteTCP, client, tlsConfigs)
 			if err != nil {
 				logger.Error().Err(err).Msg("Error configuring TLS")
+				statuses.addError(ingressRouteTCP.Namespace, ingressRouteTCP.Name, err)
 			}
 		}
 
@@ -50,7 +53,9 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 		for _, route := range ingressRouteTCP.Spec.Routes {
 			if len(route.Match) == 0 {
+				err := errors.New("empty match rule")
 				logger.Error().Msg("Empty match rule")
+				statuses.addError(ingressRouteTCP.Namespace, ingressRouteTCP.Name, err)
 				continue
 			}
 
@@ -59,6 +64,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			mds, err := p.makeMiddlewareTCPKeys(ctx, ingressRouteTCP.Namespace, route.Middlewares)
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to create middleware keys")
+				statuses.addError(ingressRouteTCP.Namespace, ingressRouteTCP.Name, err)
 				continue
 			}
 
@@ -120,6 +126,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRouteTCP.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 					if err != nil {
 						logger.Error().Err(err).Msgf("Invalid reference to TLSOption %q", ingressRouteTCP.Spec.TLS.Options.Name)
+						statuses.addError(ingressRouteTCP.Namespace, ingressRouteTCP.Name, err)
 						continue
 					}
 				}
