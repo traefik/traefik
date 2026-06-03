@@ -2480,6 +2480,153 @@ func generateTestFilename(desc string) string {
 	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+".yml")
 }
 
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces verifies that an Ingress,
+// declaring a `traefik.ingress.kubernetes.io/router.middlewares` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		path                    string
+		wantRouter              string
+	}{
+		{
+			desc:                    "Ingress with middleware annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			path:                    "fixtures/Ingress-with-annotations.yml",
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with middleware annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+			path:                    "fixtures/Ingress-with-annotations.yml",
+		},
+		{
+			desc:                    "Ingress with middleware annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			path:                    "fixtures/Ingress-with-annotations.yml",
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with middleware annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+			path:                    "fixtures/Ingress-with-annotations.yml",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock(test.path))
+
+			if test.wantRouter == "" {
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+		})
+	}
+}
+
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions verifies that an Ingress,
+// declaring a `traefik.ingress.kubernetes.io/router.tls.options` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouter              string
+	}{
+		{
+			desc:                    "Ingress with TLS options annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock("fixtures/Ingress-with-tls-options-annotation.yml"))
+
+			if test.wantRouter == "" {
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+			assert.NotNil(t, conf.HTTP.Routers[test.wantRouter].TLS)
+			assert.Equal(t, "foobar@file", conf.HTTP.Routers[test.wantRouter].TLS.Options)
+		})
+	}
+}
+
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport verifies that a Service referencing a cross-provider ServersTransport,
+// via the `traefik.ingress.kubernetes.io/service.serverstransport` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantService             string
+	}{
+		{
+			desc:                    "Service with serversTransport annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+		},
+		{
+			desc:                    "Service with serversTransport annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock("fixtures/Ingress-with-servers-transport-annotation.yml"))
+
+			if test.wantService == "" {
+				assert.Empty(t, conf.HTTP.Services)
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Services, test.wantService)
+			assert.Equal(t, "foobar@file", conf.HTTP.Services[test.wantService].LoadBalancer.ServersTransport)
+		})
+	}
+}
+
 func TestGetCertificates(t *testing.T) {
 	testIngressWithoutHostname := buildIngress(
 		iNamespace("testing"),

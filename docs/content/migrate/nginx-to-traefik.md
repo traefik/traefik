@@ -230,6 +230,10 @@ When you find one of these keys, translate the underlying intent rather than try
     ```
 Install Traefik with the Kubernetes Ingress NGINX provider enabled. Both controllers will serve the same Ingress resources simultaneously.
 
+!!! warning "Read the status race condition note first"
+
+    Running both controllers against the same Ingresses creates contention on the `status.loadBalancer.ingress[]` field. Before installing, review the [Ingress Status Race Condition](#status-race) section in Step 3 and decide which mitigation to apply (disable `publishService` on Traefik, or use a transitional IngressClass).
+
 ### Add Traefik Helm Repository
 
 ```bash
@@ -355,11 +359,20 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 
     Some ISPs ignore DNS TTL values to reduce traffic costs, caching records longer than specified. After removing NGINX from DNS, keep NGINX running for at least 24-48 hours before uninstalling to avoid dropping traffic from users whose ISPs have stale DNS caches.
 
-??? info "ExternalDNS Users"
+<a id="status-race"></a>
 
-    If you use [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to automatically manage DNS records based on Ingress status, both NGINX and Traefik will compete to update the Ingress status with their LoadBalancer IPs when `publishService` is enabled. Traefik typically wins because it updates faster, which can cause unexpected traffic shifts.
+!!! warning "Ingress Status Race Condition During Coexistence"
 
-    **Recommended approach for ExternalDNS:**
+    While both controllers manage the same Ingress resources (same `ingressClassName: nginx`), they will both attempt to write the LoadBalancer address into `status.loadBalancer.ingress[]` on every Ingress they own. Each controller overwrites the other in a tight reconciliation loop, with no error reported in the logs (just repeated `Updated ingress status` info lines on both sides).
+
+    Routing itself is not affected: both controllers correctly serve traffic during the coexistence window. The flapping status field affects anything that watches it:
+
+    - [ExternalDNS](https://github.com/kubernetes-sigs/external-dns), which may shift DNS records back and forth between the two LoadBalancer IPs.
+    - kube-state-metrics, monitoring dashboards, and alerting rules that observe Ingress status.
+    - GitOps tools such as ArgoCD or Flux, which will report a permanent drift on every affected Ingress.
+    - Custom operators reconciling on the Ingress status field.
+
+    **Recommended mitigation (option 1): disable status publishing on Traefik during coexistence**
 
     1. **[Install Traefik](#step-1-install-traefik-alongside-nginx) with `publishService` disabled**:
 
@@ -372,9 +385,11 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
               enabled: false  # Disable to prevent status updates
         ```
 
-    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname
+        Traefik keeps serving the Ingresses normally. It only stops writing the status field, leaving NGINX as the sole writer.
 
-    3. **Switch DNS via NGINX** - Configure NGINX to publish Traefik's service address:
+    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname.
+
+    3. **Switch DNS via NGINX** (ExternalDNS users only). Configure NGINX to publish Traefik's service address so ExternalDNS points traffic to Traefik:
 
         ```yaml
         # nginx-values.yaml
@@ -383,11 +398,13 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
             pathOverride: "traefik/traefik"  # Points to Traefik's service
         ```
 
-        This makes NGINX update the Ingress status with Traefik's LoadBalancer IP, causing ExternalDNS to point traffic to Traefik.
+    4. **Verify traffic flows through Traefik**. At this point, you can still roll back by removing the `pathOverride`.
 
-    4. **Verify traffic flows through Traefik** - At this point, you can still rollback by removing the `pathOverride`
+    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-4-uninstall-ingress-nginx-controller).
 
-    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-4-uninstall-ingress-nginx-controller)
+    **Alternative mitigation (option 2): use a transitional IngressClass**
+
+    Give the migrating NGINX a distinct IngressClass (for example `nginx-migration`) so the two controllers never own the same Ingress at the same time. This is the approach SUSE documents for RKE2 migrations: see [SUSE: Migrate from Ingress NGINX to Traefik](https://documentation.suse.com/cloudnative/rke2/latest/en/reference/ingress_migration.html). This avoids any contention on `status.loadBalancer.ingress[]` entirely, at the cost of a short traffic-cutover step instead of a progressive DNS shift.
 
 ### Option B: External Load Balancer with Weighted Traffic
 
