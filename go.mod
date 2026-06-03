@@ -22,7 +22,7 @@ require (
 	github.com/docker/cli v29.4.0+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/fatih/structs v1.1.0
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-acme/lego/v4 v4.35.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
