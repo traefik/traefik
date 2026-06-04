@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Enable corepack
-        run: corepack enable
+        run: npm i -g corepack
 
       - name: Setup node
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
