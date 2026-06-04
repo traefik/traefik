@@ -170,7 +170,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		delete(conf.TLS.Options, traefiktls.DefaultTLSConfigName)
 	}
 
-	return resolveHTTPTLSOptions(conf)
+	return conf
 }
 
 func resolveHTTPTLSOptions(cfg dynamic.Configuration) dynamic.Configuration {
