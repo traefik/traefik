@@ -114,8 +114,41 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute() {
 	require.NoError(s.T(), err)
 }
 
-// TestWithTLSOptions  verifies that traefik routes the requests with the associated tls options.
+// TestWithEntryPointTLSConfig verifies that a router relying on the entry point
+// TLS configuration (without an explicit router TLS section) is served over HTTPS.
+// Regression test for https://github.com/traefik/traefik/issues/13289.
+func (s *HTTPSSuite) TestWithEntryPointTLSConfig() {
+	file := s.adaptFile("fixtures/https/https_entrypoint_tls.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
 
+	// wait for Traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	backend := startTestServer("9010", http.StatusNoContent, "")
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.com",
+		},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr, try.HasCn(tr.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+}
+
+// TestWithTLSOptions verifies that traefik routes the requests with the associated tls options.
 func (s *HTTPSSuite) TestWithTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))

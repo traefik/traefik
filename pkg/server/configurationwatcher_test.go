@@ -927,7 +927,6 @@ func TestEntryPointTLSResolvedOptions(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
 	run := make(chan struct{})
-	var once sync.Once
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		router := conf.HTTP.Routers["foo@internal"]
 		if router == nil || router.TLS == nil {
@@ -935,7 +934,7 @@ func TestEntryPointTLSResolvedOptions(t *testing.T) {
 		}
 
 		assert.Equal(t, "default", router.TLS.ResolvedOptions)
-		once.Do(func() { close(run) })
+		close(run)
 	})
 
 	watcher.Start()
