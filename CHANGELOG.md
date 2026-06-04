@@ -1,3 +1,15 @@
+## [v2.11.48](https://github.com/traefik/traefik/tree/v2.11.48) (2026-06-04)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.46...v2.11.48)
+
+**Bug fixes:**
+- **[tls]** Compute resolved tlsOptions after applying models ([#13291](https://github.com/traefik/traefik/pull/13291) @rtribotte)
+- **[middleware, authentication]** Add error on basic auth build if users is empty ([#13195](https://github.com/traefik/traefik/pull/13195) @rtribotte)
+- **[k8s/ingress]** Avoid ingress path matcher injection and backport 11d251415 ([#13227](https://github.com/traefik/traefik/pull/13227) @rtribotte)
+- **[server]** Move snicheck to ctx instead of simulated routing ([#13214](https://github.com/traefik/traefik/pull/13214) @juliens)
+- **[middleware]** Reject requests with different paths after StripPrefix and StripPrefixRegex normalisation ([#13215](https://github.com/traefik/traefik/pull/13215) @rtribotte)
+- **[server]** Bump golang.org/x/net to v0.55.0 ([#13251](https://github.com/traefik/traefik/pull/13251) @kevinpollet)
+- **[server]** Bump golang.org/x/crypto to v0.52.0 ([#13276](https://github.com/traefik/traefik/pull/13276) @rtribotte)
+
 ## [v3.6.18](https://github.com/traefik/traefik/tree/v3.6.18) (2026-06-03)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.17...v3.6.18)
 
@@ -28,13 +40,7 @@
 ## [v2.11.47](https://github.com/traefik/traefik/tree/v2.11.47) (2026-06-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.46...v2.11.47)
 
-**Bug fixes:**
-- **[middleware, authentication]** Add error on basic auth build if users is empty ([#13195](https://github.com/traefik/traefik/pull/13195) @rtribotte)
-- **[k8s/ingress]** Avoid ingress path matcher injection and backport 11d251415 ([#13227](https://github.com/traefik/traefik/pull/13227) @rtribotte)
-- **[server]** Move snicheck to ctx instead of simulated routing ([#13214](https://github.com/traefik/traefik/pull/13214) @juliens)
-- **[middleware]** Reject requests with different paths after StripPrefix and StripPrefixRegex normalisation ([#13215](https://github.com/traefik/traefik/pull/13215) @rtribotte)
-- **[server]** Bump golang.org/x/net to v0.55.0 ([#13251](https://github.com/traefik/traefik/pull/13251) @kevinpollet)
-- **[server]** Bump golang.org/x/crypto to v0.52.0 ([#13276](https://github.com/traefik/traefik/pull/13276) @rtribotte)
+Release canceled.
 
 ## [v3.6.17](https://github.com/traefik/traefik/tree/v3.6.17) (2026-05-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.16...v3.6.17)
