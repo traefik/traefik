@@ -70,6 +70,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable corepack
+        run: corepack enable
+
       - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
@@ -83,6 +86,7 @@ jobs:
           safe-chain setup-ci
 
       - name: UI unit tests
+        working-directory: ./webui
         run: |
-          yarn --cwd webui install --ignore-scripts
-          yarn --cwd webui test:unit:ci
+          yarn install --mode skip-build
+          yarn test:unit:ci
