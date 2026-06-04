@@ -1,7 +1,8 @@
-## [v3.7.2](https://github.com/traefik/traefik/tree/v3.7.2) (2026-06-03)
-[All Commits](https://github.com/traefik/traefik/compare/v3.7.1...v3.7.2)
+## [v3.7.3](https://github.com/traefik/traefik/tree/v3.7.3) (2026-06-04)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.1...v3.7.3)
 
 **Bug fixes:**
+- **[tls]** Compute resolved tlsOptions after applying models ([#13291](https://github.com/traefik/traefik/pull/13291) @rtribotte)
 - **[webui, tcp]** Fix TCP router service resolution in dashboard flow diagram ([#13155](https://github.com/traefik/traefik/pull/13155) @aliamerj)
 - **[k8s/ingress-nginx]** Trim quotes from proxy_set_header header name ([#13203](https://github.com/traefik/traefik/pull/13203) @crisbal)
 - **[accesslogs]** Escape double quotes in quoted log fields ([#13180](https://github.com/traefik/traefik/pull/13180) @KaanSimsek)
@@ -70,6 +71,11 @@
 - **[middleware]** Reject requests with different paths after StripPrefix and StripPrefixRegex normalisation ([#13215](https://github.com/traefik/traefik/pull/13215) @rtribotte)
 - **[server]** Bump golang.org/x/net to v0.55.0 ([#13251](https://github.com/traefik/traefik/pull/13251) @kevinpollet)
 - **[server]** Bump golang.org/x/crypto to v0.52.0 ([#13276](https://github.com/traefik/traefik/pull/13276) @rtribotte)
+- 
+## [v3.7.2](https://github.com/traefik/traefik/tree/v3.7.2) (2026-06-03)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.1...v3.7.2)
+
+Release canceled.
 
 ## [v3.6.18](https://github.com/traefik/traefik/tree/v3.6.18) (2026-06-03)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.17...v3.6.18)
