@@ -10,6 +10,11 @@
     address = ":4443"
     [entryPoints.websecure.http.tls]
 
+  [entryPoints.websecure-options]
+    address = ":4444"
+    [entryPoints.websecure-options.http.tls]
+      options = "foo"
+
 [api]
   insecure = true
 
@@ -20,8 +25,14 @@
 
 [http.routers]
   [http.routers.router1]
+    entryPoints = ["websecure"]
     service = "service1"
     rule = "Host(`snitest.com`)"
+
+  [http.routers.router2]
+    entryPoints = ["websecure-options"]
+    service = "service1"
+    rule = "Host(`snitest.org`)"
 
 [http.services]
   [http.services.service1]
@@ -32,3 +43,11 @@
 [[tls.certificates]]
   certFile = "fixtures/https/snitest.com.cert"
   keyFile = "fixtures/https/snitest.com.key"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/snitest.org.cert"
+  keyFile = "fixtures/https/snitest.org.key"
+
+[tls.options]
+  [tls.options.foo]
+    maxVersion = "VersionTLS12"
