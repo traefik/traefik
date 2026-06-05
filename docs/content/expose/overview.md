@@ -114,3 +114,164 @@ Traefik Proxy supports WebSocket (WS) and WebSocket Secure (WSS) connections out
     ```
 
     Traefik preserves WebSocket headers including `Origin`, `Sec-WebSocket-Key`, and `Sec-WebSocket-Version`. Use the [Headers middleware](../reference/routing-configuration/http/middlewares/headers.md) if you need to modify headers for origin checking or other requirements.
+
+### Combining Middlewares with the Chain Middleware
+
+The [Chain middleware](../../reference/routing-configuration/http/middlewares/chain.md) lets you combine multiple middlewares into a single, reusable stack. This is the most common production pattern for API gateways: combining authentication, rate limiting, and CORS headers.
+
+??? example "API Gateway Middleware Stack (YAML)"
+
+    ```yaml
+    http:
+      routers:
+        api-router:
+          service: api-service
+          middlewares:
+            - api-stack
+          rule: "Host(`api.example.com`)"
+
+      middlewares:
+        api-stack:
+          chain:
+            middlewares:
+              - api-auth
+              - api-ratelimit
+              - api-cors
+
+        api-auth:
+          basicAuth:
+            users:
+              - "admin:$2y$10$..."  # bcrypt hash
+
+        api-ratelimit:
+          rateLimit:
+            average: 100
+            burst: 50
+
+        api-cors:
+          headers:
+            accessControlAllowMethods:
+              - GET
+              - POST
+              - OPTIONS
+            accessControlAllowOriginList:
+              - "https://app.example.com"
+
+      services:
+        api-service:
+          loadBalancer:
+            servers:
+              - url: "http://127.0.0.1:8080"
+    ```
+
+??? example "API Gateway Middleware Stack (TOML)"
+
+    ```toml
+    [http.routers]
+      [http.routers.api-router]
+        service = "api-service"
+        middlewares = ["api-stack"]
+        rule = "Host(`api.example.com`)"
+
+    [http.middlewares]
+      [http.middlewares.api-stack.chain]
+        middlewares = ["api-auth", "api-ratelimit", "api-cors"]
+
+      [http.middlewares.api-auth.basicAuth]
+        users = ["admin:$2y$10$..."]
+
+      [http.middlewares.api-ratelimit.rateLimit]
+        average = 100
+        burst = 50
+
+      [http.middlewares.api-cors.headers]
+        accessControlAllowMethods = ["GET", "POST", "OPTIONS"]
+        accessControlAllowOriginList = ["https://app.example.com"]
+
+    [http.services]
+      [http.services.api-service]
+        [http.services.api-service.loadBalancer]
+          [[http.services.api-service.loadBalancer.servers]]
+            url = "http://127.0.0.1:8080"
+    ```
+
+??? example "API Gateway Middleware Stack (Docker Labels)"
+
+    ```yaml
+    labels:
+      - "traefik.http.routers.api-router.service=api-service"
+      - "traefik.http.routers.api-router.middlewares=api-stack"
+      - "traefik.http.routers.api-router.rule=Host(`api.example.com`)"
+      - "traefik.http.middlewares.api-stack.chain.middlewares=api-auth,api-ratelimit,api-cors"
+      - "traefik.http.middlewares.api-auth.basicauth.users=admin:$2y$10$..."
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=50"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=https://app.example.com"
+      - "traefik.http.services.api-service.loadbalancer.server.port=8080"
+    ```
+
+??? example "API Gateway Middleware Stack (Kubernetes)"
+
+    ```yaml
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-ingress
+      namespace: default
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`api.example.com`)
+          kind: Rule
+          services:
+            - name: api-service
+              port: 8080
+          middlewares:
+            - name: api-stack
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: api-stack
+    spec:
+      chain:
+        middlewares:
+        - name: api-auth
+        - name: api-ratelimit
+        - name: api-cors
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: api-auth
+    spec:
+      basicAuth:
+        users:
+        - admin:$2y$10$...
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: api-ratelimit
+    spec:
+      rateLimit:
+        average: 100
+        burst: 50
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: api-cors
+    spec:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        accessControlAllowOriginList:
+          - https://app.example.com
+    ```
+
+This pattern keeps your routing rules clean by abstracting security concerns into reusable middleware stacks. For a complete reference of all available middlewares, see the [Middlewares reference](../../reference/routing-configuration/http/middlewares/overview.md).
