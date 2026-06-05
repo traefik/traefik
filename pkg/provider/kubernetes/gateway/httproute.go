@@ -451,6 +451,12 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 	var serversTransport *dynamic.ServersTransport
 	for _, policy := range backendTLSPolicies {
 		for _, targetRef := range policy.Spec.TargetRefs {
+			// Skip targetRefs that doesn't match the backendRef,
+			// since a BackendTLSPolicy can select multiple services.
+			if targetRef.Name != backendRef.Name {
+				continue
+			}
+			// Skip the targetRef if the sectionName doesn't match the backendRef port.
 			if targetRef.SectionName != nil && svcPort.Name != string(*targetRef.SectionName) {
 				continue
 			}
