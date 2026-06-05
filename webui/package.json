@@ -99,6 +99,7 @@
   "resolutions": {
     "form-data": "4.0.4",
     "js-yaml": "4.1.1",
-    "@csstools/css-syntax-patches-for-csstree": "1.1.4"
+    "@csstools/css-syntax-patches-for-csstree": "1.1.4",
+    "undici": "7.27.0"
   }
 }
