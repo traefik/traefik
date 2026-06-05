@@ -64,7 +64,7 @@
     "framer-motion": "^11.18.2",
     "globals": "^16.0.0",
     "jest-extended": "^4.0.2",
-    "jsdom": "^24.0.0",
+    "jsdom": "29.1.1",
     "lodash": "4.18.1",
     "msw": "^2.1.7",
     "query-string": "^6.9.0",
@@ -75,7 +75,7 @@
     "react-helmet-async": "^2.0.4",
     "react-icons": "^5.0.1",
     "react-infinite-scroll-hook": "^4.1.1",
-    "react-router-dom": "6.30.2",
+    "react-router-dom": "6.30.4",
     "swr": "^2.2.4",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.38.0",
@@ -98,6 +98,8 @@
   "packageManager": "yarn@4.9.1",
   "resolutions": {
     "form-data": "4.0.4",
-    "js-yaml": "4.1.1"
+    "js-yaml": "4.1.1",
+    "@csstools/css-syntax-patches-for-csstree": "1.1.4",
+    "undici": "7.27.0"
   }
 }
