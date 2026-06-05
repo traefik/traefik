@@ -119,7 +119,7 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
 
 In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). the `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis. This allows to have heterogeneous router configurations and ease migration.
 
-The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
+The default value of the `ruleSyntax` option is inherited from the `core.defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `core.defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
 
 #### Configuration Example
 
@@ -142,10 +142,10 @@ http:
 [http.routers]
   [http.routers.Router-v3]
     rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
-    ruleSyntax = v3
+    ruleSyntax = "v3"
   [http.routers.Router-v2]
     rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
-    ruleSyntax = v2
+    ruleSyntax = "v2"
 ```
 
 ```yaml tab="Labels"

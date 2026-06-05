@@ -65,7 +65,7 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| <a id="opt-expression" href="#opt-expression" title="#opt-expression">`expression`</a> | Condition to open the circuit breaker and applies the fallback mechanism instead of calling your services.<br />More information [here](#expression) | 100ms | No |
+| <a id="opt-expression" href="#opt-expression" title="#opt-expression">`expression`</a> | Condition to open the circuit breaker and applies the fallback mechanism instead of calling your services.<br />More information [here](#expression) | "" | No |
 | <a id="opt-checkPeriod" href="#opt-checkPeriod" title="#opt-checkPeriod">`checkPeriod`</a> | The interval between successive checks of the circuit breaker condition (when in standby state). | 100ms | No |
 | <a id="opt-fallbackDuration" href="#opt-fallbackDuration" title="#opt-fallbackDuration">`fallbackDuration`</a> | The duration for which the circuit breaker will wait before trying to recover (from a tripped state). | 10s | No |
 | <a id="opt-recoveryDuration" href="#opt-recoveryDuration" title="#opt-recoveryDuration">`recoveryDuration`</a> | The duration for which the circuit breaker will try to recover (as soon as it is in recovering state). | 10s | No |
