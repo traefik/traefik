@@ -3,6 +3,7 @@ package tcp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -21,7 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktcp "github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -125,7 +126,7 @@ func Test_Routing(t *testing.T) {
 		},
 	}
 
-	dialerManager := tcp2.NewDialerManager(nil)
+	dialerManager := traefiktcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 	serviceManager := tcp.NewManager(conf, dialerManager)
 
@@ -599,6 +600,16 @@ func Test_Routing(t *testing.T) {
 					_, err = fmt.Fprint(w, "HTTPS")
 					require.NoError(t, err)
 				}),
+
+				ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+					if tlsConn, ok := c.(*tls.Conn); ok {
+						if tlsConnWithOptionsName, ok := tlsConn.NetConn().(traefiktcp.TLSConn); ok {
+							return traefiktcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+						}
+					}
+
+					return ctx
+				},
 			}
 
 			stoppedHTTPS := make(chan struct{})
@@ -856,9 +867,9 @@ func TestPostgresTLSTermination(t *testing.T) {
 
 	// Register a TCPTLS route (TLS termination, not passthrough) with a TLSHandler.
 	// The TLSHandler wraps the actual handler, performing the TLS handshake.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", &tcp2.TLSHandler{
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", &traefiktcp.TLSHandler{
 		Config: tlsConf,
-		Next: tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		Next: traefiktcp.HandlerFunc(func(conn traefiktcp.WriteCloser) {
 			_, _ = conn.Write([]byte("OK"))
 			_ = conn.Close()
 		}),
@@ -921,7 +932,7 @@ func TestPostgresTLSPassthrough(t *testing.T) {
 	require.NoError(t, err)
 
 	// Register a TCPTLS route (TLS passthrough) with a tcp.Handler.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", traefiktcp.HandlerFunc(func(conn traefiktcp.WriteCloser) {
 		// First we should receive the PostgresStartTLSMsg.
 		buf := make([]byte, len(PostgresStartTLSMsg))
 		_, err := conn.Read(buf)
@@ -1056,7 +1067,8 @@ func routerHTTPSPathPrefix(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "PathPrefix(`/`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls10",
+				Options:         "tls10",
+				ResolvedOptions: "tls10",
 			},
 		},
 	}
@@ -1070,7 +1082,8 @@ func routerHTTPS(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "Host(`foo.bar`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls12",
+				Options:         "tls12",
+				ResolvedOptions: "tls12",
 			},
 		},
 	}
@@ -1366,7 +1379,7 @@ func (h *httpForwarder) Close() error {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
+func (h *httpForwarder) ServeTCP(conn traefiktcp.WriteCloser) {
 	h.connChan <- conn
 }
 

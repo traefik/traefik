@@ -176,6 +176,7 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 
 			conf := mergeConfiguration(newConfigs.DeepCopy(), c.defaultEntryPoints)
 			conf = applyModel(conf)
+			conf = resolveHTTPTLSOptions(conf)
 
 			for _, listener := range c.configurationListeners {
 				listener(conf)
