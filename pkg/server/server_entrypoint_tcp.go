@@ -622,6 +622,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		prevConnContext := serverHTTP.ConnContext
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
 			cState := &connState{Start: time.Now()}
 			if debugConnection {
@@ -629,7 +630,13 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 				clientConnectionStates[getConnKey(c)] = cState
 				clientConnectionStatesMu.Unlock()
 			}
-			return context.WithValue(ctx, connStateKey, cState)
+
+			ctx = context.WithValue(ctx, connStateKey, cState)
+
+			if prevConnContext != nil {
+				return prevConnContext(ctx, c)
+			}
+			return ctx
 		}
 
 		if debugConnection {
