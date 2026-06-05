@@ -229,9 +229,9 @@ You can declare UDP Routers and/or Services using KV.
 
 | Key (Path)                                                       | Description                                                       | Value |
 |------------------------------------------------------------------|------------------------------------------------------------------|-------|
-| <a id="opt-traefikudpservicesloadBalancerserversnaddress" href="#opt-traefikudpservicesloadBalancerserversnaddress" title="#opt-traefikudpservicesloadBalancerserversnaddress">`traefik/udp/services/loadBalancer/servers/<n>/address`</a> | See [UDP Service](../udp/service.md) for more information. | `foobar`  |
+| <a id="opt-traefikudpservicesservice-nameloadBalancerserversnaddress" href="#opt-traefikudpservicesservice-nameloadBalancerserversnaddress" title="#opt-traefikudpservicesservice-nameloadBalancerserversnaddress">`traefik/udp/services/<service_name>/loadBalancer/servers/<n>/address`</a> | See [UDP Service](../udp/service.md) for more information. | `foobar`  |
 | <a id="opt-traefikudpservicesweightedservices0name" href="#opt-traefikudpservicesweightedservices0name" title="#opt-traefikudpservicesweightedservices0name">`traefik/udp/services/weighted/services/0/name`</a> | See [UDP Service](../udp/service.md) for more information. | `foobar`  |
-| <a id="opt-traefikudpservicesweightedservers0weight" href="#opt-traefikudpservicesweightedservers0weight" title="#opt-traefikudpservicesweightedservers0weight">`traefik/udp/services/weighted/servers/0/weight`</a> |See [UDP Service](../udp/service.md) for more information. | `42`  | 
+| <a id="opt-traefikudpservicesweightedservices0weight" href="#opt-traefikudpservicesweightedservices0weight" title="#opt-traefikudpservicesweightedservices0weight">`traefik/udp/services/weighted/services/0/weight`</a> |See [UDP Service](../udp/service.md) for more information. | `42`  | 
 
 ## TLS
 
