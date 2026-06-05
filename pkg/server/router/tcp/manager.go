@@ -168,10 +168,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			//	# Otherwise, it will fallback to the default TLS config.
 			if tlsOptionsName != traefiktls.DefaultTLSConfigName {
 				logger.Warn().Msgf("No domain found in rule %v, the TLS option %s cannot be applied", routerHTTPConfig.Rule, tlsOptionsName)
+				routerHTTPConfig.AddError(fmt.Errorf("no domain found in rule %v, the TLS option %s cannot be applied", routerHTTPConfig.Rule, tlsOptionsName), false)
 			}
 		}
 
-		if routerHTTPConfig.TLS.ResolvedOptions != tlsOptionsName {
+		if len(domains) > 0 && routerHTTPConfig.TLS.ResolvedOptions != tlsOptionsName {
+			logger.Warn().Msg("Found different TLS options for routers on the same host, so using the default TLS options instead.")
 			routerHTTPConfig.AddError(errors.New("found different TLS options for routers on the same host, so using the default TLS options instead"), false)
 		}
 

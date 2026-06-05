@@ -721,12 +721,19 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 		ancestorStatuses := make([]gatev1.PolicyAncestorStatus, len(status.Ancestors))
 		copy(ancestorStatuses, status.Ancestors)
 
-		// keep statuses added by other gateway controllers,
-		// and statuses for Traefik gateway controller but not for the same Gateway as the one in parameter (AncestorRef).
 		for _, ancestorStatus := range currentPolicy.Status.Ancestors {
+			// Keep statuses added by other gateway controllers.
 			if ancestorStatus.ControllerName != controllerName {
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 				continue
+			}
+
+			// Keep statuses added by Traefik for other ancestors.
+			// A BackendTLSPolicy can target services attached to different listeners.
+			if !slices.ContainsFunc(status.Ancestors, func(s gatev1.PolicyAncestorStatus) bool {
+				return reflect.DeepEqual(s.AncestorRef, ancestorStatus.AncestorRef)
+			}) {
+				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 			}
 		}
 
@@ -734,7 +741,7 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 			return fmt.Errorf("failed to update BackendTLSPolicy %s/%s status: PolicyAncestor statuses count exceeds 16", policy.Namespace, policy.Name)
 		}
 
-		// do not update status when nothing has changed.
+		// Do not update status when nothing has changed.
 		if policyAncestorStatusesEqual(currentPolicy.Status.Ancestors, ancestorStatuses) {
 			return nil
 		}
