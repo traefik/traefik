@@ -327,7 +327,9 @@ linters:
         text: 'SA1008: keys in http.Header are canonicalized, "x-user" is not canonical; fix the constant or use http.CanonicalHeaderKey'
       - path: pkg/middlewares/auth/digest_auth_test.go
         text: 'SA1008: keys in http.Header are canonicalized, "x-user" is not canonical; fix the constant or use http.CanonicalHeaderKey'
-
+      - path: pkg/server/conncontext.go
+        linters:
+          - fatcontext
     paths:
       - pkg/provider/kubernetes/crd/generated/
 

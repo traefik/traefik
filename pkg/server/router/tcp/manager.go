@@ -114,6 +114,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		ctxRouter := log.With(provider.AddInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
 		logger := log.FromContext(ctxRouter)
 
+		// Even if the TLS options mismatch between the configured and the resolved one is handled in the aggregator
+		// we also have to handle it here to be able to mark the router in error.
+		tlsOptionsName := traefiktls.DefaultTLSConfigName
+		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
+			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
+		}
+
 		domains, err := httpmuxer.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
@@ -153,17 +160,14 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			//	# When a request for "/foo" comes, even though it won't be routed by httpRouter2,
 			//	# if its SNI is set to foo.com, myTLSOptions will be used for the TLS connection.
 			//	# Otherwise, it will fallback to the default TLS config.
-			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
+			if tlsOptionsName != traefiktls.DefaultTLSConfigName {
+				logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
+				routerHTTPConfig.AddError(fmt.Errorf("no domain found in rule %v, the TLS option %s cannot be applied", routerHTTPConfig.Rule, tlsOptionsName), false)
+			}
 		}
 
-		// Even if the TLS options mismatch between the configured and the resolved one is handled in the aggregator
-		// we also have to handle it here to be able to mark the router in error.
-		tlsOptionsName := traefiktls.DefaultTLSConfigName
-		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
-			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
-		}
-
-		if routerHTTPConfig.TLS.ResolvedOptions != tlsOptionsName {
+		if len(domains) > 0 && routerHTTPConfig.TLS.ResolvedOptions != tlsOptionsName {
+			logger.Warn("Found different TLS options for routers on the same host, so using the default TLS options instead.")
 			routerHTTPConfig.AddError(errors.New("found different TLS options for routers on the same host, so using the default TLS options instead"), false)
 		}
 
