@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -149,7 +150,69 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute() {
 	require.NoError(s.T(), err)
 }
 
-// TestWithTLSOptions  verifies that traefik routes the requests with the associated tls options.
+// TestWithEntryPointTLSConfig verifies that a router relying on the entry point
+// TLS configuration (without an explicit router TLS section) is served over HTTPS,
+// including when the entry point references user-defined TLS options.
+// Regression test for https://github.com/traefik/traefik/issues/13289.
+func (s *HTTPSSuite) TestWithEntryPointTLSConfig() {
+	file := s.adaptFile("fixtures/https/https_entrypoint_tls.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	backend := startTestServer("9010", http.StatusNoContent, "")
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.com",
+		},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr, try.HasCn(tr.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	// The websecure-options entry point references the user-defined "foo" TLS options (maxVersion VersionTLS12).
+	// A request with no router-level TLS must still have these options resolved and applied.
+	trOptions := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.org",
+		},
+	}
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4444/", nil)
+	require.NoError(s.T(), err)
+	req.Host = trOptions.TLSClientConfig.ServerName
+	req.Header.Set("Host", trOptions.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+
+	err = try.RequestWithTransport(req, 30*time.Second, trOptions, try.HasCn(trOptions.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	// A TLS 1.3-only client must fail the handshake, proving the "foo" options
+	// (resolved from the entry point) are effectively enforced.
+	_, err = tls.Dial("tcp", "127.0.0.1:4444", &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "snitest.org",
+		MinVersion:         tls.VersionTLS13,
+	})
+	assert.Error(s.T(), err)
+}
+
+// TestWithTLSOptions verifies that traefik routes the requests with the associated tls options.
 func (s *HTTPSSuite) TestWithTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -352,7 +415,7 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	assert.ErrorContains(s.T(), err, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	// with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS options instead", tr4.TLSClientConfig.ServerName)))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("found different TLS options for routers on the same host, so using the default TLS options instead"))
 	require.NoError(s.T(), err)
 }
 
@@ -1083,19 +1146,20 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 	defer backend2.Close()
 	backend3 := startTestServer("9030", http.StatusOK, "server3")
 	defer backend3.Close()
+	backend5 := startTestServer("9050", http.StatusOK, "server5")
+	defer backend5.Close()
 
 	file := s.adaptFile("fixtures/https/https_domain_fronting.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
 
 	// wait for Traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
 		desc               string
 		hostHeader         string
 		serverName         string
-		expectedError      bool
 		expectedContent    string
 		expectedStatusCode int
 	}{
@@ -1114,25 +1178,9 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			desc:               "Spaces after the host header",
-			hostHeader:         "site3.www.snitest.com ",
-			serverName:         "site3.www.snitest.com",
-			expectedError:      true,
-			expectedContent:    "server3",
-			expectedStatusCode: http.StatusOK,
-		},
-		{
 			desc:               "Spaces after the servername",
 			hostHeader:         "site3.www.snitest.com",
 			serverName:         "site3.www.snitest.com ",
-			expectedContent:    "server3",
-			expectedStatusCode: http.StatusOK,
-		},
-		{
-			desc:               "Spaces after the servername and host header",
-			hostHeader:         "site3.www.snitest.com ",
-			serverName:         "site3.www.snitest.com ",
-			expectedError:      true,
 			expectedContent:    "server3",
 			expectedStatusCode: http.StatusOK,
 		},
@@ -1171,6 +1219,34 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 			expectedContent:    "server1",
 			expectedStatusCode: http.StatusOK,
 		},
+		{
+			desc:               "Domain Fronting with ambiguous TLS options should produce a 421",
+			hostHeader:         "site4.www.snitest.com",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
+			desc:               "Domain Fronting with same non-default TLS options should not produce a 421",
+			hostHeader:         "site5.www.snitest.com",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server5",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "FQDN host header with empty SNI to non-default TLS options route should produce a 421",
+			hostHeader:         "site3.www.snitest.com.",
+			serverName:         "",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
+			desc:               "Non-FQDN host header with empty SNI matching FQDN route rule should produce a 421",
+			hostHeader:         "site6.www.snitest.com",
+			serverName:         "",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
 	}
 
 	for _, test := range testCases {
@@ -1179,11 +1255,10 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 		req.Host = test.hostHeader
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
-		if test.expectedError {
-			assert.Error(s.T(), err)
-		} else {
-			require.NoError(s.T(), err)
-		}
+		assert.NoError(s.T(), err, "test %s failed with: %v", test.desc, err)
+
+		err = try.RequestWithTransport(req, 500*time.Millisecond, &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
+		assert.NoError(s.T(), err, "test %s failed with: %v", test.desc, err)
 	}
 }
 

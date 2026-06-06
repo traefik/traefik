@@ -246,7 +246,7 @@ helm repo update
 ```bash
 helm upgrade --install traefik traefik/traefik \
   --namespace traefik --create-namespace \
-  --set providers.kubernetesIngressNginx.enabled=true
+  --set providers.kubernetesIngressNGINX.enabled=true
 ```
 
 Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) for more configuration:
@@ -254,7 +254,7 @@ Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/mast
 ```yaml tab="traefik-values.yaml"
 ...
 providers:
-  kubernetesIngressNginx:
+  kubernetesIngressNGINX:
     enabled: true
  ...
 ```

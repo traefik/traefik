@@ -395,7 +395,14 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				conf.HTTP.Services[serviceName] = service
 
-				rt := p.loadRouter(ingress, rule, pa, rtConfig, serviceName)
+				rt, err := p.loadRouter(ingress, rule, pa, rtConfig, serviceName)
+				if err != nil {
+					logger.Error().Err(err).
+						Str("serviceName", pa.Backend.Service.Name).
+						Str("path", pa.Path).
+						Msg("Skipping path.")
+					continue
+				}
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
@@ -721,7 +728,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	return svc, nil
 }
 
-func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) (*dynamic.Router, error) {
 	rt := &dynamic.Router{
 		Service: serviceName,
 		Observability: &dynamic.RouterObservabilityConfig{
@@ -765,6 +772,12 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 
 		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == netv1.PathTypeImplementationSpecific {
 			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
+				switch rtConfig.Router.PathMatcher {
+				case "Path", "PathPrefix", "PathRegexp":
+				default:
+					return nil, fmt.Errorf("invalid router path matcher %q: must be one of Path, PathPrefix, PathRegexp", rtConfig.Router.PathMatcher)
+				}
+
 				matcher = rtConfig.Router.PathMatcher
 			}
 		} else if *pa.PathType == netv1.PathTypeExact {
@@ -775,7 +788,7 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 	}
 
 	rt.Rule = strings.Join(rules, " && ")
-	return rt
+	return rt, nil
 }
 
 func buildHostRuleV2(host string) string {
