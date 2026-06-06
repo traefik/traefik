@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 )
 
@@ -428,6 +429,45 @@ func TestProvidersPrecedence(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
 			}
+		})
+	}
+}
+
+func TestConfiguration_ValidateConfiguration_DynamicConfig(t *testing.T) {
+	testCases := []struct {
+		desc string
+		conf *Configuration
+	}{
+		{
+			desc: "http in static config",
+			conf: &Configuration{
+				HTTP: &dynamic.HTTPConfiguration{},
+			},
+		},
+		{
+			desc: "tcp in static config",
+			conf: &Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+			},
+		},
+		{
+			desc: "udp in static config",
+			conf: &Configuration{
+				UDP: &dynamic.UDPConfiguration{},
+			},
+		},
+		{
+			desc: "tls in static config",
+			conf: &Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			err := test.conf.ValidateConfiguration()
+			assert.NoError(t, err)
 		})
 	}
 }

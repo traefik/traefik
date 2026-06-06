@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
@@ -111,6 +112,12 @@ type Configuration struct {
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
 
 	OCSP *tls.OCSPConfig `description:"OCSP configuration." json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	// Trap for dynamic configuration elements in static configuration
+	HTTP *dynamic.HTTPConfiguration `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"false"`
+	TCP  *dynamic.TCPConfiguration  `json:"tcp,omitempty" toml:"tcp,omitempty" yaml:"tcp,omitempty" export:"false"`
+	UDP  *dynamic.UDPConfiguration  `json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty" export:"false"`
+	TLS  *dynamic.TLSConfiguration  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"false"`
 }
 
 // Core configures Traefik core behavior.
@@ -433,6 +440,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 // ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
+	if c.HTTP != nil || c.TCP != nil || c.UDP != nil || c.TLS != nil {
+		log.Warn().Msg("Traefik detected dynamic configuration elements (http, tcp, udp, or tls) in the static configuration. " +
+			"These elements are part of the dynamic configuration and should be placed in a separate file or loaded through a provider. " +
+			"For more information, please refer to: https://doc.traefik.io/traefik/getting-started/configuration-overview/")
+	}
+
 	for name, resolver := range c.CertificatesResolvers {
 		if resolver.ACME != nil && resolver.Tailscale != nil {
 			return fmt.Errorf("unable to initialize certificates resolver %q, as ACME and Tailscale providers are mutually exclusive", name)
