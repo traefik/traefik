@@ -24,7 +24,12 @@ var (
 	_ middlewares.Stateful = &codeCatcher{}
 )
 
-const typeName = "CustomError"
+const (
+	typeName        = "CustomError"
+	schemeHTTP      = "http"
+	schemeHTTPS     = "https"
+	xForwardedProto = "X-Forwarded-Proto"
+)
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -126,10 +131,21 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var query string
 
-	scheme := "http"
+	scheme := schemeHTTP
 	if req.TLS != nil {
-		scheme = "https"
+		scheme = schemeHTTPS
 	}
+	if proto := req.Header.Get(xForwardedProto); proto != "" {
+		switch {
+		case strings.EqualFold(proto, schemeHTTP), strings.EqualFold(proto, "ws"):
+			scheme = schemeHTTP
+		case strings.EqualFold(proto, schemeHTTPS), strings.EqualFold(proto, "wss"):
+			scheme = schemeHTTPS
+		default:
+			logger.Debug().Msgf("Invalid X-Forwarded-Proto: %s", proto)
+		}
+	}
+
 	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
 
 	if len(c.backendQuery) > 0 {
