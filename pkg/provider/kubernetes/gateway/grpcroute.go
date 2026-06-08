@@ -356,6 +356,7 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 		}
 	}
 
+	// Sort BackendTLSPolicies by creation timestamp, then by name to match the BackendTLSPolicy requirements.
 	slices.SortStableFunc(backendTLSPolicies, func(a, b *gatev1.BackendTLSPolicy) int {
 		cmpTime := a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
 		if cmpTime == 0 {
@@ -367,6 +368,12 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 	var serversTransport *dynamic.ServersTransport
 	for _, policy := range backendTLSPolicies {
 		for _, targetRef := range policy.Spec.TargetRefs {
+			// Skip targetRefs that doesn't match the backendRef,
+			// since a BackendTLSPolicy can select multiple services.
+			if targetRef.Name != backendRef.Name {
+				continue
+			}
+			// Skip the targetRef if the sectionName doesn't match the backendRef port.
 			if targetRef.SectionName != nil && svcPort.Name != string(*targetRef.SectionName) {
 				continue
 			}
@@ -382,6 +389,7 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 				ControllerName: controllerName,
 			}
 
+			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
 				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
 					metav1.Condition{
@@ -439,6 +447,8 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update BackendTLSPolicy status")
 			}
 
+			// When something went wrong during the loading of a ServersTransport,
+			// we stop here and return a route condition error.
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
 				return nil, nil, &metav1.Condition{
 					Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -463,6 +473,8 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 		}
 	}
 
+	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
+	// When no ServersTransport is set, we need to determine the protocol based on the service port.
 	protocol := "https"
 	if serversTransport == nil {
 		protocol, err = getGRPCServiceProtocol(svcPort)
@@ -481,19 +493,12 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	// If a ServersTransport is set, use the BackendTLSPolicy hostname for the service URL
-	// Otherwise, use the backend addresses (pod IPs)
-	if serversTransport != nil && serversTransport.ServerName != "" {
+	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(serversTransport.ServerName, strconv.Itoa(int(svcPort.Port)))),
+			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
-	} else {
-		for _, ba := range backendAddresses {
-			lb.Servers = append(lb.Servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
-			})
-		}
 	}
+
 	return lb, serversTransport, nil
 }
 

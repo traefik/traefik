@@ -15,7 +15,7 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners: # Use GatewayClass defaults for listener definition.
-    - name: web
+    - name: http
       protocol: HTTP
       port: 80
       allowedRoutes:
@@ -52,33 +52,9 @@ metadata:
   namespace: default
 spec:
   targetRefs:
-    - group: ""
+    - group: core
       kind: Service
       name: whoami
   validation:
     hostname: whoami
-    caCertificateRefs:
-      - group: ""
-        kind: ConfigMap
-        name: ca-file
-      - group: core
-        kind: ConfigMap
-        name: ca-file-2
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ca-file
-  namespace: default
-data:
-  ca.crt: "CA1"
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ca-file-2
-  namespace: default
-data:
-  ca.crt: "CA2"
+    wellKnownCACertificates: System
