@@ -415,11 +415,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						logger.Error().
 							Err(err).
 							Str("ingress", fmt.Sprintf("%s/%s rule-%d path-%d", ing.Namespace, ing.Name, ri, pi)).
-							Msg("Cannot resolve auth secret, skipping auth middleware")
-					} else {
-						loc.BasicAuth = basic
-						loc.DigestAuth = digest
+							Msg("Cannot resolve auth secret, skipping ingress")
+						// Skipping the ingress entirely when auth secret resolution fails,
+						// to match ingress-nginx behavior.
+						continue
 					}
+					loc.BasicAuth = basic
+					loc.DigestAuth = digest
 				}
 
 				// Pre-resolve custom headers ConfigMap.
