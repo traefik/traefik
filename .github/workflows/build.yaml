@@ -61,6 +61,23 @@ jobs:
         with:
           go-version-file: '.go-version'
           check-latest: true
+          cache: false
+
+      - name: Restore go modules cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Per-arch go build cache
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm || 'na' }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm || 'na' }}-
 
       - name: Artifact webui
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
