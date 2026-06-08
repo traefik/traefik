@@ -237,6 +237,17 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	namespace := route.Namespace
 	if backendRef.Namespace != nil && *backendRef.Namespace != "" {
 		namespace = string(*backendRef.Namespace)
+
+		if strings.Contains(string(backendRef.Name), "@") {
+			return provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http"), &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonRefNotPermitted),
+				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: namespace is not allowed with a cross-provider reference", group, kind, namespace, backendRef.Name),
+			}
+		}
 	}
 
 	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http")
@@ -253,7 +264,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	}
 
 	if group != groupCore || kind != kindService {
-		name, service, err := p.loadHTTPBackendRef(route.Namespace, namespace, backendRef)
+		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
 		if err != nil {
 			return serviceName, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -302,12 +313,12 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	return serviceName, nil
 }
 
-func (p *Provider) loadHTTPBackendRef(routeNamespace, namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
+func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
 	// Support for cross-provider references (e.g: api@internal).
 	// This provides the same behavior as for IngressRoutes.
 	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
-		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, routeNamespace) {
-			return "", nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), routeNamespace)
+		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, namespace) {
+			return "", nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), namespace)
 		}
 
 		return string(backendRef.Name), nil, nil

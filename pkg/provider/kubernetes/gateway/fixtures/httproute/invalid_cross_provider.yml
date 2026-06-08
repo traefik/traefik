@@ -45,6 +45,7 @@ spec:
           group: traefik.io
           kind: TraefikService
           name: service@file
+          namespace: bar
           port: 80
 
         - name: whoami
