@@ -23,6 +23,21 @@ spec:
           from: Same
 
 ---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-default-to-traefikservice
+  namespace: bar
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: default
+  to:
+    - group: traefik.io
+      kind: TraefikService
+
+---
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
@@ -45,6 +60,7 @@ spec:
           group: traefik.io
           kind: TraefikService
           name: service@file
+          namespace: bar
           port: 80
 
         - name: whoami

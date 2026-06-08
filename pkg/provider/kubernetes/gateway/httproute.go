@@ -253,7 +253,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	}
 
 	if group != groupCore || kind != kindService {
-		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
+		name, service, err := p.loadHTTPBackendRef(route.Namespace, namespace, backendRef)
 		if err != nil {
 			return serviceName, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -302,12 +302,12 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	return serviceName, nil
 }
 
-func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
+func (p *Provider) loadHTTPBackendRef(routeNamespace, namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
 	// Support for cross-provider references (e.g: api@internal).
 	// This provides the same behavior as for IngressRoutes.
 	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
-		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, namespace) {
-			return "", nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), namespace)
+		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, routeNamespace) {
+			return "", nil, fmt.Errorf("TraefikService %q reference is not allowed: namespace %q is not in crossProviderNamespaces", string(backendRef.Name), routeNamespace)
 		}
 
 		return string(backendRef.Name), nil, nil
