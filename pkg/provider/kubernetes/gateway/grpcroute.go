@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -168,7 +169,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(conf, routerName, routeRule, route)
+				router.Service, serviceCondition = p.loadGRPCService(ctx, listener, conf, routerName, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -181,7 +182,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 	return conf, condition
 }
 
-func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
+func (p *Provider) loadGRPCService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
 	name := routeKey + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -190,7 +191,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(route, backendRef)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(ctx, listener, conf, route, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -219,7 +220,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -271,9 +272,14 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
-	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
+	lb, st, errCondition := p.loadGRPCServers(ctx, namespace, route, backendRef, listener)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
+	}
+
+	if st != nil {
+		lb.ServersTransport = serviceName
+		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
 	return serviceName, &dynamic.Service{LoadBalancer: lb}, nil
@@ -325,10 +331,10 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (*dynamic.ServersLoadBalancer, *metav1.Condition) {
+func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
-		return nil, &metav1.Condition{
+		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -338,26 +344,138 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 		}
 	}
 
-	if svcPort.Protocol != corev1.ProtocolTCP {
-		return nil, &metav1.Condition{
+	backendTLSPolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
+	if err != nil {
+		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
 			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only TCP protocol is supported", namespace, backendRef.Name),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot list BackendTLSPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
 		}
 	}
 
-	protocol, err := getGRPCServiceProtocol(svcPort)
-	if err != nil {
-		return nil, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only \"kubernetes.io/h2c\" and \"https\" appProtocol is supported", namespace, backendRef.Name),
+	// Sort BackendTLSPolicies by creation timestamp, then by name to match the BackendTLSPolicy requirements.
+	slices.SortStableFunc(backendTLSPolicies, func(a, b *gatev1.BackendTLSPolicy) int {
+		cmpTime := a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+		if cmpTime == 0 {
+			return strings.Compare(a.Name, b.Name)
+		}
+		return cmpTime
+	})
+
+	var serversTransport *dynamic.ServersTransport
+	for _, policy := range backendTLSPolicies {
+		for _, targetRef := range policy.Spec.TargetRefs {
+			// Skip targetRefs that doesn't match the backendRef,
+			// since a BackendTLSPolicy can select multiple services.
+			if targetRef.Name != backendRef.Name {
+				continue
+			}
+			// Skip the targetRef if the sectionName doesn't match the backendRef port.
+			if targetRef.SectionName != nil && svcPort.Name != string(*targetRef.SectionName) {
+				continue
+			}
+
+			policyAncestorStatus := gatev1.PolicyAncestorStatus{
+				AncestorRef: gatev1.ParentReference{
+					Group:       ptr.To(gatev1.Group(groupGateway)),
+					Kind:        ptr.To(gatev1.Kind(kindGateway)),
+					Namespace:   ptr.To(gatev1.Namespace(namespace)),
+					Name:        gatev1.ObjectName(listener.GWName),
+					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+				},
+				ControllerName: controllerName,
+			}
+
+			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
+			if serversTransport != nil {
+				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+					metav1.Condition{
+						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: policy.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.BackendTLSPolicyReasonResolvedRefs),
+					},
+					metav1.Condition{
+						Type:               string(gatev1.PolicyConditionAccepted),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: policy.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.PolicyReasonConflicted),
+					},
+				)
+
+				status := gatev1.PolicyStatus{
+					Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
+				}
+				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+					log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting BackendTLSPolicy status")
+				}
+
+				continue
+			}
+
+			var resolvedRefCondition metav1.Condition
+			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy)
+
+			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
+			if resolvedRefCondition.Status == metav1.ConditionFalse {
+				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, metav1.Condition{
+					Type:               string(gatev1.PolicyConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonNoValidCACertificate),
+				})
+			} else {
+				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, metav1.Condition{
+					Type:               string(gatev1.PolicyConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.PolicyReasonAccepted),
+				})
+			}
+
+			status := gatev1.PolicyStatus{
+				Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
+			}
+			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update BackendTLSPolicy status")
+			}
+
+			// When something went wrong during the loading of a ServersTransport,
+			// we stop here and return a route condition error.
+			if resolvedRefCondition.Status == metav1.ConditionFalse {
+				return nil, nil, &metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteReasonRefNotPermitted),
+					Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), resolvedRefCondition.Message),
+				}
+			}
+		}
+	}
+
+	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
+	// When no ServersTransport is set, we need to determine the protocol based on the service port.
+	protocol := "https"
+	if serversTransport == nil {
+		protocol, err = getGRPCServiceProtocol(svcPort)
+		if err != nil {
+			return nil, nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
+				Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: %s", namespace, backendRef.Name, err),
+			}
 		}
 	}
 
@@ -369,7 +487,8 @@ func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, ba
 			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
-	return lb, nil
+
+	return lb, serversTransport, nil
 }
 
 func buildGRPCMatchRule(hostnames []gatev1.Hostname, match gatev1.GRPCRouteMatch) (string, int) {
