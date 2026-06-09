@@ -47,7 +47,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					log.WithoutContext().
 						WithField(log.RouterName, routerName).
 						Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", defaultEntryPoints)
-					router.EntryPoints = defaultEntryPoints
+					router.EntryPoints = slices.Clone(defaultEntryPoints)
 				}
 
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
@@ -72,7 +72,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					log.WithoutContext().
 						WithField(log.RouterName, routerName).
 						Debugf("No entryPoint defined for this TCP router, using the default one(s) instead: %+v", defaultEntryPoints)
-					router.EntryPoints = defaultEntryPoints
+					router.EntryPoints = slices.Clone(defaultEntryPoints)
 				}
 				conf.TCP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
@@ -170,14 +170,14 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 			continue
 		}
 
+		router.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+		if len(router.TLS.Options) > 0 && router.TLS.Options != traefiktls.DefaultTLSConfigName {
+			router.TLS.ResolvedOptions = provider.GetQualifiedName(provider.AddInContext(context.Background(), name), router.TLS.Options)
+		}
+
 		for _, ep := range router.EntryPoints {
 			if routersByEntryPoint[ep] == nil {
 				routersByEntryPoint[ep] = map[string]*dynamic.Router{}
-			}
-
-			router.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
-			if len(router.TLS.Options) > 0 && router.TLS.Options != traefiktls.DefaultTLSConfigName {
-				router.TLS.ResolvedOptions = provider.GetQualifiedName(provider.AddInContext(context.Background(), name), router.TLS.Options)
 			}
 
 			routersByEntryPoint[ep][name] = router
