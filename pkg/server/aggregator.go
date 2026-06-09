@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
@@ -48,7 +47,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					log.WithoutContext().
 						WithField(log.RouterName, routerName).
 						Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", defaultEntryPoints)
-					router.EntryPoints = defaultEntryPoints
+					router.EntryPoints = slices.Clone(defaultEntryPoints)
 				}
 
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
@@ -73,7 +72,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					log.WithoutContext().
 						WithField(log.RouterName, routerName).
 						Debugf("No entryPoint defined for this TCP router, using the default one(s) instead: %+v", defaultEntryPoints)
-					router.EntryPoints = defaultEntryPoints
+					router.EntryPoints = slices.Clone(defaultEntryPoints)
 				}
 				conf.TCP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
@@ -141,81 +140,126 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	return conf
 }
 
-func resolveHTTPTLSOptions(cfg dynamic.Configuration) dynamic.Configuration {
-	if cfg.HTTP == nil || len(cfg.HTTP.Routers) == 0 {
-		return cfg
+// resolveHTTPTLSOptions resolves the TLS options for the given routers, on a per
+// entryPoint basis.
+//
+// TLS options conflicts (i.e. the same host served with different TLS options) can
+// only be detected and arbitrated within a single TLS listener, that is to say within
+// a single entryPoint. To honor that, routers are grouped per entryPoint and the
+// conflict detection is run independently for each entryPoint.
+//
+// A router keeps its original name, and its resolved TLS options, for the entryPoints
+// on which it does not conflict. For each entryPoint on which it conflicts, that
+// entryPoint is removed from the router and a dedicated copy is emitted, prefixed with
+// the entryPoint name the same way applyModel does (ep-name), with its TLS options reset
+// to the default ones.
+func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynamic.Router {
+	if len(routers) == 0 {
+		return routers
 	}
 
-	rts := make(map[string]*dynamic.Router)
+	newRouters := make(map[string]*dynamic.Router)
 
-	// Keyed by domain, then by options reference.
-	// The actual source of truth for what TLS options will actually be used for the connection.
-	// As opposed to tlsOptionsForHost, it keeps track of all the (different) TLS
-	// options that occur for a given host name, so that later on we can set relevant
-	// errors and logging for all the routers concerned (i.e. wrongly configured).
-	tlsOptionsForHostSNI := map[string]map[string][]string{}
-
-	for routerHTTPName, routerHTTPConfig := range cfg.HTTP.Routers {
-		rts[routerHTTPName] = routerHTTPConfig.DeepCopy()
-
-		if routerHTTPConfig.TLS == nil {
+	// Split every router per entryPoint.
+	// Routers always have at least one entryPoint at this stage, as they are
+	// defaulted in mergeConfiguration before applyModel and this resolution run.
+	routersByEntryPoint := map[string]map[string]*dynamic.Router{}
+	for name, router := range routers {
+		if router.TLS == nil {
+			newRouters[name] = router
 			continue
 		}
 
-		ctxRouter := log.With(provider.AddInContext(context.Background(), routerHTTPName), log.Str(log.RouterName, routerHTTPName))
-		logger := log.FromContext(ctxRouter)
-
-		tlsOptionsName := traefiktls.DefaultTLSConfigName
-		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
-			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
+		router.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+		if len(router.TLS.Options) > 0 && router.TLS.Options != traefiktls.DefaultTLSConfigName {
+			router.TLS.ResolvedOptions = provider.GetQualifiedName(provider.AddInContext(context.Background(), name), router.TLS.Options)
 		}
 
-		domains, err := httpmuxer.ParseDomains(routerHTTPConfig.Rule)
+		for _, ep := range router.EntryPoints {
+			if routersByEntryPoint[ep] == nil {
+				routersByEntryPoint[ep] = map[string]*dynamic.Router{}
+			}
+
+			routersByEntryPoint[ep][name] = router
+		}
+	}
+
+	// Resolve the TLS options independently for each entryPoint.
+	conflictingRouters := make(map[string][]string, len(routersByEntryPoint))
+	for ep, epRouters := range routersByEntryPoint {
+		conflictingRouters[ep] = findConflictingRouters(epRouters)
+	}
+
+	for name, router := range routers {
+		router.EntryPoints = slices.DeleteFunc(router.EntryPoints, func(ep string) bool {
+			deleted := slices.Contains(conflictingRouters[ep], name)
+			if deleted {
+				rt := router.DeepCopy()
+				rt.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+				rt.EntryPoints = []string{ep}
+				newRouters[ep+"-"+name] = rt
+			}
+
+			return deleted
+		})
+
+		if len(router.EntryPoints) > 0 {
+			newRouters[name] = router
+		}
+	}
+
+	return newRouters
+}
+
+// findConflictingRouters returns the names of the routers, among the given
+// single-entryPoint routers, that serve a host (SNI) also served by another router
+// with a different resolved TLS option. Such routers are arbitrated by falling back
+// to the default TLS options.
+func findConflictingRouters(routers map[string]*dynamic.Router) []string {
+	var conflicting []string
+
+	// For each host (SNI, already lower-cased by the domain parsing), the routers
+	// serving it grouped by their resolved TLS option. A host with more than one
+	// group is served with conflicting TLS options.
+	routersByHostAndOption := map[string]map[string][]string{}
+
+	for name, router := range routers {
+		if router.TLS == nil {
+			continue
+		}
+
+		domains, err := httpmuxer.ParseDomains(router.Rule)
 		if err != nil {
-			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
-			logger.Error(routerErr)
 			continue
 		}
 
+		// A router without a domain in its rule cannot be matched against an SNI,
+		// so it always falls back to the default TLS options.
 		if len(domains) == 0 {
-			rts[routerHTTPName].TLS.ResolvedOptions = "default"
-			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
+			conflicting = append(conflicting, name)
+			continue
 		}
 
 		for _, domain := range domains {
-			// domain is already in lower case thanks to the domain parsing
-			if tlsOptionsForHostSNI[domain] == nil {
-				tlsOptionsForHostSNI[domain] = make(map[string][]string)
+			if routersByHostAndOption[domain] == nil {
+				routersByHostAndOption[domain] = map[string][]string{}
 			}
-			tlsOptionsForHostSNI[domain][tlsOptionsName] = append(tlsOptionsForHostSNI[domain][tlsOptionsName], routerHTTPName)
+			option := router.TLS.ResolvedOptions
+			routersByHostAndOption[domain][option] = append(routersByHostAndOption[domain][option], name)
 		}
 	}
 
-	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
-		if len(tlsConfigs) == 1 {
-			for optionsName, v := range tlsConfigs {
-				log.WithoutContext().Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
-				for _, s := range v {
-					rts[s].TLS.ResolvedOptions = optionsName
-				}
-			}
+	for _, routersByOption := range routersByHostAndOption {
+		if len(routersByOption) == 1 {
 			continue
 		}
 
-		// multiple tlsConfigs
-		routers := make([]string, 0, len(tlsConfigs))
-		for _, v := range tlsConfigs {
-			for _, s := range v {
-				rts[s].TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
-				routers = append(routers, s)
-			}
+		for _, names := range routersByOption {
+			conflicting = append(conflicting, names...)
 		}
-
-		log.WithoutContext().Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
 	}
 
-	cfg.HTTP.Routers = rts
-	return cfg
+	return conflicting
 }
 
 func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
