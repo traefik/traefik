@@ -441,7 +441,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
 			RedirectRegex: &dynamic.RedirectRegex{
 				Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-				Replacement: "$1" + *loc.AppRoot,
+				Replacement: "$1" + *loc.AppRoot + "$2",
 			},
 		}
 		rt.Middlewares = append(rt.Middlewares, name)
