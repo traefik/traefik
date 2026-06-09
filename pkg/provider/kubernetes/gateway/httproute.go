@@ -237,6 +237,17 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	namespace := route.Namespace
 	if backendRef.Namespace != nil && *backendRef.Namespace != "" {
 		namespace = string(*backendRef.Namespace)
+
+		if strings.Contains(string(backendRef.Name), "@") {
+			return provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http"), &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonRefNotPermitted),
+				Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: namespace is not allowed with a cross-provider reference", group, kind, namespace, backendRef.Name),
+			}
+		}
 	}
 
 	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http")
