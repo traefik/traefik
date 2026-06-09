@@ -462,17 +462,6 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 		}
 	}
 
-	if svcPort.Protocol != corev1.ProtocolTCP {
-		return nil, nil, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonUnsupportedProtocol),
-			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s: only TCP protocol is supported", namespace, backendRef.Name),
-		}
-	}
-
 	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
 	// When no ServersTransport is set, we need to determine the protocol based on the service port.
 	protocol := "https"
