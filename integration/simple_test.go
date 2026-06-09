@@ -675,11 +675,11 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	require.NoError(s.T(), err)
 
 	// router4 is enabled, but in warning state because its tls options conf was messed up
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
 	require.NoError(s.T(), err)
 
 	// router5 is disabled because its middleware conf is broken
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router5@file", 1000*time.Millisecond, try.BodyContains())
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-router5@file", 1000*time.Millisecond, try.BodyContains())
 	require.NoError(s.T(), err)
 }
 
