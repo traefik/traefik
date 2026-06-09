@@ -16,7 +16,6 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -166,7 +165,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		endpointSlicesInformer := factoryKube.Discovery().V1().EndpointSlices().Informer()
+		if err = endpointSlicesInformer.AddIndexers(k8s.EndpointSliceServiceNameIndexers); err != nil {
+			return nil, fmt.Errorf("adding endpointslice service-name indexer: %w", err)
+		}
+		_, err = endpointSlicesInformer.AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -375,14 +378,22 @@ func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName stri
 		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
+	items, err := c.factoriesKube[c.lookupNamespace(namespace)].
+		Discovery().V1().EndpointSlices().Informer().
+		GetIndexer().ByIndex(k8s.EndpointSliceServiceNameIndex, k8s.EndpointSliceServiceNameIndexKey(namespace, serviceName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: %w", namespace, serviceName, err)
 	}
-	serviceSelector := labels.NewSelector()
-	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
 
-	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
+	result := make([]*discoveryv1.EndpointSlice, 0, len(items))
+	for _, item := range items {
+		es, ok := item.(*discoveryv1.EndpointSlice)
+		if !ok {
+			continue
+		}
+		result = append(result, es)
+	}
+	return result, nil
 }
 
 // ListBackendTLSPoliciesForService returns the BackendTLSPolicy for the given service name in the given namespace.
