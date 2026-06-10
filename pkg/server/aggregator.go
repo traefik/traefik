@@ -150,11 +150,8 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 //
 // A router keeps its original name, and its resolved TLS options, for the entryPoints
 // on which it does not conflict. For each entryPoint on which it conflicts, that
-// entryPoint is removed from the router and a dedicated copy is emitted, named
-// "ep-conflicted-name@provider". Prefixing with "ep-conflicted-" keeps the original
-// "name@provider" suffix intact, so provider parsing (Split on "@", index 1) still
-// resolves the original provider, and the prefix keeps the copy human-readable. The
-// copy's TLS options are reset to the default ones.
+// entryPoint is removed from the router and a dedicated copy is emitted,
+// and named following this pattern: "ep-conflicted-name@provider".
 func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynamic.Router {
 	if len(routers) == 0 {
 		return routers
