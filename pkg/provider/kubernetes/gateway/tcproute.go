@@ -347,4 +347,9 @@ func mergeTCPConfiguration(from, to *dynamic.Configuration) {
 		to.TCP.Services = map[string]*dynamic.TCPService{}
 	}
 	maps.Copy(to.TCP.Services, from.TCP.Services)
+
+	if to.TCP.ServersTransports == nil {
+		to.TCP.ServersTransports = map[string]*dynamic.TCPServersTransport{}
+	}
+	maps.Copy(to.TCP.ServersTransports, from.TCP.ServersTransports)
 }

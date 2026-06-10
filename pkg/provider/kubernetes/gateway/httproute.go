@@ -606,7 +606,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != "ConfigMap" && caCertRef.Kind != "Secret") {
+		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != kindConfigMap && caCertRef.Kind != kindSecret) {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
@@ -619,7 +619,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 
 		var caCRT string
 		switch caCertRef.Kind {
-		case "ConfigMap":
+		case kindConfigMap:
 			configmap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
 			if err != nil {
 				return nil, metav1.Condition{
@@ -632,7 +632,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 				}
 			}
 			caCRT = configmap.Data["ca.crt"]
-		case "Secret":
+		case kindSecret:
 			secret, err := p.client.GetSecret(namespace, string(caCertRef.Name))
 			if err != nil {
 				return nil, metav1.Condition{
