@@ -8779,20 +8779,22 @@ func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 	testCases := []struct {
 		desc                    string
+		fixture                 string
 		crossProviderNamespaces []string
 		wantError               bool
 	}{
-		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantError: false},
-		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantError: true},
-		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantError: false},
-		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantError: true},
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", fixture: "httproute/simple_cross_provider.yml", crossProviderNamespaces: nil, wantError: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", fixture: "httproute/simple_cross_provider.yml", crossProviderNamespaces: []string{}, wantError: true},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", fixture: "httproute/simple_cross_provider.yml", crossProviderNamespaces: []string{"default"}, wantError: false},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", fixture: "httproute/simple_cross_provider.yml", crossProviderNamespaces: []string{"other"}, wantError: true},
+		{desc: "namespace provided with cross-provider backendRef, route dropped", fixture: "httproute/invalid_cross_provider.yml", crossProviderNamespaces: []string{"other"}, wantError: true},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/simple_cross_provider.yml"})
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.fixture})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
@@ -8842,20 +8844,22 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 	testCases := []struct {
 		desc                    string
+		fixture                 string
 		crossProviderNamespaces []string
 		wantError               bool
 	}{
-		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantError: false},
-		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantError: true},
-		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantError: false},
-		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantError: true},
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", fixture: "tcproute/simple_cross_provider.yml", crossProviderNamespaces: nil, wantError: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", fixture: "tcproute/simple_cross_provider.yml", crossProviderNamespaces: []string{}, wantError: true},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", fixture: "tcproute/simple_cross_provider.yml", crossProviderNamespaces: []string{"default"}, wantError: false},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", fixture: "tcproute/simple_cross_provider.yml", crossProviderNamespaces: []string{"other"}, wantError: true},
+		{desc: "namespace provided with cross-provider backendRef, route dropped", fixture: "tcproute/invalid_cross_provider.yml", crossProviderNamespaces: []string{"other"}, wantError: true},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "tcproute/simple_cross_provider.yml"})
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.fixture})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
@@ -8914,20 +8918,22 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 	testCases := []struct {
 		desc                    string
+		fixture                 string
 		crossProviderNamespaces []string
 		wantError               bool
 	}{
-		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantError: false},
-		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantError: true},
-		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantError: false},
-		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantError: true},
+		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", fixture: "tlsroute/simple_cross_provider.yml", crossProviderNamespaces: nil, wantError: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", fixture: "tlsroute/simple_cross_provider.yml", crossProviderNamespaces: []string{}, wantError: true},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", fixture: "tlsroute/simple_cross_provider.yml", crossProviderNamespaces: []string{"default"}, wantError: false},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", fixture: "tlsroute/simple_cross_provider.yml", crossProviderNamespaces: []string{"other"}, wantError: true},
+		{desc: "namespace provided with cross-provider backendRef, route dropped", fixture: "tlsroute/invalid_cross_provider.yml", crossProviderNamespaces: []string{"other"}, wantError: true},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "tlsroute/simple_cross_provider.yml"})
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.fixture})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)

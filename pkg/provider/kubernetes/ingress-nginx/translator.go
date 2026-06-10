@@ -294,7 +294,8 @@ func buildService(backend *backend, serversTransportName string) *dynamic.Servic
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s", ep.Address),
+			URL:    fmt.Sprintf("http://%s", ep.Address),
+			Fenced: ep.Fenced,
 		})
 	}
 
@@ -320,7 +321,8 @@ func buildServiceWithLocConfig(backend *backend, serversTransportName string, lo
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", scheme, ep.Address),
+			URL:    fmt.Sprintf("%s://%s", scheme, ep.Address),
+			Fenced: ep.Fenced,
 		})
 	}
 

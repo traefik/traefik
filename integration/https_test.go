@@ -415,7 +415,7 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	assert.ErrorContains(s.T(), err, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	// with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("found different TLS options for routers on the same host, so using the default TLS options instead"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"))
 	require.NoError(s.T(), err)
 }
 
@@ -1259,6 +1259,153 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
 		assert.NoError(s.T(), err, "test %s failed with: %v", test.desc, err)
+	}
+}
+
+// TestWithTLSOptionsConflict checks how TLS options are resolved when several routers
+// target the same host (SNI), across the different conflict situations:
+//   - same options on the same entryPoint: no conflict, the options are applied;
+//   - different options on the same entryPoint: conflict, fallback to the default options;
+//   - different options on different entryPoints: no conflict, each entryPoint keeps its
+//     own options (they are selected independently on each listener);
+//   - domain fronting (Host header != SNI): allowed when both resolve to the same options,
+//     rejected with a 421 otherwise.
+//
+// The effective TLS options are probed through the negotiated TLS version: the "tls12"
+// options cap the version to TLS 1.2, while the "tls13" options require at least TLS 1.3.
+func (s *HTTPSSuite) TestWithTLSOptionsConflict() {
+	backend := startTestServer("9010", http.StatusOK, "server1")
+	defer backend.Close()
+
+	file := s.adaptFile("fixtures/https/https_tls_options_conflict.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`cross.www.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	testCases := []struct {
+		desc       string
+		addr       string // entryPoint address to reach
+		hostHeader string
+		serverName string // SNI
+		minVersion uint16 // 0 means the crypto/tls library default
+		maxVersion uint16 // 0 means the crypto/tls library default
+		// expectHandshakeError is set when the TLS handshake itself is expected to fail
+		// (i.e. the probed options reject the client's TLS version). Otherwise
+		// expectedStatusCode is asserted on the HTTP response.
+		expectHandshakeError bool
+		expectedStatusCode   int
+	}{
+		// Same host, same options, same entryPoint: no conflict, the "tls12" options are applied.
+		{
+			desc:               "same options / same entryPoint: TLS 1.2 client is accepted",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "same.www.snitest.com",
+			serverName:         "same.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:                 "same options / same entryPoint: TLS 1.3 client is rejected (maxVersion TLS1.2 enforced)",
+			addr:                 "127.0.0.1:4443",
+			hostHeader:           "same.www.snitest.com",
+			serverName:           "same.www.snitest.com",
+			minVersion:           tls.VersionTLS13,
+			expectHandshakeError: true,
+		},
+
+		// Same host, different options, same entryPoint: conflict, both routers fall back to the default options.
+		{
+			desc:               "conflicting options / same entryPoint: TLS 1.3 client is accepted (default options used)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "conflict.www.snitest.com",
+			serverName:         "conflict.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "conflicting options / same entryPoint: TLS 1.2 client is accepted (default options used)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "conflict.www.snitest.com",
+			serverName:         "conflict.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+
+		// Same host, different options, different entryPoints: no conflict, each entryPoint keeps its own options.
+		{
+			desc:               "different entryPoints: websecure keeps tls12, TLS 1.2 client is accepted",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "cross.www.snitest.com",
+			serverName:         "cross.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:                 "different entryPoints: websecure keeps tls12, TLS 1.3 client is rejected",
+			addr:                 "127.0.0.1:4443",
+			hostHeader:           "cross.www.snitest.com",
+			serverName:           "cross.www.snitest.com",
+			minVersion:           tls.VersionTLS13,
+			expectHandshakeError: true,
+		},
+		{
+			desc:               "different entryPoints: websecure2 keeps tls13, TLS 1.3 client is accepted",
+			addr:               "127.0.0.1:4444",
+			hostHeader:         "cross.www.snitest.com",
+			serverName:         "cross.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:                 "different entryPoints: websecure2 keeps tls13, TLS 1.2 client is rejected",
+			addr:                 "127.0.0.1:4444",
+			hostHeader:           "cross.www.snitest.com",
+			serverName:           "cross.www.snitest.com",
+			maxVersion:           tls.VersionTLS12,
+			expectHandshakeError: true,
+		},
+
+		// Domain fronting (Host header != SNI) on the same entryPoint.
+		{
+			desc:               "domain fronting / same options: request follows the Host header (200)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "df-a.www.snitest.com",
+			serverName:         "df-b.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "domain fronting / different options: request is misdirected (421)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "df-a.www.snitest.com",
+			serverName:         "df-c.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         test.serverName,
+			MinVersion:         test.minVersion,
+			MaxVersion:         test.maxVersion,
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "https://"+test.addr+"/", nil)
+		require.NoError(s.T(), err)
+		req.Host = test.hostHeader
+
+		if test.expectHandshakeError {
+			_, err = (&http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}).Do(req)
+			assert.ErrorContains(s.T(), err, "tls:", "test %q should fail the TLS handshake", test.desc)
+			continue
+		}
+
+		err = try.RequestWithTransport(req, 2*time.Second, &http.Transport{TLSClientConfig: tlsConfig}, try.StatusCodeIs(test.expectedStatusCode))
+		assert.NoError(s.T(), err, "test %q failed with: %v", test.desc, err)
 	}
 }
 

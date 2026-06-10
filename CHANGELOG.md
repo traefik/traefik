@@ -1,3 +1,30 @@
+## [v3.7.5](https://github.com/traefik/traefik/tree/v3.7.5) (2026-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.4...v3.7.5)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Skip ingress when auth-secret resolution fails ([#13323](https://github.com/traefik/traefik/pull/13323) @gndz07)
+- **[k8s/ingress-nginx]** Pass endpointslice fencing on ingress-nginx provider ([#13290](https://github.com/traefik/traefik/pull/13290) @Learloj)
+- **[k8s/gatewayapi]** Reject cross-provider references with backendRefs.namespace ([#13322](https://github.com/traefik/traefik/pull/13322) @youkoulayley)
+- **[server]** Bump to github.com/pires/go-proxyproto v0.12.0 ([#13313](https://github.com/traefik/traefik/pull/13313) @timschumi)
+- **[tls]** Fix routers with same host, different tlsoptions on different entryPoint ([#13329](https://github.com/traefik/traefik/pull/13329) @juliens)
+- **[tls]** Fix snicheck for routers with no hosts ([#13333](https://github.com/traefik/traefik/pull/13333) @rtribotte)
+
+## [v3.6.21](https://github.com/traefik/traefik/tree/v3.6.21) (2026-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.20...v3.6.21)
+
+**Bug fixes:**
+- **[k8s/gatewayapi]** Reject cross-provider references with backendRefs.namespace ([#13322](https://github.com/traefik/traefik/pull/13322) @youkoulayley)
+- **[server]** Bump to github.com/pires/go-proxyproto v0.12.0 ([#13313](https://github.com/traefik/traefik/pull/13313) @timschumi)
+- **[tls]** Fix routers with same host, different tlsoptions on different entryPoint ([#13329](https://github.com/traefik/traefik/pull/13329) @juliens)
+- **[tls]** Fix snicheck for routers with no hosts ([#13333](https://github.com/traefik/traefik/pull/13333) @rtribotte)
+
+## [v2.11.50](https://github.com/traefik/traefik/tree/v2.11.50) (2026-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.49...v2.11.50)
+
+**Bug fixes:**
+- **[tls]** Fix routers with same host, different tlsoptions on different entryPoint ([#13329](https://github.com/traefik/traefik/pull/13329) @juliens)
+- **[tls]** Fix snicheck for routers with no hosts ([#13333](https://github.com/traefik/traefik/pull/13333) @rtribotte)
+
 ## [v3.7.4](https://github.com/traefik/traefik/tree/v3.7.4) (2026-06-05)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.3...v3.7.4)
 
