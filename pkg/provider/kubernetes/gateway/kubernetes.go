@@ -49,6 +49,8 @@ const (
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
+	kindConfigMap      = "ConfigMap"
+	kindSecret         = "Secret"
 
 	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
@@ -591,7 +593,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				var errCertConditions []metav1.Condition
 				listenerTLSCerts := make(map[string]*tls.CertAndStores)
 				for _, certificateRef := range listener.TLS.CertificateRefs {
-					if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" || certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
+					if certificateRef.Kind == nil || *certificateRef.Kind != kindSecret || certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
 						errCertConditions = append(errCertConditions, metav1.Condition{
 							Type:               string(gatev1.ListenerConditionResolvedRefs),
 							Status:             metav1.ConditionFalse,
@@ -604,7 +606,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					}
 
 					certificateNamespace := string(ptr.Deref(certificateRef.Namespace, gatev1.Namespace(gateway.Namespace)))
-					if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+					if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, kindSecret, string(certificateRef.Name), certificateNamespace); err != nil {
 						errCertConditions = append(errCertConditions, metav1.Condition{
 							Type:               string(gatev1.ListenerConditionResolvedRefs),
 							Status:             metav1.ConditionFalse,

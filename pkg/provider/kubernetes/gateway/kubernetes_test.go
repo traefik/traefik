@@ -6156,6 +6156,178 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Simple TLSRoute and BackendTLSPolicy with CA certificate",
+			paths: []string{"services.yml", "tlsroute/with_backend_tls_policy.yml"},
+			entryPoints: map[string]Entrypoint{"tls": {
+				Address: ":9001",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tls"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        `HostSNI("foo.com")`,
+							Priority:    7,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:80",
+									},
+									{
+										Address: "10.10.0.2:80",
+									},
+								},
+								ServersTransport: "default-whoami-80",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{
+						"default-whoami-80": {
+							TLS: &dynamic.TLSClientConfig{
+								ServerName: "whoami",
+								RootCAs: []types.FileOrContent{
+									"CA1",
+									"CA2",
+									"CA1-secret",
+									"CA2-secret",
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute and BackendTLSPolicy with System CA",
+			paths: []string{"services.yml", "tlsroute/with_backend_tls_policy_system.yml"},
+			entryPoints: map[string]Entrypoint{"tls": {
+				Address: ":9001",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tls"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        `HostSNI("foo.com")`,
+							Priority:    7,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:80",
+									},
+									{
+										Address: "10.10.0.2:80",
+									},
+								},
+								ServersTransport: "default-whoami-80",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{
+						"default-whoami-80": {
+							TLS: &dynamic.TLSClientConfig{
+								ServerName: "whoami",
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
