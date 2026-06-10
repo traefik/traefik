@@ -227,28 +227,27 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					conf, statusReport, err := p.loadConfigurationFromGateways(ctxLog)
 					if err != nil {
 						logger.Error().Err(err).Msg("Unable to load configuration from Gateways")
-						continue
-					}
-
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  ProviderName,
-							Configuration: conf,
+					} else {
+						confHash, err := hashstructure.Hash(conf, nil)
+						switch {
+						case err != nil:
+							logger.Error().Msg("Unable to hash the configuration")
+						case p.lastConfiguration.Get() == confHash:
+							logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
+						default:
+							p.lastConfiguration.Set(confHash)
+							configurationChan <- dynamic.Message{
+								ProviderName:  ProviderName,
+								Configuration: conf,
+							}
 						}
-					}
 
-					// Flush regardless of whether the dynamic configuration changed: the
-					// statusReport is independent of confHash and may carry writes even
-					// when the data plane has nothing new to consume (e.g. a GatewayClass
-					// that's now Accepted but has no Gateway pointing at it yet).
-					statusReport.Flush(ctxLog, p.client)
+						// Flush regardless of whether the dynamic configuration changed: the
+						// statusReport is independent of confHash and may carry writes even
+						// when the data plane has nothing new to consume (e.g. a GatewayClass
+						// that's now Accepted but has no Gateway pointing at it yet).
+						statusReport.Flush(ctxLog, p.client)
+					}
 
 					// If we're throttling,
 					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
