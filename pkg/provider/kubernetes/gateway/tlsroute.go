@@ -414,7 +414,7 @@ func (p *Provider) loadTLSServers(ctx context.Context, namespace string, route *
 				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update BackendTLSPolicy status")
 			}
 
-			// When something wen wrong during the loading of a ServersTransport,
+			// When something went wrong during the loading of a ServersTransport,
 			// we stop here and return a route condition error.
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
 				return nil, nil, &metav1.Condition{
