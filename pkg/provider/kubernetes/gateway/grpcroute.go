@@ -77,7 +77,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 					}
 				}
 
-				routeConf, resolveRefCondition := p.loadGRPCRoute(logger.WithContext(ctx), listener, route, hostnames)
+				routeConf, resolveRefCondition := p.loadGRPCRoute(logger.WithContext(ctx), listener, route, hostnames, statusReport)
 				if accepted && listener.Attached {
 					mergeHTTPConfiguration(routeConf, conf)
 				}
@@ -90,7 +90,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 	}
 }
 
-func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -157,7 +157,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(ctx, listener, conf, routerName, routeRule, route)
+				router.Service, serviceCondition = p.loadGRPCService(listener, conf, routerName, routeRule, route, statusReport)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -170,7 +170,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 	return conf, condition
 }
 
-func (p *Provider) loadGRPCService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
+func (p *Provider) loadGRPCService(listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routeKey + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -179,7 +179,7 @@ func (p *Provider) loadGRPCService(ctx context.Context, listener gatewayListener
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(ctx, listener, conf, route, backendRef)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(listener, conf, route, backendRef, statusReport)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -208,7 +208,7 @@ func (p *Provider) loadGRPCService(ctx context.Context, listener gatewayListener
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(listener gatewayListener, conf *dynamic.Configuration, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -260,7 +260,7 @@ func (p *Provider) loadGRPCBackendRef(ctx context.Context, listener gatewayListe
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
-	lb, st, errCondition := p.loadGRPCServers(ctx, namespace, route, backendRef, listener)
+	lb, st, errCondition := p.loadGRPCServers(namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -319,7 +319,7 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -396,12 +396,7 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 					},
 				)
 
-				status := gatev1.PolicyStatus{
-					Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
-				}
-				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-					log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting BackendTLSPolicy status")
-				}
+				statusReport.RecordBackendTLSPolicyStatus(ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, policyAncestorStatus)
 
 				continue
 			}
@@ -428,12 +423,7 @@ func (p *Provider) loadGRPCServers(ctx context.Context, namespace string, route 
 				})
 			}
 
-			status := gatev1.PolicyStatus{
-				Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
-			}
-			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update BackendTLSPolicy status")
-			}
+			statusReport.RecordBackendTLSPolicyStatus(ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, policyAncestorStatus)
 
 			// When something went wrong during the loading of a ServersTransport,
 			// we stop here and return a route condition error.
