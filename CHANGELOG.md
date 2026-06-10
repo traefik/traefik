@@ -1,3 +1,10 @@
+## [v2.11.50](https://github.com/traefik/traefik/tree/v2.11.50) (2026-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.49...v2.11.50)
+
+**Bug fixes:**
+- **[tls]** Fix routers with same host, different tlsoptions on different entryPoint ([#13329](https://github.com/traefik/traefik/pull/13329) @juliens)
+- **[tls]** Fix snicheck for routers with no hosts ([#13333](https://github.com/traefik/traefik/pull/13333) @rtribotte)
+
 ## [v2.11.49](https://github.com/traefik/traefik/tree/v2.11.49) (2026-06-05)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.48...v2.11.49)
 
