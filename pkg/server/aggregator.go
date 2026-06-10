@@ -150,8 +150,8 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 //
 // A router keeps its original name, and its resolved TLS options, for the entryPoints
 // on which it does not conflict. For each entryPoint on which it conflicts, that
-// entryPoint is removed from the router and a dedicated copy is emitted,
-// and named following this pattern: "ep-conflicted-name@provider".
+// entryPoint is removed from the router and a dedicated copy is emitted, with its
+// TLSOptions reset to the default one, named following the "ep-conflicted-name@provider" pattern.
 func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynamic.Router {
 	if len(routers) == 0 {
 		return routers
@@ -234,9 +234,9 @@ func findConflictingRouters(ep string, routers map[string]*dynamic.Router) []str
 			continue
 		}
 
-		// A router without a domain in its rule cannot be matched against an SNI,
-		// so it always falls back to the default TLS options.
-		if len(domains) == 0 && len(router.TLS.Options) > 0 && router.TLS.Options != traefiktls.DefaultTLSConfigName {
+		// The configured TLSOptions on a router without a domain in its rule cannot be selected when evaluating the SNI,
+		// so if it is not the default one, it is a conflict.
+		if len(domains) == 0 && router.TLS.ResolvedOptions != traefiktls.DefaultTLSConfigName {
 			conflicting = append(conflicting, name)
 			continue
 		}

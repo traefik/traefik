@@ -733,9 +733,21 @@ func Test_resolveHTTPTLSOptions(t *testing.T) {
 			unexpectedRouters: []string{"router-a@file"},
 		},
 		{
-			desc: "no domain in rule, default options: not conflicting, keeps its name",
+			desc: "no domain in rule, implicit default options: not conflicting, keeps its name",
 			routers: map[string]*dynamic.Router{
 				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{}},
+			},
+			expected: map[string]string{
+				"router-a@file": "default",
+			},
+			unexpectedRouters: []string{"ep-a-conflicted-router-a@file"},
+		},
+		{
+			desc: "no domain in rule, explicit default options: not conflicting, keeps its name",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{
+					Options: "default",
+				}},
 			},
 			expected: map[string]string{
 				"router-a@file": "default",
