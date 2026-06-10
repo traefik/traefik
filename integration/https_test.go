@@ -315,7 +315,7 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	assert.ErrorContains(s.T(), err, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	// with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("found different TLS options for routers on the same host, so using the default TLS options instead"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"))
 	require.NoError(s.T(), err)
 }
 

@@ -693,8 +693,8 @@ func Test_resolveHTTPTLSOptions(t *testing.T) {
 				"router-b@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsB"}},
 			},
 			expected: map[string]string{
-				"ep-a-router-a@file": "default",
-				"ep-a-router-b@file": "default",
+				"ep-a-conflicted-router-a@file": "default",
+				"ep-a-conflicted-router-b@file": "default",
 			},
 			unexpectedRouters: []string{"router-a@file", "router-b@file"},
 		},
@@ -716,21 +716,43 @@ func Test_resolveHTTPTLSOptions(t *testing.T) {
 				"other@file":  {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsY"}},
 			},
 			expected: map[string]string{
-				"ep-a-shared@file": "default",    // conflicts with other@file on ep-a
-				"shared@file":      "optsX@file", // alone on ep-b
-				"ep-a-other@file":  "default",
+				"ep-a-conflicted-shared@file": "default",    // conflicts with other@file on ep-a
+				"shared@file":                 "optsX@file", // alone on ep-b
+				"ep-a-conflicted-other@file":  "default",
 			},
 			unexpectedRouters: []string{"other@file"},
 		},
 		{
-			desc: "no domain in rule: depends on SNI, resolves to default",
+			desc: "no domain in rule, non-default options: forced to default and renamed",
 			routers: map[string]*dynamic.Router{
 				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
 			},
 			expected: map[string]string{
-				"ep-a-router-a@file": "default",
+				"ep-a-conflicted-router-a@file": "default",
 			},
 			unexpectedRouters: []string{"router-a@file"},
+		},
+		{
+			desc: "no domain in rule, implicit default options: not conflicting, keeps its name",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{}},
+			},
+			expected: map[string]string{
+				"router-a@file": "default",
+			},
+			unexpectedRouters: []string{"ep-a-conflicted-router-a@file"},
+		},
+		{
+			desc: "no domain in rule, explicit default options: not conflicting, keeps its name",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{
+					Options: "default",
+				}},
+			},
+			expected: map[string]string{
+				"router-a@file": "default",
+			},
+			unexpectedRouters: []string{"ep-a-conflicted-router-a@file"},
 		},
 	}
 

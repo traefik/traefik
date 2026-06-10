@@ -150,9 +150,8 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 //
 // A router keeps its original name, and its resolved TLS options, for the entryPoints
 // on which it does not conflict. For each entryPoint on which it conflicts, that
-// entryPoint is removed from the router and a dedicated copy is emitted, prefixed with
-// the entryPoint name the same way applyModel does (ep-name), with its TLS options reset
-// to the default ones.
+// entryPoint is removed from the router and a dedicated copy is emitted, with its
+// TLSOptions reset to the default one, named following the "ep-conflicted-name@provider" pattern.
 func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynamic.Router {
 	if len(routers) == 0 {
 		return routers
@@ -187,7 +186,7 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 	// Resolve the TLS options independently for each entryPoint.
 	conflictingRouters := make(map[string][]string, len(routersByEntryPoint))
 	for ep, epRouters := range routersByEntryPoint {
-		conflictingRouters[ep] = findConflictingRouters(epRouters)
+		conflictingRouters[ep] = findConflictingRouters(ep, epRouters)
 	}
 
 	for name, router := range routers {
@@ -197,7 +196,9 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 				rt := router.DeepCopy()
 				rt.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
 				rt.EntryPoints = []string{ep}
-				newRouters[ep+"-"+name] = rt
+				// The new name is not collision free but has very small possibility to collide.
+				// TODO: rework this naming whenever we'll introduce a resource reference mechanism not based on a string.
+				newRouters[ep+"-conflicted-"+name] = rt
 			}
 
 			return deleted
@@ -215,7 +216,7 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 // single-entryPoint routers, that serve a host (SNI) also served by another router
 // with a different resolved TLS option. Such routers are arbitrated by falling back
 // to the default TLS options.
-func findConflictingRouters(routers map[string]*dynamic.Router) []string {
+func findConflictingRouters(ep string, routers map[string]*dynamic.Router) []string {
 	var conflicting []string
 
 	// For each host (SNI, already lower-cased by the domain parsing), the routers
@@ -233,9 +234,9 @@ func findConflictingRouters(routers map[string]*dynamic.Router) []string {
 			continue
 		}
 
-		// A router without a domain in its rule cannot be matched against an SNI,
-		// so it always falls back to the default TLS options.
-		if len(domains) == 0 {
+		// The configured TLSOptions on a router without a domain in its rule cannot be selected when evaluating the SNI,
+		// so if it is not the default one, it is a conflict.
+		if len(domains) == 0 && router.TLS.ResolvedOptions != traefiktls.DefaultTLSConfigName {
 			conflicting = append(conflicting, name)
 			continue
 		}
@@ -249,14 +250,18 @@ func findConflictingRouters(routers map[string]*dynamic.Router) []string {
 		}
 	}
 
-	for _, routersByOption := range routersByHostAndOption {
+	for domain, routersByOption := range routersByHostAndOption {
 		if len(routersByOption) == 1 {
 			continue
 		}
 
+		var routersInConflict []string
 		for _, names := range routersByOption {
 			conflicting = append(conflicting, names...)
+			routersInConflict = append(routersInConflict, names...)
 		}
+
+		log.WithoutContext().Errorf("On EntryPoint %q, Host %q is served by multiple routers with different TLS options, default TLSOptions will be applied for the following routers: %v", ep, domain, routersInConflict)
 	}
 
 	return conflicting
