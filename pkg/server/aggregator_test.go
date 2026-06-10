@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -1227,6 +1228,116 @@ func Test_applyModel(t *testing.T) {
 			actual := applyModel(test.input)
 
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func Test_resolveHTTPTLSOptions(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		routers           map[string]*dynamic.Router
+		expected          map[string]string // router name -> ResolvedOptions
+		unexpectedRouters []string
+	}{
+		{
+			desc: "same host, different options, different entryPoints: no conflict",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+				"router-b@file": {EntryPoints: []string{"ep-b"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsB"}},
+			},
+			expected: map[string]string{
+				"router-a@file": "optsA@file",
+				"router-b@file": "optsB@file",
+			},
+		},
+		{
+			desc: "same host, different options, same entryPoint: conflict falls back to default",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+				"router-b@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsB"}},
+			},
+			expected: map[string]string{
+				"ep-a-conflicted-router-a@file": "default",
+				"ep-a-conflicted-router-b@file": "default",
+			},
+			unexpectedRouters: []string{"router-a@file", "router-b@file"},
+		},
+		{
+			desc: "same host, same options, same entryPoint: keeps the configured options",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+				"router-b@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`) && PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+			},
+			expected: map[string]string{
+				"router-a@file": "optsA@file",
+				"router-b@file": "optsA@file",
+			},
+		},
+		{
+			desc: "router spanning two entryPoints, conflict on one only: router is duplicated",
+			routers: map[string]*dynamic.Router{
+				"shared@file": {EntryPoints: []string{"ep-a", "ep-b"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsX"}},
+				"other@file":  {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsY"}},
+			},
+			expected: map[string]string{
+				"ep-a-conflicted-shared@file": "default",    // conflicts with other@file on ep-a
+				"shared@file":                 "optsX@file", // alone on ep-b
+				"ep-a-conflicted-other@file":  "default",
+			},
+			unexpectedRouters: []string{"other@file"},
+		},
+		{
+			desc: "no domain in rule, non-default options: forced to default and renamed",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+			},
+			expected: map[string]string{
+				"ep-a-conflicted-router-a@file": "default",
+			},
+			unexpectedRouters: []string{"router-a@file"},
+		},
+		{
+			desc: "no domain in rule, implicit default options: not conflicting, keeps its name",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{}},
+			},
+			expected: map[string]string{
+				"router-a@file": "default",
+			},
+			unexpectedRouters: []string{"ep-a-conflicted-router-a@file"},
+		},
+		{
+			desc: "no domain in rule, explicit default options: not conflicting, keeps its name",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "PathPrefix(`/foo`)", TLS: &dynamic.RouterTLSConfig{
+					Options: "default",
+				}},
+			},
+			expected: map[string]string{
+				"router-a@file": "default",
+			},
+			unexpectedRouters: []string{"ep-a-conflicted-router-a@file"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := resolveHTTPTLSOptions(test.routers)
+
+			for name, want := range test.expected {
+				rt, ok := got[name]
+
+				require.True(t, ok, "router %q is missing", name)
+				require.NotNil(t, rt.TLS, "router %q has no TLS config", name)
+				assert.Equal(t, want, rt.TLS.ResolvedOptions, "router %q %v", name, rt.EntryPoints)
+			}
+
+			for _, name := range test.unexpectedRouters {
+				_, ok := got[name]
+				require.False(t, ok, "router %q is present", name)
+			}
 		})
 	}
 }

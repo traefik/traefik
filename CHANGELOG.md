@@ -1,3 +1,38 @@
+## [v3.6.21](https://github.com/traefik/traefik/tree/v3.6.21) (2026-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.20...v3.6.21)
+
+**Bug fixes:**
+- **[k8s/gatewayapi]** Reject cross-provider references with backendRefs.namespace ([#13322](https://github.com/traefik/traefik/pull/13322) @youkoulayley)
+- **[server]** Bump to github.com/pires/go-proxyproto v0.12.0 ([#13313](https://github.com/traefik/traefik/pull/13313) @timschumi)
+- **[tls]** Fix routers with same host, different tlsoptions on different entryPoint ([#13329](https://github.com/traefik/traefik/pull/13329) @juliens)
+- **[tls]** Fix snicheck for routers with no hosts ([#13333](https://github.com/traefik/traefik/pull/13333) @rtribotte)
+
+## [v2.11.50](https://github.com/traefik/traefik/tree/v2.11.50) (2026-06-10)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.49...v2.11.50)
+
+**Bug fixes:**
+- **[tls]** Fix routers with same host, different tlsoptions on different entryPoint ([#13329](https://github.com/traefik/traefik/pull/13329) @juliens)
+- **[tls]** Fix snicheck for routers with no hosts ([#13333](https://github.com/traefik/traefik/pull/13333) @rtribotte)
+
+## [v3.6.20](https://github.com/traefik/traefik/tree/v3.6.20) (2026-06-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.19...v3.6.20)
+
+**Bug fixes:**
+- **[middleware]** Fix redis write timeout option configuration ([#13273](https://github.com/traefik/traefik/pull/13273) @bzyy1024)
+- **[webui]** Bump react-router and jsdom ([#13301](https://github.com/traefik/traefik/pull/13301) @gndz07)
+- **[k8s/gatewayapi]** Fix BackendTLSPolicy status update ([#13306](https://github.com/traefik/traefik/pull/13306) @AnatoleLucet)
+- **[http3]** Bump github.com/quic-go/quic-go to v0.59.1 ([#13300](https://github.com/traefik/traefik/pull/13300) @rtribotte)
+- **[webui]** Bump axios to v1.17.0 ([#13299](https://github.com/traefik/traefik/pull/13299) @gndz07)
+- **[tls]** Fix snicheck with keepalive ([#13305](https://github.com/traefik/traefik/pull/13305) @juliens)
+
+## [v2.11.49](https://github.com/traefik/traefik/tree/v2.11.49) (2026-06-05)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.48...v2.11.49)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.59.1 ([#13300](https://github.com/traefik/traefik/pull/13300) @rtribotte)
+- **[webui]** Bump axios to v1.17.0 ([#13299](https://github.com/traefik/traefik/pull/13299) @gndz07)
+- **[tls]** Fix snicheck with keepalive ([#13305](https://github.com/traefik/traefik/pull/13305) @juliens)
+
 ## [v3.6.19](https://github.com/traefik/traefik/tree/v3.6.19) (2026-06-04)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.17...v3.6.19)
 
