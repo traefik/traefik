@@ -3693,7 +3693,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				client:      client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
