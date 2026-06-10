@@ -4751,3 +4751,261 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 }
 
 func pointer[T any](v T) *T { return &v }
+
+func TestDynConfBuilder_filterRoutersByConstraint(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		labels       map[string]string
+		routerLabels map[string]string
+		conf         *dynamic.Configuration
+		expectedHTTP []string
+		expectedTCP  []string
+		expectedUDP  []string
+	}{
+		{
+			desc: "no provider RouterLabels: filter is a no-op even with .constraint labels",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`int`)",
+				"traefik.tcp.routers.t1.constraint":  "Label(`tier`,`int`)",
+			},
+			routerLabels: nil,
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}, "r2": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{"t1": {}}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1", "r2"},
+			expectedTCP:  []string{"t1"},
+			expectedUDP:  nil,
+		},
+		{
+			desc: "router without .constraint label is kept (default-permit)",
+			labels: map[string]string{
+				"traefik.http.routers.r1.rule": "Host(`a`)",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1"},
+		},
+		{
+			desc: "router with matching .constraint is kept",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`int`)",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1"},
+		},
+		{
+			desc: "router with non-matching .constraint is dropped",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`ext`)",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: nil,
+		},
+		{
+			desc: "router with malformed .constraint expression is dropped",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(broken_syntax",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: nil,
+		},
+		{
+			desc: "mixed protocols: each filtered independently",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`int`)",
+				"traefik.http.routers.r2.constraint": "Label(`tier`,`ext`)",
+				"traefik.tcp.routers.t1.constraint":  "Label(`tier`,`int`)",
+				"traefik.tcp.routers.t2.constraint":  "Label(`tier`,`ext`)",
+				"traefik.udp.routers.u1.constraint":  "Label(`tier`,`int`)",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}, "r2": {}, "r3": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{"t1": {}, "t2": {}}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{"u1": {}}},
+			},
+			expectedHTTP: []string{"r1", "r3"},
+			expectedTCP:  []string{"t1"},
+			expectedUDP:  []string{"u1"},
+		},
+		{
+			desc: "OR expression matches when either side present",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`ext`) || Label(`tier`,`both`)",
+			},
+			routerLabels: map[string]string{"tier": "both"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1"},
+		},
+		{
+			desc: "LabelRegex matches",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "LabelRegex(`tier`,`^(int|both)$`)",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1"},
+		},
+		{
+			desc: "NOT operator: !Label(tier,ext) keeps router when tier=int",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "!Label(`tier`,`ext`)",
+			},
+			routerLabels: map[string]string{"tier": "int"},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1"},
+		},
+		{
+			desc: "empty RouterLabels with router .constraint defined: filter is no-op (default-permit)",
+			labels: map[string]string{
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`int`)",
+			},
+			routerLabels: map[string]string{},
+			conf: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Routers: map[string]*dynamic.Router{"r1": {}}},
+				TCP:  &dynamic.TCPConfiguration{Routers: map[string]*dynamic.TCPRouter{}},
+				UDP:  &dynamic.UDPConfiguration{Routers: map[string]*dynamic.UDPRouter{}},
+			},
+			expectedHTTP: []string{"r1"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			builder := NewDynConfBuilder(Shared{RouterLabels: test.routerLabels}, nil, false)
+			builder.filterRoutersByConstraint(t.Context(), test.labels, test.conf)
+
+			assert.ElementsMatch(t, test.expectedHTTP, mapKeys(test.conf.HTTP.Routers), "HTTP routers")
+			assert.ElementsMatch(t, test.expectedTCP, mapKeys(test.conf.TCP.Routers), "TCP routers")
+			assert.ElementsMatch(t, test.expectedUDP, mapKeys(test.conf.UDP.Routers), "UDP routers")
+		})
+	}
+}
+
+func mapKeys[K comparable, V any](m map[K]V) []K {
+	out := make([]K, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+func TestStripRouterConstraintLabels(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			desc:     "empty input returns empty output",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			desc: "no constraint labels: input passed through unchanged",
+			input: map[string]string{
+				"traefik.http.routers.r1.rule":        "Host(`a`)",
+				"traefik.http.routers.r1.entrypoints": "web",
+				"non-traefik-key":                     "x",
+			},
+			expected: map[string]string{
+				"traefik.http.routers.r1.rule":        "Host(`a`)",
+				"traefik.http.routers.r1.entrypoints": "web",
+				"non-traefik-key":                     "x",
+			},
+		},
+		{
+			desc: "strips http/tcp/udp router constraint labels",
+			input: map[string]string{
+				"traefik.http.routers.r1.rule":       "Host(`a`)",
+				"traefik.http.routers.r1.constraint": "Label(`tier`,`int`)",
+				"traefik.tcp.routers.t1.rule":        "HostSNI(`b`)",
+				"traefik.tcp.routers.t1.constraint":  "Label(`tier`,`ext`)",
+				"traefik.udp.routers.u1.entrypoints": "udp",
+				"traefik.udp.routers.u1.constraint":  "Label(`tier`,`int`)",
+			},
+			expected: map[string]string{
+				"traefik.http.routers.r1.rule":       "Host(`a`)",
+				"traefik.tcp.routers.t1.rule":        "HostSNI(`b`)",
+				"traefik.udp.routers.u1.entrypoints": "udp",
+			},
+		},
+		{
+			desc: "preserves other labels containing the word constraint",
+			input: map[string]string{
+				"traefik.constraint-label":              "traefik-public",
+				"traefik.http.routers.r1.constraint":    "Label(`tier`,`int`)",
+				"traefik.http.middlewares.x.constraint": "should-not-strip",
+				"random.constraint":                     "should-not-strip",
+			},
+			expected: map[string]string{
+				"traefik.constraint-label":              "traefik-public",
+				"traefik.http.middlewares.x.constraint": "should-not-strip",
+				"random.constraint":                     "should-not-strip",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			got := stripRouterConstraintLabels(test.input)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestIsRouterConstraintLabel(t *testing.T) {
+	cases := map[string]bool{
+		"traefik.http.routers.r1.constraint":       true,
+		"traefik.tcp.routers.t1.constraint":        true,
+		"traefik.udp.routers.u1.constraint":        true,
+		"traefik.http.routers.r1.rule":             false,
+		"traefik.http.middlewares.m1.constraint":   false,
+		"traefik.constraint-label":                 false,
+		"random":                                   false,
+		"":                                         false,
+		"traefik.http.routers.r1.constraint.extra": false,
+	}
+	for k, want := range cases {
+		t.Run(k, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, want, isRouterConstraintLabel(k))
+		})
+	}
+}
