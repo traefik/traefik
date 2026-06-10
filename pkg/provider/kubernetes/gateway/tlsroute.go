@@ -237,6 +237,17 @@ func (p *Provider) loadTLSService(route *gatev1.TLSRoute, backendRef gatev1.Back
 	namespace := route.Namespace
 	if backendRef.Namespace != nil && *backendRef.Namespace != "" {
 		namespace = string(*backendRef.Namespace)
+
+		if strings.Contains(string(backendRef.Name), "@") {
+			return provider.Normalize(namespace + "-" + string(backendRef.Name)), nil, &metav1.Condition{
+				Type:               string(gatev1.RouteConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonRefNotPermitted),
+				Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s: namespace is not allowed with a cross-provider reference", group, kind, namespace, backendRef.Name),
+			}
+		}
 	}
 
 	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
