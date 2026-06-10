@@ -161,6 +161,8 @@ http:
         maxResponseBodyBytes: 42
         memResponseBodyBytes: 42
         retryExpression: foobar
+        disableRequestBuffer: true
+        disableResponseBuffer: true
     Middleware04:
       chain:
         middlewares:
