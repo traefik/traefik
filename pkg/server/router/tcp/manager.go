@@ -167,8 +167,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		if len(domains) > 0 && routerHTTPConfig.TLS.ResolvedOptions != tlsOptionsName {
-			logger.Warn("Found different TLS options for routers on the same host, so using the default TLS options instead.")
-			routerHTTPConfig.AddError(errors.New("found different TLS options for routers on the same host, so using the default TLS options instead"), false)
+			routerHTTPConfig.AddError(errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"), false)
 		}
 
 		// Even though the error is seemingly ignored (aside from logging it),
