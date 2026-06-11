@@ -4636,13 +4636,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-app-root-rule-0-path-0-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-retry": {
@@ -13481,25 +13481,25 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-canary-middlewares-rule-0-path-0-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-retry": {
@@ -13805,7 +13805,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-retry": {
@@ -13822,7 +13822,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+								Replacement: "$1/foo$2",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-retry": {
