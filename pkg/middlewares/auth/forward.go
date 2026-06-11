@@ -270,7 +270,7 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	}
 
 	if _, ok := forwardReq.Header[forwardedheaders.XForwardedPort]; !ok {
-		forwardReq.Header.Set(forwardedheaders.XForwardedPort, forwardedPort(req))
+		forwardReq.Header.Set(forwardedheaders.XForwardedPort, forwardedPort(req, forwardReq))
 	}
 
 	if _, ok := forwardReq.Header[forwardedheaders.XForwardedHost]; !ok {
@@ -322,7 +322,7 @@ func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeade
 	return filteredHeaders
 }
 
-func forwardedPort(req *http.Request) string {
+func forwardedPort(req, forwardReq *http.Request) string {
 	if req == nil {
 		return ""
 	}
@@ -331,7 +331,7 @@ func forwardedPort(req *http.Request) string {
 		return port
 	}
 
-	if req.Header.Get(forwardedheaders.XForwardedProto) == "https" || req.Header.Get(forwardedheaders.XForwardedProto) == "wss" {
+	if forwardReq.Header.Get(forwardedheaders.XForwardedProto) == "https" || forwardReq.Header.Get(forwardedheaders.XForwardedProto) == "wss" {
 		return "443"
 	}
 
