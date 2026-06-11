@@ -136,6 +136,17 @@ func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, intern
 	})
 }
 
+// IsPingEntryPoint reports whether the given entry point name is configured as the ping entry point.
+// This is used to treat unmatched requests on the ping entry point as internal,
+// so that addInternals=false suppresses them (e.g. plain HTTP hitting a TLS ping entry point).
+func (o *ObservabilityMgr) IsPingEntryPoint(entryPointName string) bool {
+	if o == nil || o.config.Ping == nil {
+		return false
+	}
+
+	return o.config.Ping.EntryPoint == entryPointName
+}
+
 // shouldAccessLog returns whether the access logs should be enabled for the given serviceName and the observability config.
 func (o *ObservabilityMgr) shouldAccessLog(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
 	if o == nil {
