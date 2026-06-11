@@ -15,6 +15,7 @@ func TestServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc              string
 		insecure          bool
+		notAppendXFF      bool
 		trustedIps        []string
 		connectionHeaders []string
 		incomingHeaders   map[string][]string
@@ -108,7 +109,7 @@ func TestServeHTTP(t *testing.T) {
 				"X_forwarded_for":           {"10.0.0.1"},
 			},
 			expectedHeaders: map[string]string{
-				XForwardedFor:               "10.0.1.0, 10.0.1.12",
+				XForwardedFor:               "10.0.1.0, 10.0.1.12, 10.0.1.100",
 				XForwardedURI:               "/bar",
 				XForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
@@ -132,7 +133,7 @@ func TestServeHTTP(t *testing.T) {
 				XForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
-				XForwardedFor:               "",
+				XForwardedFor:               "10.0.1.101",
 				XForwardedURI:               "",
 				XForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
@@ -154,7 +155,7 @@ func TestServeHTTP(t *testing.T) {
 				XForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
-				XForwardedFor:               "10.0.1.0, 10.0.1.12",
+				XForwardedFor:               "10.0.1.0, 10.0.1.12, 1.2.3.156",
 				XForwardedURI:               "/bar",
 				XForwardedMethod:            "GET",
 				xForwardedTLSClientCert:     "Cert",
@@ -176,7 +177,7 @@ func TestServeHTTP(t *testing.T) {
 				XForwardedPrefix:            {"/prefix"},
 			},
 			expectedHeaders: map[string]string{
-				XForwardedFor:               "",
+				XForwardedFor:               "10.0.1.101",
 				XForwardedURI:               "",
 				XForwardedMethod:            "",
 				xForwardedTLSClientCert:     "",
@@ -196,6 +197,65 @@ func TestServeHTTP(t *testing.T) {
 			},
 			expectedHeaders: map[string]string{
 				XForwardedFor: "10.0.0.4, 10.0.0.3, 10.0.0.2, 10.0.0.1, 10.0.0.0",
+			},
+		},
+		{
+			desc:            "appends RemoteAddr when notAppendXFF is false",
+			insecure:        false,
+			notAppendXFF:    false,
+			trustedIps:      []string{"192.0.2.1"},
+			remoteAddr:      "192.0.2.1:12345",
+			incomingHeaders: map[string][]string{},
+			expectedHeaders: map[string]string{
+				XForwardedFor: "192.0.2.1",
+			},
+		},
+		{
+			desc:         "appends RemoteAddr to existing XFF when notAppendXFF is false",
+			insecure:     false,
+			notAppendXFF: false,
+			trustedIps:   []string{"192.0.2.1"},
+			remoteAddr:   "192.0.2.1:12345",
+			incomingHeaders: map[string][]string{
+				XForwardedFor: {"203.0.113.1"},
+			},
+			expectedHeaders: map[string]string{
+				XForwardedFor: "203.0.113.1, 192.0.2.1",
+			},
+		},
+		{
+			desc:            "does not append RemoteAddr when notAppendXFF is true and no incoming XFF",
+			insecure:        false,
+			notAppendXFF:    true,
+			trustedIps:      []string{"192.0.2.1"},
+			remoteAddr:      "192.0.2.1:12345",
+			incomingHeaders: map[string][]string{},
+			expectedHeaders: map[string]string{},
+		},
+		{
+			desc:         "preserves existing XFF when notAppendXFF is true",
+			insecure:     false,
+			notAppendXFF: true,
+			trustedIps:   []string{"192.0.2.1"},
+			remoteAddr:   "192.0.2.1:12345",
+			incomingHeaders: map[string][]string{
+				XForwardedFor: {"203.0.113.1"},
+			},
+			expectedHeaders: map[string]string{
+				XForwardedFor: "203.0.113.1",
+			},
+		},
+		{
+			desc:         "preserves multiple XFF values when notAppendXFF is true",
+			insecure:     false,
+			notAppendXFF: true,
+			trustedIps:   []string{"192.0.2.1"},
+			remoteAddr:   "192.0.2.1:12345",
+			incomingHeaders: map[string][]string{
+				XForwardedFor: {"203.0.113.1", "198.51.100.1"},
+			},
+			expectedHeaders: map[string]string{
+				XForwardedFor: "203.0.113.1, 198.51.100.1",
 			},
 		},
 		{
@@ -643,7 +703,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders, false,
+			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders, test.notAppendXFF,
 				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
 
