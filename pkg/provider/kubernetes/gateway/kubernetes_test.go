@@ -95,7 +95,10 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 		client:        client,
 	}
 
-	_ = p.loadConfigurationFromGateways(t.Context())
+	_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+	require.NoError(t, err)
+
+	statusReport.Flush(t.Context(), p.client)
 
 	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -2753,7 +2756,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3216,7 +3221,9 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					p.RegisterBackendFuncs(group, kind, backendFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3502,7 +3509,9 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			assert.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3684,7 +3693,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				client:      client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3976,7 +3987,9 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			assert.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4897,7 +4910,9 @@ func TestLoadTCPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -6363,7 +6378,9 @@ func TestLoadTLSRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7353,7 +7370,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7651,7 +7670,9 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -8815,7 +8836,8 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 				client:                  client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
 
 			router, ok := conf.HTTP.Routers["httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3"]
 			require.True(t, ok)
@@ -8882,7 +8904,8 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 				ExperimentalChannel:     true,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
 
 			router, ok := conf.TCP.Routers["tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tcp-0-e3b0c44298fc1c149afb"]
 			require.True(t, ok)
@@ -8955,7 +8978,8 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 				client:                  client,
 			}
 
-			conf := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			assert.NoError(t, err)
 
 			fmt.Println(conf.TCP.Routers)
 

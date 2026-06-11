@@ -20,7 +20,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration) {
+func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration, statusReport *statusReport) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTLSRoutes()
 	if err != nil {
@@ -29,18 +29,13 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 
 	for _, route := range routes {
-		logger := log.Ctx(ctx).With().
-			Str("tls_route", route.Name).
-			Str("namespace", route.Namespace).Logger()
-
 		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
 		if len(routeListeners) == 0 {
 			continue
 		}
 
-		var parentStatuses []gatev1.RouteParentStatus
 		for _, parentRef := range route.Spec.ParentRefs {
-			parentStatus := &gatev1.RouteParentStatus{
+			parentStatus := gatev1.RouteParentStatus{
 				ParentRef:      parentRef,
 				ControllerName: controllerName,
 				Conditions: []metav1.Condition{
@@ -75,14 +70,14 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 					}
 				}
 
-				routeConf, resolveRefCondition := p.loadTLSRoute(ctx, listener, route, hostnames)
+				routeConf, resolveRefCondition := p.loadTLSRoute(listener, route, hostnames, statusReport)
 				if accepted && listener.Attached {
 					mergeTCPConfiguration(routeConf, conf)
 				}
 				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
-			parentStatuses = append(parentStatuses, *parentStatus)
+			statusReport.RecordTLSRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, parentStatus)
 		}
 
 		// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
@@ -98,21 +93,10 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 			}
 		}
-
-		routeStatus := gatev1.TLSRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
-		}
-		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
-			logger.Warn().
-				Err(err).
-				Msg("Unable to update TLSRoute status")
-		}
 	}
 }
 
-func (p *Provider) loadTLSRoute(ctx context.Context, listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
@@ -173,7 +157,7 @@ func (p *Provider) loadTLSRoute(ctx context.Context, listener gatewayListener, r
 		}
 
 		var serviceCondition *metav1.Condition
-		router.Service, serviceCondition = p.loadTLSWRRService(ctx, listener, conf, routerName, routeRule.BackendRefs, route)
+		router.Service, serviceCondition = p.loadTLSWRRService(listener, conf, routerName, routeRule.BackendRefs, route, statusReport)
 		if serviceCondition != nil {
 			condition = *serviceCondition
 		}
@@ -185,7 +169,7 @@ func (p *Provider) loadTLSRoute(ctx context.Context, listener gatewayListener, r
 }
 
 // loadTLSWRRService is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTLSWRRService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute) (string, *metav1.Condition) {
+func (p *Provider) loadTLSWRRService(listener gatewayListener, conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routeKey + "-wrr"
 	if _, ok := conf.TCP.Services[name]; ok {
 		return name, nil
@@ -194,7 +178,7 @@ func (p *Provider) loadTLSWRRService(ctx context.Context, listener gatewayListen
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTLSService(ctx, listener, conf, route, backendRef)
+		svcName, svc, errCondition := p.loadTLSService(listener, conf, route, backendRef, statusReport)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -228,7 +212,7 @@ func (p *Provider) loadTLSWRRService(ctx context.Context, listener gatewayListen
 	return name, condition
 }
 
-func (p *Provider) loadTLSService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.TLSRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTLSService(listener gatewayListener, conf *dynamic.Configuration, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, statusReport *statusReport) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -296,7 +280,7 @@ func (p *Provider) loadTLSService(ctx context.Context, listener gatewayListener,
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, st, errCondition := p.loadTLSServers(ctx, namespace, route, backendRef, listener)
+	lb, st, errCondition := p.loadTLSServers(namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -309,7 +293,7 @@ func (p *Provider) loadTLSService(ctx context.Context, listener gatewayListener,
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
-func (p *Provider) loadTLSServers(ctx context.Context, namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, *metav1.Condition) {
+func (p *Provider) loadTLSServers(namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -386,12 +370,7 @@ func (p *Provider) loadTLSServers(ctx context.Context, namespace string, route *
 					},
 				)
 
-				status := gatev1.PolicyStatus{
-					Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
-				}
-				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-					log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting BackendTLSPolicy status")
-				}
+				statusReport.RecordBackendTLSPolicyStatus(ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, policyAncestorStatus)
 
 				continue
 			}
@@ -418,12 +397,7 @@ func (p *Provider) loadTLSServers(ctx context.Context, namespace string, route *
 				})
 			}
 
-			status := gatev1.PolicyStatus{
-				Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
-			}
-			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update BackendTLSPolicy status")
-			}
+			statusReport.RecordBackendTLSPolicyStatus(ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, policyAncestorStatus)
 
 			// When something went wrong during the loading of a ServersTransport,
 			// we stop here and return a route condition error.

@@ -727,14 +727,6 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 				continue
 			}
-
-			// Keep statuses added by Traefik for other ancestors.
-			// A BackendTLSPolicy can target services attached to different listeners.
-			if !slices.ContainsFunc(status.Ancestors, func(s gatev1.PolicyAncestorStatus) bool {
-				return reflect.DeepEqual(s.AncestorRef, ancestorStatus.AncestorRef)
-			}) {
-				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
-			}
 		}
 
 		if len(ancestorStatuses) > 16 {
