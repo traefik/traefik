@@ -110,10 +110,10 @@ require (
 	google.golang.org/grpc v1.80.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.35.2
-	k8s.io/apiextensions-apiserver v0.35.2
-	k8s.io/apimachinery v0.35.2
-	k8s.io/client-go v0.35.2
+	k8s.io/api v0.35.4
+	k8s.io/apiextensions-apiserver v0.35.4
+	k8s.io/apimachinery v0.35.4
+	k8s.io/client-go v0.35.4
 	k8s.io/utils v0.0.0-20260108192941-914a6e750570 // No tag on the repo.
 	knative.dev/networking v0.0.0-20251217020127-11890a5dabea
 	knative.dev/pkg v0.0.0-20251216153728-9c8140b780d1
