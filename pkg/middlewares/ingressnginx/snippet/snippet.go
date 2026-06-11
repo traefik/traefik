@@ -580,6 +580,14 @@ func WriteResponse(rw http.ResponseWriter, req *http.Request, ctx *actionContext
 	_, _ = rw.Write([]byte(ctx.body))
 }
 
+// writeHeader builds the auth subrequest headers. It deliberately does not
+// strip incoming X-Forwarded-* headers (nor their underscore aliases) and
+// exposes no trustForwardHeader knob. Trusting or sanitizing forwarded headers
+// is an entrypoint-level concern, handled once by forwardedheaders.XForwarded
+// (forwardedHeaders.insecure / trustedIPs) before any middleware runs: untrusted
+// sources already have these headers removed upstream. Re-deciding that trust
+// per middleware was a mistake in the legacy ForwardAuth path and is not
+// replicated here.
 func writeHeader(req, forwardReq *http.Request) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 
