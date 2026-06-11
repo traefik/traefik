@@ -476,7 +476,13 @@ func (s *Snippet) executeForwardAuth(rw http.ResponseWriter, req *http.Request, 
 		return true, nil
 	}
 
-	// Copy auth response headers to the original request for downstream processing
+	// Only the headers listed in the auth-response-headers annotation are stripped
+	// and replaced with the auth server's verified values. Any other header the
+	// client sends is forwarded to the backend unchanged, strictly reproducing
+	// ingress-nginx, where the annotation is the only switch and is unset in the
+	// upstream auth-url example. By design this provider asserts no identity the
+	// operator did not opt into: trusting unlisted client headers downstream is a
+	// backend misconfiguration, not a spoofing flaw here.
 	for _, headerName := range s.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
