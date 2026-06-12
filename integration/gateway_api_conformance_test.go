@@ -78,8 +78,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		s.T().Fatal("Traefik image is not present")
 	}
 
-	s.k3sContainer, err = k3s.Run(
-		ctx,
+	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
 		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.4.0.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/01-rbac.yml"),
