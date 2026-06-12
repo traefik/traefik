@@ -30,7 +30,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 20
+      Passed: 21
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -41,6 +41,7 @@ profiles:
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
+    - HTTPRouteNamedRouteRule
     - HTTPRoutePathRedirect
     - HTTPRoutePathRewrite
     - HTTPRoutePortRedirect
@@ -62,7 +63,6 @@ profiles:
     - HTTPRoute308RedirectStatusCode
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
-    - HTTPRouteNamedRouteRule
     - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
@@ -100,5 +100,6 @@ profiles:
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:
+- HTTPRouteNamedRule
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace
