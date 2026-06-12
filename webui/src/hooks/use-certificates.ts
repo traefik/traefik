@@ -1,20 +1,23 @@
 import { useMemo } from 'react'
 import useSWR from 'swr'
 
+const msPerDay = 1000 * 60 * 60 * 24;
+
 export const computeDaysLeft = (notAfter: string): number =>
-  Math.floor((new Date(notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  Math.floor((new Date(notAfter).getTime() - Date.now()) / msPerDay)
+
+const getCertificateInfo = (cert: Certificate.Raw): Certificate.Info => ({
+  ...cert,
+  daysLeft: computeDaysLeft(cert.notAfter),
+})
 
 export const useCertificates = () => {
   const { data, error } = useSWR<Certificate.Raw[]>('/certificates')
 
-  const certificates: Certificate.Info[] = useMemo(() => {
-    if (!data) return []
-
-    return data.map((cert) => ({
-      ...cert,
-      daysLeft: computeDaysLeft(cert.notAfter),
-    }))
-  }, [data])
+  const certificates = useMemo<Certificate.Info[]>(
+    () => data?.map(getCertificateInfo) ?? [],
+    [data],
+  )
 
   return {
     certificates,
@@ -26,14 +29,12 @@ export const useCertificates = () => {
 export const useCertificate = (certId: string) => {
   const { data, error } = useSWR<Certificate.Raw>(certId ? `/certificates/${certId}` : null)
 
-  const certificate: Certificate.Info | null = useMemo(() => {
-    if (!data) return null
-
-    return {
-      ...data,
-      daysLeft: computeDaysLeft(data.notAfter),
-    }
-  }, [data])
+  const certificate = useMemo<Certificate.Info | null>(
+    () => data
+      ? getCertificateInfo(data)
+      : null,
+    [data],
+  )
 
   return {
     certificate,
