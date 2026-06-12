@@ -84,7 +84,7 @@ func buildCertificateRepresentation(cert *x509.Certificate) certificateRepresent
 		SignatureAlgorithm:   cert.SignatureAlgorithm.String(),
 		CertFingerprint:      certFingerprint,
 		PublicKeyFingerprint: pubKeyFingerprint,
-		Status:               getCertificateStatus(cert.NotAfter),
+		Status:               getCertificateStatus(cert.NotBefore, cert.NotAfter),
 	}
 }
 
@@ -159,13 +159,16 @@ func formatVersion(version int) string {
 }
 
 // getCertificateStatus returns the status of a certificate based on its expiry.
-func getCertificateStatus(notAfter time.Time) string {
+func getCertificateStatus(notBefore time.Time, notAfter time.Time) string {
 	remaining := time.Until(notAfter)
 	if remaining < 0 {
 		return certStatusExpired
 	}
-	// Show warning for certificates with validity less than 30 days left.
-	if remaining < 30*24*time.Hour {
+	lifeTime := notAfter.Sub(notBefore)
+	warningRatio := 1 / 3.0
+
+	// Show warning for certificates with validity smaller than allowed ratio.
+	if float64(remaining.Milliseconds()/lifeTime.Milliseconds()) < warningRatio {
 		return certStatusWarning
 	}
 	return certStatusEnabled
