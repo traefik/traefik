@@ -2,6 +2,7 @@ package ingress
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -29,6 +30,33 @@ type RouterIng struct {
 	RuleSyntax    string                             `json:"ruleSyntax,omitempty"`
 	TLS           *dynamic.RouterTLSConfig           `json:"tls,omitempty" label:"allowEmpty"`
 	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty" label:"allowEmpty"`
+}
+
+func (r *RouterConfig) DeepCopy() *RouterConfig {
+	if r == nil {
+		return nil
+	}
+
+	out := new(RouterConfig)
+	if r.Router != nil {
+		out.Router = r.Router.DeepCopy()
+	}
+
+	return out
+}
+
+func (r *RouterIng) DeepCopy() *RouterIng {
+	if r == nil {
+		return nil
+	}
+
+	out := *r
+	out.EntryPoints = slices.Clone(r.EntryPoints)
+	out.Middlewares = slices.Clone(r.Middlewares)
+	out.TLS = r.TLS.DeepCopy()
+	out.Observability = r.Observability.DeepCopy()
+
+	return &out
 }
 
 // SetDefaults sets the default values.
