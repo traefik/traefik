@@ -45,7 +45,6 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteBackendProtocolH2CFeature,
 		features.HTTPRouteBackendProtocolWebSocketFeature,
 		features.HTTPRouteDestinationPortMatchingFeature,
-		features.HTTPRouteBackendRequestHeaderModificationFeature,
 		features.HTTPRouteNamedRouteRule,
 		features.HTTPRouteParentRefPortFeature,
 	)
