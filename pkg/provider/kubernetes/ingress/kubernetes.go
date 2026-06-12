@@ -536,6 +536,13 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client, nod
 			})
 		}
 
+		if len(ingressStatus) == 0 && service.Spec.ClusterIP != "" && service.Spec.ClusterIP != "None" {
+			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+				IP:    service.Spec.ClusterIP,
+				Ports: ports,
+			})
+		}
+
 	case corev1.ServiceTypeNodePort:
 		if p.DisableClusterScopeResources {
 			return errors.New("node port service type is not supported when cluster scope resources lookup is disabled")
