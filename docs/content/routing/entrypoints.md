@@ -1314,6 +1314,49 @@ entryPoints:
 | false        | /./foo/../bar// | /./foo/../bar//        |
 | true         | /./foo/../bar// | /bar/                  |
 
+### AllowHeadersWithUnderscores
+
+_Optional, Default=true_
+
+The `allowHeadersWithUnderscores` option defines whether request headers with underscores in their names are allowed.
+When disabled, any request header whose name contains an underscore character is silently removed from the request before routing.
+
+Underscores are valid characters in HTTP header names, but Go canonicalizes header names only on dashes, so a middleware 
+managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `authResponseHeaders` option) cannot see or remove an underscore variant (e.g. `X_Auth_User`).
+
+!!! warning "Security"
+
+    Backends mapping both forms to the same variable (CGI, WSGI, PHP, ...) can be spoofed with the underscore variant of a managed header.
+    Setting the `allowHeadersWithUnderscores` option to `false` is recommended when such backends are exposed.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      allowHeadersWithUnderscores: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    allowHeadersWithUnderscores = false
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.allowHeadersWithUnderscores=false
+```
+
+#### Examples
+
+| AllowHeadersWithUnderscores | Request Headers                                | Headers Reaching the Backend                   |
+|-----------------------------|------------------------------------------------|------------------------------------------------|
+| true                        | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit` <br> `X_Auth_User: spoof` |
+| false                       | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit`                           |
+
 ### Middlewares
 
 The list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.

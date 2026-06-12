@@ -196,7 +196,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	for _, headerName := range fa.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
-		deleteCanonicalHeaders(req.Header, headerKey)
+		req.Header.Del(headerKey)
 		if len(forwardResponse.Header[headerKey]) > 0 {
 			req.Header[headerKey] = append([]string(nil), forwardResponse.Header[headerKey]...)
 		}
@@ -204,10 +204,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if fa.authResponseHeadersRegex != nil {
 		for headerKey := range req.Header {
-			// Normalize underscore aliases (e.g. X_auth_user -> X-Auth-User) so that
-			// the operator's dash-form regex also strips attacker-supplied underscore variants.
-			normalized := http.CanonicalHeaderKey(strings.ReplaceAll(headerKey, "_", "-"))
-			if fa.authResponseHeadersRegex.MatchString(normalized) {
+			if fa.authResponseHeadersRegex.MatchString(headerKey) {
 				req.Header.Del(headerKey)
 			}
 		}
