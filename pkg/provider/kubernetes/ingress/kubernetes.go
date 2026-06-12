@@ -255,6 +255,26 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	ingresses := client.GetIngresses()
 
+	var nodeIngressStatus []netv1.IngressLoadBalancerIngress
+	if p.ReportNodeInternalIPs {
+		nodes, _, err := client.GetNodes()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Error while getting nodes for ingress status")
+		} else {
+			for _, node := range nodes {
+				for _, address := range node.Status.Addresses {
+					if address.Type == corev1.NodeInternalIP {
+						nodeIngressStatus = append(nodeIngressStatus, netv1.IngressLoadBalancerIngress{IP: address.Address})
+					}
+				}
+			}
+
+			if len(nodeIngressStatus) == 0 {
+				log.Ctx(ctx).Error().Msg("No nodes with internal IP address found for ingress status")
+			}
+		}
+	}
+
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
@@ -264,7 +284,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
-		if err := p.updateIngressStatus(ingress, client); err != nil {
+		if err := p.updateIngressStatus(ingress, client, nodeIngressStatus); err != nil {
 			logger.Error().Err(err).Msg("Error while updating ingress status")
 		}
 
@@ -451,33 +471,9 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	return conf
 }
 
-func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {
-	if p.ReportNodeInternalIPs {
-		nodes, _, err := k8sClient.GetNodes()
-		if err != nil {
-			return fmt.Errorf("getting nodes: %w", err)
-		}
-
-		if len(nodes) == 0 {
-			return errors.New("no nodes found")
-		}
-
-		var ingressStatus []netv1.IngressLoadBalancerIngress
-		for _, node := range nodes {
-			for _, address := range node.Status.Addresses {
-				if address.Type == corev1.NodeInternalIP {
-					ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
-						IP: address.Address,
-					})
-				}
-			}
-		}
-
-		if len(ingressStatus) == 0 {
-			return errors.New("no nodes with internal IP address found")
-		}
-
-		return k8sClient.UpdateIngressStatus(ing, ingressStatus)
+func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client, nodeIngressStatus []netv1.IngressLoadBalancerIngress) error {
+	if len(nodeIngressStatus) > 0 {
+		return k8sClient.UpdateIngressStatus(ing, nodeIngressStatus)
 	}
 
 	// Only process if an EndpointIngress has been configured.

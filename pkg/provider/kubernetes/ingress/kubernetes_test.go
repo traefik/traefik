@@ -3111,52 +3111,25 @@ func TestProviderInit(t *testing.T) {
 	assert.NoError(t, p3.Init())
 }
 
-func TestIngressEndpointReportNodeInternalIPs(t *testing.T) {
-	expected := []netv1.IngressLoadBalancerIngress{
-		{IP: "10.0.0.1"},
-		{IP: "10.0.0.2"},
-	}
-
-	k8sObjects := readResources(t, []string{generateTestFilename("Node Internal IP")})
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-
-	client := newClientImpl(kubeClient)
-
-	stopCh := make(chan struct{})
-	eventCh, err := client.WatchAll(nil, stopCh)
-	require.NoError(t, err)
-
-	if k8sObjects != nil {
-		// just wait for the first event
-		<-eventCh
-	}
-
-	p := Provider{ReportNodeInternalIPs: true}
-	p.loadConfigurationFromIngresses(t.Context(), client)
-
-	ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	assert.ElementsMatch(t, expected, ingress.Status.LoadBalancer.Ingress)
-}
-
-func TestUpdateIngressStatusReportNodeInternalIPsErrors(t *testing.T) {
+func TestReportNodeInternalIPs(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		client      clientMock
-		expectedErr string
+		desc          string
+		client        clientMock
+		expectedEmpty bool
 	}{
 		{
-			desc:        "GetNodes API error",
-			client:      clientMock{apiNodesError: errors.New("api nodes error")},
-			expectedErr: "getting nodes: api nodes error",
+			desc:   "nodes present",
+			client: newClientMock(generateTestFilename("Node Internal IP")),
 		},
 		{
-			desc: "no nodes found",
-			client: clientMock{
-				nodes: []*corev1.Node{},
-			},
-			expectedErr: "no nodes found",
+			desc:          "GetNodes API error",
+			client:        clientMock{apiNodesError: errors.New("api nodes error")},
+			expectedEmpty: true,
+		},
+		{
+			desc:          "no nodes found",
+			client:        clientMock{nodes: []*corev1.Node{}},
+			expectedEmpty: true,
 		},
 		{
 			desc: "nodes exist but none have an internal IP",
@@ -3171,7 +3144,7 @@ func TestUpdateIngressStatusReportNodeInternalIPsErrors(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "no nodes with internal IP address found",
+			expectedEmpty: true,
 		},
 	}
 
@@ -3180,8 +3153,14 @@ func TestUpdateIngressStatusReportNodeInternalIPsErrors(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{ReportNodeInternalIPs: true}
-			err := p.updateIngressStatus(&netv1.Ingress{}, test.client)
-			assert.EqualError(t, err, test.expectedErr)
+			conf := p.loadConfigurationFromIngresses(t.Context(), test.client)
+			if test.expectedEmpty {
+				assert.Empty(t, conf.HTTP.Routers)
+				assert.Empty(t, conf.HTTP.Services)
+			} else {
+				assert.NotEmpty(t, conf.HTTP.Routers)
+				assert.NotEmpty(t, conf.HTTP.Services)
+			}
 		})
 	}
 }
