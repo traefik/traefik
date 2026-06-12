@@ -26,11 +26,6 @@ type Resource struct {
 	URI  string       `json:"uri,omitempty"`
 }
 
-const (
-	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format.
-	RegistrationURLPathV1Regexp = `^.*/acme/reg/\d+$`
-)
-
 // NewAccount creates an account.
 func NewAccount(email string) (*Account, error) {
 	// Create a user. New accounts need an email and private key to start
