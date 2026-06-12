@@ -7793,6 +7793,51 @@ func Test_matchingGatewayListener(t *testing.T) {
 	}
 }
 
+func BenchmarkGatewayListenerIndexMatching(b *testing.B) {
+	const (
+		gatewayCount       = 500
+		listenerPerGateway = 4
+		routeCount         = 10000
+	)
+
+	var gatewayListeners []gatewayListener
+	for gi := range gatewayCount {
+		for li := range listenerPerGateway {
+			gatewayListeners = append(gatewayListeners, gatewayListener{
+				Name:        fmt.Sprintf("listener-%d", li),
+				GWName:      fmt.Sprintf("gateway-%d", gi),
+				GWNamespace: "default",
+			})
+		}
+	}
+
+	parentRefs := make([][]gatev1.ParentReference, routeCount)
+	for i := range routeCount {
+		parentRefs[i] = []gatev1.ParentReference{{
+			Name: gatev1.ObjectName(fmt.Sprintf("gateway-%d", i%gatewayCount)),
+		}}
+	}
+
+	listenerIndex := newGatewayListenerIndex(gatewayListeners)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	var total int
+	var listeners []gatewayListener
+	for range b.N {
+		total = 0
+		for _, routeParentRefs := range parentRefs {
+			listeners = listenerIndex.matchingInto(listeners[:0], "default", routeParentRefs)
+			total += len(listeners)
+		}
+	}
+
+	if total != routeCount*listenerPerGateway {
+		b.Fatalf("unexpected listener count: %d", total)
+	}
+}
+
 func Test_matchListener(t *testing.T) {
 	testCases := []struct {
 		desc       string

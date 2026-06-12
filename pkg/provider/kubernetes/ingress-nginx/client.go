@@ -20,7 +20,6 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -172,7 +171,11 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		endpointSliceInformer := factoryKube.Discovery().V1().EndpointSlices().Informer()
+		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceServiceNameIndexers); err != nil {
+			return nil, err
+		}
+		_, err = endpointSliceInformer.AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -320,14 +323,7 @@ func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName strin
 		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
-	}
-	serviceSelector := labels.NewSelector()
-	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
-
-	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
+	return k8s.EndpointSlicesByServiceName(c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Informer().GetIndexer(), namespace, serviceName)
 }
 
 // GetConfigMap returns the named configMap from the given namespace.

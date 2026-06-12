@@ -19,7 +19,7 @@ import (
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
-func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadTCPRoutes(ctx context.Context, listenerIndex gatewayListenerIndex, conf *dynamic.Configuration, statusReport *statusReport) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTCPRoutes()
 	if err != nil {
@@ -27,8 +27,9 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 		return
 	}
 
+	var routeListeners []gatewayListener
 	for _, route := range routes {
-		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
+		routeListeners = listenerIndex.matchingInto(routeListeners[:0], route.Namespace, route.Spec.ParentRefs)
 		if len(routeListeners) == 0 {
 			continue
 		}

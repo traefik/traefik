@@ -144,6 +144,44 @@ type gatewayListener struct {
 	EPName       string
 }
 
+type gatewayListenerIndex struct {
+	byGateway map[ktypes.NamespacedName][]gatewayListener
+}
+
+func newGatewayListenerIndex(listeners []gatewayListener) gatewayListenerIndex {
+	index := gatewayListenerIndex{byGateway: map[ktypes.NamespacedName][]gatewayListener{}}
+	for _, listener := range listeners {
+		key := ktypes.NamespacedName{Namespace: listener.GWNamespace, Name: listener.GWName}
+		index.byGateway[key] = append(index.byGateway[key], listener)
+	}
+
+	return index
+}
+
+func (i gatewayListenerIndex) matching(routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	return i.matchingInto(nil, routeNamespace, parentRefs)
+}
+
+func (i gatewayListenerIndex) matchingInto(listeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	for _, parentRef := range parentRefs {
+		if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+			continue
+		}
+
+		if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+			continue
+		}
+
+		key := ktypes.NamespacedName{
+			Namespace: string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace))),
+			Name:      string(parentRef.Name),
+		}
+		listeners = append(listeners, i.byGateway[key]...)
+	}
+
+	return listeners
+}
+
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
 func (p *Provider) RegisterFilterFuncs(group, kind string, builderFunc BuildFilterFunc) {
 	if p.groupKindFilterFuncs == nil {
@@ -394,14 +432,16 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
 	}
 
-	p.loadHTTPRoutes(ctx, gatewayListeners, conf, statusReport)
+	listenerIndex := newGatewayListenerIndex(gatewayListeners)
 
-	p.loadGRPCRoutes(ctx, gatewayListeners, conf, statusReport)
+	p.loadHTTPRoutes(ctx, listenerIndex, conf, statusReport)
 
-	p.loadTLSRoutes(ctx, gatewayListeners, conf, statusReport)
+	p.loadGRPCRoutes(ctx, listenerIndex, conf, statusReport)
+
+	p.loadTLSRoutes(ctx, listenerIndex, conf, statusReport)
 
 	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, gatewayListeners, conf, statusReport)
+		p.loadTCPRoutes(ctx, listenerIndex, conf, statusReport)
 	}
 
 	for _, gateway := range gateways {
@@ -410,12 +450,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		var listeners []gatewayListener
-		for _, listener := range gatewayListeners {
-			if listener.GWName == gateway.Name && listener.GWNamespace == gateway.Namespace {
-				listeners = append(listeners, listener)
-			}
-		}
+		listeners := listenerIndex.byGateway[ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}]
 
 		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
 		if len(errConditions) > 0 {
@@ -1105,32 +1140,7 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 }
 
 func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
-	var listeners []gatewayListener
-
-	for _, listener := range gatewayListeners {
-		for _, parentRef := range parentRefs {
-			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
-				continue
-			}
-
-			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
-				continue
-			}
-
-			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-			if listener.GWNamespace != parentRefNamespace {
-				continue
-			}
-
-			if string(parentRef.Name) != listener.GWName {
-				continue
-			}
-
-			listeners = append(listeners, listener)
-		}
-	}
-
-	return listeners
+	return newGatewayListenerIndex(gatewayListeners).matching(routeNamespace, parentRefs)
 }
 
 func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
