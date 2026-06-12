@@ -148,5 +148,6 @@ declare namespace Certificate {
   /** Enriched certificate with computed fields */
   type Info = Raw & {
     daysLeft: number
+    daysLifetime: number
   }
 }

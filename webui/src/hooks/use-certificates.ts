@@ -6,9 +6,13 @@ const msPerDay = 1000 * 60 * 60 * 24;
 export const computeDaysLeft = (notAfter: string): number =>
   Math.floor((new Date(notAfter).getTime() - Date.now()) / msPerDay)
 
+export const computeDaysLifetime = (notAfter: string, notBefore: string): number =>
+  Math.floor((new Date(notAfter).getTime() - new Date(notBefore).getTime()) / msPerDay)
+
 const getCertificateInfo = (cert: Certificate.Raw): Certificate.Info => ({
   ...cert,
   daysLeft: computeDaysLeft(cert.notAfter),
+  daysLifetime: computeDaysLifetime(cert.notAfter, cert.notBefore),
 })
 
 export const useCertificates = () => {
