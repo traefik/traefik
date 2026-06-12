@@ -164,6 +164,25 @@ func (p *Provider) buildBuffering(ctx context.Context, loc *location) {
 		disableResp = *loc.Config.ProxyBuffering != "on"
 	}
 
+	// Parse proxy-body-size before the early-return: in NGINX, client_max_body_size
+	// is enforced independently of proxy_request_buffering. Resolve the annotation
+	// value here so we can decide whether buffering must stay on.
+	maxRequestBodyBytes := p.ProxyBodySize
+	if s := ptr.Deref(loc.Config.ProxyBodySize, ""); s != "" {
+		if v, err := nginxSizeToBytes(s); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("proxy-body-size invalid, using provider default")
+		} else {
+			maxRequestBodyBytes = v
+		}
+	}
+
+	// The underlying buffer library only enforces MaxRequestBodyBytes when request
+	// buffering is enabled. Force it on when a body size limit is configured so
+	// the limit is actually respected, matching NGINX's behaviour.
+	if maxRequestBodyBytes > 0 {
+		disableReq = false
+	}
+
 	if disableReq && disableResp {
 		return
 	}
@@ -172,7 +191,7 @@ func (p *Provider) buildBuffering(ctx context.Context, loc *location) {
 		DisableRequestBuffer:  disableReq,
 		DisableResponseBuffer: disableResp,
 		MemRequestBodyBytes:   p.ClientBodyBufferSize,
-		MaxRequestBodyBytes:   p.ProxyBodySize,
+		MaxRequestBodyBytes:   maxRequestBodyBytes,
 		MemResponseBodyBytes:  p.ProxyBufferSize * int64(p.ProxyBuffersNumber),
 	}
 
@@ -182,13 +201,6 @@ func (p *Provider) buildBuffering(ctx context.Context, loc *location) {
 				log.Ctx(ctx).Warn().Err(err).Msg("client-body-buffer-size invalid, using provider default")
 			} else {
 				buf.MemRequestBodyBytes = v
-			}
-		}
-		if s := ptr.Deref(loc.Config.ProxyBodySize, ""); s != "" {
-			if v, err := nginxSizeToBytes(s); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("proxy-body-size invalid, using provider default")
-			} else {
-				buf.MaxRequestBodyBytes = v
 			}
 		}
 	}
