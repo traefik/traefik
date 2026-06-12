@@ -516,8 +516,7 @@ func TestInitAccount(t *testing.T) {
 				Email: "foo@foo.net",
 			},
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: "4096",
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -525,20 +524,16 @@ func TestInitAccount(t *testing.T) {
 			email:   "foo@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: "4096",
+				Email: "foo@foo.net",
 			},
 		},
 		{
-			desc: "Existing account with no email",
-			account: &Account{
-				KeyType: "4096",
-			},
+			desc:    "Existing account with no email",
+			account: &Account{},
 			email:   "foo@foo.net",
 			keyType: "4096",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: "4096",
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -549,8 +544,7 @@ func TestInitAccount(t *testing.T) {
 			email:   "bar@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: "4096",
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -560,8 +554,7 @@ func TestInitAccount(t *testing.T) {
 			},
 			email: "bar@foo.net",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: "4096",
+				Email: "foo@foo.net",
 			},
 		},
 	}
@@ -574,7 +567,6 @@ func TestInitAccount(t *testing.T) {
 			actualAccount, err := acmeProvider.initAccount()
 			assert.NoError(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
-			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
 }

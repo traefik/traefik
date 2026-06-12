@@ -18,7 +18,6 @@ type Account struct {
 	Email        string
 	Registration *Resource
 	PrivateKey   []byte
-	KeyType      string
 }
 
 type Resource struct {
@@ -37,7 +36,6 @@ func NewAccount(email string) (*Account, error) {
 	return &Account{
 		Email:      email,
 		PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
-		KeyType:    "4096",
 	}, nil
 }
 

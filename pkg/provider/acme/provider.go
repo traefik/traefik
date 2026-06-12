@@ -458,11 +458,6 @@ func (p *Provider) initAccount() (*Account, error) {
 		}
 	}
 
-	// Set the KeyType if not already defined in the account
-	if len(p.account.KeyType) == 0 {
-		p.account.KeyType = "4096"
-	}
-
 	return p.account, nil
 }
 
