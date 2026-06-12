@@ -493,7 +493,13 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	legolog.SetDefault(slog.New(slogzerolog.Option{Logger: &log.Logger}.NewZerologHandler()))
+	legolog.SetDefault(
+		slog.New(
+			slogzerolog.Option{Logger: &log.Logger}.
+				NewZerologHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {
