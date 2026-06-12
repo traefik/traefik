@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"net"
 )
 
@@ -25,4 +26,12 @@ type WriteCloser interface {
 	// has terminated sending on that connection.
 	// It corresponds to sending a FIN packet.
 	CloseWrite() error
+}
+
+// LoadBalancer is the interface that TCP load balancers must implement.
+type LoadBalancer interface {
+	Handler
+	Add(name string, handler Handler, weight *int)
+	SetStatus(ctx context.Context, childName string, up bool)
+	RegisterStatusUpdater(fn func(up bool)) error
 }

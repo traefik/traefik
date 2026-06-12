@@ -234,6 +234,42 @@ func TestManager_BuildTCP(t *testing.T) {
 			expectedError: "no transport configuration found for \"myServersTransport@provider-1\"",
 		},
 		{
+			desc:        "ip-hash strategy builds successfully",
+			serviceName: "serviceName",
+			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Strategy: dynamic.TCPBalancerStrategyIPHash,
+							Servers: []dynamic.TCPServer{
+								{Address: "192.168.0.12:80"},
+							},
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
+		},
+		{
+			desc:        "wrr strategy builds successfully",
+			serviceName: "serviceName",
+			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Strategy: dynamic.TCPBalancerStrategyWRR,
+							Servers: []dynamic.TCPServer{
+								{Address: "192.168.0.12:80"},
+							},
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
+		},
+		{
 			desc:        "WRR with healthcheck enabled",
 			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
 			serviceName: "serviceName",
