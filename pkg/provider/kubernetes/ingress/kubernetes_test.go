@@ -23,15 +23,91 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/utils/ptr"
 )
 
 var _ provider.Provider = (*Provider)(nil)
 
 func pointer[T any](v T) *T { return &v }
+
+func TestLoadServiceCachedDeduplicatesBackendLoads(t *testing.T) {
+	client := &countingClient{
+		clientMock: clientMock{
+			services: []*corev1.Service{
+				{
+					ObjectMeta: metav1.ObjectMeta{Namespace: "testing", Name: "whoami"},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name:       "http",
+								Port:       80,
+								TargetPort: intstr.FromInt32(8080),
+							},
+						},
+					},
+				},
+			},
+			endpointSlices: []*discoveryv1.EndpointSlice{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "testing",
+						Labels: map[string]string{
+							discoveryv1.LabelServiceName: "whoami",
+						},
+					},
+					Ports: []discoveryv1.EndpointPort{
+						{Name: ptr.To("http"), Port: ptr.To[int32](8080)},
+					},
+					Endpoints: []discoveryv1.Endpoint{
+						{Addresses: []string{"10.0.0.1"}},
+					},
+				},
+			},
+		},
+	}
+	backend := netv1.IngressBackend{
+		Service: &netv1.IngressServiceBackend{
+			Name: "whoami",
+			Port: netv1.ServiceBackendPort{Name: "http"},
+		},
+	}
+	cache := map[string]serviceCacheEntry{}
+
+	p := &Provider{}
+	service, err := p.loadServiceCached(client, "testing", backend, cache)
+	require.NoError(t, err)
+	service.LoadBalancer.Servers[0].URL = "http://mutated"
+
+	service, err = p.loadServiceCached(client, "testing", backend, cache)
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://10.0.0.1:8080", service.LoadBalancer.Servers[0].URL)
+	assert.Equal(t, 1, client.getServiceCalls)
+	assert.Equal(t, 1, client.getEndpointSlicesCalls)
+}
+
+type countingClient struct {
+	clientMock
+
+	getServiceCalls        int
+	getEndpointSlicesCalls int
+}
+
+func (c *countingClient) GetService(namespace, name string) (*corev1.Service, bool, error) {
+	c.getServiceCalls++
+	return c.clientMock.GetService(namespace, name)
+}
+
+func (c *countingClient) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
+	c.getEndpointSlicesCalls++
+	return c.clientMock.GetEndpointSlicesForService(namespace, serviceName)
+}
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {

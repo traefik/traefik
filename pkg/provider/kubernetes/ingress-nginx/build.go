@@ -48,6 +48,11 @@ type certBlocks struct {
 	key  []byte
 }
 
+type backendEndpointsCacheEntry struct {
+	endpoints []endpoint
+	err       error
+}
+
 // build reads all Ingress resources visible to the client and produces a model.
 //
 //nolint:funlen // multi-phase ingress processing kept inline for readability
@@ -62,6 +67,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// that needs an option carries a pointer to the cached entry; the translator
 	// registers each unique option once in conf.TLS.Options.
 	tlsOptionCache := make(map[string]*tls.Options)
+	backendEndpointsCache := make(map[string]backendEndpointsCacheEntry)
 
 	allHosts := make(map[string]bool)
 	hostsWithUseRegex := make(map[string]bool)
@@ -73,6 +79,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			p.defaultBackendServiceNamespace,
 			netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}},
 			IngressConfig{},
+			backendEndpointsCache,
 		)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("Cannot resolve default backend service")
@@ -208,7 +215,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				// The canary backend's addresses are checked using the original ingress config.
-				endpoints, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
+				endpoints, err := p.getBackendEndpointsCached(canaryIngress.Namespace, pa.Backend, prodIngressPath.config, backendEndpointsCache)
 				if err != nil || len(endpoints) == 0 {
 					continue
 				}
@@ -284,7 +291,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					continue
 				}
 
-				endpoints, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
+				endpoints, err := p.getBackendEndpointsCached(ing.Namespace, *ingBackend, ing.config, backendEndpointsCache)
 				if err != nil {
 					logger.Error().Err(err).Msgf("Cannot resolve passthrough backend for host %q", rule.Host)
 					continue
@@ -365,7 +372,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// the location is still emitted with an empty backend so the router
 				// (and its middlewares) exist, mirroring ingress-nginx's 503-on-no-servers
 				// behavior.
-				endpoints, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
+				endpoints, err := p.getBackendEndpointsCached(ing.Namespace, pa.Backend, ing.config, backendEndpointsCache)
 				if err != nil {
 					logger.Warn().
 						Str("service", pa.Backend.Service.Name).
@@ -444,9 +451,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 							// Build the error backend using defaultBackend annotation or provider default.
 							defaultSvcName := ptr.Deref(ing.config.DefaultBackend, "")
 							if defaultSvcName != "" {
-								endpoints, err := p.getBackendEndpoints(ing.Namespace,
+								endpoints, err := p.getBackendEndpointsCached(ing.Namespace,
 									netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
-									ing.config)
+									ing.config,
+									backendEndpointsCache)
 								if err == nil {
 									mc.Backends[errBackendName] = &backend{
 										Name:      errBackendName,
@@ -480,7 +488,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		// (default-backend / default-backend-tls routers) so it still serves traffic.
 		if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil {
 			db := ing.Spec.DefaultBackend
-			endpoints, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
+			endpoints, err := p.getBackendEndpointsCached(ing.Namespace, *db, ing.config, backendEndpointsCache)
 			if err != nil {
 				logger.Warn().
 					Str("service", db.Service.Name).
@@ -724,8 +732,38 @@ func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName stri
 	return endpoints, nil
 }
 
-func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBackend, cfg IngressConfig) (*backend, error) {
-	endpoints, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
+func (p *Provider) getBackendEndpointsCached(namespace string, backend netv1.IngressBackend, cfg IngressConfig, cache map[string]backendEndpointsCacheEntry) ([]endpoint, error) {
+	key := backendEndpointsCacheKey(namespace, backend, cfg)
+	if key == "" {
+		return p.getBackendEndpoints(namespace, backend, cfg)
+	}
+
+	if entry, ok := cache[key]; ok {
+		return slices.Clone(entry.endpoints), entry.err
+	}
+
+	endpoints, err := p.getBackendEndpoints(namespace, backend, cfg)
+	cache[key] = backendEndpointsCacheEntry{endpoints: slices.Clone(endpoints), err: err}
+
+	return endpoints, err
+}
+
+func backendEndpointsCacheKey(namespace string, backend netv1.IngressBackend, cfg IngressConfig) string {
+	if backend.Service == nil {
+		return ""
+	}
+
+	return strings.Join([]string{
+		namespace,
+		backend.Service.Name,
+		portString(backend.Service.Port),
+		strconv.FormatBool(ptr.Deref(cfg.ServiceUpstream, false)),
+		ptr.Deref(cfg.DefaultBackend, ""),
+	}, "/")
+}
+
+func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBackend, cfg IngressConfig, cache map[string]backendEndpointsCacheEntry) (*backend, error) {
+	endpoints, err := p.getBackendEndpointsCached(namespace, ingBackend, cfg, cache)
 	if err != nil {
 		return nil, err
 	}
