@@ -7,6 +7,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#tls-options
@@ -16,7 +17,18 @@ type TLSOption struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec TLSOptionSpec `json:"spec"`
+	Spec   TLSOptionSpec   `json:"spec"`
+	Status TLSOptionStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TLSOptionStatus defines the observed state of TLSOption.
+type TLSOptionStatus struct {
+	// Conditions lists the conditions of the TLSOption.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

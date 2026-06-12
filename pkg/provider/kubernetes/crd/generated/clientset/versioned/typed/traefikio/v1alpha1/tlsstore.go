@@ -48,6 +48,8 @@ type TLSStoresGetter interface {
 type TLSStoreInterface interface {
 	Create(ctx context.Context, tLSStore *traefikiov1alpha1.TLSStore, opts v1.CreateOptions) (*traefikiov1alpha1.TLSStore, error)
 	Update(ctx context.Context, tLSStore *traefikiov1alpha1.TLSStore, opts v1.UpdateOptions) (*traefikiov1alpha1.TLSStore, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, tLSStore *traefikiov1alpha1.TLSStore, opts v1.UpdateOptions) (*traefikiov1alpha1.TLSStore, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikiov1alpha1.TLSStore, error)
@@ -55,6 +57,8 @@ type TLSStoreInterface interface {
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.TLSStore, err error)
 	Apply(ctx context.Context, tLSStore *applyconfigurationtraefikiov1alpha1.TLSStoreApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.TLSStore, err error)
+	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
+	ApplyStatus(ctx context.Context, tLSStore *applyconfigurationtraefikiov1alpha1.TLSStoreApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.TLSStore, err error)
 	TLSStoreExpansion
 }
 

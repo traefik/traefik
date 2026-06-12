@@ -48,6 +48,8 @@ type IngressRouteUDPsGetter interface {
 type IngressRouteUDPInterface interface {
 	Create(ctx context.Context, ingressRouteUDP *traefikiov1alpha1.IngressRouteUDP, opts v1.CreateOptions) (*traefikiov1alpha1.IngressRouteUDP, error)
 	Update(ctx context.Context, ingressRouteUDP *traefikiov1alpha1.IngressRouteUDP, opts v1.UpdateOptions) (*traefikiov1alpha1.IngressRouteUDP, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, ingressRouteUDP *traefikiov1alpha1.IngressRouteUDP, opts v1.UpdateOptions) (*traefikiov1alpha1.IngressRouteUDP, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikiov1alpha1.IngressRouteUDP, error)
@@ -55,6 +57,8 @@ type IngressRouteUDPInterface interface {
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.IngressRouteUDP, err error)
 	Apply(ctx context.Context, ingressRouteUDP *applyconfigurationtraefikiov1alpha1.IngressRouteUDPApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.IngressRouteUDP, err error)
+	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
+	ApplyStatus(ctx context.Context, ingressRouteUDP *applyconfigurationtraefikiov1alpha1.IngressRouteUDPApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.IngressRouteUDP, err error)
 	IngressRouteUDPExpansion
 }
 
