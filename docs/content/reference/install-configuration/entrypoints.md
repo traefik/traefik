@@ -89,6 +89,7 @@ additionalArguments:
 | <a id="opt-asDefault" href="#opt-asDefault" title="#opt-asDefault">`asDefault`</a> | Mark the `entryPoint` to be in the list of default `entryPoints`.<br /> `entryPoints`in this list are used (by default) on HTTP and TCP routers that do not define their own `entryPoints` option.<br /> More information [here](#asdefault).                                                                                                                                                                                                                                                                                                                                                                                                                                       | false                   | No       |
 | <a id="opt-allowACMEByPass" href="#opt-allowACMEByPass" title="#opt-allowACMEByPass">`allowACMEByPass`</a> | Enables handling of ACME TLS and HTTP challenges with custom routers instead of the internal ACME router.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | false                   | No       |
 | <a id="opt-forwardedHeaders-connection" href="#opt-forwardedHeaders-connection" title="#opt-forwardedHeaders-connection">`forwardedHeaders.`<br />`connection`</a> | List of Connection headers that are allowed to pass through the middleware chain before being removed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
+| <a id="opt-forwardedHeaders-addXForwardedSchemeHeaders" href="#opt-forwardedHeaders-addXForwardedSchemeHeaders" title="#opt-forwardedHeaders-addXForwardedSchemeHeaders">`forwardedHeaders.`<br />`addXForwardedSchemeHeaders`</a> | Add the compatibility headers `X-Forwarded-Scheme` and `X-Scheme`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | false                   | No       |
 | <a id="opt-forwardedHeaders-insecure" href="#opt-forwardedHeaders-insecure" title="#opt-forwardedHeaders-insecure">`forwardedHeaders.`<br />`insecure`</a> | Set the insecure mode to always trust the forwarded headers information (`X-Forwarded-*`).<br />We recommend to use this option only for tests purposes, not in production.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
 | <a id="opt-forwardedHeaders-trustedIPs" href="#opt-forwardedHeaders-trustedIPs" title="#opt-forwardedHeaders-trustedIPs">`forwardedHeaders.`<br />`trustedIPs`</a> | Set the IPs or CIDR from where Traefik trusts the forwarded headers information (`X-Forwarded-*`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | -                       | No       |
 | <a id="opt-forwardedHeaders-notAppendXForwardedFor" href="#opt-forwardedHeaders-notAppendXForwardedFor" title="#opt-forwardedHeaders-notAppendXForwardedFor">`forwardedHeaders.`<br />`notAppendXForwardedFor`</a> | When set to `true`, Traefik will not append the client's `RemoteAddr` to the `X-Forwarded-For` header. The existing header is preserved as-is. If no `X-Forwarded-For` header exists, none will be added.                                                                                                                                                                                                                                                                                                                                    | false                   | No       |
@@ -390,6 +391,37 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ## Static configuration
     --entryPoints.web.address=:80
     --entryPoints.web.forwardedHeaders.connection=foobar
+    ```
+
+??? info "`forwardedHeaders.addXForwardedSchemeHeaders`"
+
+    Add the compatibility headers `X-Forwarded-Scheme` and `X-Scheme` next to `X-Forwarded-Proto`.
+    This is primarily useful when migrating from ingress-nginx and your applications still rely on these legacy headers.
+    When enabled, these compatibility headers follow the same value as `X-Forwarded-Proto`.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      websecure:
+        address: ":443"
+        forwardedHeaders:
+          addXForwardedSchemeHeaders: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.websecure]
+        address = ":443"
+
+        [entryPoints.websecure.forwardedHeaders]
+          addXForwardedSchemeHeaders = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.websecure.address=:443
+    --entryPoints.websecure.forwardedHeaders.addXForwardedSchemeHeaders=true
     ```
 
 ### HTTP3
