@@ -72,6 +72,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
 						SanitizePath:   pointer(true),
+						MergeSlashes:   pointer(true),
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
@@ -120,6 +121,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
 						SanitizePath:   pointer(true),
+						MergeSlashes:   pointer(true),
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
@@ -179,6 +181,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
 						SanitizePath:   pointer(true),
+						MergeSlashes:   pointer(true),
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
@@ -242,6 +245,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
 						SanitizePath:   pointer(true),
+						MergeSlashes:   pointer(true),
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
