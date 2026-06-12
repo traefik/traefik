@@ -49,7 +49,7 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 	}
 
 	if config.Redis.WriteTimeout != nil {
-		if *config.Redis.ReadTimeout > 0 {
+		if *config.Redis.WriteTimeout > 0 {
 			options.WriteTimeout = time.Duration(*config.Redis.WriteTimeout)
 		} else {
 			options.WriteTimeout = -1

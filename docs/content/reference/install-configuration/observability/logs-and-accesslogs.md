@@ -171,6 +171,9 @@ accessLog:
         User-Agent: redact
         # Drop the Authorization header value
         Authorization: drop
+    queryParameters:
+      # Drop all query parameters
+      defaultMode: drop
 ```
 
 ```toml tab="File (TOML)"
@@ -194,6 +197,9 @@ accessLog:
       [accessLog.fields.headers.names]
         User-Agent = "redact"
         Authorization = "drop"
+
+    [accessLog.fields.queryParameters]
+      defaultMode = "drop"
 ```
 
 ```sh tab="CLI"
@@ -208,6 +214,7 @@ accessLog:
 --accesslog.fields.headers.defaultmode=keep
 --accesslog.fields.headers.names.User-Agent=redact
 --accesslog.fields.headers.names.Authorization=drop
+--accesslog.fields.queryparameters.defaultmode=drop
 ```
 
 ### Configuration Options
@@ -232,6 +239,7 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-maxAge" href="#opt-accesslog-maxAge" title="#opt-accesslog-maxAge">`accesslog.maxAge`</a> | Maximum number of days to retain old access log files based on the timestamp encoded in their filename.<br /> A day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc.<br />By default files are not removed based on their age.  |   0   | No      |
 | <a id="opt-accesslog-maxBackups" href="#opt-accesslog-maxBackups" title="#opt-accesslog-maxBackups">`accesslog.maxBackups`</a> | Maximum number of old access log files to retain.<br />The default is to retain all old log files. |  0  | No      |
 | <a id="opt-accesslog-compress" href="#opt-accesslog-compress" title="#opt-accesslog-compress">`accesslog.compress`</a> | Compress access log files in gzip after rotation. | false | No      |
+| <a id="opt-accesslog-fields-queryParameters-defaultMode" href="#opt-accesslog-fields-queryParameters-defaultMode" title="#opt-accesslog-fields-queryParameters-defaultMode">`accesslog.fields.queryParameters.defaultMode`</a> | Mode to apply by default to the access logs query parameters (`keep` or `drop`) | keep | No      |
 
 ### OpenTelemetry
 

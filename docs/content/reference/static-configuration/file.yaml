@@ -61,6 +61,7 @@ entryPoints:
       connection:
         - foobar
         - foobar
+      addXForwardedSchemeHeaders: true
     http:
       redirections:
         entryPoint:
