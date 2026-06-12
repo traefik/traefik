@@ -110,7 +110,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
 
-		conf.HTTP.Routers[defaultBackendName] = rt
+		if !p.DisableHTTPEntryPoint {
+			conf.HTTP.Routers[defaultBackendName] = rt
+		}
 		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
 	}
 
@@ -230,13 +232,17 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS.Service = unavailableServiceName
 			}
 
-			conf.HTTP.Routers[routerKey] = rt
+			if !p.DisableHTTPEntryPoint {
+				conf.HTTP.Routers[routerKey] = rt
+			}
 			conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
 
 			if !loc.Error {
-				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
+				if !p.DisableHTTPEntryPoint {
+					p.applyMiddlewares(mc, loc, routerKey, rt, conf)
+					applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
+				}
 				p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
-				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
 				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 			}
 
