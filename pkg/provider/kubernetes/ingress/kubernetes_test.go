@@ -3094,6 +3094,77 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	return k8sObjects
 }
 
+func TestProviderInit(t *testing.T) {
+	p := Provider{
+		ReportNodeInternalIPs: true,
+		IngressEndpoint:       &EndpointIngress{IP: "1.2.3.4"},
+	}
+	assert.EqualError(t, p.Init(), "reportNodeInternalIPs and ingressEndpoint are mutually exclusive")
+
+	p2 := Provider{
+		ReportNodeInternalIPs:        true,
+		DisableClusterScopeResources: true,
+	}
+	assert.EqualError(t, p2.Init(), "reportNodeInternalIPs and disableClusterScopeResources are mutually exclusive")
+
+	p3 := Provider{ReportNodeInternalIPs: true}
+	assert.NoError(t, p3.Init())
+}
+
+func TestReportNodeInternalIPs(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        clientMock
+		expectedEmpty bool
+	}{
+		{
+			desc:   "nodes present",
+			client: newClientMock(generateTestFilename("Node Internal IP")),
+		},
+		{
+			desc:          "GetNodes API error",
+			client:        clientMock{apiNodesError: errors.New("api nodes error")},
+			expectedEmpty: true,
+		},
+		{
+			desc:          "no nodes found",
+			client:        clientMock{nodes: []*corev1.Node{}},
+			expectedEmpty: true,
+		},
+		{
+			desc: "nodes exist but none have an internal IP",
+			client: clientMock{
+				nodes: []*corev1.Node{
+					{
+						Status: corev1.NodeStatus{
+							Addresses: []corev1.NodeAddress{
+								{Type: corev1.NodeExternalIP, Address: "1.2.3.4"},
+							},
+						},
+					},
+				},
+			},
+			expectedEmpty: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{ReportNodeInternalIPs: true}
+			conf := p.loadConfigurationFromIngresses(t.Context(), test.client)
+			if test.expectedEmpty {
+				assert.Empty(t, conf.HTTP.Routers)
+				assert.Empty(t, conf.HTTP.Services)
+			} else {
+				assert.NotEmpty(t, conf.HTTP.Routers)
+				assert.NotEmpty(t, conf.HTTP.Services)
+			}
+		})
+	}
+}
+
 func TestStrictPrefixMatchingRule(t *testing.T) {
 	tests := []struct {
 		path        string

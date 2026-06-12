@@ -48,6 +48,7 @@ type Provider struct {
 	LabelSelector             string              `description:"Kubernetes Ingress label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass              string              `description:"Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	IngressEndpoint           *EndpointIngress    `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty" export:"true"`
+	ReportNodeInternalIPs     bool                `description:"Report node internal IPs in Ingress status." json:"reportNodeInternalIPs,omitempty" toml:"reportNodeInternalIPs,omitempty" yaml:"reportNodeInternalIPs,omitempty" export:"true"`
 	ThrottleDuration          ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
@@ -72,6 +73,14 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	if p.ReportNodeInternalIPs && p.IngressEndpoint != nil {
+		return errors.New("reportNodeInternalIPs and ingressEndpoint are mutually exclusive")
+	}
+
+	if p.ReportNodeInternalIPs && p.DisableClusterScopeResources {
+		return errors.New("reportNodeInternalIPs and disableClusterScopeResources are mutually exclusive")
+	}
+
 	return nil
 }
 
@@ -246,6 +255,26 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	ingresses := client.GetIngresses()
 
+	var nodeIngressStatus []netv1.IngressLoadBalancerIngress
+	if p.ReportNodeInternalIPs {
+		nodes, _, err := client.GetNodes()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Error while getting nodes for ingress status")
+		} else {
+			for _, node := range nodes {
+				for _, address := range node.Status.Addresses {
+					if address.Type == corev1.NodeInternalIP {
+						nodeIngressStatus = append(nodeIngressStatus, netv1.IngressLoadBalancerIngress{IP: address.Address})
+					}
+				}
+			}
+
+			if len(nodeIngressStatus) == 0 {
+				log.Ctx(ctx).Error().Msg("No nodes with internal IP address found for ingress status")
+			}
+		}
+	}
+
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
@@ -255,7 +284,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
-		if err := p.updateIngressStatus(ingress, client); err != nil {
+		if err := p.updateIngressStatus(ingress, client, nodeIngressStatus); err != nil {
 			logger.Error().Err(err).Msg("Error while updating ingress status")
 		}
 
@@ -442,7 +471,11 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	return conf
 }
 
-func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {
+func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client, nodeIngressStatus []netv1.IngressLoadBalancerIngress) error {
+	if len(nodeIngressStatus) > 0 {
+		return k8sClient.UpdateIngressStatus(ing, nodeIngressStatus)
+	}
+
 	// Only process if an EndpointIngress has been configured.
 	if p.IngressEndpoint == nil {
 		return nil
@@ -623,12 +656,12 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 				return nil, errors.New("nodes lookup is disabled")
 			}
 
-			nodes, nodesExists, nodesErr := client.GetNodes()
+			nodes, _, nodesErr := client.GetNodes()
 			if nodesErr != nil {
 				return nil, nodesErr
 			}
 
-			if !nodesExists || len(nodes) == 0 {
+			if len(nodes) == 0 {
 				return nil, fmt.Errorf("nodes not found in namespace %s", namespace)
 			}
 
