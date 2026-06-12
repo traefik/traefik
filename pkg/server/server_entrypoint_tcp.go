@@ -709,6 +709,25 @@ func denyFragment(h http.Handler) http.Handler {
 	})
 }
 
+// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+func removeHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				delete(req.Header, key)
+			}
+		}
+
+		for key := range req.Trailer {
+			if strings.Contains(key, "_") {
+				delete(req.Trailer, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
 // This function is inspired by http.AllowQuerySemicolons.
 func encodeQuerySemicolons(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

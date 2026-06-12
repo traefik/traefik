@@ -465,6 +465,85 @@ func TestSanitizePath(t *testing.T) {
 	}
 }
 
+func TestAllowHeadersWithUnderscores(t *testing.T) {
+	testCases := []struct {
+		desc                        string
+		allowHeadersWithUnderscores *bool
+		wantUnderscoreHeader        bool
+	}{
+		{
+			desc:                        "underscore headers are removed when disallowed",
+			allowHeadersWithUnderscores: pointer(false),
+			wantUnderscoreHeader:        false,
+		},
+		{
+			desc:                        "underscore headers are kept when allowed",
+			allowHeadersWithUnderscores: pointer(true),
+			wantUnderscoreHeader:        true,
+		},
+		{
+			desc:                 "underscore headers are kept when option is not set",
+			wantUnderscoreHeader: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			epConfig := &static.EntryPointsTransport{}
+			epConfig.SetDefaults()
+
+			entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+				Address:          ":0",
+				Transport:        epConfig,
+				ForwardedHeaders: &static.ForwardedHeaders{},
+				HTTP2:            &static.HTTP2Config{},
+				HTTP: static.HTTPConfig{
+					AllowHeadersWithUnderscores: test.allowHeadersWithUnderscores,
+				},
+			}, nil)
+			require.NoError(t, err)
+
+			router, err := tcprouter.NewRouter()
+			require.NoError(t, err)
+
+			var gotHeaders http.Header
+			router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				gotHeaders = req.Header.Clone()
+				rw.WriteHeader(http.StatusOK)
+			}))
+
+			conn, err := startEntrypoint(t, entryPoint, router)
+			require.NoError(t, err)
+
+			client := &http.Client{
+				Transport: &http.Transport{
+					DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+						return conn, nil
+					},
+				},
+			}
+
+			req, err := http.NewRequest(http.MethodGet, "http://"+entryPoint.listener.Addr().String(), http.NoBody)
+			require.NoError(t, err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			req.Header["X_Auth_User"] = []string{"spoof"}
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			assert.Equal(t, []string{"legit"}, gotHeaders["X-Auth-User"])
+
+			if test.wantUnderscoreHeader {
+				assert.Equal(t, []string{"spoof"}, gotHeaders["X_auth_user"])
+			} else {
+				assert.NotContains(t, gotHeaders, "X_auth_user")
+			}
+		})
+	}
+}
+
 func TestNormalizePath(t *testing.T) {
 	unreservedDecoded := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
 	unreserved := []string{
@@ -754,3 +833,72 @@ func TestPathOperations(t *testing.T) {
 		})
 	}
 }
+
+func Test_removeHeadersWithUnderscores(t *testing.T) {
+	tests := []struct {
+		name         string
+		headers      http.Header
+		trailers     http.Header
+		wantHeaders  http.Header
+		wantTrailers http.Header
+	}{
+		{
+			name:        "keeps headers without underscores",
+			headers:     http.Header{"X-Auth-User": {"foo", "bar"}},
+			wantHeaders: http.Header{"X-Auth-User": {"foo", "bar"}},
+		},
+		{
+			name:        "removes underscore variant",
+			headers:     http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantHeaders: http.Header{"X-Auth-User": {"bar"}},
+		},
+		{
+			name:        "removes mixed underscore and dash variant",
+			headers:     http.Header{"X_Auth-User": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:        "removes non-canonical underscore variant",
+			headers:     http.Header{"x_auth_user": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:        "removes header named with a single underscore",
+			headers:     http.Header{"_": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:         "removes underscore variant from trailers",
+			headers:      http.Header{"X-Auth-User": {"foo"}},
+			trailers:     http.Header{"X_Trailer_Foo": {"foo"}, "X-Trailer-Foo": {"bar"}},
+			wantHeaders:  http.Header{"X-Auth-User": {"foo"}},
+			wantTrailers: http.Header{"X-Trailer-Foo": {"bar"}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var callCount int
+			handler := removeHeadersWithUnderscores(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+				callCount++
+				assert.Equal(t, test.wantHeaders, req.Header)
+				if test.wantTrailers != nil {
+					assert.Equal(t, test.wantTrailers, req.Trailer)
+				}
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
+			req.Header = test.headers
+			req.Trailer = test.trailers
+
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			assert.Equal(t, 1, callCount)
+		})
+	}
+}
+
+
+func pointer[T any](v T) *T { return &v }

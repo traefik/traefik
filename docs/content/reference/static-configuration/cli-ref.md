@@ -123,6 +123,9 @@ Trust only forwarded headers from selected IPs.
 `--entrypoints.<name>.http`:  
 HTTP configuration.
 
+`--entrypoints.<name>.http.allowheaderswithunderscores`:  
+Defines whether request headers with underscores in their names are allowed. When disabled, such headers are removed from the request before routing. (Default: ```true```)
+
 `--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```true```)
 
