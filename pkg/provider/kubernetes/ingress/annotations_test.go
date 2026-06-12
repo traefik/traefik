@@ -118,6 +118,7 @@ func Test_parseServiceConfig(t *testing.T) {
 				"traefik.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
 				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
 				"traefik.ingress.kubernetes.io/service.nativelb":               "true",
+				"traefik.ingress.kubernetes.io/service.strategy":               "p2c",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
@@ -142,6 +143,7 @@ func Test_parseServiceConfig(t *testing.T) {
 					ServersTransport: "foobar@file",
 					PassHostHeader:   pointer(true),
 					NativeLB:         pointer(true),
+					Strategy:         dynamic.BalancerStrategyP2C,
 				},
 			},
 		},
@@ -169,6 +171,74 @@ func Test_parseServiceConfig(t *testing.T) {
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
 					Middlewares:    []string{"middleware1", "middleware2"},
+					PassHostHeader: pointer(true),
+				},
+			},
+		},
+		{
+			desc: "service strategy annotation p2c",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.strategy": "p2c",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Strategy:       dynamic.BalancerStrategyP2C,
+					PassHostHeader: pointer(true),
+				},
+			},
+		},
+		{
+			desc: "service strategy annotation wrr",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.strategy": "wrr",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Strategy:       dynamic.BalancerStrategyWRR,
+					PassHostHeader: pointer(true),
+				},
+			},
+		},
+		{
+			desc: "service strategy annotation hrw",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.strategy": "hrw",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Strategy:       dynamic.BalancerStrategyHRW,
+					PassHostHeader: pointer(true),
+				},
+			},
+		},
+		{
+			desc: "service strategy annotation leasttime",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.strategy": "leasttime",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Strategy:       dynamic.BalancerStrategyLeastTime,
+					PassHostHeader: pointer(true),
+				},
+			},
+		},
+		{
+			desc: "service strategy with sticky annotation",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.strategy":           "p2c",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie":      "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.name": "my-cookie",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Strategy: dynamic.BalancerStrategyP2C,
+					Sticky: &dynamic.Sticky{
+						Cookie: &dynamic.Cookie{
+							Name: "my-cookie",
+							Path: pointer("/"),
+						},
+					},
 					PassHostHeader: pointer(true),
 				},
 			},
