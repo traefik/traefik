@@ -104,7 +104,9 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		for domains, cert := range c.DynamicCerts.Get().(map[string]*CertificateData) {
 			for certDomain := range strings.SplitSeq(domains, ",") {
 				if matchDomain(serverName, certDomain) {
-					matchedCerts[certDomain] = cert
+					// Key the matched candidates by the certificate identifier (the full SANs concatenation).
+					matchedCerts[domains] = cert
+					break
 				}
 			}
 		}
