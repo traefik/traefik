@@ -4,7 +4,7 @@
 // Copyright Traefik Labs
 // SPDX-License-Identifier: MIT
 
-package traefik_test
+package traefik
 
 import (
 	"strings"
