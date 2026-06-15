@@ -224,7 +224,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return nil
 		}
 
-		retryResponseWriter := newResponseWriter(rw, statusCodes, start, r.timeout)
+		retryResponseWriter := newResponseWriter(rw, statusCodes, start, r.timeout, r.disableRetryOnNetworkError)
 
 		retryReq := req
 		if !r.disableRetryOnNetworkError {
@@ -282,13 +282,14 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, start time.Time, timeout time.Duration) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, start time.Time, timeout time.Duration, disableRetryOnNetworkError bool) *responseWriter {
 	return &responseWriter{
-		responseWriter:  rw,
-		headers:         make(http.Header),
-		statusCodeRange: statusCodeRanges,
-		start:           start,
-		timeout:         timeout,
+		responseWriter:             rw,
+		headers:                    make(http.Header),
+		statusCodeRange:            statusCodeRanges,
+		start:                      start,
+		timeout:                    timeout,
+		disableRetryOnNetworkError: disableRetryOnNetworkError,
 	}
 }
 

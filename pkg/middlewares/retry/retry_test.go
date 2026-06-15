@@ -563,6 +563,19 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			wantRetryAttempts:   1,
 			wantResponseStatus:  http.StatusOK,
 		},
+		{
+			desc: "no retry on TCP failure when disableRetryOnNetworkError is set",
+			config: dynamic.Retry{
+				Attempts:                   3,
+				Status:                     []string{"503"},
+				DisableRetryOnNetworkError: true,
+				MaxRequestBodyBytes:        ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusOK, http.StatusOK},
+			amountOfTCPFailures: 1,
+			wantRetryAttempts:   0, // Network error retry is disabled, so the TCP failure must not be retried.
+			wantResponseStatus:  http.StatusGatewayTimeout,
+		},
 	}
 
 	for _, test := range testCases {
