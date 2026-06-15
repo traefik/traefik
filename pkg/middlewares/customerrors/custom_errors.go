@@ -133,6 +133,10 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.TLS != nil {
 		scheme = "https"
 	}
+	if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
+		scheme = proto
+	}
+
 	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
 
 	if len(c.backendQuery) > 0 {

@@ -413,3 +413,87 @@ type mockServiceBuilder struct {
 func (m *mockServiceBuilder) BuildHTTP(_ context.Context, _ string) (http.Handler, error) {
 	return m.handler, nil
 }
+
+func TestHandler_URLPlaceholder(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		errorPage *dynamic.ErrorPage
+		expected  string
+	}{
+		{
+			desc: "full url replacement with https",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/?url={url}",
+				Status:  []string{"500"},
+			},
+			expected: "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, test.expected, r.RequestURI)
+				w.WriteHeader(http.StatusOK)
+			})}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			})
+
+			handler, err := New(context.Background(), next, *test.errorPage, serviceBuilderMock, "test")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://whoami.domain.com/api", nil)
+			req.Host = ""
+			req.TLS = nil
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+		})
+	}
+}
+
+func TestHandler_URLPlaceholder_Forwarded(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		errorPage *dynamic.ErrorPage
+		proto     string
+		expected  string
+	}{
+		{
+			desc: "full url replacement with x-forwarded-proto",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/?url={url}",
+				Status:  []string{"500"},
+			},
+			proto:    "https",
+			expected: "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, test.expected, r.RequestURI)
+				w.WriteHeader(http.StatusOK)
+			})}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			})
+
+			handler, err := New(context.Background(), next, *test.errorPage, serviceBuilderMock, "test")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://whoami.domain.com/api", nil)
+			req.Host = "whoami.domain.com"
+			req.Header.Set("X-Forwarded-Proto", test.proto)
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+		})
+	}
+}
