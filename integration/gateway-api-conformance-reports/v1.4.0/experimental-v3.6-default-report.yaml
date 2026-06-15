@@ -30,7 +30,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 13
+      Passed: 16
       Skipped: 0
     supportedFeatures:
     - GatewayPort8080
@@ -39,6 +39,8 @@ profiles:
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
+    - HTTPRouteNamedRouteRule
+    - HTTPRouteParentRefPort
     - HTTPRoutePathRedirect
     - HTTPRoutePathRewrite
     - HTTPRoutePortRedirect
@@ -53,8 +55,6 @@ profiles:
     - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
-    - HTTPRouteNamedRouteRule
-    - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
@@ -69,3 +69,6 @@ profiles:
       Skipped: 0
   name: GATEWAY-TLS
   summary: Core tests succeeded.
+succeededProvisionalTests:
+- GRPCRouteNamedRule
+- HTTPRouteNamedRule
