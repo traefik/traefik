@@ -667,7 +667,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		ConnState:   connState,
 	}
 
-
 	listener := newHTTPForwarder(ln)
 	go func() {
 		err := serverHTTP.Serve(listener)
