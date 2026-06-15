@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-acme/lego/v4/challenge/http01"
+	"github.com/go-acme/lego/v5/challenge/http01"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
@@ -29,7 +29,7 @@ func NewChallengeHTTP() *ChallengeHTTP {
 }
 
 // Present presents a challenge to obtain new ACME certificate.
-func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
+func (c *ChallengeHTTP) Present(ctx context.Context, domain, token, keyAuth string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -43,7 +43,7 @@ func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
 }
 
 // CleanUp cleans the challenges when certificate is obtained.
-func (c *ChallengeHTTP) CleanUp(domain, token, _ string) error {
+func (c *ChallengeHTTP) CleanUp(ctx context.Context, domain, token, _ string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 

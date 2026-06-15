@@ -76,8 +76,7 @@ func TestLocalStore_SaveAccount(t *testing.T) {
     "Account": {
       "Email": "some@email.com",
       "Registration": null,
-      "PrivateKey": null,
-      "KeyType": ""
+      "PrivateKey": null
     },
     "Certificates": null
   }
