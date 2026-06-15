@@ -38,7 +38,7 @@
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true
       sanitizePath = true
-      allowHeadersWithUnderscores = true
+      headersWithUnderscoresStrategy = "foobar"
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
           to = "foobar"

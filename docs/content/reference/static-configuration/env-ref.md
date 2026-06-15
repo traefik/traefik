@@ -132,9 +132,6 @@ HTTP/3 configuration. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ALLOWHEADERSWITHUNDERSCORES`:  
-Defines whether request headers with underscores in their names are allowed. When disabled, such headers are removed from the request before routing. (Default: ```true```)
-
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDBACKSLASH`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```true```)
 
@@ -158,6 +155,9 @@ Defines whether requests with encoded slash characters in the path are allowed. 
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_HEADERSWITHUNDERSCORESSTRATEGY`:  
+Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject). (Default: ```keep```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
