@@ -12,6 +12,9 @@ on:
 env:
   CGO_ENABLED: 0
 
+permissions:
+  contents: read
+
 jobs:
 
   build:
