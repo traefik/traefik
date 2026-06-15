@@ -56,6 +56,7 @@ Below is the list of the currently supported providers in Traefik.
 | <a id="opt-Kubernetes-IngressRoute" href="#opt-Kubernetes-IngressRoute" title="#opt-Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
 | <a id="opt-Kubernetes-Ingress" href="#opt-Kubernetes-Ingress" title="#opt-Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
 | <a id="opt-Kubernetes-Gateway-API" href="#opt-Kubernetes-Gateway-API" title="#opt-Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
+| <a id="opt-Kubernetes-Ingress-NGINX" href="#opt-Kubernetes-Ingress-NGINX" title="#opt-Kubernetes-Ingress-NGINX">[Kubernetes Ingress NGINX](./kubernetes/kubernetes-ingress-nginx.md)</a> | Orchestrator | Ingress              | `kubernetesingressnginx` |
 | <a id="opt-Consul-Catalog" href="#opt-Consul-Catalog" title="#opt-Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
 | <a id="opt-Nomad" href="#opt-Nomad" title="#opt-Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
 | <a id="opt-ECS" href="#opt-ECS" title="#opt-ECS">[ECS](./others/ecs.md)</a> | Orchestrator | Label                | `ecs`               |
