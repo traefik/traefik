@@ -7,28 +7,25 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 
-	"github.com/go-acme/lego/v4/certcrypto"
-	"github.com/go-acme/lego/v4/registration"
+	"github.com/go-acme/lego/v5/acme"
+	"github.com/go-acme/lego/v5/certcrypto"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Account is used to store lets encrypt registration info.
 type Account struct {
 	Email        string
-	Registration *registration.Resource
+	Registration *Resource
 	PrivateKey   []byte
-	KeyType      certcrypto.KeyType
 }
 
-const (
-	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format.
-	RegistrationURLPathV1Regexp = `^.*/acme/reg/\d+$`
-)
+type Resource struct {
+	Body acme.Account `json:"body"`
+	URI  string       `json:"uri,omitempty"`
+}
 
 // NewAccount creates an account.
-func NewAccount(ctx context.Context, email, keyTypeValue string) (*Account, error) {
-	keyType := GetKeyType(ctx, keyTypeValue)
-
+func NewAccount(email string) (*Account, error) {
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -38,7 +35,6 @@ func NewAccount(ctx context.Context, email, keyTypeValue string) (*Account, erro
 	return &Account{
 		Email:      email,
 		PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
-		KeyType:    keyType,
 	}, nil
 }
 
@@ -48,12 +44,19 @@ func (a *Account) GetEmail() string {
 }
 
 // GetRegistration returns lets encrypt registration resource.
-func (a *Account) GetRegistration() *registration.Resource {
-	return a.Registration
+func (a *Account) GetRegistration() *acme.ExtendedAccount {
+	if a.Registration == nil {
+		return nil
+	}
+
+	return &acme.ExtendedAccount{
+		Account:  a.Registration.Body,
+		Location: a.Registration.URI,
+	}
 }
 
 // GetPrivateKey returns private key.
-func (a *Account) GetPrivateKey() crypto.PrivateKey {
+func (a *Account) GetPrivateKey() crypto.Signer {
 	privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey)
 	if err != nil {
 		log.WithoutContext().WithField(log.ProviderName, "acme").
