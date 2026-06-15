@@ -4,7 +4,7 @@ import (
 	"context"
 	"slices"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
