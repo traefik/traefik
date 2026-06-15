@@ -465,25 +465,51 @@ func TestSanitizePath(t *testing.T) {
 	}
 }
 
-func TestAllowHeadersWithUnderscores(t *testing.T) {
+func TestHeadersWithUnderscoresStrategy(t *testing.T) {
 	testCases := []struct {
-		desc                        string
-		allowHeadersWithUnderscores *bool
-		wantUnderscoreHeader        bool
+		desc                 string
+		strategy             string
+		wantStatus           int
+		wantReachedBackend   bool
+		wantAuthUser         []string
+		wantUnderscoreHeader bool
 	}{
 		{
-			desc:                        "underscore headers are removed when disallowed",
-			allowHeadersWithUnderscores: pointer(false),
-			wantUnderscoreHeader:        false,
-		},
-		{
-			desc:                        "underscore headers are kept when allowed",
-			allowHeadersWithUnderscores: pointer(true),
-			wantUnderscoreHeader:        true,
-		},
-		{
-			desc:                 "underscore headers are kept when option is not set",
+			desc:                 "headers are kept when strategy is not set",
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantAuthUser:         []string{"legit"},
 			wantUnderscoreHeader: true,
+		},
+		{
+			desc:                 "headers are kept with keep strategy",
+			strategy:             static.HeadersWithUnderscoresStrategyKeep,
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantAuthUser:         []string{"legit"},
+			wantUnderscoreHeader: true,
+		},
+		{
+			desc:                 "underscore headers are removed with delete strategy",
+			strategy:             static.HeadersWithUnderscoresStrategyDelete,
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantAuthUser:         []string{"legit"},
+			wantUnderscoreHeader: false,
+		},
+		{
+			desc:                 "underscore header values are appended to the dash header with append strategy",
+			strategy:             static.HeadersWithUnderscoresStrategyAppend,
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantAuthUser:         []string{"legit", "spoof"},
+			wantUnderscoreHeader: false,
+		},
+		{
+			desc:               "request is rejected with reject strategy",
+			strategy:           static.HeadersWithUnderscoresStrategyReject,
+			wantStatus:         http.StatusBadRequest,
+			wantReachedBackend: false,
 		},
 	}
 
@@ -498,7 +524,7 @@ func TestAllowHeadersWithUnderscores(t *testing.T) {
 				ForwardedHeaders: &static.ForwardedHeaders{},
 				HTTP2:            &static.HTTP2Config{},
 				HTTP: static.HTTPConfig{
-					AllowHeadersWithUnderscores: test.allowHeadersWithUnderscores,
+					HeadersWithUnderscoresStrategy: test.strategy,
 				},
 			}, nil)
 			require.NoError(t, err)
@@ -506,8 +532,10 @@ func TestAllowHeadersWithUnderscores(t *testing.T) {
 			router, err := tcprouter.NewRouter()
 			require.NoError(t, err)
 
+			var reachedBackend bool
 			var gotHeaders http.Header
 			router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				reachedBackend = true
 				gotHeaders = req.Header.Clone()
 				rw.WriteHeader(http.StatusOK)
 			}))
@@ -533,7 +561,14 @@ func TestAllowHeadersWithUnderscores(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			assert.Equal(t, []string{"legit"}, gotHeaders["X-Auth-User"])
+			assert.Equal(t, test.wantStatus, resp.StatusCode)
+			assert.Equal(t, test.wantReachedBackend, reachedBackend)
+
+			if !test.wantReachedBackend {
+				return
+			}
+
+			assert.Equal(t, test.wantAuthUser, gotHeaders["X-Auth-User"])
 
 			if test.wantUnderscoreHeader {
 				assert.Equal(t, []string{"spoof"}, gotHeaders["X_auth_user"])
@@ -899,6 +934,3 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 		})
 	}
 }
-
-
-func pointer[T any](v T) *T { return &v }

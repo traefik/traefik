@@ -601,6 +601,19 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
+	switch configuration.HTTP.HeadersWithUnderscoresStrategy {
+	case "", static.HeadersWithUnderscoresStrategyKeep:
+		// Headers with underscores are forwarded as is.
+	case static.HeadersWithUnderscoresStrategyDelete:
+		handler = removeHeadersWithUnderscores(handler)
+	case static.HeadersWithUnderscoresStrategyAppend:
+		handler = appendHeadersWithUnderscores(handler)
+	case static.HeadersWithUnderscoresStrategyReject:
+		handler = rejectHeadersWithUnderscores(handler)
+	default:
+		return nil, fmt.Errorf("invalid headersWithUnderscoresStrategy value %q", configuration.HTTP.HeadersWithUnderscoresStrategy)
+	}
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
@@ -653,6 +666,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		ConnContext: connContext.Build(),
 		ConnState:   connState,
 	}
+
 
 	listener := newHTTPForwarder(ln)
 	go func() {
@@ -721,6 +735,52 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 		for key := range req.Trailer {
 			if strings.Contains(key, "_") {
 				delete(req.Trailer, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// appendHeadersWithUnderscores appends the values of any request header and trailer whose name contains an underscore
+// character to their dash-equivalent header, and removes the underscore variant.
+func appendHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		appendUnderscoreVariants(req.Header)
+		appendUnderscoreVariants(req.Trailer)
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// appendUnderscoreVariants moves the values of every header whose name contains an underscore
+// to its dash-equivalent canonical header, removing the underscore variant.
+func appendUnderscoreVariants(header http.Header) {
+	for key, values := range header {
+		if !strings.Contains(key, "_") {
+			continue
+		}
+
+		dashKey := http.CanonicalHeaderKey(strings.ReplaceAll(key, "_", "-"))
+		header[dashKey] = append(header[dashKey], values...)
+		delete(header, key)
+	}
+}
+
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
+		}
+
+		for key := range req.Trailer {
+			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
 			}
 		}
 

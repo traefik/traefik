@@ -1347,12 +1347,16 @@ entryPoints:
 --entryPoints.websecure.http.maxHeaderBytes=524288
 ```
 
-### AllowHeadersWithUnderscores
+### HeadersWithUnderscoresStrategy
 
-_Optional, Default=true_
+_Optional, Default=keep_
 
-The `allowHeadersWithUnderscores` option defines whether request headers with underscores in their names are allowed.
-When disabled, any request header whose name contains an underscore character is silently removed from the request before routing.
+The `headersWithUnderscoresStrategy` option defines how request headers with underscores in their names are handled before routing:
+
+- `keep`: request headers with underscores are forwarded as is (default).
+- `delete`: any request header whose name contains an underscore character is silently removed from the request.
+- `append`: the values of any request header whose name contains an underscore character are appended to its dash-equivalent header, and the underscore variant is removed.
+- `reject`: any request carrying a header whose name contains an underscore character is rejected with a `400 Bad Request` response.
 
 Underscores are valid characters in HTTP header names, but Go canonicalizes header names only on dashes, so a middleware 
 managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `authResponseHeaders` option) cannot see or remove an underscore variant (e.g. `X_Auth_User`).
@@ -1360,14 +1364,14 @@ managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `aut
 !!! warning "Security"
 
     Backends mapping both forms to the same variable (CGI, WSGI, PHP, ...) can be spoofed with the underscore variant of a managed header.
-    Setting the `allowHeadersWithUnderscores` option to `false` is recommended when such backends are exposed.
+    Setting the `headersWithUnderscoresStrategy` option to `delete`, `append`, or `reject` is recommended when such backends are exposed.
 
 ```yaml tab="File (YAML)"
 entryPoints:
   websecure:
     address: ':443'
     http:
-      allowHeadersWithUnderscores: false
+      headersWithUnderscoresStrategy: delete
 ```
 
 ```toml tab="File (TOML)"
@@ -1375,20 +1379,22 @@ entryPoints:
   address = ":443"
 
   [entryPoints.websecure.http]
-    allowHeadersWithUnderscores = false
+    headersWithUnderscoresStrategy = "delete"
 ```
 
 ```bash tab="CLI"
 --entryPoints.websecure.address=:443
---entryPoints.websecure.http.allowHeadersWithUnderscores=false
+--entryPoints.websecure.http.headersWithUnderscoresStrategy=delete
 ```
 
 #### Examples
 
-| AllowHeadersWithUnderscores | Request Headers                                | Headers Reaching the Backend                   |
-|-----------------------------|------------------------------------------------|------------------------------------------------|
-| true                        | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit` <br> `X_Auth_User: spoof` |
-| false                       | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit`                           |
+| HeadersWithUnderscoresStrategy | Request Headers                                | Result                                                 |
+|--------------------------------|------------------------------------------------|--------------------------------------------------------|
+| keep                           | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit` <br> `X_Auth_User: spoof` reach the backend |
+| delete                         | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Only `X-Auth-User: legit` reaches the backend          |
+| append                         | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit, spoof` reaches the backend        |
+| reject                         | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Request rejected with `400 Bad Request`                |
 
 ### Middlewares
 

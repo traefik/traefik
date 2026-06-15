@@ -123,9 +123,6 @@ Trust only forwarded headers from selected IPs.
 `--entrypoints.<name>.http`:  
 HTTP configuration.
 
-`--entrypoints.<name>.http.allowheaderswithunderscores`:  
-Defines whether request headers with underscores in their names are allowed. When disabled, such headers are removed from the request before routing. (Default: ```true```)
-
 `--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```true```)
 
@@ -152,6 +149,9 @@ Defines whether request query semicolons should be URLEncoded. (Default: ```fals
 
 `--entrypoints.<name>.http.maxheaderbytes`:  
 Maximum size of request headers in bytes. (Default: ```1048576```)
+
+`--entrypoints.<name>.http.headerswithunderscoresstrategy`:  
+Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject). (Default: ```keep```)
 
 `--entrypoints.<name>.http.middlewares`:  
 Default middlewares for the routers linked to the entry point.

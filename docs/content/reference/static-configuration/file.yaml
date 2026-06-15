@@ -74,6 +74,7 @@ entryPoints:
       sanitizePath: true
       maxHeaderBytes: 42
       allowHeadersWithUnderscores: true
+      headersWithUnderscoresStrategy: foobar
     http2:
       maxConcurrentStreams: 42
     http3:

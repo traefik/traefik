@@ -10,6 +10,19 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+// Strategies for handling request headers with underscores in their names.
+const (
+	// HeadersWithUnderscoresStrategyKeep forwards request headers with underscores as is.
+	HeadersWithUnderscoresStrategyKeep = "keep"
+	// HeadersWithUnderscoresStrategyDelete removes request headers with underscores before routing.
+	HeadersWithUnderscoresStrategyDelete = "delete"
+	// HeadersWithUnderscoresStrategyAppend appends the values of request headers with underscores
+	// to their dash-equivalent header, and removes the underscore variant, before routing.
+	HeadersWithUnderscoresStrategyAppend = "append"
+	// HeadersWithUnderscoresStrategyReject rejects requests carrying a header with underscores before routing.
+	HeadersWithUnderscoresStrategyReject = "reject"
+)
+
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -68,7 +81,7 @@ type HTTPConfig struct {
 	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
 	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
 	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
-	AllowHeadersWithUnderscores *bool              `description:"Defines whether request headers with underscores in their names are allowed. When disabled, such headers are removed from the request before routing." json:"allowHeadersWithUnderscores,omitempty" toml:"allowHeadersWithUnderscores,omitempty" yaml:"allowHeadersWithUnderscores,omitempty" export:"true"`
+	HeadersWithUnderscoresStrategy string             `description:"Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject)." json:"headersWithUnderscoresStrategy,omitempty" toml:"headersWithUnderscoresStrategy,omitempty" yaml:"headersWithUnderscoresStrategy,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -76,8 +89,7 @@ func (h *HTTPConfig) SetDefaults() {
 	sanitizePath := true
 	h.SanitizePath = &sanitizePath
 	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
-	allowHeadersWithUnderscores := true
-	h.AllowHeadersWithUnderscores = &allowHeadersWithUnderscores
+	h.HeadersWithUnderscoresStrategy = HeadersWithUnderscoresStrategyKeep
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.
