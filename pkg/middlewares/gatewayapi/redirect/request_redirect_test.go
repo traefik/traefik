@@ -137,6 +137,36 @@ func TestRequestRedirectHandler(t *testing.T) {
 			wantStatus: http.StatusMovedPermanently,
 		},
 		{
+			desc: "303 See Other",
+			config: dynamic.RequestRedirect{
+				Scheme:     ptr.To("https"),
+				StatusCode: http.StatusSeeOther,
+			},
+			url:        "http://foo",
+			wantURL:    "https://foo",
+			wantStatus: http.StatusSeeOther,
+		},
+		{
+			desc: "307 Temporary Redirect",
+			config: dynamic.RequestRedirect{
+				Scheme:     ptr.To("https"),
+				StatusCode: http.StatusTemporaryRedirect,
+			},
+			url:        "http://foo",
+			wantURL:    "https://foo",
+			wantStatus: http.StatusTemporaryRedirect,
+		},
+		{
+			desc: "308 Permanent Redirect",
+			config: dynamic.RequestRedirect{
+				Scheme:     ptr.To("https"),
+				StatusCode: http.StatusPermanentRedirect,
+			},
+			url:        "http://foo",
+			wantURL:    "https://foo",
+			wantStatus: http.StatusPermanentRedirect,
+		},
+		{
 			desc: "HTTP to HTTPS",
 			config: dynamic.RequestRedirect{
 				Scheme: ptr.To("https"),
@@ -201,7 +231,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 
 			assert.Equal(t, test.wantStatus, recorder.Code)
 			switch test.wantStatus {
-			case http.StatusMovedPermanently, http.StatusFound:
+			case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther, http.StatusTemporaryRedirect, http.StatusPermanentRedirect:
 				location, err := recorder.Result().Location()
 				require.NoError(t, err)
 
