@@ -9,6 +9,19 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+// Strategies for handling request headers with underscores in their names.
+const (
+	// HeadersWithUnderscoresStrategyKeep forwards request headers with underscores as is.
+	HeadersWithUnderscoresStrategyKeep = "keep"
+	// HeadersWithUnderscoresStrategyDelete removes request headers with underscores before routing.
+	HeadersWithUnderscoresStrategyDelete = "delete"
+	// HeadersWithUnderscoresStrategyAppend appends the values of request headers with underscores
+	// to their dash-equivalent header, and removes the underscore variant, before routing.
+	HeadersWithUnderscoresStrategyAppend = "append"
+	// HeadersWithUnderscoresStrategyReject rejects requests carrying a header with underscores before routing.
+	HeadersWithUnderscoresStrategyReject = "reject"
+)
+
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -59,18 +72,21 @@ func (ep *EntryPoint) SetDefaults() {
 
 // HTTPConfig is the HTTP configuration of an entry point.
 type HTTPConfig struct {
-	Redirections          *Redirections      `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
-	Middlewares           []string           `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	TLS                   *TLSConfig         `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	EncodedCharacters     *EncodedCharacters `description:"Defines which encoded characters are allowed in the request path." json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
-	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
-	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
+	Redirections                   *Redirections      `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
+	Middlewares                    []string           `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS                            *TLSConfig         `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	EncodedCharacters              *EncodedCharacters `description:"Defines which encoded characters are allowed in the request path." json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
+	EncodeQuerySemicolons          bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
+	SanitizePath                   *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
+	HeadersWithUnderscoresStrategy string             `description:"Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject)." json:"headersWithUnderscoresStrategy,omitempty" toml:"headersWithUnderscoresStrategy,omitempty" yaml:"headersWithUnderscoresStrategy,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (h *HTTPConfig) SetDefaults() {
 	sanitizePath := true
 	h.SanitizePath = &sanitizePath
+
+	h.HeadersWithUnderscoresStrategy = HeadersWithUnderscoresStrategyKeep
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.

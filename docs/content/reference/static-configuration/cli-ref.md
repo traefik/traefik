@@ -147,6 +147,9 @@ Defines whether requests with encoded slash characters in the path are allowed. 
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
+`--entrypoints.<name>.http.headerswithunderscoresstrategy`:  
+Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject). (Default: ```keep```)
+
 `--entrypoints.<name>.http.middlewares`:  
 Default middlewares for the routers linked to the entry point.
 

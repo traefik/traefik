@@ -156,6 +156,9 @@ Defines whether requests with encoded slash characters in the path are allowed. 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_HEADERSWITHUNDERSCORESSTRATEGY`:  
+Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject). (Default: ```keep```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 

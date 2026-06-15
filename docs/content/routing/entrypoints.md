@@ -1314,6 +1314,55 @@ entryPoints:
 | false        | /./foo/../bar// | /./foo/../bar//        |
 | true         | /./foo/../bar// | /bar/                  |
 
+### HeadersWithUnderscoresStrategy
+
+_Optional, Default=keep_
+
+The `headersWithUnderscoresStrategy` option defines how request headers with underscores in their names are handled before routing:
+
+- `keep`: request headers with underscores are forwarded as is (default).
+- `delete`: any request header whose name contains an underscore character is silently removed from the request.
+- `append`: the values of any request header whose name contains an underscore character are appended to its dash-equivalent header, and the underscore variant is removed.
+- `reject`: any request carrying a header whose name contains an underscore character is rejected with a `400 Bad Request` response.
+
+Underscores are valid characters in HTTP header names, but Go canonicalizes header names only on dashes, so a middleware 
+managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `authResponseHeaders` option) cannot see or remove an underscore variant (e.g. `X_Auth_User`).
+
+!!! warning "Security"
+
+    Backends mapping both forms to the same variable (CGI, WSGI, PHP, ...) can be spoofed with the underscore variant of a managed header.
+    Setting the `headersWithUnderscoresStrategy` option to `delete`, `append`, or `reject` is recommended when such backends are exposed.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      headersWithUnderscoresStrategy: delete
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    headersWithUnderscoresStrategy = "delete"
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.headersWithUnderscoresStrategy=delete
+```
+
+#### Examples
+
+| HeadersWithUnderscoresStrategy | Request Headers                                | Result                                                 |
+|--------------------------------|------------------------------------------------|--------------------------------------------------------|
+| keep                           | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit` <br> `X_Auth_User: spoof` reach the backend |
+| delete                         | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Only `X-Auth-User: legit` reaches the backend          |
+| append                         | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit, spoof` reaches the backend        |
+| reject                         | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Request rejected with `400 Bad Request`                |
+
 ### Middlewares
 
 The list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.
