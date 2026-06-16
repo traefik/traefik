@@ -60,10 +60,29 @@ func ContextWroteRequest(ctx context.Context) WroteRequest {
 	return f
 }
 
+type proxyReachedContextKey struct{}
+
+// ProxyReached is a function signaling that the request reached the backend proxy.
+type ProxyReached func()
+
+// ContextProxyReached returns the ProxyReached function if it has been set by the Retry middleware in the chain.
+func ContextProxyReached(ctx context.Context) ProxyReached {
+	f, _ := ctx.Value(proxyReachedContextKey{}).(ProxyReached)
+	return f
+}
+
 // WrapHandler wraps a given http.Handler to inject the httptrace.ClientTrace in the request context when it is needed
 // by the retry middleware.
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Reaching this handler means the request reached the proxy layer,
+		// which arms the network-error retry (a dial failure still reaches here and writes
+		// a 502 without sending bytes). Responses produced earlier in the chain
+		// (e.g. an auth middleware returning 401) never reach here and must not be retried.
+		if proxyReached := ContextProxyReached(req.Context()); proxyReached != nil {
+			proxyReached()
+		}
+
 		if wroteRequest := ContextWroteRequest(req.Context()); wroteRequest != nil {
 			trace := &httptrace.ClientTrace{
 				WroteHeaders: func() {
@@ -231,7 +250,14 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			var wroteRequest WroteRequest = func() {
 				retryResponseWriter.wroteRequest.Store(true)
 			}
-			retryReq = req.Clone(context.WithValue(req.Context(), wroteRequestContextKey{}, wroteRequest))
+			ctx := context.WithValue(req.Context(), wroteRequestContextKey{}, wroteRequest)
+
+			var proxyReached ProxyReached = func() {
+				retryResponseWriter.proxyReached.Store(true)
+			}
+			ctx = context.WithValue(ctx, proxyReachedContextKey{}, proxyReached)
+
+			retryReq = req.Clone(ctx)
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
@@ -302,6 +328,7 @@ type responseWriter struct {
 	start                      time.Time
 	timeout                    time.Duration
 
+	proxyReached   atomic.Bool
 	wroteRequest   atomic.Bool
 	written        bool
 	shouldNotWrite bool
@@ -333,7 +360,10 @@ func (r *responseWriter) WriteHeader(code int) {
 	}
 
 	timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
-	if !timedOut && !r.disableRetryOnNetworkError && !r.wroteRequest.Load() {
+	// Retry on a network error only when the request reached the backend proxy
+	// but no bytes were sent to the backend yet. Responses produced before reaching the
+	// proxy (e.g. an auth middleware returning 401) must flow through to the client.
+	if !timedOut && !r.disableRetryOnNetworkError && r.proxyReached.Load() && !r.wroteRequest.Load() {
 		r.shouldNotWrite = true
 		return
 	}

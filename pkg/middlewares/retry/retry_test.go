@@ -224,6 +224,55 @@ func TestRetryShouldNotLooseHeadersOnWrite(t *testing.T) {
 	assert.Equal(t, "bar", headerValue)
 }
 
+func TestRetryShouldNotRetryWhenProxyNotReached(t *testing.T) {
+	// Simulates a middleware (e.g. BasicAuth) short-circuiting the chain with a 401
+	// before the request reaches the backend proxy: such a response is not a network
+	// error and must not trigger the network-error retry.
+	callCount := 0
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+		rw.WriteHeader(http.StatusUnauthorized)
+	})
+
+	retryListener := &countingRetryListener{}
+	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 3}, retryListener, "traefikTest")
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	retry.ServeHTTP(recorder, testhelpers.MustNewRequest(http.MethodGet, "http://test", http.NoBody))
+
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, 0, retryListener.timesCalled)
+}
+
+func TestRetryOnStatusWhenProxyNotReached(t *testing.T) {
+	// A middleware emitting a retriable status code short-circuits the chain before
+	// reaching the backend proxy. Unlike the network-error retry, the status-code retry
+	// must still trigger regardless of who produced the response.
+	callCount := 0
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+		if callCount == 1 {
+			rw.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	config := dynamic.Retry{Attempts: 3, Status: []string{"503"}, MaxRequestBodyBytes: ptr.To[int64](1024)}
+	retryListener := &countingRetryListener{}
+	retry, err := New(t.Context(), next, config, retryListener, "traefikTest")
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	retry.ServeHTTP(recorder, testhelpers.MustNewRequest(http.MethodGet, "http://test", http.NoBody))
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, 2, callCount)
+	assert.Equal(t, 1, retryListener.timesCalled)
+}
+
 func TestRetryWithFlush(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
