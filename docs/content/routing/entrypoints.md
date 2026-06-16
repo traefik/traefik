@@ -1314,6 +1314,39 @@ entryPoints:
 | false        | /./foo/../bar// | /./foo/../bar//        |
 | true         | /./foo/../bar// | /bar/                  |
 
+### MaxHeaderBytes
+
+_Optional, Default=1048576_
+
+The `maxHeaderBytes` option defines the maximum size, in bytes, of the request headers Traefik reads for each request (including the request line).
+
+!!! note "Security"
+
+    With HTTP/2, a single connection can multiplex many concurrent requests, each carrying its own headers.
+    With the default value, some HTTP/2 calls can therefore lead to a significant memory consumption on the Traefik instance.
+    It is recommended to either lower this value to match your actual needs, or to provision enough memory to handle the expected load.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      maxHeaderBytes: 524288
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    maxHeaderBytes = 524288
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.maxHeaderBytes=524288
+```
+
 ### Middlewares
 
 The list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.
