@@ -876,8 +876,6 @@ github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd h1:0n+lFLh5zU0l6K
 github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd/go.mod h1:BbQgeDS5i0tNvypwEoF1oNjOJw8knRAE1DnVvjDstcQ=
 github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e h1:D+uTEzDZc1Fhmd0Pq06c+O9+KkAyExw0eVmu/NOqaHU=
 github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e/go.mod h1:s8kLgBQolDbsJOPVIGCEEv9zGAKUUf/685Gi0Qqg8z8=
-github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94To3gl4yTDOEtpjFwXI7V2W+z0JcNljQ4=
-github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595/go.mod h1:+lHFbEasIiQVGzhVDVw/cn0ZaOzde2OwNncp1NhXV4c=
 github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59 h1:lJUOWjGohYjLKEfAz2nyI/dpzfKNPQLi5GLH7aaOZkw=
 github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59/go.mod h1:z8WW7n06n8/1xF9Jl9WmuDeZuHAhfL+bwarNjsciwwg=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
@@ -1512,10 +1510,6 @@ github.com/magiconair/properties v1.8.10 h1:s31yESBquKXCV9a/ScB3ESkOjUYYv+X0rg8S
 github.com/magiconair/properties v1.8.10/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mailgun/multibuf v0.2.0 h1:pGhv93r0GXBVTDu6RMlA9GUQjwwoy4yspIujtaT0AOA=
 github.com/mailgun/multibuf v0.2.0/go.mod h1:E+sUhIy69qgT6EM57kCPdUTlHnjTuxQBO/yf6af9Hes=
-github.com/mailgun/timetools v0.0.0-20141028012446-7e6055773c51 h1:Kg/NPZLLC3aAFr1YToMs98dbCdhootQ1hZIvZU28hAQ=
-github.com/mailgun/timetools v0.0.0-20141028012446-7e6055773c51/go.mod h1:RYmqHbhWwIz3z9eVmQ2rx82rulEMG0t+Q1bzfc9DYN4=
-github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f h1:ZZYhg16XocqSKPGNQAe0aeweNtFxuedbwwb4fSlg7h4=
-github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f/go.mod h1:8heskWJ5c0v5J9WH89ADhyal1DOZcayll8fSbhB+/9A=
 github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mailru/easyjson v0.9.0 h1:PrnmzHw7262yW8sTBwxi1PdJA3Iw/EKBa8psRf7d9a4=
