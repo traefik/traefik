@@ -34,6 +34,8 @@ RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
 
 RUN pip install --break-system-packages "cyclonedx-bom==${CYCLONEDX_PY_VERSION}"
 
+ENV GOPATH=/tmp/go
+
 RUN go install "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@${CYCLONEDX_GOMOD_VERSION}" \
     && go install "github.com/traefik/assimilis/cmd/assimilis@${ASSIMILIS_VERSION}"
 
@@ -42,7 +44,6 @@ RUN git config --system --add safe.directory '*'
 
 # Tools that resolve module / package caches must be able to write under HOME.
 ENV HOME=/tmp \
-    GOPATH=/tmp/go \
     GOCACHE=/tmp/.cache/go-build \
     XDG_CACHE_HOME=/tmp/.cache
 

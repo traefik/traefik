@@ -132,7 +132,6 @@ jobs:
 
           extra_assets=()
           if [ -d third_party/licenses ]; then
-            tar cfz "dist/licenses_${VERSION}.tar.gz" third_party/licenses/
             tar cfz "dist/licenses_${VERSION}.tar.gz" third_party/ \
               --exclude='*.json' \
               --exclude='third_party/sbom'
