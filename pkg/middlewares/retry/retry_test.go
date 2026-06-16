@@ -1,6 +1,7 @@
 package retry
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -815,5 +816,46 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 	retry.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
+	assert.Equal(t, 0, retryListener.timesCalled)
+}
+
+// errReader fails on the first read, simulating a request body that cannot be buffered.
+type errReader struct{}
+
+func (errReader) Read([]byte) (int, error) { return 0, errors.New("boom") }
+
+// TestRetryDoesNotBufferBodyForNonIdempotentMethod ensures the HTTP status retry body
+// buffering is gated on the effective retriable status codes, which are nil for a
+// non-idempotent method when RetryNonIdempotentMethod is disabled. Buffering the body
+// anyway would surface a body read error as a spurious 500 instead of letting the
+// request flow through to the backend.
+func TestRetryDoesNotBufferBodyForNonIdempotentMethod(t *testing.T) {
+	config := dynamic.Retry{
+		Attempts:            3,
+		Status:              []string{"503"},
+		MaxRequestBodyBytes: ptr.To[int64](1024),
+	}
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// This signals that request headers have been sent to the backend.
+		if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+			trace.WroteHeaders()
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	retryListener := &countingRetryListener{}
+	retry, err := New(t.Context(), WrapHandler(next), config, retryListener, "traefikTest")
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	// POST is non-idempotent and RetryNonIdempotentMethod is unset,
+	// so no status code is retriable and the body must not be buffered.
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:3000/ok", io.NopCloser(errReader{}))
+
+	retry.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, 0, retryListener.timesCalled)
 }

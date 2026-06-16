@@ -175,7 +175,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var reusableReq *mirror.ReusableRequest
-	if len(r.statusCode) > 0 {
+	if len(statusCodes) > 0 {
 		var err error
 		var readBytes []byte
 		reusableReq, readBytes, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
