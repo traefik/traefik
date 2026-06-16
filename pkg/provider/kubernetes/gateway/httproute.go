@@ -407,6 +407,12 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 				middleware,
 			})
 
+		case gatev1.HTTPRouteFilterCORS:
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createCORS(filter.CORS),
+			})
+
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
 			// In all cases where incompatible or unsupported filters are
@@ -503,7 +509,8 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
-				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+				policyAncestorStatus.Conditions = append(
+					policyAncestorStatus.Conditions,
 					metav1.Condition{
 						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -960,6 +967,62 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 			PathPrefix: pathPrefix,
 		},
 	}, nil
+}
+
+func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
+	allowCredentials := filter.AllowCredentials != nil && *filter.AllowCredentials
+
+	var allowOrigins, allowOriginsRegex []string
+	for _, origin := range filter.AllowOrigins {
+		o := string(origin)
+		switch {
+		case strings.Contains(o, "*."):
+			allowOriginsRegex = append(allowOriginsRegex, corsOriginToRegex(o))
+		case o == "*":
+			// Convert to regex so the middleware echoes the specific request origin rather than the literal "*".
+			// The Gateway API conformance tests require the specific origin, even when AllowCredentials is false/unset.
+			allowOriginsRegex = append(allowOriginsRegex, ".*")
+		default:
+			allowOrigins = append(allowOrigins, o)
+		}
+	}
+
+	var allowMethods []string
+	for _, m := range filter.AllowMethods {
+		allowMethods = append(allowMethods, string(m))
+	}
+
+	var allowHeaders []string
+	for _, h := range filter.AllowHeaders {
+		allowHeaders = append(allowHeaders, string(h))
+	}
+
+	var exposeHeaders []string
+	for _, h := range filter.ExposeHeaders {
+		exposeHeaders = append(exposeHeaders, string(h))
+	}
+
+	return &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			AccessControlAllowCredentials:     allowCredentials,
+			AccessControlAllowOriginList:      allowOrigins,
+			AccessControlAllowOriginListRegex: allowOriginsRegex,
+			AccessControlAllowMethods:         allowMethods,
+			AccessControlAllowHeaders:         allowHeaders,
+			AccessControlExposeHeaders:        exposeHeaders,
+			AccessControlMaxAge:               ptr.To(int64(filter.MaxAge)),
+		},
+	}
+}
+
+// corsOriginToRegex converts a CORS origin glob (e.g. https://*.example.com) to a regexp string.
+func corsOriginToRegex(origin string) string {
+	prefix, suffix, found := strings.Cut(origin, "*.")
+	if !found {
+		return regexp.QuoteMeta(origin)
+	}
+
+	return "^" + regexp.QuoteMeta(prefix) + `(.*\.)?` + regexp.QuoteMeta(suffix) + "$"
 }
 
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {

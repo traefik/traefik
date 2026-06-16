@@ -30,7 +30,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 27
+      Passed: 29
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -42,6 +42,7 @@ profiles:
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteBackendRequestHeaderModification
+    - HTTPRouteCORS
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
@@ -63,7 +64,6 @@ profiles:
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
-    - HTTPRouteCORS
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
