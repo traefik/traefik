@@ -28,8 +28,8 @@ entryPoints:
     http:
       tls: {}
       middlewares:
-        - auth@kubernetescrd
-        - strip@kubernetescrd
+        - default-auth@kubernetescrd
+        - default-strip@kubernetescrd
 ```
 
 ```toml tab="File (TOML)"
@@ -49,7 +49,7 @@ entryPoints:
   [entryPoints.websecure]
     address = ":443"
     [entryPoints.websecure.http]
-      middlewares = ["auth@kubernetescrd", "strip@kubernetescrd"]
+      middlewares = ["default-auth@kubernetescrd", "default-strip@kubernetescrd"]
       [entryPoints.websecure.http.tls]
 ```
 
@@ -63,8 +63,8 @@ ports:
     tls:
       enabled: true
     middlewares:
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+      - default-auth@kubernetescrd
+      - default-strip@kubernetescrd
 additionalArguments:
   - --entryPoints.web.http.redirections.entryPoint.to=websecure
   - --entryPoints.web.http.redirections.entryPoint.scheme=https
@@ -204,8 +204,16 @@ the request to the service.
 (the Middlewares declared on the [IngressRoute](../../reference/routing-configuration/kubernetes/crd/http/ingressroute.md#middleware)
 or the [Ingress](../../reference/routing-configuration/kubernetes/ingress.md#on-ingress)
 are applied after the ones declared on the Entrypoint)
-- The option allows attaching a list of middleware using the format 
-`middlewarename@providername` as described in the example below:
+- Middlewares must be referenced by their **fully qualified name**, including the
+[provider namespace](../../reference/install-configuration/providers/overview.md#provider-namespace)
+suffix (`<middleware-name>@<provider-name>`). The exact value depends on the
+provider that declares the middleware:
+
+    | Provider           | Format                                              | Example                       |
+    |--------------------|-----------------------------------------------------|-------------------------------|
+    | <a id="opt-File" href="#opt-File" title="#opt-File">File</a> | `<middleware-name>@file`                             | `strip@file`                  |
+    | <a id="opt-Docker" href="#opt-Docker" title="#opt-Docker">Docker</a> | `<middleware-name>@docker`                           | `strip@docker`                |
+    | <a id="opt-Kubernetes-CRD" href="#opt-Kubernetes-CRD" title="#opt-Kubernetes-CRD">Kubernetes CRD</a> | `<middleware-namespace>-<middleware-name>@kubernetescrd` | `default-auth@kubernetescrd`  |
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -213,7 +221,7 @@ entryPoints:
     address: :80
     http:
       middlewares:
-        - auth@kubernetescrd
+        - default-auth@kubernetescrd
         - strip@file
 ```
 
@@ -223,7 +231,7 @@ ports:
     port: :80
     http:
       middlewares:
-        - auth@kubernetescrd
+        - default-auth@kubernetescrd
         - strip@file
 ```
 
