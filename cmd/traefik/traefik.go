@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-systemd/v22/daemon"
-	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v5/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"expvar"
 	"fmt"
@@ -600,47 +601,57 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
-	serverHTTP := &http.Server{
-		Protocols:    &protocols,
-		Handler:      handler,
-		ErrorLog:     httpServerLogger,
-		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		HTTP2: &http.HTTP2Config{
-			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
-		},
-	}
+	var connContext multipleConnContext
+	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = service.AddTransportOnContext(ctx)
+
+		if tlsConn, ok := c.(*tls.Conn); ok {
+			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
+				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+			}
+		}
+
+		return ctx
+	})
+
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 			cState := &connState{Start: time.Now()}
 			if debugConnection {
 				clientConnectionStatesMu.Lock()
 				clientConnectionStates[getConnKey(c)] = cState
 				clientConnectionStatesMu.Unlock()
 			}
-			return context.WithValue(ctx, connStateKey, cState)
-		}
 
-		if debugConnection {
-			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
-				clientConnectionStatesMu.Lock()
-				if clientConnectionStates[getConnKey(c)] != nil {
-					clientConnectionStates[getConnKey(c)].State = state.String()
-				}
-				clientConnectionStatesMu.Unlock()
+			return context.WithValue(ctx, connStateKey, cState)
+		})
+	}
+
+	var connState func(c net.Conn, state http.ConnState)
+	if debugConnection {
+		connState = func(c net.Conn, state http.ConnState) {
+			clientConnectionStatesMu.Lock()
+			if clientConnectionStates[getConnKey(c)] != nil {
+				clientConnectionStates[getConnKey(c)].State = state.String()
 			}
+			clientConnectionStatesMu.Unlock()
 		}
 	}
 
-	prevConnContext := serverHTTP.ConnContext
-	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
-		if prevConnContext != nil {
-			return prevConnContext(ctx, c)
-		}
-		return ctx
+	serverHTTP := &http.Server{
+		Protocols:      &protocols,
+		Handler:        handler,
+		ErrorLog:       httpServerLogger,
+		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		HTTP2: &http.HTTP2Config{
+			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
+		},
+		ConnContext: connContext.Build(),
+		ConnState:   connState,
 	}
 
 	listener := newHTTPForwarder(ln)

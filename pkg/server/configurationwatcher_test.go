@@ -893,3 +893,52 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 
 	assert.Equal(t, 1, publishedConfigCount)
 }
+
+// TestEntryPointTLSResolvedOptions is a regression test for
+// https://github.com/traefik/traefik/issues/13289: a router whose TLS
+// configuration comes from the entry point (and not from an explicit router TLS
+// section) must still have its TLS options resolved in the published configuration.
+func TestEntryPointTLSResolvedOptions(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+	t.Cleanup(routinesPool.Stop)
+
+	pvd := &mockProvider{
+		messages: []dynamic.Message{{
+			ProviderName: "internal",
+			Configuration: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"foo": {
+							EntryPoints: []string{"websecure"},
+							Rule:        "Host(`foo.example.com`)",
+							Service:     "service",
+						},
+					},
+					Models: map[string]*dynamic.Model{
+						"websecure": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		}},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+
+	run := make(chan struct{})
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		router := conf.HTTP.Routers["foo@internal"]
+		if router == nil || router.TLS == nil {
+			return
+		}
+
+		assert.Equal(t, "default", router.TLS.ResolvedOptions)
+		close(run)
+	})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+
+	<-run
+}

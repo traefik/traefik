@@ -3,11 +3,12 @@ package static
 import (
 	"errors"
 	"fmt"
-	stdlog "log"
+	"log/slog"
 	"strings"
 	"time"
 
-	legolog "github.com/go-acme/lego/v4/log"
+	legolog "github.com/go-acme/lego/v5/log"
+	sloglogrus "github.com/samber/slog-logrus/v2"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -339,7 +340,13 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
+	legolog.SetDefault(
+		slog.New(
+			sloglogrus.Option{Level: slog.LevelDebug, Logger: logrus.StandardLogger()}.
+				NewLogrusHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

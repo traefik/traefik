@@ -13,7 +13,9 @@ import (
 	"github.com/quic-go/quic-go/http3"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
+	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 type http3server struct {
@@ -22,7 +24,7 @@ type http3server struct {
 	http3conn net.PacketConn
 
 	lock   sync.RWMutex
-	getter func(info *tls.ClientHelloInfo) (*tls.Config, error)
+	getter func(data tcpmuxer.ConnData) (*tls.Config, string, error)
 }
 
 func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
@@ -41,8 +43,8 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 
 	h3 := &http3server{
 		http3conn: conn,
-		getter: func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-			return nil, errors.New("no tls config")
+		getter: func(data tcpmuxer.ConnData) (*tls.Config, string, error) {
+			return nil, "", errors.New("no TLS config")
 		},
 	}
 
@@ -50,9 +52,17 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		Addr:      configuration.GetAddress(),
 		Port:      configuration.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
-		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
+		TLSConfig: &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
 		QUICConfig: &quic.Config{
 			Allow0RTT: false,
+		},
+		ConnContext: func(ctx context.Context, c *quic.Conn) context.Context {
+			tlsOptionsName, err := h3.getTLSOptionsName(c)
+			if err != nil {
+				log.WithoutContext().Errorf("Error getting TLS options name for client: %v", err)
+				return ctx
+			}
+			return tcp.AddTLSOptionsNameInContext(ctx, tlsOptionsName)
 		},
 	}
 
@@ -77,7 +87,7 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	e.getter = rt.GetTLSGetClientInfo()
+	e.getter = rt.HTTP3TLSConfigMatcherFunc()
 }
 
 func (e *http3server) Shutdown(_ context.Context) error {
@@ -85,9 +95,28 @@ func (e *http3server) Shutdown(_ context.Context) error {
 	return e.Server.Close()
 }
 
-func (e *http3server) getGetConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
+func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
-	return e.getter(info)
+	connData, err := tcpmuxer.NewConnData(info.ServerName, info.Conn.RemoteAddr(), info.SupportedProtos)
+	if err != nil {
+		return nil, fmt.Errorf("creating ConnData from client hello: %w", err)
+	}
+
+	conf, _, err := e.getter(connData)
+	return conf, err
+}
+
+func (e *http3server) getTLSOptionsName(c *quic.Conn) (string, error) {
+	e.lock.RLock()
+	defer e.lock.RUnlock()
+
+	connData, err := tcpmuxer.NewConnData(c.ConnectionState().TLS.ServerName, c.RemoteAddr(), []string{c.ConnectionState().TLS.NegotiatedProtocol})
+	if err != nil {
+		return "", fmt.Errorf("creating ConnData from quic Conn: %w", err)
+	}
+
+	_, name, err := e.getter(connData)
+	return name, err
 }

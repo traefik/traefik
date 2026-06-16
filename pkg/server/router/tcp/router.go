@@ -13,14 +13,20 @@ import (
 	"slices"
 	"time"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
 // errClientHelloRead is used as a sentinel error to break the TLS handshake once we have read the ClientHello.
 var errClientHelloRead = errors.New("client hello successfully read")
+
+type tlsConfigWithOptionsName struct {
+	cfg         *tls.Config
+	optionsName string
+}
 
 // Router is a TCP router.
 type Router struct {
@@ -48,7 +54,7 @@ type Router struct {
 	httpsTLSConfig *tls.Config // default TLS config
 	// hostHTTPTLSConfig contains TLS configs keyed by SNI.
 	// A nil config is the hint to set up a brokenTLSRouter.
-	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
+	hostHTTPTLSConfig map[string]tlsConfigWithOptionsName // TLS configs keyed by SNI
 }
 
 // NewRouter returns a new TCP router.
@@ -75,14 +81,20 @@ func NewRouter() (*Router, error) {
 	}, nil
 }
 
-// GetTLSGetClientInfo is called after a ClientHello is received from a client.
-func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
-			return tlsConfig, nil
+// HTTP3TLSConfigMatcherFunc returns a matcher func for HTTP/3 which returns a tls.Config with its corresponding
+// TLSOptionName matching the given HostSNI in the connection data, or the default TLS config if there is no match.
+func (r *Router) HTTP3TLSConfigMatcherFunc() func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
+	return func(connData tcpmuxer.ConnData) (*tls.Config, string, error) {
+		h, _ := r.muxerHTTPS.Match(connData)
+		if h == nil {
+			return r.httpsTLSConfig, traefiktls.DefaultTLSConfigName, nil
 		}
 
-		return r.httpsTLSConfig, nil
+		if tlsHandler, ok := h.(*tcp.TLSHandler); ok {
+			return tlsHandler.Config, tlsHandler.TLSOptionsName, nil
+		}
+
+		return nil, "", errors.New("matching handler is not a TLSHandler")
 	}
 }
 
@@ -94,7 +106,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// we would block forever on clientHelloInfo,
 	// which is why we want to detect and handle that case first and foremost.
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
-		connData, err := tcpmuxer.NewConnData("", conn, nil)
+		connData, err := tcpmuxer.NewConnData("", conn.RemoteAddr(), nil)
 		if err != nil {
 			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 			conn.Close()
@@ -136,7 +148,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		log.WithoutContext().Errorf("Error while setting deadline: %v", err)
 	}
 
-	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
+	connData, err := tcpmuxer.NewConnData(hello.serverName, conn.RemoteAddr(), hello.protos)
 	if err != nil {
 		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 		conn.Close()
@@ -212,12 +224,15 @@ func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
 }
 
 // AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
-func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
+func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config, optionsName string) {
 	if r.hostHTTPTLSConfig == nil {
-		r.hostHTTPTLSConfig = map[string]*tls.Config{}
+		r.hostHTTPTLSConfig = map[string]tlsConfigWithOptionsName{}
 	}
 
-	r.hostHTTPTLSConfig[sniHost] = config
+	r.hostHTTPTLSConfig[sniHost] = tlsConfigWithOptionsName{
+		cfg:         config,
+		optionsName: optionsName,
+	}
 }
 
 // GetConn creates a connection proxy with a peeked string.
@@ -262,12 +277,13 @@ func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
 func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		var tcpHandler tcp.Handler
-		if tlsConf == nil {
+		if tlsConf.cfg == nil {
 			tcpHandler = &brokenTLSRouter{}
 		} else {
 			tcpHandler = &tcp.TLSHandler{
-				Next:   handler,
-				Config: tlsConf,
+				Next:           handler,
+				Config:         tlsConf.cfg,
+				TLSOptionsName: tlsConf.optionsName,
 			}
 		}
 
@@ -285,8 +301,9 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 	}
 
 	r.httpsForwarder = &tcp.TLSHandler{
-		Next:   handler,
-		Config: r.httpsTLSConfig,
+		Next:           handler,
+		Config:         r.httpsTLSConfig,
+		TLSOptionsName: "default",
 	}
 }
 

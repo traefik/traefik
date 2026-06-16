@@ -667,7 +667,7 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	s.traefikCmd(withConfigFile(file))
 
 	// All errors
-	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"]`))
 	require.NoError(s.T(), err)
 
 	// router3 has an error because it uses an unknown entrypoint
@@ -675,11 +675,11 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	require.NoError(s.T(), err)
 
 	// router4 is enabled, but in warning state because its tls options conf was messed up
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
 	require.NoError(s.T(), err)
 
 	// router5 is disabled because its middleware conf is broken
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router5@file", 1000*time.Millisecond, try.BodyContains())
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router5@file", 1000*time.Millisecond, try.BodyContains())
 	require.NoError(s.T(), err)
 }
 
@@ -1614,5 +1614,65 @@ func waitForWritePartial(t *testing.T, conn net.Conn) {
 	case <-end:
 	case <-time.After(500 * time.Millisecond):
 		t.Fatalf("timeout waiting for connection timeout")
+	}
+}
+
+func (s *SimpleSuite) TestMaxHeaderBytes() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	listener, err := net.Listen("tcp", "127.0.0.1:9000")
+	require.NoError(s.T(), err)
+
+	ts := &httptest.Server{
+		Listener: listener,
+		Config: &http.Server{
+			Handler:        handler,
+			MaxHeaderBytes: 1.25 * 1024 * 1024, // 1.25 MB
+		},
+	}
+	ts.Start()
+	defer ts.Close()
+
+	// The test server and traefik config file both specify a max request header size of 1.25 MB.
+	file := s.adaptFile("fixtures/simple_max_header_size.toml", struct {
+		TestServer string
+	}{ts.URL})
+
+	s.traefikCmd(withConfigFile(file))
+
+	testCases := []struct {
+		name           string
+		headerSize     int
+		expectedStatus int
+	}{
+		{
+			name:           "1.25MB header",
+			headerSize:     int(1.25 * 1024 * 1024),
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "1.5MB header",
+			headerSize:     int(1.5 * 1024 * 1024),
+			expectedStatus: http.StatusRequestHeaderFieldsTooLarge,
+		},
+		{
+			name:           "500KB header",
+			headerSize:     int(500 * 1024),
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.name, func() {
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Large-Header", strings.Repeat("A", test.headerSize))
+
+			err = try.Request(req, 2*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
 	}
 }
