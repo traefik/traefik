@@ -189,8 +189,9 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(route, backendRef)
+	for bi, backendRef := range routeRule.BackendRefs {
+		backendKey := fmt.Sprintf("%s-%d", routeKey, bi)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(backendKey, route, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -219,7 +220,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(backendKey string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -232,7 +233,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := provider.Normalize(backendKey + "-" + namespace + "-" + string(backendRef.Name))
 
 	if group != groupCore || kind != kindService {
 		return serviceName, nil, &metav1.Condition{

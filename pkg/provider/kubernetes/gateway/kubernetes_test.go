@@ -280,7 +280,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-9000",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-9000",
 										Weight: ptr.To(1),
 										Status: ptr.To(500),
 									},
@@ -649,13 +649,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -746,13 +746,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -818,13 +818,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -921,13 +921,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-68ef33b73c758387c1f3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-68ef33b73c758387c1f3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -983,13 +983,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-e9a5f9c29d35e93ffeef-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-e9a5f9c29d35e93ffeef-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1045,13 +1045,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-5c1d3f0c956b39f87c03-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-5c1d3f0c956b39f87c03-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1114,7 +1114,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -1124,13 +1124,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami2-http-8080",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-9618b798382aa725aa8b-0-default-whoami2-http-8080",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1147,7 +1147,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami2-http-8080": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-9618b798382aa725aa8b-0-default-whoami2-http-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1203,17 +1203,17 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 									{
-										Name:   "default-whoami2-http-8080",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-1-default-whoami2-http-8080",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1230,7 +1230,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami2-http-8080": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-1-default-whoami2-http-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1299,7 +1299,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-http-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -1309,13 +1309,30 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-https-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-http-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-https-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1393,7 +1410,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -1403,13 +1420,30 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1488,7 +1522,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-e6f8c7ac24ba601f1855-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -1498,7 +1532,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-b69179397f7b7cef15cd-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -1508,13 +1542,47 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-2c055906fe09bc52ae0a-0-default-whoami-http-80",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-e6f8c7ac24ba601f1855-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-b69179397f7b7cef15cd-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-2c055906fe09bc52ae0a-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1570,13 +1638,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c93669faca743dc125a6-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c93669faca743dc125a6-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1632,13 +1700,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-fa3e8bf16a9c0d8be299-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-fa3e8bf16a9c0d8be299-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1694,13 +1762,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a5ad2b19cc7661582983-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a5ad2b19cc7661582983-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1763,7 +1831,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a5ad2b19cc7661582983-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -1773,13 +1841,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "bar-whoami-bar-http-80",
+										Name:   "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-95b064ae9808f10000f4-0-bar-whoami-bar-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-a5ad2b19cc7661582983-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1796,7 +1864,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								},
 							},
 						},
-						"bar-whoami-bar-http-80": {
+						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-95b064ae9808f10000f4-0-bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1852,13 +1920,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "bar-whoami-bar-http-80",
+										Name:   "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-95b064ae9808f10000f4-0-bar-whoami-bar-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"bar-whoami-bar-http-80": {
+						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-95b064ae9808f10000f4-0-bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1923,13 +1991,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-3be6c6c1abd7a2aec50c-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-3be6c6c1abd7a2aec50c-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1994,13 +2062,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-3be6c6c1abd7a2aec50c-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-3be6c6c1abd7a2aec50c-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2051,7 +2119,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-whoami-http-requestheadermodifier-0": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-129ac65f6c6d641b7fac-0-default-whoami-http-requestheadermodifier-0": {
 							RequestHeaderModifier: &dynamic.HeaderModifier{
 								Set:    map[string]string{"X-Foo": "Bar"},
 								Add:    map[string]string{"X-Bar": "Foo"},
@@ -2064,14 +2132,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-129ac65f6c6d641b7fac-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
-							Middlewares: []string{"default-whoami-http-requestheadermodifier-0"},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-129ac65f6c6d641b7fac-0-default-whoami-http-80": {
+							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-129ac65f6c6d641b7fac-0-default-whoami-http-requestheadermodifier-0"},
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2229,13 +2297,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1fc167f18269cb272259-0-default-whoami-http-80",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1fc167f18269cb272259-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2298,13 +2366,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1fc167f18269cb272259-0-default-whoami-http-80",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1fc167f18269cb272259-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2369,13 +2437,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1fc167f18269cb272259-0-default-whoami-http-80",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1fc167f18269cb272259-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2431,13 +2499,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2452,12 +2520,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
-								ServersTransport: "default-whoami-http-80",
+								ServersTransport: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 							},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							ServerName: "whoami",
 							RootCAs: []types.FileOrContent{
 								"CA1",
@@ -2504,13 +2572,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2525,12 +2593,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
-								ServersTransport: "default-whoami-http-80",
+								ServersTransport: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 							},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							ServerName: "whoami",
 						},
 					},
@@ -2572,13 +2640,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2631,13 +2699,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-native-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-native-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-native-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-native-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2691,13 +2759,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-native-disabled-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-native-disabled-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-native-disabled-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-native-disabled-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2908,7 +2976,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http",
 										Weight: ptr.To(1),
 										Status: ptr.To(500),
 									},
@@ -2959,7 +3027,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http",
 										Weight: ptr.To(1),
 										Status: ptr.To(500),
 									},
@@ -3015,13 +3083,13 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 										Weight: ptr.To(1),
 									},
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-1-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-1-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3083,29 +3151,29 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-h2c-http-80",
+										Name:   "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-h2c-http-80",
 										Weight: ptr.To(1),
 									},
 									{
-										Name:   "default-whoami-ws-http-80",
+										Name:   "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-1-default-whoami-ws-http-80",
 										Weight: ptr.To(1),
 									},
 									{
-										Name:   "default-whoami-wss-http-80",
+										Name:   "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-2-default-whoami-wss-http-80",
 										Weight: ptr.To(1),
 									},
 									{
-										Name:   "default-whoami-HTTP-http-80",
+										Name:   "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-3-default-whoami-HTTP-http-80",
 										Weight: ptr.To(1),
 									},
 									{
-										Name:   "default-whoami-HTTPS-http-443",
+										Name:   "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-4-default-whoami-HTTPS-http-443",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-h2c-http-80": {
+						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-h2c-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3119,7 +3187,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-ws-http-80": {
+						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-1-default-whoami-ws-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3133,7 +3201,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-wss-http-80": {
+						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-2-default-whoami-wss-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3147,7 +3215,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-HTTPS-http-443": {
+						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-4-default-whoami-HTTPS-http-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3161,7 +3229,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-HTTP-http-80": {
+						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-3-default-whoami-HTTP-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3270,13 +3338,13 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3343,13 +3411,13 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3556,13 +3624,13 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80-grpc",
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-0-default-whoami-80-grpc",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80-grpc": {
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-0-default-whoami-80-grpc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3629,13 +3697,13 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80-grpc",
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-0-default-whoami-80-grpc",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80-grpc": {
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-0-default-whoami-80-grpc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6229,7 +6297,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6239,13 +6307,30 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6410,7 +6495,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6420,13 +6505,30 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6606,7 +6708,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6616,13 +6718,13 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6639,7 +6741,41 @@ func TestLoadMixedRoutes(t *testing.T) {
 								},
 							},
 						},
-						"bar-whoami-bar-http-80": {
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.11:80",
+									},
+									{
+										URL: "http://10.10.0.12:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6660,7 +6796,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "bar-whoami-bar-http-80",
+										Name:   "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6670,7 +6806,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "bar-whoami-bar-http-80",
+										Name:   "httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6792,7 +6928,24 @@ func TestLoadMixedRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"bar-whoami-bar-http-80": {
+						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.11:80",
+									},
+									{
+										URL: "http://10.10.0.12:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6813,7 +6966,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "bar-whoami-bar-http-80",
+										Name:   "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6823,7 +6976,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "bar-whoami-bar-http-80",
+										Name:   "httproute-bar-http-app-bar-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-bar-whoami-bar-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6919,7 +7072,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
@@ -6929,13 +7082,30 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80",
 										Weight: ptr.To(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-default-gw-default-my-gateway-ep-websecure-0-fc344df89b6d773f1900-0-default-whoami-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7252,7 +7422,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-bar-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-http-0-f407383e48e821a834a9-0-default-whoami-bar-http-80",
 										Weight: ptr.To(1),
 										Status: ptr.To(500),
 									},
