@@ -470,6 +470,7 @@ func (p *Provider) buildRetry(ctx context.Context, loc *location, endpointCount 
 			retry.Status = append(retry.Status, code)
 		}
 	}
+
 	if len(retry.Status) > 0 {
 		disableRequestBuffering := !p.ProxyRequestBuffering
 		if loc.Config.ProxyRequestBuffering != nil {

@@ -51,7 +51,7 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 
 type wroteRequestContextKey struct{}
 
-// WroteRequest is a function allowing to enable/disable the retry middleware mechanism.
+// WroteRequest is a function to signal if the request has been written to the backend.
 type WroteRequest func()
 
 // ContextWroteRequest returns the WroteRequest function if it has been set by the Retry middleware in the chain.

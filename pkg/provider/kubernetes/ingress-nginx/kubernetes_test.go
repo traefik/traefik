@@ -9129,7 +9129,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:                  "Proxy request buffering annotation off disables retry",
+			desc:                  "Proxy request buffering off keeps network retry when no status codes are set",
 			proxyRequestBuffering: true,
 			paths: []string{
 				"services.yml",
