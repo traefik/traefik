@@ -246,7 +246,7 @@ Behavior examples:
 | <a id="opt-false-2" href="#opt-false-2" title="#opt-false-2">false</a> | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
 | <a id="opt-true-2" href="#opt-true-2" title="#opt-true-2">true</a> | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
 
-### SanitizePath
+### sanitizePath
 
 The `sanitizePath` option defines whether to enable the request path sanitization.
 When disabled, the incoming request path is passed to the backend as is.
@@ -469,7 +469,7 @@ to do
 canary deployments against Traefik itself. Like upgrading Traefik version
 or reloading the static configuration without any service downtime.
 
-#### Trace Verbosity
+### traceVerbosity
 
 `observability.traceVerbosity` defines the tracing verbosity level for routers attached to this EntryPoint.
 Routers can override this value in their own observability configuration.
