@@ -55,6 +55,7 @@ Below is the list of the currently supported providers in Traefik.
 | <a id="opt-Docker-Swarm" href="#opt-Docker-Swarm" title="#opt-Docker-Swarm">[Docker Swarm](./swarm.md)</a> | Orchestrator | Label                | `swarm`             |
 | <a id="opt-Kubernetes-IngressRoute" href="#opt-Kubernetes-IngressRoute" title="#opt-Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
 | <a id="opt-Kubernetes-Ingress" href="#opt-Kubernetes-Ingress" title="#opt-Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
+| <a id="opt-Kubernetes-IngressNGINX" href="#opt-Kubernetes-IngressNGINX" title="#opt-Kubernetes-IngressNGINX">[Kubernetes Ingress NGINX](./kubernetes/kubernetes-ingress-nginx.md)</a> | Orchestrator | Ingress-NGINX              | `kubernetesIngressNGINX`        |
 | <a id="opt-Kubernetes-Gateway-API" href="#opt-Kubernetes-Gateway-API" title="#opt-Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
 | <a id="opt-Consul-Catalog" href="#opt-Consul-Catalog" title="#opt-Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
 | <a id="opt-Nomad" href="#opt-Nomad" title="#opt-Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
