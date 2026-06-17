@@ -5,7 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -144,54 +146,50 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// VerifyPeerCertificate verifies the chain certificates and their URI.
-func VerifyPeerCertificate(uri string, cfg *tls.Config, rawCerts [][]byte) error {
-	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
-	cert, err := verifyChain(cfg.RootCAs, rawCerts)
-	if err != nil {
-		return err
-	}
+// SubjectAltNameType is the type of the Subject Alternative Name.
+type SubjectAltNameType string
 
-	if len(uri) > 0 {
-		return verifyServerCertMatchesURI(uri, cert)
-	}
+const (
+	// SubjectAltNameDNSNameType specifies hostname-based SAN.
+	SubjectAltNameDNSNameType SubjectAltNameType = "DNSName"
 
-	return nil
+	// SubjectAltNameURIType specifies URI-based SAN, e.g. SPIFFE id.
+	SubjectAltNameURIType SubjectAltNameType = "URI"
+)
+
+// +k8s:deepcopy-gen=true
+
+// SubjectAltName represents a Subject Alternative Name.
+type SubjectAltName struct {
+	Type  SubjectAltNameType `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty"`
+	Value string             `json:"value,omitempty" toml:"value,omitempty" yaml:"value,omitempty"`
 }
 
-// VerifyPeerCertificateSANs verifies the chain certificates and their SANs (hostnames or URIs).
-func VerifyPeerCertificateSANs(sans []string, cfg *tls.Config, rawCerts [][]byte) error {
-	cert, err := verifyChain(cfg.ClientCAs, rawCerts)
+// VerifyPeerCertificate verifies the chain certificates and their URI.
+func VerifyPeerCertificate(sans []SubjectAltName, rootCAs *x509.CertPool, rawCerts [][]byte) error {
+	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
+	cert, err := verifyChain(rootCAs, rawCerts)
 	if err != nil {
-		return err
+		return fmt.Errorf("verifying chain: %w", err)
 	}
 
 	for _, san := range sans {
-		if verifyServerCertMatchesURI(san, cert) == nil {
-			return nil
-		}
+		switch san.Type {
+		case SubjectAltNameURIType:
+			if slices.ContainsFunc(cert.URIs, func(uri *url.URL) bool {
+				return strings.EqualFold(san.Value, uri.String())
+			}) {
+				return nil
+			}
 
-		if cert.VerifyHostname(san) == nil {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("peer certificate mismatch: none of the SANs %v match the certificate", sans)
-}
-
-// verifyServerCertMatchesURI verifies that the given certificate contains the specified URI in its SANs.
-func verifyServerCertMatchesURI(uri string, cert *x509.Certificate) error {
-	if cert == nil {
-		return errors.New("peer certificate mismatch: no peer certificate presented")
-	}
-
-	for _, certURI := range cert.URIs {
-		if strings.EqualFold(certURI.String(), uri) {
-			return nil
+		case SubjectAltNameDNSNameType:
+			if err := cert.VerifyHostname(san.Value); err == nil {
+				return nil
+			}
 		}
 	}
 
-	return fmt.Errorf("peer certificate mismatch: no SAN URI in peer certificate matches %s", uri)
+	return errors.New("no matching SAN in peer certificate")
 }
 
 // verifyChain performs standard TLS verification without enforcing remote hostname matching.

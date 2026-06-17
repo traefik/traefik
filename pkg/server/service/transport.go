@@ -171,7 +171,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.PeerCertSANs) > 0 || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.PeerCertSubjectAltNames) > 0 || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
@@ -213,6 +213,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			return nil, fmt.Errorf("TLS minimum version %s is above the maximum version %s", cfg.MinVersion, cfg.MaxVersion)
 		}
 
+		// FIXME validate san type
 		config = &tls.Config{
 			ServerName:         cfg.ServerName,
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
@@ -223,15 +224,20 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			MaxVersion:         maxVersion,
 		}
 
+		peerCertSubjectAltNames := make([]traefiktls.SubjectAltName, len(cfg.PeerCertSubjectAltNames))
+		copy(peerCertSubjectAltNames, cfg.PeerCertSubjectAltNames)
+
 		if cfg.PeerCertURI != "" {
-			config.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(cfg.PeerCertURI, config, rawCerts)
-			}
+			log.Warn().Msg("PeerCertURI option is deprecated, please use PeerCertSubjectAltNames instead")
+			peerCertSubjectAltNames = append(peerCertSubjectAltNames, traefiktls.SubjectAltName{
+				Type:  traefiktls.SubjectAltNameURIType,
+				Value: cfg.PeerCertURI,
+			})
 		}
 
-		if len(cfg.PeerCertSANs) > 0 {
-			config.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificateSANs(cfg.PeerCertSANs, config, rawCerts)
+		if len(peerCertSubjectAltNames) > 0 {
+			config.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+				return traefiktls.VerifyPeerCertificate(peerCertSubjectAltNames, config.RootCAs, rawCerts)
 			}
 		}
 	}

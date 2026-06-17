@@ -69,7 +69,12 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 		Certificates: traefiktls.Certificates{
 			c.getLeaf(),
 		},
-		PeerCertURI: spiffeID,
+		PeerCertSubjectAltNames: []traefiktls.SubjectAltName{
+			{
+				Type:  traefiktls.SubjectAltNameURIType,
+				Value: spiffeID,
+			},
+		},
 	}
 }
 
@@ -91,7 +96,12 @@ func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTran
 			Certificates: traefiktls.Certificates{
 				c.getLeaf(),
 			},
-			PeerCertURI: spiffeID,
+			PeerCertSubjectAltNames: []traefiktls.SubjectAltName{
+				{
+					Type:  traefiktls.SubjectAltNameURIType,
+					Value: spiffeID,
+				},
+			},
 		},
 	}
 }

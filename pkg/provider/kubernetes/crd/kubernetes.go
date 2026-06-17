@@ -530,18 +530,18 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
 		conf.HTTP.ServersTransports[id] = &dynamic.ServersTransport{
-			ServerName:          serversTransport.Spec.ServerName,
-			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
-			RootCAs:             rootCAs,
-			Certificates:        certs,
-			CipherSuites:        cipherSuites,
-			MinVersion:          minVersion,
-			MaxVersion:          maxVersion,
-			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
-			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
-			ForwardingTimeouts:  forwardingTimeout,
-			PeerCertURI:         serversTransport.Spec.PeerCertURI,
-			Spiffe:              serversTransport.Spec.Spiffe,
+			ServerName:              serversTransport.Spec.ServerName,
+			InsecureSkipVerify:      serversTransport.Spec.InsecureSkipVerify,
+			RootCAs:                 rootCAs,
+			Certificates:            certs,
+			CipherSuites:            cipherSuites,
+			MinVersion:              minVersion,
+			MaxVersion:              maxVersion,
+			DisableHTTP2:            serversTransport.Spec.DisableHTTP2,
+			MaxIdleConnsPerHost:     serversTransport.Spec.MaxIdleConnsPerHost,
+			ForwardingTimeouts:      forwardingTimeout,
+			PeerCertSubjectAltNames: serversTransport.Spec.PeerCertSubjectAltNames,
+			Spiffe:                  serversTransport.Spec.Spiffe,
 		}
 	}
 

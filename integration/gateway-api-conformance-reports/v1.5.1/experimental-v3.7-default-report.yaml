@@ -27,13 +27,16 @@ profiles:
       Passed: 33
       Skipped: 0
   extended:
-    result: success
+    failedTests:
+    - HTTPRouteBackendRequestHeaderModifier
+    result: failure
     statistics:
-      Failed: 0
+      Failed: 1
       Passed: 20
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
     - GatewayPort8080
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
@@ -48,7 +51,6 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
-    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
@@ -70,7 +72,7 @@ profiles:
     - HTTPRouteRequestTimeout
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests succeeded. Extended tests succeeded.
+  summary: Core tests succeeded. Extended tests failed with 1 test failures.
 - core:
     result: success
     statistics:

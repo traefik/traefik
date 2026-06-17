@@ -5472,6 +5472,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PingTimeout:           ptypes.Duration(42 * time.Second),
 							},
 							PeerCertURI: "foo://bar",
+							PeerCertSubjectAltNames: []tls.SubjectAltName{
+								{
+									Type:  tls.SubjectAltNameDNSNameType,
+									Value: "foo.com",
+								},
+								{
+									Type:  tls.SubjectAltNameURIType,
+									Value: "foo://bar",
+								},
+							},
 							Spiffe: &dynamic.Spiffe{
 								IDs: []string{
 									"spiffe://foo/buz",
