@@ -191,8 +191,8 @@ func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routeKey strin
 
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTLSService(route, backendRef)
+	for bi, backendRef := range backendRefs {
+		svcName, svc, errCondition := p.loadTLSService(routeKey, route, bi, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -226,7 +226,7 @@ func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routeKey strin
 	return name, condition
 }
 
-func (p *Provider) loadTLSService(route *gatev1.TLSRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTLSService(routeKey string, route *gatev1.TLSRoute, backendIndex int, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -239,7 +239,8 @@ func (p *Provider) loadTLSService(route *gatev1.TLSRoute, backendRef gatev1.Back
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			return provider.Normalize(namespace + "-" + string(backendRef.Name)), nil, &metav1.Condition{
+			svcKey := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
+			return provider.Normalize(svcKey), nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -250,7 +251,7 @@ func (p *Provider) loadTLSService(route *gatev1.TLSRoute, backendRef gatev1.Back
 		}
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
 
 	if err := p.isReferenceGranted(kindTLSRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
@@ -290,9 +291,6 @@ func (p *Provider) loadTLSService(route *gatev1.TLSRoute, backendRef gatev1.Back
 			Message:            fmt.Sprintf("Cannot load TLSRoute BackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
-
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
 	lb, errCondition := p.loadTLSServers(namespace, route, backendRef)
 	if errCondition != nil {

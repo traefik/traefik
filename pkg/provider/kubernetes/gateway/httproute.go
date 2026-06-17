@@ -200,10 +200,9 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
-		backendKey := fmt.Sprintf("%s-%d", routeKey, bi)
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(ctx, listener, conf, backendKey, route, backendRef, pathMatch)
+		svcName, errCondition := p.loadService(ctx, listener, conf, routeKey, route, bi, backendRef, pathMatch)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -230,7 +229,7 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, backendKey string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, routeKey string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -243,7 +242,8 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			return provider.Normalize(backendKey + "-" + namespace + "-" + string(backendRef.Name) + "-http"), &metav1.Condition{
+			svcKey := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
+			return provider.Normalize(svcKey), &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -254,7 +254,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 		}
 	}
 
-	serviceName := provider.Normalize(backendKey + "-" + namespace + "-" + string(backendRef.Name) + "-http")
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
 
 	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, &metav1.Condition{
@@ -312,9 +312,6 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 			Message:            fmt.Sprintf("Cannot load HTTPBackendRef %s/%s/%s/%s: port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
-
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
 	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener)
 	if errCondition != nil {

@@ -190,8 +190,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
-		backendKey := fmt.Sprintf("%s-%d", routeKey, bi)
-		svcName, svc, errCondition := p.loadGRPCBackendRef(backendKey, route, backendRef)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(routeKey, route, bi, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -220,7 +219,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(backendKey string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(routeKey string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -233,7 +232,7 @@ func (p *Provider) loadGRPCBackendRef(backendKey string, route *gatev1.GRPCRoute
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := provider.Normalize(backendKey + "-" + namespace + "-" + string(backendRef.Name))
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
 
 	if group != groupCore || kind != kindService {
 		return serviceName, nil, &metav1.Condition{
@@ -268,9 +267,6 @@ func (p *Provider) loadGRPCBackendRef(backendKey string, route *gatev1.GRPCRoute
 			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s/%s/%s: port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
-
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
 	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
 	if errCondition != nil {
