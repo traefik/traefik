@@ -55,7 +55,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	mc := &model{
 		Backends: make(map[string]*backend),
 		Servers:  make(map[string]*server),
-		Certs:    make(map[string]string),
+		Certs:    make(map[string]certPair),
 	}
 
 	// Builder-local cache of TLS options resolved per ingress. Each Location
@@ -255,6 +255,12 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 		// ssl-passthrough: handled per-rule. serversTransport is not needed for passthrough.
 		if ptr.Deref(ing.config.SSLPassthrough, false) {
+			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
+			if len(ing.Spec.TLS) > 0 {
+				if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
+					logger.Warn().Err(err).Msg("Error loading TLS certificates for ssl-passthrough ingress")
+				}
+			}
 			for _, rule := range ing.Spec.Rules {
 				if rule.Host == "" {
 					logger.Error().Msg("Cannot process ssl-passthrough: rule has no host")
@@ -309,6 +315,18 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
 			continue
 		}
+		// Load TLS certificates into the shared mc.Certs map first. They are kept
+		// even when the rest of the ingress is later skipped (e.g. when an
+		// auth-tls-secret fails to resolve), so the default certificate pool stays
+		// consistent. When loading fails, hasTLS still signals that the ingress has
+		// a TLS section so the translator can fall back to the default cert.
+		hasTLS := len(ing.Spec.TLS) > 0
+		if hasTLS {
+			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
+				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
+			}
+		}
+
 		// Resolve TLS option (auth-tls-secret).
 		var tlsOptionName string
 		var tlsOption *tls.Options
@@ -320,23 +338,15 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			} else {
 				tlsOpt, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config)
 				if err != nil {
-					logger.Error().Err(err).Msg("Cannot build client auth TLS option")
-				} else {
-					tlsOptionName = optName
-					tlsOption = tlsOpt
-					tlsOptionCache[optName] = tlsOption
+					logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+					// Skipping the ingress entirely matches ingress-nginx behavior:
+					// when the configured client-auth secret cannot be resolved, no
+					// router/middleware/service should be exposed for the ingress.
+					continue
 				}
-			}
-		}
-
-		// Load TLS certificates into the shared mc.Certs map (keyed by cert PEM,
-		// which naturally deduplicates certs reused across ingresses). When loading
-		// fails, hasTLS still signals that the ingress has a TLS section so the
-		// translator can fall back to the default cert.
-		hasTLS := len(ing.Spec.TLS) > 0
-		if hasTLS {
-			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
-				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
+				tlsOptionName = optName
+				tlsOption = tlsOpt
+				tlsOptionCache[optName] = tlsOption
 			}
 		}
 
@@ -405,11 +415,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						logger.Error().
 							Err(err).
 							Str("ingress", fmt.Sprintf("%s/%s rule-%d path-%d", ing.Namespace, ing.Name, ri, pi)).
-							Msg("Cannot resolve auth secret, skipping auth middleware")
-					} else {
-						loc.BasicAuth = basic
-						loc.DigestAuth = digest
+							Msg("Cannot resolve auth secret, skipping ingress")
+						// Skipping the ingress entirely when auth secret resolution fails,
+						// to match ingress-nginx behavior.
+						continue
 					}
+					loc.BasicAuth = basic
+					loc.DigestAuth = digest
 				}
 
 				// Pre-resolve custom headers ConfigMap.
@@ -763,16 +775,19 @@ func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error
 	return &blocks, nil
 }
 
-// loadCertificates loads TLS certificates for an ingress into mcCerts (keyed by cert PEM).
-// The loaded set is shared across ingresses to avoid re-reading the same secret multiple times.
-func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcCerts map[string]string, loaded map[string]bool) error {
+// loadCertificates loads TLS certificates for an ingress into mcCerts.
+// The map is keyed by "<namespace>/<secretName>" so each Secret stays as a
+// distinct certificate entry even if multiple Secrets carry identical PEM
+// content, matching ingress-nginx behavior. The loaded set is shared across
+// ingresses to avoid re-reading the same secret multiple times.
+func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcCerts map[string]certPair, loaded map[string]bool) error {
 	for _, t := range ing.Spec.TLS {
 		if t.SecretName == "" {
 			log.Ctx(ctx).Debug().Msg("Skipping TLS section: no secret name")
 			continue
 		}
 
-		secretKey := ing.Namespace + "-" + t.SecretName
+		secretKey := ing.Namespace + "/" + t.SecretName
 		if loaded[secretKey] {
 			continue
 		}
@@ -787,7 +802,7 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 			return fmt.Errorf("no keypair found in secret %s/%s", ing.Namespace, t.SecretName)
 		}
 
-		mcCerts[string(blocks.cert)] = string(blocks.key)
+		mcCerts[secretKey] = certPair{Cert: string(blocks.cert), Key: string(blocks.key)}
 	}
 
 	return nil

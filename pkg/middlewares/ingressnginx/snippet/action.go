@@ -393,7 +393,7 @@ func createProxySetHeaderAction(d config.IDirective) (action, error) {
 		return nil, errors.New("proxy_set_header directive requires 2 parameters (header and value)")
 	}
 
-	key := params[0].String()
+	key := trimQuote(params[0].String())
 	val := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
