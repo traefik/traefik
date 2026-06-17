@@ -929,7 +929,7 @@ func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *
 			AccessControlAllowHeaders:     ptr.Deref(ingressConfig.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
 			AccessControlAllowMethods:     ptr.Deref(ingressConfig.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
 			AccessControlAllowOriginList:  ptr.Deref(ingressConfig.CORSAllowOrigin, []string{"*"}),
-			AccessControlMaxAge:           int64(ptr.Deref(ingressConfig.CORSMaxAge, 1728000)),
+			AccessControlMaxAge:           ptr.To(int64(ptr.Deref(ingressConfig.CORSMaxAge, 1728000))),
 		},
 	}
 
