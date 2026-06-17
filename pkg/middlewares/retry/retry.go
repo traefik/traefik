@@ -49,47 +49,25 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 	}
 }
 
-type wroteRequestContextKey struct{}
-
-// WroteRequest is a function to signal if the request has been written to the backend.
-type WroteRequest func()
-
-// ContextWroteRequest returns the WroteRequest function if it has been set by the Retry middleware in the chain.
-func ContextWroteRequest(ctx context.Context) WroteRequest {
-	f, _ := ctx.Value(wroteRequestContextKey{}).(WroteRequest)
-	return f
-}
-
-type proxyReachedContextKey struct{}
-
-// ProxyReached is a function signaling that the request reached the backend proxy.
-type ProxyReached func()
-
-// ContextProxyReached returns the ProxyReached function if it has been set by the Retry middleware in the chain.
-func ContextProxyReached(ctx context.Context) ProxyReached {
-	f, _ := ctx.Value(proxyReachedContextKey{}).(ProxyReached)
-	return f
-}
+type retryResponseWriterContextKey struct{}
 
 // WrapHandler wraps a given http.Handler to inject the httptrace.ClientTrace in the request context when it is needed
 // by the retry middleware.
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// Reaching this handler means the request reached the proxy layer,
-		// which arms the network-error retry (a dial failure still reaches here and writes
-		// a 502 without sending bytes). Responses produced earlier in the chain
-		// (e.g. an auth middleware returning 401) never reach here and must not be retried.
-		if proxyReached := ContextProxyReached(req.Context()); proxyReached != nil {
-			proxyReached()
-		}
+		if retryResponseWriter, _ := req.Context().Value(retryResponseWriterContextKey{}).(*responseWriter); retryResponseWriter != nil {
+			// Reaching this handler means the request reached the proxy layer,
+			// which arms the network-error retry (a dial failure still reaches here and writes
+			// a 502 without sending bytes). Responses produced earlier in the chain
+			// (e.g. an auth middleware returning 401) never reach here and must not be retried.
+			retryResponseWriter.proxyReached.Store(true)
 
-		if wroteRequest := ContextWroteRequest(req.Context()); wroteRequest != nil {
 			trace := &httptrace.ClientTrace{
 				WroteHeaders: func() {
-					wroteRequest()
+					retryResponseWriter.wroteRequest.Store(true)
 				},
 				WroteRequest: func(httptrace.WroteRequestInfo) {
-					wroteRequest()
+					retryResponseWriter.wroteRequest.Store(true)
 				},
 			}
 			newCtx := httptrace.WithClientTrace(req.Context(), trace)
@@ -247,17 +225,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		retryReq := req
 		if !r.disableRetryOnNetworkError {
-			var wroteRequest WroteRequest = func() {
-				retryResponseWriter.wroteRequest.Store(true)
-			}
-			ctx := context.WithValue(req.Context(), wroteRequestContextKey{}, wroteRequest)
-
-			var proxyReached ProxyReached = func() {
-				retryResponseWriter.proxyReached.Store(true)
-			}
-			ctx = context.WithValue(ctx, proxyReachedContextKey{}, proxyReached)
-
-			retryReq = req.Clone(ctx)
+			retryReq = req.Clone(context.WithValue(req.Context(), retryResponseWriterContextKey{}, retryResponseWriter))
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
