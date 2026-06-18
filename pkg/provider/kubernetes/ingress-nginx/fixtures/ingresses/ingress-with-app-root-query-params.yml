@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-app-root-query-params
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/app-root: /foo$is_args$args
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app-root-query-params.localhost
+      http:
+        paths:
+          - path: /bar
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

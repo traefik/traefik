@@ -4635,13 +4635,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-app-root-rule-0-path-0-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
@@ -4687,6 +4687,123 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-app-root": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "App Root with query params",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-app-root-query-params.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-app-root-query-params-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("app-root-query-params.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-query-params-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-app-root-query-params",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-app-root-query-params-rule-0-path-0-app-root", "default-ingress-with-app-root-query-params-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-app-root-query-params-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("app-root-query-params.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-query-params-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-app-root-query-params",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-app-root-query-params-rule-0-path-0-tls-app-root", "default-ingress-with-app-root-query-params-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-app-root-query-params-rule-0-path-0-app-root": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
+								Replacement: "$1/foo$2",
+							},
+						},
+						"default-ingress-with-app-root-query-params-rule-0-path-0-tls-app-root": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
+								Replacement: "$1/foo$2",
+							},
+						},
+						"default-ingress-with-app-root-query-params-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-app-root-query-params-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-app-root-query-params-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-app-root-query-params",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-app-root-query-params": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -13480,25 +13597,25 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-middlewares-rule-0-path-0-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
@@ -13804,7 +13921,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
@@ -13821,7 +13938,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
+								Regex:       `^(https?://[^/?]+)/?(\?.*)?$`,
 								Replacement: "$1/foo",
 							},
 						},
