@@ -4,7 +4,7 @@ This product uses source code from third party libraries which carry
 their own copyright notices and license terms. These notices are provided
 below.
 
-Generated at: 2026-05-15T12:12:23Z
+Generated at: 2026-06-18T10:32:19Z
 
 ---
 
@@ -19,9 +19,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## abbrev 4.0.0
+## abbrev 5.0.0
 
-PURL: pkg:npm/abbrev@4.0.0
+PURL: pkg:npm/abbrev@5.0.0
 Upstream: [https://www.npmjs.com/package/abbrev](https://www.npmjs.com/package/abbrev)
 
 Licenses: ISC
@@ -77,6 +77,16 @@ Upstream: [https://www.npmjs.com/package/acorn-walk](https://www.npmjs.com/packa
 Licenses: MIT
 
 Copyright (C) 2012-2020 by various contributors (see AUTHORS)
+
+
+## agent-base 6.0.2
+
+PURL: pkg:npm/agent-base@6.0.2
+Upstream: [https://www.npmjs.com/package/agent-base](https://www.npmjs.com/package/agent-base)
+
+Licenses: MIT
+
+Copyright (c) Nathan Rajlich
 
 
 ## ajv 6.12.6
@@ -369,9 +379,9 @@ Licenses: MIT
 Copyright (c) 2020 Inspect JS
 
 
-## axios 1.15.1
+## axios 1.17.0
 
-PURL: pkg:npm/axios@1.15.1
+PURL: pkg:npm/axios@1.17.0
 Upstream: [https://www.npmjs.com/package/axios](https://www.npmjs.com/package/axios)
 
 Licenses: MIT
@@ -1412,6 +1422,16 @@ Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
 ## debug 4.3.7
 
 PURL: pkg:npm/debug@4.3.7?vcs_url=git%3A%2F%2Fgithub.com%2Fdebug-js%2Fdebug.git
+Upstream: [https://www.npmjs.com/package/debug](https://www.npmjs.com/package/debug)
+
+Licenses: MIT
+
+Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
+
+
+## debug 4.4.3
+
+PURL: pkg:npm/debug@4.4.3?vcs_url=git%3A%2F%2Fgithub.com%2Fdebug-js%2Fdebug.git
 Upstream: [https://www.npmjs.com/package/debug](https://www.npmjs.com/package/debug)
 
 Licenses: MIT
@@ -2769,99 +2789,9 @@ Licenses: MIT
 Copyright (c) 2015 Microsoft Corporation
 
 
-## github.com/Azure/go-autorest v14.2.0+incompatible
+## github.com/AzureAD/microsoft-authentication-library-for-go v1.7.0
 
-PURL: pkg:golang/github.com/Azure/go-autorest@v14.2.0+incompatible?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/autorest v0.11.30
-
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest@v0.11.30?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/autorest/adal v0.9.22
-
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/adal@v0.9.22?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/autorest/azure/auth v0.5.13
-
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/azure/auth@v0.5.13?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/autorest/azure/cli v0.4.6
-
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/azure/cli@v0.4.6?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/autorest/date v0.3.0
-
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/date@v0.3.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/autorest/to v0.4.1
-
-PURL: pkg:golang/github.com/Azure/go-autorest/autorest/to@v0.4.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/logger v0.2.1
-
-PURL: pkg:golang/github.com/Azure/go-autorest/logger@v0.2.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/Azure/go-autorest/tracing v0.6.0
-
-PURL: pkg:golang/github.com/Azure/go-autorest/tracing@v0.6.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/Azure/go-autorest](https://github.com/Azure/go-autorest)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
-## github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0
-
-PURL: pkg:golang/github.com/AzureAD/microsoft-authentication-library-for-go@v1.6.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/AzureAD/microsoft-authentication-library-for-go@v1.7.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/AzureAD/microsoft-authentication-library-for-go](https://github.com/AzureAD/microsoft-authentication-library-for-go)
 
 Licenses: MIT
@@ -3069,9 +2999,9 @@ Licenses: MIT
 Copyright (c) 2013 VividCortex
 
 
-## github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.1.0
+## github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.2.0
 
-PURL: pkg:golang/github.com/akamai/AkamaiOPEN-edgegrid-golang/v13@v13.1.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/akamai/AkamaiOPEN-edgegrid-golang/v13@v13.2.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/akamai/AkamaiOPEN-edgegrid-golang](https://github.com/akamai/AkamaiOPEN-edgegrid-golang)
 
 Licenses: Apache-2.0
@@ -3079,9 +3009,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5
+## github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e
 
-PURL: pkg:golang/github.com/alexbrainman/sspi@v0.0.0-20180613141037-e580b900e9f5?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/alexbrainman/sspi@v0.0.0-20250919150558-7d374ff0d59e?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alexbrainman/sspi](https://github.com/alexbrainman/sspi)
 
 Licenses: BSD-3-Clause
@@ -3099,9 +3029,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.16
+## github.com/alibabacloud-go/darabonba-openapi/v2 v2.2.1
 
-PURL: pkg:golang/github.com/alibabacloud-go/darabonba-openapi/v2@v2.1.16?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/alibabacloud-go/darabonba-openapi/v2@v2.2.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/darabonba-openapi](https://github.com/alibabacloud-go/darabonba-openapi)
 
 Licenses: Apache-2.0
@@ -3119,9 +3049,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/alibabacloud-go/tea v1.4.0
+## github.com/alibabacloud-go/tea v1.5.0
 
-PURL: pkg:golang/github.com/alibabacloud-go/tea@v1.4.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/alibabacloud-go/tea@v1.5.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/alibabacloud-go/tea](https://github.com/alibabacloud-go/tea)
 
 Licenses: Apache-2.0
@@ -3169,9 +3099,9 @@ Licenses: MIT
 Copyright (c) 2014 Armon Dadgar
 
 
-## github.com/aws/smithy-go v1.25.0
+## github.com/aws/smithy-go v1.25.1
 
-PURL: pkg:golang/github.com/aws/smithy-go@v1.25.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/aws/smithy-go@v1.25.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/aws/smithy-go](https://github.com/aws/smithy-go)
 
 Licenses: Apache-2.0
@@ -3179,9 +3109,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/baidubce/bce-sdk-go v0.9.265
+## github.com/baidubce/bce-sdk-go v0.9.267
 
-PURL: pkg:golang/github.com/baidubce/bce-sdk-go@v0.9.265?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/baidubce/bce-sdk-go@v0.9.267?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/baidubce/bce-sdk-go](https://github.com/baidubce/bce-sdk-go)
 
 Licenses: Apache-2.0
@@ -3209,9 +3139,19 @@ Licenses: MIT
 Copyright (C) 2013 Blake Mizerany
 
 
-## github.com/bodgit/tsig v1.2.2
+## github.com/bodgit/gssapi v0.0.3
 
-PURL: pkg:golang/github.com/bodgit/tsig@v1.2.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/bodgit/gssapi@v0.0.3?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/bodgit/gssapi](https://github.com/bodgit/gssapi)
+
+Licenses: BSD-3-Clause
+
+Copyright (c) 2023, Matt Dainty
+
+
+## github.com/bodgit/tsig v1.3.1
+
+PURL: pkg:golang/github.com/bodgit/tsig@v1.3.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/bodgit/tsig](https://github.com/bodgit/tsig)
 
 Licenses: BSD-3-Clause
@@ -3399,16 +3339,6 @@ Licenses: MIT
 Copyright (c) 2017-2020 Damian Gryski <damian@gryski.com>
 
 
-## github.com/dimchansky/utfbom v1.1.1
-
-PURL: pkg:golang/github.com/dimchansky/utfbom@v1.1.1?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/dimchansky/utfbom](https://github.com/dimchansky/utfbom)
-
-Licenses: Apache-2.0
-
-copyright notice that is included in or attached to the work
-
-
 ## github.com/distribution/reference v0.6.0
 
 PURL: pkg:golang/github.com/distribution/reference@v0.6.0?goarch=amd64&goos=linux&type=module
@@ -3509,9 +3439,9 @@ Licenses: MIT
 Copyright (c) 2014 Fatih Arslan
 
 
-## github.com/fsnotify/fsnotify v1.9.0
+## github.com/fsnotify/fsnotify v1.10.1
 
-PURL: pkg:golang/github.com/fsnotify/fsnotify@v1.9.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/fsnotify/fsnotify@v1.10.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/fsnotify/fsnotify](https://github.com/fsnotify/fsnotify)
 
 Licenses: BSD-3-Clause
@@ -3559,9 +3489,9 @@ Licenses: MIT
 Copyright (c) 2014 Sam Ghods
 
 
-## github.com/go-acme/alidns-20150109/v4 v4.7.0
+## github.com/go-acme/alidns-20150109/v5 v5.4.1
 
-PURL: pkg:golang/github.com/go-acme/alidns-20150109/v4@v4.7.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-acme/alidns-20150109/v5@v5.4.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/alidns-20150109](https://github.com/go-acme/alidns-20150109)
 
 Licenses: Apache-2.0
@@ -3569,9 +3499,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/go-acme/esa-20240910/v2 v2.48.0
+## github.com/go-acme/esa-20240910/v3 v3.2.2
 
-PURL: pkg:golang/github.com/go-acme/esa-20240910/v2@v2.48.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-acme/esa-20240910/v3@v3.2.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/esa-20240910](https://github.com/go-acme/esa-20240910)
 
 Licenses: Apache-2.0
@@ -3589,9 +3519,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/go-acme/lego/v4 v4.35.2
+## github.com/go-acme/lego/v5 v5.2.2
 
-PURL: pkg:golang/github.com/go-acme/lego/v4@v4.35.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-acme/lego/v5@v5.2.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-acme/lego](https://github.com/go-acme/lego)
 
 Licenses: MIT
@@ -3749,9 +3679,9 @@ Licenses: MIT
 Copyright (c) 2016 Go Playground
 
 
-## github.com/go-playground/validator/v10 v10.23.0
+## github.com/go-playground/validator/v10 v10.30.2
 
-PURL: pkg:golang/github.com/go-playground/validator/v10@v10.23.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/go-playground/validator/v10@v10.30.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/go-playground/validator](https://github.com/go-playground/validator)
 
 Licenses: MIT
@@ -3919,9 +3849,9 @@ Licenses: BSD-3-Clause
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
 
 
-## github.com/googleapis/enterprise-certificate-proxy v0.3.14
+## github.com/googleapis/enterprise-certificate-proxy v0.3.15
 
-PURL: pkg:golang/github.com/googleapis/enterprise-certificate-proxy@v0.3.14?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/googleapis/enterprise-certificate-proxy@v0.3.15?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/googleapis/enterprise-certificate-proxy](https://github.com/googleapis/enterprise-certificate-proxy)
 
 Licenses: Apache-2.0
@@ -3929,9 +3859,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/googleapis/gax-go/v2 v2.21.0
+## github.com/googleapis/gax-go/v2 v2.22.0
 
-PURL: pkg:golang/github.com/googleapis/gax-go/v2@v2.21.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/googleapis/gax-go/v2@v2.22.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/googleapis/gax-go](https://github.com/googleapis/gax-go)
 
 Licenses: BSD-3-Clause
@@ -4109,9 +4039,9 @@ Licenses: MIT
 Copyright (c) 2015 Huan Du
 
 
-## github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.192
+## github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.198
 
-PURL: pkg:golang/github.com/huaweicloud/huaweicloud-sdk-go-v3@v0.1.192?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/huaweicloud/huaweicloud-sdk-go-v3@v0.1.198?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/huaweicloud/huaweicloud-sdk-go-v3](https://github.com/huaweicloud/huaweicloud-sdk-go-v3)
 
 Licenses: Apache-2.0
@@ -4369,9 +4299,9 @@ Licenses: MIT
 Copyright (c) 2018 Leonardo Di Donato
 
 
-## github.com/linode/linodego v1.68.0
+## github.com/linode/linodego v1.69.1
 
-PURL: pkg:golang/github.com/linode/linodego@v1.68.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/linode/linodego@v1.69.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/linode/linodego](https://github.com/linode/linodego)
 
 Licenses: MIT
@@ -4469,9 +4399,9 @@ Licenses: MIT
 Copyright (c) 2016 Yasuhiro Matsumoto
 
 
-## github.com/mattn/go-isatty v0.0.21
+## github.com/mattn/go-isatty v0.0.22
 
-PURL: pkg:golang/github.com/mattn/go-isatty@v0.0.21?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/mattn/go-isatty@v0.0.22?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/mattn/go-isatty](https://github.com/mattn/go-isatty)
 
 Licenses: MIT
@@ -4687,16 +4617,6 @@ Upstream: [https://github.com/nrdcg/bunny-go](https://github.com/nrdcg/bunny-go)
 Licenses: MIT
 
 Copyright (c) 2021 simplesurance GmbH
-
-
-## github.com/nrdcg/dnspod-go v0.4.0
-
-PURL: pkg:golang/github.com/nrdcg/dnspod-go@v0.4.0?goarch=amd64&goos=linux&type=module
-Upstream: [https://github.com/nrdcg/dnspod-go](https://github.com/nrdcg/dnspod-go)
-
-Licenses: MIT
-
-Copyright (c) 2017 decker
 
 
 ## github.com/nrdcg/goacmedns v0.2.0
@@ -4979,9 +4899,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/quic-go/quic-go v0.57.1
+## github.com/quic-go/quic-go v0.59.1
 
-PURL: pkg:golang/github.com/quic-go/quic-go@v0.57.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/quic-go/quic-go@v0.59.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/quic-go/quic-go](https://github.com/quic-go/quic-go)
 
 Licenses: MIT
@@ -5039,9 +4959,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/sacloud/iaas-api-go v1.23.1
+## github.com/sacloud/iaas-api-go v1.29.1
 
-PURL: pkg:golang/github.com/sacloud/iaas-api-go@v1.23.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/sacloud/iaas-api-go@v1.29.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sacloud/iaas-api-go](https://github.com/sacloud/iaas-api-go)
 
 Licenses: Apache-2.0
@@ -5049,10 +4969,20 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/sacloud/packages-go v0.0.12
+## github.com/sacloud/packages-go v0.1.0
 
-PURL: pkg:golang/github.com/sacloud/packages-go@v0.0.12?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/sacloud/packages-go@v0.1.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sacloud/packages-go](https://github.com/sacloud/packages-go)
+
+Licenses: Apache-2.0
+
+copyright notice that is included in or attached to the work
+
+
+## github.com/sacloud/saclient-go v0.4.0
+
+PURL: pkg:golang/github.com/sacloud/saclient-go@v0.4.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/sacloud/saclient-go](https://github.com/sacloud/saclient-go)
 
 Licenses: Apache-2.0
 
@@ -5077,6 +5007,36 @@ Upstream: [https://github.com/sagikazarmark/slog-shim](https://github.com/sagika
 Licenses: BSD-3-Clause
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
+
+
+## github.com/samber/lo v1.53.0
+
+PURL: pkg:golang/github.com/samber/lo@v1.53.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/samber/lo](https://github.com/samber/lo)
+
+Licenses: MIT
+
+Copyright (c) 2022-2025 Samuel Berthe
+
+
+## github.com/samber/slog-common v0.21.0
+
+PURL: pkg:golang/github.com/samber/slog-common@v0.21.0?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/samber/slog-common](https://github.com/samber/slog-common)
+
+Licenses: MIT
+
+Copyright (c) 2023 Samuel Berthe
+
+
+## github.com/samber/slog-logrus/v2 v2.5.4
+
+PURL: pkg:golang/github.com/samber/slog-logrus/v2@v2.5.4?goarch=amd64&goos=linux&type=module
+Upstream: [https://github.com/samber/slog-logrus](https://github.com/samber/slog-logrus)
+
+Licenses: MIT
+
+Copyright (c) 2023 Samuel Berthe
 
 
 ## github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
@@ -5179,9 +5139,9 @@ Licenses: MIT
 Copyright (C) 2012 Dmitry Maksimov
 
 
-## github.com/sony/gobreaker v1.0.0
+## github.com/sony/gobreaker/v2 v2.4.0
 
-PURL: pkg:golang/github.com/sony/gobreaker@v1.0.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/sony/gobreaker/v2@v2.4.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/sony/gobreaker](https://github.com/sony/gobreaker)
 
 Licenses: MIT
@@ -5269,9 +5229,9 @@ Licenses: MIT
 Copyright (c) 2013 Alif Rachmawadi
 
 
-## github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.83
+## github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.106
 
-PURL: pkg:golang/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common@v1.3.83?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common@v1.3.106?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/tencentcloud/tencentcloud-sdk-go](https://github.com/tencentcloud/tencentcloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -5359,9 +5319,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/transip/gotransip/v6 v6.26.2
+## github.com/transip/gotransip/v6 v6.27.1
 
-PURL: pkg:golang/github.com/transip/gotransip/v6@v6.26.2?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/transip/gotransip/v6@v6.27.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/transip/gotransip](https://github.com/transip/gotransip)
 
 Licenses: MIT
@@ -5389,9 +5349,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/ucloud/ucloud-sdk-go v0.22.63
+## github.com/ucloud/ucloud-sdk-go v0.22.74
 
-PURL: pkg:golang/github.com/ucloud/ucloud-sdk-go@v0.22.63?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/ucloud/ucloud-sdk-go@v0.22.74?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ucloud/ucloud-sdk-go](https://github.com/ucloud/ucloud-sdk-go)
 
 Licenses: Apache-2.0
@@ -5399,9 +5359,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/ultradns/ultradns-go-sdk v1.8.1-20250722213956-faef419
+## github.com/ultradns/ultradns-go-sdk v1.8.2-20260507133303-3f324c7
 
-PURL: pkg:golang/github.com/ultradns/ultradns-go-sdk@v1.8.1-20250722213956-faef419?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/ultradns/ultradns-go-sdk@v1.8.2-20260507133303-3f324c7?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/ultradns/ultradns-go-sdk](https://github.com/ultradns/ultradns-go-sdk)
 
 Licenses: Apache-2.0
@@ -5429,9 +5389,9 @@ Licenses: MIT
 Copyright (c) 2014 Cory Jacobsen
 
 
-## github.com/vinyldns/go-vinyldns v0.9.17
+## github.com/vinyldns/go-vinyldns v0.9.18
 
-PURL: pkg:golang/github.com/vinyldns/go-vinyldns@v0.9.17?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/vinyldns/go-vinyldns@v0.9.18?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vinyldns/go-vinyldns](https://github.com/vinyldns/go-vinyldns)
 
 Licenses: Apache-2.0
@@ -5439,9 +5399,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/volcengine/volc-sdk-golang v1.0.242
+## github.com/volcengine/volc-sdk-golang v1.0.249
 
-PURL: pkg:golang/github.com/volcengine/volc-sdk-golang@v1.0.242?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/volcengine/volc-sdk-golang@v1.0.249?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/volcengine/volc-sdk-golang](https://github.com/volcengine/volc-sdk-golang)
 
 Licenses: Apache-2.0
@@ -5469,9 +5429,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## github.com/vultr/govultr/v3 v3.31.0
+## github.com/vultr/govultr/v3 v3.31.2
 
-PURL: pkg:golang/github.com/vultr/govultr/v3@v3.31.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/vultr/govultr/v3@v3.31.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/vultr/govultr](https://github.com/vultr/govultr)
 
 Licenses: MIT
@@ -5489,9 +5449,9 @@ Licenses: MIT
 Copyright (c) 2019 Montgomery Edwards⁴⁴⁸ and Faye Amacker
 
 
-## github.com/yandex-cloud/go-genproto v0.73.0
+## github.com/yandex-cloud/go-genproto v0.84.0
 
-PURL: pkg:golang/github.com/yandex-cloud/go-genproto@v0.73.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/yandex-cloud/go-genproto@v0.84.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-genproto](https://github.com/yandex-cloud/go-genproto)
 
 Licenses: MIT
@@ -5499,9 +5459,9 @@ Licenses: MIT
 Copyright (c) 2018 YANDEX LLC
 
 
-## github.com/yandex-cloud/go-sdk/services/dns v0.0.54
+## github.com/yandex-cloud/go-sdk/services/dns v0.0.65
 
-PURL: pkg:golang/github.com/yandex-cloud/go-sdk/services/dns@v0.0.54?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/yandex-cloud/go-sdk/services/dns@v0.0.65?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-sdk](https://github.com/yandex-cloud/go-sdk)
 
 Licenses: MIT
@@ -5509,9 +5469,9 @@ Licenses: MIT
 Copyright (c) 2018 YANDEX LLC
 
 
-## github.com/yandex-cloud/go-sdk/v2 v2.92.0
+## github.com/yandex-cloud/go-sdk/v2 v2.114.0
 
-PURL: pkg:golang/github.com/yandex-cloud/go-sdk/v2@v2.92.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/github.com/yandex-cloud/go-sdk/v2@v2.114.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://github.com/yandex-cloud/go-sdk](https://github.com/yandex-cloud/go-sdk)
 
 Licenses: MIT
@@ -5879,9 +5839,9 @@ Licenses: Apache-2.0
 copyright staring in 2011 when the project was ported over:
 
 
-## golang.org/x/crypto v0.50.0
+## golang.org/x/crypto v0.52.0
 
-PURL: pkg:golang/golang.org/x/crypto@v0.50.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/golang.org/x/crypto@v0.52.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto)
 
 Licenses: BSD-3-Clause
@@ -5899,9 +5859,9 @@ Licenses: BSD-3-Clause
 Copyright 2009 The Go Authors.
 
 
-## golang.org/x/mod v0.35.0
+## golang.org/x/mod v0.36.0
 
-PURL: pkg:golang/golang.org/x/mod@v0.35.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/golang.org/x/mod@v0.36.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/mod](https://pkg.go.dev/golang.org/x/mod)
 
 Licenses: BSD-3-Clause
@@ -5909,9 +5869,9 @@ Licenses: BSD-3-Clause
 Copyright 2009 The Go Authors.
 
 
-## golang.org/x/net v0.53.0
+## golang.org/x/net v0.55.0
 
-PURL: pkg:golang/golang.org/x/net@v0.53.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/golang.org/x/net@v0.55.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/net](https://pkg.go.dev/golang.org/x/net)
 
 Licenses: BSD-3-Clause
@@ -5939,9 +5899,9 @@ Licenses: BSD-3-Clause
 Copyright 2009 The Go Authors.
 
 
-## golang.org/x/sys v0.43.0
+## golang.org/x/sys v0.45.0
 
-PURL: pkg:golang/golang.org/x/sys@v0.43.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/golang.org/x/sys@v0.45.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/sys](https://pkg.go.dev/golang.org/x/sys)
 
 Licenses: BSD-3-Clause
@@ -5949,9 +5909,9 @@ Licenses: BSD-3-Clause
 Copyright 2009 The Go Authors.
 
 
-## golang.org/x/term v0.42.0
+## golang.org/x/term v0.43.0
 
-PURL: pkg:golang/golang.org/x/term@v0.42.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/golang.org/x/term@v0.43.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/term](https://pkg.go.dev/golang.org/x/term)
 
 Licenses: BSD-3-Clause
@@ -5959,9 +5919,9 @@ Licenses: BSD-3-Clause
 Copyright 2009 The Go Authors.
 
 
-## golang.org/x/text v0.36.0
+## golang.org/x/text v0.37.0
 
-PURL: pkg:golang/golang.org/x/text@v0.36.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/golang.org/x/text@v0.37.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/golang.org/x/text](https://pkg.go.dev/golang.org/x/text)
 
 Licenses: BSD-3-Clause
@@ -5999,9 +5959,9 @@ Licenses: BSD-3-Clause
 Copyright (c) 2019 The Go Authors. All rights reserved.
 
 
-## google.golang.org/api v0.276.0
+## google.golang.org/api v0.280.0
 
-PURL: pkg:golang/google.golang.org/api@v0.276.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/google.golang.org/api@v0.280.0?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/api](https://pkg.go.dev/google.golang.org/api)
 
 Licenses: BSD-3-Clause
@@ -6019,9 +5979,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9
+## google.golang.org/genproto/googleapis/rpc v0.0.0-20260511170946-3700d4141b60
 
-PURL: pkg:golang/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260401024825-9d38bb4040a9?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260511170946-3700d4141b60?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/genproto/googleapis/rpc](https://pkg.go.dev/google.golang.org/genproto/googleapis/rpc)
 
 Licenses: Apache-2.0
@@ -6029,9 +5989,9 @@ Licenses: Apache-2.0
 copyright notice that is included in or attached to the work
 
 
-## google.golang.org/grpc v1.80.0
+## google.golang.org/grpc v1.81.1
 
-PURL: pkg:golang/google.golang.org/grpc@v1.80.0?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/google.golang.org/grpc@v1.81.1?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/google.golang.org/grpc](https://pkg.go.dev/google.golang.org/grpc)
 
 Licenses: Apache-2.0
@@ -6099,9 +6059,9 @@ Licenses: BSD-3-Clause
 Copyright (c) 2012 Péter Surányi. Portions Copyright (c) 2009 The Go
 
 
-## gopkg.in/ini.v1 v1.67.1
+## gopkg.in/ini.v1 v1.67.2
 
-PURL: pkg:golang/gopkg.in/ini.v1@v1.67.1?goarch=amd64&goos=linux&type=module
+PURL: pkg:golang/gopkg.in/ini.v1@v1.67.2?goarch=amd64&goos=linux&type=module
 Upstream: [https://pkg.go.dev/gopkg.in/ini.v1](https://pkg.go.dev/gopkg.in/ini.v1)
 
 Licenses: Apache-2.0
@@ -6507,6 +6467,16 @@ Upstream: [https://www.npmjs.com/package/%40types/http-errors](https://www.npmjs
 Licenses: MIT
 
 Copyright (c) Microsoft Corporation.
+
+
+## https-proxy-agent 5.0.1
+
+PURL: pkg:npm/https-proxy-agent@5.0.1
+Upstream: [https://www.npmjs.com/package/https-proxy-agent](https://www.npmjs.com/package/https-proxy-agent)
+
+Licenses: MIT
+
+Copyright (c) Nathan Rajlich
 
 
 ## human-signals 5.0.0
@@ -7899,9 +7869,9 @@ Licenses: MIT
 Copyright (c) 2017 Sergey Rubanov (https://github.com/chicoxyzzy)
 
 
-## nopt 7.2.1
+## nopt 10.0.1
 
-PURL: pkg:npm/nopt@7.2.1
+PURL: pkg:npm/nopt@10.0.1
 Upstream: [https://www.npmjs.com/package/nopt](https://www.npmjs.com/package/nopt)
 
 Licenses: ISC
@@ -7909,9 +7879,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## nopt 9.0.0
+## nopt 7.2.1
 
-PURL: pkg:npm/nopt@9.0.0
+PURL: pkg:npm/nopt@7.2.1
 Upstream: [https://www.npmjs.com/package/nopt](https://www.npmjs.com/package/nopt)
 
 Licenses: ISC
@@ -10139,9 +10109,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## semver 7.7.4
+## semver 7.8.4
 
-PURL: pkg:npm/semver@7.7.4
+PURL: pkg:npm/semver@7.8.4
 Upstream: [https://www.npmjs.com/package/semver](https://www.npmjs.com/package/semver)
 
 Licenses: ISC
@@ -10407,6 +10377,16 @@ Upstream: [https://www.npmjs.com/package/%40vitest/snapshot](https://www.npmjs.c
 Licenses: MIT
 
 Copyright (c) 2021-Present Vitest Team
+
+
+## software.sslmate.com/src/go-pkcs12 v0.7.1
+
+PURL: pkg:golang/software.sslmate.com/src/go-pkcs12@v0.7.1?goarch=amd64&goos=linux&type=module
+Upstream: [https://pkg.go.dev/software.sslmate.com/src/go-pkcs12](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12)
+
+Licenses: BSD-3-Clause
+
+Copyright (c) 2015, 2018, 2019 Opsmate, Inc. All rights reserved.
 
 
 ## source-map 0.3.6
@@ -11459,9 +11439,9 @@ Licenses: ISC
 Copyright (c) Isaac Z. Schlueter and Contributors
 
 
-## which 6.0.1
+## which 7.0.0
 
-PURL: pkg:npm/which@6.0.1
+PURL: pkg:npm/which@7.0.0
 Upstream: [https://www.npmjs.com/package/which](https://www.npmjs.com/package/which)
 
 Licenses: ISC
