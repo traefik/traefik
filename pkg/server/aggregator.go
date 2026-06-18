@@ -1,16 +1,18 @@
 package server
 
 import (
+	"context"
 	"slices"
 	"strings"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
-	"github.com/traefik/traefik/v3/pkg/tls"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
@@ -36,8 +38,8 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			Services: make(map[string]*dynamic.UDPService),
 		},
 		TLS: &dynamic.TLSConfiguration{
-			Stores:  make(map[string]tls.Store),
-			Options: make(map[string]tls.Options),
+			Stores:  make(map[string]traefiktls.Store),
+			Options: make(map[string]traefiktls.Options),
 		},
 	}
 
@@ -53,7 +55,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 						Str(logs.RouterName, routerName).
 						Strs(logs.EntryPointName, defaultEntryPoints).
 						Msg("No entryPoint defined for this router, using the default one(s) instead")
-					router.EntryPoints = defaultEntryPoints
+					router.EntryPoints = slices.Clone(defaultEntryPoints)
 				}
 
 				// The `ruleSyntax` option is deprecated.
@@ -97,7 +99,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					log.Debug().
 						Str(logs.RouterName, routerName).
 						Msgf("No entryPoint defined for this TCP router, using the default one(s) instead: %+v", defaultEntryPoints)
-					router.EntryPoints = defaultEntryPoints
+					router.EntryPoints = slices.Clone(defaultEntryPoints)
 				}
 				conf.TCP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
@@ -134,7 +136,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			}
 
 			for key, store := range configuration.TLS.Stores {
-				if key != tls.DefaultTLSStoreName {
+				if key != traefiktls.DefaultTLSStoreName {
 					key = provider.MakeQualifiedName(pvd, key)
 				} else {
 					defaultTLSStoreProviders = append(defaultTLSStoreProviders, pvd)
@@ -156,19 +158,146 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 
 	if len(defaultTLSStoreProviders) > 1 {
 		log.Error().Msgf("Default TLS Store defined in multiple providers: %v", defaultTLSStoreProviders)
-		delete(conf.TLS.Stores, tls.DefaultTLSStoreName)
+		delete(conf.TLS.Stores, traefiktls.DefaultTLSStoreName)
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {
-		conf.TLS.Options[tls.DefaultTLSConfigName] = tls.DefaultTLSOptions
+		conf.TLS.Options[traefiktls.DefaultTLSConfigName] = traefiktls.DefaultTLSOptions
 	} else if len(defaultTLSOptionProviders) > 1 {
 		log.Error().Msgf("Default TLS Options defined in multiple providers %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
-		delete(conf.TLS.Options, tls.DefaultTLSConfigName)
+		delete(conf.TLS.Options, traefiktls.DefaultTLSConfigName)
 	}
 
 	return conf
+}
+
+// resolveHTTPTLSOptions resolves the TLS options for the given routers, on a per
+// entryPoint basis.
+//
+// TLS options conflicts (i.e. the same host served with different TLS options) can
+// only be detected and arbitrated within a single TLS listener, that is to say within
+// a single entryPoint. To honor that, routers are grouped per entryPoint and the
+// conflict detection is run independently for each entryPoint.
+//
+// A router keeps its original name, and its resolved TLS options, for the entryPoints
+// on which it does not conflict. For each entryPoint on which it conflicts, that
+// entryPoint is removed from the router and a dedicated copy is emitted, with its
+// TLSOptions reset to the default one, named following the "ep-conflicted-name@provider" pattern.
+func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynamic.Router {
+	if len(routers) == 0 {
+		return routers
+	}
+
+	newRouters := make(map[string]*dynamic.Router)
+
+	// Split every router per entryPoint.
+	// Routers always have at least one entryPoint at this stage, as they are
+	// defaulted in mergeConfiguration before applyModel and this resolution run.
+	routersByEntryPoint := map[string]map[string]*dynamic.Router{}
+	for name, router := range routers {
+		if router.TLS == nil {
+			newRouters[name] = router
+			continue
+		}
+
+		router.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+		if len(router.TLS.Options) > 0 && router.TLS.Options != traefiktls.DefaultTLSConfigName {
+			router.TLS.ResolvedOptions = provider.GetQualifiedName(provider.AddInContext(context.Background(), name), router.TLS.Options)
+		}
+
+		for _, ep := range router.EntryPoints {
+			if routersByEntryPoint[ep] == nil {
+				routersByEntryPoint[ep] = map[string]*dynamic.Router{}
+			}
+
+			routersByEntryPoint[ep][name] = router
+		}
+	}
+
+	// Resolve the TLS options independently for each entryPoint.
+	conflictingRouters := make(map[string][]string, len(routersByEntryPoint))
+	for ep, epRouters := range routersByEntryPoint {
+		conflictingRouters[ep] = findConflictingRouters(ep, epRouters)
+	}
+
+	for name, router := range routers {
+		router.EntryPoints = slices.DeleteFunc(router.EntryPoints, func(ep string) bool {
+			deleted := slices.Contains(conflictingRouters[ep], name)
+			if deleted {
+				rt := router.DeepCopy()
+				rt.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+				rt.EntryPoints = []string{ep}
+				// The new name is not collision free but has very small possibility to collide.
+				// TODO: rework this naming whenever we'll introduce a resource reference mechanism not based on a string.
+				newRouters[ep+"-conflicted-"+name] = rt
+			}
+
+			return deleted
+		})
+
+		if len(router.EntryPoints) > 0 {
+			newRouters[name] = router
+		}
+	}
+
+	return newRouters
+}
+
+// findConflictingRouters returns the names of the routers, among the given
+// single-entryPoint routers, that serve a host (SNI) also served by another router
+// with a different resolved TLS option. Such routers are arbitrated by falling back
+// to the default TLS options.
+func findConflictingRouters(ep string, routers map[string]*dynamic.Router) []string {
+	var conflicting []string
+
+	// For each host (SNI, already lower-cased by the domain parsing), the routers
+	// serving it grouped by their resolved TLS option. A host with more than one
+	// group is served with conflicting TLS options.
+	routersByHostAndOption := map[string]map[string][]string{}
+
+	for name, router := range routers {
+		if router.TLS == nil {
+			continue
+		}
+
+		domains, err := httpmuxer.ParseDomains(router.Rule)
+		if err != nil {
+			continue
+		}
+
+		// The configured TLSOptions on a router without a domain in its rule cannot be selected when evaluating the SNI,
+		// so if it is not the default one, it is a conflict.
+		if len(domains) == 0 && router.TLS.ResolvedOptions != traefiktls.DefaultTLSConfigName {
+			conflicting = append(conflicting, name)
+			continue
+		}
+
+		for _, domain := range domains {
+			if routersByHostAndOption[domain] == nil {
+				routersByHostAndOption[domain] = map[string][]string{}
+			}
+			option := router.TLS.ResolvedOptions
+			routersByHostAndOption[domain][option] = append(routersByHostAndOption[domain][option], name)
+		}
+	}
+
+	for domain, routersByOption := range routersByHostAndOption {
+		if len(routersByOption) == 1 {
+			continue
+		}
+
+		var routersInConflict []string
+		for _, names := range routersByOption {
+			conflicting = append(conflicting, names...)
+			routersInConflict = append(routersInConflict, names...)
+		}
+
+		log.Error().Msgf("On EntryPoint %q, Host %q is served by multiple routers with different TLS options, default TLSOptions will be applied for the following routers: %v", ep, domain, routersInConflict)
+	}
+
+	return conflicting
 }
 
 func applyModel(cfg dynamic.Configuration) dynamic.Configuration {

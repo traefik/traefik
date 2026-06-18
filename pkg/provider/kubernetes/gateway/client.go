@@ -49,7 +49,10 @@ type clientWrapper struct {
 	experimentalChannel bool
 }
 
-func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
+func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
+	c.QPS = float32(qps)
+	c.Burst = burst
+
 	csGateway, err := gateclientset.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -75,7 +78,7 @@ func newClientImpl(csKube kclientset.Interface, csGateway gateclientset.Interfac
 
 // newInClusterClient returns a new Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
+func newInClusterClient(endpoint string, qps, burst int) (*clientWrapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
@@ -85,20 +88,20 @@ func newInClusterClient(endpoint string) (*clientWrapper, error) {
 		config.Host = endpoint
 	}
 
-	return createClientFromConfig(config)
+	return createClientFromConfig(config, qps, burst)
 }
 
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
+func newExternalClusterClientFromFile(file string, qps, burst int) (*clientWrapper, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
 		return nil, err
 	}
-	return createClientFromConfig(configFromFlags)
+	return createClientFromConfig(configFromFlags, qps, burst)
 }
 
 // newExternalClusterClient returns a new Provider client that may run outside of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent, qps, burst int) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
@@ -122,7 +125,7 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
 
-	return createClientFromConfig(config)
+	return createClientFromConfig(config, qps, burst)
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
@@ -718,9 +721,8 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 		ancestorStatuses := make([]gatev1.PolicyAncestorStatus, len(status.Ancestors))
 		copy(ancestorStatuses, status.Ancestors)
 
-		// keep statuses added by other gateway controllers,
-		// and statuses for Traefik gateway controller but not for the same Gateway as the one in parameter (AncestorRef).
 		for _, ancestorStatus := range currentPolicy.Status.Ancestors {
+			// Keep statuses added by other gateway controllers.
 			if ancestorStatus.ControllerName != controllerName {
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 				continue
@@ -731,7 +733,7 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 			return fmt.Errorf("failed to update BackendTLSPolicy %s/%s status: PolicyAncestor statuses count exceeds 16", policy.Namespace, policy.Name)
 		}
 
-		// do not update status when nothing has changed.
+		// Do not update status when nothing has changed.
 		if policyAncestorStatusesEqual(currentPolicy.Status.Ancestors, ancestorStatuses) {
 			return nil
 		}

@@ -119,15 +119,6 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 			expectedRule: `PathRegexp("/[^/]+/bar")`,
 		},
 		{
-			desc: "Exact service and method matching",
-			method: &gatev1.GRPCMethodMatch{
-				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-				Service: ptr.To("foo"),
-				Method:  ptr.To("bar"),
-			},
-			expectedRule: `PathRegexp("/foo/bar")`,
-		},
-		{
 			desc: "Regexp service matching",
 			method: &gatev1.GRPCMethodMatch{
 				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
@@ -151,6 +142,40 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Method:  ptr.To("[^1-9/]"),
 			},
 			expectedRule: `PathRegexp("/[^1-9/]/[^1-9/]")`,
+		},
+		{
+			desc: "Exact type with dot in service name escapes dot",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
+				Service: ptr.To("foo.bar"),
+				Method:  ptr.To("Method"),
+			},
+			expectedRule: `PathRegexp("/foo\\.bar/Method")`,
+		},
+		{
+			desc: "Nil type defaults to exact and escapes dot",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    nil,
+				Service: ptr.To("auth.api"),
+				Method:  ptr.To("Login"),
+			},
+			expectedRule: `PathRegexp("/auth\\.api/Login")`,
+		},
+		{
+			desc: "RegularExpression type preserves dot as regex wildcard",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
+				Service: ptr.To("foo.bar"),
+				Method:  ptr.To(".*"),
+			},
+			expectedRule: `PathRegexp("/foo.bar/.*")`,
+		},
+		{
+			desc: "Exact type with neither service nor method uses full wildcard",
+			method: &gatev1.GRPCMethodMatch{
+				Type: ptr.To(gatev1.GRPCMethodMatchExact),
+			},
+			expectedRule: `PathRegexp("/[^/]+/[^/]+")`,
 		},
 	}
 
