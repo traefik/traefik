@@ -213,7 +213,6 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			return nil, fmt.Errorf("TLS minimum version %s is above the maximum version %s", cfg.MinVersion, cfg.MaxVersion)
 		}
 
-		// FIXME validate san type
 		config = &tls.Config{
 			ServerName:         cfg.ServerName,
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
