@@ -25,7 +25,7 @@ tcp:
         rootcas:
           - "/path/to/rootca.pem"
         peerCertSubjectAltNames:
-          - type: DNS
+          - type: DNSName
             value: foo.com
           - type: URI
             value: spiffe://example.org/peer
@@ -47,7 +47,7 @@ tcp:
     certificates = ["/path/to/cert1.pem", "/path/to/cert2.pem"]
     insecureSkipVerify = true
     rootcas = ["/path/to/rootca.pem"]
-    peerCertSubjectAltNames = [{type = "DNS", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
+    peerCertSubjectAltNames = [{type = "DNSName", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
 
   [tcp.serversTransports.mytransport.spiffe]
     ids = ["spiffe://example.org/id1", "spiffe://example.org/id2"]

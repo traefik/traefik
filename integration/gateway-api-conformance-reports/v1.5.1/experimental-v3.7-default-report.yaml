@@ -27,12 +27,10 @@ profiles:
       Passed: 33
       Skipped: 0
   extended:
-    failedTests:
-    - HTTPRouteBackendRequestHeaderModifier
-    result: failure
+    result: success
     statistics:
-      Failed: 1
-      Passed: 20
+      Failed: 0
+      Passed: 21
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -72,7 +70,7 @@ profiles:
     - HTTPRouteRequestTimeout
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests succeeded. Extended tests failed with 1 test failures.
+  summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:

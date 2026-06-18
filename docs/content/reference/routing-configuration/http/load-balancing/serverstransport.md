@@ -24,7 +24,7 @@ http:
       maxIdleConnsPerHost: 100
       disableHTTP2: true
       peerCertSubjectAltNames:
-        - type: DNS
+        - type: DNSName
           value: foo.com
         - type: URI
           value: spiffe://example.org/peer
@@ -54,7 +54,7 @@ http:
   rootcas = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
   maxIdleConnsPerHost = 100
   disableHTTP2 = true
-  peerCertSubjectAltNames = [{type = "DNS", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
+  peerCertSubjectAltNames = [{type = "DNSName", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
   cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
   minVersion = "VersionTLS12"
   maxVersion = "VersionTLS12"
