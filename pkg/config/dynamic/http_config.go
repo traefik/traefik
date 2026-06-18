@@ -525,7 +525,6 @@ type HealthCheck struct{}
 
 // +k8s:deepcopy-gen=true
 
-// FIXME doc +migration guide
 // ServersTransport options to configure communication between Traefik and the servers.
 type ServersTransport struct {
 	ServerName          string                  `description:"Defines the serverName used to contact the server." json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty"`

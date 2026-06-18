@@ -201,7 +201,6 @@ func (t *TCPServersTransport) SetDefaults() {
 
 // +k8s:deepcopy-gen=true
 
-// FIXME doc + migration guide
 // TLSClientConfig options to configure TLS communication between Traefik and the servers.
 type TLSClientConfig struct {
 	ServerName         string                  `description:"Defines the serverName used to contact the server." json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty"`
