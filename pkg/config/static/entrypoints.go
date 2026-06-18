@@ -12,15 +12,12 @@ import (
 
 // Strategies for handling request headers with underscores in their names.
 const (
-	// HeadersWithUnderscoresStrategyKeep forwards request headers with underscores as is.
-	HeadersWithUnderscoresStrategyKeep = "keep"
-	// HeadersWithUnderscoresStrategyDelete removes request headers with underscores before routing.
-	HeadersWithUnderscoresStrategyDelete = "delete"
-	// HeadersWithUnderscoresStrategyAppend appends the values of request headers with underscores
-	// to their dash-equivalent header, and removes the underscore variant, before routing.
-	HeadersWithUnderscoresStrategyAppend = "append"
-	// HeadersWithUnderscoresStrategyReject rejects requests carrying a header with underscores before routing.
-	HeadersWithUnderscoresStrategyReject = "reject"
+	// UnderscoreHeadersStrategyKeep is the strategy to forward the request headers with underscores as is.
+	UnderscoreHeadersStrategyKeep = "keep"
+	// UnderscoreHeadersStrategyDelete is the strategy to delete headers with underscores from the request before routing.
+	UnderscoreHeadersStrategyDelete = "delete"
+	// UnderscoreHeadersStrategyReject is the strategy to reject request with headers with underscores.
+	UnderscoreHeadersStrategyReject = "reject"
 )
 
 // EntryPoint holds the entry point configuration.
@@ -74,14 +71,14 @@ func (ep *EntryPoint) SetDefaults() {
 
 // HTTPConfig is the HTTP configuration of an entry point.
 type HTTPConfig struct {
-	Redirections          *Redirections      `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
-	Middlewares           []string           `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	TLS                   *TLSConfig         `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	EncodedCharacters     *EncodedCharacters `description:"Defines which encoded characters are allowed in the request path." json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
-	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
-	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
-	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
-	HeadersWithUnderscoresStrategy string             `description:"Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject)." json:"headersWithUnderscoresStrategy,omitempty" toml:"headersWithUnderscoresStrategy,omitempty" yaml:"headersWithUnderscoresStrategy,omitempty" export:"true"`
+	Redirections              *Redirections      `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
+	Middlewares               []string           `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS                       *TLSConfig         `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	EncodedCharacters         *EncodedCharacters `description:"Defines which encoded characters are allowed in the request path." json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
+	EncodeQuerySemicolons     bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
+	SanitizePath              *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
+	MaxHeaderBytes            int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	UnderscoreHeadersStrategy string             `description:"Defines the strategy to handle requests with headers with underscores (keep, delete, and reject)." json:"underscoreHeadersStrategy,omitempty" toml:"underscoreHeadersStrategy,omitempty" yaml:"underscoreHeadersStrategy,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -89,7 +86,7 @@ func (h *HTTPConfig) SetDefaults() {
 	sanitizePath := true
 	h.SanitizePath = &sanitizePath
 	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
-	h.HeadersWithUnderscoresStrategy = HeadersWithUnderscoresStrategyKeep
+	h.UnderscoreHeadersStrategy = UnderscoreHeadersStrategyKeep
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.

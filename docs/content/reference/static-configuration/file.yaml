@@ -73,8 +73,7 @@ entryPoints:
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42
-      allowHeadersWithUnderscores: true
-      headersWithUnderscoresStrategy: foobar
+      underscoreHeadersStrategy: foobar
     http2:
       maxConcurrentStreams: 42
     http3:

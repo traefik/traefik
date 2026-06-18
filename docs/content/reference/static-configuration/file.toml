@@ -39,8 +39,7 @@
       encodeQuerySemicolons = true
       sanitizePath = true
       maxHeaderBytes = 42
-      allowHeadersWithUnderscores = true
-      headersWithUnderscoresStrategy = "foobar"
+      underscoreHeadersStrategy = "foobar"
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
           to = "foobar"

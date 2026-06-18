@@ -465,7 +465,7 @@ func TestSanitizePath(t *testing.T) {
 	}
 }
 
-func TestHeadersWithUnderscoresStrategy(t *testing.T) {
+func TestUnderscoreHeadersStrategy(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		strategy             string
@@ -483,7 +483,7 @@ func TestHeadersWithUnderscoresStrategy(t *testing.T) {
 		},
 		{
 			desc:                 "headers are kept with keep strategy",
-			strategy:             static.HeadersWithUnderscoresStrategyKeep,
+			strategy:             static.UnderscoreHeadersStrategyKeep,
 			wantStatus:           http.StatusOK,
 			wantReachedBackend:   true,
 			wantAuthUser:         []string{"legit"},
@@ -491,23 +491,15 @@ func TestHeadersWithUnderscoresStrategy(t *testing.T) {
 		},
 		{
 			desc:                 "underscore headers are removed with delete strategy",
-			strategy:             static.HeadersWithUnderscoresStrategyDelete,
+			strategy:             static.UnderscoreHeadersStrategyDelete,
 			wantStatus:           http.StatusOK,
 			wantReachedBackend:   true,
 			wantAuthUser:         []string{"legit"},
 			wantUnderscoreHeader: false,
 		},
 		{
-			desc:                 "underscore header values are appended to the dash header with append strategy",
-			strategy:             static.HeadersWithUnderscoresStrategyAppend,
-			wantStatus:           http.StatusOK,
-			wantReachedBackend:   true,
-			wantAuthUser:         []string{"legit", "spoof"},
-			wantUnderscoreHeader: false,
-		},
-		{
 			desc:               "request is rejected with reject strategy",
-			strategy:           static.HeadersWithUnderscoresStrategyReject,
+			strategy:           static.UnderscoreHeadersStrategyReject,
 			wantStatus:         http.StatusBadRequest,
 			wantReachedBackend: false,
 		},
@@ -524,7 +516,7 @@ func TestHeadersWithUnderscoresStrategy(t *testing.T) {
 				ForwardedHeaders: &static.ForwardedHeaders{},
 				HTTP2:            &static.HTTP2Config{},
 				HTTP: static.HTTPConfig{
-					HeadersWithUnderscoresStrategy: test.strategy,
+					UnderscoreHeadersStrategy: test.strategy,
 				},
 			}, nil)
 			require.NoError(t, err)
@@ -917,67 +909,6 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 
 			var callCount int
 			handler := removeHeadersWithUnderscores(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
-				callCount++
-				assert.Equal(t, test.wantHeaders, req.Header)
-				if test.wantTrailers != nil {
-					assert.Equal(t, test.wantTrailers, req.Trailer)
-				}
-			}))
-
-			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
-			req.Header = test.headers
-			req.Trailer = test.trailers
-
-			handler.ServeHTTP(httptest.NewRecorder(), req)
-
-			assert.Equal(t, 1, callCount)
-		})
-	}
-}
-
-func Test_appendHeadersWithUnderscores(t *testing.T) {
-	tests := []struct {
-		name         string
-		headers      http.Header
-		trailers     http.Header
-		wantHeaders  http.Header
-		wantTrailers http.Header
-	}{
-		{
-			name:        "keeps headers without underscores",
-			headers:     http.Header{"X-Auth-User": {"foo", "bar"}},
-			wantHeaders: http.Header{"X-Auth-User": {"foo", "bar"}},
-		},
-		{
-			name:        "appends underscore variant to the dash header",
-			headers:     http.Header{"X_Auth_User": {"spoof"}, "X-Auth-User": {"legit"}},
-			wantHeaders: http.Header{"X-Auth-User": {"legit", "spoof"}},
-		},
-		{
-			name:        "appends underscore variant when no dash header exists",
-			headers:     http.Header{"X_Auth_User": {"spoof"}},
-			wantHeaders: http.Header{"X-Auth-User": {"spoof"}},
-		},
-		{
-			name:        "appends mixed underscore and dash variant",
-			headers:     http.Header{"X_Auth-User": {"spoof"}, "X-Auth-User": {"legit"}},
-			wantHeaders: http.Header{"X-Auth-User": {"legit", "spoof"}},
-		},
-		{
-			name:         "appends underscore variant from trailers",
-			headers:      http.Header{"X-Auth-User": {"foo"}},
-			trailers:     http.Header{"X_Trailer_Foo": {"bar"}},
-			wantHeaders:  http.Header{"X-Auth-User": {"foo"}},
-			wantTrailers: http.Header{"X-Trailer-Foo": {"bar"}},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			var callCount int
-			handler := appendHeadersWithUnderscores(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				callCount++
 				assert.Equal(t, test.wantHeaders, req.Header)
 				if test.wantTrailers != nil {

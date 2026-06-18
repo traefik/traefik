@@ -159,9 +159,6 @@ Defines whether request query semicolons should be URLEncoded. (Default: ```fals
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MAXHEADERBYTES`:  
 Maximum size of request headers in bytes. (Default: ```1048576```)
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_HEADERSWITHUNDERSCORESSTRATEGY`:  
-Defines how request headers with underscores in their names are handled before routing (keep, delete, append, reject). (Default: ```keep```)
-
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 
@@ -197,6 +194,9 @@ Subject alternative names.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
 Default TLS options for the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_UNDERSCOREHEADERSSTRATEGY`:  
+Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Default: ```keep```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)

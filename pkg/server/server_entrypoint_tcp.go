@@ -601,17 +601,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
-	switch configuration.HTTP.HeadersWithUnderscoresStrategy {
-	case "", static.HeadersWithUnderscoresStrategyKeep:
+	switch configuration.HTTP.UnderscoreHeadersStrategy {
+	case "", static.UnderscoreHeadersStrategyKeep:
 		// Headers with underscores are forwarded as is.
-	case static.HeadersWithUnderscoresStrategyDelete:
+	case static.UnderscoreHeadersStrategyDelete:
 		handler = removeHeadersWithUnderscores(handler)
-	case static.HeadersWithUnderscoresStrategyAppend:
-		handler = appendHeadersWithUnderscores(handler)
-	case static.HeadersWithUnderscoresStrategyReject:
+	case static.UnderscoreHeadersStrategyReject:
 		handler = rejectHeadersWithUnderscores(handler)
 	default:
-		return nil, fmt.Errorf("invalid headersWithUnderscoresStrategy value %q", configuration.HTTP.HeadersWithUnderscoresStrategy)
+		return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
 	}
 
 	var connContext multipleConnContext
@@ -739,31 +737,6 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 
 		h.ServeHTTP(rw, req)
 	})
-}
-
-// appendHeadersWithUnderscores appends the values of any request header and trailer whose name contains an underscore
-// character to their dash-equivalent header, and removes the underscore variant.
-func appendHeadersWithUnderscores(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		appendUnderscoreVariants(req.Header)
-		appendUnderscoreVariants(req.Trailer)
-
-		h.ServeHTTP(rw, req)
-	})
-}
-
-// appendUnderscoreVariants moves the values of every header whose name contains an underscore
-// to its dash-equivalent canonical header, removing the underscore variant.
-func appendUnderscoreVariants(header http.Header) {
-	for key, values := range header {
-		if !strings.Contains(key, "_") {
-			continue
-		}
-
-		dashKey := http.CanonicalHeaderKey(strings.ReplaceAll(key, "_", "-"))
-		header[dashKey] = append(header[dashKey], values...)
-		delete(header, key)
-	}
 }
 
 // rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
