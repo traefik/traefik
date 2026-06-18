@@ -63,21 +63,8 @@ spec:
       name: whoami
   validation:
     hostname: whoami
-    caCertificateRefs:
-      - group: ""
-        kind: ConfigMap
-        name: ca-file
     subjectAltNames:
       - type: Hostname
         hostname: whoami.default.svc.cluster.local
       - type: URI
         uri: spiffe://cluster.local/ns/default/sa/whoami
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ca-file
-  namespace: default
-data:
-  ca.crt: "CA1"
