@@ -35,6 +35,7 @@ RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
 RUN pip install --break-system-packages "cyclonedx-bom==${CYCLONEDX_PY_VERSION}"
 
 ENV GOPATH=/tmp/go
+ENV GOBIN=/usr/local/bin
 
 RUN go install "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@${CYCLONEDX_GOMOD_VERSION}" \
     && go install "github.com/traefik/assimilis/cmd/assimilis@${ASSIMILIS_VERSION}"
