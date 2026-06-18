@@ -145,9 +145,10 @@ type Buffering struct {
 	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
 
-	// Only configurable via code, not via configuration files.
-	DisableRequestBuffer  bool `json:"disableRequestBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
-	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	// DisableRequestBuffer disables request buffering: the request body is streamed to the backend instead of being buffered.
+	DisableRequestBuffer bool `json:"disableRequestBuffer,omitempty" toml:"disableRequestBuffer,omitempty" yaml:"disableRequestBuffer,omitempty" export:"true"`
+	// DisableResponseBuffer disables response buffering: the response body is streamed to the client, preserving chunked/streaming responses (e.g. SSE, gRPC).
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"disableResponseBuffer,omitempty" yaml:"disableResponseBuffer,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

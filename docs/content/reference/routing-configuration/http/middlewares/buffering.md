@@ -9,6 +9,11 @@ With buffering, Traefik reads the entire request into memory (possibly buffering
 
 This can help services avoid large amounts of data (`multipart/form-data` for example), and can minimize the time spent sending data to a Service
 
+By default, the middleware also buffers responses before forwarding them to the client.
+Response buffering can be disabled with the `disableResponseBuffer` option to preserve streaming
+responses such as Server-Sent Events (SSE), gRPC, and chunked transfer encoding,
+while still applying request buffering (for example to enforce `maxRequestBodyBytes`).
+
 ## Configuration Examples
 
 ```yaml tab="Structured (YAML)"
@@ -63,6 +68,8 @@ spec:
 | <a id="opt-maxResponseBodyBytes" href="#opt-maxResponseBodyBytes" title="#opt-maxResponseBodyBytes">`maxResponseBodyBytes`</a> | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. | 0 | No |
 | <a id="opt-memResponseBodyBytes" href="#opt-memResponseBodyBytes" title="#opt-memResponseBodyBytes">`memResponseBodyBytes`</a> | Threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.| 1048576 | No |
 | <a id="opt-retryExpression" href="#opt-retryExpression" title="#opt-retryExpression">`retryExpression`</a> | Replay the request using `retryExpression`.<br /> More information [here](#retryexpression). | "" | No |
+| <a id="opt-disableRequestBuffer" href="#opt-disableRequestBuffer" title="#opt-disableRequestBuffer">`disableRequestBuffer`</a> | Disables request buffering. The request body is streamed to the Service instead of being buffered. | false | No |
+| <a id="opt-disableResponseBuffer" href="#opt-disableResponseBuffer" title="#opt-disableResponseBuffer">`disableResponseBuffer`</a> | Disables response buffering. The response body is streamed to the client instead of being buffered, preserving streaming responses (SSE, gRPC, chunked transfer encoding). | false | No |
 
 ### retryExpression
 

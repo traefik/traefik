@@ -11,6 +11,8 @@
 - "traefik.http.middlewares.middleware03.buffering.memrequestbodybytes=42"
 - "traefik.http.middlewares.middleware03.buffering.memresponsebodybytes=42"
 - "traefik.http.middlewares.middleware03.buffering.retryexpression=foobar"
+- "traefik.http.middlewares.middleware03.buffering.disablerequestbuffer=true"
+- "traefik.http.middlewares.middleware03.buffering.disableresponsebuffer=true"
 - "traefik.http.middlewares.middleware04.chain.middlewares=foobar, foobar"
 - "traefik.http.middlewares.middleware05.circuitbreaker.checkperiod=42s"
 - "traefik.http.middlewares.middleware05.circuitbreaker.expression=foobar"
