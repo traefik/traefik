@@ -729,12 +729,6 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 			}
 		}
 
-		for key := range req.Trailer {
-			if strings.Contains(key, "_") {
-				delete(req.Trailer, key)
-			}
-		}
-
 		h.ServeHTTP(rw, req)
 	})
 }
@@ -743,13 +737,6 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
-			if strings.Contains(key, "_") {
-				http.Error(rw, "Bad Request", http.StatusBadRequest)
-				return
-			}
-		}
-
-		for key := range req.Trailer {
 			if strings.Contains(key, "_") {
 				http.Error(rw, "Bad Request", http.StatusBadRequest)
 				return

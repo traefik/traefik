@@ -863,11 +863,10 @@ func TestPathOperations(t *testing.T) {
 
 func Test_removeHeadersWithUnderscores(t *testing.T) {
 	tests := []struct {
-		name         string
-		headers      http.Header
-		trailers     http.Header
-		wantHeaders  http.Header
-		wantTrailers http.Header
+		name        string
+		headers     http.Header
+		trailers    http.Header
+		wantHeaders http.Header
 	}{
 		{
 			name:        "keeps headers without underscores",
@@ -894,13 +893,6 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 			headers:     http.Header{"_": {"foo"}},
 			wantHeaders: http.Header{},
 		},
-		{
-			name:         "removes underscore variant from trailers",
-			headers:      http.Header{"X-Auth-User": {"foo"}},
-			trailers:     http.Header{"X_Trailer_Foo": {"foo"}, "X-Trailer-Foo": {"bar"}},
-			wantHeaders:  http.Header{"X-Auth-User": {"foo"}},
-			wantTrailers: http.Header{"X-Trailer-Foo": {"bar"}},
-		},
 	}
 
 	for _, test := range tests {
@@ -911,9 +903,6 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 			handler := removeHeadersWithUnderscores(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				callCount++
 				assert.Equal(t, test.wantHeaders, req.Header)
-				if test.wantTrailers != nil {
-					assert.Equal(t, test.wantTrailers, req.Trailer)
-				}
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
@@ -931,7 +920,6 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 	tests := []struct {
 		name       string
 		headers    http.Header
-		trailers   http.Header
 		wantReject bool
 	}{
 		{
@@ -954,12 +942,6 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 			headers:    http.Header{"_": {"foo"}},
 			wantReject: true,
 		},
-		{
-			name:       "rejects underscore variant in trailers",
-			headers:    http.Header{"X-Auth-User": {"foo"}},
-			trailers:   http.Header{"X_Trailer_Foo": {"foo"}},
-			wantReject: true,
-		},
 	}
 
 	for _, test := range tests {
@@ -973,7 +955,6 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
 			req.Header = test.headers
-			req.Trailer = test.trailers
 
 			rw := httptest.NewRecorder()
 			handler.ServeHTTP(rw, req)
