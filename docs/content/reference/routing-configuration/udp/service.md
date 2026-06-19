@@ -49,7 +49,8 @@ This strategy is only available to load balance between [services](./service.md)
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File provider](../../install-configuration/providers/others/file.md).
+    This strategy can currently be defined with the [File provider](../../install-configuration/providers/others/file.md) 
+    and the [Kubernetes CRD provider (IngressRouteUDP)](../kubernetes/crd/udp/ingressrouteudp.md).
 
 ```yaml tab="Structured (YAML)"
 udp:
