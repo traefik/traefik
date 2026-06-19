@@ -754,6 +754,21 @@ func TestForwardAuth_writeHeader(t *testing.T) {
 				"X-Forwarded-Port":   "80",
 			},
 		},
+		{
+			desc: "X-Forwarded-Proto is not used to calculate X-Forwarded-Port if trustForwardHeader=false",
+			headers: map[string]string{
+				"X-CustomHeader":    "CustomHeader",
+				"X-Forwarded-Proto": "https",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Port":   "80",
+			},
+		},
 	}
 
 	for _, test := range testCases {
