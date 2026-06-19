@@ -129,3 +129,12 @@ The table below lists all the available variables and their associated values.
 | <a id="opt-status-2" href="#opt-status-2" title="#opt-status-2">`{status}`</a> | The response status code.                                        |
 | <a id="opt-originalStatus" href="#opt-originalStatus" title="#opt-originalStatus">`{originalStatus}`</a> | The original response status code, if it has been modified by the `statusRewrites` option. |
 | <a id="opt-url" href="#opt-url" title="#opt-url">`{url}`</a> | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.|
+
+### `errorRequestHeaders`
+
+Defines the list of original request headers forwarded to the error page service.
+
+By default (`errorRequestHeaders` not set), all request headers — including authentication material such as `Authorization` and `Cookie` — are forwarded.
+If the error page service is in a separate trust domain, use this option to restrict which headers cross the service boundary.
+
+Set to an explicit list to forward only those headers, or set to an empty list (`errorRequestHeaders: []`) to forward no headers.
