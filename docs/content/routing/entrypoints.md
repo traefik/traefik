@@ -1364,7 +1364,7 @@ managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `aut
 
     Backends mapping both forms to the same variable (CGI, WSGI, PHP, ...) can be spoofed with the underscore variant of a managed header.
     Setting the `underscoreHeadersStrategy` option to `delete` or `reject` is recommended when such backends are exposed.
-    See the [migration guide](../migration/v2.md#underscoreheadersstrategy) for more details.
+    See the [Headers with Underscores](../security/header-underscores.md) security documentation for more details.
 
 ```yaml tab="File (YAML)"
 entryPoints:
