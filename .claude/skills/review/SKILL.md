@@ -41,7 +41,6 @@ Review in this priority order, and keep the bar high at every level.
 
 ## Maintainability
 
-- Use `github.com/rs/zerolog` exclusively — do not import `log`, `slog`, or `logrus`.
 - Interfaces: prefer single-method, `-er` suffix, declared at the usage site.
 - Idiomatic Go: early returns and guard clauses, the standard library (`slices`, `maps`, `cmp`) over premature abstraction or third-party helpers, grouped import ordering, exported items with a doc comment starting with the item name.
 - Comments must explain *why*, not *what*; the code already says what. Every comment must end with a period.
