@@ -150,6 +150,12 @@ spec:
                             description: Healthcheck defines health checks for ExternalName
                               services.
                             properties:
+                              fails:
+                                description: |-
+                                  Fails defines the number of consecutive failures before considering the server unhealthy.
+                                  Default: 1
+                                minimum: 1
+                                type: integer
                               followRedirects:
                                 description: |-
                                   FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -182,6 +188,12 @@ spec:
                                   If defined to grpc, will use the gRPC health check protocol to probe the server.
                                   Default: http
                                 type: string
+                              passes:
+                                description: |-
+                                  Passes defines the number of consecutive successes before considering the server healthy again.
+                                  Default: 1
+                                minimum: 1
+                                type: integer
                               path:
                                 description: Path defines the server URL path for
                                   the health check endpoint.
@@ -1182,6 +1194,12 @@ spec:
                         description: Healthcheck defines health checks for ExternalName
                           services.
                         properties:
+                          fails:
+                            description: |-
+                              Fails defines the number of consecutive failures before considering the server unhealthy.
+                              Default: 1
+                            minimum: 1
+                            type: integer
                           followRedirects:
                             description: |-
                               FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -1214,6 +1232,12 @@ spec:
                               If defined to grpc, will use the gRPC health check protocol to probe the server.
                               Default: http
                             type: string
+                          passes:
+                            description: |-
+                              Passes defines the number of consecutive successes before considering the server healthy again.
+                              Default: 1
+                            minimum: 1
+                            type: integer
                           path:
                             description: Path defines the server URL path for the
                               health check endpoint.
@@ -2999,6 +3023,12 @@ spec:
                         description: Healthcheck defines health checks for ExternalName
                           services.
                         properties:
+                          fails:
+                            description: |-
+                              Fails defines the number of consecutive failures before considering the server unhealthy.
+                              Default: 1
+                            minimum: 1
+                            type: integer
                           followRedirects:
                             description: |-
                               FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -3031,6 +3061,12 @@ spec:
                               If defined to grpc, will use the gRPC health check protocol to probe the server.
                               Default: http
                             type: string
+                          passes:
+                            description: |-
+                              Passes defines the number of consecutive successes before considering the server healthy again.
+                              Default: 1
+                            minimum: 1
+                            type: integer
                           path:
                             description: Path defines the server URL path for the
                               health check endpoint.
@@ -3249,6 +3285,12 @@ spec:
                         description: Healthcheck defines health checks for ExternalName
                           services.
                         properties:
+                          fails:
+                            description: |-
+                              Fails defines the number of consecutive failures before considering the server unhealthy.
+                              Default: 1
+                            minimum: 1
+                            type: integer
                           followRedirects:
                             description: |-
                               FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -3281,6 +3323,12 @@ spec:
                               If defined to grpc, will use the gRPC health check protocol to probe the server.
                               Default: http
                             type: string
+                          passes:
+                            description: |-
+                              Passes defines the number of consecutive successes before considering the server healthy again.
+                              Default: 1
+                            minimum: 1
+                            type: integer
                           path:
                             description: Path defines the server URL path for the
                               health check endpoint.
@@ -3512,6 +3560,12 @@ spec:
                           description: Healthcheck defines health checks for ExternalName
                             services.
                           properties:
+                            fails:
+                              description: |-
+                                Fails defines the number of consecutive failures before considering the server unhealthy.
+                                Default: 1
+                              minimum: 1
+                              type: integer
                             followRedirects:
                               description: |-
                                 FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -3544,6 +3598,12 @@ spec:
                                 If defined to grpc, will use the gRPC health check protocol to probe the server.
                                 Default: http
                               type: string
+                            passes:
+                              description: |-
+                                Passes defines the number of consecutive successes before considering the server healthy again.
+                                Default: 1
+                              minimum: 1
+                              type: integer
                             path:
                               description: Path defines the server URL path for the
                                 health check endpoint.
@@ -3764,6 +3824,12 @@ spec:
                     description: Healthcheck defines health checks for ExternalName
                       services.
                     properties:
+                      fails:
+                        description: |-
+                          Fails defines the number of consecutive failures before considering the server unhealthy.
+                          Default: 1
+                        minimum: 1
+                        type: integer
                       followRedirects:
                         description: |-
                           FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -3796,6 +3862,12 @@ spec:
                           If defined to grpc, will use the gRPC health check protocol to probe the server.
                           Default: http
                         type: string
+                      passes:
+                        description: |-
+                          Passes defines the number of consecutive successes before considering the server healthy again.
+                          Default: 1
+                        minimum: 1
+                        type: integer
                       path:
                         description: Path defines the server URL path for the health
                           check endpoint.
@@ -3876,6 +3948,12 @@ spec:
                           description: Healthcheck defines health checks for ExternalName
                             services.
                           properties:
+                            fails:
+                              description: |-
+                                Fails defines the number of consecutive failures before considering the server unhealthy.
+                                Default: 1
+                              minimum: 1
+                              type: integer
                             followRedirects:
                               description: |-
                                 FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -3908,6 +3986,12 @@ spec:
                                 If defined to grpc, will use the gRPC health check protocol to probe the server.
                                 Default: http
                               type: string
+                            passes:
+                              description: |-
+                                Passes defines the number of consecutive successes before considering the server healthy again.
+                                Default: 1
+                              minimum: 1
+                              type: integer
                             path:
                               description: Path defines the server URL path for the
                                 health check endpoint.
@@ -4289,6 +4373,12 @@ spec:
                           description: Healthcheck defines health checks for ExternalName
                             services.
                           properties:
+                            fails:
+                              description: |-
+                                Fails defines the number of consecutive failures before considering the server unhealthy.
+                                Default: 1
+                              minimum: 1
+                              type: integer
                             followRedirects:
                               description: |-
                                 FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -4321,6 +4411,12 @@ spec:
                                 If defined to grpc, will use the gRPC health check protocol to probe the server.
                                 Default: http
                               type: string
+                            passes:
+                              description: |-
+                                Passes defines the number of consecutive successes before considering the server healthy again.
+                                Default: 1
+                              minimum: 1
+                              type: integer
                             path:
                               description: Path defines the server URL path for the
                                 health check endpoint.

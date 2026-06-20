@@ -101,6 +101,8 @@ http:
           interval: 42s
           unhealthyInterval: 42s
           timeout: 42s
+          fails: 42
+          passes: 42
           hostname: foobar
           followRedirects: true
           headers:

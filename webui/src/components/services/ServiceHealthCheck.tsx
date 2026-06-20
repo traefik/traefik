@@ -20,7 +20,9 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
         return [
           healthCheck?.interval && { key: 'Interval', val: healthCheck.interval },
           healthCheck?.timeout && { key: 'Timeout', val: healthCheck.timeout },
-          healthCheck?.port && { key: 'Port', val: healthCheck.port },
+          healthCheck?.fails && { key: 'Fails', val: String(healthCheck.fails) },
+          healthCheck?.passes && { key: 'Passes', val: String(healthCheck.passes) },
+          healthCheck?.port && { key: 'Port', val: String(healthCheck.port) },
           healthCheck?.unhealthyInterval && { key: 'Unhealthy interval', val: healthCheck.unhealthyInterval },
           healthCheck?.send && {
             key: 'Send',
@@ -40,6 +42,8 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
             val: <CopyableText text={data.loadBalancer.healthCheck.path} />,
           },
           healthCheck?.timeout && { key: 'Timeout', val: healthCheck.timeout },
+          healthCheck?.fails && { key: 'Fails', val: String(healthCheck.fails) },
+          healthCheck?.passes && { key: 'Passes', val: String(healthCheck.passes) },
           healthCheck?.port && { key: 'Port', val: String(healthCheck.port) },
           healthCheck?.hostname && {
             key: 'Hostname',

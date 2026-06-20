@@ -38,6 +38,8 @@ describe('<TcpServicePage />', () => {
         healthCheck: {
           interval: '30s',
           timeout: '10s',
+          fails: 3,
+          passes: 2,
           port: 8080,
           unhealthyInterval: '1m',
           send: 'PING',
@@ -92,6 +94,10 @@ describe('<TcpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('30s')
     expect(healthCheck.innerHTML).toContain('Timeout')
     expect(healthCheck.innerHTML).toContain('10s')
+    expect(healthCheck.innerHTML).toContain('Fails')
+    expect(healthCheck.innerHTML).toContain('3')
+    expect(healthCheck.innerHTML).toContain('Passes')
+    expect(healthCheck.innerHTML).toContain('2')
     expect(healthCheck.innerHTML).toContain('Port')
     expect(healthCheck.innerHTML).toContain('8080')
     expect(healthCheck.innerHTML).toContain('Unhealthy interval')

@@ -28,6 +28,8 @@ tcp:
           expect: "PONG"
           interval: "10s"
           timeout: "3s"
+          fails: 3
+          passes: 2
         serversTransport: "customTransport@file"
 ```
 
@@ -44,6 +46,8 @@ tcp:
       expect = "PONG"
       interval = "10s"
       timeout = "3s"
+      fails = 3
+      passes = 2
 
     serversTransport = "customTransport@file"
 ```
@@ -54,6 +58,8 @@ labels:
   - "traefik.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG"
   - "traefik.tcp.services.my-service.loadBalancer.healthCheck.interval=10s"
   - "traefik.tcp.services.my-service.loadBalancer.healthCheck.timeout=3s"
+  - "traefik.tcp.services.my-service.loadBalancer.healthCheck.fails=3"
+  - "traefik.tcp.services.my-service.loadBalancer.healthCheck.passes=2"
   - "traefik.tcp.services.my-service.loadBalancer.serversTransport=customTransport@file"
 ```
 
@@ -64,6 +70,8 @@ labels:
     "traefik.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG",
     "traefik.tcp.services.my-service.loadBalancer.healthCheck.interval=10s",
     "traefik.tcp.services.my-service.loadBalancer.healthCheck.timeout=3s",
+    "traefik.tcp.services.my-service.loadBalancer.healthCheck.fails=3",
+    "traefik.tcp.services.my-service.loadBalancer.healthCheck.passes=2",
     "traefik.tcp.services.my-service.loadBalancer.serversTransport=customTransport@file"
   ]
 }
@@ -97,6 +105,8 @@ Below are the available options for the health check mechanism:
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
 | <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check connection before considering the server unhealthy. | 5s | No |
+| <a id="opt-fails" href="#opt-fails" title="#opt-fails">`fails`</a> | Defines the number of consecutive failures before considering the server unhealthy. | 1 | No |
+| <a id="opt-passes" href="#opt-passes" title="#opt-passes">`passes`</a> | Defines the number of consecutive successes before considering the server healthy again. | 1 | No |
 
 ## Weighted Round Robin
 
@@ -229,4 +239,3 @@ tcp:
       [[tcp.services.appv2.loadBalancer.servers]]
         address = "192.168.1.11:6379"
 ```
-

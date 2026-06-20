@@ -207,6 +207,14 @@ type ServerHealthCheck struct {
 	// Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
 	// Default: 5s
 	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+	// Fails defines the number of consecutive failures before considering the server unhealthy.
+	// Default: 1
+	// +kubebuilder:validation:Minimum=1
+	Fails int `json:"fails,omitempty"`
+	// Passes defines the number of consecutive successes before considering the server healthy again.
+	// Default: 1
+	// +kubebuilder:validation:Minimum=1
+	Passes int `json:"passes,omitempty"`
 	// Hostname defines the value of hostname in the Host header of the health check request.
 	Hostname string `json:"hostname,omitempty"`
 	// FollowRedirects defines whether redirects should be followed during the health check calls.

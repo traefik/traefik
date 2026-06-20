@@ -74,30 +74,42 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 		config           *dynamic.TCPServerHealthCheck
 		expectedInterval time.Duration
 		expectedTimeout  time.Duration
+		expectedFails    int
+		expectedPasses   int
 	}{
 		{
 			desc:             "default values",
 			config:           &dynamic.TCPServerHealthCheck{},
 			expectedInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
 			expectedTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			expectedFails:    1,
+			expectedPasses:   1,
 		},
 		{
 			desc: "out of range values",
 			config: &dynamic.TCPServerHealthCheck{
 				Interval: ptypes.Duration(-time.Second),
 				Timeout:  ptypes.Duration(-time.Second),
+				Fails:    -1,
+				Passes:   -1,
 			},
 			expectedInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
 			expectedTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			expectedFails:    1,
+			expectedPasses:   1,
 		},
 		{
 			desc: "custom durations",
 			config: &dynamic.TCPServerHealthCheck{
 				Interval: ptypes.Duration(time.Second * 10),
 				Timeout:  ptypes.Duration(time.Second * 5),
+				Fails:    2,
+				Passes:   3,
 			},
 			expectedInterval: time.Second * 10,
 			expectedTimeout:  time.Second * 5,
+			expectedFails:    2,
+			expectedPasses:   3,
 		},
 		{
 			desc: "interval shorter than timeout",
@@ -107,6 +119,8 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 			},
 			expectedInterval: time.Second,
 			expectedTimeout:  time.Second * 5,
+			expectedFails:    1,
+			expectedPasses:   1,
 		},
 	}
 
@@ -117,6 +131,8 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, nil, "")
 			assert.Equal(t, test.expectedInterval, healthChecker.interval)
 			assert.Equal(t, test.expectedTimeout, healthChecker.timeout)
+			assert.Equal(t, test.expectedFails, healthChecker.fails)
+			assert.Equal(t, test.expectedPasses, healthChecker.passes)
 		})
 	}
 }
@@ -515,6 +531,54 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 			assert.Equal(t, map[string]string{test.server.Addr.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
+}
+
+func TestServiceTCPHealthChecker_handleHealthCheckResultThresholds(t *testing.T) {
+	t.Parallel()
+
+	const targetAddr = "127.0.0.1:8080"
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+	serviceInfo := &truntime.TCPServiceInfo{}
+
+	hc := &ServiceTCPHealthChecker{
+		balancer:         lb,
+		info:             serviceInfo,
+		fails:            2,
+		passes:           2,
+		healthyTargets:   make(chan *TCPHealthCheckTarget, 2),
+		unhealthyTargets: make(chan *TCPHealthCheckTarget, 2),
+		targets: map[string]*healthStatus{
+			targetAddr: {up: true},
+		},
+	}
+
+	target := &TCPHealthCheckTarget{Address: targetAddr}
+	currentTargets := make(chan *TCPHealthCheckTarget, 2)
+
+	result := hc.handleHealthCheckResult(t.Context(), target, false, currentTargets)
+	assert.Equal(t, healthStatusResult{count: 1, threshold: 2}, result)
+	assert.Equal(t, 0, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+	assert.Empty(t, serviceInfo.GetAllStatus())
+
+	result = hc.handleHealthCheckResult(t.Context(), target, false, currentTargets)
+	assert.Equal(t, healthStatusResult{update: true, count: 2, threshold: 2}, result)
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+	assert.Equal(t, map[string]string{targetAddr: truntime.StatusDown}, serviceInfo.GetAllStatus())
+
+	result = hc.handleHealthCheckResult(t.Context(), target, true, currentTargets)
+	assert.Equal(t, healthStatusResult{count: 1, threshold: 2}, result)
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+	assert.Equal(t, map[string]string{targetAddr: truntime.StatusDown}, serviceInfo.GetAllStatus())
+
+	result = hc.handleHealthCheckResult(t.Context(), target, true, currentTargets)
+	assert.Equal(t, healthStatusResult{update: true, count: 2, threshold: 2}, result)
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 1, lb.numUpsertedServers)
+	assert.Equal(t, map[string]string{targetAddr: truntime.StatusUp}, serviceInfo.GetAllStatus())
 }
 
 func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {

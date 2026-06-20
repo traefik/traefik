@@ -58,6 +58,8 @@ type ServiceHealthChecker struct {
 	interval          time.Duration
 	unhealthyInterval time.Duration
 	timeout           time.Duration
+	fails             int
+	passes            int
 
 	metrics metricsHealthCheck
 
@@ -65,6 +67,8 @@ type ServiceHealthChecker struct {
 
 	healthyTargets   chan target
 	unhealthyTargets chan target
+	targetsMu        sync.Mutex
+	targets          map[string]*healthStatus
 
 	serviceName string
 }
@@ -97,6 +101,18 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
+	fails := config.Fails
+	if fails <= 0 {
+		logger.Error().Msg("Health check fails smaller than one, default value will be used instead.")
+		fails = 1
+	}
+
+	passes := config.Passes
+	if passes <= 0 {
+		logger.Error().Msg("Health check passes smaller than one, default value will be used instead.")
+		passes = 1
+	}
+
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -108,11 +124,13 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 	}
 
 	healthyTargets := make(chan target, len(targets))
+	targetStatuses := make(map[string]*healthStatus, len(targets))
 	for name, targetURL := range targets {
 		healthyTargets <- target{
 			targetURL: targetURL,
 			name:      name,
 		}
+		targetStatuses[name] = &healthStatus{up: true}
 	}
 	unhealthyTargets := make(chan target, len(targets))
 
@@ -123,8 +141,11 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		interval:          interval,
 		unhealthyInterval: unhealthyInterval,
 		timeout:           timeout,
+		fails:             fails,
+		passes:            passes,
 		healthyTargets:    healthyTargets,
 		unhealthyTargets:  unhealthyTargets,
+		targets:           targetStatuses,
 		serviceName:       serviceName,
 		client:            client,
 		metrics:           metrics,
@@ -170,43 +191,84 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 				default:
 				}
 
-				up := true
-				serverUpMetricValue := float64(1)
-
 				if err := shc.executeHealthCheck(ctx, shc.config, target.targetURL); err != nil {
 					// The context is canceled when the dynamic configuration is refreshed.
 					if errors.Is(err, context.Canceled) {
 						return
 					}
 
-					log.Ctx(ctx).Warn().
+					result := shc.handleHealthCheckResult(ctx, target, false, targets)
+
+					event := log.Ctx(ctx).Warn().
 						Str("targetURL", target.targetURL.String()).
-						Err(err).
-						Msg("Health check failed.")
+						Err(err)
+					if !result.update {
+						event.
+							Int("currentFailures", result.count).
+							Int("failureThreshold", result.threshold).
+							Msg("Health check failed, failure threshold not reached.")
+						continue
+					}
 
-					up = false
-					serverUpMetricValue = float64(0)
+					event.Msg("Health check failed.")
+					continue
 				}
 
-				shc.balancer.SetStatus(ctx, target.name, up)
-
-				var statusStr string
-				if up {
-					statusStr = runtime.StatusUp
-					shc.healthyTargets <- target
-				} else {
-					statusStr = runtime.StatusDown
-					shc.unhealthyTargets <- target
+				result := shc.handleHealthCheckResult(ctx, target, true, targets)
+				if !result.update {
+					log.Ctx(ctx).Info().
+						Str("targetURL", target.targetURL.String()).
+						Int("currentPasses", result.count).
+						Int("passThreshold", result.threshold).
+						Msg("Health check succeeded, pass threshold not reached.")
 				}
-
-				shc.info.UpdateServerStatus(target.targetURL.String(), statusStr)
-
-				shc.metrics.ServiceServerUpGauge().
-					With("service", shc.serviceName, "url", target.targetURL.String()).
-					Set(serverUpMetricValue)
 			}
 		}
 	}
+}
+
+func (shc *ServiceHealthChecker) handleHealthCheckResult(ctx context.Context, target target, up bool, currentTargets chan target) healthStatusResult {
+	result := shc.observeTargetStatus(target.name, up)
+	if !result.update {
+		currentTargets <- target
+		return result
+	}
+
+	shc.balancer.SetStatus(ctx, target.name, up)
+
+	statusStr := runtime.StatusDown
+	serverUpMetricValue := float64(0)
+	nextTargets := shc.unhealthyTargets
+	if up {
+		statusStr = runtime.StatusUp
+		serverUpMetricValue = float64(1)
+		nextTargets = shc.healthyTargets
+	}
+
+	nextTargets <- target
+	shc.info.UpdateServerStatus(target.targetURL.String(), statusStr)
+	shc.metrics.ServiceServerUpGauge().
+		With("service", shc.serviceName, "url", target.targetURL.String()).
+		Set(serverUpMetricValue)
+
+	return result
+}
+
+func (shc *ServiceHealthChecker) observeTargetStatus(name string, up bool) healthStatusResult {
+	shc.targetsMu.Lock()
+	defer shc.targetsMu.Unlock()
+
+	if shc.targets == nil {
+		shc.targets = make(map[string]*healthStatus)
+	}
+
+	status := shc.targets[name]
+	if status == nil {
+		status = &healthStatus{up: true}
+		shc.targets[name] = status
+	}
+
+	return status.observe(up, shc.fails, shc.passes)
 }
 
 func (shc *ServiceHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.ServerHealthCheck, target *url.URL) error {

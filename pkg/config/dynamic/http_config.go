@@ -491,6 +491,8 @@ type ServerHealthCheck struct {
 	Interval          ptypes.Duration   `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	UnhealthyInterval *ptypes.Duration  `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
 	Timeout           ptypes.Duration   `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Fails             int               `json:"fails,omitempty" toml:"fails,omitempty" yaml:"fails,omitempty" export:"true"`
+	Passes            int               `json:"passes,omitempty" toml:"passes,omitempty" yaml:"passes,omitempty" export:"true"`
 	Hostname          string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	FollowRedirects   *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers           map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
@@ -502,6 +504,8 @@ func (h *ServerHealthCheck) SetDefaults() {
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
+	h.Fails = 1
+	h.Passes = 1
 }
 
 // +k8s:deepcopy-gen=true

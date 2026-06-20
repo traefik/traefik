@@ -57,6 +57,12 @@ type ServerHealthCheckApplyConfiguration struct {
 	// Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
 	// Default: 5s
 	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+	// Fails defines the number of consecutive failures before considering the server unhealthy.
+	// Default: 1
+	Fails *int `json:"fails,omitempty"`
+	// Passes defines the number of consecutive successes before considering the server healthy again.
+	// Default: 1
+	Passes *int `json:"passes,omitempty"`
 	// Hostname defines the value of hostname in the Host header of the health check request.
 	Hostname *string `json:"hostname,omitempty"`
 	// FollowRedirects defines whether redirects should be followed during the health check calls.
@@ -141,6 +147,22 @@ func (b *ServerHealthCheckApplyConfiguration) WithUnhealthyInterval(value intstr
 // If called multiple times, the Timeout field is set to the value of the last call.
 func (b *ServerHealthCheckApplyConfiguration) WithTimeout(value intstr.IntOrString) *ServerHealthCheckApplyConfiguration {
 	b.Timeout = &value
+	return b
+}
+
+// WithFails sets the Fails field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Fails field is set to the value of the last call.
+func (b *ServerHealthCheckApplyConfiguration) WithFails(value int) *ServerHealthCheckApplyConfiguration {
+	b.Fails = &value
+	return b
+}
+
+// WithPasses sets the Passes field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Passes field is set to the value of the last call.
+func (b *ServerHealthCheckApplyConfiguration) WithPasses(value int) *ServerHealthCheckApplyConfiguration {
+	b.Passes = &value
 	return b
 }
 

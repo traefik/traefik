@@ -213,6 +213,8 @@
 - "traefik.http.services.service03.loadbalancer.healthcheck.scheme=foobar"
 - "traefik.http.services.service03.loadbalancer.healthcheck.status=42"
 - "traefik.http.services.service03.loadbalancer.healthcheck.timeout=42s"
+- "traefik.http.services.service03.loadbalancer.healthcheck.fails=42"
+- "traefik.http.services.service03.loadbalancer.healthcheck.passes=42"
 - "traefik.http.services.service03.loadbalancer.healthcheck.unhealthyinterval=42s"
 - "traefik.http.services.service03.loadbalancer.passhostheader=true"
 - "traefik.http.services.service03.loadbalancer.passivehealthcheck.failurewindow=42s"
