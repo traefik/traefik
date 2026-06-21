@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -273,6 +274,10 @@ func matchDomain(serverName, certDomains string) bool {
 			return true
 		}
 
+		if matchIPReverseAddress(serverName, certDomain) {
+			return true
+		}
+
 		for len(certDomain) > 0 && certDomain[len(certDomain)-1] == '.' {
 			certDomain = certDomain[:len(certDomain)-1]
 		}
@@ -287,4 +292,17 @@ func matchDomain(serverName, certDomains string) bool {
 		}
 	}
 	return false
+}
+
+func matchIPReverseAddress(serverName, certDomain string) bool {
+	if net.ParseIP(certDomain) == nil {
+		return false
+	}
+
+	reverseAddr, err := dns.ReverseAddr(certDomain)
+	if err != nil {
+		return false
+	}
+
+	return strings.TrimSuffix(serverName, ".") == strings.TrimSuffix(strings.ToLower(reverseAddr), ".")
 }
