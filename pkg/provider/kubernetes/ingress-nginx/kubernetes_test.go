@@ -17042,18 +17042,12 @@ func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
 	t.Parallel()
 
 	k8sObjects := readResources(t, []string{
-		"services-canary-status.yml",
+		"services.yml",
 		"ingressclasses.yml",
 		"publish-service-loadbalancer.yml",
 		"ingresses/ingress-with-host.yml",
 		"ingresses/ingress-with-host-canary.yml",
 	})
-	for _, obj := range k8sObjects {
-		ing, ok := obj.(*netv1.Ingress)
-		if ok && ing.Name == "ingress-with-host" {
-			ing.Annotations["nginx.ingress.kubernetes.io/service-upstream"] = "true"
-		}
-	}
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	client := newClient(kubeClient)
