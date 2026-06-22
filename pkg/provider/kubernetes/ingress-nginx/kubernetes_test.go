@@ -16976,7 +16976,6 @@ func TestLoadConfigurationUpdatesStatusForSSLPassthroughIngress(t *testing.T) {
 	k8sObjects := readResources(t, []string{
 		"services.yml",
 		"ingressclasses.yml",
-		"publish-service-loadbalancer.yml",
 		"ingresses/ingress-with-ssl-passthrough-empty-status.yml",
 	})
 
@@ -16988,10 +16987,10 @@ func TestLoadConfigurationUpdatesStatusForSSLPassthroughIngress(t *testing.T) {
 	<-eventCh
 
 	p := Provider{
-		PublishService:    "default/traefik-publish",
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
+		PublishStatusAddress: []string{"203.0.113.10"},
+		k8sClient:            client,
+		NonTLSEntryPoints:    []string{"http"},
+		TLSEntryPoints:       []string{"https"},
 	}
 	p.SetDefaults()
 
@@ -17010,7 +17009,6 @@ func TestLoadConfigurationUpdatesStatusForNormalIngress(t *testing.T) {
 	k8sObjects := readResources(t, []string{
 		"services.yml",
 		"ingressclasses.yml",
-		"publish-service-loadbalancer.yml",
 		"ingresses/ingress-with-host.yml",
 	})
 
@@ -17022,10 +17020,10 @@ func TestLoadConfigurationUpdatesStatusForNormalIngress(t *testing.T) {
 	<-eventCh
 
 	p := Provider{
-		PublishService:    "default/traefik-publish",
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
+		PublishStatusAddress: []string{"203.0.113.10"},
+		k8sClient:            client,
+		NonTLSEntryPoints:    []string{"http"},
+		TLSEntryPoints:       []string{"https"},
 	}
 	p.SetDefaults()
 
@@ -17044,7 +17042,6 @@ func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
 	k8sObjects := readResources(t, []string{
 		"services.yml",
 		"ingressclasses.yml",
-		"publish-service-loadbalancer.yml",
 		"ingresses/ingress-with-host.yml",
 		"ingresses/ingress-with-host-canary.yml",
 	})
@@ -17057,10 +17054,10 @@ func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
 	<-eventCh
 
 	p := Provider{
-		PublishService:    "default/traefik-publish",
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
+		PublishStatusAddress: []string{"203.0.113.10"},
+		k8sClient:            client,
+		NonTLSEntryPoints:    []string{"http"},
+		TLSEntryPoints:       []string{"https"},
 	}
 	p.SetDefaults()
 
@@ -17084,7 +17081,6 @@ func TestLoadConfigurationDoesNotUpdateStatusForSkippedIngress(t *testing.T) {
 		"services.yml",
 		"secrets.yml",
 		"ingressclasses.yml",
-		"publish-service-loadbalancer.yml",
 		"ingresses/ingress-with-auth-tls-secret-missing.yml",
 	})
 
@@ -17096,10 +17092,10 @@ func TestLoadConfigurationDoesNotUpdateStatusForSkippedIngress(t *testing.T) {
 	<-eventCh
 
 	p := Provider{
-		PublishService:    "default/traefik-publish",
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
+		PublishStatusAddress: []string{"203.0.113.10"},
+		k8sClient:            client,
+		NonTLSEntryPoints:    []string{"http"},
+		TLSEntryPoints:       []string{"https"},
 	}
 	p.SetDefaults()
 
@@ -17118,7 +17114,6 @@ func TestLoadConfigurationDoesNotUpdateStatusForSkippedSSLPassthroughIngress(t *
 	k8sObjects := readResources(t, []string{
 		"services.yml",
 		"ingressclasses.yml",
-		"publish-service-loadbalancer.yml",
 		"ingresses/ingress-with-ssl-passthrough-no-root.yml",
 	})
 
@@ -17130,10 +17125,10 @@ func TestLoadConfigurationDoesNotUpdateStatusForSkippedSSLPassthroughIngress(t *
 	<-eventCh
 
 	p := Provider{
-		PublishService:    "default/traefik-publish",
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
+		PublishStatusAddress: []string{"203.0.113.10"},
+		k8sClient:            client,
+		NonTLSEntryPoints:    []string{"http"},
+		TLSEntryPoints:       []string{"https"},
 	}
 	p.SetDefaults()
 
