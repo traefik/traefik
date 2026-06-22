@@ -17038,6 +17038,51 @@ func TestLoadConfigurationUpdatesStatusForNormalIngress(t *testing.T) {
 	assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
 }
 
+func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
+	t.Parallel()
+
+	k8sObjects := readResources(t, []string{
+		"services-canary-status.yml",
+		"ingressclasses.yml",
+		"publish-service-loadbalancer.yml",
+		"ingresses/ingress-with-host.yml",
+		"ingresses/ingress-with-host-canary.yml",
+	})
+	for _, obj := range k8sObjects {
+		ing, ok := obj.(*netv1.Ingress)
+		if ok && ing.Name == "ingress-with-host" {
+			ing.Annotations["nginx.ingress.kubernetes.io/service-upstream"] = "true"
+		}
+	}
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		PublishService:    "default/traefik-publish",
+		k8sClient:         client,
+		NonTLSEntryPoints: []string{"http"},
+		TLSEntryPoints:    []string{"https"},
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+	require.NotNil(t, conf)
+
+	assertStatusUpdated := func(name string) {
+		ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), name, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
+	}
+
+	assertStatusUpdated("ingress-with-host")
+	assertStatusUpdated("ingress-with-host-canary")
+}
+
 func TestLoadConfigurationDoesNotUpdateStatusForSkippedIngress(t *testing.T) {
 	t.Parallel()
 

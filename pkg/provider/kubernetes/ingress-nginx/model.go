@@ -14,7 +14,7 @@ type model struct {
 	// Servers holds one entry per distinct hostname across all ingresses.
 	Servers map[string]*server
 
-	// ProcessedIngresses holds the ingresses that contributed regular routing
+	// ProcessedIngresses holds the ingresses that contributed routing
 	// configuration and should have their published status refreshed.
 	ProcessedIngresses []*netv1.Ingress
 

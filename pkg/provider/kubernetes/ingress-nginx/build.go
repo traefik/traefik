@@ -249,6 +249,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					HeaderPattern: ptr.Deref(canaryIngress.config.CanaryHeaderPattern, ""),
 					Cookie:        ptr.Deref(canaryIngress.config.CanaryCookie, ""),
 				}
+				markProcessedIngress(canaryIngress.Ingress)
 			}
 		}
 	}
