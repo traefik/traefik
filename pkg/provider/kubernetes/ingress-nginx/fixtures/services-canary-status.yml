@@ -1,0 +1,32 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.1
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: canary
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.5
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami
