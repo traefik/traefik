@@ -17042,8 +17042,7 @@ func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
 	k8sObjects := readResources(t, []string{
 		"services.yml",
 		"ingressclasses.yml",
-		"ingresses/ingress-with-host.yml",
-		"ingresses/ingress-with-host-canary.yml",
+		"ingresses/ingresses-with-canary.yml",
 	})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
@@ -17070,8 +17069,8 @@ func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
 		assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
 	}
 
-	assertStatusUpdated("ingress-with-host")
-	assertStatusUpdated("ingress-with-host-canary")
+	assertStatusUpdated("ingress-with-canary")
+	assertStatusUpdated("canary")
 }
 
 func TestLoadConfigurationDoesNotUpdateStatusForSkippedIngress(t *testing.T) {
