@@ -23,7 +23,7 @@ http:
         - "/path/to/rootca2.pem"
       maxIdleConnsPerHost: 100
       disableHTTP2: true
-      peerCertSubjectAltNames:
+      peerCertSANs:
         - type: DNSName
           value: foo.com
         - type: URI
@@ -54,7 +54,7 @@ http:
   rootcas = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
   maxIdleConnsPerHost = 100
   disableHTTP2 = true
-  peerCertSubjectAltNames = [{type = "DNSName", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
+  peerCertSANs = [{type = "DNSName", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
   cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
   minVersion = "VersionTLS12"
   maxVersion = "VersionTLS12"
@@ -117,9 +117,9 @@ labels:
 | <a id="opt-maxVersion" href="#opt-maxVersion" title="#opt-maxVersion">`maxVersion`</a> | Defines the maximum TLS version to use when contacting backend servers.                                                                  | ""      | No |
 | <a id="opt-maxIdleConnsPerHost" href="#opt-maxIdleConnsPerHost" title="#opt-maxIdleConnsPerHost">`maxIdleConnsPerHost`</a> | Maximum idle (keep-alive) connections to keep per-host.                                                                                  | 200     | No       |
 | <a id="opt-disableHTTP2" href="#opt-disableHTTP2" title="#opt-disableHTTP2">`disableHTTP2`</a> | Disables HTTP/2 for connections with servers.                                                                                            | false   | No       |
-| <a id="opt-peerCertSubjectAltNames" href="#opt-peerCertSubjectAltNames" title="#opt-peerCertSubjectAltNames">`peerCertSubjectAltNames`</a> | Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification.                        | []      | No       |
-| <a id="opt-peerCertSubjectAltNames-type" href="#opt-peerCertSubjectAltNames-type" title="#opt-peerCertSubjectAltNames-type">`peerCertSubjectAltNames[].type`</a> | Defines the SAN type (`URI` or `DNSName`) to match against the peer certificate's Subject Alternative Names.                                                                    | ""      | No       |
-| <a id="opt-peerCertSubjectAltNames-value" href="#opt-peerCertSubjectAltNames-value" title="#opt-peerCertSubjectAltNames-value">`peerCertSubjectAltNames[].value`</a> | Defines the SAN value to match against the peer certificate's Subject Alternative Names.                  | ""      | No       |
+| <a id="opt-peerCertSANs" href="#opt-peerCertSANs" title="#opt-peerCertSANs">`peerCertSANs`</a> | Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification.                        | []      | No       |
+| <a id="opt-peerCertSANs-type" href="#opt-peerCertSANs-type" title="#opt-peerCertSANs-type">`peerCertSANs[].type`</a> | Defines the SAN type (`URI` or `DNSName`) to match against the peer certificate's Subject Alternative Names.                                                                    | ""      | No       |
+| <a id="opt-peerCertSANs-value" href="#opt-peerCertSANs-value" title="#opt-peerCertSANs-value">`peerCertSANs[].value`</a> | Defines the SAN value to match against the peer certificate's Subject Alternative Names.                  | ""      | No       |
 | <a id="opt-forwardingTimeouts-dialTimeout" href="#opt-forwardingTimeouts-dialTimeout" title="#opt-forwardingTimeouts-dialTimeout">`forwardingTimeouts.dialTimeout`</a> | Amount of time to wait until a connection to a server can be established.<br />0 = no timeout                                            | 30s     | No       |
 | <a id="opt-forwardingTimeouts-responseHeaderTimeout" href="#opt-forwardingTimeouts-responseHeaderTimeout" title="#opt-forwardingTimeouts-responseHeaderTimeout">`forwardingTimeouts.responseHeaderTimeout`</a> | Amount of time to wait for a server's response headers after fully writing the request (including its body, if any).<br />0 = no timeout | 0s      | No       |
 | <a id="opt-forwardingTimeouts-idleConnTimeout" href="#opt-forwardingTimeouts-idleConnTimeout" title="#opt-forwardingTimeouts-idleConnTimeout">`forwardingTimeouts.idleConnTimeout`</a> | Maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.<br />0 = no timeout                       | 90s     | No       |

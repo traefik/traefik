@@ -699,7 +699,7 @@ func TestKerberosRoundTripper(t *testing.T) {
 	}
 }
 
-func TestPeerCertSubjectAltNames(t *testing.T) {
+func TestPeerCertSANs(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		serversTransport *dynamic.ServersTransport
@@ -710,9 +710,9 @@ func TestPeerCertSubjectAltNames(t *testing.T) {
 			serversTransport: &dynamic.ServersTransport{
 				ServerName: "example.com",
 				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
-				PeerCertSubjectAltNames: []traefiktls.SubjectAltName{
+				PeerCertSANs: []traefiktls.SAN{
 					{
-						Type:  traefiktls.SubjectAltNameDNSNameType,
+						Type:  traefiktls.SANDNSNameType,
 						Value: "www.example.com",
 					},
 				},
@@ -724,9 +724,9 @@ func TestPeerCertSubjectAltNames(t *testing.T) {
 			serversTransport: &dynamic.ServersTransport{
 				ServerName: "example.com",
 				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
-				PeerCertSubjectAltNames: []traefiktls.SubjectAltName{
+				PeerCertSANs: []traefiktls.SAN{
 					{
-						Type:  traefiktls.SubjectAltNameDNSNameType,
+						Type:  traefiktls.SANDNSNameType,
 						Value: "wrong.example.com",
 					},
 				},

@@ -146,27 +146,27 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// SubjectAltNameType is the type of the Subject Alternative Name.
-type SubjectAltNameType string
+// SANType is the type of the Subject Alternative Name.
+type SANType string
 
 const (
-	// SubjectAltNameDNSNameType specifies hostname-based SAN.
-	SubjectAltNameDNSNameType SubjectAltNameType = "DNSName"
+	// SANDNSNameType specifies hostname-based SAN.
+	SANDNSNameType SANType = "DNSName"
 
-	// SubjectAltNameURIType specifies URI-based SAN, e.g. SPIFFE id.
-	SubjectAltNameURIType SubjectAltNameType = "URI"
+	// SANURIType specifies URI-based SAN, e.g. SPIFFE id.
+	SANURIType SANType = "URI"
 )
 
 // +k8s:deepcopy-gen=true
 
-// SubjectAltName represents a Subject Alternative Name.
-type SubjectAltName struct {
-	Type  SubjectAltNameType `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty"`
-	Value string             `json:"value,omitempty" toml:"value,omitempty" yaml:"value,omitempty"`
+// SAN represents a Subject Alternative Name.
+type SAN struct {
+	Type  SANType `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty"`
+	Value string  `json:"value,omitempty" toml:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // VerifyPeerCertificate verifies the chain certificates and their URI.
-func VerifyPeerCertificate(sans []SubjectAltName, rootCAs *x509.CertPool, rawCerts [][]byte) error {
+func VerifyPeerCertificate(sans []SAN, rootCAs *x509.CertPool, rawCerts [][]byte) error {
 	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
 	cert, err := verifyChain(rootCAs, rawCerts)
 	if err != nil {
@@ -175,14 +175,14 @@ func VerifyPeerCertificate(sans []SubjectAltName, rootCAs *x509.CertPool, rawCer
 
 	for _, san := range sans {
 		switch san.Type {
-		case SubjectAltNameURIType:
+		case SANURIType:
 			if slices.ContainsFunc(cert.URIs, func(uri *url.URL) bool {
 				return strings.EqualFold(san.Value, uri.String())
 			}) {
 				return nil
 			}
 
-		case SubjectAltNameDNSNameType:
+		case SANDNSNameType:
 			if err := cert.VerifyHostname(san.Value); err == nil {
 				return nil
 			}

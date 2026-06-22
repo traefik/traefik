@@ -743,7 +743,7 @@ func TestProxyProtocolDisabled(t *testing.T) {
 	assert.Equal(t, "PONG", string(buf[:4]))
 }
 
-func TestPeerCertSubjectAltNames(t *testing.T) {
+func TestPeerCertSANs(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		serversTransport *dynamic.TCPServersTransport
@@ -755,9 +755,9 @@ func TestPeerCertSubjectAltNames(t *testing.T) {
 				TLS: &dynamic.TLSClientConfig{
 					ServerName: "example.com",
 					RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
-					PeerCertSubjectAltNames: []traefiktls.SubjectAltName{
+					PeerCertSANs: []traefiktls.SAN{
 						{
-							Type:  traefiktls.SubjectAltNameDNSNameType,
+							Type:  traefiktls.SANDNSNameType,
 							Value: "www.example.com",
 						},
 					},
@@ -771,9 +771,9 @@ func TestPeerCertSubjectAltNames(t *testing.T) {
 				TLS: &dynamic.TLSClientConfig{
 					ServerName: "example.com",
 					RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
-					PeerCertSubjectAltNames: []traefiktls.SubjectAltName{
+					PeerCertSANs: []traefiktls.SAN{
 						{
-							Type:  traefiktls.SubjectAltNameDNSNameType,
+							Type:  traefiktls.SANDNSNameType,
 							Value: "wrong.example.com",
 						},
 					},

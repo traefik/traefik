@@ -2536,9 +2536,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"default-whoami-http-80": {
 							ServerName:         "whoami",
 							InsecureSkipVerify: true,
-							PeerCertSubjectAltNames: []tls.SubjectAltName{
-								{Type: tls.SubjectAltNameDNSNameType, Value: "whoami.default.svc.cluster.local"},
-								{Type: tls.SubjectAltNameURIType, Value: "spiffe://cluster.local/ns/default/sa/whoami"},
+							PeerCertSANs: []tls.SAN{
+								{Type: tls.SANDNSNameType, Value: "whoami.default.svc.cluster.local"},
+								{Type: tls.SANURIType, Value: "spiffe://cluster.local/ns/default/sa/whoami"},
 							},
 						},
 					},
@@ -3731,9 +3731,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						"default-whoami-80-grpc": {
 							ServerName:         "whoami",
 							InsecureSkipVerify: true,
-							PeerCertSubjectAltNames: []tls.SubjectAltName{
-								{Type: tls.SubjectAltNameDNSNameType, Value: "whoami.default.svc.cluster.local"},
-								{Type: tls.SubjectAltNameURIType, Value: "spiffe://cluster.local/ns/default/sa/whoami"},
+							PeerCertSANs: []tls.SAN{
+								{Type: tls.SANDNSNameType, Value: "whoami.default.svc.cluster.local"},
+								{Type: tls.SANURIType, Value: "spiffe://cluster.local/ns/default/sa/whoami"},
 							},
 						},
 					},
@@ -6468,9 +6468,9 @@ func TestLoadTLSRoutes(t *testing.T) {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "whoami",
 								InsecureSkipVerify: true,
-								PeerCertSubjectAltNames: []tls.SubjectAltName{
-									{Type: tls.SubjectAltNameDNSNameType, Value: "whoami.default.svc.cluster.local"},
-									{Type: tls.SubjectAltNameURIType, Value: "spiffe://cluster.local/ns/default/sa/whoami"},
+								PeerCertSANs: []tls.SAN{
+									{Type: tls.SANDNSNameType, Value: "whoami.default.svc.cluster.local"},
+									{Type: tls.SANURIType, Value: "spiffe://cluster.local/ns/default/sa/whoami"},
 								},
 							},
 						},

@@ -171,7 +171,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.PeerCertSubjectAltNames) > 0 || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.PeerCertSANs) > 0 || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
@@ -223,20 +223,20 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			MaxVersion:         maxVersion,
 		}
 
-		peerCertSubjectAltNames := make([]traefiktls.SubjectAltName, len(cfg.PeerCertSubjectAltNames))
-		copy(peerCertSubjectAltNames, cfg.PeerCertSubjectAltNames)
+		peerCertSANs := make([]traefiktls.SAN, len(cfg.PeerCertSANs))
+		copy(peerCertSANs, cfg.PeerCertSANs)
 
 		if cfg.PeerCertURI != "" {
-			log.Warn().Msg("PeerCertURI option is deprecated, please use PeerCertSubjectAltNames instead")
-			peerCertSubjectAltNames = append(peerCertSubjectAltNames, traefiktls.SubjectAltName{
-				Type:  traefiktls.SubjectAltNameURIType,
+			log.Warn().Msg("PeerCertURI option is deprecated, please use PeerCertSANs instead")
+			peerCertSANs = append(peerCertSANs, traefiktls.SAN{
+				Type:  traefiktls.SANURIType,
 				Value: cfg.PeerCertURI,
 			})
 		}
 
-		if len(peerCertSubjectAltNames) > 0 {
+		if len(peerCertSANs) > 0 {
 			config.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(peerCertSubjectAltNames, config.RootCAs, rawCerts)
+				return traefiktls.VerifyPeerCertificate(peerCertSANs, config.RootCAs, rawCerts)
 			}
 		}
 	}

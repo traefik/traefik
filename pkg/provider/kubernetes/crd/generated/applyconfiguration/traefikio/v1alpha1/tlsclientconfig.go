@@ -50,10 +50,10 @@ type TLSClientConfigApplyConfiguration struct {
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	//
-	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSubjectAltNames option instead.
+	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
 	PeerCertURI *string `json:"peerCertURI,omitempty"`
-	// PeerCertSubjectAltNames defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
-	PeerCertSubjectAltNames []tls.SubjectAltName `json:"peerCertSubjectAltNames,omitempty"`
+	// PeerCertSANs defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
+	PeerCertSANs []tls.SAN `json:"peerCertSANs,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
@@ -121,12 +121,12 @@ func (b *TLSClientConfigApplyConfiguration) WithPeerCertURI(value string) *TLSCl
 	return b
 }
 
-// WithPeerCertSubjectAltNames adds the given value to the PeerCertSubjectAltNames field in the declarative configuration
+// WithPeerCertSANs adds the given value to the PeerCertSANs field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the PeerCertSubjectAltNames field.
-func (b *TLSClientConfigApplyConfiguration) WithPeerCertSubjectAltNames(values ...tls.SubjectAltName) *TLSClientConfigApplyConfiguration {
+// If called multiple times, values provided by each call will be appended to the PeerCertSANs field.
+func (b *TLSClientConfigApplyConfiguration) WithPeerCertSANs(values ...tls.SAN) *TLSClientConfigApplyConfiguration {
 	for i := range values {
-		b.PeerCertSubjectAltNames = append(b.PeerCertSubjectAltNames, values[i])
+		b.PeerCertSANs = append(b.PeerCertSANs, values[i])
 	}
 	return b
 }

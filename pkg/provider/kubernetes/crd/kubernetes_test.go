@@ -5472,13 +5472,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PingTimeout:           ptypes.Duration(42 * time.Second),
 							},
 							PeerCertURI: "foo://bar",
-							PeerCertSubjectAltNames: []tls.SubjectAltName{
+							PeerCertSANs: []tls.SAN{
 								{
-									Type:  tls.SubjectAltNameDNSNameType,
+									Type:  tls.SANDNSNameType,
 									Value: "foo.com",
 								},
 								{
-									Type:  tls.SubjectAltNameURIType,
+									Type:  tls.SANURIType,
 									Value: "foo://bar",
 								},
 							},

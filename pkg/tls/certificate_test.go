@@ -18,28 +18,28 @@ func Test_VerifyPeerCertificate(t *testing.T) {
 
 	tests := []struct {
 		desc     string
-		sans     []SubjectAltName
+		sans     []SAN
 		rawCerts [][]byte
 		rootCAs  *x509.CertPool
 		expErr   require.ErrorAssertionFunc
 	}{
 		{
 			desc:     "returns error when no certificates are provided",
-			sans:     []SubjectAltName{{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"}},
+			sans:     []SAN{{Type: SANURIType, Value: "spiffe://foo.com"}},
 			rawCerts: nil,
 			rootCAs:  pki.caPool,
 			expErr:   require.Error,
 		},
 		{
 			desc:     "returns error when certificate has no URIs",
-			sans:     []SubjectAltName{{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"}},
+			sans:     []SAN{{Type: SANURIType, Value: "spiffe://foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, nil, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.Error,
 		},
 		{
 			desc: "returns error when no URI matches",
-			sans: []SubjectAltName{{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"}},
+			sans: []SAN{{Type: SANURIType, Value: "spiffe://foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, nil, []*url.URL{
 				{Scheme: "spiffe", Host: "other.org"},
 			})},
@@ -48,7 +48,7 @@ func Test_VerifyPeerCertificate(t *testing.T) {
 		},
 		{
 			desc: "returns nil when URI matches",
-			sans: []SubjectAltName{{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"}},
+			sans: []SAN{{Type: SANURIType, Value: "spiffe://foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, nil, []*url.URL{
 				{Scheme: "spiffe", Host: "foo.com"},
 			})},
@@ -57,7 +57,7 @@ func Test_VerifyPeerCertificate(t *testing.T) {
 		},
 		{
 			desc: "returns nil when one of the URIs matches",
-			sans: []SubjectAltName{{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"}},
+			sans: []SAN{{Type: SANURIType, Value: "spiffe://foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, nil, []*url.URL{
 				{Scheme: "spiffe", Host: "example.org"},
 				{Scheme: "spiffe", Host: "foo.com"},
@@ -67,51 +67,51 @@ func Test_VerifyPeerCertificate(t *testing.T) {
 		},
 		{
 			desc:     "returns error when certificate has no DNS names",
-			sans:     []SubjectAltName{{Type: SubjectAltNameDNSNameType, Value: "foo.com"}},
+			sans:     []SAN{{Type: SANDNSNameType, Value: "foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, nil, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.Error,
 		},
 		{
 			desc:     "returns error when no DNS name matches",
-			sans:     []SubjectAltName{{Type: SubjectAltNameDNSNameType, Value: "foo.com"}},
+			sans:     []SAN{{Type: SANDNSNameType, Value: "foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"other.com"}, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.Error,
 		},
 		{
 			desc:     "returns nil when DNS name matches",
-			sans:     []SubjectAltName{{Type: SubjectAltNameDNSNameType, Value: "foo.com"}},
+			sans:     []SAN{{Type: SANDNSNameType, Value: "foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"foo.com"}, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.NoError,
 		},
 		{
 			desc:     "returns nil when DNS name matches a wildcard",
-			sans:     []SubjectAltName{{Type: SubjectAltNameDNSNameType, Value: "bar.foo.com"}},
+			sans:     []SAN{{Type: SANDNSNameType, Value: "bar.foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"*.foo.com"}, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.NoError,
 		},
 		{
 			desc:     "returns nil when one of the DNS names matches",
-			sans:     []SubjectAltName{{Type: SubjectAltNameDNSNameType, Value: "foo.com"}},
+			sans:     []SAN{{Type: SANDNSNameType, Value: "foo.com"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"example.com", "foo.com"}, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.NoError,
 		},
 		{
 			desc:     "returns nil when DNS name matches case-insensitively",
-			sans:     []SubjectAltName{{Type: SubjectAltNameDNSNameType, Value: "FOO.COM"}},
+			sans:     []SAN{{Type: SANDNSNameType, Value: "FOO.COM"}},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"foo.com"}, nil)},
 			rootCAs:  pki.caPool,
 			expErr:   require.NoError,
 		},
 		{
 			desc: "returns nil when URI matches in mixed sans",
-			sans: []SubjectAltName{
-				{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"},
-				{Type: SubjectAltNameDNSNameType, Value: "foo.com"},
+			sans: []SAN{
+				{Type: SANURIType, Value: "spiffe://foo.com"},
+				{Type: SANDNSNameType, Value: "foo.com"},
 			},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, nil, []*url.URL{
 				{Scheme: "spiffe", Host: "foo.com"},
@@ -121,9 +121,9 @@ func Test_VerifyPeerCertificate(t *testing.T) {
 		},
 		{
 			desc: "returns nil when DNS name matches in mixed sans",
-			sans: []SubjectAltName{
-				{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"},
-				{Type: SubjectAltNameDNSNameType, Value: "foo.com"},
+			sans: []SAN{
+				{Type: SANURIType, Value: "spiffe://foo.com"},
+				{Type: SANDNSNameType, Value: "foo.com"},
 			},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"foo.com"}, nil)},
 			rootCAs:  pki.caPool,
@@ -131,9 +131,9 @@ func Test_VerifyPeerCertificate(t *testing.T) {
 		},
 		{
 			desc: "returns error when neither URI nor DNS name matches in mixed sans",
-			sans: []SubjectAltName{
-				{Type: SubjectAltNameURIType, Value: "spiffe://foo.com"},
-				{Type: SubjectAltNameDNSNameType, Value: "foo.com"},
+			sans: []SAN{
+				{Type: SANURIType, Value: "spiffe://foo.com"},
+				{Type: SANDNSNameType, Value: "foo.com"},
 			},
 			rawCerts: [][]byte{pki.newLeafCertDER(t, []string{"other.com"}, []*url.URL{
 				{Scheme: "spiffe", Host: "other.org"},

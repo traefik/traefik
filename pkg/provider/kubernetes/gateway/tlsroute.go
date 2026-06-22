@@ -453,13 +453,13 @@ func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.Back
 		for _, san := range policy.Spec.Validation.SubjectAltNames {
 			switch san.Type {
 			case gatev1.URISubjectAltNameType:
-				st.TLS.PeerCertSubjectAltNames = append(st.TLS.PeerCertSubjectAltNames, tls.SubjectAltName{
-					Type:  tls.SubjectAltNameURIType,
+				st.TLS.PeerCertSANs = append(st.TLS.PeerCertSANs, tls.SAN{
+					Type:  tls.SANURIType,
 					Value: string(san.URI),
 				})
 			case gatev1.HostnameSubjectAltNameType:
-				st.TLS.PeerCertSubjectAltNames = append(st.TLS.PeerCertSubjectAltNames, tls.SubjectAltName{
-					Type:  tls.SubjectAltNameDNSNameType,
+				st.TLS.PeerCertSANs = append(st.TLS.PeerCertSANs, tls.SAN{
+					Type:  tls.SANDNSNameType,
 					Value: string(san.Hostname),
 				})
 			default:

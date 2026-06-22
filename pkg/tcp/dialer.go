@@ -175,7 +175,7 @@ func (d *DialerManager) Build(config *dynamic.TCPServersLoadBalancer, isTLS bool
 			tlsConfig = tlsconfig.MTLSClientConfig(d.spiffeX509Source, d.spiffeX509Source, authorizer)
 		}
 
-		if st.TLS.InsecureSkipVerify || len(st.TLS.RootCAs) > 0 || len(st.TLS.ServerName) > 0 || len(st.TLS.Certificates) > 0 || st.TLS.PeerCertURI != "" || len(st.TLS.PeerCertSubjectAltNames) > 0 {
+		if st.TLS.InsecureSkipVerify || len(st.TLS.RootCAs) > 0 || len(st.TLS.ServerName) > 0 || len(st.TLS.Certificates) > 0 || st.TLS.PeerCertURI != "" || len(st.TLS.PeerCertSANs) > 0 {
 			if tlsConfig != nil {
 				return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 			}
@@ -187,20 +187,20 @@ func (d *DialerManager) Build(config *dynamic.TCPServersLoadBalancer, isTLS bool
 				Certificates:       st.TLS.Certificates.GetCertificates(),
 			}
 
-			peerCertSubjectAltNames := make([]traefiktls.SubjectAltName, len(st.TLS.PeerCertSubjectAltNames))
-			copy(peerCertSubjectAltNames, st.TLS.PeerCertSubjectAltNames)
+			peerCertSANs := make([]traefiktls.SAN, len(st.TLS.PeerCertSANs))
+			copy(peerCertSANs, st.TLS.PeerCertSANs)
 
 			if st.TLS.PeerCertURI != "" {
-				log.Warn().Msg("PeerCertURI option is deprecated, please use PeerCertSubjectAltNames instead")
-				peerCertSubjectAltNames = append(peerCertSubjectAltNames, traefiktls.SubjectAltName{
-					Type:  traefiktls.SubjectAltNameURIType,
+				log.Warn().Msg("PeerCertURI option is deprecated, please use PeerCertSANs instead")
+				peerCertSANs = append(peerCertSANs, traefiktls.SAN{
+					Type:  traefiktls.SANURIType,
 					Value: st.TLS.PeerCertURI,
 				})
 			}
 
-			if len(peerCertSubjectAltNames) > 0 {
+			if len(peerCertSANs) > 0 {
 				tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-					return traefiktls.VerifyPeerCertificate(peerCertSubjectAltNames, tlsConfig.RootCAs, rawCerts)
+					return traefiktls.VerifyPeerCertificate(peerCertSANs, tlsConfig.RootCAs, rawCerts)
 				}
 			}
 		}

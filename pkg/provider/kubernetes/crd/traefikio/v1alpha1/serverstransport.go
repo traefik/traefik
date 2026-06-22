@@ -55,10 +55,10 @@ type ServersTransportSpec struct {
 	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	//
-	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSubjectAltNames option instead.
+	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
 	PeerCertURI string `json:"peerCertURI,omitempty"`
-	// PeerCertSubjectAltNames defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
-	PeerCertSubjectAltNames []traefiktls.SubjectAltName `json:"peerCertSubjectAltNames,omitempty"`
+	// PeerCertSANs defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
+	PeerCertSANs []traefiktls.SAN `json:"peerCertSANs,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
