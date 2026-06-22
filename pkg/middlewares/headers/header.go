@@ -168,7 +168,9 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
 
-		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
+		if s.headers.AccessControlMaxAge != nil {
+			rw.Header().Set("Access-Control-Max-Age", strconv.FormatInt(*s.headers.AccessControlMaxAge, 10))
+		}
 		return true
 	}
 

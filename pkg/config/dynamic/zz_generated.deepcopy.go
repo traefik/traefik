@@ -653,6 +653,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AccessControlMaxAge != nil {
+		in, out := &in.AccessControlMaxAge, &out.AccessControlMaxAge
+		*out = new(int64)
+		**out = **in
+	}
 	if in.AllowedHosts != nil {
 		in, out := &in.AllowedHosts, &out.AllowedHosts
 		*out = make([]string, len(*in))
