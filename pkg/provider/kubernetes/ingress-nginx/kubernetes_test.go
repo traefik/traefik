@@ -16970,176 +16970,81 @@ func TestNginxSizeToBytes(t *testing.T) {
 	}
 }
 
-func TestLoadConfigurationUpdatesStatusForSSLPassthroughIngress(t *testing.T) {
+func TestLoadConfigurationIngressStatus(t *testing.T) {
 	t.Parallel()
 
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"ingressclasses.yml",
-		"ingresses/ingress-with-ssl-passthrough-empty-status.yml",
-	})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	client := newClient(kubeClient)
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		PublishStatusAddress: []string{"203.0.113.10"},
-		k8sClient:            client,
-		NonTLSEntryPoints:    []string{"http"},
-		TLSEntryPoints:       []string{"https"},
+	testCases := []struct {
+		desc         string
+		paths        []string
+		ingressNames []string
+		wantStatus   bool
+	}{
+		{
+			desc:         "SSL passthrough ingress",
+			paths:        []string{"ingresses/ingress-with-ssl-passthrough-empty-status.yml"},
+			ingressNames: []string{"ingress-with-ssl-passthrough"},
+			wantStatus:   true,
+		},
+		{
+			desc:         "normal ingress",
+			paths:        []string{"ingresses/ingress-with-host.yml"},
+			ingressNames: []string{"ingress-with-host"},
+			wantStatus:   true,
+		},
+		{
+			desc:         "canary ingress",
+			paths:        []string{"ingresses/ingresses-with-canary.yml"},
+			ingressNames: []string{"ingress-with-canary", "canary"},
+			wantStatus:   true,
+		},
+		{
+			desc:         "skipped ingress",
+			paths:        []string{"secrets.yml", "ingresses/ingress-with-auth-tls-secret-missing.yml"},
+			ingressNames: []string{"ingress-with-auth-tls-secret-missing"},
+		},
+		{
+			desc:         "skipped SSL passthrough ingress",
+			paths:        []string{"ingresses/ingress-with-ssl-passthrough-no-root.yml"},
+			ingressNames: []string{"ingress-with-ssl-passthrough-no-root"},
+		},
 	}
-	p.SetDefaults()
 
-	conf := p.loadConfiguration(t.Context())
-	require.NotNil(t, conf)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-ssl-passthrough", metav1.GetOptions{})
-	require.NoError(t, err)
+			paths := append([]string{"services.yml", "ingressclasses.yml"}, test.paths...)
+			k8sObjects := readResources(t, paths)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			client := newClient(kubeClient)
 
-	assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
+			eventCh, err := client.WatchAll(t.Context(), "", "")
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				PublishStatusAddress: []string{"203.0.113.10"},
+				k8sClient:            client,
+				NonTLSEntryPoints:    []string{"http"},
+				TLSEntryPoints:       []string{"https"},
+			}
+			p.SetDefaults()
+
+			require.NotNil(t, p.loadConfiguration(t.Context()))
+
+			for _, name := range test.ingressNames {
+				ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+
+				if test.wantStatus {
+					assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
+				} else {
+					assert.Empty(t, ing.Status.LoadBalancer.Ingress)
+				}
+			}
+		})
+	}
 }
-
-func TestLoadConfigurationUpdatesStatusForNormalIngress(t *testing.T) {
-	t.Parallel()
-
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"ingressclasses.yml",
-		"ingresses/ingress-with-host.yml",
-	})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	client := newClient(kubeClient)
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		PublishStatusAddress: []string{"203.0.113.10"},
-		k8sClient:            client,
-		NonTLSEntryPoints:    []string{"http"},
-		TLSEntryPoints:       []string{"https"},
-	}
-	p.SetDefaults()
-
-	conf := p.loadConfiguration(t.Context())
-	require.NotNil(t, conf)
-
-	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-host", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
-}
-
-func TestLoadConfigurationUpdatesStatusForCanaryIngress(t *testing.T) {
-	t.Parallel()
-
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"ingressclasses.yml",
-		"ingresses/ingresses-with-canary.yml",
-	})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	client := newClient(kubeClient)
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		PublishStatusAddress: []string{"203.0.113.10"},
-		k8sClient:            client,
-		NonTLSEntryPoints:    []string{"http"},
-		TLSEntryPoints:       []string{"https"},
-	}
-	p.SetDefaults()
-
-	conf := p.loadConfiguration(t.Context())
-	require.NotNil(t, conf)
-
-	assertStatusUpdated := func(name string) {
-		ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), name, metav1.GetOptions{})
-		require.NoError(t, err)
-		assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
-	}
-
-	assertStatusUpdated("ingress-with-canary")
-	assertStatusUpdated("canary")
-}
-
-func TestLoadConfigurationDoesNotUpdateStatusForSkippedIngress(t *testing.T) {
-	t.Parallel()
-
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"secrets.yml",
-		"ingressclasses.yml",
-		"ingresses/ingress-with-auth-tls-secret-missing.yml",
-	})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	client := newClient(kubeClient)
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		PublishStatusAddress: []string{"203.0.113.10"},
-		k8sClient:            client,
-		NonTLSEntryPoints:    []string{"http"},
-		TLSEntryPoints:       []string{"https"},
-	}
-	p.SetDefaults()
-
-	conf := p.loadConfiguration(t.Context())
-	require.NotNil(t, conf)
-
-	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-auth-tls-secret-missing", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	assert.Empty(t, ing.Status.LoadBalancer.Ingress)
-}
-
-func TestLoadConfigurationDoesNotUpdateStatusForSkippedSSLPassthroughIngress(t *testing.T) {
-	t.Parallel()
-
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"ingressclasses.yml",
-		"ingresses/ingress-with-ssl-passthrough-no-root.yml",
-	})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	client := newClient(kubeClient)
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		PublishStatusAddress: []string{"203.0.113.10"},
-		k8sClient:            client,
-		NonTLSEntryPoints:    []string{"http"},
-		TLSEntryPoints:       []string{"https"},
-	}
-	p.SetDefaults()
-
-	conf := p.loadConfiguration(t.Context())
-	require.NotNil(t, conf)
-
-	ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-ssl-passthrough-no-root", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	assert.Empty(t, ing.Status.LoadBalancer.Ingress)
-}
-
 func TestProvider_validateConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                            string
