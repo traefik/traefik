@@ -16981,7 +16981,7 @@ func TestLoadConfigurationIngressStatus(t *testing.T) {
 	}{
 		{
 			desc:         "SSL passthrough ingress",
-			paths:        []string{"ingresses/ingress-with-ssl-passthrough-empty-status.yml"},
+			paths:        []string{"ingresses/ingress-with-ssl-passthrough.yml"},
 			ingressNames: []string{"ingress-with-ssl-passthrough"},
 			wantStatus:   true,
 		},
