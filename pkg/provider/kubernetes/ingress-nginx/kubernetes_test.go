@@ -17045,6 +17045,7 @@ func TestLoadConfigurationIngressStatus(t *testing.T) {
 		})
 	}
 }
+
 func TestProvider_validateConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                            string
