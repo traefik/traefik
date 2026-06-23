@@ -7,14 +7,34 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const EndpointSliceServiceNameIndex = "endpointSliceServiceName"
+// endpointSliceByServiceNameIndexName is the name of the Kubernetes indexer indexing endpoint slices by service name.
+const endpointSliceByServiceNameIndexName = "endpointSliceByServiceName"
 
-var EndpointSliceServiceNameIndexers = cache.Indexers{
-	EndpointSliceServiceNameIndex: endpointSliceServiceNameIndexFunc,
+// EndpointSliceByServiceNameIndexers is the indexers for indexing endpoint slices by service name.
+// The index key is in the format "<namespace>/<serviceName>".
+var EndpointSliceByServiceNameIndexers = cache.Indexers{
+	endpointSliceByServiceNameIndexName: func(obj any) ([]string, error) {
+		endpointSlice, ok := obj.(*discoveryv1.EndpointSlice)
+		if !ok {
+			return nil, fmt.Errorf("unexpected endpoint slice object type %T", obj)
+		}
+
+		serviceName := endpointSlice.Labels[discoveryv1.LabelServiceName]
+
+		// In case the service name is empty nothing needs to be indexed.
+		if serviceName == "" {
+			return nil, nil
+		}
+
+		objectName := cache.NewObjectName(endpointSlice.Namespace, serviceName)
+		return []string{objectName.String()}, nil
+	},
 }
 
+// EndpointSlicesByServiceName returns the EndpointSlices for the given service name in the given namespace from the indexer.
 func EndpointSlicesByServiceName(indexer cache.Indexer, namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
-	objects, err := indexer.ByIndex(EndpointSliceServiceNameIndex, endpointSliceServiceNameIndexKey(namespace, serviceName))
+	objectName := cache.NewObjectName(namespace, serviceName)
+	objects, err := indexer.ByIndex(endpointSliceByServiceNameIndexName, objectName.String())
 	if err != nil {
 		return nil, fmt.Errorf("listing endpoint slices by service name index: %w", err)
 	}
@@ -30,22 +50,4 @@ func EndpointSlicesByServiceName(indexer cache.Indexer, namespace, serviceName s
 	}
 
 	return endpointSlices, nil
-}
-
-func endpointSliceServiceNameIndexFunc(obj any) ([]string, error) {
-	endpointSlice, ok := obj.(*discoveryv1.EndpointSlice)
-	if !ok {
-		return nil, fmt.Errorf("unexpected endpoint slice object type %T", obj)
-	}
-
-	serviceName := endpointSlice.Labels[discoveryv1.LabelServiceName]
-	if serviceName == "" {
-		return nil, nil
-	}
-
-	return []string{endpointSliceServiceNameIndexKey(endpointSlice.Namespace, serviceName)}, nil
-}
-
-func endpointSliceServiceNameIndexKey(namespace, serviceName string) string {
-	return namespace + "/" + serviceName
 }

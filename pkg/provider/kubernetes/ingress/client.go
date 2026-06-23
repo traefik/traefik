@@ -172,7 +172,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 		endpointSliceInformer := factoryKube.Discovery().V1().EndpointSlices().Informer()
-		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceServiceNameIndexers); err != nil {
+		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceByServiceNameIndexers); err != nil {
 			return nil, err
 		}
 		_, err = endpointSliceInformer.AddEventHandler(eventHandler)

@@ -10,7 +10,7 @@ import (
 )
 
 func TestEndpointSlicesByServiceName(t *testing.T) {
-	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, EndpointSliceServiceNameIndexers)
+	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, EndpointSliceByServiceNameIndexers)
 
 	matching := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
