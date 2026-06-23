@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -500,7 +501,40 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error {
+// mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
+func mergeRouteParentStatuses(currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
+	parentStatuses := make([]gatev1.RouteParentStatus, len(desiredParents))
+	copy(parentStatuses, desiredParents)
+
+	for _, currentParent := range currentParents {
+		// Keep statuses added by other gateway controllers.
+		if currentParent.ControllerName != controllerName {
+			parentStatuses = append(parentStatuses, currentParent)
+			continue
+		}
+
+		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
+		// Also, keep statuses from gateways managed by other Traefik instances.
+		// Ownership of a parentStatus is determined by the presence of a parentRef for a managed gateway.
+		// SectionName or Port is not used to determine ownership.
+		ownByOtherController := true
+		for _, gateway := range gateways {
+			if gateway.Namespace == string(ptr.Deref(currentParent.ParentRef.Namespace, "")) &&
+				gateway.Name == string(currentParent.ParentRef.Name) {
+				ownByOtherController = false
+				break
+			}
+		}
+
+		if ownByOtherController {
+			parentStatuses = append(parentStatuses, currentParent)
+		}
+	}
+
+	return parentStatuses
+}
+
+func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.HTTPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating HTTPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -513,16 +547,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -551,7 +576,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.GRPCRouteStatus) error {
+func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.GRPCRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating GRPCRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -564,16 +589,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -602,7 +618,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TCPRouteStatus) error {
+func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1alpha2.TCPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -615,16 +631,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -653,7 +660,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
-func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TLSRouteStatus) error {
+func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1alpha2.TLSRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TLSRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -666,16 +673,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
