@@ -1,0 +1,131 @@
+name: Unit Test Benchmark
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+
+  # ── Approach 1: single job, modules cached via setup-go, no build cache ──────
+  approach1-no-split-no-build-cache:
+    name: "1) No split / no build cache"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+          # cache: true (default) — caches ~/go/pkg/mod only
+
+      - name: Avoid generating webui
+        run: touch webui/static/index.html
+
+      - name: Run unit tests
+        run: go test -parallel 8 ./cmd/... ./pkg/...
+
+  # ── Approach 2: single job, modules + build cache, no split ─────────────────
+  approach2-no-split-with-build-cache:
+    name: "2) No split / with build cache"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+          cache: false
+
+      - name: Restore go modules cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Restore go build cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
+
+      - name: Avoid generating webui
+        run: touch webui/static/index.html
+
+      - name: Run unit tests
+        run: go test -parallel 8 ./cmd/... ./pkg/...
+
+  # ── Approach 3: 12 shards + build cache ──────────────────────────────────────
+  generate-matrix:
+    name: "3) Generate matrix (split + cache)"
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+          cache: false
+
+      - name: Generate matrix
+        id: set-matrix
+        run: |
+          matrix_output=$(go run ./internal/testsci/genmatrix.go -groups 12)
+          echo "$matrix_output"
+          echo "$matrix_output" >> "$GITHUB_OUTPUT"
+
+  approach3-split-with-build-cache:
+    name: "3) Split+cache shard ${{ matrix.shard.id }}"
+    runs-on: ubuntu-latest
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+          cache: false
+
+      - name: Restore go modules cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Restore go build cache
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-
+
+      - name: Avoid generating webui
+        run: touch webui/static/index.html
+
+      - name: Run unit tests
+        run: go test -parallel 8 -v -run "${{ matrix.shard.regex }}" ${{ matrix.shard.packages }}
