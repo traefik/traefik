@@ -38,6 +38,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-accesslog-otlp-http-tls-key" href="#opt-accesslog-otlp-http-tls-key" title="#opt-accesslog-otlp-http-tls-key">accesslog.otlp.http.tls.key</a> | TLS key | |
 | <a id="opt-accesslog-otlp-resourceattributes-name" href="#opt-accesslog-otlp-resourceattributes-name" title="#opt-accesslog-otlp-resourceattributes-name">accesslog.otlp.resourceattributes._name_</a> | Defines additional resource attributes (key:value). | |
 | <a id="opt-accesslog-otlp-servicename" href="#opt-accesslog-otlp-servicename" title="#opt-accesslog-otlp-servicename">accesslog.otlp.servicename</a> | Defines the service name resource attribute. | traefik |
+| <a id="opt-accesslog-otlp-servicenamespace" href="#opt-accesslog-otlp-servicenamespace" title="#opt-accesslog-otlp-servicenamespace">accesslog.otlp.servicenamespace</a> | Defines the service namespace resource attribute. | |
 | <a id="opt-api" href="#opt-api" title="#opt-api">api</a> | Enable api/dashboard. | false |
 | <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed. | / |
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">api.dashboard</a> | Activate dashboard. | true |
@@ -185,6 +186,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-log-otlp-http-tls-key" href="#opt-log-otlp-http-tls-key" title="#opt-log-otlp-http-tls-key">log.otlp.http.tls.key</a> | TLS key | |
 | <a id="opt-log-otlp-resourceattributes-name" href="#opt-log-otlp-resourceattributes-name" title="#opt-log-otlp-resourceattributes-name">log.otlp.resourceattributes._name_</a> | Defines additional resource attributes (key:value). | |
 | <a id="opt-log-otlp-servicename" href="#opt-log-otlp-servicename" title="#opt-log-otlp-servicename">log.otlp.servicename</a> | Defines the service name resource attribute. | traefik |
+| <a id="opt-log-otlp-servicenamespace" href="#opt-log-otlp-servicenamespace" title="#opt-log-otlp-servicenamespace">log.otlp.servicenamespace</a> | Defines the service namespace resource attribute. | |
 | <a id="opt-metrics-addinternals" href="#opt-metrics-addinternals" title="#opt-metrics-addinternals">metrics.addinternals</a> | Enables metrics for internal services (ping, dashboard, etc...). | false |
 | <a id="opt-metrics-datadog" href="#opt-metrics-datadog" title="#opt-metrics-datadog">metrics.datadog</a> | Datadog metrics exporter type. | false |
 | <a id="opt-metrics-datadog-addentrypointslabels" href="#opt-metrics-datadog-addentrypointslabels" title="#opt-metrics-datadog-addentrypointslabels">metrics.datadog.addentrypointslabels</a> | Enable metrics on entry points. | true |
@@ -226,6 +228,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-otlp-pushinterval" href="#opt-metrics-otlp-pushinterval" title="#opt-metrics-otlp-pushinterval">metrics.otlp.pushinterval</a> | Period between calls to collect a checkpoint. | 10 |
 | <a id="opt-metrics-otlp-resourceattributes-name" href="#opt-metrics-otlp-resourceattributes-name" title="#opt-metrics-otlp-resourceattributes-name">metrics.otlp.resourceattributes._name_</a> | Defines additional resource attributes (key:value). | |
 | <a id="opt-metrics-otlp-servicename" href="#opt-metrics-otlp-servicename" title="#opt-metrics-otlp-servicename">metrics.otlp.servicename</a> | Defines the service name resource attribute. | traefik |
+| <a id="opt-metrics-otlp-servicenamespace" href="#opt-metrics-otlp-servicenamespace" title="#opt-metrics-otlp-servicenamespace">metrics.otlp.servicenamespace</a> | Defines the service namespace resource attribute. | |
 | <a id="opt-metrics-prometheus" href="#opt-metrics-prometheus" title="#opt-metrics-prometheus">metrics.prometheus</a> | Prometheus metrics exporter type. | false |
 | <a id="opt-metrics-prometheus-addentrypointslabels" href="#opt-metrics-prometheus-addentrypointslabels" title="#opt-metrics-prometheus-addentrypointslabels">metrics.prometheus.addentrypointslabels</a> | Enable metrics on entry points. | true |
 | <a id="opt-metrics-prometheus-addrouterslabels" href="#opt-metrics-prometheus-addrouterslabels" title="#opt-metrics-prometheus-addrouterslabels">metrics.prometheus.addrouterslabels</a> | Enable metrics on routers. | false |
@@ -535,3 +538,4 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-tracing-safequeryparams" href="#opt-tracing-safequeryparams" title="#opt-tracing-safequeryparams">tracing.safequeryparams</a> | Query params to not redact. | |
 | <a id="opt-tracing-samplerate" href="#opt-tracing-samplerate" title="#opt-tracing-samplerate">tracing.samplerate</a> | Sets the rate between 0.0 and 1.0 of requests to trace. | 1.000000 |
 | <a id="opt-tracing-servicename" href="#opt-tracing-servicename" title="#opt-tracing-servicename">tracing.servicename</a> | Defines the service name resource attribute. | traefik |
+| <a id="opt-tracing-servicenamespace" href="#opt-tracing-servicenamespace" title="#opt-tracing-servicenamespace">tracing.servicenamespace</a> | Defines the service namespace resource attribute. | |
