@@ -30,10 +30,11 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 20
+      Passed: 21
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
     - GatewayPort8080
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
@@ -48,7 +49,6 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
-    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation

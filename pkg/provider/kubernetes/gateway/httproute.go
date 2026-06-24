@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -582,6 +583,37 @@ func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, ba
 func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.ServersTransport, metav1.Condition) {
 	st := &dynamic.ServersTransport{
 		ServerName: string(policy.Spec.Validation.Hostname),
+	}
+
+	if len(policy.Spec.Validation.SubjectAltNames) > 0 {
+		// Per the Gateway API specification the Hostname should only be used for authentication
+		// and not for certificate validation. Thus, if SubjectAltNames is specified, we ignore
+		// the Hostname validation by setting the InsecureSkipVerify option to true.
+		st.InsecureSkipVerify = true
+
+		for _, san := range policy.Spec.Validation.SubjectAltNames {
+			switch san.Type {
+			case gatev1.URISubjectAltNameType:
+				st.PeerCertSANs = append(st.PeerCertSANs, tls.SAN{
+					Type:  tls.SANURIType,
+					Value: string(san.URI),
+				})
+			case gatev1.HostnameSubjectAltNameType:
+				st.PeerCertSANs = append(st.PeerCertSANs, tls.SAN{
+					Type:  tls.SANDNSNameType,
+					Value: string(san.Hostname),
+				})
+			default:
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+					Message:            fmt.Sprintf("Unsupported SubjectAltName type %q; only URI and Hostname types are supported", san.Type),
+				}
+			}
+		}
 	}
 
 	if policy.Spec.Validation.WellKnownCACertificates != nil {

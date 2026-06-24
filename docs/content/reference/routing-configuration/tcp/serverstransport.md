@@ -24,7 +24,11 @@ tcp:
         insecureSkipVerify: true
         rootcas:
           - "/path/to/rootca.pem"
-        peerCertURI: "spiffe://example.org/peer"
+        peerCertSANs:
+          - type: DNSName
+            value: foo.com
+          - type: URI
+            value: spiffe://example.org/peer
       spiffe:
         ids:
           - "spiffe://example.org/id1"
@@ -43,7 +47,7 @@ tcp:
     certificates = ["/path/to/cert1.pem", "/path/to/cert2.pem"]
     insecureSkipVerify = true
     rootcas = ["/path/to/rootca.pem"]
-    peerCertURI = "spiffe://example.org/peer"
+    peerCertSANs = [{type = "DNSName", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
 
   [tcp.serversTransports.mytransport.spiffe]
     ids = ["spiffe://example.org/id1", "spiffe://example.org/id2"]
@@ -96,7 +100,9 @@ labels:
 | <a id="opt-serverstransport-tls-certificates" href="#opt-serverstransport-tls-certificates" title="#opt-serverstransport-tls-certificates">`serverstransport.`<br />`tls`<br />`.certificates`</a> | Defines the list of certificates (as file paths, or data bytes) that will be set as client certificates for mTLS.                                                                                                  |         | No       |
 | <a id="opt-serverstransport-tls-insecureSkipVerify" href="#opt-serverstransport-tls-insecureSkipVerify" title="#opt-serverstransport-tls-insecureSkipVerify">`serverstransport.`<br />`tls`<br />`.insecureSkipVerify`</a> | Controls whether the server's certificate chain and host name is verified.                                                                                                                                         | false   | No       |
 | <a id="opt-serverstransport-tls-rootcas" href="#opt-serverstransport-tls-rootcas" title="#opt-serverstransport-tls-rootcas">`serverstransport.`<br />`tls`<br />`.rootcas`</a> | Defines the root certificate authorities to use when verifying server certificates. (for mTLS connections).                                                                                                        |         | No       |
-| <a id="opt-serverstransport-tls-peerCertURI" href="#opt-serverstransport-tls-peerCertURI" title="#opt-serverstransport-tls-peerCertURI">`serverstransport.`<br />`tls.`<br />`peerCertURI`</a> | Defines the URI used to match against SAN URIs during the server's certificate verification.                                                                                                                       | false   | No       |
+| <a id="opt-serverstransport-tls-peerCertSANs" href="#opt-serverstransport-tls-peerCertSANs" title="#opt-serverstransport-tls-peerCertSANs">`serverstransport.`<br />`tls.`<br />`peerCertSANs`</a> | Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification.                                                                                                                       | []      | No       |
+| <a id="opt-serverstransport-tls-peerCertSANs-type" href="#opt-serverstransport-tls-peerCertSANs-type" title="#opt-serverstransport-tls-peerCertSANs-type">`serverstransport.`<br />`tls.`<br />`peerCertSANs[].type`</a> | Defines the SAN type (`URI` or `DNSName`) to match against the peer certificate's Subject Alternative Names.                                                                    | ""      | No       |
+| <a id="opt-serverstransport-tls-peerCertSANs-value" href="#opt-serverstransport-tls-peerCertSANs-value" title="#opt-serverstransport-tls-peerCertSANs-value">`serverstransport.`<br />`tls.`<br />`peerCertSANs[].value`</a> | Defines the SAN value to match against the peer certificate's Subject Alternative Names.                  | ""      | No       |
 | <a id="opt-serverstransport-spiffe" href="#opt-serverstransport-spiffe" title="#opt-serverstransport-spiffe">`serverstransport.`<br />`spiffe`</a> | Defines the SPIFFE configuration. An empty `spiffe` section enables SPIFFE (that allows any SPIFFE ID).                                                                                                            |         | No       |
 | <a id="opt-serverstransport-spiffe-ids" href="#opt-serverstransport-spiffe-ids" title="#opt-serverstransport-spiffe-ids">`serverstransport.`<br />`spiffe`<br />`.ids`</a> | Allow SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain.                                                                                                                                          |         | No       |
 | <a id="opt-serverstransport-spiffe-trustDomain" href="#opt-serverstransport-spiffe-trustDomain" title="#opt-serverstransport-spiffe-trustDomain">`serverstransport.`<br />`spiffe`<br />`.trustDomain`</a> | Allow SPIFFE trust domain.                                                                                                                                                                                         | ""      | No       |
