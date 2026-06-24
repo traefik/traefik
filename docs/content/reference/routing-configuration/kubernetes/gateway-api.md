@@ -770,11 +770,6 @@ Once everything is deployed, sending the WHO command should return the following
 
 ### TLS
 
-!!! info "Experimental Channel"
-
-    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
-    Therefore, to use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) option must be enabled.
-
 The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.
 
