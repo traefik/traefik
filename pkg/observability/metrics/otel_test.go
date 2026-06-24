@@ -282,15 +282,17 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 
 func TestOpenTelemetry(t *testing.T) {
 	tests := []struct {
-		desc        string
-		serviceName string
+		desc             string
+		serviceName      string
+		serviceNamespace string
 	}{
 		{
 			desc: "default",
 		},
 		{
-			desc:        "custom-service-name",
-			serviceName: "custom-service-name",
+			desc:             "custom-service-name-and-namespace",
+			serviceName:      "custom-service-name",
+			serviceNamespace: "custom-service-namespace",
 		},
 	}
 
@@ -336,6 +338,9 @@ func TestOpenTelemetry(t *testing.T) {
 				cfg.ServiceName = test.serviceName
 				wantServiceName = test.serviceName
 			}
+			if test.serviceNamespace != "" {
+				cfg.ServiceNamespace = test.serviceNamespace
+			}
 
 			registry := RegisterOpenTelemetry(t.Context(), &cfg)
 			require.NotNil(t, registry)
@@ -347,6 +352,9 @@ func TestOpenTelemetry(t *testing.T) {
 			expected := []string{
 				`({"key":"service.name","value":{"stringValue":"` + wantServiceName + `"}})`,
 				`({"key":"service.version","value":{"stringValue":"` + version.Version + `"}})`,
+			}
+			if test.serviceNamespace != "" {
+				expected = append(expected, `({"key":"service.namespace","value":{"stringValue":"`+test.serviceNamespace+`"}})`)
 			}
 
 			tryAssertMessage(t, c, expected)

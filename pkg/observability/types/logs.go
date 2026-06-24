@@ -8,13 +8,11 @@ import (
 
 	"github.com/traefik/paerser/types"
 	ttypes "github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	otelsdk "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -153,6 +151,7 @@ func checkFieldHeaderValue(value, defaultValue string) string {
 // OTelLog provides configuration settings for the open-telemetry logger.
 type OTelLog struct {
 	ServiceName        string            `description:"Defines the service name resource attribute." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ServiceNamespace   string            `description:"Defines the service namespace resource attribute." json:"serviceNamespace,omitempty" toml:"serviceNamespace,omitempty" yaml:"serviceNamespace,omitempty" export:"true"`
 	ResourceAttributes map[string]string `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty"`
 	GRPC               *OTelGRPC         `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTP               *OTelHTTP         `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -194,10 +193,7 @@ func (o *OTelLog) NewLoggerProvider(ctx context.Context) (*otelsdk.LoggerProvide
 		resource.WithDetectors(ttypes.K8sAttributesDetector{}),
 		// The following order allows the user to override the service name and version,
 		// as well as any other attributes set by the above detectors.
-		resource.WithAttributes(
-			semconv.ServiceName(o.ServiceName),
-			semconv.ServiceVersion(version.Version),
-		),
+		resource.WithAttributes(ServiceResourceAttributes(o.ServiceName, o.ServiceNamespace)...),
 		resource.WithAttributes(resAttrs...),
 		// Use the environment variables to allow overriding above resource attributes.
 		resource.WithFromEnv(),

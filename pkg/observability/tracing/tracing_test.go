@@ -99,6 +99,7 @@ func TestTracing(t *testing.T) {
 
 				attributes := resourceAttributes(traces)
 				assert.Equal(t, "custom", attributes["service.environment"])
+				assert.Equal(t, "namespace", attributes["service.namespace"])
 			},
 		},
 		{
@@ -353,6 +354,7 @@ func TestTracing(t *testing.T) {
 
 			tracingConfig := &static.Tracing{
 				ServiceName:        "traefik",
+				ServiceNamespace:   "namespace",
 				SampleRate:         1.0,
 				ResourceAttributes: test.resourceAttributes,
 				OTLP: &otypes.OTelTracing{

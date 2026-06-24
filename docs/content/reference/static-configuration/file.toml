@@ -376,6 +376,7 @@
     explicitBoundaries = [42.0, 42.0]
     pushInterval = "42s"
     serviceName = "foobar"
+    serviceNamespace = "foobar"
     [metrics.otlp.grpc]
       endpoint = "foobar"
       insecure = true
@@ -417,6 +418,7 @@
   compress = true
   [log.otlp]
     serviceName = "foobar"
+    serviceNamespace = "foobar"
     [log.otlp.resourceAttributes]
       name0 = "foobar"
       name1 = "foobar"
@@ -463,6 +465,7 @@
         name1 = "foobar"
   [accessLog.otlp]
     serviceName = "foobar"
+    serviceNamespace = "foobar"
     [accessLog.otlp.resourceAttributes]
       name0 = "foobar"
       name1 = "foobar"
@@ -490,6 +493,7 @@
 
 [tracing]
   serviceName = "foobar"
+  serviceNamespace = "foobar"
   capturedRequestHeaders = ["foobar", "foobar"]
   capturedResponseHeaders = ["foobar", "foobar"]
   safeQueryParams = ["foobar", "foobar"]

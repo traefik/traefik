@@ -22,7 +22,6 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
@@ -223,10 +222,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		resource.WithDetectors(types.K8sAttributesDetector{}),
 		// The following order allows the user to override the service name and version,
 		// as well as any other attributes set by the above detectors.
-		resource.WithAttributes(
-			semconv.ServiceName(config.ServiceName),
-			semconv.ServiceVersion(version.Version),
-		),
+		resource.WithAttributes(otypes.ServiceResourceAttributes(config.ServiceName, config.ServiceNamespace)...),
 		resource.WithAttributes(resAttrs...),
 		// Use the environment variables to allow overriding above resource attributes.
 		resource.WithFromEnv(),
