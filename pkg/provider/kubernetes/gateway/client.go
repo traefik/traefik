@@ -502,7 +502,7 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 }
 
 // mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
-func mergeRouteParentStatuses(currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
+func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
 	parentStatuses := make([]gatev1.RouteParentStatus, len(desiredParents))
 	copy(parentStatuses, desiredParents)
 
@@ -517,9 +517,10 @@ func mergeRouteParentStatuses(currentParents, desiredParents []gatev1.RouteParen
 		// Also, keep statuses from gateways managed by other Traefik instances.
 		// Ownership of a parentStatus is determined by the presence of a parentRef for a managed gateway.
 		// SectionName or Port is not used to determine ownership.
+		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
 		ownByOtherController := true
 		for _, gateway := range gateways {
-			if gateway.Namespace == string(ptr.Deref(currentParent.ParentRef.Namespace, "")) &&
+			if gateway.Namespace == parentNamespace &&
 				gateway.Name == string(currentParent.ParentRef.Name) {
 				ownByOtherController = false
 				break
@@ -547,7 +548,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -589,7 +590,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -631,7 +632,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -673,7 +674,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		parentStatuses := mergeRouteParentStatuses(currentRoute.Status.Parents, status.Parents, gateways)
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {

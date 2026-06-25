@@ -1139,8 +1139,8 @@ type gatewayListenersForParentRef struct {
 	listeners []gatewayListener
 }
 
-// matchingGatewayListenersForParentRef returns the listeners of that Gateway,
-// for each parentRef referring to a Gateway managed by this controller.
+// matchingGatewayListenersForParentRef returns, for each parentRef referring to a
+// Gateway managed by this controller, all the listeners of that Gateway.
 // parentRefs that do not refer to one of our Gateways are omitted.
 func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
 	var matches []gatewayListenersForParentRef
@@ -1157,7 +1157,6 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 		parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
 
 		var matchingGateway *gatewayWithListeners
-		var listeners []gatewayListener
 		for _, gateway := range gateways {
 			if gateway.Namespace != parentRefNamespace {
 				continue
@@ -1168,19 +1167,19 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			}
 
 			matchingGateway = &gateway
-			for _, listener := range gateway.listeners {
-				if matchListener(listener, parentRef) {
-					listeners = append(listeners, listener)
-				}
-			}
+			break
 		}
 
 		if matchingGateway != nil {
+			// All the Gateway listeners are kept: the parentRef is associated to its
+			// Gateway here, and whether each listener is actually targeted (SectionName,
+			// Port) is decided when loading the route, so that ResolvedRefs is reported
+			// even for parentRefs that match no listener.
 			matches = append(matches, gatewayListenersForParentRef{
 				parentRef:        parentRef,
 				gatewayName:      matchingGateway.Name,
 				gatewayNamespace: matchingGateway.Namespace,
-				listeners:        listeners,
+				listeners:        matchingGateway.listeners,
 			})
 		}
 	}

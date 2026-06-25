@@ -49,34 +49,41 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 
 			var resolvedRefCondition *metav1.Condition
 			for _, listener := range match.listeners {
-				if !allowRoute(listener, route.Namespace, kindTLSRoute) {
+				// A parentRef can target specific listeners through its SectionName or Port.
+				accepted := matchListener(listener, match.parentRef)
+
+				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
 					if acceptedCondition.Status == metav1.ConditionFalse {
 						acceptedCondition.Reason = string(gatev1.RouteReasonNotAllowedByListeners)
 					}
-					continue
+					accepted = false
 				}
 
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if !ok {
+				if accepted && !ok {
 					if acceptedCondition.Status == metav1.ConditionFalse {
 						acceptedCondition.Reason = string(gatev1.RouteReasonNoMatchingListenerHostname)
 					}
-					continue
+					accepted = false
 				}
 
-				listener.Status.AttachedRoutes++
+				if accepted {
+					listener.Status.AttachedRoutes++
+				}
 
+				// The ResolvedRefs condition must be reported for every parentRef,
+				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadTLSRoute(match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
-				if listener.Attached {
+				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
+					resolvedRefCondition = &condition
+				}
+
+				if accepted && listener.Attached {
 					mergeTCPConfiguration(routeConf, conf)
 
 					// Only consider the route attached if the listener is in an "attached" state.
 					acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
 					acceptedCondition.Status = metav1.ConditionTrue
-				}
-
-				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = &condition
 				}
 			}
 

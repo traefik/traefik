@@ -7472,6 +7472,36 @@ func Test_matchingGatewayListener(t *testing.T) {
 				listeners:        []gatewayListener{{Name: "web"}},
 			}},
 		},
+		{
+			// A parentRef with a non-matching SectionName or Port still targets the
+			// Gateway: all its listeners are returned so the route loader can report
+			// ResolvedRefs even though the route attaches to none of them.
+			desc: "ParentRef with a non-matching port still returns the Gateway listeners",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{Name: "web", Port: 80}},
+			}},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "gateway",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+				Port:      ptr.To(gatev1.PortNumber(8080)),
+			}},
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:      "gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Port:      ptr.To(gatev1.PortNumber(8080)),
+				},
+				gatewayName:      "gateway",
+				gatewayNamespace: "default",
+				listeners:        []gatewayListener{{Name: "web", Port: 80}},
+			}},
+		},
 	}
 
 	for _, test := range testCases {
@@ -7623,6 +7653,12 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 		ControllerName: controllerName,
 		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "my-gateway"},
 	}
+	// A parentRef without an explicit namespace defaults to the Route namespace,
+	// and must still be recognized as targeting a managed Gateway.
+	staleManagedDefaulted := gatev1.RouteParentStatus{
+		ControllerName: controllerName,
+		ParentRef:      gatev1.ParentReference{Name: "my-gateway"},
+	}
 	desired := gatev1.RouteParentStatus{
 		ControllerName: controllerName,
 		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "my-gateway"},
@@ -7658,6 +7694,11 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 			want:    []gatev1.RouteParentStatus{desired},
 		},
 		{
+			desc:    "drops our stale status targeting a managed Gateway via namespace defaulting",
+			current: []gatev1.RouteParentStatus{staleManagedDefaulted},
+			want:    []gatev1.RouteParentStatus{desired},
+		},
+		{
 			desc:    "mixed: keeps unmanaged, drops managed",
 			current: []gatev1.RouteParentStatus{otherController, otherTraefik, staleManaged},
 			want:    []gatev1.RouteParentStatus{desired, otherController, otherTraefik},
@@ -7668,7 +7709,7 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := mergeRouteParentStatuses(test.current, []gatev1.RouteParentStatus{desired}, gateways)
+			got := mergeRouteParentStatuses("default", test.current, []gatev1.RouteParentStatus{desired}, gateways)
 			assert.Equal(t, test.want, got)
 		})
 	}
