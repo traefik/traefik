@@ -158,7 +158,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	for _, ns := range namespaces {
-		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector))
+		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector), kinformers.WithTransform(k8s.StripManagedFields))
 
 		_, err := factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -167,7 +167,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 		c.factoriesIngress[ns] = factoryIngress
 
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -178,7 +178,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 		c.factoriesKube[ns] = factoryKube
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -213,7 +213,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if !c.disableIngressClassInformer || !c.disableClusterScopeInformer {
-		c.clusterScopeFactory = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
+		c.clusterScopeFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
 
 		_, err := c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
