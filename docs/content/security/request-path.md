@@ -80,6 +80,40 @@ entryPoints:
 - `/foo/bar//` → `/foo/bar/` (removes duplicate slashes)
 - `/./foo/../bar//` → `/bar/` (combines all normalizations)
 
+**Redirect mode:**
+
+By default, path sanitization silently rewrites the path before forwarding to backends.
+You can optionally enable redirect mode to return a permanent redirect to the sanitized path:
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ":443"
+    http:
+      sanitizePath: true
+      redirectSanitizedPath: true
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    sanitizePath = true
+    redirectSanitizedPath = true
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.sanitizePath=true
+--entryPoints.websecure.http.redirectSanitizedPath=true
+```
+
+When `redirectSanitizedPath` is enabled:
+
+- GET requests receive a `301 Moved Permanently` redirect
+- Other methods receive a `308 Permanent Redirect` to preserve
+
 ### Encoded Character Filtering
 
 Encoded character filtering provides an additional security layer by rejecting potentially dangerous URL-encoded characters.

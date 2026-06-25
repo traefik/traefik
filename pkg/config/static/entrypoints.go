@@ -73,6 +73,7 @@ type HTTPConfig struct {
 	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
 	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
 	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	RedirectSanitizedPath bool               `description:"Defines whether requests requiring path sanitization should receive a 301 redirect instead of silent rewrite." json:"redirectSanitizedPath,omitempty" toml:"redirectSanitizedPath,omitempty" yaml:"redirectSanitizedPath,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
