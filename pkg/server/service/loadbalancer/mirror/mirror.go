@@ -227,6 +227,12 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	// the request body is larger than what we allow for the mirrors.
 	body := make([]byte, maxBodySize+1)
 	n, err := io.ReadFull(req.Body, body)
+	if errors.Is(err, io.EOF) && n == 0 {
+		return &reusableRequest{
+			req:  req,
+			body: body[:n],
+		}, nil, nil
+	}
 	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
 		return nil, nil, err
 	}
