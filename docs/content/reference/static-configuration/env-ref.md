@@ -195,6 +195,9 @@ Subject alternative names.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
 Default TLS options for the routers linked to the entry point.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_UNDERSCOREHEADERSSTRATEGY`:  
+Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Default: ```keep```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)
 

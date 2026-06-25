@@ -601,6 +601,17 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
+	switch configuration.HTTP.UnderscoreHeadersStrategy {
+	case "", static.UnderscoreHeadersStrategyKeep:
+		// Headers with underscores are forwarded as is.
+	case static.UnderscoreHeadersStrategyDelete:
+		handler = removeHeadersWithUnderscores(handler)
+	case static.UnderscoreHeadersStrategyReject:
+		handler = rejectHeadersWithUnderscores(handler)
+	default:
+		return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
+	}
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
@@ -703,6 +714,33 @@ func denyFragment(h http.Handler) http.Handler {
 			rw.WriteHeader(http.StatusBadRequest)
 
 			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+func removeHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				delete(req.Header, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
 		}
 
 		h.ServeHTTP(rw, req)
