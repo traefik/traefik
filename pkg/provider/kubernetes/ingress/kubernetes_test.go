@@ -2498,6 +2498,18 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Published Service ClusterIP No ExternalIPs",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					IP: "10.0.0.99",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
