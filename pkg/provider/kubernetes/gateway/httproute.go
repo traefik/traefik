@@ -80,7 +80,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = &condition
+					resolvedRefCondition = ptr.To(condition)
 				}
 
 				if accepted && listener.Attached {

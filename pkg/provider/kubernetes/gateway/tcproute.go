@@ -68,7 +68,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadTCPRoute(match.gatewayName, match.gatewayNamespace, listener, route)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = &condition
+					resolvedRefCondition = ptr.To(condition)
 				}
 
 				if accepted && listener.Attached {
