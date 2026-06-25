@@ -515,19 +515,14 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 
 		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
 		// Also, keep statuses from gateways managed by other Traefik instances.
-		// Ownership of a parentStatus is determined by the presence of a parentRef for a managed gateway.
-		// SectionName or Port is not used to determine ownership.
+		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
+		// SectionName or Port is not used.
 		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
-		ownByOtherController := true
-		for _, gateway := range gateways {
-			if gateway.Namespace == parentNamespace &&
-				gateway.Name == string(currentParent.ParentRef.Name) {
-				ownByOtherController = false
-				break
-			}
-		}
+		isManaged := slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
+			return gw.Namespace == parentNamespace && gw.Name == string(currentParent.ParentRef.Name)
+		})
 
-		if ownByOtherController {
+		if !isManaged {
 			parentStatuses = append(parentStatuses, currentParent)
 		}
 	}
