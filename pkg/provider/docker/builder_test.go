@@ -42,6 +42,12 @@ func ports(portMap networktypes.PortMap) func(*containertypes.InspectResponse) {
 	}
 }
 
+func exposedPorts(portSet networktypes.PortSet) func(*containertypes.InspectResponse) {
+	return func(c *containertypes.InspectResponse) {
+		c.Config.ExposedPorts = portSet
+	}
+}
+
 func withNetwork(name string, ops ...func(*networktypes.EndpointSettings)) func(*containertypes.InspectResponse) {
 	return func(c *containertypes.InspectResponse) {
 		if c.NetworkSettings.Networks == nil {

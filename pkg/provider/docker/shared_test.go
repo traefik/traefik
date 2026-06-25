@@ -39,6 +39,13 @@ func Test_getPort_docker(t *testing.T) {
 			expected: "80",
 		},
 		{
+			desc: "exposed port, no binding, no server port label",
+			container: containerJSON(exposedPorts(networktypes.PortSet{
+				networktypes.MustParsePort("80/tcp"): {},
+			})),
+			expected: "80",
+		},
+		{
 			desc:       "no binding, server port label",
 			container:  containerJSON(),
 			serverPort: "8080",
