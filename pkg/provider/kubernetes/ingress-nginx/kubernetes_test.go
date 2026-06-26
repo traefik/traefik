@@ -17,7 +17,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
+	netv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/utils/ptr"
 )
@@ -15863,6 +15868,112 @@ func TestLoadIngresses(t *testing.T) {
 			assert.Equal(t, test.expected, conf)
 		})
 	}
+}
+
+func TestLoadConfigurationUpdatesIngressStatusOncePerIngress(t *testing.T) {
+	pathType := netv1.PathTypePrefix
+	kubeClient := kubefake.NewClientset(
+		&netv1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "multi-path",
+				Namespace: "default",
+			},
+			Spec: netv1.IngressSpec{
+				Rules: []netv1.IngressRule{
+					{
+						Host: "example.com",
+						IngressRuleValue: netv1.IngressRuleValue{
+							HTTP: &netv1.HTTPIngressRuleValue{
+								Paths: []netv1.HTTPIngressPath{
+									{
+										Path:     "/one",
+										PathType: &pathType,
+										Backend: netv1.IngressBackend{
+											Service: &netv1.IngressServiceBackend{
+												Name: "whoami",
+												Port: netv1.ServiceBackendPort{Number: 80},
+											},
+										},
+									},
+									{
+										Path:     "/two",
+										PathType: &pathType,
+										Backend: netv1.IngressBackend{
+											Service: &netv1.IngressServiceBackend{
+												Name: "whoami",
+												Port: netv1.ServiceBackendPort{Number: 80},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "whoami",
+				Namespace: "default",
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{
+					{
+						Name:       "http",
+						Port:       80,
+						TargetPort: intstr.FromInt32(8080),
+					},
+				},
+			},
+		},
+		&discoveryv1.EndpointSlice{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "whoami",
+				Namespace: "default",
+				Labels: map[string]string{
+					discoveryv1.LabelServiceName: "whoami",
+				},
+			},
+			Ports: []discoveryv1.EndpointPort{
+				{
+					Name: ptr.To("http"),
+					Port: ptr.To[int32](8080),
+				},
+			},
+			Endpoints: []discoveryv1.Endpoint{
+				{Addresses: []string{"10.0.0.1"}},
+			},
+		},
+	)
+
+	client := newClient(kubeClient)
+	_, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	kubeClient.ClearActions()
+
+	p := Provider{
+		k8sClient:                client,
+		NonTLSEntryPoints:        []string{"http"},
+		TLSEntryPoints:           []string{"https"},
+		PublishStatusAddress:     []string{"203.0.113.10"},
+		WatchIngressWithoutClass: true,
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+	require.NotNil(t, conf)
+
+	var statusUpdates int
+	for _, action := range kubeClient.Actions() {
+		if action.GetVerb() == "update" &&
+			action.GetResource().Resource == "ingresses" &&
+			action.GetSubresource() == "status" {
+			statusUpdates++
+		}
+	}
+
+	assert.Equal(t, 1, statusUpdates)
 }
 
 func TestNginxSizeToBytes(t *testing.T) {
