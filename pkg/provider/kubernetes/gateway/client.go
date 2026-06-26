@@ -501,35 +501,6 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 	return nil
 }
 
-// mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
-func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
-	parentStatuses := make([]gatev1.RouteParentStatus, len(desiredParents))
-	copy(parentStatuses, desiredParents)
-
-	for _, currentParent := range currentParents {
-		// Keep statuses added by other gateway controllers.
-		if currentParent.ControllerName != controllerName {
-			parentStatuses = append(parentStatuses, currentParent)
-			continue
-		}
-
-		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
-		// Also, keep statuses from gateways managed by other Traefik instances.
-		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
-		// SectionName or Port is not used.
-		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
-		isManaged := slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
-			return gw.Namespace == parentNamespace && gw.Name == string(currentParent.ParentRef.Name)
-		})
-
-		if !isManaged {
-			parentStatuses = append(parentStatuses, currentParent)
-		}
-	}
-
-	return parentStatuses
-}
-
 func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.HTTPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating HTTPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
@@ -780,6 +751,35 @@ func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, namespace)
+}
+
+// mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
+func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
+	parentStatuses := make([]gatev1.RouteParentStatus, len(desiredParents))
+	copy(parentStatuses, desiredParents)
+
+	for _, currentParent := range currentParents {
+		// Keep statuses added by other gateway controllers.
+		if currentParent.ControllerName != controllerName {
+			parentStatuses = append(parentStatuses, currentParent)
+			continue
+		}
+
+		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
+		// Also, keep statuses from gateways managed by other Traefik instances.
+		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
+		// SectionName or Port is not used.
+		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
+		isManaged := slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
+			return gw.Namespace == parentNamespace && gw.Name == string(currentParent.ParentRef.Name)
+		})
+
+		if !isManaged {
+			parentStatuses = append(parentStatuses, currentParent)
+		}
+	}
+
+	return parentStatuses
 }
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
