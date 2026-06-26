@@ -7,13 +7,10 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 func Test_detectChanges(t *testing.T) {
-	portA := int32(80)
-	portB := int32(8080)
-	trueValue := true
-	falseValue := false
 	tests := []struct {
 		name   string
 		oldObj any
@@ -191,7 +188,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Ready: &trueValue},
+					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -200,7 +197,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Ready: &falseValue},
+					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(false)},
 				}},
 			},
 			want: true,
@@ -213,7 +210,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: &trueValue},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -222,7 +219,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: &falseValue},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
 				}},
 			},
 			want: true,
@@ -235,7 +232,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: &falseValue},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -244,7 +241,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: &trueValue},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
 				}},
 			},
 			want: true,
@@ -265,7 +262,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: &trueValue},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
 				}},
 			},
 		},
@@ -285,7 +282,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: &falseValue},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
 				}},
 			},
 			want: true,
@@ -306,7 +303,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: &falseValue},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
 				}},
 			},
 		},
@@ -326,7 +323,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: &trueValue},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
 				}},
 			},
 			want: true,
@@ -354,7 +351,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "1",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: &portA,
+					Port: ptr.To[int32](80),
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -362,7 +359,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "2",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: &portB,
+					Port: ptr.To[int32](8080),
 				}},
 			},
 			want: true,
