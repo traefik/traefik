@@ -353,7 +353,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	// Configure Ingress NGINX provider.
-	if c.Providers.KubernetesIngressNGINX != nil {
+	if c.Providers.KubernetesIngressNGINX != nil && !c.Providers.KubernetesIngressNGINX.DisableHTTPEntryPoint {
 		var nonTLSEntryPoints []string
 		for epName, entryPoint := range c.EntryPoints {
 			if entryPoint.HTTP.TLS == nil {
