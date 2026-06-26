@@ -1158,7 +1158,7 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 
 		var matchingGateway *gatewayWithListeners
 		for _, gateway := range gateways {
-			if gateway.Namespace != parentRefNamespace {
+			if parentRefNamespace != gateway.Namespace {
 				continue
 			}
 
