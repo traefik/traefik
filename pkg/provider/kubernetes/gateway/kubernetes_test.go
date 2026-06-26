@@ -7254,69 +7254,66 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 func Test_matchingGatewayListener(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		gwListeners    []gatewayListener
+		gateways       []gatewayWithListeners
 		parentRefs     []gatev1.ParentReference
 		routeNamespace string
-		wantLen        int
+		want           []gatewayListenersForParentRef
 	}{
 		{
 			desc: "Unsupported group",
-			gwListeners: []gatewayListener{{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Group: ptr.To(gatev1.Group("foo")),
 			}},
-			wantLen: 0,
 		},
 		{
 			desc: "Unsupported kind",
-			gwListeners: []gatewayListener{{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Group: ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:  ptr.To(gatev1.Kind("foo")),
 			}},
-			wantLen: 0,
 		},
 		{
 			desc: "Namespace does not match the listener",
-			gwListeners: []gatewayListener{{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Namespace: ptr.To(gatev1.Namespace("foo")),
 				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:      ptr.To(gatev1.Kind("Gateway")),
 			}},
-			wantLen: 0,
 		},
 		{
 			desc: "Route namespace defaulting does not match the listener",
-			gwListeners: []gatewayListener{{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			routeNamespace: "foo",
 			parentRefs: []gatev1.ParentReference{{
 				Group: ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:  ptr.To(gatev1.Kind("Gateway")),
 			}},
-			wantLen: 0,
 		},
 		{
 			desc: "Name does not match the listener",
-			gwListeners: []gatewayListener{{
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Namespace: ptr.To(gatev1.Namespace("default")),
@@ -7324,13 +7321,13 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:      ptr.To(gatev1.Kind("Gateway")),
 			}},
-			wantLen: 0,
 		},
 		{
 			desc: "Match",
-			gwListeners: []gatewayListener{{
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Name:      "gateway",
@@ -7338,13 +7335,24 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:      ptr.To(gatev1.Kind("Gateway")),
 			}},
-			wantLen: 1,
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:      "gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+				},
+				gatewayName:      "gateway",
+				gatewayNamespace: "default",
+				listeners:        []gatewayListener{{}},
+			}},
 		},
 		{
 			desc: "Match with route namespace defaulting",
-			gwListeners: []gatewayListener{{
-				GWName:      "gateway",
-				GWNamespace: "default",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{}},
 			}},
 			routeNamespace: "default",
 			parentRefs: []gatev1.ParentReference{{
@@ -7352,7 +7360,147 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Group: ptr.To(gatev1.Group(gatev1.GroupName)),
 				Kind:  ptr.To(gatev1.Kind("Gateway")),
 			}},
-			wantLen: 1,
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:  "gateway",
+					Group: ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:  ptr.To(gatev1.Kind("Gateway")),
+				},
+				gatewayName:      "gateway",
+				gatewayNamespace: "default",
+				listeners:        []gatewayListener{{}},
+			}},
+		},
+		{
+			// A Route may reference Gateways owned by other controllers; those
+			// parentRefs must not be associated to (and thus get status written by)
+			// this controller.
+			desc: "Only parentRefs targeting our Gateways are returned",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{}},
+			}},
+			parentRefs: []gatev1.ParentReference{
+				{
+					Name:      "gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+				},
+				{
+					Name:      "other-gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+				},
+			},
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:      "gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+				},
+				gatewayName:      "gateway",
+				gatewayNamespace: "default",
+				listeners:        []gatewayListener{{}},
+			}},
+		},
+		{
+			desc: "ParentRef is associated to all the listeners of its Gateway",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{
+					{Name: "web"},
+					{Name: "websecure"},
+				},
+			}},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "gateway",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+			}},
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:      "gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+				},
+				gatewayName:      "gateway",
+				gatewayNamespace: "default",
+				listeners: []gatewayListener{
+					{Name: "web"},
+					{Name: "websecure"},
+				},
+			}},
+		},
+		{
+			// A parentRef must only be associated to the listeners of the Gateway it
+			// targets, even when several of our Gateways are known.
+			desc: "ParentRef is only associated to the referenced Gateway",
+			gateways: []gatewayWithListeners{
+				{
+					Name:      "gateway-a",
+					Namespace: "default",
+					listeners: []gatewayListener{{Name: "web"}},
+				},
+				{
+					Name:      "gateway-b",
+					Namespace: "default",
+					listeners: []gatewayListener{{Name: "web"}},
+				},
+			},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "gateway-a",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+			}},
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:      "gateway-a",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+				},
+				gatewayName:      "gateway-a",
+				gatewayNamespace: "default",
+				listeners:        []gatewayListener{{Name: "web"}},
+			}},
+		},
+		{
+			// A parentRef with a non-matching SectionName or Port still targets the
+			// Gateway: all its listeners are returned so the route loader can report
+			// ResolvedRefs even though the route attaches to none of them.
+			desc: "ParentRef with a non-matching port still returns the Gateway listeners",
+			gateways: []gatewayWithListeners{{
+				Name:      "gateway",
+				Namespace: "default",
+				listeners: []gatewayListener{{Name: "web", Port: 80}},
+			}},
+			parentRefs: []gatev1.ParentReference{{
+				Name:      "gateway",
+				Namespace: ptr.To(gatev1.Namespace("default")),
+				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+				Kind:      ptr.To(gatev1.Kind("Gateway")),
+				Port:      ptr.To(gatev1.PortNumber(8080)),
+			}},
+			want: []gatewayListenersForParentRef{{
+				parentRef: gatev1.ParentReference{
+					Name:      "gateway",
+					Namespace: ptr.To(gatev1.Namespace("default")),
+					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
+					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Port:      ptr.To(gatev1.PortNumber(8080)),
+				},
+				gatewayName:      "gateway",
+				gatewayNamespace: "default",
+				listeners:        []gatewayListener{{Name: "web", Port: 80}},
+			}},
 		},
 	}
 
@@ -7360,10 +7508,220 @@ func Test_matchingGatewayListener(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			listeners := matchingGatewayListeners(test.gwListeners, test.routeNamespace, test.parentRefs)
-			assert.Len(t, listeners, test.wantLen)
+			matches := matchingGatewayListenersForParentRef(test.gateways, test.routeNamespace, test.parentRefs)
+			assert.Equal(t, test.want, matches)
 		})
 	}
+}
+
+// Test_loadRoutes_multipleGatewaysParentRefs ensures that, when a Route
+// references several Gateways (including one owned by another controller), Traefik
+// only manages the parents it is responsible for: it writes a single RouteParentStatus
+// for its own parentRef, writes nothing for a Route that targets only a foreign
+// Gateway, and counts each attached Route only once in the listener AttachedRoutes.
+func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		path                string
+		entryPoints         map[string]Entrypoint
+		experimentalChannel bool
+		gatewayName         string
+		route1, route2      string
+		getParents          func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus
+	}{
+		{
+			desc:        "HTTPRoute",
+			path:        "httproute/with_multiple_gateways_parent_refs.yml",
+			entryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
+			gatewayName: "my-gateway",
+			route1:      "http-app-1",
+			route2:      "http-app-2",
+			getParents: func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus {
+				t.Helper()
+				route, err := gwClient.GatewayV1().HTTPRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+				return route.Status.Parents
+			},
+		},
+		{
+			desc:        "GRPCRoute",
+			path:        "grpcroute/with_multiple_gateways_parent_refs.yml",
+			entryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
+			gatewayName: "my-gateway",
+			route1:      "grpc-app-1",
+			route2:      "grpc-app-2",
+			getParents: func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus {
+				t.Helper()
+				route, err := gwClient.GatewayV1().GRPCRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+				return route.Status.Parents
+			},
+		},
+		{
+			desc:                "TCPRoute",
+			path:                "tcproute/with_multiple_gateways_parent_refs.yml",
+			entryPoints:         map[string]Entrypoint{"tcp": {Address: ":9000"}},
+			experimentalChannel: true,
+			gatewayName:         "my-tcp-gateway",
+			route1:              "tcp-app-1",
+			route2:              "tcp-app-2",
+			getParents: func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus {
+				t.Helper()
+				route, err := gwClient.GatewayV1alpha2().TCPRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+				return route.Status.Parents
+			},
+		},
+		{
+			desc:                "TLSRoute",
+			path:                "tlsroute/with_multiple_gateways_parent_refs.yml",
+			entryPoints:         map[string]Entrypoint{"tls": {Address: ":9000"}},
+			experimentalChannel: true,
+			gatewayName:         "my-tls-gateway",
+			route1:              "tls-app-1",
+			route2:              "tls-app-2",
+			getParents: func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus {
+				t.Helper()
+				route, err := gwClient.GatewayV1alpha2().TLSRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+				return route.Status.Parents
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
+
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+			client.experimentalChannel = test.experimentalChannel
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: test.experimentalChannel,
+				client:              client,
+			}
+
+			_ = p.loadConfigurationFromGateways(t.Context())
+
+			// route1 references our Gateway and a foreign one: only our parentRef must
+			// get a status entry, written under our controllerName and accepted.
+			parents1 := test.getParents(t, gwClient, test.route1)
+			require.Len(t, parents1, 1)
+			assert.Equal(t, gatev1.GatewayController(controllerName), parents1[0].ControllerName)
+			assert.Equal(t, gatev1.ObjectName(test.gatewayName), parents1[0].ParentRef.Name)
+
+			acceptedCondition := findCondition(parents1[0].Conditions, gatev1.RouteConditionAccepted)
+			require.NotNil(t, acceptedCondition)
+			assert.Equal(t, metav1.ConditionTrue, acceptedCondition.Status)
+			assert.Equal(t, string(gatev1.RouteReasonAccepted), acceptedCondition.Reason)
+
+			// route2 references only the foreign Gateway: Traefik must not write any status.
+			assert.Empty(t, test.getParents(t, gwClient, test.route2))
+
+			// The listener must count route1 once, ignoring the foreign parentRef and
+			// the foreign-only Route.
+			gateway, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), test.gatewayName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Len(t, gateway.Status.Listeners, 1)
+			assert.Equal(t, int32(1), gateway.Status.Listeners[0].AttachedRoutes)
+		})
+	}
+}
+
+// Test_mergeRouteParentStatuses ensures the merge keeps the parentStatuses Traefik
+// does not own: those written by another controller, and those written by another
+// Traefik instance (our controllerName but a parentRef not targeting a managed
+// Gateway), while replacing our stale statuses with the freshly computed ones.
+func Test_mergeRouteParentStatuses(t *testing.T) {
+	gateways := []gatewayWithListeners{{Name: "my-gateway", Namespace: "default"}}
+
+	otherController := gatev1.RouteParentStatus{
+		ControllerName: "example.com/other-controller",
+		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "other-gateway"},
+	}
+	otherTraefik := gatev1.RouteParentStatus{
+		ControllerName: controllerName,
+		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "other-traefik-gateway"},
+	}
+	staleManaged := gatev1.RouteParentStatus{
+		ControllerName: controllerName,
+		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "my-gateway"},
+	}
+	// A parentRef without an explicit namespace defaults to the Route namespace,
+	// and must still be recognized as targeting a managed Gateway.
+	staleManagedDefaulted := gatev1.RouteParentStatus{
+		ControllerName: controllerName,
+		ParentRef:      gatev1.ParentReference{Name: "my-gateway"},
+	}
+	desired := gatev1.RouteParentStatus{
+		ControllerName: controllerName,
+		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "my-gateway"},
+		Conditions: []metav1.Condition{{
+			Type:   string(gatev1.RouteConditionAccepted),
+			Status: metav1.ConditionTrue,
+			Reason: string(gatev1.RouteReasonAccepted),
+		}},
+	}
+
+	testCases := []struct {
+		desc    string
+		current []gatev1.RouteParentStatus
+		want    []gatev1.RouteParentStatus
+	}{
+		{
+			desc: "no current status",
+			want: []gatev1.RouteParentStatus{desired},
+		},
+		{
+			desc:    "keeps status owned by another controller",
+			current: []gatev1.RouteParentStatus{otherController},
+			want:    []gatev1.RouteParentStatus{desired, otherController},
+		},
+		{
+			desc:    "keeps our status targeting a Gateway managed by another Traefik instance",
+			current: []gatev1.RouteParentStatus{otherTraefik},
+			want:    []gatev1.RouteParentStatus{desired, otherTraefik},
+		},
+		{
+			desc:    "drops our stale status targeting a managed Gateway",
+			current: []gatev1.RouteParentStatus{staleManaged},
+			want:    []gatev1.RouteParentStatus{desired},
+		},
+		{
+			desc:    "drops our stale status targeting a managed Gateway via namespace defaulting",
+			current: []gatev1.RouteParentStatus{staleManagedDefaulted},
+			want:    []gatev1.RouteParentStatus{desired},
+		},
+		{
+			desc:    "mixed: keeps unmanaged, drops managed",
+			current: []gatev1.RouteParentStatus{otherController, otherTraefik, staleManaged},
+			want:    []gatev1.RouteParentStatus{desired, otherController, otherTraefik},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := mergeRouteParentStatuses("default", test.current, []gatev1.RouteParentStatus{desired}, gateways)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func findCondition(conditions []metav1.Condition, conditionType gatev1.RouteConditionType) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == string(conditionType) {
+			return &conditions[i]
+		}
+	}
+	return nil
 }
 
 func Test_matchListener(t *testing.T) {
@@ -7442,9 +7800,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Not allowed Kind",
 			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+				Name: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 					"bar",
@@ -7456,9 +7812,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Allowed Kind",
 			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+				Name: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 					"bar",
@@ -7473,9 +7827,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Not allowed namespace",
 			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+				Name: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 				},
@@ -7491,9 +7843,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Allowed namespace",
 			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+				Name: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 				},
@@ -7509,9 +7859,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Allowed namespace",
 			gwListener: gatewayListener{
-				Name:        "foo",
-				GWName:      "gateway",
-				GWNamespace: "default",
+				Name: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 				},
@@ -8159,136 +8507,6 @@ func Test_gatewayAddresses(t *testing.T) {
 			test.wantErr(t, err)
 
 			assert.Equal(t, test.want, got)
-		})
-	}
-}
-
-func Test_upsertRouteConditionResolvedRefs(t *testing.T) {
-	testCases := []struct {
-		desc           string
-		conditions     []metav1.Condition
-		condition      metav1.Condition
-		wantConditions []metav1.Condition
-	}{
-		{
-			desc: "True to False",
-			conditions: []metav1.Condition{
-				{
-					Type:    "foo",
-					Status:  "bar",
-					Reason:  "baz",
-					Message: "foobarbaz",
-				},
-				{
-					Type:    string(gatev1.RouteConditionResolvedRefs),
-					Status:  metav1.ConditionTrue,
-					Reason:  "foo",
-					Message: "foo",
-				},
-			},
-			condition: metav1.Condition{
-				Type:    string(gatev1.RouteConditionResolvedRefs),
-				Status:  metav1.ConditionFalse,
-				Reason:  "bar",
-				Message: "bar",
-			},
-			wantConditions: []metav1.Condition{
-				{
-					Type:    "foo",
-					Status:  "bar",
-					Reason:  "baz",
-					Message: "foobarbaz",
-				},
-				{
-					Type:    string(gatev1.RouteConditionResolvedRefs),
-					Status:  metav1.ConditionFalse,
-					Reason:  "bar",
-					Message: "bar",
-				},
-			},
-		},
-		{
-			desc: "False to False",
-			conditions: []metav1.Condition{
-				{
-					Type:    "foo",
-					Status:  "bar",
-					Reason:  "baz",
-					Message: "foobarbaz",
-				},
-				{
-					Type:    string(gatev1.RouteConditionResolvedRefs),
-					Status:  metav1.ConditionFalse,
-					Reason:  "foo",
-					Message: "foo",
-				},
-			},
-			condition: metav1.Condition{
-				Type:    string(gatev1.RouteConditionResolvedRefs),
-				Status:  metav1.ConditionFalse,
-				Reason:  "bar",
-				Message: "bar",
-			},
-			wantConditions: []metav1.Condition{
-				{
-					Type:    "foo",
-					Status:  "bar",
-					Reason:  "baz",
-					Message: "foobarbaz",
-				},
-				{
-					Type:    string(gatev1.RouteConditionResolvedRefs),
-					Status:  metav1.ConditionFalse,
-					Reason:  "bar",
-					Message: "bar",
-				},
-			},
-		},
-		{
-			desc: "False to True: no upsert",
-			conditions: []metav1.Condition{
-				{
-					Type:    "foo",
-					Status:  "bar",
-					Reason:  "baz",
-					Message: "foobarbaz",
-				},
-				{
-					Type:    string(gatev1.RouteConditionResolvedRefs),
-					Status:  metav1.ConditionFalse,
-					Reason:  "foo",
-					Message: "foo",
-				},
-			},
-			condition: metav1.Condition{
-				Type:    string(gatev1.RouteConditionResolvedRefs),
-				Status:  metav1.ConditionTrue,
-				Reason:  "bar",
-				Message: "bar",
-			},
-			wantConditions: []metav1.Condition{
-				{
-					Type:    "foo",
-					Status:  "bar",
-					Reason:  "baz",
-					Message: "foobarbaz",
-				},
-				{
-					Type:    string(gatev1.RouteConditionResolvedRefs),
-					Status:  metav1.ConditionFalse,
-					Reason:  "foo",
-					Message: "foo",
-				},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := upsertRouteConditionResolvedRefs(test.conditions, test.condition)
-			assert.Equal(t, test.wantConditions, got)
 		})
 	}
 }
