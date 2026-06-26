@@ -20,6 +20,7 @@ The load balancer supports multiple **strategies** for distributing traffic amon
 - `p2c` (Power of Two Choices) - Selects two random servers and routes to the one with fewer active connections
 - `hrw` (Highest Random Weight) - Uses consistent hashing based on client IP for session affinity
 - `leasttime` - Routes to the server with lowest response time combined with fewest active connections
+- `affinity` - Routes requests to a consistent backend based on a value extracted from the request path or a header
 
 ### Configuration Example
 
@@ -117,7 +118,8 @@ labels:
 | Field                              | Description                                                                                                                                                                                                                                                                                                                                                                                   | Required |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | <a id="opt-servers" href="#opt-servers" title="#opt-servers">`servers`</a> | Represents individual backend instances for your service                                                                                                                                                                                                                                                                                                                                      | Yes      |
-| <a id="opt-strategy" href="#opt-strategy" title="#opt-strategy">`strategy`</a> | Load balancing strategy for distributing traffic among servers. Valid values: `wrr` (default), `p2c`, `hrw`, `leasttime`.                                                                                                                                                                                                                                                                     | No       |
+| <a id="opt-strategy" href="#opt-strategy" title="#opt-strategy">`strategy`</a> | Load balancing strategy for distributing traffic among servers. Valid values: `wrr` (default), `p2c`, `hrw`, `leasttime`, `affinity`.                                                                                                                                                                                                                                                         | No       |
+| <a id="opt-affinity" href="#opt-affinity" title="#opt-affinity">`affinity`</a> | Configuration for the `affinity` strategy. Defines how the affinity key is extracted from the request. Required when `strategy` is set to `affinity`.                                                                                                                                                                                                                                         | No       |
 | <a id="opt-sticky" href="#opt-sticky" title="#opt-sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
 | <a id="opt-passiveHealthcheck" href="#opt-passiveHealthcheck" title="#opt-passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
@@ -282,6 +284,153 @@ When multiple servers have identical scores, Weighted Round Robin (WRR) with Ear
           url = "http://private-ip-server-3/"
     ```
 
+#### Affinity
+
+Routes all requests sharing the same application-level session key to the same backend server.
+The session key is extracted from the request using either a regex capture group on the request path or a request header value.
+
+This strategy is useful for protocols where a single logical session is split across multiple HTTP requests that must all reach the same backend — for example, protocols like XHTTP (SplitHTTP) where a session is identified by a path segment rather than a cookie.
+
+The affinity key is resolved in the following priority order:
+
+1. **Regex match on the request path**: If `affinity.regex` is set and the path matches, the first capture group is used as the key.
+2. **Request header**: If `affinity.headerName` is set, the value of that header is used as the key.
+3. **Full request path**: If neither produces a key, the full path is hashed deterministically (no session pinning, but still consistent per path).
+
+When a server that owns pinned sessions becomes unhealthy, those sessions are evicted from the affinity ring and re-assigned on the next request.
+
+##### Configuration Options
+
+| Field                                                                                                                          | Description                                                                                                                                             | Required                              |
+|--------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| <a id="opt-affinity-regex" href="#opt-affinity-regex" title="#opt-affinity-regex">`affinity.regex`</a>                        | A regular expression matched against the request path. The **first capture group** is used as the affinity key. Must be a valid Go regular expression.  | No (one of `regex` or `headerName` recommended) |
+| <a id="opt-affinity-headerName" href="#opt-affinity-headerName" title="#opt-affinity-headerName">`affinity.headerName`</a>    | The name of a request header whose value is used as the affinity key. Takes effect only if `regex` is not set or does not match.                        | No (one of `regex` or `headerName` recommended) |
+
+??? example "Affinity Load Balancing by Path Segment -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    Routes all requests for the same `<session-id>` in `/hello/<session-id>` and `/hello/<session-id>/<seq>` to the same backend.
+    This matches the XHTTP (SplitHTTP) pattern where a GET opens a read stream and sequential POSTs carry data chunks, all sharing a session identifier in the path.
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "affinity"
+            affinity:
+              regex: "^/hello/([^/]+)"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "affinity"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+        [http.services.my-service.loadBalancer.affinity]
+          regex = "^/hello/([^/]+)"
+    ```
+
+    ```yaml tab="Labels"
+    labels:
+      - "traefik.http.services.my-service.loadBalancer.strategy=affinity"
+      - "traefik.http.services.my-service.loadBalancer.affinity.regex=^/hello/([^/]+)"
+    ```
+
+??? example "Affinity Load Balancing by Request Header -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    Routes all requests carrying the same `X-Session-Id` header value to the same backend.
+    Useful for non-browser clients that can set a session identifier as a request header.
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "affinity"
+            affinity:
+              headerName: "X-Session-Id"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "affinity"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+        [http.services.my-service.loadBalancer.affinity]
+          headerName = "X-Session-Id"
+    ```
+
+    ```yaml tab="Labels"
+    labels:
+      - "traefik.http.services.my-service.loadBalancer.strategy=affinity"
+      - "traefik.http.services.my-service.loadBalancer.affinity.headername=X-Session-Id"
+    ```
+
+??? example "Affinity Load Balancing with both Path Regex and Header Fallback -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    Uses the path regex as the primary affinity key, and falls back to the `X-Session-Id` header if the path does not match the regex.
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "affinity"
+            affinity:
+              regex: "^/hello/([^/]+)"
+              headerName: "X-Session-Id"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "affinity"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+        [http.services.my-service.loadBalancer.affinity]
+          regex = "^/hello/([^/]+)"
+          headerName = "X-Session-Id"
+    ```
+
+    ```yaml tab="Labels"
+    labels:
+      - "traefik.http.services.my-service.loadBalancer.strategy=affinity"
+      - "traefik.http.services.my-service.loadBalancer.affinity.regex=^/hello/([^/]+)"
+      - "traefik.http.services.my-service.loadBalancer.affinity.headername=X-Session-Id"
+    ```
+
 ### Health Check
 
 The `healthcheck` option configures health check to remove unhealthy servers from the load balancing rotation.
@@ -311,6 +460,11 @@ Below are the available options for the health check mechanism:
 
 When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
 On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
+
+!!! info "Affinity vs Sticky Sessions"
+
+    The `affinity` strategy and sticky sessions solve the same problem, routing a client back to the same backend, but in different ways.
+    Sticky sessions rely on a cookie the client must store and return. The `affinity` strategy derives the routing key directly from the request itself (path or header), making it suitable for non-browser clients or protocols where cookie handling is not practical.
 
 #### Stickiness on multiple levels
 
@@ -551,7 +705,7 @@ These are distinct from load balancing strategies - they operate at the **servic
 
 !!! info "Key Difference"
 
-    - **Load Balancing Strategies** (wrr, p2c, hrw, leasttime): Distribute traffic among **servers** within a single `loadBalancer` service
+    - **Load Balancing Strategies** (wrr, p2c, hrw, leasttime, affinity): Distribute traffic among **servers** within a single `loadBalancer` service
     - **Advanced Service Types** (weighted, highestRandomWeight, mirroring, failover): Distribute or manage traffic among multiple **services**
 
 ### Weighted Round robin

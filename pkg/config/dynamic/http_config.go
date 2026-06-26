@@ -359,6 +359,14 @@ type Cookie struct {
 	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
+// Config struct for the affinity load balancer settings
+type AffinityConfig struct {
+	// Regex for matching a path for the affinity load balancer
+	Regex string `json:"regex,omitempty"`
+	// Header name, the value will be used for the affinity load balancer
+	HeaderName string `json:"headerName,omitempty"`
+}
+
 // SetDefaults set the default values for a Cookie.
 func (c *Cookie) SetDefaults() {
 	defaultPath := "/"
@@ -376,6 +384,8 @@ const (
 	BalancerStrategyHRW BalancerStrategy = "hrw"
 	// BalancerStrategyLeastTime is the least-time strategy.
 	BalancerStrategyLeastTime BalancerStrategy = "leasttime"
+	// BalancerStrategyAffinity is the header or regex based strategy
+	BalancerStrategyAffinity BalancerStrategy = "affinity"
 )
 
 // +k8s:deepcopy-gen=true
@@ -399,6 +409,9 @@ type ServersLoadBalancer struct {
 	// NginxUpstreamHashBy enables the customization of the hashing key.
 	// It can be set to a specific text value, a NGINX variable or a combination of both.
 	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// Configuration for the affinity load balancer
+	Affinity *AffinityConfig `json:"affinity,omitempty"`
 }
 
 // Merge merges the other load balancer into this one.
