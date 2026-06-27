@@ -373,6 +373,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 	client.gatewayClass = p.GatewayClass
 	client.labelSelector = p.LabelSelector
+	client.experimentalChannel = p.ExperimentalChannel
 
 	return client, nil
 }

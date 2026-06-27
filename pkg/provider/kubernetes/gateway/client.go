@@ -15,6 +15,7 @@ import (
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -45,8 +46,9 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
-	gatewayClass  string
-	labelSelector string
+	gatewayClass        string
+	labelSelector       string
+	experimentalChannel bool
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -160,9 +162,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if c.experimentalChannel {
-		_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		clusterTrustBundleAvailable, err := c.clusterTrustBundleAvailable()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
+		}
+
+		if clusterTrustBundleAvailable {
+			_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -992,4 +1001,20 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 			lA.AttachedRoutes == lB.AttachedRoutes &&
 			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
+}
+
+func (c *clientWrapper) clusterTrustBundleAvailable() (bool, error) {
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion("certificates.k8s.io/v1beta1")
+	if err != nil {
+		if kerrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	for _, r := range resourceList.APIResources {
+		if r.Name == "clustertrustbundles" {
+			return true, nil
+		}
+	}
+	return false, nil
 }
