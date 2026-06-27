@@ -15,7 +15,7 @@ import (
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -1006,7 +1006,7 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 func (c *clientWrapper) clusterTrustBundleAvailable() (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion("certificates.k8s.io/v1beta1")
 	if err != nil {
-		if kerrors.IsNotFound(err) {
+		if kerror.IsNotFound(err) {
 			return false, nil
 		}
 		return false, err
