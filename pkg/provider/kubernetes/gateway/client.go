@@ -155,9 +155,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
-	_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
-	if err != nil {
-		return nil, err
+	if c.experimentalChannel {
+		_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions), gateinformers.WithTransform(k8s.StripManagedFields))
