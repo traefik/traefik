@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
+	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -150,6 +151,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
 	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -409,6 +415,11 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	}
 
 	return servicePolicies, nil
+}
+
+// GetClusterTrustBundle returns the named ClusterTrustBundle.
+func (c *clientWrapper) GetClusterTrustBundle(name string) (*certv1beta1.ClusterTrustBundle, error) {
+	return c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Lister().Get(name)
 }
 
 // GetService returns the named service from the given namespace.

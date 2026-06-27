@@ -39,18 +39,20 @@ const (
 
 	controllerName = "traefik.io/gateway-controller"
 
-	groupCore    = "core"
-	groupGateway = "gateway.networking.k8s.io"
+	groupCore         = "core"
+	groupGateway      = "gateway.networking.k8s.io"
+	groupCertificates = "certificates.k8s.io"
 
-	kindGateway        = "Gateway"
-	kindTraefikService = "TraefikService"
-	kindHTTPRoute      = "HTTPRoute"
-	kindGRPCRoute      = "GRPCRoute"
-	kindTCPRoute       = "TCPRoute"
-	kindTLSRoute       = "TLSRoute"
-	kindService        = "Service"
-	kindConfigMap      = "ConfigMap"
-	kindSecret         = "Secret"
+	kindGateway            = "Gateway"
+	kindTraefikService     = "TraefikService"
+	kindHTTPRoute          = "HTTPRoute"
+	kindGRPCRoute          = "GRPCRoute"
+	kindTCPRoute           = "TCPRoute"
+	kindTLSRoute           = "TLSRoute"
+	kindService            = "Service"
+	kindConfigMap          = "ConfigMap"
+	kindSecret             = "Secret"
+	kindClusterTrustBundle = "ClusterTrustBundle"
 
 	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
@@ -672,7 +674,8 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
 		if len(listener.Status.Conditions) == 0 {
-			listener.Status.Conditions = append(listener.Status.Conditions,
+			listener.Status.Conditions = append(
+				listener.Status.Conditions,
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionTrue,
@@ -722,7 +725,8 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		return gatewayStatus, errorConditions
 	}
 
-	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
+	gatewayStatus.Conditions = append(
+		gatewayStatus.Conditions,
 		// update "Accepted" status with "Accepted" reason
 		metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
