@@ -119,9 +119,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				for {
 					select {
 					case event := <-res.Messages:
-						if event.Action == "start" ||
-							event.Action == "die" ||
-							strings.HasPrefix(string(event.Action), "health_status") {
+						if shouldHandleEvent(event.Action) {
 							startStopHandle(event)
 						}
 					case err := <-res.Err:
@@ -148,6 +146,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func shouldHandleEvent(action eventtypes.Action) bool {
+	// Skip health_status: healthy events to avoid unnecessary reloads.
+	return action == eventtypes.ActionStart || action == eventtypes.ActionDie || (strings.HasPrefix(string(action), "health_status") && action != eventtypes.ActionHealthStatusHealthy)
 }
 
 func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
