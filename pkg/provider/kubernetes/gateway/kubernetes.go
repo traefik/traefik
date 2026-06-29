@@ -51,6 +51,8 @@ const (
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
 
+	routeReasonHostnameConflict = "HostnameConflict"
+
 	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
 	appProtocolH2C   = "kubernetes.io/h2c"
@@ -399,9 +401,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		})
 	}
 
-	p.loadHTTPRoutes(ctx, selectedGateways, conf)
-
-	p.loadGRPCRoutes(ctx, selectedGateways, conf)
+	attached := p.collectAttachedRoutes(ctx, selectedGateways)
+	p.loadHTTPRoutes(ctx, selectedGateways, conf, attached)
+	p.loadGRPCRoutes(ctx, selectedGateways, conf, attached)
 
 	p.loadTLSRoutes(ctx, selectedGateways, conf)
 
@@ -629,7 +631,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					if _, tlsExists := listenerTLSCerts[configKey]; !tlsExists {
 						tlsCert, err := p.getTLSCert(certificateRef.Name, certificateNamespace)
 						if err != nil {
-							errCertConditions = append(errCertConditions, metav1.Condition{
+							errCertConditions = append(
+							errCertConditions, metav1.Condition{
 								Type:               string(gatev1.ListenerConditionResolvedRefs),
 								Status:             metav1.ConditionFalse,
 								ObservedGeneration: gateway.Generation,
@@ -684,7 +687,8 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		if len(listener.Status.Conditions) == 0 {
 			acceptedListeners++
 
-			listener.Status.Conditions = append(listener.Status.Conditions,
+			listener.Status.Conditions = append(
+				listener.Status.Conditions,
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionTrue,
@@ -770,7 +774,8 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		programmedConditionMessage = "Gateway successfully programmed, but some Listeners are not valid"
 	}
 
-	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
+	gatewayStatus.Conditions = append(
+		gatewayStatus.Conditions,
 		// update "Accepted" status with "Accepted" reason
 		metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
@@ -1122,6 +1127,74 @@ func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []g
 	}
 
 	return matches, len(matches) > 0
+}
+
+func (p *Provider) collectAttachedRoutes(ctx context.Context, gateways []gatewayWithListeners) attachedRoutes {
+	result := make(attachedRoutes)
+
+	httpRoutes, err := p.client.ListHTTPRoutes()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Unable to list HTTPRoutes")
+	}
+
+	slices.SortStableFunc(httpRoutes, func(a, b *gatev1.HTTPRoute) int {
+		return a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+	})
+
+	for _, route := range httpRoutes {
+		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
+		for _, match := range routeParentRefs {
+			for _, listener := range match.listeners {
+				attachment := attachmentForListener(match, listener, route.Namespace, kindHTTPRoute, route.Spec.Hostnames)
+				if !attachment.attached {
+					continue
+				}
+
+				for _, hostname := range attachment.hostnames {
+					result.Claim(attachment.listenerKey, kindHTTPRoute, hostname, route.CreationTimestamp.Time)
+				}
+			}
+		}
+	}
+
+	grpcRoutes, err := p.client.ListGRPCRoutes()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GRPCRoutes")
+	}
+
+	slices.SortStableFunc(grpcRoutes, func(a, b *gatev1.GRPCRoute) int {
+		return a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+	})
+
+	for _, route := range grpcRoutes {
+		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
+		for _, match := range routeParentRefs {
+			for _, listener := range match.listeners {
+				attachment := attachmentForListener(match, listener, route.Namespace, kindGRPCRoute, route.Spec.Hostnames)
+				if !attachment.attached {
+					continue
+				}
+
+				for _, hostname := range attachment.hostnames {
+					result.Claim(attachment.listenerKey, kindGRPCRoute, hostname, route.CreationTimestamp.Time)
+				}
+			}
+		}
+	}
+
+	return result
+}
+
+func hostnamesIntersect(a, b []gatev1.Hostname) bool {
+	for _, ha := range a {
+		for _, hb := range b {
+			if findMatchingHostname(ha, hb) != "" || findMatchingHostname(hb, ha) != "" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
