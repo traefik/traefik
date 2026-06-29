@@ -509,7 +509,7 @@ func TestUnderscoreHeadersStrategy(t *testing.T) {
 			epConfig := &static.EntryPointsTransport{}
 			epConfig.SetDefaults()
 
-			entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+			entryPoint, err := NewTCPEntryPoint(t.Context(), "", &static.EntryPoint{
 				Address:          ":0",
 				Transport:        epConfig,
 				ForwardedHeaders: &static.ForwardedHeaders{},
@@ -517,7 +517,7 @@ func TestUnderscoreHeadersStrategy(t *testing.T) {
 				HTTP: static.HTTPConfig{
 					UnderscoreHeadersStrategy: test.strategy,
 				},
-			}, nil)
+			}, nil, nil)
 			require.NoError(t, err)
 
 			router, err := tcprouter.NewRouter()
