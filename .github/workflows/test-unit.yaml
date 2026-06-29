@@ -1,6 +1,10 @@
 name: Test Unit
 
 on:
+  push:
+    branches:
+      - master
+      - v*
   pull_request:
     branches:
       - '*'
@@ -13,52 +17,23 @@ permissions:
   contents: read
 
 jobs:
-  generate-packages:
-    name: List Go Packages
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
-        with:
-          go-version-file: '.go-version'
-          check-latest: true
-
-      - name: Generate matrix
-        id: set-matrix
-        run: |
-          matrix_output=$(go run ./internal/testsci/genmatrix.go)
-          echo "$matrix_output"
-          echo "$matrix_output" >> $GITHUB_OUTPUT
 
   test-unit:
+    name: Unit tests
     runs-on: ubuntu-latest
-    needs: generate-packages
-    strategy:
-      matrix:
-        package: ${{ fromJson(needs.generate-packages.outputs.matrix) }}
 
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: '.go-version'
           check-latest: true
 
-      - name: Tests
-        run: |
-          go test -v -parallel 8 ${{ matrix.package.group }}
+      - name: Run unit tests
+        run: go test -parallel 8 ./cmd/... ./pkg/...
 
   test-ui-unit:
     runs-on: ubuntu-latest
@@ -66,8 +41,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
 
       - name: Enable corepack
         run: corepack enable
