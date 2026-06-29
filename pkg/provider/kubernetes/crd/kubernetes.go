@@ -538,6 +538,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			MinVersion:          minVersion,
 			MaxVersion:          maxVersion,
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
+			PreferIPv6:          serversTransport.Spec.PreferIPv6,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
 			PeerCertURI:         serversTransport.Spec.PeerCertURI,

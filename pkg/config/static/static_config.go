@@ -149,6 +149,7 @@ type ServersTransport struct {
 	MaxIdleConnsPerHost int                   `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used. If negative, disables connection reuse." json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts   `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	Spiffe              *Spiffe               `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	PreferIPv6          bool                  `description:"Prefers IPv6 over IPv4 when resolving backend server hostnames, falling back to IPv4 when no IPv6 address is reachable." json:"preferIPv6,omitempty" toml:"preferIPv6,omitempty" yaml:"preferIPv6,omitempty" export:"true"`
 }
 
 // Spiffe holds the SPIFFE configuration.
