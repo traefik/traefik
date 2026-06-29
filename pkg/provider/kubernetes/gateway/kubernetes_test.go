@@ -6877,6 +6877,122 @@ func TestLoadMixedRoutes(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "GRPCRoute wins over HTTPRoute on the same hostname when created first",
+			paths: []string{"services.yml", "mixed/with_grpcroute_priority_over_httproute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web": {Address: ":9080"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64": {
+							EntryPoints: []string{"web"},
+							Service:     "grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    22,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80-grpc",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80-grpc": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "h2c://10.10.0.1:80"},
+									{URL: "h2c://10.10.0.2:80"},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "GRPCRoute rejected when hostname conflicts with accepted HTTPRoute on the same listener",
+			paths: []string{"services.yml", "mixed/with_httproute_grpcroute_hostname_conflict.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web": {Address: ":9080"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    9,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-http-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

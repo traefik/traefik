@@ -20,8 +20,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-// TODO: as described in the specification https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io%2fv1.GRPCRoute, we should check for hostname conflicts between HTTP and GRPC routes.
-func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration) {
+func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, attached attachedRoutes) {
 	routes, err := p.client.ListGRPCRoutes()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GRPCRoutes")
@@ -51,22 +50,16 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithLis
 
 			var resolvedRefCondition *metav1.Condition
 			for _, listener := range match.listeners {
-				// A parentRef can target specific listeners through its SectionName or Port.
-				accepted := matchListener(listener, match.parentRef)
+				attachment := attachmentForListener(match, listener, route.Namespace, kindGRPCRoute, route.Spec.Hostnames)
+				accepted := attachment.attached
+				reason := attachment.reason
 
-				if accepted && !allowRoute(listener, route.Namespace, kindGRPCRoute) {
-					if acceptedCondition.Status == metav1.ConditionFalse {
-						acceptedCondition.Reason = string(gatev1.RouteReasonNotAllowedByListeners)
-					}
+				if accepted && attached.HasConflict(attachment.listenerKey, kindGRPCRoute, attachment.hostnames) {
 					accepted = false
+					reason = routeReasonHostnameConflict
 				}
-
-				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if accepted && !ok {
-					if acceptedCondition.Status == metav1.ConditionFalse {
-						acceptedCondition.Reason = string(gatev1.RouteReasonNoMatchingListenerHostname)
-					}
-					accepted = false
+				if reason != "" && acceptedCondition.Status == metav1.ConditionFalse {
+					acceptedCondition.Reason = string(reason)
 				}
 
 				if accepted {
@@ -76,7 +69,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithLis
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadGRPCRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
+				routeConf, condition := p.loadGRPCRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, attachment.hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = ptr.To(condition)
 				}

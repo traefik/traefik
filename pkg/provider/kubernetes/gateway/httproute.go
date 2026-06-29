@@ -23,7 +23,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration) {
+func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, attached attachedRoutes) {
 	routes, err := p.client.ListHTTPRoutes()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to list HTTPRoutes")
@@ -53,22 +53,16 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 
 			var resolvedRefCondition *metav1.Condition
 			for _, listener := range match.listeners {
-				// A parentRef can target specific listeners through its SectionName or Port.
-				accepted := matchListener(listener, match.parentRef)
+				attachment := attachmentForListener(match, listener, route.Namespace, kindHTTPRoute, route.Spec.Hostnames)
+				accepted := attachment.attached
+				reason := attachment.reason
 
-				if accepted && !allowRoute(listener, route.Namespace, kindHTTPRoute) {
-					if acceptedCondition.Status == metav1.ConditionFalse {
-						acceptedCondition.Reason = string(gatev1.RouteReasonNotAllowedByListeners)
-					}
+				if accepted && attached.HasConflict(attachment.listenerKey, kindHTTPRoute, attachment.hostnames) {
 					accepted = false
+					reason = routeReasonHostnameConflict
 				}
-
-				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
-				if accepted && !ok {
-					if acceptedCondition.Status == metav1.ConditionFalse {
-						acceptedCondition.Reason = string(gatev1.RouteReasonNoMatchingListenerHostname)
-					}
-					accepted = false
+				if reason != "" && acceptedCondition.Status == metav1.ConditionFalse {
+					acceptedCondition.Reason = string(reason)
 				}
 
 				if accepted {
@@ -78,7 +72,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
+				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, attachment.hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = ptr.To(condition)
 				}
@@ -499,7 +493,8 @@ func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace s
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
-				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+				policyAncestorStatus.Conditions = append(
+					policyAncestorStatus.Conditions,
 					metav1.Condition{
 						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
