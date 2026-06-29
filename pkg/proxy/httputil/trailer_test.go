@@ -1,4 +1,4 @@
-package service
+package httputil
 
 import (
 	"io"
@@ -32,13 +32,17 @@ func TestRequestTrailersNotForwardedToBackend(t *testing.T) {
 	}))
 	t.Cleanup(backend.Close)
 
-	proxyHandler, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
-	require.NoError(t, err)
-
-	lb, err := roundrobin.New(proxyHandler)
-	require.NoError(t, err)
+	transportManager := &transportManagerMock{
+		roundTrippers: map[string]http.RoundTripper{"default": &http.Transport{}},
+	}
 
 	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+
+	p, err := NewProxyBuilder(transportManager, nil).Build("default", backendURL, true, false, 0)
+	require.NoError(t, err)
+
+	lb, err := roundrobin.New(p)
 	require.NoError(t, err)
 
 	err = lb.UpsertServer(backendURL)
