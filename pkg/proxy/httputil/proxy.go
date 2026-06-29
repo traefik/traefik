@@ -219,6 +219,11 @@ func ComputeStatusCode(err error) int {
 	case errors.Is(err, context.Canceled):
 		return StatusClientClosedRequest
 	default:
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			return http.StatusRequestEntityTooLarge
+		}
+
 		var netErr net.Error
 		if errors.As(err, &netErr) {
 			if netErr.Timeout() {
