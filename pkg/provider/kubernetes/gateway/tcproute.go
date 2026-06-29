@@ -19,7 +19,7 @@ import (
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
-func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTCPRoutes()
 	if err != nil {
@@ -28,55 +28,67 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 
 	for _, route := range routes {
-		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
-		if len(routeListeners) == 0 {
+		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
+		if len(routeParentRefs) == 0 {
 			continue
 		}
 
-		for _, parentRef := range route.Spec.ParentRefs {
-			parentStatus := gatev1alpha2.RouteParentStatus{
-				ParentRef:      parentRef,
-				ControllerName: controllerName,
-				Conditions: []metav1.Condition{
-					{
-						Type:               string(gatev1.RouteConditionAccepted),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.RouteReasonNoMatchingParent),
-					},
-				},
+		for _, match := range routeParentRefs {
+			acceptedCondition := metav1.Condition{
+				Type:               string(gatev1.RouteConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonNoMatchingParent),
 			}
 
-			for _, listener := range routeListeners {
-				accepted := matchListener(listener, parentRef)
+			var resolvedRefCondition *metav1.Condition
+			for _, listener := range match.listeners {
+				// A parentRef can target specific listeners through its SectionName or Port.
+				accepted := matchListener(listener, match.parentRef)
 
 				if accepted && !allowRoute(listener, route.Namespace, kindTCPRoute) {
-					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
+					if acceptedCondition.Status == metav1.ConditionFalse {
+						acceptedCondition.Reason = string(gatev1.RouteReasonNotAllowedByListeners)
+					}
 					accepted = false
 				}
 
 				if accepted {
 					listener.Status.AttachedRoutes++
-					// only consider the route attached if the listener is in an "attached" state.
-					if listener.Attached {
-						parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonAccepted))
-					}
 				}
 
-				routeConf, resolveRefCondition := p.loadTCPRoute(listener, route)
+				// The ResolvedRefs condition must be reported for every parentRef,
+				// even when the route does not attach to the listener.
+				routeConf, condition := p.loadTCPRoute(match.gatewayName, match.gatewayNamespace, listener, route)
+				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
+					resolvedRefCondition = ptr.To(condition)
+				}
+
 				if accepted && listener.Attached {
 					mergeTCPConfiguration(routeConf, conf)
+
+					// Only consider the route attached if the listener is in an "attached" state.
+					acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
+					acceptedCondition.Status = metav1.ConditionTrue
 				}
-				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
-			statusReport.RecordTCPRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, parentStatus)
+			parentStatusConditions := []metav1.Condition{acceptedCondition}
+			if resolvedRefCondition != nil {
+				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			}
+
+			statusReport.RecordTCPRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gatev1alpha2.RouteParentStatus{
+				ParentRef:      match.parentRef,
+				ControllerName: controllerName,
+				Conditions:     parentStatusConditions,
+			})
 		}
 	}
 }
 
-func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1alpha2.TCPRoute) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1alpha2.TCPRoute) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
@@ -114,7 +126,7 @@ func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1alpha2.TC
 		}
 
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTCPRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTCPRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
 		// Routing criteria should be introduced at some point.
 		routerName := makeRouterName("", routeKey)
 
@@ -158,8 +170,8 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routeKey strin
 
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTCPService(route, backendRef)
+	for bi, backendRef := range backendRefs {
+		svcName, svc, errCondition := p.loadTCPService(routeKey, route, bi, backendRef)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -193,7 +205,7 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routeKey strin
 	return name, condition
 }
 
-func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTCPService(routeKey string, route *gatev1alpha2.TCPRoute, backendIndex int, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -206,7 +218,8 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			return provider.Normalize(namespace + "-" + string(backendRef.Name)), nil, &metav1.Condition{
+			svcKey := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
+			return provider.Normalize(svcKey), nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -217,7 +230,7 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 		}
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
 
 	if err := p.isReferenceGranted(kindTCPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
@@ -257,9 +270,6 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 			Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
-
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
 	lb, errCondition := p.loadTCPServers(namespace, route, backendRef)
 	if errCondition != nil {

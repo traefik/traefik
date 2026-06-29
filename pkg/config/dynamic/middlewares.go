@@ -365,7 +365,7 @@ type Headers struct {
 	// AccessControlExposeHeaders defines the Access-Control-Expose-Headers values sent in preflight response.
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty" export:"true"`
 	// AccessControlMaxAge defines the time that a preflight request may be cached.
-	AccessControlMaxAge int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
+	AccessControlMaxAge *int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
 	// AddVaryHeader defines whether the Vary header is automatically added/updated when the AccessControlAllowOriginList is set.
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
 	// AllowedHosts defines the fully qualified list of allowed domain names.
@@ -441,7 +441,7 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 		len(h.AccessControlAllowOriginList) != 0 ||
 		len(h.AccessControlAllowOriginListRegex) != 0 ||
 		len(h.AccessControlExposeHeaders) != 0 ||
-		h.AccessControlMaxAge != 0 ||
+		h.AccessControlMaxAge != nil ||
 		h.AddVaryHeader)
 }
 
