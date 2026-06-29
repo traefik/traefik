@@ -3,6 +3,7 @@ package k8s
 import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 // ResourceEventHandler handles Add, Update or Delete Events for resources.
@@ -97,6 +98,15 @@ func endpointChanged(a, b discoveryv1.Endpoint) bool {
 		if aaddr != baddr {
 			return true
 		}
+	}
+
+	// A nil condition has a defined meaning that consumers resolve with the same defaults
+	// (Ready and Serving default to true, Terminating to false), so comparison must use those
+	// defaults to avoid reporting a nil-to-default transition as a change.
+	if ptr.Deref(a.Conditions.Ready, true) != ptr.Deref(b.Conditions.Ready, true) ||
+		ptr.Deref(a.Conditions.Serving, true) != ptr.Deref(b.Conditions.Serving, true) ||
+		ptr.Deref(a.Conditions.Terminating, false) != ptr.Deref(b.Conditions.Terminating, false) {
+		return true
 	}
 
 	return false

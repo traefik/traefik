@@ -18,7 +18,7 @@ http:
         - "/path/to/cert1.pem"
         - "/path/to/cert2.pem"
       insecureSkipVerify: true
-      rootcas:
+      rootCAs:
         - "/path/to/rootca1.pem"
         - "/path/to/rootca2.pem"
       maxIdleConnsPerHost: 100
@@ -47,7 +47,7 @@ http:
   serverName = "myhost"
   certificates = ["/path/to/cert1.pem", "/path/to/cert2.pem"]
   insecureSkipVerify = true
-  rootcas = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
+  rootCAs = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
   maxIdleConnsPerHost = 100
   disableHTTP2 = true
   peerCertURI = "spiffe://example.org/peer"
@@ -107,11 +107,11 @@ labels:
 | <a id="opt-serverName" href="#opt-serverName" title="#opt-serverName">`serverName`</a> | Configures the server name that will be used as the SNI.                                                                                 | ""      | No       |
 | <a id="opt-certificates" href="#opt-certificates" title="#opt-certificates">`certificates`</a> | Defines the list of certificates (as file paths, or data bytes) that will be set as client certificates for mTLS.                        | []      | No       |
 | <a id="opt-insecureSkipVerify" href="#opt-insecureSkipVerify" title="#opt-insecureSkipVerify">`insecureSkipVerify`</a> | Controls whether the server's certificate chain and host name is verified.                                                               | false   | No       |
-| <a id="opt-rootcas" href="#opt-rootcas" title="#opt-rootcas">`rootcas`</a> | Set of root certificate authorities to use when verifying server certificates. (for mTLS connections).                                   | []      | No       |
+| <a id="opt-rootCAs" href="#opt-rootCAs" title="#opt-rootCAs">`rootCAs`</a> | Set of root certificate authorities to use when verifying server certificates. (for mTLS connections).                                   | []      | No       |
 | <a id="opt-cipherSuites" href="#opt-cipherSuites" title="#opt-cipherSuites">`cipherSuites`</a> | Defines the cipher suites to use when contacting backend servers. | [] | No |
 | <a id="opt-minVersion" href="#opt-minVersion" title="#opt-minVersion">`minVersion`</a> | Defines the minimum TLS version to use when contacting backend servers. | "" | No |
 | <a id="opt-maxVersion" href="#opt-maxVersion" title="#opt-maxVersion">`maxVersion`</a> | Defines the maximum TLS version to use when contacting backend servers. | "" | No |
-| <a id="opt-maxIdleConnsPerHost" href="#opt-maxIdleConnsPerHost" title="#opt-maxIdleConnsPerHost">`maxIdleConnsPerHost`</a> | Maximum idle (keep-alive) connections to keep per-host.                                                                                  | 200     | No       |
+| <a id="opt-maxIdleConnsPerHost" href="#opt-maxIdleConnsPerHost" title="#opt-maxIdleConnsPerHost">`maxIdleConnsPerHost`</a> | Maximum idle (keep-alive) connections to keep per-host. If zero, `DefaultMaxIdleConnsPerHost` (2) is used.                               | 0       | No       |
 | <a id="opt-disableHTTP2" href="#opt-disableHTTP2" title="#opt-disableHTTP2">`disableHTTP2`</a> | Disables HTTP/2 for connections with servers.                                                                                            | false   | No       |
 | <a id="opt-peerCertURI" href="#opt-peerCertURI" title="#opt-peerCertURI">`peerCertURI`</a> | Defines the URI used to match against SAN URIs during the server's certificate verification.                                             | ""      | No       |
 | <a id="opt-forwardingTimeouts-dialTimeout" href="#opt-forwardingTimeouts-dialTimeout" title="#opt-forwardingTimeouts-dialTimeout">`forwardingTimeouts.dialTimeout`</a> | Amount of time to wait until a connection to a server can be established.<br />0 = no timeout                                            | 30s     | No       |

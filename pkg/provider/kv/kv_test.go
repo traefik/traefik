@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"k8s.io/utils/ptr"
 )
 
 func pointer[T any](v T) *T { return &v }
@@ -615,7 +616,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						AccessControlMaxAge: 42,
+						AccessControlMaxAge: ptr.To(int64(42)),
 						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",

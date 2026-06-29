@@ -65,8 +65,14 @@ func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	redirectURL := *req.URL
 	redirectURL.Host = req.Host
 
+	// req.URL.Scheme is always empty for server requests (Go net/http, RFC 7230 section 5.3).
+	// Per the Gateway API spec, when no scheme is configured the request scheme must be used.
+	// https://github.com/kubernetes-sigs/gateway-api/blob/v1.4.0/apis/v1/httproute_types.go#L1194-L1195
+	redirectURL.Scheme = "http"
 	if r.scheme != nil {
 		redirectURL.Scheme = *r.scheme
+	} else if req.TLS != nil {
+		redirectURL.Scheme = "https"
 	}
 
 	host := redirectURL.Hostname()

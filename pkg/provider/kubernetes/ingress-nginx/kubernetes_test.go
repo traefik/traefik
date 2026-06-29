@@ -1175,7 +1175,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -2240,7 +2243,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry": {
@@ -2269,7 +2273,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-tls-retry": {
@@ -2450,10 +2455,16 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -2839,7 +2850,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
-								AccessControlMaxAge:           42,
+								AccessControlMaxAge:           ptr.To(int64(42)),
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-tls-cors": {
@@ -2849,7 +2860,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
-								AccessControlMaxAge:           42,
+								AccessControlMaxAge:           ptr.To(int64(42)),
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-retry": {
@@ -5640,7 +5651,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
 								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
-								AccessControlMaxAge:           1728000,
+								AccessControlMaxAge:           ptr.To(int64(1728000)),
 							},
 						},
 						"default-backend-tls-cors": {
@@ -5650,7 +5661,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
 								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
-								AccessControlMaxAge:           1728000,
+								AccessControlMaxAge:           ptr.To(int64(1728000)),
 							},
 						},
 						"default-backend-retry": {
@@ -8364,7 +8375,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -8513,7 +8527,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -11326,7 +11343,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -14939,7 +14959,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
@@ -14966,7 +14989,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
@@ -15967,7 +15993,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-wildcard-host-tls-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -16447,7 +16476,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -16462,7 +16494,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-1-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-tls-multi-secrets-rule-1-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
@@ -16653,7 +16688,10 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{

@@ -248,7 +248,7 @@ func (p *Provider) buildCORS(loc *location) {
 		AccessControlAllowHeaders:     ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
 		AccessControlAllowMethods:     ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
 		AccessControlAllowOriginList:  ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}),
-		AccessControlMaxAge:           int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000)),
+		AccessControlMaxAge:           ptr.To(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
 	}
 }
 
