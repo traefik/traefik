@@ -70,8 +70,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:              pointer(true),
+						MaxHeaderBytes:            1048576,
+						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -118,8 +119,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:              pointer(true),
+						MaxHeaderBytes:            1048576,
+						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -177,8 +179,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:              pointer(true),
+						MaxHeaderBytes:            1048576,
+						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -240,8 +243,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:              pointer(true),
+						MaxHeaderBytes:            1048576,
+						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
