@@ -1,6 +1,11 @@
 package types
 
-import "github.com/traefik/traefik/v3/pkg/types"
+import (
+	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+)
 
 // OTelGRPC provides configuration settings for the gRPC open-telemetry.
 type OTelGRPC struct {
@@ -25,4 +30,17 @@ type OTelHTTP struct {
 // SetDefaults sets the default values.
 func (o *OTelHTTP) SetDefaults() {
 	o.Endpoint = "https://localhost:4318"
+}
+
+// ServiceResourceAttributes returns service resource attributes shared by all OpenTelemetry signals.
+func ServiceResourceAttributes(serviceName, serviceNamespace string) []attribute.KeyValue {
+	attrs := []attribute.KeyValue{
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion(version.Version),
+	}
+	if serviceNamespace != "" {
+		attrs = append(attrs, semconv.ServiceNamespace(serviceNamespace))
+	}
+
+	return attrs
 }

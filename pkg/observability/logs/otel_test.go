@@ -34,6 +34,7 @@ func TestLog(t *testing.T) {
 				assert.NotContains(t, log, `"severityNumber"`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -48,6 +49,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":1`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -62,6 +64,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":5`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -76,6 +79,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":9`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -90,6 +94,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":13`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -104,6 +109,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":17`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -118,6 +124,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":21`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -132,6 +139,7 @@ func TestLog(t *testing.T) {
 				assert.Contains(t, log, `"severityNumber":24`)
 				assert.Regexp(t, `{"key":"resource","value":{"stringValue":"attribute"}}`, log)
 				assert.Regexp(t, `{"key":"service.name","value":{"stringValue":"test"}}`, log)
+				assert.Regexp(t, `{"key":"service.namespace","value":{"stringValue":"namespace"}}`, log)
 				assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
 				assert.Regexp(t, `{"key":"foo","value":{"stringValue":"bar"}}`, log)
 				assert.Regexp(t, `"traceId":"01020304050607080000000000000000","spanId":"0102030405060708"`, log)
@@ -162,6 +170,7 @@ func TestLog(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			config := &otypes.OTelLog{
 				ServiceName:        "test",
+				ServiceNamespace:   "namespace",
 				ResourceAttributes: map[string]string{"resource": "attribute"},
 				HTTP: &otypes.OTelHTTP{
 					Endpoint: collector.URL,

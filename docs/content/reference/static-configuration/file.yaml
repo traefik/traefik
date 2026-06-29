@@ -439,6 +439,7 @@ metrics:
       - 42
     pushInterval: 42s
     serviceName: foobar
+    serviceNamespace: foobar
     resourceAttributes:
       name0: foobar
       name1: foobar
@@ -457,6 +458,7 @@ log:
   compress: true
   otlp:
     serviceName: foobar
+    serviceNamespace: foobar
     resourceAttributes:
       name0: foobar
       name1: foobar
@@ -504,6 +506,7 @@ accessLog:
   addInternals: true
   otlp:
     serviceName: foobar
+    serviceNamespace: foobar
     resourceAttributes:
       name0: foobar
       name1: foobar
@@ -530,6 +533,7 @@ accessLog:
         name1: foobar
 tracing:
   serviceName: foobar
+  serviceNamespace: foobar
   resourceAttributes:
     name0: foobar
     name1: foobar

@@ -236,6 +236,7 @@ func (a *LifeCycle) SetDefaults() {
 // Tracing holds the tracing configuration.
 type Tracing struct {
 	ServiceName             string              `description:"Defines the service name resource attribute." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ServiceNamespace        string              `description:"Defines the service namespace resource attribute." json:"serviceNamespace,omitempty" toml:"serviceNamespace,omitempty" yaml:"serviceNamespace,omitempty" export:"true"`
 	ResourceAttributes      map[string]string   `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty" export:"true"`
 	CapturedRequestHeaders  []string            `description:"Request headers to add as attributes for server and client spans." json:"capturedRequestHeaders,omitempty" toml:"capturedRequestHeaders,omitempty" yaml:"capturedRequestHeaders,omitempty" export:"true"`
 	CapturedResponseHeaders []string            `description:"Response headers to add as attributes for server and client spans." json:"capturedResponseHeaders,omitempty" toml:"capturedResponseHeaders,omitempty" yaml:"capturedResponseHeaders,omitempty" export:"true"`

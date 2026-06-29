@@ -10,7 +10,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	ttypes "github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -18,7 +17,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
@@ -53,7 +51,7 @@ func (c *OTelTracing) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error) {
+func (c *OTelTracing) Setup(ctx context.Context, serviceName, serviceNamespace string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -81,10 +79,7 @@ func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate 
 		resource.WithDetectors(ttypes.K8sAttributesDetector{}),
 		// The following order allows the user to override the service name and version,
 		// as well as any other attributes set by the above detectors.
-		resource.WithAttributes(
-			semconv.ServiceName(serviceName),
-			semconv.ServiceVersion(version.Version),
-		),
+		resource.WithAttributes(ServiceResourceAttributes(serviceName, serviceNamespace)...),
 		resource.WithAttributes(resAttrs...),
 		// Use the environment variables to allow overriding above resource attributes.
 		resource.WithFromEnv(),
