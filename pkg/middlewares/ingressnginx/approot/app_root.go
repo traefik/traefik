@@ -43,6 +43,6 @@ func (ar *appRoot) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	path := ingressnginx.ReplaceVariables(ar.appRoot, req, nil, nil)
+	path := ingressnginx.ReplaceVariables("$scheme://$best_http_host"+ar.appRoot, req, nil, nil)
 	http.Redirect(rw, req, path, http.StatusFound)
 }
