@@ -1,3 +1,49 @@
+## [v3.6.22](https://github.com/traefik/traefik/tree/v3.6.22) (2026-06-30)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.21...v3.6.22)
+
+**Bug fixes:**
+- **[acme, logs]** Bump github.com/go-acme/lego/v5 ([#13154](https://github.com/traefik/traefik/pull/13154) @ldez)
+- **[acme]** Bump github.com/go-acme/lego/v5 ([#13359](https://github.com/traefik/traefik/pull/13359) @juliens)
+- **[k8s/gatewayapi]** Add missing Gateway API features in conformance tests ([#13356](https://github.com/traefik/traefik/pull/13356) @AnatoleLucet)
+- **[k8s/gatewayapi]** Ignore other gateways parentRefs and update route parent statuses only for managed gateways ([#13397](https://github.com/traefik/traefik/pull/13397) @rtribotte)
+- **[k8s]** Detect EndpointSlice condition changes ([#13405](https://github.com/traefik/traefik/pull/13405) @kevinpollet)
+- **[k8s]** Index Kubernetes EndpointSlice by service name ([#13395](https://github.com/traefik/traefik/pull/13395) @kevinpollet)
+- **[k8s]** Sort endpointslices to keep backend IPs consistent across rebuilds ([#13406](https://github.com/traefik/traefik/pull/13406) @kevinpollet)
+- **[kv]** Bump kvtools/redis to v1.2.1 ([#13403](https://github.com/traefik/traefik/pull/13403) @ldez)
+- **[middleware, authentication]** Fix x-forwarded-port in forward-auth ([#13344](https://github.com/traefik/traefik/pull/13344) @juliens)
+- **[middleware, k8s/gatewayapi]** Fix Host header not being modified by RequestHeaderModifier ([#12805](https://github.com/traefik/traefik/pull/12805) @mihuross)
+- **[middleware, k8s/gatewayapi]** Fix request scheme derivation when Gateway API RequestRedirect omits scheme ([#13347](https://github.com/traefik/traefik/pull/13347) @gndz07)
+- **[middleware]** Fix CORS Max-Age set to 0 by default ([#13371](https://github.com/traefik/traefik/pull/13371) @AnatoleLucet)
+- **[middleware]** Fix CORS wildcard when allow-credentials is true ([#13368](https://github.com/traefik/traefik/pull/13368) @AnatoleLucet)
+- **[tls]** Fix nondeterministic TLS certificate selection on shared SAN ([#13348](https://github.com/traefik/traefik/pull/13348) @rtribotte)
+- **[server]** Add an option to remove request headers with underscores ([#13262](https://github.com/traefik/traefik/pull/13262) @youkoulayley)
+- **[server]** Configurable max request header size ([#13353](https://github.com/traefik/traefik/pull/13353) @juliens)
+- **[webui]** Bump axios to v1.18.0 ([#13380](https://github.com/traefik/traefik/pull/13380) @gndz07)
+- **[websocket]** Fix connection upgrades when backend server is using h2c scheme ([#12967](https://github.com/traefik/traefik/pull/12967) @stffabi)
+
+**Documentation:**
+- **[k8s]** Align Helm chart documented values with chart v41 ([#13366](https://github.com/traefik/traefik/pull/13366) @mloiseleur)
+- **[k8s/crd]** Fix broken CRD reference links in IngressRoute page ([#13375](https://github.com/traefik/traefik/pull/13375) @s3onghyun)
+- **[k8s/ingress-nginx]** Add Kubernetes Ingress NGINX to the providers list ([#13372](https://github.com/traefik/traefik/pull/13372) @nmengin)
+- **[middleware]** Clarify entryPoint middleware reference format ([#13364](https://github.com/traefik/traefik/pull/13364) @mloiseleur)
+- **[security]** Add HTTP/2 header memory exhaustion security documentation ([#13381](https://github.com/traefik/traefik/pull/13381) @emilevauge)
+- **[server]** Adds documentations on maxHeaderBytes ([#13363](https://github.com/traefik/traefik/pull/13363) @juliens)
+- Fix inaccuracies in reference documentation ([#13304](https://github.com/traefik/traefik/pull/13304) @sheddy-traefik)
+
+## [v2.11.51](https://github.com/traefik/traefik/tree/v2.11.51) (2026-06-30)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.50...v2.11.51)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 ([#13359](https://github.com/traefik/traefik/pull/13359) @juliens)
+- **[middleware, authentication]** Fix x-forwarded-port in forward-auth ([#13344](https://github.com/traefik/traefik/pull/13344) @juliens)
+- **[middleware, authentication]** Add an option to remove request headers with underscores ([#13262](https://github.com/traefik/traefik/pull/13262) @youkoulayley)
+- **[server]** Configurable max request header size ([#13353](https://github.com/traefik/traefik/pull/13353) @juliens)
+- **[webui]** Bump axios to v1.18.0 ([#13380](https://github.com/traefik/traefik/pull/13380) @gndz07)
+
+**Documentation:**
+- **[security]** Add HTTP/2 header memory exhaustion security documentation ([#13381](https://github.com/traefik/traefik/pull/13381) @emilevauge)
+- **[server]** Adds documentations on maxHeaderBytes ([#13363](https://github.com/traefik/traefik/pull/13363) @juliens)
+
 ## [v3.7.5](https://github.com/traefik/traefik/tree/v3.7.5) (2026-06-10)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.4...v3.7.5)
 
