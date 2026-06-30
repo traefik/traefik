@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:24-alpine3.22
+FROM node:24-alpine3.24
 
 ENV WEBUI_DIR=/src/webui
 RUN mkdir -p $WEBUI_DIR
