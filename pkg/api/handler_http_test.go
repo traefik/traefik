@@ -28,10 +28,11 @@ func TestHandler_HTTP(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc     string
-		path     string
-		conf     runtime.Configuration
-		expected expected
+		desc                     string
+		path                     string
+		conf                     runtime.Configuration
+		hideMiddlewareParameters bool
+		expected                 expected
 	}{
 		{
 			desc: "all routers, but no config",
@@ -994,6 +995,56 @@ func TestHandler_HTTP(t *testing.T) {
 				statusCode: http.StatusNotFound,
 			},
 		},
+		{
+			desc: "one middleware by id, plugin parameters explicitly shown",
+			path: "/api/http/middlewares/oidc@myprovider",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"oidc@myprovider": {
+						Middleware: &dynamic.Middleware{
+							Plugin: map[string]dynamic.PluginConf{
+								"traefik-oidc-auth": {
+									"ClientId": "abcd-12345",
+									"Secret":   "urn:k8s:secret:oidc-secret:pluginSecret",
+									"Scopes":   []any{"openid", "profile", "email"},
+								},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+				},
+			},
+			hideMiddlewareParameters: false,
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/middleware-oidc.json",
+			},
+		},
+		{
+			desc: "one middleware by id, plugin parameters hidden",
+			path: "/api/http/middlewares/oidc@myprovider",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"oidc@myprovider": {
+						Middleware: &dynamic.Middleware{
+							Plugin: map[string]dynamic.PluginConf{
+								"traefik-oidc-auth": {
+									"ClientId": "abcd-12345",
+									"Secret":   "urn:k8s:secret:oidc-secret:pluginSecret",
+									"Scopes":   []any{"openid", "profile", "email"},
+								},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+				},
+			},
+			hideMiddlewareParameters: true,
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/middleware-oidc-hidden.json",
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1006,7 +1057,7 @@ func TestHandler_HTTP(t *testing.T) {
 			rtConf.GetRoutersByEntryPoints(t.Context(), []string{"web"}, false)
 			rtConf.GetRoutersByEntryPoints(t.Context(), []string{"web"}, true)
 
-			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
+			handler := New(static.Configuration{API: &static.API{HideMiddlewareParameters: test.hideMiddlewareParameters}, Global: &static.Global{}}, rtConf)
 			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
