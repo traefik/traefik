@@ -76,7 +76,7 @@ func (b *buffer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		// For streaming requests (chunked or unknown length), wrap the body so the
 		// limit is enforced as bytes are read, matching NGINX's client_max_body_size
-		// behaviour without enabling request buffering.
+		// behavior without enabling request buffering.
 		req.Body = http.MaxBytesReader(rw, req.Body, b.maxBodyBytes)
 	}
 	b.buffer.ServeHTTP(rw, req)

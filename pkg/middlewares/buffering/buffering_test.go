@@ -2,7 +2,6 @@ package buffering
 
 import (
 	"bytes"
-	"crypto/rand"
 	"errors"
 	"io"
 	"math"
@@ -17,7 +16,6 @@ import (
 
 func TestBuffering(t *testing.T) {
 	payload := make([]byte, math.MaxInt8)
-	_, _ = rand.Read(payload)
 
 	testCases := []struct {
 		desc         string
@@ -73,7 +71,6 @@ func TestBuffering(t *testing.T) {
 
 func TestBufferingDisabledRequestBuffer(t *testing.T) {
 	payload := make([]byte, 128)
-	_, _ = rand.Read(payload)
 
 	testCases := []struct {
 		desc         string
@@ -117,8 +114,8 @@ func TestBufferingDisabledRequestBuffer(t *testing.T) {
 				DisableRequestBuffer: true,
 				MaxRequestBodyBytes:  1,
 			},
-			body:       payload,
-			contentLen: -1, // strip Content-Length to simulate chunked/streaming
+			body:         payload,
+			contentLen:   -1, // strip Content-Length to simulate chunked/streaming
 			expectedCode: http.StatusRequestEntityTooLarge,
 		},
 	}
