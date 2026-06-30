@@ -4,13 +4,13 @@
 **Bug fixes:**
 - **[acme]** Bump github.com/go-acme/lego/v5 ([#13359](https://github.com/traefik/traefik/pull/13359) @juliens)
 - **[middleware, authentication]** Fix x-forwarded-port in forward-auth ([#13344](https://github.com/traefik/traefik/pull/13344) @juliens)
-- **[middleware, authentication]** Add an option to remove request headers with underscores ([#13262](https://github.com/traefik/traefik/pull/13262) @youkoulayley)
+- **[server]** Add an option to remove request headers with underscores ([#13262](https://github.com/traefik/traefik/pull/13262) @youkoulayley)
+- **[server]** Configurable max request header size ([#13353](https://github.com/traefik/traefik/pull/13353) @juliens)
 - **[webui]** Bump axios to v1.18.0 ([#13380](https://github.com/traefik/traefik/pull/13380) @gndz07)
-- Configurable max request header size ([#13353](https://github.com/traefik/traefik/pull/13353) @juliens)
 
 **Documentation:**
 - **[security]** Add HTTP/2 header memory exhaustion security documentation ([#13381](https://github.com/traefik/traefik/pull/13381) @emilevauge)
-- Adds documentations on maxHeaderBytes ([#13363](https://github.com/traefik/traefik/pull/13363) @juliens)
+- **[server]** Adds documentations on maxHeaderBytes ([#13363](https://github.com/traefik/traefik/pull/13363) @juliens)
 
 ## [v2.11.50](https://github.com/traefik/traefik/tree/v2.11.50) (2026-06-10)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.49...v2.11.50)
