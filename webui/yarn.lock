@@ -5452,6 +5452,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"flatted@npm:3.4.0":
+  version: 3.4.0
+  resolution: "flatted@npm:3.4.0"
+  checksum: 10c0/033b0d28dc7c11c20cdddfef160647d37ee6f49cac265e6315d7c172a8a518a971316938d49c72cce3e20bddd40f1bae1455a5cba29f9741fcfb0af4d3491fa4
+  languageName: node
+  linkType: hard
+
 "flatted@npm:^3.2.9":
   version: 3.3.3
   resolution: "flatted@npm:3.3.3"
@@ -8733,6 +8740,7 @@ __metadata:
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^5.2.0"
+    flatted: "npm:3.4.0"
     framer-motion: "npm:^11.18.2"
     globals: "npm:^16.0.0"
     husky: "npm:^9.0.0"
