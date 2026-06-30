@@ -15,6 +15,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"golang.org/x/net/http/httpguts"
 )
@@ -180,6 +181,13 @@ func ErrorHandlerWithContext(ctx context.Context, w http.ResponseWriter, err err
 		logger.Error().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
 	} else {
 		logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
+	}
+
+	// Populate the access log OriginError field, unless the client closed the request.
+	if statusCode != StatusClientClosedRequest {
+		if table := accesslog.GetLogDataTable(ctx); table != nil {
+			table.Core[accesslog.OriginError] = err.Error()
+		}
 	}
 
 	w.WriteHeader(statusCode)

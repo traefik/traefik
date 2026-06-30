@@ -1,8 +1,10 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -179,4 +182,95 @@ func Test_isTLSConfigError(t *testing.T) {
 			require.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+// timeoutError is a net.Error that reports a timeout.
+type timeoutError struct{ msg string }
+
+func (e *timeoutError) Error() string   { return e.msg }
+func (e *timeoutError) Timeout() bool   { return true }
+func (e *timeoutError) Temporary() bool { return false }
+
+// netError is a net.Error that does not report a timeout.
+type netError struct{ msg string }
+
+func (e *netError) Error() string   { return e.msg }
+func (e *netError) Timeout() bool   { return false }
+func (e *netError) Temporary() bool { return false }
+
+func TestErrorHandlerWithContext_OriginError(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		err                error
+		wantStatus         int
+		wantOriginError    bool
+		wantOriginErrorMsg string
+	}{
+		{
+			desc:               "io.EOF",
+			err:                io.EOF,
+			wantStatus:         http.StatusBadGateway,
+			wantOriginError:    true,
+			wantOriginErrorMsg: io.EOF.Error(),
+		},
+		{
+			desc:               "network timeout",
+			err:                &timeoutError{msg: "i/o timeout"},
+			wantStatus:         http.StatusGatewayTimeout,
+			wantOriginError:    true,
+			wantOriginErrorMsg: "i/o timeout",
+		},
+		{
+			desc:               "network non-timeout",
+			err:                &netError{msg: "connection refused"},
+			wantStatus:         http.StatusBadGateway,
+			wantOriginError:    true,
+			wantOriginErrorMsg: "connection refused",
+		},
+		{
+			desc:            "context canceled",
+			err:             context.Canceled,
+			wantStatus:      StatusClientClosedRequest,
+			wantOriginError: false,
+		},
+		{
+			desc:               "TLS config error",
+			err:                &tls.RecordHeaderError{RecordHeader: [5]byte{}, Conn: nil, Msg: "bad TLS record"},
+			wantStatus:         http.StatusInternalServerError,
+			wantOriginError:    true,
+			wantOriginErrorMsg: (&tls.RecordHeaderError{RecordHeader: [5]byte{}, Msg: "bad TLS record"}).Error(),
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			logData := &accesslog.LogData{Core: accesslog.CoreLogData{}}
+			ctx := context.WithValue(t.Context(), accesslog.DataTableKey, logData)
+
+			rw := httptest.NewRecorder()
+			ErrorHandlerWithContext(ctx, rw, test.err)
+
+			assert.Equal(t, test.wantStatus, rw.Code)
+
+			if test.wantOriginError {
+				val, ok := logData.Core[accesslog.OriginError]
+				assert.True(t, ok)
+				assert.Equal(t, test.wantOriginErrorMsg, val)
+			} else {
+				_, ok := logData.Core[accesslog.OriginError]
+				assert.False(t, ok)
+			}
+		})
+	}
+}
+
+func TestErrorHandlerWithContext_OriginError_NoLogData(t *testing.T) {
+	// No LogData in context: the handler must not panic.
+	rw := httptest.NewRecorder()
+	assert.NotPanics(t, func() {
+		ErrorHandlerWithContext(t.Context(), rw, io.EOF)
+	})
+	assert.Equal(t, http.StatusBadGateway, rw.Code)
 }
