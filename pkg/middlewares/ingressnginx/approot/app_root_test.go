@@ -20,34 +20,39 @@ func TestAppRoot(t *testing.T) {
 		expectsError     bool
 	}{
 		{
-			desc:         "empty app root",
-			config:       dynamic.AppRoot{AppRoot: ""},
+			desc:         "empty path",
+			config:       dynamic.AppRoot{Path: ""},
+			expectsError: true,
+		},
+		{
+			desc:         "path does not start with /",
+			config:       dynamic.AppRoot{Path: "http://foo.com"},
 			expectsError: true,
 		},
 		{
 			desc:             "root path redirects to app root",
-			config:           dynamic.AppRoot{AppRoot: "/login"},
+			config:           dynamic.AppRoot{Path: "/login"},
 			requestURL:       "http://example.com/",
 			expectedStatus:   http.StatusFound,
 			expectedLocation: "http://example.com/login",
 		},
 		{
 			desc:             "root path with query params and $is_args$args preserves them",
-			config:           dynamic.AppRoot{AppRoot: "/login$is_args$args"},
+			config:           dynamic.AppRoot{Path: "/login$is_args$args"},
 			requestURL:       "http://example.com/?foo=bar",
 			expectedStatus:   http.StatusFound,
 			expectedLocation: "http://example.com/login?foo=bar",
 		},
 		{
 			desc:             "root path with query params without $is_args$args drops them",
-			config:           dynamic.AppRoot{AppRoot: "/login"},
+			config:           dynamic.AppRoot{Path: "/login"},
 			requestURL:       "http://example.com/?foo=bar",
 			expectedStatus:   http.StatusFound,
 			expectedLocation: "http://example.com/login",
 		},
 		{
 			desc:           "non-root path passes through",
-			config:         dynamic.AppRoot{AppRoot: "/login"},
+			config:         dynamic.AppRoot{Path: "/login"},
 			requestURL:     "http://example.com/something",
 			expectedStatus: http.StatusOK,
 		},
@@ -55,6 +60,8 @@ func TestAppRoot(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {})
 
 			mw, err := New(t.Context(), next, test.config, "app-root")

@@ -91,7 +91,7 @@ func (p *Provider) buildAppRoot(loc *location) {
 		return
 	}
 	loc.AppRoot = &dynamic.AppRoot{
-		AppRoot: *loc.Config.AppRoot,
+		Path: *loc.Config.AppRoot,
 	}
 }
 

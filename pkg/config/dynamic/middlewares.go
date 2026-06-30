@@ -958,6 +958,6 @@ type UpstreamVHost struct {
 
 // AppRoot holds the app-root middleware configuration used by the ingress-nginx provider.
 type AppRoot struct {
-	// AppRoot defines the path that should be treated as the app root
-	AppRoot string `json:"appRoot,omitempty"`
+	// Path defines the path that should be treated as the app root.
+	Path string `json:"path,omitempty"`
 }

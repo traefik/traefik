@@ -4846,12 +4846,12 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-app-root-rule-0-path-0-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-retry": {
@@ -14614,22 +14614,22 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-middlewares-rule-0-path-0-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-tls-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-tls-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-retry": {
@@ -14948,7 +14948,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry": {
@@ -14959,7 +14959,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-retry": {
@@ -14976,7 +14976,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry": {
@@ -14987,7 +14987,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
 							AppRoot: &dynamic.AppRoot{
-								AppRoot: "/foo",
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-retry": {
