@@ -30,18 +30,23 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 21
+      Passed: 27
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
     - GatewayPort8080
+    - HTTPRoute303RedirectStatusCode
+    - HTTPRoute307RedirectStatusCode
+    - HTTPRoute308RedirectStatusCode
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
+    - HTTPRouteNamedRouteRule
+    - HTTPRouteParentRefPort
     - HTTPRoutePathRedirect
     - HTTPRoutePathRewrite
     - HTTPRoutePortRedirect
@@ -57,13 +62,8 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
-    - HTTPRoute303RedirectStatusCode
-    - HTTPRoute307RedirectStatusCode
-    - HTTPRoute308RedirectStatusCode
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
-    - HTTPRouteNamedRouteRule
-    - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
@@ -100,5 +100,10 @@ profiles:
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:
+- GRPCRouteNamedRule
+- HTTPRoute303Redirect
+- HTTPRoute307Redirect
+- HTTPRoute308Redirect
+- HTTPRouteNamedRule
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace

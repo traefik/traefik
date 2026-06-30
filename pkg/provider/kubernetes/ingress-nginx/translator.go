@@ -399,8 +399,6 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 			RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
 		}
 		rt.Middlewares = []string{name}
-		rt.Service = "noop@internal"
-		return
 	}
 
 	if loc.AccessLog != nil {

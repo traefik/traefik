@@ -7,11 +7,10 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 func Test_detectChanges(t *testing.T) {
-	portA := int32(80)
-	portB := int32(8080)
 	tests := []struct {
 		name   string
 		oldObj any
@@ -182,6 +181,154 @@ func Test_detectChanges(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "With different endpoint ready condition",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(true)},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(false)},
+				}},
+			},
+			want: true,
+		},
+		{
+			name: "With different endpoint serving condition",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
+				}},
+			},
+			want: true,
+		},
+		{
+			name: "With different endpoint terminating condition",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
+				}},
+			},
+			want: true,
+		},
+		{
+			name: "With endpoint serving condition nil then explicitly true",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.10.10.10"},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
+				}},
+			},
+		},
+		{
+			name: "With endpoint serving condition nil then explicitly false",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.10.10.10"},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
+				}},
+			},
+			want: true,
+		},
+		{
+			name: "With endpoint terminating condition nil then explicitly false",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.10.10.10"},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
+				}},
+			},
+		},
+		{
+			name: "With endpoint terminating condition nil then explicitly true",
+			oldObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.10.10.10"},
+				}},
+			},
+			newObj: &discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses:  []string{"10.10.10.10"},
+					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
+				}},
+			},
+			want: true,
+		},
+		{
 			name: "With different len of ports",
 			oldObj: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
@@ -204,7 +351,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "1",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: &portA,
+					Port: ptr.To[int32](80),
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -212,7 +359,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "2",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: &portB,
+					Port: ptr.To[int32](8080),
 				}},
 			},
 			want: true,

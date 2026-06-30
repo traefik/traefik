@@ -173,16 +173,16 @@ ALPN(`h2`)
           rule = "ClientIP(`192.168.0.0/24`)"
           entryPoints = ["web"]
           priority = 1
-          service = "service-2
+          service = "service-2"
       ```
 
     ```yaml tab="Labels"
        labels:
-        - "traefik.tcp.routers.Router-1.rule="ClientIP(`192.168.0.12`)"
+        - 'traefik.tcp.routers.Router-1.rule=ClientIP(`192.168.0.12`)'
         - "traefik.tcp.routers.Router-1.entryPoints=web"
         - "traefik.tcp.routers.Router-1.service=service-1"
         - "traefik.tcp.routers.Router-1.priority=2"
-        - "traefik.tcp.routers.Router-2.rule="ClientIP(`192.168.0.0/24`)"
+        - 'traefik.tcp.routers.Router-2.rule=ClientIP(`192.168.0.0/24`)'
         - "traefik.tcp.routers.Router-2.entryPoints=web"
         - "traefik.tcp.routers.Router-2.service=service-2"
         - "traefik.tcp.routers.Router-2.priority=1"
