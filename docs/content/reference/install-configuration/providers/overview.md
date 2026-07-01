@@ -45,6 +45,20 @@ For the list of the providers names, see the [supported providers](#supported-pr
     On the other hand, if you were to declare a middleware as a Custom Resource in Kubernetes and use the non-CRD Ingress objects,
     you would have to add the Kubernetes Namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
 
+!!! warning "Resource Name Normalization"
+
+    Traefik normalizes resource names by replacing every sequence of non-alphanumeric
+    characters with a single dash (`-`). Names that contain special characters, such as
+    consecutive dashes (`--`), dots, or underscores, are therefore collapsed when the
+    reference is resolved, and the reference must use the normalized form.
+
+    For example, a middleware named `strip--prefix` in the `prod` Kubernetes Namespace is
+    referenced as `prod-strip-prefix@kubernetescrd` (the double dash becomes a single dash),
+    not `prod-strip--prefix@kubernetescrd`. Referencing the non-normalized name results in a
+    `middleware "..." does not exist` error.
+
+    Use the normalized name as displayed in the Traefik dashboard.
+
 ## Supported Providers
 
 Below is the list of the currently supported providers in Traefik.
