@@ -1102,6 +1102,27 @@ if ($request_method = GET) {
 			expectedPath: "/new/page",
 		},
 		{
+			desc: "rewrite in if block using query argument",
+			configurationSnippet: `
+if ($arg_db = "foo") {
+	rewrite ^/write$ /api/v1 last;
+}
+if ($arg_db = "bar") {
+	rewrite ^/write$ /api/v1/bar last;
+}
+if ($arg_db = "baz") {
+	rewrite ^/write$ /api/v1/baz last;
+}
+if ($arg_db = "foobar") {
+	rewrite ^/write$ /api/v1/foo/bar last;
+}
+return 404;
+`,
+			path:          "/write?db=foobar&v=foobar-1.2.3.4",
+			expectedPath:  "/api/v1/foo/bar",
+			expectedQuery: "db=foobar&v=foobar-1.2.3.4",
+		},
+		{
 			desc: "rewrite with multiple capture groups",
 			serverSnippet: `
 rewrite ^/download/(.*)/media/(.*)\..*$ /download/$1/mp3/$2.mp3 last;
