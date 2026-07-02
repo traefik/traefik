@@ -2562,6 +2562,76 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "SSL Passthrough with force-ssl-redirect creates HTTP redirect router",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-ssl-passthrough-and-force-ssl-redirect.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-ingress-with-ssl-passthrough-and-force-ssl-redirect-passthrough-redirect-whoami-localhost": {
+							EntryPoints: []string{"https"},
+							Rule:        `HostSNI("passthrough-redirect.whoami.localhost")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+							Service: "default-whoami-tls-443",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-whoami-tls-443": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.3:8443",
+									},
+									{
+										Address: "10.10.0.4:8443",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-ssl-passthrough-and-force-ssl-redirect-passthrough-redirect-whoami-localhost-http": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("passthrough-redirect.whoami.localhost")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-ssl-passthrough-and-force-ssl-redirect-passthrough-redirect-whoami-localhost-redirect-scheme"},
+							Service:     "noop@internal",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-ssl-passthrough-and-force-ssl-redirect-passthrough-redirect-whoami-localhost-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Sticky Sessions",
 			paths: []string{
 				"services.yml",
