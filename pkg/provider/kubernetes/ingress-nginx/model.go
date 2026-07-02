@@ -290,4 +290,8 @@ type sslPassthroughBackend struct {
 
 	// RouterKey is the unique key used to name the TCP router.
 	RouterKey string
+
+	// ForceSSLRedirect indicates that HTTP requests to this host should be
+	// redirected to HTTPS with a 308 Permanent Redirect.
+	ForceSSLRedirect bool
 }
