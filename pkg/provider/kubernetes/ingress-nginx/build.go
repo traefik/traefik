@@ -955,7 +955,7 @@ func (p *Provider) resolveHTTPErrorBackend(namespace string, cfg IngressConfig) 
 func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
 	if len(ingressClasses) > 0 && ing.Spec.IngressClassName != nil {
 		return slices.ContainsFunc(ingressClasses, func(ic *netv1.IngressClass) bool {
-			return *ing.Spec.IngressClassName == ic.ObjectMeta.Name
+			return *ing.Spec.IngressClassName == ic.Name
 		})
 	}
 
@@ -963,7 +963,7 @@ func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.Ing
 		return class == p.IngressClass
 	}
 
-	return p.WatchIngressWithoutClass
+	return p.WatchIngressWithoutClass && ing.Spec.IngressClassName == nil
 }
 
 func (p *Provider) validateIngress(ing *netv1.Ingress, cfg IngressConfig) error {
