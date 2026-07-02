@@ -90,7 +90,9 @@ func (p *Provider) buildAppRoot(loc *location) {
 	if loc.Config.AppRoot == nil || !strings.HasPrefix(*loc.Config.AppRoot, "/") {
 		return
 	}
-	loc.AppRoot = loc.Config.AppRoot
+	loc.AppRoot = &dynamic.AppRoot{
+		Path: *loc.Config.AppRoot,
+	}
 }
 
 func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHosts map[string]bool) {
