@@ -764,6 +764,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AccessControlMaxAge != nil {
+		in, out := &in.AccessControlMaxAge, &out.AccessControlMaxAge
+		*out = new(int64)
+		**out = **in
+	}
 	if in.AllowedHosts != nil {
 		in, out := &in.AllowedHosts, &out.AllowedHosts
 		*out = make([]string, len(*in))
@@ -1855,6 +1860,11 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 		*out = new(ForwardingTimeouts)
 		**out = **in
 	}
+	if in.PeerCertSANs != nil {
+		in, out := &in.PeerCertSANs, &out.PeerCertSANs
+		*out = make([]tls.SAN, len(*in))
+		copy(*out, *in)
+	}
 	if in.Spiffe != nil {
 		in, out := &in.Spiffe, &out.Spiffe
 		*out = new(Spiffe)
@@ -2520,6 +2530,11 @@ func (in *TLSClientConfig) DeepCopyInto(out *TLSClientConfig) {
 	if in.Certificates != nil {
 		in, out := &in.Certificates, &out.Certificates
 		*out = make(tls.Certificates, len(*in))
+		copy(*out, *in)
+	}
+	if in.PeerCertSANs != nil {
+		in, out := &in.PeerCertSANs, &out.PeerCertSANs
+		*out = make([]tls.SAN, len(*in))
 		copy(*out, *in)
 	}
 	if in.Spiffe != nil {

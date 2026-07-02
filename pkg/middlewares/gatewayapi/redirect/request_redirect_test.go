@@ -3,6 +3,7 @@ package redirect
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,71 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"k8s.io/utils/ptr"
 )
+
+func TestRequestRedirectHandlerSchemeFromRequest(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		config     dynamic.RequestRedirect
+		tls        bool
+		wantScheme string
+	}{
+		{
+			desc:       "no scheme configured derives http from plain request",
+			config:     dynamic.RequestRedirect{Path: ptr.To("/baz")},
+			wantScheme: "http",
+		},
+		{
+			desc:       "no scheme configured derives https from TLS request",
+			config:     dynamic.RequestRedirect{Path: ptr.To("/baz")},
+			tls:        true,
+			wantScheme: "https",
+		},
+		{
+			desc:       "explicit scheme overrides request scheme",
+			config:     dynamic.RequestRedirect{Scheme: ptr.To("https"), Path: ptr.To("/baz")},
+			wantScheme: "https",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+			handler, err := NewRequestRedirect(t.Context(), next, test.config, "traefikTest")
+			require.NoError(t, err)
+
+			var ts *httptest.Server
+			if test.tls {
+				ts = httptest.NewTLSServer(handler)
+			} else {
+				ts = httptest.NewServer(handler)
+			}
+			t.Cleanup(ts.Close)
+
+			client := ts.Client()
+			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}
+
+			resp, err := client.Get(ts.URL + "/foo/bar")
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = resp.Body.Close() })
+
+			// Use the raw header value instead of resp.Location(), which resolves
+			// scheme-relative URLs against the request URL and would mask an empty scheme.
+			locationStr := resp.Header.Get("Location")
+			require.NotEmpty(t, locationStr)
+
+			locationURL, err := url.Parse(locationStr)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.wantScheme, locationURL.Scheme)
+			assert.Equal(t, "/baz", locationURL.Path)
+		})
+	}
+}
 
 func TestRequestRedirectHandler(t *testing.T) {
 	testCases := []struct {
@@ -137,6 +203,36 @@ func TestRequestRedirectHandler(t *testing.T) {
 			wantStatus: http.StatusMovedPermanently,
 		},
 		{
+			desc: "303 See Other",
+			config: dynamic.RequestRedirect{
+				Scheme:     ptr.To("https"),
+				StatusCode: http.StatusSeeOther,
+			},
+			url:        "http://foo",
+			wantURL:    "https://foo",
+			wantStatus: http.StatusSeeOther,
+		},
+		{
+			desc: "307 Temporary Redirect",
+			config: dynamic.RequestRedirect{
+				Scheme:     ptr.To("https"),
+				StatusCode: http.StatusTemporaryRedirect,
+			},
+			url:        "http://foo",
+			wantURL:    "https://foo",
+			wantStatus: http.StatusTemporaryRedirect,
+		},
+		{
+			desc: "308 Permanent Redirect",
+			config: dynamic.RequestRedirect{
+				Scheme:     ptr.To("https"),
+				StatusCode: http.StatusPermanentRedirect,
+			},
+			url:        "http://foo",
+			wantURL:    "https://foo",
+			wantStatus: http.StatusPermanentRedirect,
+		},
+		{
 			desc: "HTTP to HTTPS",
 			config: dynamic.RequestRedirect{
 				Scheme: ptr.To("https"),
@@ -201,7 +297,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 
 			assert.Equal(t, test.wantStatus, recorder.Code)
 			switch test.wantStatus {
-			case http.StatusMovedPermanently, http.StatusFound:
+			case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther, http.StatusTemporaryRedirect, http.StatusPermanentRedirect:
 				location, err := recorder.Result().Location()
 				require.NoError(t, err)
 

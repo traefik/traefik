@@ -178,12 +178,11 @@ gateway:
           group: ""
 
 # Enable Observability
-logs:
-  general:
-    level: INFO
-  # This enables access logs, outputting them to Traefik's standard output by default. The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
-  access:
-    enabled: true
+log:
+  level: INFO
+# This enables access logs, outputting them to Traefik's standard output by default. The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
+accessLog:
+  enabled: true
 
 # Enables Prometheus for Metrics
 metrics:

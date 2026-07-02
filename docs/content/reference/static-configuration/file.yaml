@@ -61,6 +61,7 @@ entryPoints:
       connection:
         - foobar
         - foobar
+      addXForwardedSchemeHeaders: true
     http:
       redirections:
         entryPoint:
@@ -95,6 +96,7 @@ entryPoints:
       sanitizePath: true
       mergeSlashes: true
       maxHeaderBytes: 42
+      underscoreHeadersStrategy: foobar
     http2:
       maxConcurrentStreams: 42
     http3:

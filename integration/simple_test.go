@@ -949,7 +949,7 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	s.traefikCmd(withConfigFile(file))
 
 	// All errors
-	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"]`))
 	require.NoError(s.T(), err)
 
 	// router3 has an error because it uses an unknown entrypoint
@@ -957,11 +957,11 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	require.NoError(s.T(), err)
 
 	// router4 is enabled, but in warning state because its tls options conf was messed up
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
 	require.NoError(s.T(), err)
 
 	// router5 is disabled because its middleware conf is broken
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router5@file", 1000*time.Millisecond, try.BodyContains())
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router5@file", 1000*time.Millisecond, try.BodyContains())
 	require.NoError(s.T(), err)
 }
 
@@ -2454,6 +2454,59 @@ func (s *SimpleSuite) TestAllowACMEByPassRedirect() {
 	resp, err = noRedirectClient.Get("http://127.0.0.1:8888/other-path")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusMovedPermanently, resp.StatusCode)
+}
+
+func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_underscore_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the underscore variant directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
 }
 
 func (s *SimpleSuite) TestFailoverService() {

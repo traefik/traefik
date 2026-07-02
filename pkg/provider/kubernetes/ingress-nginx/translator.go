@@ -3,9 +3,11 @@ package ingressnginx
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -37,11 +39,12 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	lb.SetDefaults()
 	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb}
 
-	for cert, key := range mc.Certs {
+	for _, k := range slices.Sorted(maps.Keys(mc.Certs)) {
+		cp := mc.Certs[k]
 		conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
 			Certificate: tls.Certificate{
-				CertFile: types.FileOrContent(cert),
-				KeyFile:  types.FileOrContent(key),
+				CertFile: types.FileOrContent(cp.Cert),
+				KeyFile:  types.FileOrContent(cp.Key),
 			},
 		})
 	}
@@ -86,13 +89,13 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Observability: obs,
 		}
 
-		if loc := mc.DefaultBackendLocation; loc != nil && loc.Retry != nil {
-			retryName := defaultBackendName + "-retry"
-			retryTLSName := defaultBackendTLSName + "-retry"
-			conf.HTTP.Middlewares[retryName] = &dynamic.Middleware{Retry: loc.Retry}
-			conf.HTTP.Middlewares[retryTLSName] = &dynamic.Middleware{Retry: loc.Retry}
-			rt.Middlewares = []string{retryName}
-			rtTLS.Middlewares = []string{retryTLSName}
+		// Apply the full middleware stack from the ingress location annotations to
+		// both catch-all routers, so options like enable-cors, custom-headers,
+		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
+		// ingress reach its catch-all routers.
+		if loc := mc.DefaultBackendLocation; loc != nil {
+			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
 
 		conf.HTTP.Routers[defaultBackendName] = rt
@@ -291,7 +294,8 @@ func buildService(backend *backend, serversTransportName string) *dynamic.Servic
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s", ep.Address),
+			URL:    fmt.Sprintf("http://%s", ep.Address),
+			Fenced: ep.Fenced,
 		})
 	}
 
@@ -317,7 +321,8 @@ func buildServiceWithLocConfig(backend *backend, serversTransportName string, lo
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", scheme, ep.Address),
+			URL:    fmt.Sprintf("%s://%s", scheme, ep.Address),
+			Fenced: ep.Fenced,
 		})
 	}
 
@@ -394,8 +399,6 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 			RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
 		}
 		rt.Middlewares = []string{name}
-		rt.Service = "noop@internal"
-		return
 	}
 
 	if loc.AccessLog != nil {
@@ -411,7 +414,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		if e.ErrorBackendName != "" {
 			errorSvcName = "default-backend-" + routerKey
 			if errBackend, ok := mc.Backends[e.ErrorBackendName]; ok {
-				conf.HTTP.Services[errorSvcName] = buildService(errBackend, "")
+				conf.HTTP.Services[errorSvcName] = buildServiceWithLocConfig(errBackend, "", loc.Config)
 			}
 		}
 		headers := http.Header{

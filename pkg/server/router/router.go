@@ -19,6 +19,7 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -372,6 +373,12 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	if len(router.ParentRefs) == 0 && router.DeniedEncodedPathCharacters != nil {
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
+		})
+	}
+
+	if router.TLS != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
 		})
 	}
 
