@@ -588,8 +588,11 @@ func buildRule(host string, loc *location) string {
 
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
+
+		regexPath := loc.Path
 		if pathType == netv1.PathTypeImplementationSpecific {
 			pathType = netv1.PathTypePrefix
+			regexPath = makeTrailingGroupOptional(loc.Path)
 		}
 
 		switch pathType {
@@ -597,7 +600,7 @@ func buildRule(host string, loc *location) string {
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
 		case netv1.PathTypePrefix:
 			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+loc.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
 			} else {
 				rules = append(rules, buildPrefixRule(loc.Path))
 			}
@@ -619,4 +622,19 @@ func buildPrefixRule(path string) string {
 	}
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, path+"/")
+}
+
+// makeTrailingGroupOptional converts an ImplementationSpecific regex path like /foo/(.*)
+// into /foo(?:/(.*))? so it also matches the bare /foo (without trailing slash).
+// Only applies when the path starts with a literal prefix (not a capture group),
+// i.e. when the path does not begin with "/(".
+func makeTrailingGroupOptional(path string) string {
+	if strings.HasPrefix(path, "/(") {
+		return path
+	}
+	idx := strings.LastIndex(path, "/(")
+	if idx < 0 {
+		return path
+	}
+	return path[:idx] + "(?:" + path[idx:] + ")?"
 }
