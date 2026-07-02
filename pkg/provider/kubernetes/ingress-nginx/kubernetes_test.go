@@ -17342,6 +17342,30 @@ func TestProvider_validateConfiguration(t *testing.T) {
 	}
 }
 
+func TestProvider_shouldProcessExplicitNonMatchingIngressClass(t *testing.T) {
+	provider := &Provider{
+		WatchIngressWithoutClass: true,
+	}
+	provider.SetDefaults()
+
+	ingressClasses := filterIngressClass([]*netv1.IngressClass{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "traefik"},
+			Spec: netv1.IngressClassSpec{
+				Controller: "traefik.io/ingress-controller",
+			},
+		},
+	}, provider.IngressClassByName, provider.IngressClass, provider.ControllerClass)
+
+	ingress := &netv1.Ingress{
+		Spec: netv1.IngressSpec{
+			IngressClassName: ptr.To("traefik"),
+		},
+	}
+
+	assert.False(t, provider.shouldProcess(ingress, ingressClasses))
+}
+
 func TestHeaderRegexp(t *testing.T) {
 	testCases := []struct {
 		desc     string
