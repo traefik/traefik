@@ -145,7 +145,15 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 		MaxAge:   s.cookie.maxAge,
 		Expires:  s.cookie.expires,
 	}
-	http.SetCookie(rw, cookie)
+
+	cookieStr := cookie.String()
+	if strings.HasPrefix(s.cookie.domain, ".") {
+		// Go stdlib http.SetCookie strips the leading dot from the Domain attribute per RFC 6265.
+		// nginx-ingress-controller preserves it (Domain=.example.com), so we restore it here
+		// to maintain migration compatibility.
+		cookieStr = strings.Replace(cookieStr, "Domain="+s.cookie.domain[1:], "Domain="+s.cookie.domain, 1)
+	}
+	rw.Header().Add("Set-Cookie", cookieStr)
 
 	return nil
 }
