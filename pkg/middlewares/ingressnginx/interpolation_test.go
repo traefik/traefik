@@ -269,6 +269,30 @@ func Test_ReplaceVariables(t *testing.T) {
 			expected: "val=8080",
 		},
 		{
+			desc:     "$args via RequestURI fallback when URL.RawQuery is empty",
+			src:      "val=$args",
+			req:      mustNewRequestWithEmptyRawQuery(t, http.MethodGet, "http://baz.com/foo?q=test&other=1"),
+			expected: "val=q=test&other=1",
+		},
+		{
+			desc:     "$query_string via RequestURI fallback when URL.RawQuery is empty",
+			src:      "val=$query_string",
+			req:      mustNewRequestWithEmptyRawQuery(t, http.MethodGet, "http://baz.com/foo?q=test&other=1"),
+			expected: "val=q=test&other=1",
+		},
+		{
+			desc:     "$is_args via RequestURI fallback when URL.RawQuery is empty",
+			src:      "val=$is_args",
+			req:      mustNewRequestWithEmptyRawQuery(t, http.MethodGet, "http://baz.com/foo?q=test"),
+			expected: "val=?",
+		},
+		{
+			desc:     "$is_args$args via RequestURI fallback preserves query params",
+			src:      "/login$is_args$args",
+			req:      mustNewRequestWithEmptyRawQuery(t, http.MethodGet, "http://baz.com/?foo=bar"),
+			expected: "/login?foo=bar",
+		},
+		{
 			desc:     "$proxy_add_x_forwarded_for without existing header",
 			src:      "val=$proxy_add_x_forwarded_for",
 			req:      mustNewRequestWithRemoteAddr(t, http.MethodGet, "http://baz.com/foo", "192.168.1.1:12345"),
@@ -338,6 +362,16 @@ func mustNewRequestWithCookie(t *testing.T, method, target, cookieName, cookieVa
 	req := httptest.NewRequest(method, target, http.NoBody)
 	req.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
 
+	return req
+}
+
+// mustNewRequestWithEmptyRawQuery creates a request where req.URL.RawQuery is cleared
+// but req.RequestURI still retains the query string. This simulates a middleware that
+// rebuilds req.URL (e.g. copies only the path) without preserving RawQuery.
+func mustNewRequestWithEmptyRawQuery(t *testing.T, method, target string) *http.Request {
+	t.Helper()
+	req := httptest.NewRequest(method, target, http.NoBody)
+	req.URL.RawQuery = ""
 	return req
 }
 
