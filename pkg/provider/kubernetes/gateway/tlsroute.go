@@ -12,15 +12,17 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
-func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTLSRoutes()
 	if err != nil {
@@ -29,55 +31,70 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 
 	for _, route := range routes {
-		routeListeners := matchingGatewayListeners(gatewayListeners, route.Namespace, route.Spec.ParentRefs)
-		if len(routeListeners) == 0 {
+		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
+		if len(routeParentRefs) == 0 {
 			continue
 		}
 
-		for _, parentRef := range route.Spec.ParentRefs {
-			parentStatus := gatev1.RouteParentStatus{
-				ParentRef:      parentRef,
-				ControllerName: controllerName,
-				Conditions: []metav1.Condition{
-					{
-						Type:               string(gatev1.RouteConditionAccepted),
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1.RouteReasonNoMatchingParent),
-					},
-				},
+		for _, match := range routeParentRefs {
+			acceptedCondition := metav1.Condition{
+				Type:               string(gatev1.RouteConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.RouteReasonNoMatchingParent),
 			}
 
-			for _, listener := range routeListeners {
-				accepted := matchListener(listener, parentRef)
+			var resolvedRefCondition *metav1.Condition
+			for _, listener := range match.listeners {
+				// A parentRef can target specific listeners through its SectionName or Port.
+				accepted := matchListener(listener, match.parentRef)
 
 				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
-					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNotAllowedByListeners))
+					if acceptedCondition.Status == metav1.ConditionFalse {
+						acceptedCondition.Reason = string(gatev1.RouteReasonNotAllowedByListeners)
+					}
 					accepted = false
 				}
+
 				hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
 				if accepted && !ok {
-					parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonNoMatchingListenerHostname))
+					if acceptedCondition.Status == metav1.ConditionFalse {
+						acceptedCondition.Reason = string(gatev1.RouteReasonNoMatchingListenerHostname)
+					}
 					accepted = false
 				}
 
 				if accepted {
 					listener.Status.AttachedRoutes++
-					// only consider the route attached if the listener is in an "attached" state.
-					if listener.Attached {
-						parentStatus.Conditions = updateRouteConditionAccepted(parentStatus.Conditions, string(gatev1.RouteReasonAccepted))
-					}
 				}
 
-				routeConf, resolveRefCondition := p.loadTLSRoute(listener, route, hostnames, statusReport)
+				// The ResolvedRefs condition must be reported for every parentRef,
+				// even when the route does not attach to the listener.
+				routeConf, condition := p.loadTLSRoute(match.gatewayName, match.gatewayNamespace, listener, route, hostnames, statusReport)
+				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
+					resolvedRefCondition = ptr.To(condition)
+				}
+
 				if accepted && listener.Attached {
 					mergeTCPConfiguration(routeConf, conf)
+
+					// Only consider the route attached if the listener is in an "attached" state.
+					acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
+					acceptedCondition.Status = metav1.ConditionTrue
 				}
-				parentStatus.Conditions = upsertRouteConditionResolvedRefs(parentStatus.Conditions, resolveRefCondition)
 			}
 
-			statusReport.RecordTLSRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, parentStatus)
+			parentStatusConditions := []metav1.Condition{acceptedCondition}
+			if resolvedRefCondition != nil {
+				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			}
+
+			statusReport.RecordTLSRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gatev1alpha2.RouteParentStatus{
+				ParentRef:      match.parentRef,
+				ControllerName: controllerName,
+				Conditions:     parentStatusConditions,
+			})
 		}
 
 		// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
@@ -96,7 +113,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 	}
 }
 
-func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
@@ -133,7 +150,7 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute
 		}
 
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTLSRoute), route.Namespace, route.Name, listener.GWNamespace, listener.GWName, listener.EPName, ri))
+		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTLSRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
 		// Routing criteria should be introduced at some point.
 		routerName := makeRouterName("", routeKey)
 
@@ -157,7 +174,7 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute
 		}
 
 		var serviceCondition *metav1.Condition
-		router.Service, serviceCondition = p.loadTLSWRRService(listener, conf, routerName, routeRule.BackendRefs, route, statusReport)
+		router.Service, serviceCondition = p.loadTLSWRRService(gatewayName, listener, conf, routerName, routeRule.BackendRefs, route, statusReport)
 		if serviceCondition != nil {
 			condition = *serviceCondition
 		}
@@ -169,7 +186,7 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute
 }
 
 // loadTLSWRRService is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTLSWRRService(listener gatewayListener, conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadTLSWRRService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routeKey + "-wrr"
 	if _, ok := conf.TCP.Services[name]; ok {
 		return name, nil
@@ -177,8 +194,8 @@ func (p *Provider) loadTLSWRRService(listener gatewayListener, conf *dynamic.Con
 
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTLSService(listener, conf, route, backendRef, statusReport)
+	for bi, backendRef := range backendRefs {
+		svcName, svc, errCondition := p.loadTLSService(gatewayName, listener, conf, routeKey, route, bi, backendRef, statusReport)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -212,7 +229,7 @@ func (p *Provider) loadTLSWRRService(listener gatewayListener, conf *dynamic.Con
 	return name, condition
 }
 
-func (p *Provider) loadTLSService(listener gatewayListener, conf *dynamic.Configuration, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, statusReport *statusReport) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTLSService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, route *gatev1.TLSRoute, backendIndex int, backendRef gatev1.BackendRef, statusReport *statusReport) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -225,7 +242,8 @@ func (p *Provider) loadTLSService(listener gatewayListener, conf *dynamic.Config
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			return provider.Normalize(namespace + "-" + string(backendRef.Name)), nil, &metav1.Condition{
+			svcKey := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
+			return provider.Normalize(svcKey), nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -236,7 +254,7 @@ func (p *Provider) loadTLSService(listener gatewayListener, conf *dynamic.Config
 		}
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
 
 	if err := p.isReferenceGranted(kindTLSRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
@@ -277,10 +295,7 @@ func (p *Provider) loadTLSService(listener gatewayListener, conf *dynamic.Config
 		}
 	}
 
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
-
-	lb, st, errCondition := p.loadTLSServers(namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadTLSServers(gatewayName, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -293,7 +308,7 @@ func (p *Provider) loadTLSService(listener gatewayListener, conf *dynamic.Config
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
-func (p *Provider) loadTLSServers(namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, *metav1.Condition) {
+func (p *Provider) loadTLSServers(gatewayName, namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -345,7 +360,7 @@ func (p *Provider) loadTLSServers(namespace string, route *gatev1.TLSRoute, back
 					Group:       ptr.To(gatev1.Group(groupGateway)),
 					Kind:        ptr.To(gatev1.Kind(kindGateway)),
 					Namespace:   ptr.To(gatev1.Namespace(namespace)),
-					Name:        gatev1.ObjectName(listener.GWName),
+					Name:        gatev1.ObjectName(gatewayName),
 					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
 				},
 				ControllerName: controllerName,
@@ -441,6 +456,37 @@ func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.Back
 		TLS: &dynamic.TLSClientConfig{
 			ServerName: string(policy.Spec.Validation.Hostname),
 		},
+	}
+
+	if len(policy.Spec.Validation.SubjectAltNames) > 0 {
+		// Per the Gateway API specification the Hostname should only be used for authentication
+		// and not for certificate validation. Thus, if SubjectAltNames is specified, we ignore
+		// the Hostname validation by setting the InsecureSkipVerify option to true.
+		st.TLS.InsecureSkipVerify = true
+
+		for _, san := range policy.Spec.Validation.SubjectAltNames {
+			switch san.Type {
+			case gatev1.URISubjectAltNameType:
+				st.TLS.PeerCertSANs = append(st.TLS.PeerCertSANs, tls.SAN{
+					Type:  tls.SANURIType,
+					Value: string(san.URI),
+				})
+			case gatev1.HostnameSubjectAltNameType:
+				st.TLS.PeerCertSANs = append(st.TLS.PeerCertSANs, tls.SAN{
+					Type:  tls.SANDNSNameType,
+					Value: string(san.Hostname),
+				})
+			default:
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+					Message:            fmt.Sprintf("Unsupported SubjectAltName type %q; only URI and Hostname types are supported", san.Type),
+				}
+			}
+		}
 	}
 
 	if policy.Spec.Validation.WellKnownCACertificates != nil {

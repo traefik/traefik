@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"

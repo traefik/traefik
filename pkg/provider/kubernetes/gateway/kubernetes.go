@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -84,8 +83,6 @@ type Provider struct {
 	// groupKindBackendFuncs is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
 	groupKindBackendFuncs map[string]map[string]BuildBackendFunc
 
-	lastConfiguration safe.Safe
-
 	routerTransform k8s.RouterTransform
 	client          *clientWrapper
 }
@@ -138,10 +135,14 @@ type gatewayListener struct {
 
 	Attached bool
 
-	GWName       string
-	GWNamespace  string
-	GWGeneration int64
-	EPName       string
+	EPName string
+}
+
+type gatewayWithListeners struct {
+	Name      string
+	Namespace string
+
+	listeners []gatewayListener
 }
 
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
@@ -220,7 +221,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
@@ -228,18 +229,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					if err != nil {
 						logger.Error().Err(err).Msg("Unable to load configuration from Gateways")
 					} else {
-						confHash, err := hashstructure.Hash(conf, nil)
-						switch {
-						case err != nil:
-							logger.Error().Msg("Unable to hash the configuration")
-						case p.lastConfiguration.Get() == confHash:
-							logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-						default:
-							p.lastConfiguration.Set(confHash)
-							configurationChan <- dynamic.Message{
-								ProviderName:  ProviderName,
-								Configuration: conf,
-							}
+						configurationChan <- dynamic.Message{
+							ProviderName:  ProviderName,
+							Configuration: conf,
 						}
 
 						// Flush regardless of whether the dynamic configuration changed: the
@@ -384,24 +376,30 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		gateways = append(gateways, gateway)
 	}
 
-	var gatewayListeners []gatewayListener
+	var selectedGateways []gatewayWithListeners
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
+		selectedGateways = append(selectedGateways, gatewayWithListeners{
+			Name:      gateway.Name,
+			Namespace: gateway.Namespace,
+			listeners: p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf),
+		})
 	}
 
-	p.loadHTTPRoutes(ctx, gatewayListeners, conf, statusReport)
+	statusReport.gatewayListeners = selectedGateways
 
-	p.loadGRPCRoutes(ctx, gatewayListeners, conf, statusReport)
+	p.loadHTTPRoutes(ctx, selectedGateways, conf, statusReport)
 
-	p.loadTLSRoutes(ctx, gatewayListeners, conf, statusReport)
+	p.loadGRPCRoutes(ctx, selectedGateways, conf, statusReport)
+
+	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
 
 	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, gatewayListeners, conf, statusReport)
+		p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
 	}
 
 	for _, gateway := range gateways {
@@ -411,9 +409,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Logger()
 
 		var listeners []gatewayListener
-		for _, listener := range gatewayListeners {
-			if listener.GWName == gateway.Name && listener.GWNamespace == gateway.Namespace {
-				listeners = append(listeners, listener)
+		for _, selectedGateway := range selectedGateways {
+			if selectedGateway.Name == gateway.Name && selectedGateway.Namespace == gateway.Namespace {
+				listeners = append(listeners, selectedGateway.listeners...)
 			}
 		}
 
@@ -445,14 +443,11 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 	for i, listener := range gateway.Spec.Listeners {
 		gatewayListeners[i] = gatewayListener{
-			Name:         string(listener.Name),
-			GWName:       gateway.Name,
-			GWNamespace:  gateway.Namespace,
-			GWGeneration: gateway.Generation,
-			Port:         listener.Port,
-			Protocol:     listener.Protocol,
-			TLS:          listener.TLS,
-			Hostname:     listener.Hostname,
+			Name:     string(listener.Name),
+			Port:     listener.Port,
+			Protocol: listener.Protocol,
+			TLS:      listener.TLS,
+			Hostname: listener.Hostname,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
 				SupportedKinds: []gatev1.RouteGroupKind{},
@@ -1104,33 +1099,63 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
-	var listeners []gatewayListener
+// gatewayListenersForParentRef associates a route parentRef with the listeners of
+// the Gateway it refers to, among the Gateways managed by this controller.
+type gatewayListenersForParentRef struct {
+	parentRef gatev1.ParentReference
 
-	for _, listener := range gatewayListeners {
-		for _, parentRef := range parentRefs {
-			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+	gatewayName      string
+	gatewayNamespace string
+
+	listeners []gatewayListener
+}
+
+// matchingGatewayListenersForParentRef returns, for each parentRef referring to a
+// Gateway managed by this controller, all the listeners of that Gateway.
+// parentRefs that do not refer to one of our Gateways are omitted.
+func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
+	var matches []gatewayListenersForParentRef
+
+	for _, parentRef := range parentRefs {
+		if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+			continue
+		}
+
+		if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+			continue
+		}
+
+		parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+
+		var matchingGateway *gatewayWithListeners
+		for _, gateway := range gateways {
+			if parentRefNamespace != gateway.Namespace {
 				continue
 			}
 
-			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+			if string(parentRef.Name) != gateway.Name {
 				continue
 			}
 
-			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-			if listener.GWNamespace != parentRefNamespace {
-				continue
-			}
+			matchingGateway = &gateway
+			break
+		}
 
-			if string(parentRef.Name) != listener.GWName {
-				continue
-			}
-
-			listeners = append(listeners, listener)
+		if matchingGateway != nil {
+			// All the Gateway listeners are kept: the parentRef is associated to its
+			// Gateway here, and whether each listener is actually targeted (SectionName,
+			// Port) is decided when loading the route, so that ResolvedRefs is reported
+			// even for parentRefs that match no listener.
+			matches = append(matches, gatewayListenersForParentRef{
+				parentRef:        parentRef,
+				gatewayName:      matchingGateway.Name,
+				gatewayNamespace: matchingGateway.Namespace,
+				listeners:        matchingGateway.listeners,
+			})
 		}
 	}
 
-	return listeners
+	return matches
 }
 
 func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
@@ -1328,42 +1353,6 @@ func kindToString(p *gatev1.Kind) string {
 		return "<nil>"
 	}
 	return string(*p)
-}
-
-func updateRouteConditionAccepted(conditions []metav1.Condition, reason string) []metav1.Condition {
-	var conds []metav1.Condition
-	for _, c := range conditions {
-		if c.Type == string(gatev1.RouteConditionAccepted) && c.Status != metav1.ConditionTrue {
-			c.Reason = reason
-			c.LastTransitionTime = metav1.Now()
-
-			if reason == string(gatev1.RouteReasonAccepted) {
-				c.Status = metav1.ConditionTrue
-			}
-		}
-
-		conds = append(conds, c)
-	}
-
-	return conds
-}
-
-func upsertRouteConditionResolvedRefs(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
-	var (
-		curr  *metav1.Condition
-		conds []metav1.Condition
-	)
-	for _, c := range conditions {
-		if c.Type == string(gatev1.RouteConditionResolvedRefs) {
-			curr = &c
-			continue
-		}
-		conds = append(conds, c)
-	}
-	if curr != nil && curr.Status == metav1.ConditionFalse && condition.Status == metav1.ConditionTrue {
-		return append(conds, *curr)
-	}
-	return append(conds, condition)
 }
 
 func upsertGatewayClassConditionAccepted(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {

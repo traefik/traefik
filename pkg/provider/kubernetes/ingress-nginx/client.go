@@ -20,7 +20,6 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -158,7 +157,7 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 	}
 
 	for _, ns := range c.watchedNamespaces {
-		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 
 		_, err := factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -167,25 +166,29 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 
 		c.factoriesIngress[ns] = factoryIngress
 
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		endpointSliceInformer := factoryKube.Discovery().V1().EndpointSlices().Informer()
+		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceByServiceNameIndexers); err != nil {
+			return nil, err
+		}
+		_, err = endpointSliceInformer.AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
 		c.factoriesKube[ns] = factoryKube
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
 		c.factoriesSecret[ns] = factorySecret
 
-		factoryConfigMap := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factoryConfigMap := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryConfigMap.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -226,7 +229,7 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		}
 	}
 
-	c.clusterScopeFactory = kinformers.NewSharedInformerFactory(c.clientset, resyncPeriod)
+	c.clusterScopeFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
 
 	if !c.ignoreIngressClasses {
 		_, err = c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
@@ -320,14 +323,11 @@ func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName strin
 		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
-	}
-	serviceSelector := labels.NewSelector()
-	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
-
-	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
+	return k8s.EndpointSlicesByServiceName(
+		c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Informer().GetIndexer(),
+		namespace,
+		serviceName,
+	)
 }
 
 // GetConfigMap returns the named configMap from the given namespace.

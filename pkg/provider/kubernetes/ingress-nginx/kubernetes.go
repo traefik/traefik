@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -132,9 +131,7 @@ type Provider struct {
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
 
-	k8sClient         *clientWrapper
-	lastConfiguration safe.Safe
-
+	k8sClient           *clientWrapper
 	applyMiddlewareFunc func(routerKey string, router *dynamic.Router, config *dynamic.Configuration, ingressConfig IngressConfig) error
 }
 
@@ -213,7 +210,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this
 					// throttling interval -- if we're hitting our throttle, we may have
 					// dropped events. This is fine, because we don't treat different
@@ -221,18 +218,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// track more information about the dropped events.
 					conf := p.loadConfiguration(ctxLog)
 
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  ProviderName,
-							Configuration: conf,
-						}
+					configurationChan <- dynamic.Message{
+						ProviderName:  ProviderName,
+						Configuration: conf,
 					}
 
 					// If we're throttling, we sleep here for the throttle duration to
@@ -268,23 +256,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	mc := p.build(ctx, ingressClasses)
 
 	// Update ingress statuses (requires k8s access, must happen in Phase 1 context).
-	for _, server := range mc.Servers {
-		for _, loc := range server.Locations {
-			if loc.IngressName == "" {
-				continue
-			}
-			// Retrieve the original ingress to update its status.
-			for _, ing := range p.k8sClient.ListIngresses() {
-				if ing.Namespace == loc.Namespace && ing.Name == loc.IngressName {
-					if err := p.updateIngressStatus(ing); err != nil {
-						log.Ctx(ctx).Error().Err(err).
-							Str("namespace", ing.Namespace).
-							Str("ingress", ing.Name).
-							Msg("Error while updating ingress status")
-					}
-					break
-				}
-			}
+	for _, ing := range mc.ProcessedIngresses {
+		if err := p.updateIngressStatus(ing); err != nil {
+			log.Ctx(ctx).Error().Err(err).
+				Str("namespace", ing.Namespace).
+				Str("ingress", ing.Name).
+				Msg("Error while updating ingress status")
 		}
 	}
 

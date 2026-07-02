@@ -42,9 +42,9 @@ http:
           timeout: "3s"
           fails: 3
           passes: 2
-        passiveHealthcheck:
+        passiveHealthCheck:
           failureWindow: "3s"
-          maxFailedAttempts: "3"
+          maxFailedAttempts: 3
         passHostHeader: true
         serversTransport: "customTransport@file"
         responseForwarding:
@@ -68,9 +68,9 @@ http:
       fails = 3
       passes = 2
 
-    [http.services.my-service.loadBalancer.passiveHealthcheck]
+    [http.services.my-service.loadBalancer.passiveHealthCheck]
       failureWindow = "3s"
-      maxFailedAttempts = "3"
+      maxFailedAttempts = 3
     
     passHostHeader = true
     serversTransport = "customTransport@file"
@@ -93,6 +93,8 @@ labels:
   - "traefik.http.services.my-service.loadBalancer.healthcheck.passes=2"
   - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s"
   - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.failureWindow=3s"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.maxFailedAttempts=3"
   - "traefik.http.services.my-service.loadBalancer.passHostHeader=true"
   - "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file"
   - "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
@@ -109,6 +111,8 @@ labels:
     "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health",
     "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s",
     "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.failureWindow=3s",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.maxFailedAttempts=3",
     "traefik.http.services.my-service.loadBalancer.healthcheck.fails=3",
     "traefik.http.services.my-service.loadBalancer.healthcheck.passes=2",
     "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s",
@@ -128,11 +132,11 @@ labels:
 | <a id="opt-strategy" href="#opt-strategy" title="#opt-strategy">`strategy`</a> | Load balancing strategy for distributing traffic among servers. Valid values: `wrr` (default), `p2c`, `hrw`, `leasttime`.                                                                                                                                                                                                                                                                     | No       |
 | <a id="opt-sticky" href="#opt-sticky" title="#opt-sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
-| <a id="opt-passiveHealthcheck" href="#opt-passiveHealthcheck" title="#opt-passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
+| <a id="opt-passiveHealthCheck" href="#opt-passiveHealthCheck" title="#opt-passiveHealthCheck">`passiveHealthCheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
 | <a id="opt-passHostHeader" href="#opt-passHostHeader" title="#opt-passHostHeader">`passHostHeader`</a> | Allows forwarding of the client Host header to server. By default, `passHostHeader` is true.                                                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
 | <a id="opt-responseForwarding" href="#opt-responseForwarding" title="#opt-responseForwarding">`responseForwarding`</a> | Configures how Traefik forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
-| <a id="opt-responseForwarding-FlushInterval" href="#opt-responseForwarding-FlushInterval" title="#opt-responseForwarding-FlushInterval">`responseForwarding.FlushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
+| <a id="opt-responseForwarding-flushInterval" href="#opt-responseForwarding-flushInterval" title="#opt-responseForwarding-flushInterval">`responseForwarding.flushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
 
 #### Servers
 
@@ -308,7 +312,7 @@ Below are the available options for the health check mechanism:
 | <a id="opt-hostname" href="#opt-hostname" title="#opt-hostname">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
 | <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server URL port for the health check endpoint.                                                                   |         | No       |
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                          | 30s     | No       |
-| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s     | No       |
+| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | -       | No       |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
 | <a id="opt-fails" href="#opt-fails" title="#opt-fails">`fails`</a> | Defines the number of consecutive failures before considering the server unhealthy.                                           | 1       | No       |
 | <a id="opt-passes" href="#opt-passes" title="#opt-passes">`passes`</a> | Defines the number of consecutive successes before considering the server healthy again.                                      | 1       | No       |
@@ -477,7 +481,7 @@ curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
 
 ### Passive Health Check
 
-The `passiveHealthcheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
+The `passiveHealthCheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
 
 Passive health checks rely on real traffic to assess server health.
 Traefik forwards requests as usual and evaluates each response or timeout,

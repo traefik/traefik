@@ -114,7 +114,7 @@ The Service automatically gets a server per instance in this consul Catalog serv
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the service, add tags starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change.
+To update the configuration of the Router automatically attached to the service, add tags starting with `traefik.http.routers.{name-of-your-choice}.` and followed by the option you want to change.
 
 For example, to change the rule, you could add the tag ```traefik.http.routers.my-service.rule=Host(`example.com`)```.
 
@@ -257,7 +257,7 @@ More information about available middlewares in the dedicated [middlewares secti
     ```yaml
     # ...
     # Declaring a middleware
-    traefik.tcp.middlewares.test-inflightconn.amount=10
+    traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10
     # Referencing a middleware
     traefik.tcp.routers.my-service.middlewares=test-inflightconn
     ```

@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"k8s.io/utils/ptr"
 )
 
 func pointer[T any](v T) *T { return &v }
@@ -636,7 +637,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"X-foobar",
 							"X-fiibar",
 						},
-						AccessControlMaxAge: 200,
+						AccessControlMaxAge: ptr.To(int64(200)),
 						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",
@@ -1200,7 +1201,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"X-foobar",
 							"X-fiibar",
 						},
-						AccessControlMaxAge: 200,
+						AccessControlMaxAge: ptr.To(int64(200)),
 						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",

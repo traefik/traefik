@@ -391,6 +391,8 @@ nav:
     - 'Security':
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
+        - 'HTTP/2 Header Memory': 'security/http2-header-memory.md'
+        - 'Headers with Underscores': 'security/header-underscores.md'
         - 'Multi-Tenant Kubernetes': 'security/multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
