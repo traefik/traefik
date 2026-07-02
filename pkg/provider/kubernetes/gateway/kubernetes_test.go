@@ -111,6 +111,152 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
 }
 
+func TestGatewayScoping(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+		<-eventCh
+	}
+
+	p := Provider{
+		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
+		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
+		// Scope the provider to a single Gateway.
+		Gateway: "default/traefik-internal",
+		client:  client,
+	}
+
+	_ = p.loadConfigurationFromGateways(t.Context())
+
+	// The scoped Gateway is managed and gets a status address.
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Len(t, gw.Status.Addresses, 1)
+	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
+
+	// The other Gateway is ignored.
+	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, gw.Status.Addresses)
+}
+
+func TestDisableGatewayClassStatus(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+		<-eventCh
+	}
+
+	p := Provider{
+		EntryPoints:               map[string]Entrypoint{"http": {Address: ":9080"}},
+		StatusAddress:             &StatusAddress{IP: "1.2.3.4"},
+		DisableGatewayClassStatus: true,
+		client:                    client,
+	}
+
+	_ = p.loadConfigurationFromGateways(t.Context())
+
+	// Gateway status is still written (the data plane owns it).
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.NotEmpty(t, gw.Status.Conditions)
+	require.Len(t, gw.Status.Addresses, 1)
+	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
+
+	// GatewayClass status is not written (left to the operator).
+	gc, err := gwClient.GatewayV1().GatewayClasses().Get(t.Context(), "traefik-internal", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, gc.Status.Conditions)
+}
+
+func TestStaticAddressStatus(t *testing.T) {
+	ip := func(v string) gatev1.GatewaySpecAddress {
+		return gatev1.GatewaySpecAddress{Type: ptr.To(gatev1.IPAddressType), Value: v}
+	}
+	realized := []gatev1.GatewayStatusAddress{{Type: ptr.To(gatev1.IPAddressType), Value: "1.2.3.4"}}
+
+	t.Run("no spec addresses returns realized", func(t *testing.T) {
+		gw := &gatev1.Gateway{}
+		addrs, unmet := staticAddressStatus(gw, realized)
+		require.Nil(t, unmet)
+		assert.Equal(t, realized, addrs)
+	})
+
+	t.Run("unsupported type not accepted", func(t *testing.T) {
+		gw := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Addresses: []gatev1.GatewaySpecAddress{{
+			Type: ptr.To(gatev1.AddressType("test/fake")), Value: "x",
+		}}}}
+		_, unmet := staticAddressStatus(gw, realized)
+		require.NotNil(t, unmet)
+		assert.Equal(t, string(gatev1.GatewayConditionAccepted), unmet.Type)
+		assert.Equal(t, string(gatev1.GatewayReasonUnsupportedAddress), unmet.Reason)
+	})
+
+	t.Run("usable address programmed", func(t *testing.T) {
+		gw := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Addresses: []gatev1.GatewaySpecAddress{ip("1.2.3.4")}}}
+		addrs, unmet := staticAddressStatus(gw, realized)
+		require.Nil(t, unmet)
+		require.Len(t, addrs, 1)
+		assert.Equal(t, "1.2.3.4", addrs[0].Value)
+	})
+
+	t.Run("unusable address not programmed", func(t *testing.T) {
+		gw := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Addresses: []gatev1.GatewaySpecAddress{ip("9.9.9.9"), ip("1.2.3.4")}}}
+		addrs, unmet := staticAddressStatus(gw, realized)
+		require.NotNil(t, unmet)
+		assert.Equal(t, string(gatev1.GatewayConditionProgrammed), unmet.Type)
+		assert.Equal(t, string(gatev1.GatewayReasonAddressNotUsable), unmet.Reason)
+		for _, a := range addrs {
+			assert.NotEqual(t, "9.9.9.9", a.Value)
+		}
+	})
+}
+
+func TestManagesGateway(t *testing.T) {
+	newGW := func(ns, name string) *gatev1.Gateway {
+		return &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+	}
+
+	testCases := []struct {
+		desc    string
+		gateway string
+		gw      *gatev1.Gateway
+		want    bool
+	}{
+		{desc: "no scoping manages everything", gateway: "", gw: newGW("default", "foo"), want: true},
+		{desc: "matching ref", gateway: "default/foo", gw: newGW("default", "foo"), want: true},
+		{desc: "different name", gateway: "default/foo", gw: newGW("default", "bar"), want: false},
+		{desc: "different namespace", gateway: "default/foo", gw: newGW("other", "foo"), want: false},
+		{desc: "malformed ref", gateway: "foo", gw: newGW("default", "foo"), want: false},
+		{desc: "list matches first", gateway: "default/foo,other/bar", gw: newGW("default", "foo"), want: true},
+		{desc: "list matches second with spaces", gateway: "default/foo, other/bar", gw: newGW("other", "bar"), want: true},
+		{desc: "list matches none", gateway: "default/foo,other/bar", gw: newGW("default", "baz"), want: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := Provider{Gateway: test.gateway}
+			assert.Equal(t, test.want, p.managesGateway(test.gw))
+		})
+	}
+}
+
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
 		desc                string

@@ -222,6 +222,8 @@ providers:
         name: foobar
         namespace: foobar
     nativeLBByDefault: true
+    gateway: foobar
+    disableGatewayClassStatus: true
   rest:
     insecure: true
   consulCatalog:
