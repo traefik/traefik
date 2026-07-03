@@ -228,8 +228,9 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	body := make([]byte, maxBodySize+1)
 	n, err := io.ReadFull(req.Body, body)
 	// This happens with HTTP/3, where the end of the body is framed at the stream
-	// level instead of declared with Content-Length. A chunked request with no
-	// chunks has the same shape.
+	// level rather than declared via Content-Length, so a bodyless request arrives
+	// with a non-nil Body and ContentLength == -1. The same shape is possible for a
+	// chunked request that sends no chunks.
 	if errors.Is(err, io.EOF) && n == 0 {
 		return &reusableRequest{
 			req:  req,
