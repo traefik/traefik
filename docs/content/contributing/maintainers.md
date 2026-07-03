@@ -26,6 +26,7 @@ description: "Traefik Proxy is an open source software with a thriving community
 * Gina Adzani [@gndz07](https://github.com/gndz07)
 * Mathis Urien [@LBF38](https://github.com/LBF38)
 * Kangmin Kim [@amazon7737](https://github.com/amazon7737)
+* Nándor Kollár [@nandorKollar](https://github.com/nandorKollar)
 
 ## Past Maintainers
 
