@@ -231,7 +231,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	// level rather than declared via Content-Length, so a bodyless request arrives
 	// with a non-nil Body and ContentLength == -1. The same shape is possible for a
 	// chunked request that sends no chunks.
-	if errors.Is(err, io.EOF) && n == 0 {
+	if errors.Is(err, io.EOF) {
 		return &reusableRequest{
 			req:  req,
 			body: body[:n],
