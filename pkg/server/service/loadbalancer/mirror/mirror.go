@@ -207,7 +207,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
+	if req.Body == nil || !mirrorBody {
 		return &reusableRequest{req: req}, nil, nil
 	}
 
