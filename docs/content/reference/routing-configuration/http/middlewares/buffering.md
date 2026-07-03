@@ -11,7 +11,7 @@ This can help services avoid large amounts of data (`multipart/form-data` for ex
 
 !!! info
 
-    When the middleware is attached, Traefik still buffers the request body before forwarding it.
+    When the middleware is attached, Traefik buffers the request body before forwarding it.
     As a result, Traefik can send the request upstream with a fixed `Content-Length` instead of streaming the original chunked body.
 
 ## Configuration Examples
