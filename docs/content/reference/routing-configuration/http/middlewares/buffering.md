@@ -7,14 +7,12 @@ The `buffering` middleware limits the size of requests that can be forwarded to 
 
 With buffering, Traefik reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.
 
-The buffering middleware is not enabled by default.
-Its options only apply to routers that explicitly use this middleware.
-
-Setting `maxRequestBodyBytes` to `0` keeps the request body size unlimited.
-However, when the middleware is attached, Traefik still buffers the request body before forwarding it.
-As a result, Traefik can send the request upstream with a fixed `Content-Length` instead of streaming the original chunked body.
-
 This can help services avoid large amounts of data (`multipart/form-data` for example), and can minimize the time spent sending data to a Service
+
+!!! info
+
+    When the middleware is attached, Traefik still buffers the request body before forwarding it.
+    As a result, Traefik can send the request upstream with a fixed `Content-Length` instead of streaming the original chunked body.
 
 ## Configuration Examples
 
@@ -65,9 +63,9 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum allowed body size for the request (in bytes). <br /> If the request exceeds the allowed size, it is not forwarded to the Service, and the client gets a `413` (Request Entity Too Large) response. | 0 | No |
+| <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum allowed body size for the request (in bytes). <br /> If the request exceeds the allowed size, it is not forwarded to the Service, and the client gets a `413` (Request Entity Too Large) response. <br /> `0` means unlimited. | 0 | No |
 | <a id="opt-memRequestBodyBytes" href="#opt-memRequestBodyBytes" title="#opt-memRequestBodyBytes">`memRequestBodyBytes`</a> | Threshold (in bytes) from which the request will be buffered on disk instead of in memory.| 1048576 | No |
-| <a id="opt-maxResponseBodyBytes" href="#opt-maxResponseBodyBytes" title="#opt-maxResponseBodyBytes">`maxResponseBodyBytes`</a> | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. | 0 | No |
+| <a id="opt-maxResponseBodyBytes" href="#opt-maxResponseBodyBytes" title="#opt-maxResponseBodyBytes">`maxResponseBodyBytes`</a> | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. <br /> `0` means unlimited. | 0 | No |
 | <a id="opt-memResponseBodyBytes" href="#opt-memResponseBodyBytes" title="#opt-memResponseBodyBytes">`memResponseBodyBytes`</a> | Threshold (in bytes) from which the response will be buffered on disk instead of in memory.| 1048576 | No |
 | <a id="opt-retryExpression" href="#opt-retryExpression" title="#opt-retryExpression">`retryExpression`</a> | Replay the request using `retryExpression`.<br /> More information [here](#retryexpression). | "" | No |
 
