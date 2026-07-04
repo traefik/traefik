@@ -1,13 +1,20 @@
 package file
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"io"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -266,6 +273,226 @@ func TestProvideWatchWithNonConfigDanglingSymlink(t *testing.T) {
 	}
 }
 
+func TestProvideWithWatch_RenewedCertificateInPlaceReloads(t *testing.T) {
+	dynamicDir := t.TempDir()
+	certsDir := t.TempDir()
+
+	firstExpiry := time.Now().Add(24 * time.Hour).Truncate(time.Second)
+	writeCertPair(t, filepath.Join(certsDir, "cert.pem"), filepath.Join(certsDir, "key.pem"), firstExpiry)
+	newDynamicCertConfig(t, dynamicDir, certsDir)
+
+	provider := &Provider{Directory: dynamicDir, Watch: true}
+	configChan := make(chan dynamic.Message)
+	go func() {
+		assert.NoError(t, provider.Provide(configChan, safe.NewPool(t.Context())))
+	}()
+
+	waitForCertNotAfter(t, configChan, firstExpiry, 2*time.Second)
+
+	secondExpiry := time.Now().Add(48 * time.Hour).Truncate(time.Second)
+	writeCertPair(t, filepath.Join(certsDir, "cert.pem"), filepath.Join(certsDir, "key.pem"), secondExpiry)
+
+	waitForCertNotAfter(t, configChan, secondExpiry, 2*time.Second)
+}
+
+func TestProvideWithWatch_RenamedCertificateReloadsRepeatedly(t *testing.T) {
+	dynamicDir := t.TempDir()
+	certsDir := t.TempDir()
+
+	firstExpiry := time.Now().Add(24 * time.Hour).Truncate(time.Second)
+	writeCertPair(t, filepath.Join(certsDir, "cert.pem"), filepath.Join(certsDir, "key.pem"), firstExpiry)
+	newDynamicCertConfig(t, dynamicDir, certsDir)
+
+	provider := &Provider{Directory: dynamicDir, Watch: true}
+	configChan := make(chan dynamic.Message)
+	go func() {
+		assert.NoError(t, provider.Provide(configChan, safe.NewPool(t.Context())))
+	}()
+
+	waitForCertNotAfter(t, configChan, firstExpiry, 2*time.Second)
+
+	secondExpiry := time.Now().Add(48 * time.Hour).Truncate(time.Second)
+	renameCertPair(t, filepath.Join(certsDir, "cert.pem"), filepath.Join(certsDir, "key.pem"), secondExpiry)
+	waitForCertNotAfter(t, configChan, secondExpiry, 2*time.Second)
+
+	thirdExpiry := time.Now().Add(72 * time.Hour).Truncate(time.Second)
+	renameCertPair(t, filepath.Join(certsDir, "cert.pem"), filepath.Join(certsDir, "key.pem"), thirdExpiry)
+	waitForCertNotAfter(t, configChan, thirdExpiry, 2*time.Second)
+}
+
+func TestProvideWithWatch_DeletedAndRecreatedCertificateReloads(t *testing.T) {
+	dynamicDir := t.TempDir()
+	certsDir := t.TempDir()
+
+	firstExpiry := time.Now().Add(24 * time.Hour).Truncate(time.Second)
+	certPath := filepath.Join(certsDir, "cert.pem")
+	keyPath := filepath.Join(certsDir, "key.pem")
+	writeCertPair(t, certPath, keyPath, firstExpiry)
+	newDynamicCertConfig(t, dynamicDir, certsDir)
+
+	provider := &Provider{Directory: dynamicDir, Watch: true}
+	configChan := make(chan dynamic.Message)
+	go func() {
+		assert.NoError(t, provider.Provide(configChan, safe.NewPool(t.Context())))
+	}()
+
+	waitForCertNotAfter(t, configChan, firstExpiry, 2*time.Second)
+
+	require.NoError(t, os.Remove(certPath))
+	require.NoError(t, os.Remove(keyPath))
+
+	secondExpiry := time.Now().Add(96 * time.Hour).Truncate(time.Second)
+	writeCertPair(t, certPath, keyPath, secondExpiry)
+
+	waitForCertNotAfter(t, configChan, secondExpiry, 2*time.Second)
+}
+
+func TestProvideWithWatch_CertificateMissingAtStartupIsPickedUpOnceCreated(t *testing.T) {
+	dynamicDir := t.TempDir()
+	certsDir := t.TempDir()
+	certPath := filepath.Join(certsDir, "cert.pem")
+	keyPath := filepath.Join(certsDir, "key.pem")
+	newDynamicCertConfig(t, dynamicDir, certsDir)
+
+	provider := &Provider{Directory: dynamicDir, Watch: true}
+	configChan := make(chan dynamic.Message)
+	go func() {
+		assert.NoError(t, provider.Provide(configChan, safe.NewPool(t.Context())))
+	}()
+
+	time.Sleep(200 * time.Millisecond)
+
+	expiry := time.Now().Add(24 * time.Hour).Truncate(time.Second)
+	writeCertPair(t, certPath, keyPath, expiry)
+
+	waitForCertNotAfter(t, configChan, expiry, 2*time.Second)
+}
+
+func TestIsBaseDir(t *testing.T) {
+	tests := []struct {
+		desc      string
+		directory string
+		filename  string
+		dir       string
+		want      bool
+	}{
+		{
+			desc:      "directory mode, exact match",
+			directory: "/etc/traefik/dynamic",
+			dir:       "/etc/traefik/dynamic",
+			want:      true,
+		},
+		{
+			desc:      "directory mode, unrelated dir",
+			directory: "/etc/traefik/dynamic",
+			dir:       "/etc/traefik/other",
+			want:      false,
+		},
+		{
+			desc:     "filename mode, matches parent dir",
+			filename: "/etc/traefik/dynamic/certificates.toml",
+			dir:      "/etc/traefik/dynamic",
+			want:     true,
+		},
+		{
+			desc:     "filename mode, unrelated dir",
+			filename: "/etc/traefik/dynamic/certificates.toml",
+			dir:      "/etc/other",
+			want:     false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			p := &Provider{Directory: test.directory, Filename: test.filename}
+			assert.Equal(t, test.want, p.isBaseDir(test.dir))
+		})
+	}
+}
+
+func TestSyncExternalFileWatches(t *testing.T) {
+	dynamicDir := t.TempDir()
+	certsDirA := t.TempDir()
+	certsDirB := t.TempDir()
+
+	watcher, err := fsnotify.NewWatcher()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = watcher.Close() })
+
+	p := &Provider{Directory: dynamicDir}
+	p.watcher = watcher
+
+	certA := filepath.Join(certsDirA, "cert.pem")
+	certB := filepath.Join(certsDirB, "cert.pem")
+	inBaseDir := filepath.Join(dynamicDir, "inline-cert.pem")
+
+	p.syncExternalFileWatches([]string{certA, inBaseDir})
+	assert.Equal(t, map[string]struct{}{certsDirA: {}}, p.externalDirs, "certsDirA should be tracked; the base dir must not be")
+
+	p.syncExternalFileWatches([]string{certB, inBaseDir})
+	assert.Equal(t, map[string]struct{}{certsDirB: {}}, p.externalDirs)
+
+	p.syncExternalFileWatches(nil)
+	assert.Empty(t, p.externalDirs)
+}
+
+func TestIsRelevantEvent(t *testing.T) {
+	tests := []struct {
+		desc      string
+		directory string
+		filename  string
+		external  map[string]struct{}
+		event     string
+		want      bool
+	}{
+		{
+			desc:      "directory mode, event under directory",
+			directory: "/etc/traefik/dynamic",
+			event:     "/etc/traefik/dynamic/certificates.toml",
+			want:      true,
+		},
+		{
+			desc:      "directory mode, sibling dir with overlapping name prefix is not matched",
+			directory: "/etc/traefik/dynamic",
+			event:     "/etc/traefik/dynamic-backup/certificates.toml",
+			want:      false,
+		},
+		{
+			desc:     "filename mode, matching basename",
+			filename: "/etc/traefik/dynamic/certificates.toml",
+			event:    "/etc/traefik/dynamic/certificates.toml",
+			want:     true,
+		},
+		{
+			desc:     "filename mode, unrelated file in same dir",
+			filename: "/etc/traefik/dynamic/certificates.toml",
+			event:    "/etc/traefik/dynamic/other.toml",
+			want:     false,
+		},
+		{
+			desc:     "filename mode, event under a tracked external dir",
+			filename: "/etc/traefik/dynamic/certificates.toml",
+			external: map[string]struct{}{"/etc/letsencrypt/live/example.com": {}},
+			event:    "/etc/letsencrypt/live/example.com/cert.pem",
+			want:     true,
+		},
+		{
+			desc:     "filename mode, event under an untracked dir",
+			filename: "/etc/traefik/dynamic/certificates.toml",
+			event:    "/etc/letsencrypt/live/example.com/cert.pem",
+			want:     false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			p := &Provider{Directory: test.directory, Filename: test.filename}
+			p.externalDirs = test.external
+			assert.Equal(t, test.want, p.isRelevantEvent(test.event))
+		})
+	}
+}
+
 func getTestCases() []ProvideTestCase {
 	return []ProvideTestCase{
 		{
@@ -424,4 +651,86 @@ func createTempFile(srcPath, tempDir string) (*os.File, error) {
 
 	_, err = io.Copy(file, src)
 	return file, err
+}
+
+func generateSelfSignedCert(t *testing.T, notAfter time.Time) (certPEM, keyPEM []byte) {
+	t.Helper()
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject:      pkix.Name{CommonName: "repro.local"},
+		NotBefore:    time.Now(),
+		NotAfter:     notAfter,
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+
+	certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyPEM = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	return certPEM, keyPEM
+}
+
+func writeCertPair(t *testing.T, certPath, keyPath string, notAfter time.Time) {
+	t.Helper()
+
+	certPEM, keyPEM := generateSelfSignedCert(t, notAfter)
+	require.NoError(t, os.WriteFile(certPath, certPEM, 0o600))
+	require.NoError(t, os.WriteFile(keyPath, keyPEM, 0o600))
+}
+
+func renameCertPair(t *testing.T, certPath, keyPath string, notAfter time.Time) {
+	t.Helper()
+
+	dir := t.TempDir()
+	tmpCert := filepath.Join(dir, "cert.pem")
+	tmpKey := filepath.Join(dir, "key.pem")
+	writeCertPair(t, tmpCert, tmpKey, notAfter)
+
+	require.NoError(t, os.Rename(tmpCert, certPath))
+	require.NoError(t, os.Rename(tmpKey, keyPath))
+}
+
+func waitForCertNotAfter(t *testing.T, configChan chan dynamic.Message, want time.Time, timeout time.Duration) {
+	t.Helper()
+
+	deadline := time.After(timeout)
+	for {
+		select {
+		case conf := <-configChan:
+			if conf.Configuration.TLS == nil || len(conf.Configuration.TLS.Certificates) == 0 {
+				continue
+			}
+
+			certPEM := conf.Configuration.TLS.Certificates[0].Certificate.CertFile.String()
+			block, _ := pem.Decode([]byte(certPEM))
+			if block == nil {
+				continue
+			}
+
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				continue
+			}
+
+			if cert.NotAfter.Truncate(time.Second).Equal(want.Truncate(time.Second)) {
+				return
+			}
+		case <-deadline:
+			t.Fatalf("timeout waiting for certificate with NotAfter=%s", want)
+		}
+	}
+}
+
+func newDynamicCertConfig(t *testing.T, dir, certsDir string) {
+	t.Helper()
+
+	confPath := filepath.Join(dir, "certificates.toml")
+	content := "[[tls.certificates]]\n" +
+		"  certFile = \"" + filepath.Join(certsDir, "cert.pem") + "\"\n" +
+		"  keyFile = \"" + filepath.Join(certsDir, "key.pem") + "\"\n"
+	require.NoError(t, os.WriteFile(confPath, []byte(content), 0o600))
 }
