@@ -24,6 +24,31 @@ type ProvideTestCase struct {
 	expectedNumTLSOptions int
 }
 
+func TestTLSCertificateContentMissingFile(t *testing.T) {
+	tempDir := t.TempDir()
+
+	missingCert := filepath.Join(tempDir, "not-yet-issued-cert.pem")
+	missingKey := filepath.Join(tempDir, "not-yet-issued-key.pem")
+
+	fileConfig, err := os.CreateTemp(tempDir, "temp*.toml")
+	require.NoError(t, err)
+
+	content := `
+[[tls.certificates]]
+  certFile = "` + missingCert + `"
+  keyFile = "` + missingKey + `"
+`
+
+	_, err = fileConfig.WriteString(content)
+	require.NoError(t, err)
+
+	provider := &Provider{}
+	_, refFiles, err := provider.loadFileConfig(t.Context(), fileConfig.Name())
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, []string{missingCert, missingKey}, refFiles)
+}
+
 func TestTLSCertificateContent(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -66,8 +91,20 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := &Provider{}
-	configuration, err := provider.loadFileConfig(t.Context(), fileConfig.Name(), true)
+	configuration, refFiles, err := provider.loadFileConfig(t.Context(), fileConfig.Name())
 	require.NoError(t, err)
+
+	// Every certificate/key/CA path referenced from the config should be reported,
+	// so the caller can keep watching them for external changes.
+	require.ElementsMatch(t, []string{
+		fileTLS.Name(), fileTLSKey.Name(), // tls.certificates
+		fileTLS.Name(),                    // tls.options.default.clientAuth.caFiles
+		fileTLS.Name(), fileTLSKey.Name(), // tls.stores.default.defaultCertificate
+		fileTLS.Name(),                    // http.serversTransports.default.rootCAs
+		fileTLS.Name(), fileTLSKey.Name(), // http.serversTransports.default.certificates
+		fileTLS.Name(),                    // tcp.serversTransports.default.tls.rootCAs
+		fileTLS.Name(), fileTLSKey.Name(), // tcp.serversTransports.default.tls.certificates
+	}, refFiles)
 
 	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
