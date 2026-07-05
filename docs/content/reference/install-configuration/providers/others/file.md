@@ -122,4 +122,9 @@ http:
     As it is very difficult to listen to all file system notifications, Traefik uses [fsnotify](https://github.com/fsnotify/fsnotify).
     If using a directory with a mounted directory does not fix your issue, please check your file system compatibility with fsnotify.
 
+    If a configuration file contains a YAML or TOML syntax error, Traefik discards **all** configuration from the file provider.
+    Every router, middleware, and service defined across the entire directory is dropped — not just the broken file.
+    Validate configuration files before deploying (for example, with `traefik healthcheck` or an external YAML validator),
+    and keep backups of known-good configurations.
+
 {% include-markdown "includes/traefik-for-business-applications.md" %}
