@@ -3,7 +3,9 @@ package tls
 import (
 	"crypto/tls"
 	"fmt"
+	"maps"
 	"net"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -76,6 +78,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	if c == nil {
 		return nil
 	}
+
 	serverName := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
 	if len(serverName) == 0 {
 		// If no ServerName is provided, Check for local IP address matches
@@ -99,38 +102,31 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		return certificateData.Certificate
 	}
 
-	matchedCerts := map[string]*CertificateData{}
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains, cert := range c.DynamicCerts.Get().(map[string]*CertificateData) {
-			for certDomain := range strings.SplitSeq(domains, ",") {
-				if matchDomain(serverName, certDomain) {
-					matchedCerts[certDomain] = cert
+		certs := c.DynamicCerts.Get().(map[string]*CertificateData)
+		// sorted cert sans identifiers
+		sorted := slices.SortedFunc(maps.Keys(certs), func(certKey string, certKey2 string) int {
+			// reverse sort.
+			return strings.Compare(certKey2, certKey)
+		})
+
+		for _, certDomains := range sorted {
+			if matchDomain(serverName, certDomains) {
+				// cache best match
+				certificateData := certs[certDomains]
+				c.CertCache.SetDefault(serverName, certificateData)
+
+				if c.ocspStapler != nil && certificateData.Hash != "" {
+					if staple, ok := c.ocspStapler.GetStaple(certificateData.Hash); ok {
+						// We are updating the OCSPStaple of the certificate without any synchronization
+						// as this should not cause any issue.
+						certificateData.Certificate.OCSPStaple = staple
+					}
 				}
+
+				return certificateData.Certificate
 			}
 		}
-	}
-
-	if len(matchedCerts) > 0 {
-		// sort map by keys
-		keys := make([]string, 0, len(matchedCerts))
-		for k := range matchedCerts {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		// cache best match
-		certificateData := matchedCerts[keys[len(keys)-1]]
-		c.CertCache.SetDefault(serverName, certificateData)
-
-		if c.ocspStapler != nil && certificateData.Hash != "" {
-			if staple, ok := c.ocspStapler.GetStaple(certificateData.Hash); ok {
-				// We are updating the OCSPStaple of the certificate without any synchronization
-				// as this should not cause any issue.
-				certificateData.Certificate.OCSPStaple = staple
-			}
-		}
-
-		return certificateData.Certificate
 	}
 
 	return nil
@@ -267,20 +263,25 @@ func parseCertificate(cert *Certificate) (tls.Certificate, []string, error) {
 	return tlsCert, SANs, err
 }
 
-// matchDomain returns whether the server name matches the cert domain.
+// matchDomain returns whether the server name matches the cert domains.
 // The server name, from TLS SNI, must not have trailing dots (https://datatracker.ietf.org/doc/html/rfc6066#section-3).
 // This is enforced by https://github.com/golang/go/blob/d3d7998756c33f69706488cade1cd2b9b10a4c7f/src/crypto/tls/handshake_messages.go#L423-L427.
-func matchDomain(serverName, certDomain string) bool {
-	// TODO: assert equality after removing the trailing dots?
-	if serverName == certDomain {
-		return true
-	}
+func matchDomain(serverName, certDomains string) bool {
+	for certDomain := range strings.SplitSeq(certDomains, ",") {
+		// TODO: assert equality after removing the trailing dots?
+		if serverName == certDomain {
+			return true
+		}
 
-	for len(certDomain) > 0 && certDomain[len(certDomain)-1] == '.' {
-		certDomain = certDomain[:len(certDomain)-1]
-	}
+		for len(certDomain) > 0 && certDomain[len(certDomain)-1] == '.' {
+			certDomain = certDomain[:len(certDomain)-1]
+		}
 
-	labels := strings.Split(serverName, ".")
-	labels[0] = "*"
-	return certDomain == strings.Join(labels, ".")
+		labels := strings.Split(serverName, ".")
+		labels[0] = "*"
+		if certDomain == strings.Join(labels, ".") {
+			return true
+		}
+	}
+	return false
 }

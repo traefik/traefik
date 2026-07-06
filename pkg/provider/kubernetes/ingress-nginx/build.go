@@ -57,6 +57,16 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		Servers:  make(map[string]*server),
 		Certs:    make(map[string]certPair),
 	}
+	processedIngresses := make(map[string]struct{})
+	markProcessedIngress := func(ing *netv1.Ingress) {
+		key := ing.Namespace + "/" + ing.Name
+		if _, exists := processedIngresses[key]; exists {
+			return
+		}
+
+		processedIngresses[key] = struct{}{}
+		mc.ProcessedIngresses = append(mc.ProcessedIngresses, ing)
+	}
 
 	// Builder-local cache of TLS options resolved per ingress. Each Location
 	// that needs an option carries a pointer to the cached entry; the translator
@@ -239,6 +249,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					HeaderPattern: ptr.Deref(canaryIngress.config.CanaryHeaderPattern, ""),
 					Cookie:        ptr.Deref(canaryIngress.config.CanaryCookie, ""),
 				}
+				markProcessedIngress(canaryIngress.Ingress)
 			}
 		}
 	}
@@ -305,6 +316,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					Hostname:    rule.Host,
 					RouterKey:   routerKey,
 				})
+				markProcessedIngress(ing.Ingress)
 			}
 			continue
 		}
@@ -415,11 +427,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						logger.Error().
 							Err(err).
 							Str("ingress", fmt.Sprintf("%s/%s rule-%d path-%d", ing.Namespace, ing.Name, ri, pi)).
-							Msg("Cannot resolve auth secret, skipping auth middleware")
-					} else {
-						loc.BasicAuth = basic
-						loc.DigestAuth = digest
+							Msg("Cannot resolve auth secret, skipping ingress")
+						// Skipping the ingress entirely when auth secret resolution fails,
+						// to match ingress-nginx behavior.
+						continue
 					}
+					loc.BasicAuth = basic
+					loc.DigestAuth = digest
 				}
 
 				// Pre-resolve custom headers ConfigMap.
@@ -468,6 +482,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
 
 				srv.Locations = append(srv.Locations, loc)
+				markProcessedIngress(ing.Ingress)
 			}
 		}
 
@@ -510,6 +525,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
 					mc.DefaultBackendLocation = loc
+					markProcessedIngress(ing.Ingress)
 				}
 				continue
 			}
@@ -559,6 +575,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
 
 				srv.Locations = append(srv.Locations, loc)
+				markProcessedIngress(ing.Ingress)
 			}
 		}
 	}

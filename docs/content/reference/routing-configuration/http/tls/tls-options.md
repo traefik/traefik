@@ -231,8 +231,8 @@ _Optional, Default="false"_
 
 When set to true, Traefik disables the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.
 
-```yaml tab="File (YAML)"
-# Dynamic configuration
+```yaml tab="Structured (YAML)"
+# routing configuration
 
 tls:
   options:
@@ -240,8 +240,8 @@ tls:
       disableSessionTickets: true
 ```
 
-```toml tab="File (TOML)"
-# Dynamic configuration
+```toml tab="Structured (TOML)"
+# routing configuration
 
 [tls.options]
   [tls.options.default]

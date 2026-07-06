@@ -268,23 +268,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	mc := p.build(ctx, ingressClasses)
 
 	// Update ingress statuses (requires k8s access, must happen in Phase 1 context).
-	for _, server := range mc.Servers {
-		for _, loc := range server.Locations {
-			if loc.IngressName == "" {
-				continue
-			}
-			// Retrieve the original ingress to update its status.
-			for _, ing := range p.k8sClient.ListIngresses() {
-				if ing.Namespace == loc.Namespace && ing.Name == loc.IngressName {
-					if err := p.updateIngressStatus(ing); err != nil {
-						log.Ctx(ctx).Error().Err(err).
-							Str("namespace", ing.Namespace).
-							Str("ingress", ing.Name).
-							Msg("Error while updating ingress status")
-					}
-					break
-				}
-			}
+	for _, ing := range mc.ProcessedIngresses {
+		if err := p.updateIngressStatus(ing); err != nil {
+			log.Ctx(ctx).Error().Err(err).
+				Str("namespace", ing.Namespace).
+				Str("ingress", ing.Name).
+				Msg("Error while updating ingress status")
 		}
 	}
 

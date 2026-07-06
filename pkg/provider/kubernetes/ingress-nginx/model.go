@@ -14,6 +14,10 @@ type model struct {
 	// Servers holds one entry per distinct hostname across all ingresses.
 	Servers map[string]*server
 
+	// ProcessedIngresses holds the ingresses that contributed routing
+	// configuration and should have their published status refreshed.
+	ProcessedIngresses []*netv1.Ingress
+
 	// PassthroughBackends holds ssl-passthrough entries.
 	PassthroughBackends []*sslPassthroughBackend
 
@@ -168,8 +172,8 @@ type location struct {
 	// AccessLog, if non-nil, overrides the router-level access log setting.
 	AccessLog *bool
 
-	// AppRoot, if non-nil, is the path to redirect bare "/" requests to.
-	AppRoot *string
+	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
+	AppRoot *dynamic.AppRoot
 
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost

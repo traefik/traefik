@@ -63,9 +63,16 @@ These matchers will match the request's host in lowercase.
 
     This is only available with the **v3 rule syntax** (the default).
 
+!!! info "Exception: a bare wildcard matches every request"
+
+    As an exception to the rules above, a bare `*` is not treated as a subdomain wildcard but as a catch-all:
+    ``Host(`*`)`` matches every request regardless of its host, including requests with no host at all.
+    This mirrors the behaviour of the TCP [``HostSNI(`*`)``](../../tcp/routing/rules-and-priority.md#hostsni-and-hostsniregexp) matcher, so both stay consistent.
+
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-requests-with-Host-set-to-example-com" href="#opt-Match-requests-with-Host-set-to-example-com" title="#opt-Match-requests-with-Host-set-to-example-com">Match requests with `Host` set to `example.com`.</a> | ```Host(`example.com`)``` |
+| <a id="opt-Match-every-request-regardless-of-its-host-see-the-exception-above" href="#opt-Match-every-request-regardless-of-its-host-see-the-exception-above" title="#opt-Match-every-request-regardless-of-its-host-see-the-exception-above">Match every request regardless of its host (see the exception above).</a> | ```Host(`*`)``` |
 | <a id="opt-Match-requests-sent-to-any-subdomain-of-example-com" href="#opt-Match-requests-sent-to-any-subdomain-of-example-com" title="#opt-Match-requests-sent-to-any-subdomain-of-example-com">Match requests sent to any subdomain of `example.com`.</a> | ```HostRegexp(`^.+\.example\.com$`)``` |
 | <a id="opt-Match-requests-with-Host-set-to-either-example-com-or-example-org" href="#opt-Match-requests-with-Host-set-to-either-example-com-or-example-org" title="#opt-Match-requests-with-Host-set-to-either-example-com-or-example-org">Match requests with `Host` set to either `example.com` or `example.org`.</a> | ```HostRegexp(`^example\.(com|org)$`)``` |
 | <a id="opt-Match-Host-case-insensitively" href="#opt-Match-Host-case-insensitively" title="#opt-Match-Host-case-insensitively">Match `Host` [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HostRegexp(`(?i)^example\.(com|org)$`)``` |
@@ -128,7 +135,7 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
 
 In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). the `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis. This allows to have heterogeneous router configurations and ease migration.
 
-The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
+The default value of the `ruleSyntax` option is inherited from the `core.defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `core.defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
 
 #### Configuration Example
 
@@ -151,10 +158,10 @@ http:
 [http.routers]
   [http.routers.Router-v3]
     rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
-    ruleSyntax = v3
+    ruleSyntax = "v3"
   [http.routers.Router-v2]
     rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
-    ruleSyntax = v2
+    ruleSyntax = "v2"
 ```
 
 ```yaml tab="Labels"

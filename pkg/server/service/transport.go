@@ -321,6 +321,16 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
 		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
 		transport.DialContext = customDialContext(dialer, cfg.ForwardingTimeouts)
+		// The forwarding timeout names come from the x/net/http2.Transport fields (ReadIdleTimeout/PingTimeout),
+		// which were used to configure the HTTP/2 health checks before the net/http native support (Go 1.24).
+		// HTTP2Config.SendPingTimeout carries the same semantics as ReadIdleTimeout:
+		// the delay without any frame received on a connection after which a ping health check is sent.
+		// The field was renamed when the HTTP/2 configuration moved to net/http, see https://go.dev/issue/67813.
+		// The HTTP2 config does not enable HTTP2 protocol.
+		transport.HTTP2 = &http.HTTP2Config{
+			SendPingTimeout: time.Duration(cfg.ForwardingTimeouts.ReadIdleTimeout),
+			PingTimeout:     time.Duration(cfg.ForwardingTimeouts.PingTimeout),
+		}
 	}
 
 	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
@@ -333,10 +343,7 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 		}, nil
 	}
 
-	rt, err := newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
-	if err != nil {
-		return nil, err
-	}
+	rt := newSmartRoundTripper(transport)
 	return &kerberosRoundTripper{
 		OriginalRoundTripper: rt,
 		new: func() http.RoundTripper {

@@ -294,7 +294,8 @@ func buildService(backend *backend, serversTransportName string) *dynamic.Servic
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s", ep.Address),
+			URL:    fmt.Sprintf("http://%s", ep.Address),
+			Fenced: ep.Fenced,
 		})
 	}
 
@@ -320,7 +321,8 @@ func buildServiceWithLocConfig(backend *backend, serversTransportName string, lo
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", scheme, ep.Address),
+			URL:    fmt.Sprintf("%s://%s", scheme, ep.Address),
+			Fenced: ep.Fenced,
 		})
 	}
 
@@ -397,8 +399,6 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 			RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
 		}
 		rt.Middlewares = []string{name}
-		rt.Service = "noop@internal"
-		return
 	}
 
 	if loc.AccessLog != nil {
@@ -436,12 +436,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 
 	if loc.AppRoot != nil {
 		name := routerKey + "-app-root"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
-			RedirectRegex: &dynamic.RedirectRegex{
-				Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-				Replacement: "$1" + *loc.AppRoot,
-			},
-		}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AppRoot: loc.AppRoot}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 

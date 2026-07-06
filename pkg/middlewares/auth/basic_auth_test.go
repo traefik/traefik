@@ -16,6 +16,15 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
+func TestNewBasicEmpty(t *testing.T) {
+	auth := dynamic.BasicAuth{
+		Users: []string{},
+	}
+
+	_, err := NewBasic(t.Context(), nil, auth, "authName")
+	require.Error(t, err)
+}
+
 func TestNewBasicNotFoundSecretIsSet(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
