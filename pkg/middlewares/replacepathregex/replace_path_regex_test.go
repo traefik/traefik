@@ -13,13 +13,15 @@ import (
 
 func TestReplacePathRegex(t *testing.T) {
 	testCases := []struct {
-		desc            string
-		path            string
-		config          dynamic.ReplacePathRegex
-		expectedPath    string
-		expectedRawPath string
-		expectedHeader  string
-		expectsError    bool
+		desc               string
+		path               string
+		config             dynamic.ReplacePathRegex
+		expectedPath       string
+		expectedRawPath    string
+		expectedHeader     string
+		expectedRequestURI string
+		expectedStatusCode int
+		expectsError       bool
 	}{
 		{
 			desc: "simple regex",
@@ -28,9 +30,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/who-am-i/$1",
 				Regex:       `^/whoami/(.*)`,
 			},
-			expectedPath:    "/who-am-i/and/whoami",
-			expectedRawPath: "/who-am-i/and/whoami",
-			expectedHeader:  "/whoami/and/whoami",
+			expectedPath:       "/who-am-i/and/whoami",
+			expectedHeader:     "/whoami/and/whoami",
+			expectedRequestURI: "/who-am-i/and/whoami",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "simple replace (no regex)",
@@ -39,9 +42,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/who-am-i",
 				Regex:       `/whoami`,
 			},
-			expectedPath:    "/who-am-i/and/who-am-i",
-			expectedRawPath: "/who-am-i/and/who-am-i",
-			expectedHeader:  "/whoami/and/whoami",
+			expectedPath:       "/who-am-i/and/who-am-i",
+			expectedHeader:     "/whoami/and/whoami",
+			expectedRequestURI: "/who-am-i/and/who-am-i",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "empty replacement",
@@ -50,9 +54,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "",
 				Regex:       `/whoami`,
 			},
-			expectedPath:    "/and",
-			expectedRawPath: "/and",
-			expectedHeader:  "/whoami/and/whoami",
+			expectedPath:       "/and",
+			expectedHeader:     "/whoami/and/whoami",
+			expectedRequestURI: "/and",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "empty trimmed replacement",
@@ -61,9 +66,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: " ",
 				Regex:       `/whoami`,
 			},
-			expectedPath:    "/and",
-			expectedRawPath: "/and",
-			expectedHeader:  "/whoami/and/whoami",
+			expectedPath:       "/and",
+			expectedHeader:     "/whoami/and/whoami",
+			expectedRequestURI: "/and",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "no match",
@@ -72,7 +78,9 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/whoami",
 				Regex:       `/no-match`,
 			},
-			expectedPath: "/whoami/and/whoami",
+			expectedPath:       "/whoami/and/whoami",
+			expectedRequestURI: "/whoami/and/whoami",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "multiple replacement",
@@ -81,9 +89,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/downloads/$1-$2",
 				Regex:       `^(?i)/downloads/([^/]+)/([^/]+)$`,
 			},
-			expectedPath:    "/downloads/src-source.go",
-			expectedRawPath: "/downloads/src-source.go",
-			expectedHeader:  "/downloads/src/source.go",
+			expectedPath:       "/downloads/src-source.go",
+			expectedHeader:     "/downloads/src/source.go",
+			expectedRequestURI: "/downloads/src-source.go",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "invalid regular expression",
@@ -102,9 +111,11 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/foo%2Fbar",
 				Regex:       `/aaa/bbb`,
 			},
-			expectedPath:    "/foo/bar",
-			expectedRawPath: "/foo%2Fbar",
-			expectedHeader:  "/aaa/bbb",
+			expectedPath:       "/foo/bar",
+			expectedRawPath:    "/foo%2Fbar",
+			expectedHeader:     "/aaa/bbb",
+			expectedRequestURI: "/foo%2Fbar",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "path and regex with escaped char",
@@ -113,9 +124,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/foo/bar",
 				Regex:       `/aaa%2Fbbb`,
 			},
-			expectedPath:    "/foo/bar",
-			expectedRawPath: "/foo/bar",
-			expectedHeader:  "/aaa%2Fbbb",
+			expectedPath:       "/foo/bar",
+			expectedHeader:     "/aaa%2Fbbb",
+			expectedRequestURI: "/foo/bar",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "path with escaped char (no match)",
@@ -124,8 +136,10 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/foo/bar",
 				Regex:       `/aaa/bbb`,
 			},
-			expectedPath:    "/aaa/bbb",
-			expectedRawPath: "/aaa%2Fbbb",
+			expectedPath:       "/aaa/bbb",
+			expectedRawPath:    "/aaa%2Fbbb",
+			expectedRequestURI: "/aaa%2Fbbb",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "path with percent encoded backspace char",
@@ -134,19 +148,29 @@ func TestReplacePathRegex(t *testing.T) {
 				Replacement: "/$1",
 				Regex:       `^/foo/(.*)`,
 			},
-			expectedPath:    "/\bbar",
-			expectedRawPath: "/%08bar",
+			expectedPath:       "/\bbar",
+			expectedRequestURI: "/%08bar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc: "path with ..",
+			path: "/foo../bar",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "/$1",
+				Regex:       `^/foo(.*)`,
+			},
+			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var actualPath, actualRawPath, actualHeader, requestURI string
+			var actualPath, actualRawPath, actualHeader, actualRequestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
 				actualRawPath = r.URL.RawPath
 				actualHeader = r.Header.Get(replacepath.ReplacedPathHeader)
-				requestURI = r.RequestURI
+				actualRequestURI = r.RequestURI
 			})
 
 			handler, err := New(t.Context(), next, test.config, "foo-replace-path-regexp")
@@ -162,16 +186,11 @@ func TestReplacePathRegex(t *testing.T) {
 
 			resp, err := http.Get(server.URL + test.path)
 			require.NoError(t, err, "Unexpected error while making test request")
-			require.Equal(t, http.StatusOK, resp.StatusCode)
+			require.Equal(t, test.expectedStatusCode, resp.StatusCode)
 
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
-
-			if actualRawPath == "" {
-				assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
-			} else {
-				assert.Equal(t, actualRawPath, requestURI, "Unexpected request URI.")
-			}
+			assert.Equal(t, test.expectedRequestURI, actualRequestURI, "Unexpected request URI.")
 
 			if test.expectedHeader != "" {
 				assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", replacepath.ReplacedPathHeader)
