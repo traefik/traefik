@@ -970,21 +970,21 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 }
 
 func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
-	allowCredentials := filter.AllowCredentials != nil && *filter.AllowCredentials
-
 	var allowOrigins, allowOriginsRegex []string
 	for _, origin := range filter.AllowOrigins {
-		o := string(origin)
-		switch {
-		case strings.Contains(o, "*."):
-			allowOriginsRegex = append(allowOriginsRegex, corsOriginToRegex(o))
-		case o == "*":
-			// Convert to regex so the middleware echoes the specific request origin rather than the literal "*".
-			// The Gateway API conformance tests require the specific origin, even when AllowCredentials is false/unset.
-			allowOriginsRegex = append(allowOriginsRegex, ".*")
-		default:
-			allowOrigins = append(allowOrigins, o)
+		if prefix, suffix, found := strings.Cut(string(origin), "*"); found {
+			switch {
+			case prefix != "" || suffix != "":
+				allowOriginsRegex = append(allowOriginsRegex, "^"+regexp.QuoteMeta(prefix)+`.*`+regexp.QuoteMeta(suffix)+"$")
+			default:
+				// Convert to regex so the middleware echoes the specific request origin rather than the literal "*".
+				// The Gateway API conformance tests require the specific origin, even when AllowCredentials is false/unset.
+				allowOriginsRegex = append(allowOriginsRegex, ".*")
+			}
+			continue
 		}
+
+		allowOrigins = append(allowOrigins, string(origin))
 	}
 
 	var allowMethods []string
@@ -1004,7 +1004,7 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 
 	return &dynamic.Middleware{
 		Headers: &dynamic.Headers{
-			AccessControlAllowCredentials:     allowCredentials,
+			AccessControlAllowCredentials:     ptr.Deref(filter.AllowCredentials, false),
 			AccessControlAllowOriginList:      allowOrigins,
 			AccessControlAllowOriginListRegex: allowOriginsRegex,
 			AccessControlAllowMethods:         allowMethods,
@@ -1013,16 +1013,6 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 			AccessControlMaxAge:               ptr.To(int64(filter.MaxAge)),
 		},
 	}
-}
-
-// corsOriginToRegex converts a CORS origin glob (e.g. https://*.example.com) to a regexp string.
-func corsOriginToRegex(origin string) string {
-	prefix, suffix, found := strings.Cut(origin, "*.")
-	if !found {
-		return regexp.QuoteMeta(origin)
-	}
-
-	return "^" + regexp.QuoteMeta(prefix) + `(.*\.)?` + regexp.QuoteMeta(suffix) + "$"
 }
 
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
