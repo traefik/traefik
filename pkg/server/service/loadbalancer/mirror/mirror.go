@@ -207,7 +207,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
+	if req.Body == nil || !mirrorBody {
 		return &reusableRequest{req: req}, nil, nil
 	}
 
@@ -227,6 +227,16 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	// the request body is larger than what we allow for the mirrors.
 	body := make([]byte, maxBodySize+1)
 	n, err := io.ReadFull(req.Body, body)
+	// This happens with HTTP/3, where the end of the body is framed at the stream
+	// level rather than declared via Content-Length, so a bodyless request arrives
+	// with a non-nil Body and ContentLength == -1. The same shape is possible for a
+	// chunked request that sends no chunks.
+	if errors.Is(err, io.EOF) {
+		return &reusableRequest{
+			req:  req,
+			body: body[:n],
+		}, nil, nil
+	}
 	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
 		return nil, nil, err
 	}
