@@ -250,7 +250,6 @@ You can declare TCP Routers and/or Services using labels.
 |------|-------------|-------|
 | <a id="opt-traefik-tcp-services-service-name-loadbalancer-server-port" href="#opt-traefik-tcp-services-service-name-loadbalancer-server-port" title="#opt-traefik-tcp-services-service-name-loadbalancer-server-port">`traefik.tcp.services.<service_name>.loadbalancer.server.port`</a> | Registers a port of the application. | `423` |
 | <a id="opt-traefik-tcp-services-service-name-loadbalancer-server-tls" href="#opt-traefik-tcp-services-service-name-loadbalancer-server-tls" title="#opt-traefik-tcp-services-service-name-loadbalancer-server-tls">`traefik.tcp.services.<service_name>.loadbalancer.server.tls`</a> | Determines whether to use TLS when dialing with the backend. | `true` |
-| <a id="opt-traefik-tcp-services-service-name-loadbalancer-server-weight" href="#opt-traefik-tcp-services-service-name-loadbalancer-server-weight" title="#opt-traefik-tcp-services-service-name-loadbalancer-server-weight">`traefik.tcp.services.<service_name>.loadbalancer.server.weight`</a> | Overrides the default weight. | `42` |
 | <a id="opt-traefik-tcp-services-service-name-loadbalancer-serverstransport" href="#opt-traefik-tcp-services-service-name-loadbalancer-serverstransport" title="#opt-traefik-tcp-services-service-name-loadbalancer-serverstransport">`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`</a> | Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.<br/>See [serverstransport](../tcp/serverstransport.md) for more information. | `foobar@file` |
 
 ### UDP
@@ -282,7 +281,7 @@ More information about available middlewares in the dedicated [middlewares secti
     ```yaml
     # ...
     # Declaring a middleware
-    traefik.tcp.middlewares.test-inflightconn.amount=10
+    traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10
     # Referencing a middleware
     traefik.tcp.routers.my-service.middlewares=test-inflightconn
     ```

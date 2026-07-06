@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -84,8 +83,6 @@ type Provider struct {
 	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
 	// groupKindBackendFuncs is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
 	groupKindBackendFuncs map[string]map[string]BuildBackendFunc
-
-	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
 	client          *clientWrapper
@@ -169,6 +166,13 @@ func (l gatewayListener) routeKeySegment() string {
 	}
 }
 
+type gatewayWithListeners struct {
+	Name      string
+	Namespace string
+
+	listeners []gatewayListener
+}
+
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
 func (p *Provider) RegisterFilterFuncs(group, kind string, builderFunc BuildFilterFunc) {
 	if p.groupKindFilterFuncs == nil {
@@ -245,7 +249,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
@@ -253,18 +257,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					if err != nil {
 						logger.Error().Err(err).Msg("Unable to load configuration from Gateways")
 					} else {
-						confHash, err := hashstructure.Hash(conf, nil)
-						switch {
-						case err != nil:
-							logger.Error().Msg("Unable to hash the configuration")
-						case p.lastConfiguration.Get() == confHash:
-							logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-						default:
-							p.lastConfiguration.Set(confHash)
-							configurationChan <- dynamic.Message{
-								ProviderName:  ProviderName,
-								Configuration: conf,
-							}
+						configurationChan <- dynamic.Message{
+							ProviderName:  ProviderName,
+							Configuration: conf,
 						}
 
 						// Flush regardless of whether the dynamic configuration changed: the
@@ -409,7 +404,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		gateways = append(gateways, gateway)
 	}
 
-	var gatewayListeners []gatewayListener
+	var selectedGateways []gatewayWithListeners
 	// listenerSetInfosByGateway tracks per-ListenerSet status info, keyed by gateway NamespacedName.
 	listenerSetInfosByGateway := make(map[ktypes.NamespacedName]map[ktypes.NamespacedName]*listenerSetInfo)
 
@@ -426,17 +421,23 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		gwNSN := ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}
 		listenerSetInfosByGateway[gwNSN] = lsInfoMap
 
-		gatewayListeners = append(gatewayListeners, gwListeners...)
+		selectedGateways = append(selectedGateways, gatewayWithListeners{
+			Name:      gateway.Name,
+			Namespace: gateway.Namespace,
+			listeners: gwListeners,
+		})
 	}
 
-	p.loadHTTPRoutes(ctx, gatewayListeners, conf, statusReport)
+	statusReport.gatewayListeners = selectedGateways
 
-	p.loadGRPCRoutes(ctx, gatewayListeners, conf, statusReport)
+	p.loadHTTPRoutes(ctx, selectedGateways, conf, statusReport)
 
-	p.loadTLSRoutes(ctx, gatewayListeners, conf, statusReport)
+	p.loadGRPCRoutes(ctx, selectedGateways, conf, statusReport)
+
+	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
 
 	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, gatewayListeners, conf, statusReport)
+		p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
 	}
 
 	for _, gateway := range gateways {
@@ -447,17 +448,23 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 		gwNSN := ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}
 
+		// Collect this gateway's listeners (both Gateway- and ListenerSet-sourced).
+		var listeners []gatewayListener
+		for _, selectedGateway := range selectedGateways {
+			if selectedGateway.Name == gateway.Name && selectedGateway.Namespace == gateway.Namespace {
+				listeners = append(listeners, selectedGateway.listeners...)
+			}
+		}
+
 		// Only Gateway-sourced listeners are passed to makeGatewayStatus.
 		var gwOnlyListeners []gatewayListener
-		for _, listener := range gatewayListeners {
-			if listener.GWName == gateway.Name && listener.GWNamespace == gateway.Namespace {
-				source := listener.Source
-				if source == "" {
-					source = kindGateway
-				}
-				if source == kindGateway {
-					gwOnlyListeners = append(gwOnlyListeners, listener)
-				}
+		for _, listener := range listeners {
+			source := listener.Source
+			if source == "" {
+				source = kindGateway
+			}
+			if source == kindGateway {
+				gwOnlyListeners = append(gwOnlyListeners, listener)
 			}
 		}
 
@@ -492,7 +499,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		lsStatuses := make(map[ktypes.NamespacedName]gatev1.ListenerSetStatus)
 		if lsInfoMap, ok := listenerSetInfosByGateway[gwNSN]; ok {
 			for nsn, info := range lsInfoMap {
-				lsStatuses[nsn] = makeListenerSetStatus(info, gatewayListeners, gatewayStatus)
+				lsStatuses[nsn] = makeListenerSetStatus(info, listeners, gatewayStatus)
 			}
 		}
 
@@ -1190,63 +1197,101 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
-	var listeners []gatewayListener
+// gatewayListenersForParentRef associates a route parentRef with the listeners of
+// the Gateway it refers to, among the Gateways managed by this controller.
+type gatewayListenersForParentRef struct {
+	parentRef gatev1.ParentReference
 
-	for _, listener := range gatewayListeners {
-		for _, parentRef := range parentRefs {
-			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+	gatewayName      string
+	gatewayNamespace string
+
+	listeners []gatewayListener
+}
+
+// matchingGatewayListenersForParentRef returns, for each parentRef referring to a
+// Gateway or a ListenerSet managed by this controller, the corresponding listeners.
+// A Gateway parentRef yields the Gateway-sourced listeners of that Gateway, while a
+// ListenerSet parentRef yields the listeners sourced from the referenced ListenerSet.
+// parentRefs that do not refer to one of our Gateways or ListenerSets are omitted.
+func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
+	var matches []gatewayListenersForParentRef
+
+	for _, parentRef := range parentRefs {
+		if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+			continue
+		}
+
+		refKind := string(ptr.Deref(parentRef.Kind, kindGateway))
+		parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+
+		// Source discrimination: a Gateway parentRef targets only Gateway-sourced
+		// listeners, and a ListenerSet parentRef targets only the listeners of the
+		// referenced ListenerSet.
+		switch refKind {
+		case kindGateway:
+			for _, gateway := range gateways {
+				if parentRefNamespace != gateway.Namespace || string(parentRef.Name) != gateway.Name {
+					continue
+				}
+
+				var listeners []gatewayListener
+				for _, listener := range gateway.listeners {
+					source := listener.Source
+					if source == "" {
+						source = kindGateway
+					}
+					if source == kindGateway {
+						listeners = append(listeners, listener)
+					}
+				}
+
+				// All the Gateway listeners are kept: the parentRef is associated to its
+				// Gateway here, and whether each listener is actually targeted (SectionName,
+				// Port) is decided when loading the route, so that ResolvedRefs is reported
+				// even for parentRefs that match no listener.
+				matches = append(matches, gatewayListenersForParentRef{
+					parentRef:        parentRef,
+					gatewayName:      gateway.Name,
+					gatewayNamespace: gateway.Namespace,
+					listeners:        listeners,
+				})
+				break
+			}
+
+		case kindListenerSet:
+			// A ListenerSet parentRef targets the listeners sourced from the referenced
+			// ListenerSet, regardless of which Gateway it is attached to.
+			var listeners []gatewayListener
+			var gatewayName, gatewayNamespace string
+			for _, gateway := range gateways {
+				for _, listener := range gateway.listeners {
+					if listener.Source != kindListenerSet {
+						continue
+					}
+					if listener.SourceNamespace != parentRefNamespace || string(parentRef.Name) != listener.SourceName {
+						continue
+					}
+
+					listeners = append(listeners, listener)
+					gatewayName = gateway.Name
+					gatewayNamespace = gateway.Namespace
+				}
+			}
+
+			if len(listeners) == 0 {
 				continue
 			}
 
-			refKind := string(ptr.Deref(parentRef.Kind, kindGateway))
-
-			// Source discrimination: routes targeting a Gateway match only
-			// Gateway-sourced listeners, and routes targeting a ListenerSet
-			// match only ListenerSet-sourced listeners.
-			listenerSource := listener.Source
-			if listenerSource == "" {
-				listenerSource = kindGateway
-			}
-
-			switch refKind {
-			case kindGateway:
-				if listenerSource != kindGateway {
-					continue
-				}
-
-				parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-				if listener.GWNamespace != parentRefNamespace {
-					continue
-				}
-
-				if string(parentRef.Name) != listener.GWName {
-					continue
-				}
-
-			case kindListenerSet:
-				if listenerSource != kindListenerSet {
-					continue
-				}
-
-				parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-				if listener.SourceNamespace != parentRefNamespace {
-					continue
-				}
-
-				if string(parentRef.Name) != listener.SourceName {
-					continue
-				}
-
-			default:
-				continue
-			}
-
-			listeners = append(listeners, listener)
+			matches = append(matches, gatewayListenersForParentRef{
+				parentRef:        parentRef,
+				gatewayName:      gatewayName,
+				gatewayNamespace: gatewayNamespace,
+				listeners:        listeners,
+			})
 		}
 	}
 
-	return listeners
+	return matches
 }
 
 func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
@@ -2010,42 +2055,6 @@ func kindToString(p *gatev1.Kind) string {
 		return "<nil>"
 	}
 	return string(*p)
-}
-
-func updateRouteConditionAccepted(conditions []metav1.Condition, reason string) []metav1.Condition {
-	var conds []metav1.Condition
-	for _, c := range conditions {
-		if c.Type == string(gatev1.RouteConditionAccepted) && c.Status != metav1.ConditionTrue {
-			c.Reason = reason
-			c.LastTransitionTime = metav1.Now()
-
-			if reason == string(gatev1.RouteReasonAccepted) {
-				c.Status = metav1.ConditionTrue
-			}
-		}
-
-		conds = append(conds, c)
-	}
-
-	return conds
-}
-
-func upsertRouteConditionResolvedRefs(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
-	var (
-		curr  *metav1.Condition
-		conds []metav1.Condition
-	)
-	for _, c := range conditions {
-		if c.Type == string(gatev1.RouteConditionResolvedRefs) {
-			curr = &c
-			continue
-		}
-		conds = append(conds, c)
-	}
-	if curr != nil && curr.Status == metav1.ConditionFalse && condition.Status == metav1.ConditionTrue {
-		return append(conds, *curr)
-	}
-	return append(conds, condition)
 }
 
 func upsertGatewayClassConditionAccepted(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
