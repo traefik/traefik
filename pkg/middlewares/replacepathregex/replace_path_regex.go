@@ -46,7 +46,7 @@ func (rp *replacePathRegex) GetTracingInformation() (string, string) {
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), rp.name, typeName))
+	logger := middlewares.GetLogger(req.Context(), rp.name, typeName)
 
 	currentPath := req.URL.RawPath
 	if currentPath == "" {
@@ -80,7 +80,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 		// Stop here if the normalization of the path produces a different path.
 		if path != req.URL.Path {
-			logger.Debugf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
+			logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
 			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
