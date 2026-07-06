@@ -509,8 +509,7 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
-				policyAncestorStatus.Conditions = append(
-					policyAncestorStatus.Conditions,
+				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
 					metav1.Condition{
 						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
