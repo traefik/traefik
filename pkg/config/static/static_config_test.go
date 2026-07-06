@@ -41,6 +41,79 @@ func TestHasEntrypoint(t *testing.T) {
 	}
 }
 
+func TestHasDeniedEncodedCharacters(t *testing.T) {
+	allowAll := &EncodedCharacters{}
+	allowAll.SetDefaults()
+
+	denySlash := &EncodedCharacters{}
+	denySlash.SetDefaults()
+	denySlash.AllowEncodedSlash = false
+
+	denyHash := &EncodedCharacters{}
+	denyHash.SetDefaults()
+	denyHash.AllowEncodedHash = false
+
+	tests := []struct {
+		desc        string
+		entryPoints map[string]*EntryPoint
+		assert      assert.BoolAssertionFunc
+	}{
+		{
+			desc:   "no entryPoints",
+			assert: assert.False,
+		},
+		{
+			desc: "entryPoint without encoded characters configuration",
+			entryPoints: map[string]*EntryPoint{
+				"web": {},
+			},
+			assert: assert.False,
+		},
+		{
+			desc: "entryPoint allowing all encoded characters",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					HTTP: HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			assert: assert.False,
+		},
+		{
+			desc: "entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					HTTP: HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			assert: assert.True,
+		},
+		{
+			desc: "one entryPoint among others disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					HTTP: HTTPConfig{EncodedCharacters: allowAll},
+				},
+				"websecure": {
+					HTTP: HTTPConfig{EncodedCharacters: denyHash},
+				},
+			},
+			assert: assert.True,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+			}
+
+			test.assert(t, cfg.HasDeniedEncodedCharacters())
+		})
+	}
+}
+
 func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string

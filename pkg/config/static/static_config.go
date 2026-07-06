@@ -482,6 +482,28 @@ func (c *Configuration) ValidateConfiguration() error {
 	return nil
 }
 
+// HasDeniedEncodedCharacters reports whether at least one entrypoint disallows an encoded character in the request path.
+func (c *Configuration) HasDeniedEncodedCharacters() bool {
+	for _, ep := range c.EntryPoints {
+		encodedCharacters := ep.HTTP.EncodedCharacters
+		if encodedCharacters == nil {
+			continue
+		}
+
+		if !encodedCharacters.AllowEncodedSlash ||
+			!encodedCharacters.AllowEncodedBackSlash ||
+			!encodedCharacters.AllowEncodedNullCharacter ||
+			!encodedCharacters.AllowEncodedSemicolon ||
+			!encodedCharacters.AllowEncodedPercent ||
+			!encodedCharacters.AllowEncodedQuestionMark ||
+			!encodedCharacters.AllowEncodedHash {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (c *Configuration) hasUserDefinedEntrypoint() bool {
 	return len(c.EntryPoints) != 0
 }
