@@ -3341,6 +3341,10 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-default-whoami-0",
 										Weight: ptr.To(1),
 									},
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-bar-whoami-bar-1",
+										Weight: ptr.To(1),
+									},
 								},
 							},
 						},
@@ -3360,6 +3364,26 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
+						},
+						// Cross-namespace backendRef: its ExtensionRef filter must resolve to the route's own namespace,
+						// not the backendRef's namespace.
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-bar-whoami-bar-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.11:80",
+									},
+									{
+										URL: "http://10.10.0.12:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Middlewares: []string{"default-my-backend-middleware"},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
@@ -3403,8 +3427,9 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-my-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
-						"default-my-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-first-middleware":   {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-second-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
+						"default-my-backend-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}},
 					},
 					Services: map[string]*dynamic.Service{
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-wrr": {
@@ -3412,6 +3437,10 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-default-whoami-0",
+										Weight: ptr.To(1),
+									},
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-bar-whoami-bar-1",
 										Weight: ptr.To(1),
 									},
 								},
@@ -3433,6 +3462,26 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
+						},
+						// Cross-namespace backendRef: its ExtensionRef filter must resolve to the route's own namespace,
+						// not the backendRef's namespace.
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-bar-whoami-bar-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.11:80",
+									},
+									{
+										URL: "http://10.10.0.12:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Middlewares: []string{"default-my-backend-middleware"},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
