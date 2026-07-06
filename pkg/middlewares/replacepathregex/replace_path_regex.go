@@ -46,6 +46,8 @@ func (rp *replacePathRegex) GetTracingInformation() (string, string) {
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), rp.name, typeName))
+
 	currentPath := req.URL.RawPath
 	if currentPath == "" {
 		currentPath = req.URL.EscapedPath()
@@ -68,6 +70,20 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		}
 
 		req.RequestURI = req.URL.RequestURI()
+
+		// Here we are sanitizing the URL when the path is not empty,
+		// as the JoinPath method is adding a leading slash if the path is empty.
+		path := req.URL.Path
+		if path != "" {
+			req.URL = req.URL.JoinPath()
+		}
+
+		// Stop here if the normalization of the path produces a different path.
+		if path != req.URL.Path {
+			logger.Debugf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
 	}
 
 	rp.next.ServeHTTP(rw, req)
