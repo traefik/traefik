@@ -320,6 +320,17 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
+!!! info "Supported Filter Types"
+
+    Traefik supports the following route-level filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
 !!! info "ExtensionRef Filters"
 
     To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
@@ -442,6 +453,7 @@ This allows request modifications to be applied to specific backends, enabling t
     - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"
