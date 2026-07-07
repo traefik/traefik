@@ -407,6 +407,12 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 				middleware,
 			})
 
+		case gatev1.HTTPRouteFilterCORS:
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createCORS(filter.CORS),
+			})
+
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
 			// In all cases where incompatible or unsupported filters are
@@ -960,6 +966,52 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 			PathPrefix: pathPrefix,
 		},
 	}, nil
+}
+
+func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
+	var allowOrigins, allowOriginsRegex []string
+	for _, origin := range filter.AllowOrigins {
+		if prefix, suffix, found := strings.Cut(string(origin), "*"); found {
+			switch {
+			case prefix != "" || suffix != "":
+				allowOriginsRegex = append(allowOriginsRegex, "^"+regexp.QuoteMeta(prefix)+`.*`+regexp.QuoteMeta(suffix)+"$")
+			default:
+				// Convert to regex so the middleware echoes the specific request origin rather than the literal "*".
+				// The Gateway API conformance tests require the specific origin, even when AllowCredentials is false/unset.
+				allowOriginsRegex = append(allowOriginsRegex, ".*")
+			}
+			continue
+		}
+
+		allowOrigins = append(allowOrigins, string(origin))
+	}
+
+	var allowMethods []string
+	for _, m := range filter.AllowMethods {
+		allowMethods = append(allowMethods, string(m))
+	}
+
+	var allowHeaders []string
+	for _, h := range filter.AllowHeaders {
+		allowHeaders = append(allowHeaders, string(h))
+	}
+
+	var exposeHeaders []string
+	for _, h := range filter.ExposeHeaders {
+		exposeHeaders = append(exposeHeaders, string(h))
+	}
+
+	return &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			AccessControlAllowCredentials:     ptr.Deref(filter.AllowCredentials, false),
+			AccessControlAllowOriginList:      allowOrigins,
+			AccessControlAllowOriginListRegex: allowOriginsRegex,
+			AccessControlAllowMethods:         allowMethods,
+			AccessControlAllowHeaders:         allowHeaders,
+			AccessControlExposeHeaders:        exposeHeaders,
+			AccessControlMaxAge:               ptr.To(int64(filter.MaxAge)),
+		},
+	}
 }
 
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {

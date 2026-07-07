@@ -64,6 +64,7 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteBackendRequestHeaderModificationFeature,
 		features.HTTPRouteNamedRouteRule,
 		features.HTTPRouteParentRefPortFeature,
+		features.HTTPRouteCORS,
 	)
 }
 
