@@ -9065,6 +9065,75 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 	}
 }
 
+// TestCrossProviderNamespaces_TCPServersTransport verifies that the
+// CrossProviderNamespaces option gates @file references in IngressRouteTCP service.serversTransport.
+func TestCrossProviderNamespaces_TCPServersTransport(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantServiceDropped      bool
+	}{
+		{
+			desc:                    "nil: cross-provider ServersTransport ref is accepted (backward compatible)",
+			crossProviderNamespaces: nil,
+		},
+		{
+			desc:                    "empty list: cross-provider ServersTransport ref is rejected, service is dropped",
+			crossProviderNamespaces: []string{},
+			wantServiceDropped:      true,
+		},
+		{
+			desc:                    "namespace allowed: cross-provider ServersTransport ref is accepted",
+			crossProviderNamespaces: []string{"default"},
+		},
+		{
+			desc:                    "namespace not allowed: cross-provider ServersTransport ref is rejected, service is dropped",
+			crossProviderNamespaces: []string{"other"},
+			wantServiceDropped:      true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, crdObjects := readResources(t, []string{"tcp/services.yml", "tcp/with_servers_transport_cross_provider.yml"})
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				AllowCrossNamespace:     true,
+				CrossProviderNamespaces: test.crossProviderNamespaces,
+			}
+
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
+
+			service, ok := conf.TCP.Services["default-test.route-fdd3e9338e47a45efefc"]
+			if test.wantServiceDropped {
+				assert.False(t, ok)
+				return
+			}
+
+			require.True(t, ok)
+			require.NotNil(t, service.LoadBalancer)
+			assert.Equal(t, "foo@file", service.LoadBalancer.ServersTransport)
+		})
+	}
+}
+
 func TestExternalNameService(t *testing.T) {
 	testCases := []struct {
 		desc                     string

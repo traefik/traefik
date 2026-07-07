@@ -133,7 +133,7 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
     RuleSyntax option is deprecated and will be removed in the next major version.
     Please do not use this field and rewrite the router rules to use the v3 syntax.
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). the `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis. This allows to have heterogeneous router configurations and ease migration.
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). The `ruleSyntax` option allows configuring the rule syntax to be used for parsing the rule on a per-router basis. This allows having heterogeneous router configurations and eases migration.
 
 The default value of the `ruleSyntax` option is inherited from the `core.defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `core.defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
 
