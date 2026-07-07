@@ -47,6 +47,8 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/healthCheck/interval":                          "1s",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/unhealthyinterval":                 "1s",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/timeout":                           "1s",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/fails":                             "42",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/passes":                            "42",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/hostname":                          "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1":                     "foobar",
@@ -687,6 +689,8 @@ func Test_buildConfiguration(t *testing.T) {
 							Interval:          ptypes.Duration(time.Second),
 							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
 							Timeout:           ptypes.Duration(time.Second),
+							Fails:             42,
+							Passes:            42,
 							Hostname:          "foobar",
 							FollowRedirects:   pointer(true),
 							Headers: map[string]string{

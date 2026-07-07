@@ -20,3 +20,5 @@ spec:
       healthCheck:
         path: /health
         interval: 15s
+        fails: 3
+        passes: 2

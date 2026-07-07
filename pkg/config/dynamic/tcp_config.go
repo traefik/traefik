@@ -223,10 +223,14 @@ type TCPServerHealthCheck struct {
 	Interval          ptypes.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	UnhealthyInterval *ptypes.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
 	Timeout           ptypes.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Fails             int              `json:"fails,omitempty" toml:"fails,omitempty" yaml:"fails,omitempty" export:"true"`
+	Passes            int              `json:"passes,omitempty" toml:"passes,omitempty" yaml:"passes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for a TCPServerHealthCheck.
 func (t *TCPServerHealthCheck) SetDefaults() {
 	t.Interval = DefaultHealthCheckInterval
 	t.Timeout = DefaultHealthCheckTimeout
+	t.Fails = 1
+	t.Passes = 1
 }

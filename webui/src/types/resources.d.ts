@@ -93,6 +93,8 @@ declare namespace Service {
         interval?: string
         unhealthyInterval?: string
         timeout?: string
+        fails?: number
+        passes?: number
       }
     }
     weighted?: {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -30,9 +31,13 @@ type ServiceTCPHealthChecker struct {
 	interval          time.Duration
 	unhealthyInterval time.Duration
 	timeout           time.Duration
+	fails             int
+	passes            int
 
 	healthyTargets   chan *TCPHealthCheckTarget
 	unhealthyTargets chan *TCPHealthCheckTarget
+	targetsMu        sync.Mutex
+	targets          map[string]*healthStatus
 
 	serviceName string
 }
@@ -64,6 +69,18 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
+	fails := config.Fails
+	if fails <= 0 {
+		logger.Error().Msg("Health check fails smaller than one, default value will be used instead.")
+		fails = 1
+	}
+
+	passes := config.Passes
+	if passes <= 0 {
+		logger.Error().Msg("Health check passes smaller than one, default value will be used instead.")
+		passes = 1
+	}
+
 	if config.Send != "" && len(config.Send) > maxPayloadSize {
 		logger.Error().Msgf("Health check payload size exceeds maximum allowed size of %d bytes, falling back to connect only check.", maxPayloadSize)
 		config.Send = ""
@@ -75,8 +92,10 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 	}
 
 	healthyTargets := make(chan *TCPHealthCheckTarget, len(targets))
+	targetStatuses := make(map[string]*healthStatus, len(targets))
 	for _, target := range targets {
 		healthyTargets <- &target
+		targetStatuses[target.Address] = &healthStatus{up: true}
 	}
 	unhealthyTargets := make(chan *TCPHealthCheckTarget, len(targets))
 
@@ -87,8 +106,11 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 		interval:          interval,
 		unhealthyInterval: unhealthyInterval,
 		timeout:           timeout,
+		fails:             fails,
+		passes:            passes,
 		healthyTargets:    healthyTargets,
 		unhealthyTargets:  unhealthyTargets,
+		targets:           targetStatuses,
 		serviceName:       serviceName,
 	}
 }
@@ -132,39 +154,81 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 				default:
 				}
 
-				up := true
-
 				if err := thc.executeHealthCheck(ctx, thc.config, target); err != nil {
 					// The context is canceled when the dynamic configuration is refreshed.
 					if errors.Is(err, context.Canceled) {
 						return
 					}
 
-					log.Ctx(ctx).Warn().
+					result := thc.handleHealthCheckResult(ctx, target, false, targets)
+
+					event := log.Ctx(ctx).Warn().
 						Str("targetAddress", target.Address).
-						Err(err).
-						Msg("Health check failed.")
+						Err(err)
+					if !result.update {
+						event.
+							Int("currentFailures", result.count).
+							Int("failureThreshold", result.threshold).
+							Msg("Health check failed, failure threshold not reached.")
+						continue
+					}
 
-					up = false
+					event.Msg("Health check failed.")
+					continue
 				}
 
-				thc.balancer.SetStatus(ctx, target.Address, up)
-
-				var statusStr string
-				if up {
-					statusStr = runtime.StatusUp
-					thc.healthyTargets <- target
-				} else {
-					statusStr = runtime.StatusDown
-					thc.unhealthyTargets <- target
+				result := thc.handleHealthCheckResult(ctx, target, true, targets)
+				if !result.update {
+					log.Ctx(ctx).Info().
+						Str("targetAddress", target.Address).
+						Int("currentPasses", result.count).
+						Int("passThreshold", result.threshold).
+						Msg("Health check succeeded, pass threshold not reached.")
 				}
-
-				thc.info.UpdateServerStatus(target.Address, statusStr)
-
-				// TODO: add a TCP server up metric (like for HTTP).
 			}
 		}
 	}
+}
+
+func (thc *ServiceTCPHealthChecker) handleHealthCheckResult(ctx context.Context, target *TCPHealthCheckTarget, up bool, currentTargets chan *TCPHealthCheckTarget) healthStatusResult {
+	result := thc.observeTargetStatus(target.Address, up)
+	if !result.update {
+		currentTargets <- target
+		return result
+	}
+
+	thc.balancer.SetStatus(ctx, target.Address, up)
+
+	statusStr := runtime.StatusDown
+	nextTargets := thc.unhealthyTargets
+	if up {
+		statusStr = runtime.StatusUp
+		nextTargets = thc.healthyTargets
+	}
+
+	nextTargets <- target
+	thc.info.UpdateServerStatus(target.Address, statusStr)
+
+	// TODO: add a TCP server up metric (like for HTTP).
+
+	return result
+}
+
+func (thc *ServiceTCPHealthChecker) observeTargetStatus(address string, up bool) healthStatusResult {
+	thc.targetsMu.Lock()
+	defer thc.targetsMu.Unlock()
+
+	if thc.targets == nil {
+		thc.targets = make(map[string]*healthStatus)
+	}
+
+	status := thc.targets[address]
+	if status == nil {
+		status = &healthStatus{up: true}
+		thc.targets[address] = status
+	}
+
+	return status.observe(up, thc.fails, thc.passes)
 }
 
 func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *TCPHealthCheckTarget) error {

@@ -398,6 +398,12 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 		}
 		lb.HealthCheck.SetDefaults()
 
+		if svc.HealthCheck.Fails != 0 {
+			lb.HealthCheck.Fails = svc.HealthCheck.Fails
+		}
+		if svc.HealthCheck.Passes != 0 {
+			lb.HealthCheck.Passes = svc.HealthCheck.Passes
+		}
 		if svc.HealthCheck.FollowRedirects != nil {
 			lb.HealthCheck.FollowRedirects = svc.HealthCheck.FollowRedirects
 		}

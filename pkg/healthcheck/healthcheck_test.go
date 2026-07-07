@@ -28,30 +28,42 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 		config      *dynamic.ServerHealthCheck
 		expInterval time.Duration
 		expTimeout  time.Duration
+		expFails    int
+		expPasses   int
 	}{
 		{
 			desc:        "default values",
 			config:      &dynamic.ServerHealthCheck{},
 			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
 			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			expFails:    1,
+			expPasses:   1,
 		},
 		{
 			desc: "out of range values",
 			config: &dynamic.ServerHealthCheck{
 				Interval: ptypes.Duration(-time.Second),
 				Timeout:  ptypes.Duration(-time.Second),
+				Fails:    -1,
+				Passes:   -1,
 			},
 			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
 			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			expFails:    1,
+			expPasses:   1,
 		},
 		{
 			desc: "custom durations",
 			config: &dynamic.ServerHealthCheck{
 				Interval: ptypes.Duration(time.Second * 10),
 				Timeout:  ptypes.Duration(time.Second * 5),
+				Fails:    2,
+				Passes:   3,
 			},
 			expInterval: time.Second * 10,
 			expTimeout:  time.Second * 5,
+			expFails:    2,
+			expPasses:   3,
 		},
 		{
 			desc: "interval shorter than timeout",
@@ -61,6 +73,8 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 			},
 			expInterval: time.Second,
 			expTimeout:  time.Second * 5,
+			expFails:    1,
+			expPasses:   1,
 		},
 	}
 
@@ -71,6 +85,8 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
+			assert.Equal(t, test.expFails, healthChecker.fails)
+			assert.Equal(t, test.expPasses, healthChecker.passes)
 		})
 	}
 }
@@ -441,6 +457,13 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 				UnhealthyInterval: pointer(ptypes.Duration(500 * time.Millisecond)),
 				Timeout:           ptypes.Duration(499 * time.Millisecond),
 			}
+			config.SetDefaults()
+			config.Mode = test.mode
+			config.Status = test.status
+			config.Path = "/path"
+			config.Interval = ptypes.Duration(500 * time.Millisecond)
+			config.UnhealthyInterval = pointer(ptypes.Duration(500 * time.Millisecond))
+			config.Timeout = ptypes.Duration(499 * time.Millisecond)
 
 			gauge := &testhelpers.CollectingGauge{}
 			serviceInfo := &runtime.ServiceInfo{}
@@ -480,6 +503,60 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
+}
+
+func TestServiceHealthChecker_handleHealthCheckResultThresholds(t *testing.T) {
+	t.Parallel()
+
+	targetURL := testhelpers.MustParseURL("http://127.0.0.1:8080")
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+	gauge := &testhelpers.CollectingGauge{}
+	serviceInfo := &runtime.ServiceInfo{}
+
+	hc := &ServiceHealthChecker{
+		balancer:         lb,
+		info:             serviceInfo,
+		metrics:          &MetricsMock{gauge},
+		serviceName:      "foobar",
+		fails:            2,
+		passes:           2,
+		healthyTargets:   make(chan target, 2),
+		unhealthyTargets: make(chan target, 2),
+		targets: map[string]*healthStatus{
+			"test": {up: true},
+		},
+	}
+
+	currentTargets := make(chan target, 2)
+	healthTarget := target{targetURL: targetURL, name: "test"}
+
+	result := hc.handleHealthCheckResult(t.Context(), healthTarget, false, currentTargets)
+	assert.Equal(t, healthStatusResult{count: 1, threshold: 2}, result)
+	assert.Equal(t, 0, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+	assert.Empty(t, serviceInfo.GetAllStatus())
+
+	result = hc.handleHealthCheckResult(t.Context(), healthTarget, false, currentTargets)
+	assert.Equal(t, healthStatusResult{update: true, count: 2, threshold: 2}, result)
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+	assert.InDelta(t, float64(0), gauge.GaugeValue, delta)
+	assert.Equal(t, map[string]string{targetURL.String(): runtime.StatusDown}, serviceInfo.GetAllStatus())
+
+	result = hc.handleHealthCheckResult(t.Context(), healthTarget, true, currentTargets)
+	assert.Equal(t, healthStatusResult{count: 1, threshold: 2}, result)
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+	assert.Equal(t, map[string]string{targetURL.String(): runtime.StatusDown}, serviceInfo.GetAllStatus())
+
+	result = hc.handleHealthCheckResult(t.Context(), healthTarget, true, currentTargets)
+	assert.Equal(t, healthStatusResult{update: true, count: 2, threshold: 2}, result)
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 1, lb.numUpsertedServers)
+	assert.InDelta(t, float64(1), gauge.GaugeValue, delta)
+	assert.Equal(t, []string{"service", "foobar", "url", targetURL.String()}, gauge.LastLabelValues)
+	assert.Equal(t, map[string]string{targetURL.String(): runtime.StatusUp}, serviceInfo.GetAllStatus())
 }
 
 func TestDifferentIntervals(t *testing.T) {

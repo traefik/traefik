@@ -40,6 +40,8 @@ http:
           path: "/health"
           interval: "10s"
           timeout: "3s"
+          fails: 3
+          passes: 2
         passiveHealthCheck:
           failureWindow: "3s"
           maxFailedAttempts: 3
@@ -63,6 +65,8 @@ http:
       path = "/health"
       interval = "10s"
       timeout = "3s"
+      fails = 3
+      passes = 2
 
     [http.services.my-service.loadBalancer.passiveHealthCheck]
       failureWindow = "3s"
@@ -85,6 +89,10 @@ labels:
   - "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health"
   - "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s"
   - "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s"
+  - "traefik.http.services.my-service.loadBalancer.healthcheck.fails=3"
+  - "traefik.http.services.my-service.loadBalancer.healthcheck.passes=2"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3"
   - "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.failureWindow=3s"
   - "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.maxFailedAttempts=3"
   - "traefik.http.services.my-service.loadBalancer.passHostHeader=true"
@@ -105,6 +113,10 @@ labels:
     "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
     "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.failureWindow=3s",
     "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.maxFailedAttempts=3",
+    "traefik.http.services.my-service.loadBalancer.healthcheck.fails=3",
+    "traefik.http.services.my-service.loadBalancer.healthcheck.passes=2",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3",
     "traefik.http.services.my-service.loadBalancer.passHostHeader=true",
     "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file",
     "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
@@ -302,6 +314,8 @@ Below are the available options for the health check mechanism:
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                          | 30s     | No       |
 | <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | -       | No       |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
+| <a id="opt-fails" href="#opt-fails" title="#opt-fails">`fails`</a> | Defines the number of consecutive failures before considering the server unhealthy.                                           | 1       | No       |
+| <a id="opt-passes" href="#opt-passes" title="#opt-passes">`passes`</a> | Defines the number of consecutive successes before considering the server healthy again.                                      | 1       | No       |
 | <a id="opt-headers" href="#opt-headers" title="#opt-headers">`headers`</a> | Defines custom headers to be sent to the health check endpoint.                                                               |         | No       |
 | <a id="opt-followRedirects" href="#opt-followRedirects" title="#opt-followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
 | <a id="opt-method" href="#opt-method" title="#opt-method">`method`</a> | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |

@@ -164,6 +164,8 @@ describe('<HttpServicePage />', () => {
           port: 80,
           interval: '5s',
           timeout: '10s',
+          fails: 3,
+          passes: 2,
           hostname: 'domain.com',
           headers: {
             'X-Custom-A': 'foobar,gi,ji;ji,ok',
@@ -197,6 +199,10 @@ describe('<HttpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('/health')
     expect(healthCheck.innerHTML).toContain('Timeout')
     expect(healthCheck.innerHTML).toContain('10s')
+    expect(healthCheck.innerHTML).toContain('Fails')
+    expect(healthCheck.innerHTML).toContain('3')
+    expect(healthCheck.innerHTML).toContain('Passes')
+    expect(healthCheck.innerHTML).toContain('2')
     expect(healthCheck.innerHTML).toContain('Port')
     expect(healthCheck.innerHTML).toContain('80')
     expect(healthCheck.innerHTML).toContain('Hostname')
