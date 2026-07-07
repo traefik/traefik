@@ -679,8 +679,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if portName == *p.Name {
-				port = *p.Port
+			if p.Name != nil && portName == *p.Name {
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}
