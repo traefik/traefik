@@ -802,6 +802,80 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "EndpointSlice with nil port name",
+			paths: []string{
+				"ingressclasses.yml",
+				"services.yml",
+				"ingresses/ingress-with-nil-endpointslice-port-name.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0": {
+							Rule:       `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "EndpointSlice with nil port value",
+			paths: []string{
+				"ingressclasses.yml",
+				"services.yml",
+				"ingresses/ingress-with-nil-endpointslice-port-value.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0": {
+							Rule:       `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

@@ -632,8 +632,8 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if servicePort.Name == *p.Name {
-				port = *p.Port
+			if p.Name != nil && servicePort.Name == *p.Name {
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}

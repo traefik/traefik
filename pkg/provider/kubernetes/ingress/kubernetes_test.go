@@ -1728,6 +1728,58 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:               "Ingress with nil endpointslice port name",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-name-whoami-localhost": {
+							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
+							Service: "default-whoami-nil-port-name-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-nil-port-name-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:               "Ingress with nil endpointslice port value",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-value-whoami-localhost": {
+							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
+							Service: "default-whoami-nil-port-value-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-nil-port-value-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

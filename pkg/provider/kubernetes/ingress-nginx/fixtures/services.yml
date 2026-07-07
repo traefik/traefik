@@ -93,3 +93,73 @@ spec:
     - port: 80
       targetPort: 8080
       name: http
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: whoami-nil-port-name
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.2
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami-nil-port-name
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-nil-port-name
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-nil-port-name
+
+addressType: IPv4
+ports:
+  - port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: whoami-nil-port-value
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.3
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami-nil-port-value
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-nil-port-value
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-nil-port-value
+
+addressType: IPv4
+ports:
+  - name: web
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
