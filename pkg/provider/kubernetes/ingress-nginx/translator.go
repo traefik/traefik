@@ -52,24 +52,25 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	if mc.DefaultBackend != nil {
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesIngressMetadata{
-					Namespace:   mc.DefaultBackend.Namespace,
-					ServiceName: mc.DefaultBackend.ServiceName,
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: mc.DefaultBackend.Namespace,
 				},
 			},
 		}
 
 		var serversTransportName string
 		if loc := mc.DefaultBackendLocation; loc != nil {
-			obs.Metadata.Ingress.IngressName = loc.IngressName
-			obs.Metadata.Ingress.ServicePort = loc.ServicePort
+			obs.Metadata.Ingress.Name = loc.IngressName
 			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
 				serversTransportName = loc.ServersTransportName
 				conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
 			}
 		}
 
-		conf.HTTP.Services[defaultBackendName] = buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc := buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc.Observability = buildServiceObservability(mc.DefaultBackend)
+		conf.HTTP.Services[defaultBackendName] = defaultBackendSvc
 
 		rt := &dynamic.Router{
 			EntryPoints:   p.NonTLSEntryPoints,
@@ -148,15 +149,16 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			primarySvcName := loc.BackendName
-			conf.HTTP.Services[primarySvcName] = buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc := buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc.Observability = buildServiceObservability(backend)
+			conf.HTTP.Services[primarySvcName] = primarySvc
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
-					Ingress: &dynamic.KubernetesIngressMetadata{
-						Namespace:   loc.Namespace,
-						IngressName: loc.IngressName,
-						ServiceName: loc.ServiceName,
-						ServicePort: loc.ServicePort,
+					Ingress: &dynamic.KubernetesMetadata{
+						Kind:      "Ingress",
+						Namespace: loc.Namespace,
+						Name:      loc.IngressName,
 					},
 				},
 			}
@@ -169,6 +171,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canaryWRRName := primarySvcName + "-wrr"
 
 					canarySvc := buildServiceWithLocConfig(canaryBackend, loc.ServersTransportName, loc.Config)
+					canarySvc.Observability = buildServiceObservability(canaryBackend)
 					conf.HTTP.Services[canarySvcName] = canarySvc
 
 					conf.HTTP.Services[canaryWRRName] = &dynamic.Service{
@@ -281,6 +284,21 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	}
 
 	return conf
+}
+
+func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
+	if b == nil {
+		return nil
+	}
+	return &dynamic.ServiceObservabilityConfig{
+		Metadata: &dynamic.ServiceObservabilityMetadata{
+			Kubernetes: &dynamic.KubernetesServiceMetadata{
+				Namespace: b.Namespace,
+				Name:      b.ServiceName,
+				Port:      b.ServicePort,
+			},
+		},
+	}
 }
 
 func buildService(backend *backend, serversTransportName string) *dynamic.Service {
@@ -414,7 +432,9 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		if e.ErrorBackendName != "" {
 			errorSvcName = "default-backend-" + routerKey
 			if errBackend, ok := mc.Backends[e.ErrorBackendName]; ok {
-				conf.HTTP.Services[errorSvcName] = buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc := buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc.Observability = buildServiceObservability(errBackend)
+				conf.HTTP.Services[errorSvcName] = errSvc
 			}
 		}
 		headers := http.Header{

@@ -57,9 +57,8 @@
 				"metadata": {
 					"ingress": {
 						"namespace": "default",
-						"ingressName": "whoami-keep-route",
-						"serviceName": "whoami",
-						"servicePort": "80"
+						"name": "whoami-keep-route",
+						"kind": "Ingress"
 					}
 				}
 			},
@@ -111,10 +110,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -123,13 +122,22 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"noop@internal": {
