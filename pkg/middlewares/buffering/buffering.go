@@ -16,8 +16,10 @@ const (
 )
 
 type buffer struct {
-	name   string
-	buffer *oxybuffer.Buffer
+	name                 string
+	buffer               *oxybuffer.Buffer
+	maxBodyBytes         int64
+	disableRequestBuffer bool
 }
 
 // New creates a buffering middleware.
@@ -54,8 +56,10 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	}
 
 	return &buffer{
-		name:   name,
-		buffer: oxyBuffer,
+		name:                 name,
+		buffer:               oxyBuffer,
+		maxBodyBytes:         config.MaxRequestBodyBytes,
+		disableRequestBuffer: config.DisableRequestBuffer,
 	}, nil
 }
 
@@ -64,5 +68,16 @@ func (b *buffer) GetTracingInformation() (string, string) {
 }
 
 func (b *buffer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if b.disableRequestBuffer && b.maxBodyBytes > 0 && req.Body != nil && req.Body != http.NoBody {
+		// Reject immediately when Content-Length is known and exceeds the limit.
+		if req.ContentLength > b.maxBodyBytes {
+			http.Error(rw, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+			return
+		}
+		// For streaming requests (chunked or unknown length), wrap the body so the
+		// limit is enforced as bytes are read, matching NGINX's client_max_body_size
+		// behavior without enabling request buffering.
+		req.Body = http.MaxBytesReader(rw, req.Body, b.maxBodyBytes)
+	}
 	b.buffer.ServeHTTP(rw, req)
 }
