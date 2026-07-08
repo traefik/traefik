@@ -535,7 +535,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -550,7 +550,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -621,11 +621,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "service@file",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -640,7 +640,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -681,7 +681,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -696,7 +696,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -745,7 +745,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -760,7 +760,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -800,7 +800,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -815,7 +815,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -855,7 +855,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -870,7 +870,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -915,7 +915,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -925,7 +925,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami2-8080",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -940,7 +940,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 						"default-whoami2-8080": {
@@ -953,7 +953,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -993,11 +993,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoami2-8080",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1012,7 +1012,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 						"default-whoami2-8080": {
@@ -1025,7 +1025,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1076,7 +1076,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1086,7 +1086,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1101,7 +1101,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1161,7 +1161,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1171,7 +1171,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1186,7 +1186,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1240,7 +1240,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1250,7 +1250,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1265,7 +1265,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1305,7 +1305,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1320,7 +1320,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1365,7 +1365,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1375,7 +1375,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1390,7 +1390,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 						"bar-whoami-bar-80": {
@@ -1403,7 +1403,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.12:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1443,7 +1443,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1458,7 +1458,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.12:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -1689,7 +1689,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1750,7 +1750,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1760,7 +1760,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1828,11 +1828,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-tcp-app-my-tcp-gateway-tcp-1-e3b0c44298fc1c149afb-wrr-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-tcp-app-my-tcp-gateway-tcp-1-e3b0c44298fc1c149afb-wrr-1",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1842,7 +1842,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1852,7 +1852,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1918,11 +1918,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "service@file",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -1976,7 +1976,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{{
 									Name:   "default-whoamitcp-9000",
-									Weight: ptr.To(1),
+									Weight: new(1),
 								}},
 							},
 						},
@@ -2038,7 +2038,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2097,7 +2097,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2107,7 +2107,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2173,7 +2173,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2457,7 +2457,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2523,7 +2523,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2580,7 +2580,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2644,7 +2644,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2654,7 +2654,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2730,11 +2730,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "service@file",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2800,7 +2800,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2857,7 +2857,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2914,7 +2914,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2971,7 +2971,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3028,7 +3028,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3093,7 +3093,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3103,7 +3103,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3172,7 +3172,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3229,11 +3229,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-tls-app-my-gateway-tcp-1-673acf455cb2dab0b43a-wrr-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 									{
 										Name:   "default-tls-app-my-gateway-tcp-1-673acf455cb2dab0b43a-wrr-1",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3243,7 +3243,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3253,7 +3253,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-10000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3458,7 +3458,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3468,7 +3468,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3478,7 +3478,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3518,7 +3518,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3528,7 +3528,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3543,7 +3543,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -3632,7 +3632,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3642,7 +3642,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3652,7 +3652,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3692,7 +3692,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3702,7 +3702,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3717,7 +3717,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -3790,7 +3790,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3800,7 +3800,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3810,7 +3810,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3844,7 +3844,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3854,7 +3854,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3893,7 +3893,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3903,7 +3903,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3918,7 +3918,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 						"bar-whoami-bar-80": {
@@ -3931,7 +3931,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.12:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 						"bar-http-app-bar-my-gateway-web-a431b128267aabc954fd-wrr": {
@@ -3939,7 +3939,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3949,7 +3949,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4025,7 +4025,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4035,7 +4035,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4045,7 +4045,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "bar-whoamitcp-bar-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4078,7 +4078,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.12:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 						"bar-http-app-bar-my-gateway-web-a431b128267aabc954fd-wrr": {
@@ -4086,7 +4086,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4096,7 +4096,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "bar-whoami-bar-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4151,7 +4151,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4161,7 +4161,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "default-whoamitcp-9000",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4201,7 +4201,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4211,7 +4211,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-80",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4226,7 +4226,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -4423,7 +4423,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  nil,
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 				},
@@ -4451,7 +4451,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 				},
@@ -4465,13 +4465,13 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType]("unknown"),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 				},
@@ -4485,7 +4485,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 					{},
@@ -4500,7 +4500,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 					{
@@ -4523,7 +4523,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 						Headers: []gatev1alpha2.HTTPHeaderMatch{
 							{
@@ -4545,7 +4545,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 						Headers: []gatev1alpha2.HTTPHeaderMatch{
 							{
@@ -4567,7 +4567,7 @@ func Test_extractRule(t *testing.T) {
 					{
 						Path: &gatev1alpha2.HTTPPathMatch{
 							Type:  ptr.To[gatev1alpha2.PathMatchType](gatev1alpha2.PathMatchExact),
-							Value: ptr.To("/foo/"),
+							Value: new("/foo/"),
 						},
 					},
 					{

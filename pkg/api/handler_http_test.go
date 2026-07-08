@@ -18,8 +18,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/static"
 )
 
-func pointer[T any](v T) *T { return &v }
-
 func TestHandler_HTTP(t *testing.T) {
 	type expected struct {
 		statusCode int
@@ -336,7 +334,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -353,7 +351,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.2",
@@ -422,7 +420,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -439,7 +437,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.2",
@@ -456,7 +454,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.3",
@@ -486,7 +484,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -504,7 +502,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.2",
@@ -535,7 +533,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -553,7 +551,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.2",
@@ -584,7 +582,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -613,7 +611,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -642,7 +640,7 @@ func TestHandler_HTTP(t *testing.T) {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.ServersLoadBalancer{
-									PassHostHeader: pointer(true),
+									PassHostHeader: new(true),
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",

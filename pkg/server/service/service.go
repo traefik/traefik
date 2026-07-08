@@ -106,8 +106,8 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 
 	value := reflect.ValueOf(*conf.Service)
 	var count int
-	for i := range value.NumField() {
-		if !value.Field(i).IsNil() {
+	for _, field := range value.Fields() {
+		if !field.IsNil() {
 			count++
 		}
 	}

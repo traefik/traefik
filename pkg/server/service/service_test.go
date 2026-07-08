@@ -240,7 +240,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
-				PassHostHeader: pointer(true),
+				PassHostHeader: new(true),
 				Servers: []dynamic.Server{
 					{
 						URL: serverPassHost.URL,
@@ -258,7 +258,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			desc:        "PassHost doesn't pass the host instead of the IP",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
-				PassHostHeader: pointer(false),
+				PassHostHeader: new(false),
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 				Servers: []dynamic.Server{
 					{

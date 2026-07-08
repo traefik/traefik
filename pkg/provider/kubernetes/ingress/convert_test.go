@@ -19,7 +19,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -36,7 +36,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -54,7 +54,7 @@ func Test_convertSlice_networkingv1beta1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -71,7 +71,7 @@ func Test_convertSlice_networkingv1beta1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -89,7 +89,7 @@ func Test_convertSlice_networkingv1_to_networkingv1beta1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -106,7 +106,7 @@ func Test_convertSlice_networkingv1_to_networkingv1beta1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -123,7 +123,7 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    ptr("test"),
+				Error:    new("test"),
 			},
 		},
 	}
@@ -138,14 +138,10 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    ptr("test"),
+				Error:    new("test"),
 			},
 		},
 	}
 
 	assert.Equal(t, expected, actual)
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

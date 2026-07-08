@@ -1472,7 +1472,7 @@ func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HT
 
 		svc := dynamic.Service{
 			LoadBalancer: &dynamic.ServersLoadBalancer{
-				PassHostHeader: ptr.To(true),
+				PassHostHeader: new(true),
 			},
 		}
 
