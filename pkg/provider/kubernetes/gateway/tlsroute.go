@@ -75,7 +75,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadTLSRoute(match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = ptr.To(condition)
+					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
@@ -209,7 +209,7 @@ func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routeKey strin
 	var condition *metav1.Condition
 	for bi, backendRef := range backendRefs {
 		svcName, svc, errCondition := p.loadTLSService(routeKey, route, bi, backendRef)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
 			condition = errCondition

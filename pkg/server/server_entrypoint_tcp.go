@@ -247,13 +247,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		if err != nil {
 			logger.Error().Err(err).Send()
 
-			var opErr *net.OpError
-			if errors.As(err, &opErr) && opErr.Temporary() {
+			if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Temporary() {
 				continue
 			}
 
-			var urlErr *url.Error
-			if errors.As(err, &urlErr) && urlErr.Temporary() {
+			if urlErr, ok := errors.AsType[*url.Error](err); ok && urlErr.Temporary() {
 				continue
 			}
 
