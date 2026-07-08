@@ -2219,7 +2219,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-whoami-nil-port-name-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2255,7 +2255,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-whoami-nil-port-value-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},

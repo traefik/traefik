@@ -17129,13 +17129,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -17143,7 +17143,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -17152,7 +17152,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -17227,13 +17227,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -17241,7 +17241,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -17250,7 +17250,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},

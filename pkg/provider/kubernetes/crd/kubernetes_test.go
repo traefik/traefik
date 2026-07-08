@@ -5709,7 +5709,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test-route-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5750,7 +5750,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test-route-6b204d94623b3df4370c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
