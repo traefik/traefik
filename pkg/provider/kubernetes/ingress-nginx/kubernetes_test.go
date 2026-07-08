@@ -14,7 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/utils/ptr"
 )
 
 func TestLoadIngresses(t *testing.T) {
@@ -95,7 +94,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -159,7 +158,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -212,7 +211,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -297,7 +296,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -314,7 +313,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -331,7 +330,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -430,7 +429,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -440,7 +439,7 @@ func TestLoadIngresses(t *testing.T) {
 										Domain:   "foo.localhost",
 										HTTPOnly: true,
 										MaxAge:   42,
-										Path:     ptr.To("/foobar"),
+										Path:     new("/foobar"),
 										SameSite: "none",
 										Secure:   true,
 									},
@@ -487,7 +486,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -535,7 +534,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
-								AccessControlMaxAge:           ptr.To(int64(42)),
+								AccessControlMaxAge:           new(int64(42)),
 							},
 						},
 					},
@@ -551,7 +550,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -593,7 +592,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -638,7 +637,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -691,7 +690,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -748,7 +747,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -762,7 +761,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -776,7 +775,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -790,7 +789,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -827,7 +826,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -864,7 +863,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},

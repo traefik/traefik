@@ -80,7 +80,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = ptr.To(condition)
+					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
@@ -165,8 +165,8 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 						Services: []dynamic.WRRService{
 							{
 								Name:   "invalid-httproute-filter",
-								Status: ptr.To(500),
-								Weight: ptr.To(1),
+								Status: new(500),
+								Weight: new(1),
 							},
 						},
 					},
@@ -214,7 +214,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
 		svcName, errCondition := p.loadService(ctx, gatewayName, listener, conf, route, backendRef)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
 				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
@@ -222,7 +222,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
 				Name:   svcName,
-				Status: ptr.To(500),
+				Status: new(500),
 				Weight: weight,
 			})
 			continue
@@ -357,7 +357,7 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, route
 
 	pm := ptr.Deref(pathMatch, gatev1.HTTPPathMatch{
 		Type:  ptr.To(gatev1.PathMatchPathPrefix),
-		Value: ptr.To("/"),
+		Value: new("/"),
 	})
 
 	var middlewares []namedMiddleware
@@ -490,9 +490,9 @@ func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace s
 				AncestorRef: gatev1.ParentReference{
 					Group:       ptr.To(gatev1.Group(groupGateway)),
 					Kind:        ptr.To(gatev1.Kind(kindGateway)),
-					Namespace:   ptr.To(gatev1.Namespace(namespace)),
+					Namespace:   new(gatev1.Namespace(namespace)),
 					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+					SectionName: new(gatev1.SectionName(listener.Name)),
 				},
 				ControllerName: controllerName,
 			}
@@ -706,7 +706,7 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (string, int) {
 	path := ptr.Deref(match.Path, gatev1.HTTPPathMatch{
 		Type:  ptr.To(gatev1.PathMatchPathPrefix),
-		Value: ptr.To("/"),
+		Value: new("/"),
 	})
 
 	var priority int
@@ -853,16 +853,16 @@ func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Midd
 func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch gatev1.HTTPPathMatch) *dynamic.Middleware {
 	var hostname *string
 	if filter.Hostname != nil {
-		hostname = ptr.To(string(*filter.Hostname))
+		hostname = new(string(*filter.Hostname))
 	}
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
 	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
-		port = ptr.To("")
+		port = new("")
 	}
 	if filter.Port != nil {
-		port = ptr.To(strconv.Itoa(int(*filter.Port)))
+		port = new(strconv.Itoa(int(*filter.Port)))
 	}
 
 	var path *string
@@ -896,7 +896,7 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 
 	var host *string
 	if filter.Hostname != nil {
-		host = ptr.To(string(*filter.Hostname))
+		host = new(string(*filter.Hostname))
 	}
 
 	var path *string

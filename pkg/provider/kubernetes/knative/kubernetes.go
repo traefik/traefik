@@ -25,7 +25,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/ptr"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	"knative.dev/pkg/network"
@@ -368,7 +367,7 @@ func (p *Provider) buildWeightedRoundRobin(routerKey string, splits []knativenet
 
 		wrr.Services = append(wrr.Services, dynamic.WRRService{
 			Name:    serviceKey,
-			Weight:  ptr.To(percent),
+			Weight:  new(percent),
 			Headers: split.AppendHeaders,
 		})
 	}

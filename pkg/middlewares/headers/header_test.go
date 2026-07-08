@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"k8s.io/utils/ptr"
 )
 
 func TestNewHeader_customRequestHeader(t *testing.T) {
@@ -127,7 +126,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 			cfg: dynamic.Headers{
 				AccessControlAllowMethods:    []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
-				AccessControlMaxAge:          ptr.To(int64(600)),
+				AccessControlMaxAge:          new(int64(600)),
 			},
 			requestHeaders: map[string][]string{
 				"Access-Control-Request-Headers": {"origin"},
@@ -146,7 +145,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 			cfg: dynamic.Headers{
 				AccessControlAllowMethods:    []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOriginList: []string{"*"},
-				AccessControlMaxAge:          ptr.To(int64(600)),
+				AccessControlMaxAge:          new(int64(600)),
 			},
 			requestHeaders: map[string][]string{
 				"Access-Control-Request-Headers": {"origin"},
@@ -166,7 +165,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				AccessControlAllowMethods:     []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOriginList:  []string{"*"},
 				AccessControlAllowCredentials: true,
-				AccessControlMaxAge:           ptr.To(int64(600)),
+				AccessControlMaxAge:           new(int64(600)),
 			},
 			requestHeaders: map[string][]string{
 				"Access-Control-Request-Headers": {"origin"},
@@ -187,7 +186,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				AccessControlAllowMethods:    []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOriginList: []string{"*"},
 				AccessControlAllowHeaders:    []string{"origin", "X-Forwarded-For"},
-				AccessControlMaxAge:          ptr.To(int64(600)),
+				AccessControlMaxAge:          new(int64(600)),
 			},
 			requestHeaders: map[string][]string{
 				"Access-Control-Request-Headers": {"origin"},
@@ -208,7 +207,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				AccessControlAllowMethods:    []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOriginList: []string{"*"},
 				AccessControlAllowHeaders:    []string{"origin", "X-Forwarded-For"},
-				AccessControlMaxAge:          ptr.To(int64(600)),
+				AccessControlMaxAge:          new(int64(600)),
 			},
 			requestHeaders: map[string][]string{
 				"Access-Control-Request-Method": {"GET", "OPTIONS"},
