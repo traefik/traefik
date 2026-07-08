@@ -48,8 +48,8 @@ trim = true
 ############################################
 
 [git]
-tag_pattern = "v[0-9].*"
-ignore_tags = "v3\\..*"
+tag_pattern = "v3\\.6.*"
+ignore_tags = "v2\\..*"
 
 filter_commits = false
 conventional_commits = false
