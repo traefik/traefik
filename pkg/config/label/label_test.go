@@ -13,8 +13,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-func pointer[T any](v T) *T { return &v }
-
 func TestDecodeConfiguration(t *testing.T) {
 	labels := map[string]string{
 		"traefik.http.middlewares.Middleware0.addprefix.prefix":                                    "foobar",
@@ -268,7 +266,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 42},
 					},
 				},
@@ -279,7 +277,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
 					},
 				},
@@ -539,7 +537,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							Key:                "foobar",
 							InsecureSkipVerify: true,
 						},
-						TrustForwardHeader: pointer(true),
+						TrustForwardHeader: new(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"fiibar",
@@ -548,7 +546,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						MaxResponseBodySize: pointer[int64](42),
+						MaxResponseBodySize: new(int64(42)),
 					},
 				},
 				"Middleware8": {
@@ -669,9 +667,9 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: pointer(true),
+							FollowRedirects: new(true),
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -697,9 +695,9 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: pointer(true),
+							FollowRedirects: new(true),
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -777,7 +775,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 					},
 				},
 				"Service1": {
@@ -787,7 +785,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 					},
 				},
 			},
@@ -1053,7 +1051,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Key:                "foobar",
 							InsecureSkipVerify: true,
 						},
-						TrustForwardHeader: pointer(true),
+						TrustForwardHeader: new(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"fiibar",
@@ -1062,7 +1060,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						MaxResponseBodySize: pointer[int64](42),
+						MaxResponseBodySize: new(int64(42)),
 					},
 				},
 				"Middleware8": {
@@ -1175,7 +1173,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
@@ -1202,7 +1200,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},

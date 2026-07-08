@@ -32,7 +32,7 @@ func TestRequestTrailersNotForwardedToBackend(t *testing.T) {
 	}))
 	t.Cleanup(backend.Close)
 
-	proxyHandler, err := buildProxy(pointer(true), nil, http.DefaultTransport, nil)
+	proxyHandler, err := buildProxy(new(true), nil, http.DefaultTransport, nil)
 	require.NoError(t, err)
 
 	lb, err := roundrobin.New(proxyHandler)
