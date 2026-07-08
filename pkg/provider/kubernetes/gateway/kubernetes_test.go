@@ -1542,7 +1542,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-2c055906fe09bc52ae0a-svc-default-whoami-0",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: new(1),
 									},
 								},
 							},
