@@ -302,6 +302,43 @@ func TestCloneRequest(t *testing.T) {
 		assert.Empty(t, rr.body)
 	})
 
+	t.Run("valid empty body with unknown content length", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		assert.NoError(t, err)
+
+		req.Body = io.NopCloser(bytes.NewReader(nil))
+		req.ContentLength = -1
+
+		rr, expectedBytes, err := NewReusableRequest(req, 20)
+		assert.NoError(t, err)
+		assert.Nil(t, expectedBytes)
+		assert.Empty(t, rr.body)
+
+		cloned := rr.Clone(req.Context())
+		body, err := io.ReadAll(cloned.Body)
+		assert.NoError(t, err)
+		assert.Empty(t, body)
+	})
+
+	t.Run("valid body with unknown content length", func(t *testing.T) {
+		bb := []byte(`unknown length body`)
+
+		req, err := http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(bb))
+		assert.NoError(t, err)
+
+		req.ContentLength = -1
+
+		rr, expectedBytes, err := NewReusableRequest(req, 20)
+		assert.NoError(t, err)
+		assert.Nil(t, expectedBytes)
+		assert.Equal(t, bb, rr.body)
+
+		cloned := rr.Clone(req.Context())
+		body, err := io.ReadAll(cloned.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, bb, body)
+	})
+
 	t.Run("no request given", func(t *testing.T) {
 		_, _, err := NewReusableRequest(nil, defaultMaxBodySize)
 		assert.Error(t, err)

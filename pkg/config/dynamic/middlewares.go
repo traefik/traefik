@@ -61,6 +61,7 @@ type Middleware struct {
 	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -951,4 +952,12 @@ type UpstreamVHost struct {
 	// Vars holds provider-resolved custom variables, keyed with their leading "$".
 	// For example: {"$service_name": "my-app", "$namespace": "foo"}.
 	Vars map[string]string `json:"vars,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AppRoot holds the app-root middleware configuration used by the ingress-nginx provider.
+type AppRoot struct {
+	// Path defines the path that should be treated as the app root.
+	Path string `json:"path,omitempty"`
 }

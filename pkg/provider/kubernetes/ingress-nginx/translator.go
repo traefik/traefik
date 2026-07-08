@@ -175,8 +175,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						Weighted: &dynamic.WeightedRoundRobin{
 							Sticky: buildSticky(loc.Config, "wrr"),
 							Services: []dynamic.WRRService{
-								{Name: primarySvcName, Weight: ptr.To(loc.Canary.WeightTotal - loc.Canary.Weight)},
-								{Name: canarySvcName, Weight: ptr.To(loc.Canary.Weight)},
+								{Name: primarySvcName, Weight: new(loc.Canary.WeightTotal - loc.Canary.Weight)},
+								{Name: canarySvcName, Weight: new(loc.Canary.Weight)},
 							},
 						},
 					}
@@ -386,7 +386,7 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 			SameSite: strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
 			MaxAge:   ptr.Deref(cfg.SessionCookieMaxAge, 0),
 			Expires:  ptr.Deref(cfg.SessionCookieExpires, 0),
-			Path:     ptr.To(ptr.Deref(cfg.SessionCookiePath, "/")),
+			Path:     new(ptr.Deref(cfg.SessionCookiePath, "/")),
 			Domain:   ptr.Deref(cfg.SessionCookieDomain, ""),
 		},
 	}
@@ -405,7 +405,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		if rt.Observability == nil {
 			rt.Observability = &dynamic.RouterObservabilityConfig{}
 		}
-		rt.Observability.AccessLogs = ptr.To(*loc.AccessLog)
+		rt.Observability.AccessLogs = new(*loc.AccessLog)
 	}
 
 	if loc.CustomHTTPErrors != nil {
@@ -436,12 +436,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 
 	if loc.AppRoot != nil {
 		name := routerKey + "-app-root"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
-			RedirectRegex: &dynamic.RedirectRegex{
-				Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-				Replacement: "$1" + *loc.AppRoot,
-			},
-		}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AppRoot: loc.AppRoot}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -559,7 +554,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 		RedirectRegex: &dynamic.RedirectRegex{
 			Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
 			Replacement: fmt.Sprintf("$1://%s$2/$3", f.TargetHostname),
-			StatusCode:  ptr.To(http.StatusPermanentRedirect),
+			StatusCode:  new(http.StatusPermanentRedirect),
 		},
 	}
 

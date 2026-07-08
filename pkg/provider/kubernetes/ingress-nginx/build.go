@@ -708,9 +708,7 @@ func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName stri
 		var port int32
 		for _, p := range es.Ports {
 			if p.Name != nil && *p.Name == portName {
-				if p.Port != nil {
-					port = *p.Port
-				}
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}
