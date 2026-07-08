@@ -138,7 +138,9 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 				EntryPoints: []string{listener.EPName},
 			}
 			if listener.Protocol == gatev1.HTTPSProtocolType {
-				router.TLS = &dynamic.RouterTLSConfig{}
+				router.TLS = &dynamic.RouterTLSConfig{
+					Options: listener.FrontendTLSValidationOptions,
+				}
 			}
 
 			var err error
