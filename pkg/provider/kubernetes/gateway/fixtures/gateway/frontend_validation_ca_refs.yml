@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-configmap
+  namespace: default
+data:
+  ca.crt: "CA1"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-configmap-empty
+  namespace: default
+data: {}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ca-secret
+  namespace: default
+data:
+  ca.crt: Q0Ey
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-configmap-not-granted
+  namespace: other-ns
+data:
+  ca.crt: "CA3"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-configmap-granted
+  namespace: other-ns
+data:
+  ca.crt: "CA4"
+
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway
+  namespace: other-ns
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: default
+  to:
+    - group: ""
+      kind: ConfigMap
+      name: ca-configmap-granted

@@ -1,0 +1,25 @@
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+      sectionName: https
+  hostnames:
+    - "foo.com"
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /bar
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
