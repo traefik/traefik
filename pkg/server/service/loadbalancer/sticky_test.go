@@ -162,3 +162,35 @@ func TestConvertSameSite_CaseInsensitive(t *testing.T) {
 		})
 	}
 }
+
+func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{Name: "test", Expires: 3600})
+	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+	res1 := httptest.NewRecorder()
+	require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
+	exp1 := res1.Result().Cookies()[0].Expires
+
+	// The Expires must be recomputed at write time, not frozen at construction; a
+	// real gap is needed because HTTP-date has 1-second granularity and there is no
+	// injectable clock.
+	time.Sleep(2 * time.Second)
+
+	res2 := httptest.NewRecorder()
+	require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
+	exp2 := res2.Result().Cookies()[0].Expires
+
+	assert.True(t, exp2.After(exp1))
+}
+
+func TestSticky_WriteStickyCookie_NoExpiresIsSessionCookie(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{Name: "test"})
+	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+	res := httptest.NewRecorder()
+	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+
+	// Without an expiry configured the cookie stays a session cookie, so the
+	// per-request Expires branch must not add an Expires attribute.
+	assert.True(t, res.Result().Cookies()[0].Expires.IsZero())
+}
