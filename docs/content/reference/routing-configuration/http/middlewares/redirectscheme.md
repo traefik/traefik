@@ -46,7 +46,7 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+    "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https",
     "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
   ]
 }

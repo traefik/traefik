@@ -50,11 +50,13 @@
       insecure = true
       trustedIPs = ["foobar", "foobar"]
       connection = ["foobar", "foobar"]
+      addXForwardedSchemeHeaders = true
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true
       sanitizePath = true
       maxHeaderBytes = 42
+      underscoreHeadersStrategy = "foobar"
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
           to = "foobar"

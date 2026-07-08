@@ -37,8 +37,8 @@ http:
     query = "/{status}.html"
 
     [http.middlewares.test-errors.errors.statusRewrites]
-      "418" = "404"
-      "502-504" = "500"
+      "418" = 404
+      "502-504" = 500
 
 [http.services]
   # ... definition of the error-handler-service
@@ -83,8 +83,8 @@ spec:
       - "503"
       - "505-599"
     statusRewrites:
-      "418": "404"
-      "502-504": "500"
+      "418": 404
+      "502-504": 500
     query: /{status}.html
     service:
       name: error-handler-service
@@ -99,6 +99,7 @@ spec:
 | <a id="opt-statusRewrites" href="#opt-statusRewrites" title="#opt-statusRewrites">`statusRewrites`</a> | An optional mapping of status codes to be rewritten. More information [here](#statusrewrites).  | []     | No      |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
 | <a id="opt-query" href="#opt-query" title="#opt-query">`query`</a> | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
+| <a id="opt-errorRequestHeaders" href="#opt-errorRequestHeaders" title="#opt-errorRequestHeaders">`errorRequestHeaders`</a> | Defines the list of original request headers forwarded to the error page service.<br /> More information [here](#errorrequestheaders) | []      | No      |
 
 ### service and HostHeader
 

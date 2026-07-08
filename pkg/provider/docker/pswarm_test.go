@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,15 +46,21 @@ func TestListTasks(t *testing.T) {
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.5"}),
 					taskStatus(taskState(swarmtypes.TaskStateFailed)),
 				),
+				swarmTask("id6",
+					taskSlot(6),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.6/24"}),
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
+				),
 			},
 			isGlobalSVC: false,
 			expectedTasks: []string{
 				"container.1",
 				"container.4",
+				"container.6",
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -146,21 +152,23 @@ func TestSwarmProvider_listServices(t *testing.T) {
 			dockerVersion: "1.30",
 			networks: []networktypes.Summary{
 				{
-					Name:       "network_name",
-					ID:         "yk6l57rfwizjzxxzftn4amaot",
-					Created:    time.Now(),
-					Scope:      "swarm",
-					Driver:     "overlay",
-					EnableIPv6: false,
-					Internal:   true,
-					Ingress:    false,
-					ConfigOnly: false,
-					Options: map[string]string{
-						"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
-						"com.docker.networktypes.enable_ipv6":                 "false",
-					},
-					Labels: map[string]string{
-						"com.docker.stack.namespace": "test",
+					Network: networktypes.Network{
+						Name:       "network_name",
+						ID:         "yk6l57rfwizjzxxzftn4amaot",
+						Created:    time.Now(),
+						Scope:      "swarm",
+						Driver:     "overlay",
+						EnableIPv6: false,
+						Internal:   true,
+						Ingress:    false,
+						ConfigOnly: false,
+						Options: map[string]string{
+							"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
+							"com.docker.networktypes.enable_ipv6":                 "false",
+						},
+						Labels: map[string]string{
+							"com.docker.stack.namespace": "test",
+						},
 					},
 				},
 			},
@@ -201,21 +209,23 @@ func TestSwarmProvider_listServices(t *testing.T) {
 			dockerVersion: "1.30",
 			networks: []networktypes.Summary{
 				{
-					Name:       "network_name",
-					ID:         "yk6l57rfwizjzxxzftn4amaot",
-					Created:    time.Now(),
-					Scope:      "swarm",
-					Driver:     "overlay",
-					EnableIPv6: false,
-					Internal:   true,
-					Ingress:    false,
-					ConfigOnly: false,
-					Options: map[string]string{
-						"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
-						"com.docker.networktypes.enable_ipv6":                 "false",
-					},
-					Labels: map[string]string{
-						"com.docker.stack.namespace": "test",
+					Network: networktypes.Network{
+						Name:       "network_name",
+						ID:         "yk6l57rfwizjzxxzftn4amaot",
+						Created:    time.Now(),
+						Scope:      "swarm",
+						Driver:     "overlay",
+						EnableIPv6: false,
+						Internal:   true,
+						Ingress:    false,
+						ConfigOnly: false,
+						Options: map[string]string{
+							"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
+							"com.docker.networktypes.enable_ipv6":                 "false",
+						},
+						Labels: map[string]string{
+							"com.docker.stack.namespace": "test",
+						},
 					},
 				},
 			},
@@ -281,7 +291,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -306,7 +316,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -344,7 +354,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "vlan",
+					Network: networktypes.Network{Name: "vlan"},
 				},
 			},
 		},
@@ -372,7 +382,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "vlan"},
 				},
 			},
 		},

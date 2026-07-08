@@ -400,6 +400,15 @@ proxy_set_header Accept-Encoding "";
 			},
 		},
 		{
+			desc: "proxy_set_header with quoted header name",
+			configurationSnippet: `
+proxy_set_header "X-Custom-Header" "my-value";
+`,
+			expectedRequestHeaders: map[string]string{
+				"X-Custom-Header": "my-value",
+			},
+		},
+		{
 			desc: "set directive creates variable",
 			configurationSnippet: `
 set $my_var "hello";

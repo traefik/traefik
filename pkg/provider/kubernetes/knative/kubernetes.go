@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -56,8 +55,7 @@ type Provider struct {
 	PrivateService     ServiceRef      `description:"Kubernetes service used to expose the networking controller privately." json:"privateService,omitempty" toml:"privateService,omitempty" yaml:"privateService,omitempty" export:"true"`
 	ThrottleDuration   ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 
-	client            *clientWrapper
-	lastConfiguration safe.Safe
+	client *clientWrapper
 }
 
 // Init the provider.
@@ -103,24 +101,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
 					conf, ingressStatuses := p.loadConfiguration(ctxLog)
 
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  ProviderName,
-							Configuration: conf,
-						}
+					configurationChan <- dynamic.Message{
+						ProviderName:  ProviderName,
+						Configuration: conf,
 					}
 
 					// If we're throttling,

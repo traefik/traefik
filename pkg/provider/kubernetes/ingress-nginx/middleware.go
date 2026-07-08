@@ -12,6 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"k8s.io/utils/ptr"
 )
 
@@ -38,7 +40,7 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildAuthTLSPassCert(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
-	p.buildRetry(loc, endpointCount)
+	p.buildRetry(ctx, loc, endpointCount)
 }
 
 func (p *Provider) buildSSLRedirect(loc *location) {
@@ -229,7 +231,10 @@ func (p *Provider) buildIPAllowList(loc *location) {
 		ranges = append(ranges, strings.TrimSpace(r))
 	}
 
-	loc.IPAllowList = &dynamic.IPAllowList{SourceRange: ranges}
+	loc.IPAllowList = &dynamic.IPAllowList{
+		SourceRange: ranges,
+		IPStrategy:  p.IPAllowListStrategy,
+	}
 }
 
 func (p *Provider) buildCORS(loc *location) {
@@ -240,10 +245,10 @@ func (p *Provider) buildCORS(loc *location) {
 	loc.CORS = &dynamic.Headers{
 		AccessControlAllowCredentials: ptr.Deref(loc.Config.EnableCORSAllowCredentials, true),
 		AccessControlExposeHeaders:    ptr.Deref(loc.Config.CORSExposeHeaders, []string{}),
-		AccessControlAllowHeaders:     ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"}),
+		AccessControlAllowHeaders:     ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
 		AccessControlAllowMethods:     ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
 		AccessControlAllowOriginList:  ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}),
-		AccessControlMaxAge:           int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000)),
+		AccessControlMaxAge:           ptr.To(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
 	}
 }
 
@@ -330,8 +335,27 @@ func (p *Provider) buildAuthTLSPassCert(loc *location) {
 		return
 	}
 
+	verifyClient := clientAuthTypeFromString(loc.Config.AuthTLSVerifyClient)
+
+	var caFiles []types.FileOrContent
+	// When auth-tls-verify-client is "optional_no_ca" (RequestClientCert), the CA
+	// certificate from the auth-tls-secret is forwarded to the upstream so the
+	// upstream can verify the client certificate it receives.
+	if verifyClient == tls.RequestClientCert {
+		parts := strings.SplitN(ptr.Deref(loc.Config.AuthTLSSecret, ""), "/", 2)
+		if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
+			secretNamespace, secretName := parts[0], parts[1]
+			if p.AllowCrossNamespaceResources || secretNamespace == loc.Namespace {
+				if blocks, err := p.certificateBlocks(secretNamespace, secretName); err == nil && blocks.ca != nil {
+					caFiles = []types.FileOrContent{types.FileOrContent(blocks.ca)}
+				}
+			}
+		}
+	}
+
 	loc.AuthTLSPassCert = &dynamic.AuthTLSPassCertificateToUpstream{
-		ClientAuthType: clientAuthTypeFromString(loc.Config.AuthTLSVerifyClient),
+		ClientAuthType: verifyClient,
+		CAFiles:        caFiles,
 	}
 }
 
@@ -389,7 +413,7 @@ func (p *Provider) buildSnippetAuth(loc *location) {
 	loc.SnippetAuth = sa
 }
 
-func (p *Provider) buildRetry(loc *location, endpointCount int) {
+func (p *Provider) buildRetry(ctx context.Context, loc *location, endpointCount int) {
 	attempts := ptr.Deref(loc.Config.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
 	// Safeguard to deactivate retry when the value is less than 0.
 	if attempts < 0 {
@@ -418,6 +442,23 @@ func (p *Provider) buildRetry(loc *location, endpointCount int) {
 
 	retry := &dynamic.Retry{Attempts: attempts}
 
+	maxRequestBodyBytes := p.ProxyBodySize
+	if proxyBodySize := ptr.Deref(loc.Config.ProxyBodySize, ""); proxyBodySize != "" {
+		if v, err := nginxSizeToBytes(proxyBodySize); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("proxy-body-size invalid, using provider default")
+		} else {
+			maxRequestBodyBytes = v
+		}
+	}
+
+	if maxRequestBodyBytes == 0 {
+		// Zero value means no limit with ingress-nginx.
+		// With the retry middleware, the equivalent configuration is a negative value.
+		maxRequestBodyBytes = -1
+	}
+
+	retry.MaxRequestBodyBytes = &maxRequestBodyBytes
+
 	hasError := slices.Contains(conditions, "error")
 	hasTimeout := slices.Contains(conditions, "timeout")
 	if !hasError && !hasTimeout {
@@ -427,6 +468,21 @@ func (p *Provider) buildRetry(loc *location, endpointCount int) {
 	for _, sc := range conditions {
 		if code, ok := strings.CutPrefix(sc, "http_"); ok {
 			retry.Status = append(retry.Status, code)
+		}
+	}
+
+	if len(retry.Status) > 0 {
+		disableRequestBuffering := !p.ProxyRequestBuffering
+		if loc.Config.ProxyRequestBuffering != nil {
+			// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+			disableRequestBuffering = *loc.Config.ProxyRequestBuffering != "on"
+		}
+
+		// When request buffering is explicitly disabled,
+		// we still want to allow the retry for empty body requests
+		// but disable it for request with bodies.
+		if disableRequestBuffering {
+			retry.MaxRequestBodyBytes = ptr.To(int64(0))
 		}
 	}
 
