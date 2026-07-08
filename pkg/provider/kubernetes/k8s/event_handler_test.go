@@ -7,7 +7,6 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 func Test_detectChanges(t *testing.T) {
@@ -351,7 +350,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "1",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: ptr.To[int32](80),
+					Port: new(int32(80)),
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -359,7 +358,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "2",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: ptr.To[int32](8080),
+					Port: new(int32(8080)),
 				}},
 			},
 			want: true,

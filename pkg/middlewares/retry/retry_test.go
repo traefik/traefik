@@ -18,7 +18,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"k8s.io/utils/ptr"
 )
 
 func TestRetry(t *testing.T) {
@@ -261,7 +260,7 @@ func TestRetryOnStatusWhenProxyNotReached(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	})
 
-	config := dynamic.Retry{Attempts: 3, Status: []string{"503"}, MaxRequestBodyBytes: ptr.To[int64](1024)}
+	config := dynamic.Retry{Attempts: 3, Status: []string{"503"}, MaxRequestBodyBytes: new(int64(1024))}
 	retryListener := &countingRetryListener{}
 	retry, err := New(t.Context(), next, config, retryListener, "traefikTest")
 	require.NoError(t, err)
@@ -619,7 +618,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Attempts:                   3,
 				Status:                     []string{"503"},
 				DisableRetryOnNetworkError: true,
-				MaxRequestBodyBytes:        ptr.To[int64](1024),
+				MaxRequestBodyBytes:        new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusOK, http.StatusOK},
 			amountOfTCPFailures: 1,
@@ -833,7 +832,7 @@ func TestRetryDoesNotBufferBodyForNonIdempotentMethod(t *testing.T) {
 	config := dynamic.Retry{
 		Attempts:            3,
 		Status:              []string{"503"},
-		MaxRequestBodyBytes: ptr.To[int64](1024),
+		MaxRequestBodyBytes: new(int64(1024)),
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

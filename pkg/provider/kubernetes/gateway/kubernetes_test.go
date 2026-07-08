@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatev1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
@@ -2822,7 +2821,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-default-whoami-nil-port-name-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2830,7 +2829,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-default-whoami-nil-port-name-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2876,7 +2875,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-default-whoami-nil-port-value-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -2884,7 +2883,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-svc-default-whoami-nil-port-value-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3774,7 +3773,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-svc-default-whoami-nil-port-name-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3782,7 +3781,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-svc-default-whoami-nil-port-name-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3828,7 +3827,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-svc-default-whoami-nil-port-value-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3836,7 +3835,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-6a1e0890d475642f7c64-svc-default-whoami-nil-port-value-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -5085,7 +5084,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-svc-default-whoamitcp-nil-port-name-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -5132,7 +5131,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-svc-default-whoamitcp-nil-port-value-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -6486,7 +6485,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-svc-default-whoamitcp-nil-port-name-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -6546,7 +6545,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-svc-default-whoamitcp-nil-port-value-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -8130,9 +8129,9 @@ func Test_matchingGatewayListener(t *testing.T) {
 			want: []gatewayListenersForParentRef{{
 				parentRef: gatev1.ParentReference{
 					Name:      "gateway",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
 				gatewayNamespace: "default",
@@ -8155,8 +8154,8 @@ func Test_matchingGatewayListener(t *testing.T) {
 			want: []gatewayListenersForParentRef{{
 				parentRef: gatev1.ParentReference{
 					Name:  "gateway",
-					Group: ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:  ptr.To(gatev1.Kind("Gateway")),
+					Group: new(gatev1.Group(gatev1.GroupName)),
+					Kind:  new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
 				gatewayNamespace: "default",
@@ -8176,23 +8175,23 @@ func Test_matchingGatewayListener(t *testing.T) {
 			parentRefs: []gatev1.ParentReference{
 				{
 					Name:      "gateway",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				{
 					Name:      "other-gateway",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
 				},
 			},
 			want: []gatewayListenersForParentRef{{
 				parentRef: gatev1.ParentReference{
 					Name:      "gateway",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
 				gatewayNamespace: "default",
@@ -8211,16 +8210,16 @@ func Test_matchingGatewayListener(t *testing.T) {
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Name:      "gateway",
-				Namespace: ptr.To(gatev1.Namespace("default")),
-				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-				Kind:      ptr.To(gatev1.Kind("Gateway")),
+				Namespace: new(gatev1.Namespace("default")),
+				Group:     new(gatev1.Group(gatev1.GroupName)),
+				Kind:      new(gatev1.Kind("Gateway")),
 			}},
 			want: []gatewayListenersForParentRef{{
 				parentRef: gatev1.ParentReference{
 					Name:      "gateway",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
 				gatewayNamespace: "default",
@@ -8248,16 +8247,16 @@ func Test_matchingGatewayListener(t *testing.T) {
 			},
 			parentRefs: []gatev1.ParentReference{{
 				Name:      "gateway-a",
-				Namespace: ptr.To(gatev1.Namespace("default")),
-				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-				Kind:      ptr.To(gatev1.Kind("Gateway")),
+				Namespace: new(gatev1.Namespace("default")),
+				Group:     new(gatev1.Group(gatev1.GroupName)),
+				Kind:      new(gatev1.Kind("Gateway")),
 			}},
 			want: []gatewayListenersForParentRef{{
 				parentRef: gatev1.ParentReference{
 					Name:      "gateway-a",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway-a",
 				gatewayNamespace: "default",
@@ -8276,18 +8275,18 @@ func Test_matchingGatewayListener(t *testing.T) {
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Name:      "gateway",
-				Namespace: ptr.To(gatev1.Namespace("default")),
-				Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-				Kind:      ptr.To(gatev1.Kind("Gateway")),
-				Port:      ptr.To(gatev1.PortNumber(8080)),
+				Namespace: new(gatev1.Namespace("default")),
+				Group:     new(gatev1.Group(gatev1.GroupName)),
+				Kind:      new(gatev1.Kind("Gateway")),
+				Port:      new(gatev1.PortNumber(8080)),
 			}},
 			want: []gatewayListenersForParentRef{{
 				parentRef: gatev1.ParentReference{
 					Name:      "gateway",
-					Namespace: ptr.To(gatev1.Namespace("default")),
-					Group:     ptr.To(gatev1.Group(gatev1.GroupName)),
-					Kind:      ptr.To(gatev1.Kind("Gateway")),
-					Port:      ptr.To(gatev1.PortNumber(8080)),
+					Namespace: new(gatev1.Namespace("default")),
+					Group:     new(gatev1.Group(gatev1.GroupName)),
+					Kind:      new(gatev1.Kind("Gateway")),
+					Port:      new(gatev1.PortNumber(8080)),
 				},
 				gatewayName:      "gateway",
 				gatewayNamespace: "default",
@@ -8435,15 +8434,15 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 
 	otherController := gatev1.RouteParentStatus{
 		ControllerName: "example.com/other-controller",
-		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "other-gateway"},
+		ParentRef:      gatev1.ParentReference{Namespace: new(gatev1.Namespace("default")), Name: "other-gateway"},
 	}
 	otherTraefik := gatev1.RouteParentStatus{
 		ControllerName: controllerName,
-		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "other-traefik-gateway"},
+		ParentRef:      gatev1.ParentReference{Namespace: new(gatev1.Namespace("default")), Name: "other-traefik-gateway"},
 	}
 	staleManaged := gatev1.RouteParentStatus{
 		ControllerName: controllerName,
-		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "my-gateway"},
+		ParentRef:      gatev1.ParentReference{Namespace: new(gatev1.Namespace("default")), Name: "my-gateway"},
 	}
 	// A parentRef without an explicit namespace defaults to the Route namespace,
 	// and must still be recognized as targeting a managed Gateway.
@@ -8453,7 +8452,7 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 	}
 	desired := gatev1.RouteParentStatus{
 		ControllerName: controllerName,
-		ParentRef:      gatev1.ParentReference{Namespace: ptr.To(gatev1.Namespace("default")), Name: "my-gateway"},
+		ParentRef:      gatev1.ParentReference{Namespace: new(gatev1.Namespace("default")), Name: "my-gateway"},
 		Conditions: []metav1.Condition{{
 			Type:   string(gatev1.RouteConditionAccepted),
 			Status: metav1.ConditionTrue,
