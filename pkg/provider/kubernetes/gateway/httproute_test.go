@@ -92,9 +92,9 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
 			match: gatev1.HTTPRouteMatch{
-				Path: ptr.To(gatev1.HTTPPathMatch{
+				Path: new(gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchPathPrefix),
-					Value: ptr.To("/"),
+					Value: new("/"),
 				}),
 				Headers: nil,
 			},
@@ -104,9 +104,9 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
 			match: gatev1.HTTPRouteMatch{
-				Path: ptr.To(gatev1.HTTPPathMatch{
+				Path: new(gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchPathPrefix),
-					Value: ptr.To("/"),
+					Value: new("/"),
 				}),
 				Headers: []gatev1.HTTPHeaderMatch{
 					{Name: "foo", Value: "bar"},
@@ -126,7 +126,7 @@ func Test_buildMatchRule(t *testing.T) {
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  nil,
-					Value: ptr.To("/foo/"),
+					Value: new("/foo/"),
 				},
 			},
 			expectedRule:     `(Path("/foo") || PathPrefix("/foo/"))`,
@@ -148,7 +148,7 @@ func Test_buildMatchRule(t *testing.T) {
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Value: new("/foo/"),
 				},
 			},
 			expectedRule:     `Path("/foo/")`,
@@ -159,7 +159,7 @@ func Test_buildMatchRule(t *testing.T) {
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Value: new("/foo/"),
 				},
 				Headers: []gatev1.HTTPHeaderMatch{
 					{
@@ -178,7 +178,7 @@ func Test_buildMatchRule(t *testing.T) {
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Value: new("/foo/"),
 				},
 				Headers: []gatev1.HTTPHeaderMatch{
 					{

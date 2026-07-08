@@ -68,7 +68,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadTCPRoute(match.gatewayName, match.gatewayNamespace, listener, route)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = ptr.To(condition)
+					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
@@ -189,7 +189,7 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routeKey strin
 	var condition *metav1.Condition
 	for _, backendRef := range backendRefs {
 		svcName, svc, errCondition := p.loadTCPService(route, backendRef)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
 			condition = errCondition
