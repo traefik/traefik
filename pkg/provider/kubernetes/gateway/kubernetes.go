@@ -681,6 +681,28 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 				if fv.resolvedRefsErr != nil {
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, *fv.resolvedRefsErr)
+					if fv.acceptedErr == nil {
+						// A valid CA certificate was still found among the CACertificateRefs, so the Listener
+						// remains Accepted and Programmed even though ResolvedRefs reports the invalid ones.
+						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionAccepted),
+								Status:             metav1.ConditionTrue,
+								ObservedGeneration: gateway.Generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonAccepted),
+								Message:            "No error found",
+							},
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionProgrammed),
+								Status:             metav1.ConditionTrue,
+								ObservedGeneration: gateway.Generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonProgrammed),
+								Message:            "No error found",
+							},
+						)
+					}
 				}
 
 				if fv.acceptedErr != nil {
@@ -797,7 +819,6 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 	}
 
 	clientAuthType := tls.RequireAndVerifyClientCert
-	// TODO support the InsecureFrontendValidationMode condition.
 	if validation.Mode == gatev1.AllowInsecureFallback {
 		clientAuthType = tls.RequestClientCert
 	}
@@ -824,8 +845,40 @@ func registerFrontEndValidationOptions(conf *dynamic.Configuration, validation f
 	return name
 }
 
+func hasInsecureFrontendValidationMode(gateway *gatev1.Gateway) bool {
+	if gateway.Spec.TLS == nil || gateway.Spec.TLS.Frontend == nil {
+		return false
+	}
+
+	frontendValidation := gateway.Spec.TLS.Frontend
+	if frontendValidation.Default.Validation != nil && frontendValidation.Default.Validation.Mode == gatev1.AllowInsecureFallback {
+		return true
+	}
+
+	for _, perPort := range frontendValidation.PerPort {
+		if perPort.TLS.Validation != nil && perPort.TLS.Validation.Mode == gatev1.AllowInsecureFallback {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
+
+	// When FrontendValidationModeType is changed to AllowInsecureFallback ,
+	// the InsecureFrontendValidationMode condition MUST be set to True with Reason ConfigurationChanged on gateway.
+	if hasInsecureFrontendValidationMode(gateway) {
+		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
+			Type:               string(gatev1.GatewayConditionInsecureFrontendValidationMode),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.GatewayReasonConfigurationChanged),
+			Message:            "FrontendValidationMode is set to AllowInsecureFallback",
+		})
+	}
 
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
