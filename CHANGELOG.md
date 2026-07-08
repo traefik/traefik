@@ -1,3 +1,28 @@
+## [v3.7.7](https://github.com/traefik/traefik/tree/v3.7.7) (2026-07-08)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.6...v3.7.7)
+
+**Bug fixes:**
+- **[middleware, k8s/ingress-nginx]** Add app-root middleware with nginx variable interpolation ([#13398](https://github.com/traefik/traefik/pull/13398) @dfeinblatt)
+- **[rules]** Fix consistency between HostSNI(*) and Host(*) ([#13460](https://github.com/traefik/traefik/pull/13460) @juliens)
+- **[k8s, k8s/gatewayapi]** Fix ExtensionRef filters on backendRefs to resolve against the HTTPRoute namespace ([#13462](https://github.com/traefik/traefik/pull/13462) @gndz07)
+- **[middleware]** Fix handle empty unknown-length bodies in mirroring ([#13399](https://github.com/traefik/traefik/pull/13399) @amazon7737)
+- **[k8s/crd]** Fix cross-provider ref check for TCP ServersTransport in Kubernetes CRD provider ([#13458](https://github.com/traefik/traefik/pull/13458) @gndz07)
+- **[middleware]** Sanitize replaced path in ReplacePathRegex middleware ([#13466](https://github.com/traefik/traefik/pull/13466) @kevinpollet)
+- **[acme]** Bump software.sslmate.com/src/go-pkcs12 to v0.7.3 ([#13477](https://github.com/traefik/traefik/pull/13477) @rtribotte)
+- **[otel]** Bump go.opentelemetry.io/otel to v1.44.0 ([#13478](https://github.com/traefik/traefik/pull/13478) @rtribotte)
+- **[k8s]** Fix panic when endpointslice port value or name is nil ([#13481](https://github.com/traefik/traefik/pull/13481) @kevinpollet)
+
+**Documentation:**
+- Fix version in migration guide ([#13434](https://github.com/traefik/traefik/pull/13434) @kevinpollet)
+- Fix changelog v2.11.51 ([#13430](https://github.com/traefik/traefik/pull/13430) @mmatur)
+- Add v3.7 to supported version docs ([#13118](https://github.com/traefik/traefik/pull/13118) @jnoordsij)
+- Fix some function names in comments ([#13443](https://github.com/traefik/traefik/pull/13443) @blackflytech)
+- Add @nandorKollar as a current maintainer ([#13451](https://github.com/traefik/traefik/pull/13451) @emilevauge)
+- Add @amazon7737 as a current maintainer ([#13450](https://github.com/traefik/traefik/pull/13450) @emilevauge)
+- **[middleware]** Clarify buffering middleware defaults ([#13401](https://github.com/traefik/traefik/pull/13401) @amazon7737)
+- Fix grammar in TLS, TCP service, and routing reference docs ([#13461](https://github.com/traefik/traefik/pull/13461) @almightymoon)
+- Fix X-Forwarded-Prefix documentation for dashboard redirection ([#13472](https://github.com/traefik/traefik/pull/13472) @kevinpollet)
+
 ## [v3.6.23](https://github.com/traefik/traefik/tree/v3.6.23) (2026-07-08)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.22...v3.6.23)
 
