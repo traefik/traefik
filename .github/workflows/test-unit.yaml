@@ -11,7 +11,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
-      - 'script/gcg/**'
+      - 'script/release/**'
 
 jobs:
 
