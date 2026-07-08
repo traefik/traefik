@@ -1404,7 +1404,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-http-80",
-										Weight: func(i int) *int { return &i }(1),
+										Weight: new(1),
 									},
 								},
 							},

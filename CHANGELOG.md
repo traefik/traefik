@@ -1,3 +1,14 @@
+## [v2.11.52](https://github.com/traefik/traefik/tree/v2.11.52) (2026-07-08)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.51...v2.11.52)
+
+**Bug fixes:**
+- **[middleware]** Sanitize replaced path in ReplacePathRegex middleware ([#13466](https://github.com/traefik/traefik/pull/13466) @kevinpollet)
+- **[acme]** Bump software.sslmate.com/src/go-pkcs12 to v0.7.3 ([#13477](https://github.com/traefik/traefik/pull/13477) @rtribotte)
+- **[otel]** Bump go.opentelemetry.io/otel to v1.44.0 ([#13478](https://github.com/traefik/traefik/pull/13478) @rtribotte)
+
+**Documentation:**
+- Fix changelog v2.11.51 ([#13430](https://github.com/traefik/traefik/pull/13430) @mmatur)
+
 ## [v3.6.22](https://github.com/traefik/traefik/tree/v3.6.22) (2026-06-30)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.21...v3.6.22)
 
