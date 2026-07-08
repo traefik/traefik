@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -146,8 +147,8 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 			desc: "Exact type with dot in service name escapes dot",
 			method: &gatev1.GRPCMethodMatch{
 				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-				Service: ptr.To("foo.bar"),
-				Method:  ptr.To("Method"),
+				Service: new("foo.bar"),
+				Method:  new("Method"),
 			},
 			expectedRule: `PathRegexp("/foo\\.bar/Method")`,
 		},
@@ -155,8 +156,8 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 			desc: "Nil type defaults to exact and escapes dot",
 			method: &gatev1.GRPCMethodMatch{
 				Type:    nil,
-				Service: ptr.To("auth.api"),
-				Method:  ptr.To("Login"),
+				Service: new("auth.api"),
+				Method:  new("Login"),
 			},
 			expectedRule: `PathRegexp("/auth\\.api/Login")`,
 		},
@@ -164,8 +165,8 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 			desc: "RegularExpression type preserves dot as regex wildcard",
 			method: &gatev1.GRPCMethodMatch{
 				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
-				Service: ptr.To("foo.bar"),
-				Method:  ptr.To(".*"),
+				Service: new("foo.bar"),
+				Method:  new(".*"),
 			},
 			expectedRule: `PathRegexp("/foo.bar/.*")`,
 		},

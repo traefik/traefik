@@ -188,7 +188,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Ready: new(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -197,7 +197,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Ready: new(false)},
 				}},
 			},
 			want: true,
@@ -210,7 +210,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -219,7 +219,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(false)},
 				}},
 			},
 			want: true,
@@ -232,7 +232,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(false)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -241,7 +241,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(true)},
 				}},
 			},
 			want: true,
@@ -262,7 +262,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(true)},
 				}},
 			},
 		},
@@ -282,7 +282,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(false)},
 				}},
 			},
 			want: true,
@@ -303,7 +303,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(false)},
 				}},
 			},
 		},
@@ -323,7 +323,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(true)},
 				}},
 			},
 			want: true,

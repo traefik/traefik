@@ -18,6 +18,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"k8s.io/utils/ptr"
 )
 
 func TestRetry(t *testing.T) {

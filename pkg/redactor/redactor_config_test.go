@@ -32,7 +32,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"k8s.io/utils/ptr"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
@@ -205,7 +204,7 @@ func init() {
 					AccessControlAllowOriginList:      []string{"foo"},
 					AccessControlAllowOriginListRegex: []string{"foo"},
 					AccessControlExposeHeaders:        []string{"foo"},
-					AccessControlMaxAge:               ptr.To(int64(42)),
+					AccessControlMaxAge:               new(int64(42)),
 					AddVaryHeader:                     true,
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},

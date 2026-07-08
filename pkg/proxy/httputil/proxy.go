@@ -201,14 +201,13 @@ func statusText(statusCode int) string {
 // and the client configuration should allow to verify the server certificate.
 func isTLSConfigError(err error) bool {
 	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
-	var recordHeaderErr tls.RecordHeaderError
-	if errors.As(err, &recordHeaderErr) {
+	if _, ok := errors.AsType[tls.RecordHeaderError](err); ok {
 		return true
 	}
 
 	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
-	var certVerificationErr *tls.CertificateVerificationError
-	return errors.As(err, &certVerificationErr)
+	_, ok := errors.AsType[*tls.CertificateVerificationError](err)
+	return ok
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
@@ -219,8 +218,7 @@ func ComputeStatusCode(err error) int {
 	case errors.Is(err, context.Canceled):
 		return StatusClientClosedRequest
 	default:
-		var netErr net.Error
-		if errors.As(err, &netErr) {
+		if netErr, ok := errors.AsType[net.Error](err); ok {
 			if netErr.Timeout() {
 				return http.StatusGatewayTimeout
 			}

@@ -20,18 +20,18 @@ func TestRequestRedirectHandlerSchemeFromRequest(t *testing.T) {
 	}{
 		{
 			desc:       "no scheme configured derives http from plain request",
-			config:     dynamic.RequestRedirect{Path: ptr.To("/baz")},
+			config:     dynamic.RequestRedirect{Path: new("/baz")},
 			wantScheme: "http",
 		},
 		{
 			desc:       "no scheme configured derives https from TLS request",
-			config:     dynamic.RequestRedirect{Path: ptr.To("/baz")},
+			config:     dynamic.RequestRedirect{Path: new("/baz")},
 			tls:        true,
 			wantScheme: "https",
 		},
 		{
 			desc:       "explicit scheme overrides request scheme",
-			config:     dynamic.RequestRedirect{Scheme: ptr.To("https"), Path: ptr.To("/baz")},
+			config:     dynamic.RequestRedirect{Scheme: new("https"), Path: new("/baz")},
 			wantScheme: "https",
 		},
 	}
@@ -204,7 +204,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "303 See Other",
 			config: dynamic.RequestRedirect{
-				Scheme:     ptr.To("https"),
+				Scheme:     new("https"),
 				StatusCode: http.StatusSeeOther,
 			},
 			url:        "http://foo",
@@ -214,7 +214,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "307 Temporary Redirect",
 			config: dynamic.RequestRedirect{
-				Scheme:     ptr.To("https"),
+				Scheme:     new("https"),
 				StatusCode: http.StatusTemporaryRedirect,
 			},
 			url:        "http://foo",
@@ -224,7 +224,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 		{
 			desc: "308 Permanent Redirect",
 			config: dynamic.RequestRedirect{
-				Scheme:     ptr.To("https"),
+				Scheme:     new("https"),
 				StatusCode: http.StatusPermanentRedirect,
 			},
 			url:        "http://foo",
