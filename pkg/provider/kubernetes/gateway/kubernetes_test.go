@@ -3009,7 +3009,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-svc-default-whoami-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -3025,7 +3025,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -4173,7 +4173,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-svc-default-whoami-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -4189,7 +4189,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 										URL: "h2c://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -10289,7 +10289,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 			desc: "cross-namespace ref without a ReferenceGrant is rejected",
 			validation: &gatev1.FrontendTLSValidation{
 				CACertificateRefs: []gatev1.ObjectReference{
-					{Kind: "ConfigMap", Name: "ca-configmap-not-granted", Namespace: ptr.To(gatev1.Namespace("other-ns"))},
+					{Kind: "ConfigMap", Name: "ca-configmap-not-granted", Namespace: new(gatev1.Namespace("other-ns"))},
 				},
 			},
 			expected: frontendValidation{
@@ -10313,7 +10313,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 			desc: "cross-namespace ref with a matching ReferenceGrant is resolved",
 			validation: &gatev1.FrontendTLSValidation{
 				CACertificateRefs: []gatev1.ObjectReference{
-					{Kind: "ConfigMap", Name: "ca-configmap-granted", Namespace: ptr.To(gatev1.Namespace("other-ns"))},
+					{Kind: "ConfigMap", Name: "ca-configmap-granted", Namespace: new(gatev1.Namespace("other-ns"))},
 				},
 			},
 			expected: frontendValidation{
@@ -10503,11 +10503,11 @@ func Test_loadGatewayListeners(t *testing.T) {
 						Port:     443,
 						TLS: &gatev1.ListenerTLSConfig{
 							CertificateRefs: []gatev1.SecretObjectReference{
-								{Kind: ptr.To(gatev1.Kind("Secret")), Group: ptr.To(gatev1.Group("")), Name: "tls-secret"},
+								{Kind: new(gatev1.Kind("Secret")), Group: new(gatev1.Group("")), Name: "tls-secret"},
 							},
 						},
 						AllowedRoutes: &gatev1.AllowedRoutes{
-							Namespaces: &gatev1.RouteNamespaces{From: ptr.To(gatev1.NamespacesFromSame)},
+							Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
 						},
 					},
 				},
