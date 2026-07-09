@@ -4434,8 +4434,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								StatusRewrites: map[string]int{
 									"404": 200,
 								},
-								Service: "default-errorpage-errorpage-service",
-								Query:   "query",
+								Service:             "default-errorpage-errorpage-service",
+								Query:               "query",
+								ErrorRequestHeaders: []string{"X-Foo-Bar", "X-Bar-Foo"},
 							},
 						},
 					},
