@@ -670,6 +670,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				}
 			}
 
+			// Frontend validation.
 			if listener.Protocol == gatev1.HTTPSProtocolType {
 				fv := defaultFrontendValidation
 				fvOptions := defaultFrontendValidationOptions
@@ -706,8 +707,17 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				}
 
 				if fv.acceptedErr != nil {
-					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, *fv.acceptedErr)
-					continue
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+						*fv.acceptedErr,
+						metav1.Condition{
+							Type:               string(gatev1.ListenerConditionProgrammed),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: gateway.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonInvalid),
+							Message:            "Invalid CA certificate configuration",
+						})
+
 				}
 
 				gatewayListeners[i].FrontendTLSValidationOptions = fvOptions
@@ -815,6 +825,10 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 			Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
 			Message:            "No valid CA certificate found in CACertificateRefs",
 		}
+		// RequireAndVerifyClientCert without CAFiles can never build a valid TLS config,
+		// so any router that references these options fails closed
+		// instead of silently serving without client-cert enforcement.
+		res.clientAuth = &tls.ClientAuth{ClientAuthType: tls.RequireAndVerifyClientCert}
 		return res
 	}
 
