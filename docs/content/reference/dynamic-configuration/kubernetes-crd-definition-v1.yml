@@ -1102,6 +1102,14 @@ spec:
                   This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
                   More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/errorpages/
                 properties:
+                  errorRequestHeaders:
+                    description: |-
+                      ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+                      When nil (not set), all original request headers are forwarded.
+                      Set to an empty list to forward no headers, or list specific headers to forward only those.
+                    items:
+                      type: string
+                    type: array
                   query:
                     description: |-
                       Query defines the URL for the error page (hosted by service).
