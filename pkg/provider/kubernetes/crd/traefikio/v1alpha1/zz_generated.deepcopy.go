@@ -184,6 +184,11 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		copy(*out, *in)
 	}
 	in.Service.DeepCopyInto(&out.Service)
+	if in.ErrorRequestHeaders != nil {
+		in, out := &in.ErrorRequestHeaders, &out.ErrorRequestHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

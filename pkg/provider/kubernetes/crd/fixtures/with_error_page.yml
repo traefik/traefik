@@ -10,6 +10,9 @@ spec:
     - "404"
     - "500"
     query: query
+    errorRequestHeaders:
+    - "X-Foo-Bar"
+    - "X-Bar-Foo"
     service:
       name: whoami
       port: 80
