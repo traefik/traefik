@@ -91,12 +91,22 @@ type RouterTCPTLSConfig struct {
 	Domains      []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
 }
 
+type TCPBalancerStrategy string
+
+const (
+	// TCPBalancerStrategyWRR is the weighted round-robin strategy.
+	TCPBalancerStrategyWRR TCPBalancerStrategy = "wrr"
+	// TCPBalancerStrategyIPHash is the IP hash strategy, which routes connections from the same source IP consistently to the same server.
+	TCPBalancerStrategyIPHash TCPBalancerStrategy = "ip-hash"
+)
+
 // +k8s:deepcopy-gen=true
 
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
-	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
-	ServersTransport string      `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Servers          []TCPServer         `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	ServersTransport string              `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Strategy         TCPBalancerStrategy `json:"strategy,omitempty" toml:"strategy,omitempty" yaml:"strategy,omitempty" export:"true"`
 	// ProxyProtocol holds the PROXY Protocol configuration.
 	//
 	// Deprecated: use ServersTransport to configure ProxyProtocol instead.

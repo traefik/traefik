@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
@@ -56,7 +57,14 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 	switch {
 	case conf.LoadBalancer != nil:
-		loadBalancer := tcp.NewWRRLoadBalancer(conf.LoadBalancer.HealthCheck != nil)
+		var loadBalancer tcp.LoadBalancer
+
+		switch conf.LoadBalancer.Strategy {
+		case dynamic.TCPBalancerStrategyIPHash:
+			loadBalancer = tcp.NewIPHashLoadBalancer(conf.LoadBalancer.HealthCheck != nil)
+		default:
+			loadBalancer = tcp.NewWRRLoadBalancer(conf.LoadBalancer.HealthCheck != nil)
+		}
 
 		if conf.LoadBalancer.TerminationDelay != nil {
 			log.Ctx(ctx).Warn().Msgf("Service %q load balancer uses `TerminationDelay`, but this option is deprecated, please use ServersTransport configuration instead.", serviceName)

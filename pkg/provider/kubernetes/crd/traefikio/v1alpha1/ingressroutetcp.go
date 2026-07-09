@@ -80,6 +80,9 @@ type ServiceTCP struct {
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
 	// +kubebuilder:validation:Minimum=0
 	Weight *int `json:"weight,omitempty"`
+	// Strategy defines the load balancing strategy to use.
+	// Default: wrr.
+	Strategy string `json:"strategy,omitempty"`
 	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
 	// it has closed the writing capability of its connection, to close the reading capability as well,
 	// hence fully terminating the connection.

@@ -631,6 +631,11 @@ spec:
                               It allows to configure the transport between Traefik and your servers.
                               Can only be used on a Kubernetes Service.
                             type: string
+                          strategy:
+                            description: |-
+                              Strategy defines the load balancing strategy to use.
+                              Default: wrr.
+                            type: string
                           terminationDelay:
                             description: |-
                               TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
