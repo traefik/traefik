@@ -10,13 +10,11 @@ An HTTP router is in charge of connecting incoming requests to the services that
 Rules are a set of matchers configured with values, that determine if a particular request matches a specific criteria. 
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
-- The character `@` is not authorized in the router name.
-- To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ` or escaped double-quotes ``\"``.
-- Single quotes ' are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
-- Regular Expressions:
-    - Matchers that accept a regexp as their value use a [Go](https://golang.org/pkg/regexp/) flavored syntax.
-    - The usual `AND` (&&) and `OR` (||) logical operators can be used, with the expected precedence rules, as well as parentheses to express complex rules.
-    - The `NOT` (!) operator allows you to invert the matcher.
+- To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes ``\"``.
+    - Single quotes `'` are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
+- Matchers that accept a regular expression (`regexp`) use the [Go flavored syntax](https://golang.org/pkg/regexp/).
+- The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules, as well as parentheses to express complex rules.
+- The NOT (`!`) operator allows you to invert the matcher.
 
 The table below lists all the available matchers:
 
