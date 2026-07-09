@@ -60,8 +60,10 @@ spec:
 # Three listeners exercise the three frontend validation outcomes:
 # - https (443): Default validation, valid CA, AllowValidOnly.
 # - https2 (8443): PerPort override, valid CA, AllowInsecureFallback.
-# - https3 (9443): PerPort override with an unresolvable CA ref, so no TLS
-#   option is registered and the listener is rejected.
+# - https3 (9443): PerPort override with an unresolvable CA ref: no valid CA
+#   certificate can be resolved, so the listener fails closed with a
+#   RequireAndVerifyClientCert option that has no CAFiles (can never be
+#   satisfied) instead of silently skipping client-cert enforcement.
 ---
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1

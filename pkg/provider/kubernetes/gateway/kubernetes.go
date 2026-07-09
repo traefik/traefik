@@ -717,9 +717,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 							Reason:             string(gatev1.ListenerReasonInvalid),
 							Message:            "Invalid CA certificate configuration",
 						})
-
 				}
-
 				gatewayListeners[i].FrontendTLSValidationOptions = fvOptions
 			}
 		}
@@ -746,7 +744,6 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 	}
 
 	var caCerts []types.FileOrContent
-	// TODO we only surface first error here, to confirm what would we want to surface.
 	var refErr string
 	var reason gatev1.ListenerConditionReason
 
