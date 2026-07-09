@@ -29,6 +29,7 @@ Review in this priority order, and keep the bar high at every level.
 - Do not use `context.Background()` in request paths — propagate the context from the caller.
 - Custom context keys must be unexported struct types (`type myKey struct{}`), never bare strings or integers.
 - Changes must not blur the static/dynamic configuration boundary: static configuration is read at startup only; dynamic configuration is produced by providers at runtime. Code that reads dynamic config at startup, or stores static config in a runtime struct, is a correctness bug.
+- New dynamic configuration options must be replicated everywhere the option's structure is duplicated. In particular, a field added to a `pkg/config/dynamic` type has a mirror in the Kubernetes CRD types under `pkg/provider/kubernetes/crd/traefikio/v1alpha1`; the new field must be added there and wired through the CRD-to-dynamic conversion in `pkg/provider/kubernetes/crd/kubernetes.go`. A dynamic option that is not exposed on the duplicated CRD struct is a bug.
 
 ## Breaking changes
 

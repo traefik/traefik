@@ -453,8 +453,9 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 	}
 
 	return balancerName, &dynamic.ErrorPage{
-		Status: errorPage.Status,
-		Query:  errorPage.Query,
+		Status:              errorPage.Status,
+		Query:               errorPage.Query,
+		ErrorRequestHeaders: errorPage.ErrorRequestHeaders,
 	}, balancerServerHTTP, nil
 }
 
