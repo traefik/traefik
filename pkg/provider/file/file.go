@@ -254,7 +254,7 @@ func (p *Provider) isRelevantEvent(filename string) bool {
 
 // syncExternalFileWatches updates the fsnotify watcher so that it watches the parent
 // directories of exactly the external files (certificates, keys, CA bundles) currently
-// referenced by the dynamic configuration
+// referenced by the dynamic configuration.
 func (p *Provider) syncExternalFileWatches(refFiles []string) {
 	p.watcherMu.Lock()
 	defer p.watcherMu.Unlock()
@@ -338,7 +338,6 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, []string, error
 // keep watching them for changes (e.g. certificate renewal).
 func (p *Provider) loadFileConfig(ctx context.Context, filename string) (*dynamic.Configuration, []string, error) {
 	configuration, err := p.CreateConfiguration(ctx, filename, template.FuncMap{}, false)
-
 	if err != nil {
 		return nil, nil, err
 	}
