@@ -4672,7 +4672,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple TCPRoute, with TLS",
+			desc:  "Empty caused by TCPRoute attached to a TLS listener",
 			paths: []string{"services.yml", "tcproute/with_protocol_tls.yml"},
 			entryPoints: map[string]Entrypoint{
 				"tls": {Address: ":9000"},
@@ -5427,7 +5427,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple TLS listener to TCPRoute in Terminate mode",
+			desc:  "Empty caused by TCPRoute attached to a TLS listener in Terminate mode",
 			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TCPRoute.yml"},
 			entryPoints: map[string]Entrypoint{
 				"tcp": {Address: ":9000"},
@@ -5453,7 +5453,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple TLS listener to TCPRoute in Passthrough mode",
+			desc:  "Empty caused by TCPRoute attached to a TLS listener in Passthrough mode",
 			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TCPRoute_passthrough.yml"},
 			entryPoints: map[string]Entrypoint{
 				"tcp": {Address: ":9000"},
@@ -7859,16 +7859,54 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			entryPoints: map[string]Entrypoint{
 				"tls": {Address: ":9000"},
 			},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
 					Services: map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Middlewares:       map[string]*dynamic.TCPMiddleware{},
-					Services:          map[string]*dynamic.TCPService{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tls"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        `HostSNI("foo.example.com")`,
+							RuleSyntax:  "default",
+							Priority:    15,
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{{
+									Name:   "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-svc-default-whoamitcp-0",
+									Weight: new(1),
+								}},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-e3b0c44298fc1c149afb-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -7877,7 +7915,16 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+				},
 			},
 		},
 		{
