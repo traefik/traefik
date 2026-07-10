@@ -145,7 +145,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				var roundTrip ptypes.Duration
 				if err := roundTrip.Set(route.RespondingTimeouts.RoundTrip.String()); err != nil {
 					// An invalid duration only disables the timeout: the route stays routable.
-					logger.Error().Err(err).Msg("Error while reading responding timeout RoundTrip")
+					logger.Error().Err(err).Msg("Error while reading RoundTrip")
 				} else {
 					r.RespondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: roundTrip}
 				}

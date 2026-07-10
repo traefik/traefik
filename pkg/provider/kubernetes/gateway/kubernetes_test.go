@@ -708,12 +708,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(10 * time.Second)},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-7bdba2726a513ef385d6": {
-							EntryPoints:        []string{"web"},
-							Service:            "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-7bdba2726a513ef385d6-wrr",
-							Rule:               `Host("foo.com") && Path("/baz")`,
-							Priority:           100009,
-							RuleSyntax:         "default",
-							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-7bdba2726a513ef385d6-wrr",
+							Rule:        `Host("foo.com") && Path("/baz")`,
+							Priority:    100009,
+							RuleSyntax:  "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-b9513066069db48f452f": {
 							EntryPoints: []string{"web"},

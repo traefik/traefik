@@ -127,6 +127,8 @@ labels:
 The `respondingTimeouts.roundTrip` option bounds the **whole transaction** on a router: the timer starts when the router receives the request (right after the request headers are parsed), and covers the request body upload, the backend processing (including all retry attempts), and the response delivery.
 It bounds slow clients too: a slow upload or a slow response read is interrupted at the deadline.
 
+Unlike the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) (which carries `readTimeout`/`writeTimeout`/`idleTimeout`), the router-level `respondingTimeouts` exposes only `roundTrip`.
+
 When the deadline expires **before** the response has started, the client receives a `504 Gateway Timeout`.
 When it expires **after** the response has started (streaming), the transaction is torn down and the connection is closed.
 

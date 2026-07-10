@@ -37,29 +37,22 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	deadline := time.Now().Add(h.timeout)
 
-	// Nested routers: the most restrictive deadline wins,
-	// a child router cannot extend the budget set by its parent (or by any upstream deadline source).
+	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
 	if d, ok := req.Context().Deadline(); ok && d.Before(deadline) {
 		deadline = d
 	}
 
-	// Bound slow clients on the inbound connection; this replaces the deadlines armed from the entrypoint
-	// respondingTimeouts for this request.
+	// These connection deadlines replace, for this request, the ones armed from the entrypoint respondingTimeouts.
 	rc := http.NewResponseController(rw)
 
-	// The read deadline is armed only for a request carrying a body, the sole window where it bounds anything:
-	// it makes a stalled upload fail fast instead of holding the connection.
-	// A body-less request must be left alone: the server has already started a background read on the
-	// connection to detect client disconnections, and it reads any failure of that read — a deadline expiry
-	// included — as a dead connection, canceling the connection context (net/http connReader.backgroundRead).
-	// That context is the parent of every subsequent request context on the connection, so arming the deadline
-	// here would make the next request on a keep-alive connection start already canceled.
-	// The presence of a body is read from ContentLength, not from req.Body: an upstream middleware may wrap
-	// req.Body (the capture middleware does), which defeats a req.Body != http.NoBody sentinel and would arm
-	// the deadline on a body-less request. ContentLength is zero exactly when there is no body, -1 when chunked.
-	// It is never cleared on return: the server drains the unread request body before flushing the response
-	// (net/http chunkWriter.writeHeader), once this handler and its defers have run, and only a live deadline
-	// bounds that drain. The server clears it on its own before reading the next request.
+	// The read deadline is armed only for a request carrying a body, to bound a stalled upload.
+	// It must not be set on a body-less request: net/http has started a background read to detect client
+	// disconnection, and treats a deadline expiry as a dead connection, canceling the connection context that
+	// parents every later request on the keep-alive connection.
+	// Body presence comes from ContentLength (0 = none, -1 = chunked), not req.Body, because an upstream
+	// middleware may wrap req.Body (capture does) and defeat a req.Body != http.NoBody check.
+	// It is not cleared on return: the server drains the unread body before flushing the response, after this
+	// handler returns, and only a live deadline bounds that drain (the server clears it itself before the next request).
 	if req.ContentLength != 0 {
 		if err := rc.SetReadDeadline(deadline); err != nil {
 			logger.Debug().Err(err).Msg("Unable to set read deadline")
@@ -73,18 +66,15 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rewriter := &statusRewriter{ResponseWriter: rw, deadline: deadline}
 
 	defer func() {
-		// A hijacked connection no longer belongs to the server, which cleared its deadlines when handing it
-		// over (net/http (*conn).hijackLocked): re-arming one here would bound a protocol-switched tunnel.
+		// A hijacked connection no longer belongs to the server, which cleared its deadlines when handing it over:
+		// re-arming one here would bound a protocol-switched tunnel.
 		if rewriter.hijacked {
 			return
 		}
 
-		// The response is flushed after this defer (net/http finishRequest), by which time the transaction
-		// deadline may have expired: the flush is granted a fresh budget, or a 504 could never reach the
-		// client. That budget is the entrypoint writeTimeout, the bound the flush had before this middleware
-		// replaced it, and the zero time when the entrypoint has none — which is also what keeps the deadline
-		// from leaking onto the next request on the connection, as net/http re-arms it per request only when
-		// Server.WriteTimeout > 0.
+		// The response is flushed after this defer runs, possibly past an expired deadline; restoring a live budget
+		// lets a pending 504 reach the client. That budget is the entrypoint writeTimeout — the bound the flush had
+		// before this middleware replaced it — or no deadline when the entrypoint has none.
 		var writeDeadline time.Time
 		if writeTimeout := entryPointWriteTimeout(req); writeTimeout > 0 {
 			writeDeadline = time.Now().Add(writeTimeout)
@@ -96,21 +86,17 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}()
 
 	if isUpgradeRequest(req) {
-		// For upgrade requests the deadline bounds the handshake only and is disarmed at the protocol switch:
-		// a deadline must never tear down a healthy tunnel.
-		// A disarmable timer replaces context.WithDeadline because a context deadline cannot be un-armed,
-		// and once expired it would kill the backend leg of an established tunnel.
-		// The cancellation carries context.DeadlineExceeded as its cause because the transport surfaces
-		// context.Cause as the round-trip error: a handshake the backend never answers is then reported as a
-		// timeout everywhere, including in the tracing span and the metrics derived from that error.
+		// For an upgrade the deadline bounds the handshake only: a disarmable timer replaces context.WithDeadline,
+		// which cannot be un-armed and would tear down an established tunnel at expiry.
+		// It cancels with context.DeadlineExceeded as its cause so that a handshake the backend never answers is
+		// reported as a timeout everywhere the transport surfaces the cause: client status, tracing span, and metrics.
 		ctx, cancel := context.WithCancelCause(req.Context())
 		defer cancel(nil)
 
 		timer := time.AfterFunc(time.Until(deadline), func() { cancel(context.DeadlineExceeded) })
 		defer timer.Stop()
 
-		// The timer has to be disarmed at the protocol switch, not on return: the proxy keeps serving the
-		// tunnel until it closes (net/http/httputil handleUpgradeResponse blocks).
+		// Disarmed at the protocol switch, not on return: the proxy keeps serving the tunnel until it closes.
 		rewriter.onHijack = func() { timer.Stop() }
 
 		h.next.ServeHTTP(rewriter, req.WithContext(ctx))
@@ -158,11 +144,10 @@ type statusRewriter struct {
 }
 
 func (s *statusRewriter) WriteHeader(code int) {
-	// Past the deadline, a 5xx can only mean the transaction ran out of budget.
-	// 499 is included because the connection read deadline and the context deadline expire at the same
-	// instant: when the former wins the race, net/http cancels the request context with context.Canceled,
-	// which the proxy error handler reads as a client disconnection. Comparing against the deadline, rather
-	// than inspecting context.Cause, keeps the outcome independent of which of the two fired first.
+	// Past the deadline, a 5xx means the transaction ran out of budget. 499 is included because the read and
+	// context deadlines expire together: when the read deadline wins, net/http cancels the request context with
+	// context.Canceled, which the proxy error handler reads as a client disconnection. Comparing against the
+	// deadline, rather than the cancellation cause, keeps the outcome independent of which of the two fired first.
 	if (code >= http.StatusInternalServerError || code == httputil.StatusClientClosedRequest) &&
 		!time.Now().Before(s.deadline) {
 		code = http.StatusGatewayTimeout

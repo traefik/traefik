@@ -206,14 +206,18 @@ func TestStatusNormalization(t *testing.T) {
 			status:   httputil.StatusClientClosedRequest,
 			expected: httputil.StatusClientClosedRequest,
 		},
+		// The rewriter promotes only the statuses the timeout path itself yields: the proxy maps an expired
+		// deadline to a 5xx or to 499 (ComputeStatusCode), never to a 2xx or a non-499 4xx. So a 2xx or 4xx past
+		// the deadline can only come from a handler that ignored it — a completed success or a definitive
+		// client-side verdict — and is passed through unchanged rather than masked as a 504.
 		{
-			desc:       "4xx after expiry is preserved",
+			desc:       "4xx past the deadline is preserved, not masked as 504",
 			status:     http.StatusNotFound,
 			waitExpiry: true,
 			expected:   http.StatusNotFound,
 		},
 		{
-			desc:       "2xx after expiry is preserved",
+			desc:       "2xx past the deadline is preserved, not masked as 504",
 			status:     http.StatusOK,
 			waitExpiry: true,
 			expected:   http.StatusOK,
@@ -356,12 +360,10 @@ func TestSlowBackendGets504(t *testing.T) {
 	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
 }
 
-// TestExpiryDoesNotCancelNextKeepAliveRequest guards the read deadline arming: net/http cancels the whole
-// connection context when a background read fails, so a request that reaches its deadline must not leave the
-// next request on the same keep-alive connection with an already-canceled context.
-// The timed-out router sits below the capture middleware, as it does in production: capture wraps req.Body,
-// so a body-less request no longer carries http.NoBody by the time it reaches this middleware, and the body
-// presence must be read from ContentLength — otherwise the read deadline is armed and poisons the connection.
+// TestExpiryDoesNotCancelNextKeepAliveRequest guards the read deadline arming: a timed-out request must not
+// leave the next request on the same keep-alive connection with an already-canceled context.
+// The timed-out router sits below capture, as in production: capture wraps req.Body, so body presence must be
+// read from ContentLength rather than an http.NoBody check, or the read deadline is armed on a body-less request.
 func TestExpiryDoesNotCancelNextKeepAliveRequest(t *testing.T) {
 	t.Parallel()
 
@@ -405,9 +407,8 @@ func TestExpiryDoesNotCancelNextKeepAliveRequest(t *testing.T) {
 	assert.Equal(t, "backend", string(body))
 }
 
-// TestWriteDeadlineNotLeakedToNextKeepAliveRequest guards the deferred clear: net/http only re-arms the write
-// deadline when Server.WriteTimeout > 0, which Traefik entrypoints leave at 0, so a write deadline left behind
-// by a request would still be live — and already expired — when the next request on the connection responds.
+// TestWriteDeadlineNotLeakedToNextKeepAliveRequest asserts that a write deadline armed for one request never
+// disturbs the next request on the same keep-alive connection.
 func TestWriteDeadlineNotLeakedToNextKeepAliveRequest(t *testing.T) {
 	t.Parallel()
 
@@ -440,7 +441,7 @@ func TestWriteDeadlineNotLeakedToNextKeepAliveRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, res.StatusCode)
 
-	// Wait past the first request's deadline: a leaked write deadline is now expired.
+	// Wait past the first request's deadline before reusing the connection: any deadline left on it is now expired.
 	time.Sleep(2 * timeout)
 
 	_, err = fmt.Fprintf(conn, "GET /plain HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
@@ -572,7 +573,9 @@ func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
 			}
 
 			assert.False(t, deadline.IsZero())
-			assert.WithinDuration(t, start.Add(test.writeTimeout), deadline, time.Minute)
+			// The flush runs right after the handler, so the recorded deadline is start+writeTimeout within the
+			// flush latency; a tolerance well under the 1h roundTrip proves it is the writeTimeout, not the roundTrip.
+			assert.WithinDuration(t, start.Add(test.writeTimeout), deadline, 2*time.Second)
 		})
 	}
 }
