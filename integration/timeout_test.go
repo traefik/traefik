@@ -91,6 +91,57 @@ func (s *TimeoutSuite) TestRouterRespondingTimeouts() {
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
+// TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout covers a router roundTrip on an entrypoint that
+// has its own writeTimeout: the router deadline supersedes it for the request, and the entrypoint one is
+// restored before the response is flushed, which happens after the router handler has returned.
+func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout() {
+	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
+	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_write_timeout.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/roundTrip`)", "Path(`/noRoundTrip`)"))
+	require.NoError(s.T(), err)
+
+	// Check that timeout service is available.
+	statusURL := fmt.Sprintf("http://%s/statusTest?status=200",
+		net.JoinHostPort(timeoutEndpointIP, "9000"))
+	require.NoError(s.T(), try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)))
+
+	client := &http.Client{}
+
+	// The entrypoint writeTimeout is in force: without a router roundTrip, a backend answering after it
+	// leaves the response unwritable and the connection is closed with no response at all.
+	_, err = client.Get("http://127.0.0.1:8000/noRoundTrip?sleep=2000")
+	require.Error(s.T(), err)
+
+	// The router roundTrip supersedes it: the very same backend now answers.
+	response, err := client.Get("http://127.0.0.1:8000/roundTrip?sleep=2000")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+	// Drain the response to allow the keep-alive connection reuse.
+	_, err = io.Copy(io.Discard, response.Body)
+	require.NoError(s.T(), err)
+	require.NoError(s.T(), response.Body.Close())
+
+	// Past the roundTrip the 504 still reaches the client: the response is flushed once the router handler
+	// has returned, under a write deadline restored from the entrypoint writeTimeout rather than an expired one.
+	response, err = client.Get("http://127.0.0.1:8000/roundTrip?sleep=4000")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusGatewayTimeout, response.StatusCode)
+
+	_, err = io.Copy(io.Discard, response.Body)
+	require.NoError(s.T(), err)
+	require.NoError(s.T(), response.Body.Close())
+
+	// The next request on the same keep-alive connection is unaffected: the server re-arms the entrypoint
+	// write deadline per request.
+	response, err = client.Get("http://127.0.0.1:8000/roundTrip?sleep=100")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
+
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsHTTP3() {
 	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
 	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_http3.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})

@@ -54,7 +54,13 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// included — as a dead connection, canceling the connection context (net/http connReader.backgroundRead).
 	// That context is the parent of every subsequent request context on the connection, so arming the deadline
 	// here would make the next request on a keep-alive connection start already canceled.
-	if req.Body != nil && req.Body != http.NoBody {
+	// The presence of a body is read from ContentLength, not from req.Body: an upstream middleware may wrap
+	// req.Body (the capture middleware does), which defeats a req.Body != http.NoBody sentinel and would arm
+	// the deadline on a body-less request. ContentLength is zero exactly when there is no body, -1 when chunked.
+	// It is never cleared on return: the server drains the unread request body before flushing the response
+	// (net/http chunkWriter.writeHeader), once this handler and its defers have run, and only a live deadline
+	// bounds that drain. The server clears it on its own before reading the next request.
+	if req.ContentLength != 0 {
 		if err := rc.SetReadDeadline(deadline); err != nil {
 			logger.Debug().Err(err).Msg("Unable to set read deadline")
 		}
@@ -64,14 +70,29 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Debug().Err(err).Msg("Unable to set write deadline")
 	}
 
-	// The write deadline must not outlive the request: the net/http server clears it between keep-alive
-	// requests only when WriteTimeout > 0, and Traefik entrypoints default to 0, so a leaked write deadline
-	// would kill an unrelated subsequent request on the connection.
-	// The read deadline must conversely be left armed: the server drains the unread request body before
-	// flushing the response (net/http chunkWriter.writeHeader), once this defer has already run, and only a
-	// live deadline bounds that drain. The server clears it on its own before reading the next request.
+	rewriter := &statusRewriter{ResponseWriter: rw, deadline: deadline}
+
 	defer func() {
-		_ = rc.SetWriteDeadline(time.Time{})
+		// A hijacked connection no longer belongs to the server, which cleared its deadlines when handing it
+		// over (net/http (*conn).hijackLocked): re-arming one here would bound a protocol-switched tunnel.
+		if rewriter.hijacked {
+			return
+		}
+
+		// The response is flushed after this defer (net/http finishRequest), by which time the transaction
+		// deadline may have expired: the flush is granted a fresh budget, or a 504 could never reach the
+		// client. That budget is the entrypoint writeTimeout, the bound the flush had before this middleware
+		// replaced it, and the zero time when the entrypoint has none — which is also what keeps the deadline
+		// from leaking onto the next request on the connection, as net/http re-arms it per request only when
+		// Server.WriteTimeout > 0.
+		var writeDeadline time.Time
+		if writeTimeout := entryPointWriteTimeout(req); writeTimeout > 0 {
+			writeDeadline = time.Now().Add(writeTimeout)
+		}
+
+		if err := rc.SetWriteDeadline(writeDeadline); err != nil {
+			logger.Debug().Err(err).Msg("Unable to restore write deadline")
+		}
 	}()
 
 	if isUpgradeRequest(req) {
@@ -88,11 +109,11 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		timer := time.AfterFunc(time.Until(deadline), func() { cancel(context.DeadlineExceeded) })
 		defer timer.Stop()
 
-		// Only the timer has to be disarmed here: net/http clears both connection deadlines when the
-		// connection is handed over (net/http (*conn).hijackLocked).
-		disarm := func() { timer.Stop() }
+		// The timer has to be disarmed at the protocol switch, not on return: the proxy keeps serving the
+		// tunnel until it closes (net/http/httputil handleUpgradeResponse blocks).
+		rewriter.onHijack = func() { timer.Stop() }
 
-		h.next.ServeHTTP(&statusRewriter{ResponseWriter: rw, deadline: deadline, onHijack: disarm}, req.WithContext(ctx))
+		h.next.ServeHTTP(rewriter, req.WithContext(ctx))
 
 		return
 	}
@@ -101,7 +122,20 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithDeadline(req.Context(), deadline)
 	defer cancel()
 
-	h.next.ServeHTTP(&statusRewriter{ResponseWriter: rw, deadline: deadline}, req.WithContext(ctx))
+	h.next.ServeHTTP(rewriter, req.WithContext(ctx))
+}
+
+// entryPointWriteTimeout returns the writeTimeout of the entrypoint serving req, zero when it has none.
+// It cannot be injected into the middleware: the router handler is built once per router and shared by every
+// entrypoint the router is attached to (pkg/server/router.Manager). The net/http server publishes itself on
+// the request context for exactly this purpose.
+func entryPointWriteTimeout(req *http.Request) time.Duration {
+	srv, ok := req.Context().Value(http.ServerContextKey).(*http.Server)
+	if !ok {
+		return 0
+	}
+
+	return srv.WriteTimeout
 }
 
 // isUpgradeRequest reports whether the request attempts a protocol switch.
@@ -119,6 +153,8 @@ type statusRewriter struct {
 	deadline time.Time
 	// onHijack is set for upgrade requests: it disarms the handshake timer.
 	onHijack func()
+	// hijacked reports whether the connection has been handed over.
+	hijacked bool
 }
 
 func (s *statusRewriter) WriteHeader(code int) {
@@ -141,11 +177,19 @@ func (s *statusRewriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		s.onHijack()
 	}
 
-	if h, ok := s.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
+	hijacker, ok := s.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a hijacker: %T", s.ResponseWriter)
 	}
 
-	return nil, nil, fmt.Errorf("not a hijacker: %T", s.ResponseWriter)
+	conn, brw, err := hijacker.Hijack()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	s.hijacked = true
+
+	return conn, brw, nil
 }
 
 func (s *statusRewriter) Flush() {
