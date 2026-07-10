@@ -6,9 +6,11 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,7 +74,9 @@ func (s *TimeoutSuite) TestRouterRespondingTimeouts() {
 		net.JoinHostPort(timeoutEndpointIP, "9000"))
 	require.NoError(s.T(), try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)))
 
-	client := &http.Client{}
+	// A single idle connection per host forces the requests below to reuse the same keep-alive connection,
+	// so the "no leaked deadline" assertion actually exercises connection reuse.
+	client := &http.Client{Transport: &http.Transport{MaxIdleConns: 1, MaxIdleConnsPerHost: 1}}
 
 	// A backend answering after the router roundTrip timeout yields a 504.
 	response, err := client.Get("http://127.0.0.1:8000/roundTrip?sleep=2000")
@@ -108,7 +112,9 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 		net.JoinHostPort(timeoutEndpointIP, "9000"))
 	require.NoError(s.T(), try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)))
 
-	client := &http.Client{}
+	// A single idle connection per host forces the requests below to reuse the same keep-alive connection,
+	// so the write-deadline restore is exercised across a real connection reuse.
+	client := &http.Client{Transport: &http.Transport{MaxIdleConns: 1, MaxIdleConnsPerHost: 1}}
 
 	// The entrypoint writeTimeout is in force: without a router roundTrip, a backend answering after it
 	// leaves the response unwritable and the connection is closed with no response at all.
@@ -140,6 +146,71 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 	response, err = client.Get("http://127.0.0.1:8000/roundTrip?sleep=100")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+}
+
+// TestRouterRespondingTimeoutsWebSocket covers the upgrade path of the router roundTrip: an established
+// WebSocket tunnel is never severed at the deadline (the handshake timer is disarmed at the protocol switch),
+// while a hung upgrade handshake still yields a 504 (pre-101 the gateway has not responded).
+func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
+	upgrader := gorillawebsocket.Upgrader{}
+
+	// A healthy echo backend: it completes the handshake and relays messages both ways.
+	echo := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+
+		for {
+			mt, message, err := c.ReadMessage()
+			if err != nil {
+				return
+			}
+			if err = c.WriteMessage(mt, message); err != nil {
+				return
+			}
+		}
+	}))
+	s.T().Cleanup(echo.Close)
+
+	// A backend that never answers the handshake: it holds the request until the proxy tears the leg down.
+	hang := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	s.T().Cleanup(hang.Close)
+
+	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_websocket.toml", struct {
+		WebsocketServer string
+		HangServer      string
+	}{
+		WebsocketServer: echo.URL,
+		HangServer:      hang.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/ws`)", "Path(`/ws-hang`)"))
+	require.NoError(s.T(), err)
+
+	// An established tunnel survives well past the 1s roundTrip: the timer is disarmed at the protocol switch.
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
+	require.NoError(s.T(), err)
+	s.T().Cleanup(func() { _ = conn.Close() })
+
+	time.Sleep(2 * time.Second)
+
+	require.NoError(s.T(), conn.WriteMessage(gorillawebsocket.TextMessage, []byte("after-deadline")))
+
+	_, msg, err := conn.ReadMessage()
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "after-deadline", string(msg))
+
+	// A hung upgrade handshake yields a 504 once the roundTrip elapses: pre-101 the gateway has not responded.
+	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws-hang", nil)
+	require.Error(s.T(), err)
+	require.NotNil(s.T(), resp)
+	assert.Equal(s.T(), http.StatusGatewayTimeout, resp.StatusCode)
 }
 
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsHTTP3() {
