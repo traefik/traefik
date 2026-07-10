@@ -25,6 +25,8 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router0.respondingTimeouts]
+        roundTrip = "42s"
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -48,6 +50,8 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router1.respondingTimeouts]
+        roundTrip = "42s"
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
