@@ -11,8 +11,10 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -138,14 +140,33 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
+		var respondingTimeouts *dynamic.RouterRespondingTimeouts
+		if routeRule.Timeouts != nil {
+			if routeRule.Timeouts.BackendRequest != nil {
+				// backendRequest is per-attempt and belongs to the backend layer (ServersTransport);
+				// the route stays Accepted and the operator is told why.
+				log.Ctx(ctx).Debug().Msg("Ignoring HTTPRoute timeouts.backendRequest: not supported yet")
+			}
+
+			if routeRule.Timeouts.Request != nil {
+				// The CRD CEL validation guarantees a valid GEP-2257 duration string.
+				if d, err := time.ParseDuration(string(*routeRule.Timeouts.Request)); err != nil {
+					log.Ctx(ctx).Debug().Err(err).Msg("Ignoring HTTPRoute timeouts.request: invalid duration")
+				} else {
+					respondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(d)}
+				}
+			}
+		}
+
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax: "default",
-				Rule:       rule,
-				Priority:   priority + len(route.Spec.Rules) - ri,
-				ParentRefs: listener.RouterNames,
+				RuleSyntax:         "default",
+				Rule:               rule,
+				Priority:           priority + len(route.Spec.Rules) - ri,
+				ParentRefs:         listener.RouterNames,
+				RespondingTimeouts: respondingTimeouts,
 			}
 
 			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)

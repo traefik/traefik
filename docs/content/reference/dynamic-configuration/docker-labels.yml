@@ -174,6 +174,7 @@
 - "traefik.http.routers.router0.observability.traceverbosity=foobar"
 - "traefik.http.routers.router0.observability.tracing=true"
 - "traefik.http.routers.router0.priority=42"
+- "traefik.http.routers.router0.respondingtimeouts.roundtrip=42s"
 - "traefik.http.routers.router0.rule=foobar"
 - "traefik.http.routers.router0.rulesyntax=foobar"
 - "traefik.http.routers.router0.service=foobar"

@@ -56,6 +56,15 @@ type Route struct {
 	// Observability defines the observability configuration for a router.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
 	Observability *RouterObservabilityConfig `json:"observability,omitempty"`
+	// RespondingTimeouts defines the timeouts for responding to client requests.
+	RespondingTimeouts *RouterRespondingTimeouts `json:"respondingTimeouts,omitempty"`
+}
+
+// RouterRespondingTimeouts holds the timeouts for responding to client requests.
+type RouterRespondingTimeouts struct {
+	// RoundTrip defines the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
+	// If zero, no timeout applies.
+	RoundTrip *intstr.IntOrString `json:"roundTrip,omitempty"`
 }
 
 // RouterObservabilityConfig holds the observability configuration for a router.
