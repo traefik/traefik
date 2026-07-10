@@ -8054,26 +8054,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^https?://[^/]+/(example)(/.*)`,
 								Replacement: "https://redirect.example.com/$1$2",
-								StatusCode:  ptr.To(http.StatusMovedPermanently),
+								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-ingress-with-redirect-use-regex-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^https?://[^/]+/(example)(/.*)`,
 								Replacement: "https://redirect.example.com/$1$2",
-								StatusCode:  ptr.To(http.StatusMovedPermanently),
+								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-ingress-with-redirect-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-redirect-use-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -8081,7 +8081,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8098,7 +8098,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-redirect-use-regex",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
