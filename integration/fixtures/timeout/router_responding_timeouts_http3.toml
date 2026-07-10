@@ -1,0 +1,41 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.websecure]
+    address = ":4443"
+    [entryPoints.websecure.http3]
+
+[accessLog]
+  format = "json"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "Host(`snitest.com`) && Path(`/roundTrip`)"
+    [http.routers.router1.tls]
+    [http.routers.router1.respondingTimeouts]
+      roundTrip = "1s"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.TimeoutEndpoint}}:9000"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/snitest.com.cert"
+  keyFile = "fixtures/https/snitest.com.key"
