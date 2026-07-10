@@ -130,7 +130,11 @@ It bounds slow clients too: a slow upload or a slow response read is interrupted
 When the deadline expires **before** the response has started, the client receives a `504 Gateway Timeout`.
 When it expires **after** the response has started (streaming), the transaction is torn down and the connection is closed.
 
-**Interaction with entry point timeouts.** For requests matched by the router, `roundTrip` **replaces** the connection deadlines armed from the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) (`readTimeout`/`writeTimeout`), in both directions: a `roundTrip` longer than the entry point timeouts extends the window for that router only (which re-opens the slow-client exposure on that router), while a shorter one tightens it.
+**Interaction with entry point timeouts.** For requests matched by the router, `roundTrip` **replaces** the connection deadlines armed from the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) (`readTimeout`/`writeTimeout`), in both directions: a `roundTrip` longer than the entry point timeouts extends the window for requests matched by that router, while a shorter one tightens it.
+
+!!! warning "A long `roundTrip` relaxes the entry point's slow-client protection"
+
+    The entry point `readTimeout` (default `60s`) caps how long a client may take to send its request, which limits slow-client attacks such as Slowloris. A `roundTrip` longer than `readTimeout` lifts that cap for the matched requests: a slow client on that route can then hold a connection open for the whole `roundTrip` duration. Because connection limits are enforced per entry point, that cost is borne by everything served by the entry point, not by the router alone. Set a long `roundTrip` only on routes that need it.
 
 **Protocol upgrades (WebSocket, `kubectl exec`, ...).** For upgrade requests (any `Connection: Upgrade` protocol), the deadline bounds the **handshake only** and is disarmed at the protocol switch: an established tunnel is never torn down by this timeout, while a backend that never answers the handshake still yields a `504`.
 

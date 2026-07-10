@@ -320,6 +320,10 @@ The `HTTPRoute` rules support the [`timeouts`](https://gateway-api.sigs.k8s.io/a
   It maps to the router [`respondingTimeouts.roundTrip`](../http/routing/router.md#responding-timeouts) option: the timer starts at request reception (so it also bounds a slow request-body upload, unlike Envoy-based implementations), the deadline bounds only the handshake for upgrade requests (WebSocket, ...), and it applies to streaming responses (SSE, gRPC streaming) which cannot be detected at request time — omit it (or set `0s`) on such routes.
 - `timeouts.backendRequest` is **not supported yet**: it is ignored (with a debug log), and the route remains `Accepted`.
 
+!!! warning "A long `timeouts.request` relaxes the entry point's slow-client protection"
+
+    A `timeouts.request` longer than the entry point `readTimeout` (default `60s`) lets a slow client hold a connection open for its whole duration, lifting the slow-client protection (such as against Slowloris) that `readTimeout` provides. Since `HTTPRoute` is namespace-scoped while the entry point and its connection limits are cluster-scoped, a route author can widen a bound the cluster operator set, at a cost borne by every route sharing the entry point. See [Responding Timeouts](../http/routing/router.md#responding-timeouts).
+
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
