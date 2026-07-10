@@ -170,6 +170,14 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
+	timeoutConfig := config.DefaultTimeoutConfig()
+	// Some tests reuse generic hostnames (e.g. example.org) across independently
+	// created/deleted Gateways. Without a pause between test cases, a fast
+	// create-request-delete cycle can outrun the Gateway API provider's
+	// reconciliation, leaving a previous test's routers transiently active during
+	// the next test's assertions. See https://github.com/kubernetes-sigs/gateway-api/pull/3243.
+	timeoutConfig.TestIsolation = 2 * time.Second
+
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
 		Client:                     s.kubeClient,
 		Clientset:                  s.clientSet,
@@ -177,7 +185,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 		Debug:                      true,
 		CleanupBaseResources:       true,
 		RestConfig:                 s.restConfig,
-		TimeoutConfig:              config.DefaultTimeoutConfig(),
+		TimeoutConfig:              timeoutConfig,
 		ManifestFS:                 []fs.FS{&conformance.Manifests},
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *gatewayAPIConformanceRunTest,

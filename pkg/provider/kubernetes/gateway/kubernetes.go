@@ -729,57 +729,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsCerts)...)
 	}
 
-	rejectFrontendValidationHostConflicts(gateway, gatewayListeners)
-
 	return gatewayListeners
-}
-
-// rejectFrontendValidationHostConflicts detects HTTPS listeners of the same Gateway, on the same
-// EntryPoint, whose hostnames could overlap on the wire (SNI) but that resolved to different
-// frontend client certificate validation options.
-// The conflicting listeners are marked Accepted: False and their frontend validation options are dropped.
-func rejectFrontendValidationHostConflicts(gateway *gatev1.Gateway, listeners []gatewayListener) {
-	for i, a := range listeners {
-		if a.Protocol != gatev1.HTTPSProtocolType || !a.Attached || a.FrontendTLSValidationOptions == "" {
-			continue
-		}
-
-		for j, b := range listeners {
-			if i == j || b.Protocol != gatev1.HTTPSProtocolType || !b.Attached {
-				continue
-			}
-
-			if a.EPName != b.EPName || !hostnamesMayOverlap(a.Hostname, b.Hostname) {
-				continue
-			}
-
-			if a.FrontendTLSValidationOptions == b.FrontendTLSValidationOptions {
-				continue
-			}
-
-			listeners[i].Status.Conditions = append(listeners[i].Status.Conditions, metav1.Condition{
-				Type:               string(gatev1.ListenerConditionAccepted),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.ListenerReasonInvalid),
-				Message:            fmt.Sprintf("Listener %q and %q on EntryPoint %q may serve overlapping hostnames with conflicting frontend client certificate validation configuration", a.Name, b.Name, a.EPName),
-			})
-			listeners[i].FrontendTLSValidationOptions = ""
-
-			break
-		}
-	}
-}
-
-// hostnamesMayOverlap reports whether two listener hostnames could both match the same incoming
-// SNI value. A nil hostname has no restriction and therefore can match any SNI.
-func hostnamesMayOverlap(a, b *gatev1.Hostname) bool {
-	if a == nil || b == nil {
-		return true
-	}
-
-	return *a == *b
 }
 
 type frontendValidation struct {
