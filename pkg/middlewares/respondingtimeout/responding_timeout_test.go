@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress"
 	"github.com/traefik/traefik/v3/pkg/middlewares/respondingtimeout"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -121,6 +122,52 @@ func upgradeBackend(t *testing.T) *url.URL {
 	require.NoError(t, err)
 
 	return target
+}
+
+// flushDeadlineListener reports, once per connection, the write deadline in force when the server first
+// writes to it.
+type flushDeadlineListener struct {
+	net.Listener
+
+	deadlines chan<- time.Time
+}
+
+func (l *flushDeadlineListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+
+	return &flushDeadlineConn{Conn: conn, deadlines: l.deadlines}, nil
+}
+
+type flushDeadlineConn struct {
+	net.Conn
+
+	deadlines chan<- time.Time
+
+	mu       sync.Mutex
+	deadline time.Time
+	reported bool
+}
+
+func (c *flushDeadlineConn) SetWriteDeadline(deadline time.Time) error {
+	c.mu.Lock()
+	c.deadline = deadline
+	c.mu.Unlock()
+
+	return c.Conn.SetWriteDeadline(deadline)
+}
+
+func (c *flushDeadlineConn) Write(b []byte) (int, error) {
+	c.mu.Lock()
+	if !c.reported {
+		c.reported = true
+		c.deadlines <- c.deadline
+	}
+	c.mu.Unlock()
+
+	return c.Conn.Write(b)
 }
 
 func TestStatusNormalization(t *testing.T) {
@@ -312,11 +359,18 @@ func TestSlowBackendGets504(t *testing.T) {
 // TestExpiryDoesNotCancelNextKeepAliveRequest guards the read deadline arming: net/http cancels the whole
 // connection context when a background read fails, so a request that reaches its deadline must not leave the
 // next request on the same keep-alive connection with an already-canceled context.
+// The timed-out router sits below the capture middleware, as it does in production: capture wraps req.Body,
+// so a body-less request no longer carries http.NoBody by the time it reaches this middleware, and the body
+// presence must be read from ContentLength — otherwise the read deadline is armed and poisons the connection.
 func TestExpiryDoesNotCancelNextKeepAliveRequest(t *testing.T) {
 	t.Parallel()
 
+	timeoutHandler := wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t)))
+	captured, err := capture.Wrap(timeoutHandler)
+	require.NoError(t, err)
+
 	mux := http.NewServeMux()
-	mux.Handle("/timeout", wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t))))
+	mux.Handle("/timeout", captured)
 	// No timeout on this router, and a backend that answers.
 	mux.Handle("/plain", reverseProxy(healthyBackend(t)))
 
@@ -459,6 +513,135 @@ func TestEarlyResponseDoesNotWaitForStalledUpload(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	assert.Less(t, time.Since(start), 10*timeout)
+}
+
+// TestFlushKeepsEntryPointWriteTimeout guards the deferred restore. A handler writing a small response leaves
+// it entirely buffered, so the first write on the connection is the post-handler flush (net/http
+// finishRequest): the deadline it runs under is the one this middleware left behind.
+func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		writeTimeout time.Duration
+	}{
+		{
+			desc: "the entrypoint has no write timeout",
+		},
+		{
+			desc:         "the entrypoint has a write timeout",
+			writeTimeout: time.Second,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// A roundTrip far beyond the entrypoint write timeout: the deadline the flush runs under tells
+			// unambiguously which of the two the middleware left on the connection.
+			ts := httptest.NewUnstartedServer(wrap(t, time.Hour, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				_, _ = rw.Write([]byte("ok"))
+			})))
+
+			deadlines := make(chan time.Time, 1)
+			ts.Listener = &flushDeadlineListener{Listener: ts.Listener, deadlines: deadlines}
+			ts.Config.WriteTimeout = test.writeTimeout
+
+			ts.Start()
+			t.Cleanup(ts.Close)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
+			require.NoError(t, err)
+
+			start := time.Now()
+
+			res, err := ts.Client().Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			var deadline time.Time
+			select {
+			case deadline = <-deadlines:
+			case <-time.After(5 * time.Second):
+				require.FailNow(t, "the response never reached the connection")
+			}
+
+			if test.writeTimeout == 0 {
+				assert.True(t, deadline.IsZero())
+				return
+			}
+
+			assert.False(t, deadline.IsZero())
+			assert.WithinDuration(t, start.Add(test.writeTimeout), deadline, time.Minute)
+		})
+	}
+}
+
+// TestWriteDeadlineNotRearmedAfterHijack guards the hijack check in the deferred restore: net/http applies a
+// deadline set through the ResponseWriter straight to the connection, without checking whether it still owns
+// it, so restoring one would bound a tunnel the handler has already taken over.
+func TestWriteDeadlineNotRearmedAfterHijack(t *testing.T) {
+	t.Parallel()
+
+	writeTimeout := 100 * time.Millisecond
+
+	// The handler hands the connection over and returns without serving the tunnel, as a plugin would; the
+	// deferred restore then runs while the connection is still live.
+	hijacked := make(chan net.Conn, 1)
+	ts := httptest.NewUnstartedServer(wrap(t, time.Hour, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		conn, brw, err := http.NewResponseController(rw).Hijack()
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		_, err = brw.WriteString("HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: spdy/3.1\r\n\r\n")
+		if !assert.NoError(t, err) {
+			return
+		}
+		if !assert.NoError(t, brw.Flush()) {
+			return
+		}
+
+		hijacked <- conn
+	})))
+	ts.Config.WriteTimeout = writeTimeout
+
+	ts.Start()
+	t.Cleanup(ts.Close)
+
+	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	require.NoError(t, conn.SetDeadline(time.Now().Add(5*time.Second)))
+
+	_, err = fmt.Fprintf(conn, "GET / HTTP/1.1\r\nHost: %s\r\nConnection: Upgrade\r\nUpgrade: spdy/3.1\r\n\r\n", ts.Listener.Addr())
+	require.NoError(t, err)
+
+	br := bufio.NewReader(conn)
+	res, err := http.ReadResponse(br, nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, res.StatusCode)
+
+	var serverConn net.Conn
+	select {
+	case serverConn = <-hijacked:
+	case <-time.After(5 * time.Second):
+		require.FailNow(t, "the connection was never hijacked")
+	}
+	t.Cleanup(func() { _ = serverConn.Close() })
+
+	// Well past the entrypoint write timeout: the tunnel must still carry a write.
+	time.Sleep(3 * writeTimeout)
+
+	_, err = serverConn.Write([]byte("after-timeout"))
+	require.NoError(t, err)
+
+	relayed := make([]byte, len("after-timeout"))
+	_, err = io.ReadFull(br, relayed)
+	require.NoError(t, err)
+
+	assert.Equal(t, "after-timeout", string(relayed))
 }
 
 func TestFlushPropagatesThroughCompress(t *testing.T) {
