@@ -46,21 +46,24 @@ func newRouter(ctx context.Context, router, routerRule, service string, next htt
 }
 
 func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil && DetailedTracingEnabled(req.Context()) {
-		// Capture the root server span before replacing the context with
-		// the router's internal span context. The root server span was
-		// created by the entrypoint middleware and is the parent of all
-		// subsequent spans in this request.
+	// Enrich the root server span with http.route and update its name.
+	// This runs regardless of DetailedTracingEnabled because the root
+	// server span always exists (created by the entrypoint middleware
+	// when TracingEnabled is true). The router span (internal) is only
+	// created when DetailedTracingEnabled is true.
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
 		serverSpan := trace.SpanFromContext(req.Context())
 
-		tracingCtx, span := tracer.Start(req.Context(), "Router", trace.WithSpanKind(trace.SpanKindInternal))
-		defer span.End()
+		if DetailedTracingEnabled(req.Context()) {
+			tracingCtx, span := tracer.Start(req.Context(), "Router", trace.WithSpanKind(trace.SpanKindInternal))
+			defer span.End()
 
-		req = req.WithContext(tracingCtx)
+			req = req.WithContext(tracingCtx)
 
-		span.SetAttributes(attribute.String("traefik.service.name", f.service))
-		span.SetAttributes(attribute.String("traefik.router.name", f.router))
-		span.SetAttributes(semconv.HTTPRoute(f.routerRule))
+			span.SetAttributes(attribute.String("traefik.service.name", f.service))
+			span.SetAttributes(attribute.String("traefik.router.name", f.router))
+			span.SetAttributes(semconv.HTTPRoute(f.routerRule))
+		}
 
 		// Set http.route on the root server span and update its name to
 		// "{method} {route}" per OTel HTTP semantic conventions:
