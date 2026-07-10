@@ -2177,3 +2177,101 @@ func (l labellingProxyBuilder) Build(_ string, target *url.URL, _, _ bool, _ tim
 }
 
 func (l labellingProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
+
+// slowProxyBuilder builds a handler answering 200 after a delay, or 500 if the request context expires first,
+// allowing tests to observe the router respondingTimeouts enforcement.
+type slowProxyBuilder struct {
+	delay time.Duration
+}
+
+func (p slowProxyBuilder) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		select {
+		case <-req.Context().Done():
+			rw.WriteHeader(http.StatusInternalServerError)
+		case <-time.After(p.delay):
+			rw.WriteHeader(http.StatusOK)
+		}
+	}), nil
+}
+
+func (p slowProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
+
+func TestRouterManager_RespondingTimeouts(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		respondingTimeouts *dynamic.RouterRespondingTimeouts
+		expectedStatus     int
+	}{
+		{
+			desc:               "roundTrip shorter than the backend delay yields a 504",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(10 * time.Millisecond)},
+			expectedStatus:     http.StatusGatewayTimeout,
+		},
+		{
+			desc:               "roundTrip longer than the backend delay is not enforced",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(time.Hour)},
+			expectedStatus:     http.StatusOK,
+		},
+		{
+			desc:               "zero roundTrip disables the timeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+			expectedStatus:     http.StatusOK,
+		},
+		{
+			desc:           "no respondingTimeouts",
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Services: map[string]*dynamic.Service{
+						"foo-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.0.0.1"},
+								},
+							},
+						},
+					},
+					Routers: map[string]*dynamic.Router{
+						"foo": {
+							EntryPoints:        []string{"web"},
+							Service:            "foo-service",
+							Rule:               "Host(`foo.bar`)",
+							RespondingTimeouts: test.respondingTimeouts,
+						},
+					},
+				},
+			})
+
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, slowProxyBuilder{delay: 50 * time.Millisecond})
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			tlsManager := traefiktls.NewManager(nil)
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, []string{})
+
+			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
+
+			w := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
+
+			reqHost := requestdecorator.New(nil)
+			reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
+
+			assert.Equal(t, test.expectedStatus, w.Code)
+		})
+	}
+}

@@ -94,8 +94,18 @@ type Router struct {
 	Priority                    int                                `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
 	TLS                         *RouterTLSConfig                   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Observability               *RouterObservabilityConfig         `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	RespondingTimeouts          *RouterRespondingTimeouts          `json:"respondingTimeouts,omitempty" toml:"respondingTimeouts,omitempty" yaml:"respondingTimeouts,omitempty" export:"true"`
 	DefaultRule                 bool                               `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterRespondingTimeouts holds the timeouts for responding to client requests on a router.
+type RouterRespondingTimeouts struct {
+	// RoundTrip is the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
+	// If zero, no timeout applies.
+	RoundTrip ptypes.Duration `json:"roundTrip,omitempty" toml:"roundTrip,omitempty" yaml:"roundTrip,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

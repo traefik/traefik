@@ -11,8 +11,10 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -128,14 +130,33 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
 		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindHTTPRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
 
+		var respondingTimeouts *dynamic.RouterRespondingTimeouts
+		if routeRule.Timeouts != nil {
+			if routeRule.Timeouts.BackendRequest != nil {
+				// backendRequest is per-attempt and belongs to the backend layer (ServersTransport);
+				// the route stays Accepted and the operator is told why.
+				log.Ctx(ctx).Debug().Msg("Ignoring HTTPRoute timeouts.backendRequest: not supported yet")
+			}
+
+			if routeRule.Timeouts.Request != nil {
+				// The CRD CEL validation guarantees a valid GEP-2257 duration string.
+				if d, err := time.ParseDuration(string(*routeRule.Timeouts.Request)); err != nil {
+					log.Ctx(ctx).Debug().Err(err).Msg("Ignoring HTTPRoute timeouts.request: invalid duration")
+				} else {
+					respondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(d)}
+				}
+			}
+		}
+
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax:  "default",
-				Rule:        rule,
-				Priority:    priority + len(route.Spec.Rules) - ri,
-				EntryPoints: []string{listener.EPName},
+				RuleSyntax:         "default",
+				Rule:               rule,
+				Priority:           priority + len(route.Spec.Rules) - ri,
+				EntryPoints:        []string{listener.EPName},
+				RespondingTimeouts: respondingTimeouts,
 			}
 			if listener.Protocol == gatev1.HTTPSProtocolType {
 				router.TLS = &dynamic.RouterTLSConfig{}

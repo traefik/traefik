@@ -310,6 +310,40 @@ Once everything is deployed, sending a `GET` request to the HTTP and HTTPS endpo
     X-Real-Ip: 10.42.1.0
     ```
 
+#### Route timeouts
+
+The `HTTPRoute` rules support the [`timeouts`](https://gateway-api.sigs.k8s.io/api-types/httproute/#timeouts-optional) field to bound the duration of a request:
+
+- `timeouts.request` defines the maximum duration for the gateway to respond to the client request (the whole client transaction, encompassing any retries).
+  On expiry before the response has started, the client receives a `504 Gateway Timeout`.
+  Setting it to `0s` disables the timeout.
+  It maps to the router [`respondingTimeouts.roundTrip`](../http/routing/router.md#responding-timeouts) option: the timer starts at request reception (so it also bounds a slow request-body upload, unlike Envoy-based implementations), the deadline bounds only the handshake for upgrade requests (WebSocket, ...), and it applies to streaming responses (SSE, gRPC streaming) which cannot be detected at request time — omit it (or set `0s`) on such routes.
+- `timeouts.backendRequest` is **not supported yet**: it is ignored (with a debug log), and the route remains `Accepted`.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami-http
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: http
+      kind: Gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      timeouts:
+        request: 10s
+      backendRefs:
+        - name: whoami
+          namespace: default
+          port: 80
+```
+
 #### Using Traefik middleware as HTTPRoute filter
 
 An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.

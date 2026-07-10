@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -19,6 +20,7 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/respondingtimeout"
 	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
@@ -380,6 +382,12 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
 		})
+	}
+
+	// Appended below observability so that the 504 is observed, and above the user middlewares so that the
+	// deadline bounds them all, retry attempts included.
+	if router.RespondingTimeouts != nil && router.RespondingTimeouts.RoundTrip > 0 {
+		chain = chain.Append(respondingtimeout.WrapHandler(time.Duration(router.RespondingTimeouts.RoundTrip)))
 	}
 
 	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)
