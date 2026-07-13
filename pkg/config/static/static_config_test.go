@@ -8,8 +8,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 )
 
-func pointer[T any](v T) *T { return &v }
-
 func TestHasEntrypoint(t *testing.T) {
 	tests := []struct {
 		desc        string
@@ -71,8 +69,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              pointer(true),
-						MergeSlashes:              pointer(true),
+						SanitizePath:              new(true),
+						MergeSlashes:              new(true),
 						MaxHeaderBytes:            1048576,
 						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
@@ -121,8 +119,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              pointer(true),
-						MergeSlashes:              pointer(true),
+						SanitizePath:              new(true),
+						MergeSlashes:              new(true),
 						MaxHeaderBytes:            1048576,
 						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
@@ -182,8 +180,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              pointer(true),
-						MergeSlashes:              pointer(true),
+						SanitizePath:              new(true),
+						MergeSlashes:              new(true),
 						MaxHeaderBytes:            1048576,
 						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},
@@ -247,8 +245,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              pointer(true),
-						MergeSlashes:              pointer(true),
+						SanitizePath:              new(true),
+						MergeSlashes:              new(true),
 						MaxHeaderBytes:            1048576,
 						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
 					},

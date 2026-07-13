@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -93,9 +92,9 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
 			match: gatev1.HTTPRouteMatch{
-				Path: ptr.To(gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchPathPrefix),
-					Value: ptr.To("/"),
+				Path: new(gatev1.HTTPPathMatch{
+					Type:  new(gatev1.PathMatchPathPrefix),
+					Value: new("/"),
 				}),
 				Headers: nil,
 			},
@@ -105,9 +104,9 @@ func Test_buildMatchRule(t *testing.T) {
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
 			match: gatev1.HTTPRouteMatch{
-				Path: ptr.To(gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchPathPrefix),
-					Value: ptr.To("/"),
+				Path: new(gatev1.HTTPPathMatch{
+					Type:  new(gatev1.PathMatchPathPrefix),
+					Value: new("/"),
 				}),
 				Headers: []gatev1.HTTPHeaderMatch{
 					{Name: "foo", Value: "bar"},
@@ -127,7 +126,7 @@ func Test_buildMatchRule(t *testing.T) {
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
 					Type:  nil,
-					Value: ptr.To("/foo/"),
+					Value: new("/foo/"),
 				},
 			},
 			expectedRule:     `(Path("/foo") || PathPrefix("/foo/"))`,
@@ -137,7 +136,7 @@ func Test_buildMatchRule(t *testing.T) {
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
+					Type:  new(gatev1.PathMatchExact),
 					Value: nil,
 				},
 			},
@@ -148,8 +147,8 @@ func Test_buildMatchRule(t *testing.T) {
 			desc: "One Path",
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Type:  new(gatev1.PathMatchExact),
+					Value: new("/foo/"),
 				},
 			},
 			expectedRule:     `Path("/foo/")`,
@@ -159,12 +158,12 @@ func Test_buildMatchRule(t *testing.T) {
 			desc: "Path && Header",
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Type:  new(gatev1.PathMatchExact),
+					Value: new("/foo/"),
 				},
 				Headers: []gatev1.HTTPHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.HeaderMatchExact),
+						Type:  new(gatev1.HeaderMatchExact),
 						Name:  "my-header",
 						Value: "foo",
 					},
@@ -178,12 +177,12 @@ func Test_buildMatchRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{"foo.com"},
 			match: gatev1.HTTPRouteMatch{
 				Path: &gatev1.HTTPPathMatch{
-					Type:  ptr.To(gatev1.PathMatchExact),
-					Value: ptr.To("/foo/"),
+					Type:  new(gatev1.PathMatchExact),
+					Value: new("/foo/"),
 				},
 				Headers: []gatev1.HTTPHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.HeaderMatchExact),
+						Type:  new(gatev1.HeaderMatchExact),
 						Name:  "my-header",
 						Value: "foo",
 					},
@@ -216,7 +215,7 @@ func Test_createCORS(t *testing.T) {
 			filter: &gatev1.HTTPCORSFilter{},
 			expected: &dynamic.Middleware{
 				Headers: &dynamic.Headers{
-					AccessControlMaxAge: ptr.To(int64(0)),
+					AccessControlMaxAge: new(int64(0)),
 				},
 			},
 		},
@@ -228,7 +227,7 @@ func Test_createCORS(t *testing.T) {
 			expected: &dynamic.Middleware{
 				Headers: &dynamic.Headers{
 					AccessControlAllowOriginList: []string{"https://foo.example.com", "https://bar.example.com"},
-					AccessControlMaxAge:          ptr.To(int64(0)),
+					AccessControlMaxAge:          new(int64(0)),
 				},
 			},
 		},
@@ -240,7 +239,7 @@ func Test_createCORS(t *testing.T) {
 			expected: &dynamic.Middleware{
 				Headers: &dynamic.Headers{
 					AccessControlAllowOriginListRegex: []string{`.*`},
-					AccessControlMaxAge:               ptr.To(int64(0)),
+					AccessControlMaxAge:               new(int64(0)),
 				},
 			},
 		},
@@ -252,7 +251,7 @@ func Test_createCORS(t *testing.T) {
 			expected: &dynamic.Middleware{
 				Headers: &dynamic.Headers{
 					AccessControlAllowOriginListRegex: []string{`^https://.*$`},
-					AccessControlMaxAge:               ptr.To(int64(0)),
+					AccessControlMaxAge:               new(int64(0)),
 				},
 			},
 		},
@@ -264,7 +263,7 @@ func Test_createCORS(t *testing.T) {
 			expected: &dynamic.Middleware{
 				Headers: &dynamic.Headers{
 					AccessControlAllowOriginListRegex: []string{`^https://.*\.example\.com$`},
-					AccessControlMaxAge:               ptr.To(int64(0)),
+					AccessControlMaxAge:               new(int64(0)),
 				},
 			},
 		},
@@ -277,7 +276,7 @@ func Test_createCORS(t *testing.T) {
 				Headers: &dynamic.Headers{
 					AccessControlAllowOriginList:      []string{"https://foo.example.com"},
 					AccessControlAllowOriginListRegex: []string{`^https://.*\.example\.com$`},
-					AccessControlMaxAge:               ptr.To(int64(0)),
+					AccessControlMaxAge:               new(int64(0)),
 				},
 			},
 		},
@@ -285,7 +284,7 @@ func Test_createCORS(t *testing.T) {
 			desc: "All fields set",
 			filter: &gatev1.HTTPCORSFilter{
 				AllowOrigins:     []gatev1.CORSOrigin{"https://foo.example.com"},
-				AllowCredentials: ptr.To(true),
+				AllowCredentials: new(true),
 				AllowMethods:     []gatev1.HTTPMethodWithWildcard{"GET", "POST"},
 				AllowHeaders:     []gatev1.HTTPHeaderName{"X-Foo", "X-Bar"},
 				ExposeHeaders:    []gatev1.HTTPHeaderName{"X-Baz"},
@@ -298,19 +297,19 @@ func Test_createCORS(t *testing.T) {
 					AccessControlAllowMethods:     []string{"GET", "POST"},
 					AccessControlAllowHeaders:     []string{"X-Foo", "X-Bar"},
 					AccessControlExposeHeaders:    []string{"X-Baz"},
-					AccessControlMaxAge:           ptr.To(int64(600)),
+					AccessControlMaxAge:           new(int64(600)),
 				},
 			},
 		},
 		{
 			desc: "AllowCredentials explicitly false",
 			filter: &gatev1.HTTPCORSFilter{
-				AllowCredentials: ptr.To(false),
+				AllowCredentials: new(false),
 			},
 			expected: &dynamic.Middleware{
 				Headers: &dynamic.Headers{
 					AccessControlAllowCredentials: false,
-					AccessControlMaxAge:           ptr.To(int64(0)),
+					AccessControlMaxAge:           new(int64(0)),
 				},
 			},
 		},

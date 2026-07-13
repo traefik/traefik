@@ -90,7 +90,9 @@ func (p *Provider) buildAppRoot(loc *location) {
 	if loc.Config.AppRoot == nil || !strings.HasPrefix(*loc.Config.AppRoot, "/") {
 		return
 	}
-	loc.AppRoot = loc.Config.AppRoot
+	loc.AppRoot = &dynamic.AppRoot{
+		Path: *loc.Config.AppRoot,
+	}
 }
 
 func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHosts map[string]bool) {
@@ -248,7 +250,7 @@ func (p *Provider) buildCORS(loc *location) {
 		AccessControlAllowHeaders:     ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
 		AccessControlAllowMethods:     ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
 		AccessControlAllowOriginList:  ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}),
-		AccessControlMaxAge:           ptr.To(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
+		AccessControlMaxAge:           new(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
 	}
 }
 
@@ -482,7 +484,7 @@ func (p *Provider) buildRetry(ctx context.Context, loc *location, endpointCount 
 		// we still want to allow the retry for empty body requests
 		// but disable it for request with bodies.
 		if disableRequestBuffering {
-			retry.MaxRequestBodyBytes = ptr.To(int64(0))
+			retry.MaxRequestBodyBytes = new(int64(0))
 		}
 	}
 

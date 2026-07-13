@@ -471,7 +471,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		}
 		gatewayListeners[i].EPName = ep
 
-		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: ptr.To(gatev1.NamespacesFromSame)}})
+		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)}})
 		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(gateway.Namespace, allowedRoutes.Namespaces)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
@@ -748,14 +748,14 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 
 	if p.StatusAddress.IP != "" {
 		return []gatev1.GatewayStatusAddress{{
-			Type:  ptr.To(gatev1.IPAddressType),
+			Type:  new(gatev1.IPAddressType),
 			Value: p.StatusAddress.IP,
 		}}, nil
 	}
 
 	if p.StatusAddress.Hostname != "" {
 		return []gatev1.GatewayStatusAddress{{
-			Type:  ptr.To(gatev1.HostnameAddressType),
+			Type:  new(gatev1.HostnameAddressType),
 			Value: p.StatusAddress.Hostname,
 		}}, nil
 	}
@@ -772,13 +772,13 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 			switch {
 			case addr.IP != "":
 				addresses = append(addresses, gatev1.GatewayStatusAddress{
-					Type:  ptr.To(gatev1.IPAddressType),
+					Type:  new(gatev1.IPAddressType),
 					Value: addr.IP,
 				})
 
 			case addr.Hostname != "":
 				addresses = append(addresses, gatev1.GatewayStatusAddress{
-					Type:  ptr.To(gatev1.HostnameAddressType),
+					Type:  new(gatev1.HostnameAddressType),
 					Value: addr.Hostname,
 				})
 			}
@@ -937,8 +937,8 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if svcPort.Name == *p.Name {
-				port = *p.Port
+			if p.Name != nil && svcPort.Name == *p.Name {
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}

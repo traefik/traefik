@@ -50,6 +50,10 @@ type ErrorPageApplyConfiguration struct {
 	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
 	// The {url} variable can be used in order to insert the escaped request URL.
 	Query *string `json:"query,omitempty"`
+	// ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+	// When nil (not set), all original request headers are forwarded.
+	// Set to an empty list to forward no headers, or list specific headers to forward only those.
+	ErrorRequestHeaders []string `json:"errorRequestHeaders,omitempty"`
 }
 
 // ErrorPageApplyConfiguration constructs a declarative configuration of the ErrorPage type for use with
@@ -95,5 +99,15 @@ func (b *ErrorPageApplyConfiguration) WithService(value *ServiceApplyConfigurati
 // If called multiple times, the Query field is set to the value of the last call.
 func (b *ErrorPageApplyConfiguration) WithQuery(value string) *ErrorPageApplyConfiguration {
 	b.Query = &value
+	return b
+}
+
+// WithErrorRequestHeaders adds the given value to the ErrorRequestHeaders field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ErrorRequestHeaders field.
+func (b *ErrorPageApplyConfiguration) WithErrorRequestHeaders(values ...string) *ErrorPageApplyConfiguration {
+	for i := range values {
+		b.ErrorRequestHeaders = append(b.ErrorRequestHeaders, values[i])
+	}
 	return b
 }

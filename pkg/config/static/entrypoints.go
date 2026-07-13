@@ -9,7 +9,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"k8s.io/utils/ptr"
 )
 
 // Strategies for handling request headers with underscores in their names.
@@ -89,8 +88,8 @@ type HTTPConfig struct {
 
 // SetDefaults sets the default values.
 func (h *HTTPConfig) SetDefaults() {
-	h.SanitizePath = ptr.To(true)
-	h.MergeSlashes = ptr.To(true)
+	h.SanitizePath = new(true)
+	h.MergeSlashes = new(true)
 	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
 	h.UnderscoreHeadersStrategy = UnderscoreHeadersStrategyKeep
 }
@@ -216,8 +215,8 @@ type ObservabilityConfig struct {
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
-	o.AccessLogs = ptr.To(true)
-	o.Metrics = ptr.To(true)
-	o.Tracing = ptr.To(true)
+	o.AccessLogs = new(true)
+	o.Metrics = new(true)
+	o.Tracing = new(true)
 	o.TraceVerbosity = otypes.MinimalVerbosity
 }
