@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/approot"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
@@ -349,6 +350,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return rewritetarget.New(ctx, next, *config.RewriteTarget, middlewareName)
+		}
+	}
+
+	// AppRoot
+	if config.AppRoot != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return approot.New(ctx, next, *config.AppRoot, middlewareName)
 		}
 	}
 

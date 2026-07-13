@@ -41,7 +41,7 @@ func (s *HTTPSuite) TestSimpleConfiguration() {
 			Services: map[string]*dynamic.Service{
 				"serviceHTTP": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						Servers: []dynamic.Server{
 							{
 								URL: "http://bacon:80",
@@ -80,5 +80,3 @@ func startTestServerWithResponse(response []byte) (ts *httptest.Server) {
 	ts.Start()
 	return ts
 }
-
-func pointer[T any](v T) *T { return &v }
