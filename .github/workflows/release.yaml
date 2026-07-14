@@ -13,8 +13,21 @@ env:
 
 jobs:
 
+  validate-third-party:
+    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Check third-party attribution generation date
+        run: make validate-third-party
+
   build-webui:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
+    needs:
+      - validate-third-party
     uses: ./.github/workflows/template-webui.yaml
 
   build:
@@ -26,6 +39,7 @@ jobs:
         os: [ linux-amd64, linux-386, linux-arm, linux-arm64, linux-ppc64le, linux-s390x, linux-riscv64, darwin-amd64, darwin-arm64, windows-amd64, windows-arm64, windows-386, freebsd-amd64, freebsd-386, openbsd-amd64, openbsd-386, openbsd-riscv64 ]
     needs:
       - build-webui
+      - validate-third-party
 
     steps:
       - name: Check out code
@@ -132,6 +146,7 @@ jobs:
             --exclude dist .
 
           chown -R "$(id -u)":"$(id -g)" dist/
-          gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
+          tar cfz "dist/third_party_${VERSION}.tar.gz" third_party/
+          gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} ./dist/third_party_${VERSION}.tar.gz --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
 
           ./script/deploy.sh
