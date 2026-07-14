@@ -284,7 +284,13 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
+			e.switcher.ServeTCP(newTrackedConnection(
+				writeCloser,
+				e.tracker,
+				logger,
+				time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout),
+				time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout),
+			))
 		})
 	}
 }
@@ -761,18 +767,40 @@ func getConnKey(conn net.Conn) string {
 	return fmt.Sprintf("%s => %s", conn.RemoteAddr(), conn.LocalAddr())
 }
 
-func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *trackedConnection {
+func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker, logger *zerolog.Logger, readTimeout, writeTimeout time.Duration) *trackedConnection {
 	tracker.AddConnection(conn)
 	return &trackedConnection{
-		WriteCloser: conn,
-		tracker:     tracker,
+		WriteCloser:  conn,
+		tracker:      tracker,
+		logger:       logger,
+		readTimeout:  readTimeout,
+		writeTimeout: writeTimeout,
 	}
 }
 
 type trackedConnection struct {
 	tcp.WriteCloser
 
-	tracker *connectionTracker
+	tracker      *connectionTracker
+	logger       *zerolog.Logger
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+}
+
+func (t *trackedConnection) Read(b []byte) (int, error) {
+	n, err := t.WriteCloser.Read(b)
+	if err != nil && t.readTimeout > 0 && errors.Is(err, os.ErrDeadlineExceeded) {
+		t.logger.Debug().Dur("readTimeout", t.readTimeout).Msg("Closing connection: read timeout exceeded")
+	}
+	return n, err
+}
+
+func (t *trackedConnection) Write(b []byte) (int, error) {
+	n, err := t.WriteCloser.Write(b)
+	if err != nil && t.writeTimeout > 0 && errors.Is(err, os.ErrDeadlineExceeded) {
+		t.logger.Debug().Dur("writeTimeout", t.writeTimeout).Msg("Closing connection: write timeout exceeded")
+	}
+	return n, err
 }
 
 func (t *trackedConnection) Close() error {
