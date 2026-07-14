@@ -84,6 +84,16 @@ binary-windows-amd64:
 crossbinary-default: generate generate-webui
 	$(CURDIR)/script/crossbinary-default.sh
 
+.PHONY: third-party
+#? third-party: Generate third party license files
+third-party:
+	$(CURDIR)/script/third-party.sh
+
+.PHONY: validate-third-party
+#? validate-third-party: Validate that third-party attribution files were generated today
+validate-third-party:
+	$(CURDIR)/script/validate-third-party.sh
+
 .PHONY: test
 #? test: Run the unit and integration tests
 test: test-ui-unit test-unit test-integration
