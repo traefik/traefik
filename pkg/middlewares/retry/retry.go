@@ -371,6 +371,9 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
 	}
+
+	// When the connection is Hijack we can not retry.
+	r.written = true
 	return hijacker.Hijack()
 }
 
