@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
@@ -76,6 +77,15 @@ type Handler struct {
 
 // NewHandler creates a new Handler.
 func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
+	if a := config.Anonymization; a != nil {
+		if a.IPv4Subnet < 0 || a.IPv4Subnet > 32 {
+			return nil, fmt.Errorf("invalid access log anonymization IPv4 subnet %d: must be between 0 and 32", a.IPv4Subnet)
+		}
+		if a.IPv6Subnet < 0 || a.IPv6Subnet > 128 {
+			return nil, fmt.Errorf("invalid access log anonymization IPv6 subnet %d: must be between 0 and 128", a.IPv6Subnet)
+		}
+	}
+
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -261,6 +271,11 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
+
+	if a := h.config.Anonymization; a != nil {
+		core[ClientHost] = ip.MaskIP(core[ClientHost].(string), a.IPv4Subnet, a.IPv6Subnet)
+		core[ClientAddr] = maskClientAddr(core[ClientAddr].(string), a)
+	}
 
 	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
 		core[ClientHost] = forwardedFor
@@ -456,6 +471,16 @@ func openAccessLogFile(filePath string) (*os.File, error) {
 	}
 
 	return file, nil
+}
+
+// maskClientAddr truncates the host part of a host:port ClientAddr value, keeping the port.
+func maskClientAddr(value string, a *otypes.AccessLogAnonymization) string {
+	host, port := silentSplitHostPort(value)
+	masked := ip.MaskIP(host, a.IPv4Subnet, a.IPv6Subnet)
+	if port == "-" {
+		return masked
+	}
+	return net.JoinHostPort(masked, port)
 }
 
 func silentSplitHostPort(value string) (host, port string) {

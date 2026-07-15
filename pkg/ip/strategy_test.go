@@ -15,6 +15,74 @@ const (
 	ipv6BracketsZonePort = "[::abcd:ffff:c0a8:1%1]:80"
 )
 
+func TestMaskIP(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		ip         string
+		ipv4Subnet int
+		ipv6Subnet int
+		expected   string
+	}{
+		{
+			desc:       "IPv4 truncated to /24",
+			ip:         "203.0.113.42",
+			ipv4Subnet: 24,
+			ipv6Subnet: 48,
+			expected:   "203.0.113.0",
+		},
+		{
+			desc:       "IPv6 truncated to /48",
+			ip:         "2001:db8::abcd:ffff:c0a8:1",
+			ipv4Subnet: 24,
+			ipv6Subnet: 48,
+			expected:   "2001:db8::",
+		},
+		{
+			desc:       "IPv4 subnet disabled leaves IPv4 untouched",
+			ip:         "203.0.113.42",
+			ipv4Subnet: 0,
+			ipv6Subnet: 48,
+			expected:   "203.0.113.42",
+		},
+		{
+			desc:       "IPv6 subnet disabled leaves IPv6 untouched",
+			ip:         "2001:db8::1",
+			ipv4Subnet: 24,
+			ipv6Subnet: 0,
+			expected:   "2001:db8::1",
+		},
+		{
+			desc:       "4-in-6 mapped address uses the IPv4 subnet",
+			ip:         "::ffff:203.0.113.42",
+			ipv4Subnet: 24,
+			ipv6Subnet: 48,
+			expected:   "203.0.113.0",
+		},
+		{
+			desc:       "invalid IP is returned unchanged",
+			ip:         "not-an-ip",
+			ipv4Subnet: 24,
+			ipv6Subnet: 48,
+			expected:   "not-an-ip",
+		},
+		{
+			desc:       "out-of-range subnet is returned unchanged",
+			ip:         "203.0.113.42",
+			ipv4Subnet: 40,
+			ipv6Subnet: 48,
+			expected:   "203.0.113.42",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, MaskIP(test.ip, test.ipv4Subnet, test.ipv6Subnet))
+		})
+	}
+}
+
 func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 	testCases := []struct {
 		desc       string
