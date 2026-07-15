@@ -10,12 +10,12 @@ ASSIMILIS_ERROR_LOG="$(pwd)/third_party/assimilis.log"
 TIMESTAMP_FILE="$(pwd)/third_party/.last_generated_at"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-    printf "Credentials file not found: ${ENV_FILE}
+    printf "Credentials file not found: %s
 Create it with:
 
   cp .env.example .env
 
-Then add your Aikido credentials."
+Then add your Aikido credentials." "$ENV_FILE"
     exit 1
 fi
 
@@ -59,7 +59,7 @@ OAUTH_RESPONSE="${TMP_DIR}/oauth-response.json"
 
 if ! oauth_http_code="$(
     curl -sS -u "${AIK_CLIENT}:${AIK_SECRET}" --request POST \
-        --url ${AIKIDO_BASE_URL}/api/oauth/token \
+        --url "${AIKIDO_BASE_URL}"/api/oauth/token \
         --write-out '%{http_code}' \
         --header 'accept: application/json' \
         --header 'content-type: application/json' \
@@ -71,8 +71,8 @@ if ! oauth_http_code="$(
 fi
 
 if [[ ! "$oauth_http_code" =~ ^2[0-9][0-9]$ ]]; then
-    printf "Aikido API error: $OAUTH_RESPONSE"
-    printf "Aikido authentication failed with HTTP status ${oauth_http_code}"
+    printf "Aikido API error: %s" "$OAUTH_RESPONSE"
+    printf "Aikido authentication failed with HTTP status %s" "$oauth_http_code"
     exit 1
 fi
 
@@ -83,22 +83,22 @@ fi
 
 log "Downloading the CycloneDX SBOM for Aikido repository ${AIKIDO_REPO_CODE}"
 
-mkdir -p ${SBOM_DIR}
+mkdir -p "${SBOM_DIR}"
 if ! sbom_http_code="$(
     curl -sS --request GET \
         --write-out '%{http_code}' \
         --url "${AIKIDO_BASE_URL}/api/public/v1/repositories/code/${AIKIDO_REPO_CODE}/licenses/export?format=sbom" \
         --header 'accept: application/json' \
         --header "authorization: Bearer ${AIKIDO_TOKEN}" \
-        -o ${SBOM_DIR}/${REPO_NAME}.cdx.json
+        -o "${SBOM_DIR}"/${REPO_NAME}.cdx.json
 )"; then
     printf "Could not download the SBOM from Aikido"
     exit 1
 fi
 
 if [[ ! "$sbom_http_code" =~ ^2[0-9][0-9]$ ]]; then
-    printf "Aikido API error: $SBOM_DIR/${REPO_NAME}.cdx.json"
-    printf "Aikido SBOM export failed with HTTP status ${sbom_http_code}"
+    printf "Aikido API error: %s/%s" "$SBOM_DIR" "${REPO_NAME}.cdx.json"
+    printf "Aikido SBOM export failed with HTTP status %s" "$sbom_http_code"
     exit 1
 fi
 
@@ -108,7 +108,7 @@ REPOSITORY_RESPONSE="${TMP_DIR}/repository-response.json"
 
 if repository_http_code="$(
     curl -sS --request GET \
-        --url ${AIKIDO_BASE_URL}/api/public/v1/repositories/code/${AIKIDO_REPO_CODE} \
+        --url "${AIKIDO_BASE_URL}"/api/public/v1/repositories/code/"${AIKIDO_REPO_CODE}" \
         --write-out '%{http_code}' \
         --header 'accept: application/json' \
         --header "authorization: Bearer ${AIKIDO_TOKEN}" \
@@ -125,7 +125,7 @@ if repository_http_code="$(
       printf "Warning: Aikido did not provide a last_scanned_at value"
     fi
   else
-    printf "Warning: Could not retrieve the Aikido scan time; HTTP status ${repository_http_code}"
+    printf "Warning: Could not retrieve the Aikido scan time; HTTP status %s" "${repository_http_code}"
   fi
 else
   printf "Warning: Could not retrieve the Aikido repository metadata"
@@ -139,10 +139,10 @@ assimilis_exit_code="${PIPESTATUS[0]}"
 set -e
 
 if [[ "$assimilis_exit_code" -ne 0 ]]; then
-    printf "Error: Assimilis failed with exit code ${assimilis_exit_code}.
+    printf "Error: Assimilis failed with exit code %s.
 
 The complete log was saved to:
-  ${ASSIMILIS_ERROR_LOG}"
+  ${ASSIMILIS_ERROR_LOG}" "${assimilis_exit_code}"
     exit 1
 fi
 
