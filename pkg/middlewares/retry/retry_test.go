@@ -882,20 +882,18 @@ func TestRetryDoesNotBufferBodyForNonIdempotentMethod(t *testing.T) {
 // it, so WriteHeader is never called on the retry responseWriter and written stays false.
 // When the client goes away, the retry middleware therefore replays the request, this time getting a regular
 // Content-Length response, which makes copyResponse arm the maxLatencyWriter flush timer.
-// The delayed flush then flushes an http.response whose buffered writer has been released by Hijack.
+// The delayed flush then flushes an http.Response whose buffered writer has been released by Hijack.
 //
 // Until the retry middleware stops replaying hijacked requests, this does not report a test failure:
 // it panics in a timer goroutine, which takes the whole test binary down with a SIGSEGV.
 func TestRetryWebsocketDelayedFlush(t *testing.T) {
-	var backendCalls atomic.Int32
-
+	var backendCallCount atomic.Int32
 	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if backendCalls.Add(1) == 1 {
+		if backendCallCount.Add(1) == 1 {
 			upgrader := websocket.Upgrader{}
 			conn, err := upgrader.Upgrade(rw, req, nil)
-			if !assert.NoError(t, err) {
-				return
-			}
+			require.NoError(t, err)
+
 			defer conn.Close()
 
 			// Hold the stream until the client goes away.
@@ -911,7 +909,7 @@ func TestRetryWebsocketDelayedFlush(t *testing.T) {
 		rw.(http.Flusher).Flush()
 
 		// Give the flush timer time to fire before the body completes the copy.
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(time.Second)
 
 		_, _ = rw.Write([]byte("0123456789"))
 	}))
@@ -921,17 +919,17 @@ func TestRetryWebsocketDelayedFlush(t *testing.T) {
 	require.NoError(t, err)
 
 	proxy := &httputil.ReverseProxy{
-		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.Out.URL.Scheme = backendURL.Scheme
-			pr.Out.URL.Host = backendURL.Host
-		},
 		FlushInterval: 100 * time.Millisecond,
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.Out.URL.Host = backendURL.Host
+			pr.Out.URL.Scheme = backendURL.Scheme
+		},
 	}
 
-	retryH, err := New(t.Context(), WrapHandler(proxy), dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	handler, err := New(t.Context(), WrapHandler(proxy), dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
-	retryServer := httptest.NewServer(retryH)
+	retryServer := httptest.NewServer(handler)
 	t.Cleanup(retryServer.Close)
 
 	conn, response, err := websocket.DefaultDialer.Dial(strings.Replace(retryServer.URL, "http", "ws", 1), nil)
@@ -944,5 +942,5 @@ func TestRetryWebsocketDelayedFlush(t *testing.T) {
 	// Leave the replayed attempt time to arm and fire the delayed flush.
 	time.Sleep(time.Second)
 
-	assert.Equal(t, int32(1), backendCalls.Load(), "an upgraded request must not be replayed")
+	assert.Equal(t, int32(1), backendCallCount.Load(), "an upgraded request must not be replayed")
 }
