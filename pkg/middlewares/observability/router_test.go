@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -24,32 +25,101 @@ func TestNewRouter(t *testing.T) {
 		expected   []expected
 	}{
 		{
-			desc:       "base",
+			desc:       "Path rule",
 			service:    "myService",
 			router:     "myRouter",
 			routerRule: "Path(`/`)",
 			expected: []expected{
 				{
-					name: "GET",
+					// Root server span: name updated from "GET" to "GET /"
+					// and http.route attribute added by the router middleware.
+					name: "GET /",
 					attributes: []attribute.KeyValue{
 						attribute.String("span.kind", "server"),
+						attribute.String("http.route", "/"),
+					},
+				},
+				{
+					// Router internal span: keeps the raw rule as http.route
+					// (the extracted path is only set on the root server span).
+					name: "Router",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "internal"),
+						attribute.String("traefik.service.name", "myService"),
+						attribute.String("traefik.router.name", "myRouter"),
+						attribute.String("http.route", "Path(`/`)"),
+					},
+				},
+			},
+		},
+		{
+			desc:       "PathPrefix rule",
+			service:    "myService",
+			router:     "myRouter",
+			routerRule: "PathPrefix(`/api/v1/ml-scribe`)",
+			expected: []expected{
+				{
+					name: "GET /api/v1/ml-scribe",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "server"),
+						attribute.String("http.route", "/api/v1/ml-scribe"),
 					},
 				},
 				{
 					name: "Router",
 					attributes: []attribute.KeyValue{
 						attribute.String("span.kind", "internal"),
-						attribute.String("http.request.method", "GET"),
-						attribute.Int64("http.response.status_code", int64(404)),
-						attribute.String("network.protocol.version", "1.1"),
-						attribute.String("server.address", "www.test.com"),
-						attribute.Int64("server.port", int64(80)),
-						attribute.String("url.full", "http://www.test.com/traces?p=OpenTelemetry"),
-						attribute.String("url.scheme", "http"),
 						attribute.String("traefik.service.name", "myService"),
 						attribute.String("traefik.router.name", "myRouter"),
-						attribute.String("http.route", "Path(`/`)"),
-						attribute.String("user_agent.original", "router-test"),
+						attribute.String("http.route", "PathPrefix(`/api/v1/ml-scribe`)"),
+					},
+				},
+			},
+		},
+		{
+			desc:       "complex rule with Host and PathPrefix",
+			service:    "myService",
+			router:     "myRouter",
+			routerRule: "Host(`example.com`) && PathPrefix(`/grafana`)",
+			expected: []expected{
+				{
+					name: "GET /grafana",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "server"),
+						attribute.String("http.route", "/grafana"),
+					},
+				},
+				{
+					name: "Router",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "internal"),
+						attribute.String("traefik.service.name", "myService"),
+						attribute.String("traefik.router.name", "myRouter"),
+						attribute.String("http.route", "Host(`example.com`) && PathPrefix(`/grafana`)"),
+					},
+				},
+			},
+		},
+		{
+			desc:       "Host-only rule (no path extracted, fallback to raw rule)",
+			service:    "myService",
+			router:     "myRouter",
+			routerRule: "Host(`example.com`)",
+			expected: []expected{
+				{
+					name: "GET Host(`example.com`)",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "server"),
+						attribute.String("http.route", "Host(`example.com`)"),
+					},
+				},
+				{
+					name: "Router",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "internal"),
+						attribute.String("traefik.service.name", "myService"),
+						attribute.String("traefik.router.name", "myRouter"),
+						attribute.String("http.route", "Host(`example.com`)"),
 					},
 				},
 			},
@@ -62,9 +132,21 @@ func TestNewRouter(t *testing.T) {
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "router-test")
 
-			tracer := &mockTracer{}
+			mockTracer := &mockTracer{}
+			// Wrap the mock tracer with tracing.NewTracer so that
+			// tracing.TracerFromContext can find it via the span's
+			// TracerProvider (which returns *tracing.Tracer for the
+			// "github.com/traefik/traefik" tracer name).
+			tracer := tracing.NewTracer(mockTracer, nil, nil, nil)
 			tracingCtx, entryPointSpan := tracer.Start(req.Context(), http.MethodGet, trace.WithSpanKind(trace.SpanKindServer))
 			defer entryPointSpan.End()
+
+			// Inject observability state with detailed tracing enabled
+			// so the router middleware actually creates spans.
+			tracingCtx = WithObservability(tracingCtx, Observability{
+				TracingEnabled:          true,
+				DetailedTracingEnabled:  true,
+			})
 
 			req = req.WithContext(tracingCtx)
 
@@ -76,7 +158,7 @@ func TestNewRouter(t *testing.T) {
 			handler := newRouter(t.Context(), test.router, test.routerRule, test.service, next)
 			handler.ServeHTTP(rw, req)
 
-			for i, span := range tracer.spans {
+			for i, span := range mockTracer.spans {
 				assert.Equal(t, test.expected[i].name, span.name)
 				assert.Equal(t, test.expected[i].attributes, span.attributes)
 			}
