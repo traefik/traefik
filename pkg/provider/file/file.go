@@ -232,7 +232,12 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 	}
 
 	if len(p.Filename) > 0 {
-		return p.loadFileConfig(ctx, p.Filename, true)
+		configuration, err := p.loadFileConfig(ctx, p.Filename, true)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", p.Filename, err)
+		}
+
+		return configuration, nil
 	}
 
 	return nil, errors.New("error using file configuration provider, neither filename nor directory is defined")
