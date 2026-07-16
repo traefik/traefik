@@ -60,6 +60,8 @@ type ServersTransportSpecApplyConfiguration struct {
 	ForwardingTimeouts *ForwardingTimeoutsApplyConfiguration `json:"forwardingTimeouts,omitempty"`
 	// DisableHTTP2 disables HTTP/2 for connections with backend servers.
 	DisableHTTP2 *bool `json:"disableHTTP2,omitempty"`
+	// PreferIPv6 prefers IPv6 over IPv4 when resolving backend server hostnames, falling back to IPv4 when no IPv6 address is reachable.
+	PreferIPv6 *bool `json:"preferIPv6,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	//
 	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
@@ -172,6 +174,14 @@ func (b *ServersTransportSpecApplyConfiguration) WithForwardingTimeouts(value *F
 // If called multiple times, the DisableHTTP2 field is set to the value of the last call.
 func (b *ServersTransportSpecApplyConfiguration) WithDisableHTTP2(value bool) *ServersTransportSpecApplyConfiguration {
 	b.DisableHTTP2 = &value
+	return b
+}
+
+// WithPreferIPv6 sets the PreferIPv6 field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the PreferIPv6 field is set to the value of the last call.
+func (b *ServersTransportSpecApplyConfiguration) WithPreferIPv6(value bool) *ServersTransportSpecApplyConfiguration {
+	b.PreferIPv6 = &value
 	return b
 }
 
