@@ -1,12 +1,15 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -179,4 +182,73 @@ func Test_isTLSConfigError(t *testing.T) {
 			require.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+func Test_ComputeStatusCode(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		err      error
+		expected int
+	}{
+		{
+			desc:     "EOF",
+			err:      io.EOF,
+			expected: http.StatusBadGateway,
+		},
+		{
+			desc:     "context canceled",
+			err:      context.Canceled,
+			expected: StatusClientClosedRequest,
+		},
+		{
+			desc:     "unknown error",
+			err:      errors.New("random error"),
+			expected: http.StatusInternalServerError,
+		},
+		{
+			desc:     "invalid byte in chunk length",
+			err:      chunkedBodyError(t, "X\r\n\r\n"),
+			expected: http.StatusBadRequest,
+		},
+		{
+			desc:     "empty hex number for chunk length",
+			err:      chunkedBodyError(t, "\r\n"),
+			expected: http.StatusBadRequest,
+		},
+		{
+			desc:     "invalid CR in chunked line",
+			err:      chunkedBodyError(t, "3\rabc\r\n"),
+			expected: http.StatusBadRequest,
+		},
+		{
+			desc:     "chunked line ends with bare LF",
+			err:      chunkedBodyError(t, "3\nabc"),
+			expected: http.StatusBadRequest,
+		},
+		{
+			desc:     "malformed chunked encoding",
+			err:      chunkedBodyError(t, "1\r\nAB\r\n"),
+			expected: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, ComputeStatusCode(test.err))
+		})
+	}
+}
+
+// chunkedBodyError returns the error produced by the net/http chunked reader
+// when decoding the given malformed body, matching what a request with an
+// invalid chunked body yields at proxy time.
+func chunkedBodyError(t *testing.T, body string) error {
+	t.Helper()
+
+	_, err := io.ReadAll(httputil.NewChunkedReader(strings.NewReader(body)))
+	require.Error(t, err)
+
+	return err
 }
