@@ -303,6 +303,10 @@ type Redis struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// DenyOnError controls the middleware behavior when Redis is unavailable or returns an error.
+	// When true (the default), the request is rejected with a 500 status code.
+	// When false, the error is logged and the request is forwarded to the next handler (fail-open).
+	DenyOnError bool `json:"denyOnError,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
