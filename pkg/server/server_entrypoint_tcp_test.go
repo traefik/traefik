@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -9,10 +10,12 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -933,6 +936,82 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 			}
 
 			assert.True(t, reachedBackend)
+		})
+	}
+}
+
+type fakeTimeoutConn struct {
+	net.Conn
+
+	readErr  error
+	writeErr error
+}
+
+func (c *fakeTimeoutConn) Read(_ []byte) (int, error)  { return 0, c.readErr }
+func (c *fakeTimeoutConn) Write(b []byte) (int, error) { return len(b), c.writeErr }
+func (c *fakeTimeoutConn) CloseWrite() error           { return nil }
+
+func TestTrackedConnectionTimeoutLogging(t *testing.T) {
+	tests := []struct {
+		desc         string
+		readTimeout  time.Duration
+		writeTimeout time.Duration
+		readErr      error
+		writeErr     error
+		write        bool
+		wantLog      string
+	}{
+		{
+			desc:        "read deadline exceeded logs readTimeout",
+			readTimeout: 30 * time.Second,
+			readErr:     os.ErrDeadlineExceeded,
+			wantLog:     "readTimeout",
+		},
+		{
+			desc:         "write deadline exceeded logs writeTimeout",
+			writeTimeout: 15 * time.Second,
+			writeErr:     os.ErrDeadlineExceeded,
+			write:        true,
+			wantLog:      "writeTimeout",
+		},
+		{
+			desc:        "non-timeout error is not logged",
+			readTimeout: 30 * time.Second,
+			readErr:     io.EOF,
+		},
+		{
+			desc:    "deadline exceeded with the timeout unset is not logged",
+			readErr: os.ErrDeadlineExceeded,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			logger := zerolog.New(&buf).Level(zerolog.DebugLevel)
+
+			conn := &trackedConnection{
+				WriteCloser:  &fakeTimeoutConn{readErr: test.readErr, writeErr: test.writeErr},
+				logger:       &logger,
+				readTimeout:  test.readTimeout,
+				writeTimeout: test.writeTimeout,
+			}
+
+			var err error
+			if test.write {
+				_, err = conn.Write([]byte("ping"))
+			} else {
+				_, err = conn.Read(make([]byte, 4))
+			}
+			require.Error(t, err)
+
+			if test.wantLog == "" {
+				assert.Empty(t, buf.String())
+				return
+			}
+			assert.Contains(t, buf.String(), test.wantLog)
 		})
 	}
 }
