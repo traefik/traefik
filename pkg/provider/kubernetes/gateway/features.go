@@ -30,7 +30,10 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 
 // extendedGatewayFeatures returns the supported extended Gateway features.
 func extendedGatewayFeatures() sets.Set[features.Feature] {
-	return sets.New(features.GatewayPort8080Feature)
+	return sets.New(
+		features.GatewayPort8080Feature,
+		features.GatewayFrontendClientCertificateValidationFeature,
+		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature)
 }
 
 // extendedTLSRouteFeatures returns the supported extended TLS Route features.

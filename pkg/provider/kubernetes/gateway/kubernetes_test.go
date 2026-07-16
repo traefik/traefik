@@ -2970,6 +2970,113 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Gateway tls.frontend Default and PerPort validation register TLS options",
+			paths: []string{"services.yml", "gateway/with_frontend_validation.yml", "gateway/with_frontend_validation_httproute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"websecure":  {Address: ":443"},
+				"websecure2": {Address: ":8443"},
+				"websecure3": {Address: ":9443"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3": {
+							EntryPoints: []string{"websecure"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-my-gateway-frontend-validation-default",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-my-gateway-frontend-validation-default": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"CA1"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-my-gateway-frontend-validation8443": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"CA2"},
+								ClientAuthType: tls.RequestClientCert,
+							},
+						},
+						"default-my-gateway-frontend-validation9443": {
+							ClientAuth: tls.ClientAuth{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -4030,6 +4137,113 @@ func TestLoadGRPCRoutes(t *testing.T) {
 					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "GRPCRoute attached to a Gateway tls.frontend Default validation listener sets TLS options",
+			paths: []string{"services.yml", "gateway/with_frontend_validation.yml", "gateway/with_frontend_validation_grpcroute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"websecure":  {Address: ":443"},
+				"websecure2": {Address: ":8443"},
+				"websecure3": {Address: ":9443"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64": {
+							EntryPoints: []string{"websecure"},
+							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    22,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-my-gateway-frontend-validation-default",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-my-gateway-frontend-validation-default": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"CA1"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-my-gateway-frontend-validation8443": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"CA2"},
+								ClientAuthType: tls.RequestClientCert,
+							},
+						},
+						"default-my-gateway-frontend-validation9443": {
+							ClientAuth: tls.ClientAuth{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -9964,6 +10178,466 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	}
 
 	return k8sObjects, gwObjects
+}
+
+func Test_resolveFrontendValidation(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"gateway/frontend_validation_ca_refs.yml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	p := Provider{client: client}
+
+	gateway := &gatev1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "my-gateway",
+			Namespace:  "default",
+			Generation: 1,
+		},
+	}
+
+	testCases := []struct {
+		desc       string
+		validation *gatev1.FrontendTLSValidation
+		expected   frontendValidation
+	}{
+		{
+			desc:       "nil validation returns an empty result",
+			validation: nil,
+			expected:   frontendValidation{},
+		},
+		{
+			desc: "valid ConfigMap and Secret refs are resolved",
+			validation: &gatev1.FrontendTLSValidation{
+				Mode: gatev1.AllowValidOnly,
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "ConfigMap", Name: "ca-configmap"},
+					{Kind: "Secret", Name: "ca-secret"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					CAFiles:        []types.FileOrContent{"CA1", "CA2"},
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+			},
+		},
+		{
+			desc: "AllowInsecureFallback mode maps to RequestClientCert",
+			validation: &gatev1.FrontendTLSValidation{
+				Mode: gatev1.AllowInsecureFallback,
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "ConfigMap", Name: "ca-configmap"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					CAFiles:        []types.FileOrContent{"CA1"},
+					ClientAuthType: tls.RequestClientCert,
+				},
+			},
+		},
+		{
+			desc: "unsupported kind is rejected and no valid CA certificate remains",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "Service", Name: "whoami"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "unsupported CACertificateRef group/kind: /Service",
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+		{
+			desc: "unsupported group is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "example.com", Kind: "ConfigMap", Name: "ca-configmap"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "unsupported CACertificateRef group/kind: example.com/ConfigMap",
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+		{
+			desc: "cross-namespace ref without a ReferenceGrant is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "ConfigMap", Name: "ca-configmap-not-granted", Namespace: new(gatev1.Namespace("other-ns"))},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+					Message:            "Cannot reference CACertificateRef: /ConfigMap: missing ReferenceGrant",
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+		{
+			desc: "cross-namespace ref with a matching ReferenceGrant is resolved",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "ConfigMap", Name: "ca-configmap-granted", Namespace: new(gatev1.Namespace("other-ns"))},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					CAFiles:        []types.FileOrContent{"CA4"},
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+			},
+		},
+		{
+			desc: "unresolvable Secret is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "Secret", Name: "does-not-exist"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            `Cannot resolve secret: default/does-not-exist: secret "does-not-exist" not found`,
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+		{
+			desc: "unresolvable ConfigMap is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "ConfigMap", Name: "does-not-exist"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            `Cannot resolve configmap: default/does-not-exist: configmap "does-not-exist" not found`,
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+		{
+			desc: "ConfigMap missing the ca.crt key is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "ConfigMap", Name: "ca-configmap-empty"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            "Cannot find ca.crt: ConfigMap default/ca-configmap-empty",
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+		{
+			desc: "a valid ref alongside an invalid one keeps the valid CA and reports ResolvedRefs only",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "Service", Name: "whoami"},
+					{Kind: "ConfigMap", Name: "ca-configmap"},
+				},
+			},
+			expected: frontendValidation{
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "unsupported CACertificateRef group/kind: /Service",
+				},
+				clientAuth: &tls.ClientAuth{
+					CAFiles:        []types.FileOrContent{"CA1"},
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+			},
+		},
+		{
+			desc: "only the first error is surfaced when multiple refs are invalid",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Kind: "Secret", Name: "does-not-exist"},
+					{Kind: "Service", Name: "whoami"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+				resolvedRefsErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            `Cannot resolve secret: default/does-not-exist: secret "does-not-exist" not found`,
+				},
+				acceptedErr: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			got := p.resolveFrontendValidation(gateway, test.validation)
+
+			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
+			if got.resolvedRefsErr != nil {
+				got.resolvedRefsErr.LastTransitionTime = metav1.Time{}
+			}
+			if got.acceptedErr != nil {
+				got.acceptedErr.LastTransitionTime = metav1.Time{}
+			}
+
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_loadGatewayListeners(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"gateway/frontend_validation_ca_refs.yml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
+		client:      client,
+	}
+
+	newGateway := func(caCertificateRefs []gatev1.ObjectReference) *gatev1.Gateway {
+		return &gatev1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "my-gateway",
+				Namespace:  "default",
+				Generation: 1,
+			},
+			Spec: gatev1.GatewaySpec{
+				TLS: &gatev1.GatewayTLSConfig{
+					Frontend: &gatev1.FrontendTLSConfig{
+						Default: gatev1.TLSConfig{
+							Validation: &gatev1.FrontendTLSValidation{
+								Mode:              gatev1.AllowValidOnly,
+								CACertificateRefs: caCertificateRefs,
+							},
+						},
+					},
+				},
+				Listeners: []gatev1.Listener{
+					{
+						Name:     "https",
+						Protocol: gatev1.HTTPSProtocolType,
+						Port:     443,
+						TLS: &gatev1.ListenerTLSConfig{
+							CertificateRefs: []gatev1.SecretObjectReference{
+								{Kind: new(gatev1.Kind("Secret")), Group: new(gatev1.Group("")), Name: "tls-secret"},
+							},
+						},
+						AllowedRoutes: &gatev1.AllowedRoutes{
+							Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	testCases := []struct {
+		desc               string
+		gateway            *gatev1.Gateway
+		expectedAttached   bool
+		expectedConditions []metav1.Condition
+	}{
+		{
+			desc: "fully resolved CACertificateRefs attaches the Listener with no error condition",
+			gateway: newGateway([]gatev1.ObjectReference{
+				{Kind: "ConfigMap", Name: "ca-configmap"},
+			}),
+			expectedAttached:   true,
+			expectedConditions: []metav1.Condition{},
+		},
+		{
+			desc: "a valid ref alongside an invalid one keeps the Listener attached and reports ResolvedRefs alongside Accepted and Programmed",
+			gateway: newGateway([]gatev1.ObjectReference{
+				{Kind: "Service", Name: "whoami"},
+				{Kind: "ConfigMap", Name: "ca-configmap"},
+			}),
+			expectedAttached: true,
+			expectedConditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "unsupported CACertificateRef group/kind: /Service",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonAccepted),
+					Message:            "No error found",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonProgrammed),
+					Message:            "No error found",
+				},
+			},
+		},
+		{
+			desc: "no valid CACertificateRefs reports NoValidCACertificate but still attaches, relying on the fail-closed TLS option",
+			gateway: newGateway([]gatev1.ObjectReference{
+				{Kind: "Service", Name: "whoami"},
+			}),
+			expectedAttached: true,
+			expectedConditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "unsupported CACertificateRef group/kind: /Service",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+					Message:            "No valid CA certificate found in CACertificateRefs",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalid),
+					Message:            "Invalid CA certificate configuration",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
+			listeners := p.loadGatewayListeners(t.Context(), test.gateway, conf)
+
+			require.Len(t, listeners, 1)
+			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
+
+			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
+			for i := range listeners[0].Status.Conditions {
+				listeners[0].Status.Conditions[i].LastTransitionTime = metav1.Time{}
+			}
+			assert.Equal(t, test.expectedConditions, listeners[0].Status.Conditions)
+		})
+	}
 }
 
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
