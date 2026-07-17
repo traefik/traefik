@@ -41,7 +41,8 @@ and capitalizing the percent-encoded characters (according to [rfc3986#section-6
 ### 3. Path Sanitization
 
 Traefik sanitizes request paths to prevent common attack vectors,
-by removing the `..`, `.` and duplicate slash segments from the URL (according to [rfc3986#section-6.2.2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3)).
+by removing the `..` and `.` segments from the URL (according to [rfc3986#section-6.2.2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3)),
+and optionally merging duplicate slash sequences (controlled by the [`mergeSlashes`](../reference/install-configuration/entrypoints.md#mergeslashes) option).
 
 ## Path Security Configuration
 
@@ -77,8 +78,11 @@ entryPoints:
 
 - `./foo/bar` → `/foo/bar` (removes relative current directory)
 - `/foo/../bar` → `/bar` (resolves parent directory traversal)
-- `/foo/bar//` → `/foo/bar/` (removes duplicate slashes)
+- `/foo/bar//` → `/foo/bar/` (merges duplicate slashes — when `mergeSlashes` is enabled)
 - `/./foo/../bar//` → `/bar/` (combines all normalizations)
+
+When `mergeSlashes` is set to `false`, duplicate slashes are preserved (e.g., `/foo//bar` stays `/foo//bar`)
+while dot-segment resolution still applies. See [MergeSlashes](../reference/install-configuration/entrypoints.md#mergeslashes) for details.
 
 ### Encoded Character Filtering
 
