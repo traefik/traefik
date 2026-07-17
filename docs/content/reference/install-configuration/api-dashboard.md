@@ -24,6 +24,10 @@ In production, it should be at least secured by authentication and authorization
     It's recommended to NOT publicly exposing the API's port, keeping it restricted to internal networks
     (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
 
+Middleware parameters, including plugin configuration such as credentials resolved from secrets, can contain sensitive data.
+By default, the `/api/http/middlewares` and `/api/tcp/middlewares` endpoints (and the dashboard) redact this information; the parameter names are kept, but their values are hidden.
+Set [`api.hideMiddlewareParameters`](#opt-api-hidemiddlewareparameters) to `false` to expose the raw values instead.
+
 ## Configuration Example
 
 Enable the dashboard:
@@ -174,6 +178,7 @@ enabling the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | true      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disableDashboardAd" href="#opt-api-disableDashboardAd" title="#opt-api-disableDashboardAd">`api.disableDashboardAd`</a> | Disable the advertisement from the dashboard. | false      | No      |
+| <a id="opt-api-hidemiddlewareparameters" href="#opt-api-hidemiddlewareparameters" title="#opt-api-hidemiddlewareparameters">`api.hidemiddlewareparameters`</a> | Hide middleware parameters, notably plugin configuration, in the API and dashboard. Defaults to true; set to false to expose them. | true      | No      |
 | <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basepath).| false      | No      |
 
 ## Endpoints
