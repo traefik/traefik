@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/containous/alice"
+	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"golang.org/x/net/http/httpguts"
@@ -59,15 +61,17 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	if err := rc.SetWriteDeadline(deadline); err != nil {
-		logger.Debug().Err(err).Msg("Unable to set write deadline")
-	}
+	// The write deadline is armed lazily on the first response write (statusRewriter.armWriteDeadline), not up front:
+	// arming it at the transaction deadline makes HTTP/2 reset the stream with INTERNAL_ERROR the instant it fires
+	// (golang.org/x/net/http2 (*stream).onWriteTimeout), before the 504 can be written, so the client would see a
+	// stream error instead of the status. A pre-response write (e.g. a 100-continue) is then bounded only by writeTimeout.
+	writeTimeout := entryPointWriteTimeout(req)
 
-	rewriter := &statusRewriter{ResponseWriter: rw, deadline: deadline}
+	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, writeTimeout: writeTimeout, logger: logger}
 
 	defer func() {
-		// A hijacked connection no longer belongs to the server, which cleared its deadlines when handing it over:
-		// re-arming one here would bound a protocol-switched tunnel.
+		// A hijacked connection no longer belongs to the server, which cleared its deadlines when handing it
+		// over (net/http (*conn).hijackLocked): re-arming one here would bound a protocol-switched tunnel.
 		if rewriter.hijacked {
 			return
 		}
@@ -76,7 +80,7 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// lets a pending 504 reach the client. That budget is the entrypoint writeTimeout — the bound the flush had
 		// before this middleware replaced it — or no deadline when the entrypoint has none.
 		var writeDeadline time.Time
-		if writeTimeout := entryPointWriteTimeout(req); writeTimeout > 0 {
+		if writeTimeout > 0 {
 			writeDeadline = time.Now().Add(writeTimeout)
 		}
 
@@ -136,7 +140,15 @@ func isUpgradeRequest(req *http.Request) bool {
 type statusRewriter struct {
 	http.ResponseWriter
 
-	deadline time.Time
+	responseController *http.ResponseController
+	deadline           time.Time
+	writeTimeout       time.Duration
+	logger             *zerolog.Logger
+
+	// sync.Once guards the single write-deadline arming against the reverse proxy's flush goroutine
+	// (net/http/httputil maxLatencyWriter) racing the request goroutine.
+	armOnce sync.Once
+
 	// onHijack is set for upgrade requests: it disarms the handshake timer.
 	onHijack func()
 	// hijacked reports whether the connection has been handed over.
@@ -144,6 +156,8 @@ type statusRewriter struct {
 }
 
 func (s *statusRewriter) WriteHeader(code int) {
+	s.armWriteDeadline()
+
 	// Past the deadline, a 5xx means the transaction ran out of budget. 499 is included because the read and
 	// context deadlines expire together: when the read deadline wins, net/http cancels the request context with
 	// context.Canceled, which the proxy error handler reads as a client disconnection. Comparing against the
@@ -154,6 +168,12 @@ func (s *statusRewriter) WriteHeader(code int) {
 	}
 
 	s.ResponseWriter.WriteHeader(code)
+}
+
+func (s *statusRewriter) Write(b []byte) (int, error) {
+	s.armWriteDeadline()
+
+	return s.ResponseWriter.Write(b)
 }
 
 // Hijack is the protocol-switch commitment point: the deadline is disarmed before the connection is handed over.
@@ -178,6 +198,8 @@ func (s *statusRewriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (s *statusRewriter) Flush() {
+	s.armWriteDeadline()
+
 	if f, ok := s.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
@@ -185,4 +207,27 @@ func (s *statusRewriter) Flush() {
 
 func (s *statusRewriter) Unwrap() http.ResponseWriter {
 	return s.ResponseWriter
+}
+
+// armWriteDeadline arms the write deadline once, when the response starts (see the ServeHTTP note for why not up front).
+// Before the deadline it uses the deadline, so a slow-read response is still torn down at the router budget; past it —
+// the 504 path — it uses a live budget (the entrypoint writeTimeout, or none) so the 504 reaches the client.
+func (s *statusRewriter) armWriteDeadline() {
+	s.armOnce.Do(func() {
+		if s.hijacked {
+			return
+		}
+
+		writeDeadline := s.deadline
+		if !time.Now().Before(s.deadline) {
+			writeDeadline = time.Time{}
+			if s.writeTimeout > 0 {
+				writeDeadline = time.Now().Add(s.writeTimeout)
+			}
+		}
+
+		if err := s.responseController.SetWriteDeadline(writeDeadline); err != nil {
+			s.logger.Debug().Err(err).Msg("Unable to arm write deadline")
+		}
+	})
 }

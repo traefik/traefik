@@ -360,6 +360,27 @@ func TestSlowBackendGets504(t *testing.T) {
 	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
 }
 
+// TestSlowBackendGets504OverHTTP2 guards the lazy write-deadline arming: arming the write deadline up front made
+// HTTP/2 reset the stream at the deadline before the 504 could be written, so the client saw a stream error, not the status.
+func TestSlowBackendGets504OverHTTP2(t *testing.T) {
+	t.Parallel()
+
+	ts := httptest.NewUnstartedServer(wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t))))
+	ts.EnableHTTP2 = true
+	ts.StartTLS()
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
+	require.NoError(t, err)
+
+	res, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	require.Equal(t, "HTTP/2.0", res.Proto)
+	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
+}
+
 // TestExpiryDoesNotCancelNextKeepAliveRequest guards the read deadline arming: a timed-out request must not
 // leave the next request on the same keep-alive connection with an already-canceled context.
 // The timed-out router sits below capture, as in production: capture wraps req.Body, so body presence must be
