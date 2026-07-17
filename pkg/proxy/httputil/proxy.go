@@ -53,12 +53,13 @@ func ShouldNotAppendXFF(ctx context.Context) bool {
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
-		Transport:     roundTripper,
-		FlushInterval: flushInterval,
-		BufferPool:    bufferPool,
-		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ErrorHandler:  ErrorHandler,
+		Rewrite:        rewriteRequestBuilder(target, passHostHeader, preservePath),
+		Transport:      roundTripper,
+		FlushInterval:  flushInterval,
+		BufferPool:     bufferPool,
+		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ErrorHandler:   ErrorHandler,
+		ModifyResponse: openConnectTunnel,
 	}
 }
 
@@ -114,6 +115,10 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 
 		if isWebSocketUpgrade(pr.Out) {
 			cleanWebSocketHeaders(pr.Out)
+		}
+
+		if pr.Out.Method == http.MethodConnect {
+			deferConnectPayload(pr)
 		}
 	}
 }
