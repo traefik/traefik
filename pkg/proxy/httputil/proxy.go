@@ -29,12 +29,13 @@ const (
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	proxy := &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader, preservePath),
-		Transport:     roundTripper,
-		FlushInterval: flushInterval,
-		BufferPool:    bufferPool,
-		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ErrorHandler:  ErrorHandler,
+		Director:       directorBuilder(target, passHostHeader, preservePath),
+		Transport:      roundTripper,
+		FlushInterval:  flushInterval,
+		BufferPool:     bufferPool,
+		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ErrorHandler:   ErrorHandler,
+		ModifyResponse: openConnectTunnel,
 	}
 
 	return newConnectHandler(proxy)
@@ -75,6 +76,10 @@ func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) fu
 
 		if isWebSocketUpgrade(outReq) {
 			cleanWebSocketHeaders(outReq)
+		}
+
+		if outReq.Method == http.MethodConnect {
+			deferConnectPayload(outReq)
 		}
 	}
 }
