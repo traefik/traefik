@@ -100,9 +100,10 @@ type EAB struct {
 
 // DNSChallenge contains DNS challenge configuration.
 type DNSChallenge struct {
-	Provider    string       `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
-	Resolvers   []string     `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	Propagation *Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Provider     string       `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
+	Resolvers    []string     `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	NetworkStack string       `description:"The network stack to use." json:"networkStack,omitempty" toml:"networkStack,omitempty" yaml:"networkStack,omitempty"`
+	Propagation  *Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	// Deprecated: please use Propagation.DelayBeforeChecks instead.
 	DelayBeforeCheck ptypes.Duration `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
@@ -342,8 +343,11 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
 		logger.Debug().Msgf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
 
-		if len(p.DNSChallenge.Resolvers) > 0 {
-			opts := &dns01.Options{RecursiveNameservers: p.DNSChallenge.Resolvers}
+		if len(p.DNSChallenge.Resolvers) > 0 || p.DNSChallenge.NetworkStack != "" {
+			opts := &dns01.Options{
+				RecursiveNameservers: p.DNSChallenge.Resolvers,
+				NetworkStack:         getNetworkStack(p.DNSChallenge.NetworkStack),
+			}
 
 			dns01.SetDefaultClient(dns01.NewClient(opts))
 		}
@@ -1099,4 +1103,17 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool
 		}
 	}
 	return false
+}
+
+func getNetworkStack(networkStack string) challenge.NetworkStack {
+	switch networkStack {
+	case "ipv4only", "ipv4":
+		return challenge.IPv4Only
+
+	case "ipv6only", "ipv6":
+		return challenge.IPv6Only
+
+	default:
+		return challenge.DualStack
+	}
 }
