@@ -1631,3 +1631,108 @@ func (s *mockSpan) SetName(_ string) {}
 func (s *mockSpan) TracerProvider() trace.TracerProvider {
 	return nil
 }
+
+func TestLoggerJSON_OriginError(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		originError     string
+		setOriginError  bool
+		wantOriginError any
+	}{
+		{
+			desc:            "OriginError populated",
+			originError:     "connection refused",
+			setOriginError:  true,
+			wantOriginError: "connection refused",
+		},
+		{
+			desc:            "OriginError empty string",
+			originError:     "",
+			setOriginError:  true,
+			wantOriginError: "",
+		},
+		{
+			desc:            "OriginError absent",
+			setOriginError:  false,
+			wantOriginError: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
+			config := &otypes.AccessLog{FilePath: logFilePath, Format: JSONFormat}
+
+			logger, err := NewHandler(t.Context(), config)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := logger.Close()
+				require.NoError(t, err)
+			})
+
+			req := &http.Request{
+				Header: map[string][]string{
+					"User-Agent": {testUserAgent},
+					"Referer":    {testReferer},
+				},
+				Proto:      testProto,
+				Host:       testHostname,
+				Method:     testMethod,
+				RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
+				URL: &url.URL{
+					User: url.UserPassword(testUsername, ""),
+					Path: testPath,
+				},
+				Body: io.NopCloser(bytes.NewReader([]byte("bar"))),
+			}
+
+			chain := alice.New()
+			chain = chain.Append(capture.Wrap)
+			chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+				return observability.WithObservabilityHandler(next, observability.Observability{
+					AccessLogsEnabled: true,
+				}), nil
+			})
+			chain = chain.Append(logger.AliceConstructor())
+
+			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				logData := GetLogData(r)
+				require.NotNil(t, logData)
+
+				logData.Core[RouterName] = testRouterName
+				logData.Core[ServiceURL] = testServiceName
+				logData.Core[OriginStatus] = testStatus
+				logData.Core[OriginContentSize] = testContentSize
+				logData.Core[RetryAttempts] = testRetryAttempts
+				logData.Core[StartUTC] = testStart.UTC()
+				logData.Core[StartLocal] = testStart.Local()
+
+				if test.setOriginError {
+					logData.Core[OriginError] = test.originError
+				}
+
+				rw.WriteHeader(testStatus)
+				_, _ = rw.Write([]byte(testContent))
+			}))
+			require.NoError(t, err)
+
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			logData, err := os.ReadFile(logFilePath)
+			require.NoError(t, err)
+
+			jsonData := make(map[string]any)
+			err = json.Unmarshal(logData, &jsonData)
+			require.NoError(t, err)
+
+			if test.wantOriginError != nil {
+				assert.Equal(t, test.wantOriginError, jsonData[OriginError])
+			} else {
+				_, exists := jsonData[OriginError]
+				assert.False(t, exists)
+			}
+		})
+	}
+}
