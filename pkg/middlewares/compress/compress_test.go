@@ -314,8 +314,9 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Exclude Request Content-Type",
 			conf: dynamic.Compress{
-				Encodings:            defaultSupportedEncodings,
-				ExcludedContentTypes: []string{"text/event-stream"},
+				Encodings:                 defaultSupportedEncodings,
+				ExcludedContentTypes:      []string{"text/event-stream"},
+				ExcludeRequestContentType: true,
 			},
 			reqContentType: "text/event-stream",
 		},
@@ -338,23 +339,26 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		{
 			desc: "Ignoring application/grpc with exclude option",
 			conf: dynamic.Compress{
-				Encodings:            defaultSupportedEncodings,
-				ExcludedContentTypes: []string{"application/json"},
+				Encodings:                 defaultSupportedEncodings,
+				ExcludedContentTypes:      []string{"application/json"},
+				ExcludeRequestContentType: true,
 			},
 			reqContentType: "application/grpc",
 		},
 		{
 			desc: "Ignoring application/grpc with include option",
 			conf: dynamic.Compress{
-				Encodings:            defaultSupportedEncodings,
-				IncludedContentTypes: []string{"application/json"},
+				Encodings:                 defaultSupportedEncodings,
+				IncludedContentTypes:      []string{"application/json"},
+				ExcludeRequestContentType: true,
 			},
 			reqContentType: "application/grpc",
 		},
 		{
 			desc: "Ignoring application/grpc with no option",
 			conf: dynamic.Compress{
-				Encodings: defaultSupportedEncodings,
+				Encodings:                 defaultSupportedEncodings,
+				ExcludeRequestContentType: true,
 			},
 			reqContentType: "application/grpc",
 		},
@@ -435,6 +439,60 @@ func TestShouldCompressWhenSpecificContentType(t *testing.T) {
 
 			assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
 			assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+			assert.NotEqual(t, rw.Body.Bytes(), baseBody)
+		})
+	}
+}
+
+func TestShouldCompressWhenRequestContentTypeExclusionDisabled(t *testing.T) {
+	baseBody := generateBytes(gzhttp.DefaultMinSize)
+
+	testCases := []struct {
+		desc           string
+		conf           dynamic.Compress
+		reqContentType string
+	}{
+		{
+			desc: "excluded request Content-Type is compressed when ExcludeRequestContentType is false",
+			conf: dynamic.Compress{
+				Encodings:                 defaultSupportedEncodings,
+				ExcludedContentTypes:      []string{"text/event-stream"},
+				ExcludeRequestContentType: false,
+			},
+			reqContentType: "text/event-stream",
+		},
+		{
+			desc: "application/grpc request is compressed when ExcludeRequestContentType is false",
+			conf: dynamic.Compress{
+				Encodings:                 defaultSupportedEncodings,
+				ExcludeRequestContentType: false,
+			},
+			reqContentType: "application/grpc",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Add(acceptEncodingHeader, gzipName)
+			req.Header.Add(contentTypeHeader, test.reqContentType)
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				_, err := rw.Write(baseBody)
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
+
+			handler, err := New(t.Context(), next, test.conf, "test")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
 			assert.NotEqual(t, rw.Body.Bytes(), baseBody)
 		})
 	}

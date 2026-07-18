@@ -278,7 +278,8 @@
         "compress": {
           "excludedContentTypes": [
             "foo"
-          ]
+          ],
+          "excludeRequestContentType": false
         },
         "passTLSClientCert": {
           "pem": true,
