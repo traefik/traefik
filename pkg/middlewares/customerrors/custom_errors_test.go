@@ -334,3 +334,74 @@ type mockServiceBuilder struct {
 func (m *mockServiceBuilder) BuildHTTP(_ context.Context, _ string) (http.Handler, error) {
 	return m.handler, nil
 }
+
+func TestHandlerURLPlaceholder(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		target         string
+		forwardedProto string
+		expected       string
+	}{
+		{
+			desc:     "uses https for TLS requests",
+			target:   "https://whoami.domain.com/api",
+			expected: "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "uses forwarded https scheme",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "https",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "normalizes forwarded websocket scheme to http",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "ws",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "normalizes forwarded websocket TLS scheme to https",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "wss",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "ignores invalid forwarded scheme",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "ftp",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, test.expected, r.RequestURI)
+				w.WriteHeader(http.StatusOK)
+			})}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			})
+
+			errorPage := dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/?url={url}",
+				Status:  []string{"500"},
+			}
+
+			handler, err := New(t.Context(), next, errorPage, serviceBuilderMock, "test")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, test.target, nil)
+			if test.forwardedProto != "" {
+				req.Header.Set(xForwardedProto, test.forwardedProto)
+			}
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+		})
+	}
+}
