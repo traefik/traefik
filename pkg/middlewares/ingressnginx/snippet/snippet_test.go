@@ -1141,6 +1141,30 @@ rewrite ^/(.*)$ "${uri}?" break;
 			expectedPath:  "/some/path",
 			expectedQuery: "",
 		},
+		{
+			desc: "rewrite with dot-segment traversal in capture group is rejected",
+			configurationSnippet: `
+rewrite ^/foo(.*)$ /$1 break;
+`,
+			path:               "/foo../bar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "rewrite with capture group lacking path separator introducing dot-segment traversal is rejected",
+			configurationSnippet: `
+rewrite ^/api(.*)$ /$1 break;
+`,
+			path:               "/api../admin",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "rewrite with percent-encoded character in capture group succeeds",
+			configurationSnippet: `
+rewrite ^/api/(.*)$ /v2/$1 break;
+`,
+			path:         "/api/foo%2Fbar",
+			expectedPath: "/v2/foo/bar",
+		},
 		// --- add_header always tests ---
 		{
 			desc: "add_header with always applies to 200 status",
