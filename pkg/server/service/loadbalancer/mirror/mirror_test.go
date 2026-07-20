@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync/atomic"
 	"testing"
 
@@ -176,13 +177,31 @@ func TestMirroringWithBody(t *testing.T) {
 	assert.Equal(t, numMirrors, int(val))
 }
 
+// serverRequestBody mimics the net/http server request body,
+// whose reads fail with http.ErrBodyReadAfterClose once it has been closed.
+type serverRequestBody struct {
+	reader *bytes.Reader
+	closed bool
+}
+
+func (b *serverRequestBody) Read(p []byte) (int, error) {
+	if b.closed {
+		return 0, http.ErrBodyReadAfterClose
+	}
+	return b.reader.Read(p)
+}
+
+func (b *serverRequestBody) Close() error {
+	b.closed = true
+	return nil
+}
+
 func TestMirroringWithIgnoredBody(t *testing.T) {
 	const numMirrors = 10
 
 	var (
 		countMirror atomic.Int32
 		body        = []byte(`body`)
-		emptyBody   = []byte(``)
 	)
 
 	pool := safe.NewPool(t.Context())
@@ -192,6 +211,12 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 		bb, err := io.ReadAll(r.Body)
 		assert.NoError(t, err)
 		assert.Equal(t, body, bb)
+
+		// Closing the body stands in for the net/http server,
+		// which closes the request body once the handler chain has returned,
+		// before the mirror requests are sent from the goroutine pool.
+		assert.NoError(t, r.Body.Close())
+
 		rw.WriteHeader(http.StatusOK)
 	})
 
@@ -202,13 +227,17 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 			assert.NotNil(t, r.Body)
 			bb, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
-			assert.Equal(t, emptyBody, bb)
+			assert.Empty(t, bb)
+			assert.Equal(t, int64(0), r.ContentLength)
+			assert.Empty(t, r.Header.Get("Content-Length"))
 			countMirror.Add(1)
 		}), 100)
 		assert.NoError(t, err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/", &serverRequestBody{reader: bytes.NewReader(body)})
+	req.ContentLength = int64(len(body))
+	req.Header.Set("Content-Length", strconv.Itoa(len(body)))
 
 	mirror.ServeHTTP(httptest.NewRecorder(), req)
 
