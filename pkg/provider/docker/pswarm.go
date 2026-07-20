@@ -197,12 +197,12 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 		}
 
 		if dData.ExtraConf.LBSwarm {
-			if len(dData.NetworkSettings.Networks) > 0 {
+			if len(dData.NetworkSettings.Networks) > 0 || p.AllowEmptyServices {
 				dockerDataList = append(dockerDataList, dData)
 			}
 		} else {
 			isGlobalSvc := service.Spec.Mode.Global != nil
-			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
+			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc, p.AllowEmptyServices)
 			if err != nil {
 				logger.Warn().Err(err).Send()
 			} else {
@@ -262,7 +262,7 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 }
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
-	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
+	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool, allowEmptyServices bool,
 ) ([]dockerData, error) {
 	taskList, err := dockerClient.TaskList(ctx, client.TaskListOptions{
 		Filters: make(client.Filters).Add("service", serviceID).Add("desired-state", "running"),
@@ -285,6 +285,21 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 			dockerDataList = append(dockerDataList, dData)
 		}
 	}
+
+	if allowEmptyServices && len(dockerDataList) == 0 {
+		emptyData := dockerData{
+			ID:          serviceDockerData.ID,
+			ServiceName: serviceDockerData.ServiceName,
+			Name:        serviceDockerData.Name,
+			Labels:      serviceDockerData.Labels,
+			ExtraConf:   serviceDockerData.ExtraConf,
+			NetworkSettings: networkSettings{
+				Networks: make(map[string]*networkData),
+			},
+		}
+		dockerDataList = append(dockerDataList, emptyData)
+	}
+
 	return dockerDataList, err
 }
 
