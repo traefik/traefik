@@ -6192,7 +6192,7 @@ func TestCrossNamespace(t *testing.T) {
 				}
 			}
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -6787,7 +6787,7 @@ func TestExternalNameService(t *testing.T) {
 				}
 			}
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -6993,7 +6993,7 @@ func TestNativeLB(t *testing.T) {
 				}
 			}
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
@@ -7032,7 +7032,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 		}
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	kubeClient := kubefake.NewClientset(k8sObjects...)
 	crdClient := traefikcrdfake.NewSimpleClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
