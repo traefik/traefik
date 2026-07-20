@@ -264,6 +264,101 @@ func TestForwardAuthNotForwardBody(t *testing.T) {
 	assert.Equal(t, 1, nextCallCount)
 }
 
+func TestForwardAuthConnectBodyNotForwarded(t *testing.T) {
+	// smuggled is a complete HTTP/1 request an attacker hides in the CONNECT body, hoping the auth server reads it as a
+	// pipelined request once the unframed body desynchronizes the shared keep-alive pool.
+	smuggled := []byte("GET /whoami?tag=SMUGGLED HTTP/1.1\r\nHost: victim\r\n\r\n")
+
+	testCases := []struct {
+		desc                string
+		method              string
+		expectBodyForwarded bool
+	}{
+		{
+			desc:                "CONNECT body is dropped and never reaches the auth server",
+			method:              http.MethodConnect,
+			expectBodyForwarded: false,
+		},
+		{
+			desc:                "POST body is still forwarded to the auth server",
+			method:              http.MethodPost,
+			expectBodyForwarded: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// A raw listener captures the exact bytes Traefik writes to the auth server, so the assertion can tell
+			// whether an unframed CONNECT body reaches the wire at all.
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = listener.Close() })
+
+			rawCh := make(chan []byte, 1)
+			go func() {
+				conn, err := listener.Accept()
+				if err != nil {
+					rawCh <- nil
+					return
+				}
+				defer conn.Close()
+
+				// The client sends the whole request before reading the response, so a short read deadline captures any
+				// trailing unframed body while keeping the test deterministic.
+				_ = conn.SetReadDeadline(time.Now().Add(300 * time.Millisecond))
+				raw, _ := io.ReadAll(conn)
+
+				_, _ = conn.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"))
+				rawCh <- raw
+			}()
+
+			var nextCalled bool
+			var nextBody []byte
+			next := http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+				nextCalled = true
+				nextBody, _ = io.ReadAll(req.Body)
+			})
+
+			maxBodySize := int64(len(smuggled))
+			auth := dynamic.ForwardAuth{
+				Address:               "http://" + listener.Addr().String(),
+				ForwardBody:           true,
+				PreserveRequestMethod: true,
+				MaxBodySize:           &maxBodySize,
+			}
+
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			req, err := http.NewRequestWithContext(t.Context(), test.method, "http://example.com/whoami", bytes.NewReader(smuggled))
+			require.NoError(t, err)
+			req.RemoteAddr = "10.0.0.1:1234"
+
+			middleware.ServeHTTP(httptest.NewRecorder(), req)
+
+			raw := <-rawCh
+			require.NotNil(t, raw)
+
+			got := string(raw)
+			assert.True(t, bytes.HasPrefix(raw, []byte(test.method+" ")))
+
+			if test.expectBodyForwarded {
+				assert.Contains(t, got, "SMUGGLED")
+			} else {
+				assert.NotContains(t, got, "SMUGGLED")
+				// Defense-in-depth: the CONNECT auth connection is closed instead of returned to the pool.
+				assert.Contains(t, got, "Connection: close")
+			}
+
+			// The buffered body is preserved on the request for the downstream handler regardless of the method.
+			assert.True(t, nextCalled)
+			assert.Equal(t, smuggled, nextBody)
+		})
+	}
+}
+
 func TestForwardAuthRedirect(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)
