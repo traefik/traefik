@@ -21,6 +21,7 @@ kube::codegen::gen_helpers \
 
 kube::codegen::gen_client \
     --with-watch \
+    --with-applyconfig \
     --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
     --output-pkg "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
     --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \

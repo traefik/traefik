@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
 	scheme "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type IngressRouteTCPInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikcontainousv1alpha1.IngressRouteTCPList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikcontainousv1alpha1.IngressRouteTCP, err error)
+	Apply(ctx context.Context, ingressRouteTCP *applyconfigurationtraefikcontainousv1alpha1.IngressRouteTCPApplyConfiguration, opts v1.ApplyOptions) (result *traefikcontainousv1alpha1.IngressRouteTCP, err error)
 	IngressRouteTCPExpansion
 }
 
 // ingressRouteTCPs implements IngressRouteTCPInterface
 type ingressRouteTCPs struct {
-	*gentype.ClientWithList[*traefikcontainousv1alpha1.IngressRouteTCP, *traefikcontainousv1alpha1.IngressRouteTCPList]
+	*gentype.ClientWithListAndApply[*traefikcontainousv1alpha1.IngressRouteTCP, *traefikcontainousv1alpha1.IngressRouteTCPList, *applyconfigurationtraefikcontainousv1alpha1.IngressRouteTCPApplyConfiguration]
 }
 
 // newIngressRouteTCPs returns a IngressRouteTCPs
 func newIngressRouteTCPs(c *TraefikContainousV1alpha1Client, namespace string) *ingressRouteTCPs {
 	return &ingressRouteTCPs{
-		gentype.NewClientWithList[*traefikcontainousv1alpha1.IngressRouteTCP, *traefikcontainousv1alpha1.IngressRouteTCPList](
+		gentype.NewClientWithListAndApply[*traefikcontainousv1alpha1.IngressRouteTCP, *traefikcontainousv1alpha1.IngressRouteTCPList, *applyconfigurationtraefikcontainousv1alpha1.IngressRouteTCPApplyConfiguration](
 			"ingressroutetcps",
 			c.RESTClient(),
 			scheme.ParameterCodec,
