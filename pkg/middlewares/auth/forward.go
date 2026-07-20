@@ -172,6 +172,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if forwardReqMethod == http.MethodConnect {
+		forwardReq.Close = true
+	}
+
 	if fa.forwardBody {
 		bodyBytes, err := fa.readBodyBytes(req)
 		if errors.Is(err, errBodyTooLarge) {
@@ -192,7 +196,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// bodyBytes is nil when the request has no body.
 		if bodyBytes != nil {
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-			forwardReq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+			if forwardReqMethod != http.MethodConnect {
+				forwardReq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			}
 		}
 	}
 
