@@ -30,7 +30,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewClientset(helmSecret, secret)
-	crdClient := traefikcrdfake.NewSimpleClientset()
+	crdClient := traefikcrdfake.NewClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
 
