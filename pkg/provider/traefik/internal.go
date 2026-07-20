@@ -166,9 +166,9 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 			continue
 		}
 
-		rule := "HostRegexp(`^.+$`)"
+		rule := "Host(`*`)"
 		if ep.AllowACMEByPass {
-			rule = "HostRegexp(`^.+$`) && !PathPrefix(`/.well-known/acme-challenge/`)"
+			rule = "Host(`*`) && !PathPrefix(`/.well-known/acme-challenge/`)"
 		}
 
 		rtName := provider.Normalize(name + "-to-" + def.EntryPoint.To)
