@@ -9,7 +9,7 @@
           "redirect-web-to-443"
         ],
         "service": "noop@internal",
-        "rule": "HostRegexp(`^.+$`)",
+        "rule": "Host(`*`)",
         "ruleSyntax": "default"
       }
     },
