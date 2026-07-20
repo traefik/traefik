@@ -113,7 +113,7 @@ func TestNewRateLimiter(t *testing.T) {
 					DenyOnError: true,
 				},
 			},
-			expectedDenyOnError: boolPtr(true),
+			expectedDenyOnError: new(true),
 		},
 		{
 			desc: "denyOnError can be set to false for Redis",
@@ -125,7 +125,7 @@ func TestNewRateLimiter(t *testing.T) {
 					DenyOnError: false,
 				},
 			},
-			expectedDenyOnError: boolPtr(false),
+			expectedDenyOnError: new(false),
 		},
 	}
 
@@ -636,8 +636,6 @@ type errorLimiter struct{}
 func (e *errorLimiter) Allow(_ context.Context, _ string) (*time.Duration, error) {
 	return nil, errors.New("redis unavailable")
 }
-
-func boolPtr(b bool) *bool { return &b }
 
 type mockRedisClient struct {
 	ttl  int
