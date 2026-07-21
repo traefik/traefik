@@ -104,7 +104,6 @@ install_assimilis() {
 
 main() {
     local token
-    local generated_at
 
     load_env
 
