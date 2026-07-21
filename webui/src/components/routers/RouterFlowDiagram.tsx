@@ -1,4 +1,4 @@
-import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefiklabs/faency'
+import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { FiArrowRight, FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 
@@ -112,7 +112,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
     ? data.service
     : `${data.service ?? 'unknown'}@${data.provider ?? 'unknown'}`
 
-  const { data: serviceData, error: serviceDataError } = useResourceDetail(serviceSlug ?? '', 'services')
+  const { data: serviceData, error: serviceDataError } = useResourceDetail(serviceSlug ?? '', 'services', protocol)
 
   return (
     <Flex gap={2} data-testid="router-structure">

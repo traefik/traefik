@@ -65,15 +65,17 @@ func TestProvider_SetDefaults(t *testing.T) {
 
 	assert.Equal(t, provider.PollInterval, ptypes.Duration(5*time.Second))
 	assert.Equal(t, provider.PollTimeout, ptypes.Duration(5*time.Second))
+	assert.Equal(t, int64(-1), provider.MaxResponseBodySize)
 }
 
 func TestProvider_fetchConfigurationData(t *testing.T) {
 	tests := []struct {
-		desc       string
-		statusCode int
-		headers    map[string]string
-		expData    []byte
-		expErr     require.ErrorAssertionFunc
+		desc                string
+		statusCode          int
+		headers             map[string]string
+		expData             []byte
+		expErr              require.ErrorAssertionFunc
+		maxResponseBodySize *int64
 	}{
 		{
 			desc:       "should return the fetched configuration data",
@@ -97,6 +99,25 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			statusCode: http.StatusInternalServerError,
 			expErr:     require.Error,
 		},
+		{
+			desc:                "should return an error response body is too long when maxResponseBodySize is 0",
+			statusCode:          http.StatusOK,
+			maxResponseBodySize: new(int64(0)),
+			expErr:              require.Error,
+		},
+		{
+			desc:                "should return an error response body is too long when response is longer than maxResponseBodySize",
+			statusCode:          http.StatusOK,
+			maxResponseBodySize: new(int64(1)),
+			expErr:              require.Error,
+		},
+		{
+			desc:                "should return the fetched configuration data when response is the same length with maxResponseBodySize",
+			statusCode:          http.StatusOK,
+			maxResponseBodySize: new(int64(2)),
+			expData:             []byte("{}"),
+			expErr:              require.NoError,
+		},
 	}
 
 	for _, test := range tests {
@@ -118,11 +139,15 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			}))
 			defer srv.Close()
 
-			provider := Provider{
-				Endpoint:     srv.URL,
-				Headers:      test.headers,
-				PollInterval: ptypes.Duration(1 * time.Second),
-				PollTimeout:  ptypes.Duration(1 * time.Second),
+			var provider Provider
+			provider.SetDefaults()
+
+			provider.Headers = test.headers
+			provider.Endpoint = srv.URL
+			provider.PollTimeout = ptypes.Duration(1 * time.Second)
+			provider.PollInterval = ptypes.Duration(1 * time.Second)
+			if test.maxResponseBodySize != nil {
+				provider.MaxResponseBodySize = *test.maxResponseBodySize
 			}
 
 			err := provider.Init()
@@ -201,11 +226,12 @@ func TestProvider_Provide(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	provider := Provider{
-		Endpoint:     server.URL,
-		PollTimeout:  ptypes.Duration(1 * time.Second),
-		PollInterval: ptypes.Duration(100 * time.Millisecond),
-	}
+	var provider Provider
+	provider.SetDefaults()
+
+	provider.Endpoint = server.URL
+	provider.PollTimeout = ptypes.Duration(1 * time.Second)
+	provider.PollInterval = ptypes.Duration(100 * time.Millisecond)
 
 	err := provider.Init()
 	require.NoError(t, err)
@@ -257,11 +283,12 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	provider := Provider{
-		Endpoint:     server.URL + "/endpoint",
-		PollTimeout:  ptypes.Duration(1 * time.Second),
-		PollInterval: ptypes.Duration(100 * time.Millisecond),
-	}
+	var provider Provider
+	provider.SetDefaults()
+
+	provider.Endpoint = server.URL + "/endpoint"
+	provider.PollTimeout = ptypes.Duration(1 * time.Second)
+	provider.PollInterval = ptypes.Duration(100 * time.Millisecond)
 
 	err := provider.Init()
 	require.NoError(t, err)

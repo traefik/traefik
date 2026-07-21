@@ -189,11 +189,15 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 			return nil, errors.New("chain builder not defined")
 		}
 		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
+		originalLB := lb
 		var err error
 		lb, err = chain.Then(lb)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
+		}
+		if su, ok := originalLB.(healthcheck.StatusUpdater); ok {
+			lb = &statusUpdaterHandler{Handler: lb, statusUpdater: su}
 		}
 	}
 
@@ -210,24 +214,29 @@ func (m *Manager) LaunchHealthCheck(ctx context.Context) {
 }
 
 func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName string, config *dynamic.Failover) (http.Handler, error) {
-	f := failover.New(config.HealthCheck)
-
 	serviceHandler, err := m.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
 	}
 
-	f.SetHandler(serviceHandler)
-
-	updater, ok := serviceHandler.(healthcheck.StatusUpdater)
-	if !ok {
+	updater, implementUpdater := serviceHandler.(healthcheck.StatusUpdater)
+	isErrorDefined := config.Errors != nil && len(config.Errors.Status) > 0
+	if !implementUpdater && !isErrorDefined {
 		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Service, serviceName, serviceHandler)
 	}
 
-	if err := updater.RegisterStatusUpdater(func(up bool) {
-		f.SetHandlerStatus(ctx, up)
-	}); err != nil {
-		return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+	f, err := failover.New(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating failover service %v: %w", serviceName, err)
+	}
+	f.SetHandler(serviceHandler)
+
+	if implementUpdater {
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			f.SetHandlerStatus(ctx, up)
+		}); err != nil && !isErrorDefined {
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+		}
 	}
 
 	fallbackHandler, err := m.BuildHTTP(ctx, config.Fallback)
@@ -242,8 +251,8 @@ func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName str
 		return f, nil
 	}
 
-	fallbackUpdater, ok := fallbackHandler.(healthcheck.StatusUpdater)
-	if !ok {
+	fallbackUpdater, implementUpdater := fallbackHandler.(healthcheck.StatusUpdater)
+	if !implementUpdater {
 		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Fallback, serviceName, fallbackHandler)
 	}
 
@@ -367,7 +376,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
-	balancer := hrw.New(config.HealthCheck != nil)
+	balancer := hrw.New(config.HealthCheck != nil, "")
 	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
@@ -433,7 +442,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyHRW:
-		lb = hrw.New(service.HealthCheck != nil)
+		lb = hrw.New(service.HealthCheck != nil, service.NginxUpstreamHashBy)
 	case dynamic.BalancerStrategyLeastTime:
 		lb = leasttime.New(service.Sticky, service.HealthCheck != nil)
 	default:
@@ -530,6 +539,18 @@ type serverBalancer interface {
 	healthcheck.StatusSetter
 
 	AddServer(name string, handler http.Handler, server dynamic.Server)
+}
+
+// statusUpdaterHandler wraps an http.Handler while preserving the
+// healthcheck.StatusUpdater interface from the original handler.
+type statusUpdaterHandler struct {
+	http.Handler
+
+	statusUpdater healthcheck.StatusUpdater
+}
+
+func (s *statusUpdaterHandler) RegisterStatusUpdater(fn func(up bool)) error {
+	return s.statusUpdater.RegisterStatusUpdater(fn)
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {

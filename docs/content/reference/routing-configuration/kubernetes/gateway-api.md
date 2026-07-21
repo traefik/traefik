@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the specification.
+The Kubernetes Gateway API provider supports version [v1.5.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.5.1) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, and `GRPCRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute`, and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.5.1/traefik-traefik).
 
 
 ## Deploying a Gateway
@@ -108,6 +108,36 @@ data:
 
   tls.key: |
     LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRUUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQ1Nzd2dna25BZ0VBQW9JQ0FRQ1pNNm1WNUJkV2V0QzYKbXZ6dGFQaGxTY2dJY253emdzbDhBcXp3RDJNOVJWVkZwRUxBbTh2OTNlRWtMZEY2ZnNkY0FhUXQxWlFDSFdYbwovZkxwUTVVa1B4dXY2TVArdjRtSjB2OGRLRlo3UjcwaTVud1lCMkVlVkw2RUNZaWlxNmZ6VEtsa3F6U0QvNW93CnpTdy96amtHVGEwSXcvdkg5YXNINzRIajNXdEE3RythenZjaVlhQTZxK1dWYlZxNlBIanF6em9obEFuMkh1anoKNmhEamFpZXN2TGx3QS9CL3JoRHNBS2graTByOEFKUTFqM0JiTGJuYkJyWmZqYnBJUjNhYVh5amkwK3RQWENnVQo5M0JlOXZtS2U2U2NHUjcvNk9ubWJrU3NMY2RXaFpVNzcrL2c4WllsZGhwS01nczc4ekJYUlh4bHlzSThHRUtqClNYbnd5OVpmTU9kSTRKQU1jbU9JTmlZQWNtWm5JTUJIa0xacFl3aUl0eFdseXVJcWxoZFpkSHNrTFdNSjBSTHUKMUZoUzJwRVdDTmUzN1QwYjlobTRYNDlydUFiekl1M01xSmczcXFIdGRMNGRkZ1JZRHNjMXd0cDJrR2dBZGxDaQpySHJReitZeDBCTU9WbGRHM2htUlFIeWRxMkhyWW0xeEFDNWpMZ3FvaVZhY09wd0xKY21PcGsrZWVNQkNZNVo0CnpDWDdYV3l3YVZjbTJzdmhpTzE4QmRSK2g5aFliMkRNZDFCendDbE95endQcUlvQy9uNGRURG96Ry9GT3NySzgKLzRGeHc2NkNWZjNxODMwTVB3UndsQ0sxQ0I3RjNQK3lKWkpPelRuK05QZ2dGQW9NaGZUYXBQWTFhUGlWajBzVApvb0IwWjhjRVdUZE5ycUFObVBrOWgzaEIycG44SndJREFRQUJBb0lDQUVCa2dKRXA3ODAvamVBQktQSTR2cjhFCkJmblc5UEZKdFpwVUhaQkJSM3NIVzFJTU9xcHVVWTJBNXhLbjEzWmZOemdxMEhFYlpqeUZVc0pkaXU0VW8razYKUlU3b3pRaVVSU0VTK0h1dTZycWlhcEx5d1pIditCZ2hrbm80NzU4Lyt6VytNU3pJOFNmU0ZXTVJ1ZG1QdWxRMQo3ZGJUV1U2d3FaU0tUTlFUeXZMYzdnUHBuZUpybWtkTzNRNnppZ0RoVGdtVDFHRXNzZ3NxN3NzbXhMWnhkZithCnkyNlRtVkJ4UDFlUzV6OVpHTWxYRFBSK044RjdOTFVrMng3S21WT3NCZVBZdjN5bmlpNHZGQUhNQndWRFZadXAKWUlUajRpMjZIaVhtanlLM2t5T0F2anNWSElRMXh1QTBCZFROdC84WXRtYllJL005QitydVg0UDJiRFNUMktRKwo4TlN2Uk9wbVppcnBHZkY3bExMSGpJUjlTMFhCWDd6VDRoWnBRWnpqK3NEWnhDM2Y3TGIwRFlKYkp0TmlDYTQxCmNpTjhNUlNldzNneHZ0RVk0RzdnN3hjbkJNdjdNT3RwQTE3d2gvMHdLd0h0amYzSWh2TmIzdkZwT0k5d1FqSzYKSlRQMng4bENJV0tyalpObVN0UksreHJTN3hTOUZVdnBhSVlyclRLQkZWSmcyMURCYWI1L3hqRlBlQWxXejczSwpvVkhsa0hLdXNMSjZLczZzcXo0ZG9mbzg3dkFsUFJzTXRkZ1ZnZFIzNXhLTGtEWXNIbGxML3Z5dE9oSkNieXB5CkJqQm1TR0RMdzBDdWplaHVtU2czYjdSUGVTNk5rbHNqUEIrMVpzRjhpVGdCcjMyM1hvTmNha2dhWWVYQlg4NFAKaE1WZHUxWk1rbXJZMWhXTzEydnhBb0lCQVFEWU5Vb2xCMkhsdWlDcVFqdmU4UFNhV0YxRmhwNUlOMGJIZEppeApIdkhqMkplVHJ6V1pUZFlIdFNJR2RzalhTOTBESXo2bXJhMW9YZXFRYlgrODVlOUFQQkZnRTJmNU5uTzBCSVVJCk5hMXRiVGpIOUhjRGRzQmJKUkZwYnk1ODZUb3lhdFY3bS9zcjVpQUZlZFMyenFOTm1XUmZOdllZS2xselZoSEUKdUd4ZjZxMHJTWktVQUhja2s1bU5Yais3WFhZaTgyemErVEE3ZjBDVm5OamR3OXFpd3B2aTJKTFB2SnA0bWt6KwpyMEN1RW9yV2NhMUdTL2hTVWdXemw3NzhQdlRpZFI2RW4zMDB2ZlIyTE84aG1xRjhVL3Bpb2UrTDVjSllRNnNKCk1YMngrYThzWFFpZ3dwdG02aUNxQ2FuS3ExN3NUZS9RTmQ1czdwb3ZOaHVKOHd3dEFvSUJBUUMxWmM5ZktPUFgKVzZSN1VoaHRRcmhIc3htQnRIQ1BuNWRLbjN5MElNNWRBaEFSdFZDV1U0M0hOTHpCNW1LbjU2dnZrSVNFaXdBbAoxTGhuY2I3YXQ2cHpTSlZtMm5oTDhjeUZrdGQrNzVyL1FHNFlpNnZQbHNBODV5ZXZpZDhZcWswaHdaZXExY05xCmxETUN3NWsrV0drckM2VW5jZXNIc2FWbDJTUGdZV1c1L3I1NnVxUnBsaVFka1EyZmlEYWRyblVueU8ycHg3bFMKVG1HemZaNmtzTWh2MlZFR1NPRm05aUo0dWlPb0xyZVhoU1RQRmxTdjdZUTZSWWtSaGgwT0tqdXM5bXZacEIxWApjcytYN0UyVTNlM0RZelpCR0NFdmxxaFNWTFRScjdIN21pMWxUMEozR0RzbDdiUk9xOE50WVdQa3hhSlNCUnQ5Ck9TcTlkTm9CcGRvakFvSUJBQ2lQdnN3NW1WVW0yUS80QXhGdE5RWnJ3M3ZTcUlrMXpaS0h2a21rVzQ3NlNGMk4KaGttdmY1TE1tWWlLNmx6eHY1SGlIOVBYUzJ3RUNvaHo4bjMyeVM3TTFobW5LbDlucHNkRC9jMHZmTXpGcTl4ZgpjYUIxdTlxZGxxbW9FUm1nQzZuL3Z2TkVyUmRzUWQrbEhwSDVMRXZYbGl3Q3ZLS0Y5MmdhNHBSOFlPQ1J2MUVhCnFXUVl2a0ZmYTNSSkZUM0taK3BncnJCYUJZRnoreUxXWFIwbHJEUFN2TG9QRldQaHB6MHUvWGplV2cwT0wzdlIKc2NjNVkybldOM21jNDFpaFd3SE5KUitPYUVmbnh5QVFpQUJPNlRMUThtMWtvZk1sOUpMb2h3TGZoUXhKb21KNQpSYkFiTWxwWlhDMXFTSzliL1IvcDh5NmxuSWZsTDRuaDVjSzRsVFVDZ2dFQUpSSHVSQU1tTksrTXVJcjVaUEs2Cm1DUjR0UEg4QXMzWmJDMlZuWFlLMWlVQ3hhdXBFVjkzM05yaExEcjV0Rmg2NFpWR0Q1UWNicDYvSkp5eEpSOWQKblB1YlZJNlhBT1lrSnJQd2lBZE5SSmFWS1R6NTJvMXpNYjhIZEM4WHdZR2tDNTcxY0xzSW1YSTV6bm5NaWxvaworK0FBVzBSRGhLb0FKQVV3K0x6T3ZpamFJbGljR3R2TSs2SFdCK0VkVURJRHpTS1p0eFdTd01nMTNTbHh6elExCmNlNFdTZE9CQkxxT0p0L2JRNVp3ZkcyQUxUWGlEcVhhWE5JekJickRtMDUwTFkrYVVMcmlLQ25WVkxXODBReGQKZDQyQjIrR2pmb2NxVk5Ec3R1RlIzUm9QNXVGQXN2Zm50b09TVW5WMWxaZk9nMFVFUEFEQk1tRUpZL2hLU1FYcwp3d0tDQVFBNWQya2hFQ1c1V3QrMzRYWnl1b3NFTjZ4UDExbC96VDRBZjhGSWtQLzlkb0JXRnBhc28zbG1NcXZHCmhPeFErbnZBSjFhNzhZRjA4N3p1UC9DZkQ0UElOUTV4YzZHMDNQdG5JOVNVT0dpMDB4Zlg5MU5NMHBHYWJqb0QKZ0RqVzJxSkJDaVB5N0RIR1RlZkU5eUNUbkhrY1NBbWllVGc3aGFyeEZPOUREZTJKbzhKQXV2SHI1aGVxazVIcgpLYlgzTy9vNUMwcWVnYW1rWVRLcHZzV2VFdXhkY2l5LzFQd3NnV3BuV1JPWllQNENrSkJweEx1bDNVamVSY3dkCnRhcjBJYU52WlV2NFd4U0JZdWVHMDFyYUd2SDZtTTcyTEExR3MrMytwTnZwUVo3bGo2S09tcFlhQUlhemVxY2MKTjJjT2R5U1RqZmQ5OFlNVFAxbmIyK3N1Yy91VAotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+```
+
+### Multiple TLS Certificates
+
+Traefik supports multiple secret `certificateRefs` per Gateway listener.
+If one of the certificates is invalid or cannot be loaded, the listener will be considered invalid and will not be able to serve traffic until the issue is resolved.
+
+For example, the following `Gateway` listener references two different certificates:
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: multi-cert-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: example-com-tls
+          - name: example-org-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
 ```
 
 ## Exposing a Route
@@ -290,9 +320,20 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
+!!! info "Supported Filter Types"
+
+    Traefik supports the following route-level filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
 !!! info "ExtensionRef Filters"
 
-    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-ingress.md). 
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
 
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
@@ -397,6 +438,107 @@ Once everything is deployed, sending a `GET` request should return the following
     X-Forwarded-Proto: http
     X-Forwarded-Server: traefik-6b66d45748-ns8mt
     X-Real-Ip: 10.42.2.1
+    ```
+
+#### Backend-Level Filters
+
+In addition to route-level filters, the Gateway API also supports applying filters directly to individual backends through the `backendRefs[].filters` field.
+This allows request modifications to be applied to specific backends, enabling the `HTTPRouteBackendRequestHeaderModification` extended feature.
+
+!!! info "Supported Filter Types"
+
+    Backend-level filters support the same filter types as route-level filters:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
+!!! info "Middlewares Execution Order"
+
+    When both route-level and backend-level filters are configured, route-level filters are applied first, followed by backend-level filters.
+
+For more information on service-level middlewares, see [service middlewares](../http/load-balancing/service.md#middlewares).
+
+??? example "Using RequestHeaderModifier on a Backend"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+
+          backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+              filters:
+                - type: RequestHeaderModifier
+                  requestHeaderModifier:
+                    set:
+                      - name: X-Backend-Header
+                        value: "backend-filter"
+    ```
+
+??? example "Using ExtensionRef (Traefik Middleware) on a Backend"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+              filters:
+                - type: ExtensionRef
+                  extensionRef:
+                    group: traefik.io
+                    kind: Middleware
+                    name: add-prefix
+    ```
+
+    ```yaml tab="AddPrefix Middleware"
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: add-prefix
+      namespace: default
+    spec:
+      addPrefix:
+        prefix: /api
     ```
 
 ### GRPC
@@ -639,11 +781,6 @@ Once everything is deployed, sending the WHO command should return the following
     ```
 
 ### TLS
-
-!!! info "Experimental Channel"
-
-    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
-    Therefore, to use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) option must be enabled.
 
 The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.

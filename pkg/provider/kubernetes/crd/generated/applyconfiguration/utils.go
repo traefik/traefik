@@ -42,6 +42,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=traefik.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithKind("BasicAuth"):
 		return &traefikiov1alpha1.BasicAuthApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Buffering"):
+		return &traefikiov1alpha1.BufferingApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Certificate"):
 		return &traefikiov1alpha1.CertificateApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Chain"):
@@ -60,6 +62,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.DigestAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ErrorPage"):
 		return &traefikiov1alpha1.ErrorPageApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Failover"):
+		return &traefikiov1alpha1.FailoverApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("FailoverError"):
+		return &traefikiov1alpha1.FailoverErrorApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ForwardAuth"):
 		return &traefikiov1alpha1.ForwardAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ForwardingTimeouts"):
@@ -112,6 +118,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.RootCAApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Route"):
 		return &traefikiov1alpha1.RouteApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RouterObservabilityConfig"):
+		return &traefikiov1alpha1.RouterObservabilityConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteTCP"):
 		return &traefikiov1alpha1.RouteTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteUDP"):

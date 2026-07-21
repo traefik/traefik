@@ -1,4 +1,4 @@
-import { Flex, Text } from '@traefiklabs/faency'
+import { Flex, Text } from '@traefik-labs/faency'
 import { FiGlobe } from 'react-icons/fi'
 
 import { getProviderFromName } from './Servers'

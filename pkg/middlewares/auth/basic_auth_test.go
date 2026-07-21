@@ -16,6 +16,26 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
+func TestNewBasicEmpty(t *testing.T) {
+	auth := dynamic.BasicAuth{
+		Users: []string{},
+	}
+
+	_, err := NewBasic(t.Context(), nil, auth, "authName")
+	require.Error(t, err)
+}
+
+func TestNewBasicNotFoundSecretIsSet(t *testing.T) {
+	auth := dynamic.BasicAuth{
+		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+	}
+	middleware, err := NewBasic(t.Context(), nil, auth, "authName")
+	require.NoError(t, err)
+
+	ba := middleware.(*basicAuth)
+	assert.Equal(t, "$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", ba.notFoundSecret)
+}
+
 func TestBasicAuthFail(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
@@ -105,6 +125,30 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body))
 }
 
+func TestBasicAuthUserHeaderCanonical(t *testing.T) {
+	var nextCalled bool
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		nextCalled = true
+		assert.Empty(t, req.Header.Get("X-User"))
+		assert.Equal(t, []string{"test"}, req.Header["x-user"])
+	})
+	auth := dynamic.BasicAuth{
+		Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		HeaderField: "x-user",
+	}
+	m, err := NewBasic(t.Context(), next, auth, "test")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
+	req.SetBasicAuth("test", "test")
+	req.Header.Set("X-User", "admin")
+	rw := httptest.NewRecorder()
+	m.ServeHTTP(rw, req)
+
+	assert.Equal(t, http.StatusOK, rw.Result().StatusCode)
+	assert.True(t, nextCalled)
+}
+
 func TestBasicAuthHeaderRemoved(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Empty(t, r.Header.Get(authorizationHeader))
@@ -192,11 +236,9 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	defer ts.Close()
 
 	var wg sync.WaitGroup
-	wg.Add(2)
 
 	for range 2 {
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 			req.SetBasicAuth("test", "test")
 
@@ -205,7 +247,7 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 			defer res.Body.Close()
 
 			assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
-		}()
+		})
 	}
 
 	wg.Wait()

@@ -42,7 +42,7 @@ The section below describe how to configure Traefik logs using the static config
 | <a id="opt-log-maxSize" href="#opt-log-maxSize" title="#opt-log-maxSize">`log.maxSize`</a> | Maximum size in megabytes of the log file before it gets rotated. | 100MB      | No      |
 | <a id="opt-log-maxAge" href="#opt-log-maxAge" title="#opt-log-maxAge">`log.maxAge`</a> | Maximum number of days to retain old log files based on the timestamp encoded in their filename.<br /> A day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc.<br />By default files are not removed based on their age.  |   0   | No      |
 | <a id="opt-log-maxBackups" href="#opt-log-maxBackups" title="#opt-log-maxBackups">`log.maxBackups`</a> | Maximum number of old log files to retain.<br />The default is to retain all old log files. |  0  | No      |
-| <a id="opt-log-compress" href="#opt-log-compress" title="#opt-log-compress">`log.compress`</a> | Compress log files in gzip after rotation. | false | No      |
+| <a id="opt-log-compress" href="#opt-log-compress" title="#opt-log-compress">`log.compress`</a> | Compress log files in gzip after rotation. Compression is always enabled when log rotation is active; this field has no effect. | false | No      |
 
 ### OpenTelemetry
 
@@ -104,7 +104,7 @@ log:
 | <a id="opt-log-otlp-serviceName" href="#opt-log-otlp-serviceName" title="#opt-log-otlp-serviceName">`log.otlp.serviceName`</a> | Service name used in selected backend.                                                                                                 | "traefik"                        | No       |
 | <a id="opt-log-otlp-resourceAttributes" href="#opt-log-otlp-resourceAttributes" title="#opt-log-otlp-resourceAttributes">`log.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector.  See [resourceAttributes](#resourceattributes) for details.                                                                    | []                               | No       |
 | <a id="opt-log-otlp-http" href="#opt-log-otlp-http" title="#opt-log-otlp-http">`log.otlp.http`</a> | This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.                                                    |                                  | No       |
-| <a id="opt-log-otlp-http-endpoint" href="#opt-log-otlp-http-endpoint" title="#opt-log-otlp-http-endpoint">`log.otlp.http.endpoint`</a> | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318/v1/logs` | No       |
+| <a id="opt-log-otlp-http-endpoint" href="#opt-log-otlp-http-endpoint" title="#opt-log-otlp-http-endpoint">`log.otlp.http.endpoint`</a> | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318` | No       |
 | <a id="opt-log-otlp-http-headers" href="#opt-log-otlp-http-headers" title="#opt-log-otlp-http-headers">`log.otlp.http.headers`</a> | Additional headers sent with logs by the exporter to the OpenTelemetry Collector.                                                      | [ ]                              | No       |
 | <a id="opt-log-otlp-http-tls" href="#opt-log-otlp-http-tls" title="#opt-log-otlp-http-tls">`log.otlp.http.tls`</a> | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector.                                 |                                  | No       |
 | <a id="opt-log-otlp-http-tls-ca" href="#opt-log-otlp-http-tls-ca" title="#opt-log-otlp-http-tls-ca">`log.otlp.http.tls.ca`</a> | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |                                  | No       |
@@ -171,6 +171,9 @@ accessLog:
         User-Agent: redact
         # Drop the Authorization header value
         Authorization: drop
+    queryParameters:
+      # Drop all query parameters
+      defaultMode: drop
 ```
 
 ```toml tab="File (TOML)"
@@ -194,6 +197,9 @@ accessLog:
       [accessLog.fields.headers.names]
         User-Agent = "redact"
         Authorization = "drop"
+
+    [accessLog.fields.queryParameters]
+      defaultMode = "drop"
 ```
 
 ```sh tab="CLI"
@@ -208,6 +214,7 @@ accessLog:
 --accesslog.fields.headers.defaultmode=keep
 --accesslog.fields.headers.names.User-Agent=redact
 --accesslog.fields.headers.names.Authorization=drop
+--accesslog.fields.queryparameters.defaultmode=drop
 ```
 
 ### Configuration Options
@@ -224,10 +231,11 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-filters-statusCodes" href="#opt-accesslog-filters-statusCodes" title="#opt-accesslog-filters-statusCodes">`accesslog.filters.statusCodes`</a> | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
 | <a id="opt-accesslog-filters-retryAttempts" href="#opt-accesslog-filters-retryAttempts" title="#opt-accesslog-filters-retryAttempts">`accesslog.filters.retryAttempts`</a> | Keep the access logs when at least one retry has happened. | false      | No      |
 | <a id="opt-accesslog-filters-minDuration" href="#opt-accesslog-filters-minDuration" title="#opt-accesslog-filters-minDuration">`accesslog.filters.minDuration`</a> | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).  |  0   | No      |
-| <a id="opt-accesslog-fields-defaultMode" href="#opt-accesslog-fields-defaultMode" title="#opt-accesslog-fields-defaultMode">`accesslog.fields.defaultMode`</a> | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | keep | No      |
+| <a id="opt-accesslog-fields-defaultMode" href="#opt-accesslog-fields-defaultMode" title="#opt-accesslog-fields-defaultMode">`accesslog.fields.defaultMode`</a> | Mode to apply by default to the access logs fields (`keep` or `drop`). | keep | No      |
 | <a id="opt-accesslog-fields-names" href="#opt-accesslog-fields-names" title="#opt-accesslog-fields-names">`accesslog.fields.names`</a> | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#json-format-fields). |  [ ]    | No      |
 | <a id="opt-accesslog-fields-headers-defaultMode" href="#opt-accesslog-fields-headers-defaultMode" title="#opt-accesslog-fields-headers-defaultMode">`accesslog.fields.headers.defaultMode`</a> | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
 | <a id="opt-accesslog-fields-headers-names" href="#opt-accesslog-fields-headers-names" title="#opt-accesslog-fields-headers-names">`accesslog.fields.headers.names`</a> | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
+| <a id="opt-accesslog-fields-queryParameters-defaultMode" href="#opt-accesslog-fields-queryParameters-defaultMode" title="#opt-accesslog-fields-queryParameters-defaultMode">`accesslog.fields.queryParameters.defaultMode`</a> | Mode to apply by default to the access logs query parameters (`keep` or `drop`) | keep | No      |
 
 ### OpenTelemetry
 
@@ -291,7 +299,7 @@ accesslog:
 | <a id="opt-accesslog-otlp-serviceName" href="#opt-accesslog-otlp-serviceName" title="#opt-accesslog-otlp-serviceName">`accesslog.otlp.serviceName`</a> | Defines the service name resource attribute.                                                                                           | "traefik"                        | No       |
 | <a id="opt-accesslog-otlp-resourceAttributes" href="#opt-accesslog-otlp-resourceAttributes" title="#opt-accesslog-otlp-resourceAttributes">`accesslog.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector. See [resourceAttributes](#resourceattributes_1) for details.       | []                               | No       |
 | <a id="opt-accesslog-otlp-http" href="#opt-accesslog-otlp-http" title="#opt-accesslog-otlp-http">`accesslog.otlp.http`</a> | This instructs the exporter to send access logs to the OpenTelemetry Collector using HTTP.                                             |                                  | No       |
-| <a id="opt-accesslog-otlp-http-endpoint" href="#opt-accesslog-otlp-http-endpoint" title="#opt-accesslog-otlp-http-endpoint">`accesslog.otlp.http.endpoint`</a> | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318/v1/logs` | No       |
+| <a id="opt-accesslog-otlp-http-endpoint" href="#opt-accesslog-otlp-http-endpoint" title="#opt-accesslog-otlp-http-endpoint">`accesslog.otlp.http.endpoint`</a> | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318` | No       |
 | <a id="opt-accesslog-otlp-http-headers" href="#opt-accesslog-otlp-http-headers" title="#opt-accesslog-otlp-http-headers">`accesslog.otlp.http.headers`</a> | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector.                                               | [ ]                              | No       |
 | <a id="opt-accesslog-otlp-http-tls" href="#opt-accesslog-otlp-http-tls" title="#opt-accesslog-otlp-http-tls">`accesslog.otlp.http.tls`</a> | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector.                          |                                  | No       |
 | <a id="opt-accesslog-otlp-http-tls-ca" href="#opt-accesslog-otlp-http-tls-ca" title="#opt-accesslog-otlp-http-tls-ca">`accesslog.otlp.http.tls.ca`</a> | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |                                  | No       |
@@ -384,6 +392,10 @@ Below the fields displayed with the generic CLF format:
 | <a id="opt-TLSVersion" href="#opt-TLSVersion" title="#opt-TLSVersion">`TLSVersion`</a> | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).   |
 | <a id="opt-TLSCipher" href="#opt-TLSCipher" title="#opt-TLSCipher">`TLSCipher`</a> | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS).      |
 | <a id="opt-TLSClientSubject" href="#opt-TLSClientSubject" title="#opt-TLSClientSubject">`TLSClientSubject`</a> | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`).  |
+| <a id="opt-KubernetesIngressNamespace" href="#opt-KubernetesIngressNamespace" title="#opt-KubernetesIngressNamespace">`KubernetesIngressNamespace`</a> | The namespace of the Kubernetes Ingress resource the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
+| <a id="opt-KubernetesIngressName" href="#opt-KubernetesIngressName" title="#opt-KubernetesIngressName">`KubernetesIngressName`</a> | The name of the Kubernetes Ingress resource the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
+| <a id="opt-KubernetesServiceName" href="#opt-KubernetesServiceName" title="#opt-KubernetesServiceName">`KubernetesServiceName`</a> | The name of the Kubernetes Service associated with the Ingress the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
+| <a id="opt-KubernetesServicePort" href="#opt-KubernetesServicePort" title="#opt-KubernetesServicePort">`KubernetesServicePort`</a> | The port of the Kubernetes Service associated with the Ingress the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
 
 ### Log Rotation
 
@@ -407,7 +419,7 @@ Example utilizing Docker Compose:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.6
+    image: traefik:v3.7
     environment:
       - TZ=US/Alaska
     command:

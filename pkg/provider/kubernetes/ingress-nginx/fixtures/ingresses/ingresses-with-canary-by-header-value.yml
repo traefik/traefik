@@ -1,0 +1,46 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-canary-by-header-value
+  namespace: default
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "Foo"
+    nginx.ingress.kubernetes.io/canary-by-header-value: "bar"
+    nginx.ingress.kubernetes.io/canary-by-header-pattern: "bar(.*)" # This annotation is ignored when canary-by-header-value is set.
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80

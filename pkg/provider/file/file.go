@@ -26,7 +26,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-const providerName = "file"
+// ProviderName is the file provider name.
+const ProviderName = "file"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -52,7 +53,7 @@ func (p *Provider) Init() error {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 
 	if p.Watch {
 		var watchItems []string
@@ -71,9 +72,16 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// ignore sub-dir
 					continue
 				}
+				if !isFileSupported(entry.Name()) {
+					// ignore unsupported file extension
+					continue
+				}
 				watchItems = append(watchItems, path.Join(p.Directory, entry.Name()))
 			}
 		case len(p.Filename) > 0:
+			if !isFileSupported(p.Filename) {
+				return fmt.Errorf("unsupported file extension for file %s", p.Filename)
+			}
 			watchItems = append(watchItems, filepath.Dir(p.Filename), p.Filename)
 		default:
 			return errors.New("error using file configuration provider, neither filename nor directory is defined")
@@ -168,13 +176,13 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 		log.Debug().Msgf("add watcher on: %s", item)
 		err = watcher.Add(item)
 		if err != nil {
-			return fmt.Errorf("error adding file watcher: %w", err)
+			return fmt.Errorf("error adding file watcher for %s: %w", item, err)
 		}
 	}
 
 	// Process events
 	pool.GoCtx(func(ctx context.Context) {
-		logger := log.With().Str(logs.ProviderName, providerName).Logger()
+		logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 		defer watcher.Close()
 		for {
 			select {
@@ -218,7 +226,7 @@ func (p *Provider) applyConfiguration(configurationChan chan<- dynamic.Message) 
 // buildConfiguration loads configuration either from file or a directory
 // specified by 'Filename'/'Directory' and returns a 'Configuration' object.
 func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
-	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
+	ctx := log.With().Str(logs.ProviderName, ProviderName).Logger().WithContext(context.Background())
 
 	if len(p.Directory) > 0 {
 		configurations, err := p.collectFileConfigs(ctx, p.Directory, "")
@@ -391,6 +399,8 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 	}
 
 	for _, item := range fileList {
+		logger := log.Ctx(ctx).With().Str("filename", item.Name()).Logger()
+
 		itemPath := filepath.Join(directory, item.Name())
 		filename := item.Name()
 		if prefix != "" {
@@ -406,10 +416,8 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 			continue
 		}
 
-		switch strings.ToLower(filepath.Ext(item.Name())) {
-		case ".toml", ".yaml", ".yml":
-			// noop
-		default:
+		if !isFileSupported(item.Name()) {
+			logger.Debug().Msg("Skipping file, unsupported extension")
 			continue
 		}
 
@@ -498,4 +506,13 @@ func readFile(filename string) (string, error) {
 		return string(buf), nil
 	}
 	return "", fmt.Errorf("invalid filename: %s", filename)
+}
+
+func isFileSupported(filename string) bool {
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".toml", ".yaml", ".yml":
+		return true
+	default:
+		return false
+	}
 }

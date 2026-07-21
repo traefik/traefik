@@ -15,8 +15,11 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 		Insert(features.HTTPRouteExtendedFeatures.Intersection(extendedHTTPRouteFeatures()).UnsortedList()...).
 		Insert(features.ReferenceGrantCoreFeatures.UnsortedList()...).
 		Insert(features.BackendTLSPolicyCoreFeatures.UnsortedList()...).
+		Insert(features.BackendTLSPolicyExtendedFeatures.Intersection(extendedBackendTLSPolicyFeatures()).UnsortedList()...).
 		Insert(features.GRPCRouteCoreFeatures.UnsortedList()...).
-		Insert(features.TLSRouteCoreFeatures.UnsortedList()...)
+		Insert(features.GRPCRouteExtendedFeatures.Intersection(extendedGRPCRouteFeatures()).UnsortedList()...).
+		Insert(features.TLSRouteCoreFeatures.UnsortedList()...).
+		Insert(features.TLSRouteExtendedFeatures.Intersection(extendedTLSRouteFeatures()).UnsortedList()...)
 
 	featureNames := make([]features.FeatureName, 0, featureSet.Len())
 	for f := range featureSet {
@@ -30,20 +33,48 @@ func extendedGatewayFeatures() sets.Set[features.Feature] {
 	return sets.New(features.GatewayPort8080Feature)
 }
 
+// extendedTLSRouteFeatures returns the supported extended TLS Route features.
+func extendedTLSRouteFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.TLSRouteModeTerminateFeature,
+		features.TLSRouteModeMixedFeature,
+	)
+}
+
 // extendedHTTPRouteFeatures returns the supported extended HTTP Route features.
 func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 	return sets.New(
 		features.HTTPRouteQueryParamMatchingFeature,
 		features.HTTPRouteMethodMatchingFeature,
+		features.HTTPRoutePathRedirectFeature,
 		features.HTTPRoutePortRedirectFeature,
 		features.HTTPRouteSchemeRedirectFeature,
+		features.HTTPRoute303RedirectStatusCodeFeature,
+		features.HTTPRoute307RedirectStatusCodeFeature,
+		features.HTTPRoute308RedirectStatusCodeFeature,
 		features.HTTPRouteHostRewriteFeature,
 		features.HTTPRoutePathRewriteFeature,
-		features.HTTPRoutePathRedirectFeature,
 		features.HTTPRouteResponseHeaderModificationFeature,
 		features.HTTPRouteBackendProtocolH2CFeature,
 		features.HTTPRouteBackendProtocolWebSocketFeature,
 		features.HTTPRouteDestinationPortMatchingFeature,
 		features.HTTPRouteBackendRequestHeaderModificationFeature,
+		features.HTTPRouteNamedRouteRule,
+		features.HTTPRouteParentRefPortFeature,
+		features.HTTPRouteCORS,
+	)
+}
+
+// extendedGRPCRouteFeatures returns the supported extended GRPC Route features.
+func extendedGRPCRouteFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.GRPCRouteNamedRouteRule,
+	)
+}
+
+// extendedBackendTLSPolicyFeatures returns the supported extended BackendTLSPolicy features.
+func extendedBackendTLSPolicyFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.BackendTLSPolicySanValidationFeature,
 	)
 }

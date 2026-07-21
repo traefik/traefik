@@ -1,7 +1,9 @@
 package tcp
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -13,59 +15,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktcp "github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
-
-type applyRouter func(conf *runtime.Configuration)
-
-type checkRouter func(addr string, timeout time.Duration) error
-
-type httpForwarder struct {
-	net.Listener
-
-	connChan chan net.Conn
-	errChan  chan error
-}
-
-func newHTTPForwarder(ln net.Listener) *httpForwarder {
-	return &httpForwarder{
-		Listener: ln,
-		connChan: make(chan net.Conn),
-		errChan:  make(chan error),
-	}
-}
-
-// Close closes the Listener.
-func (h *httpForwarder) Close() error {
-	h.errChan <- http.ErrServerClosed
-
-	return nil
-}
-
-// ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
-	h.connChan <- conn
-}
-
-// Accept retrieves a served connection in ServeTCP.
-func (h *httpForwarder) Accept() (net.Conn, error) {
-	select {
-	case conn := <-h.connChan:
-		return conn, nil
-	case err := <-h.errChan:
-		return nil, err
-	}
-}
 
 // Test_Routing aims to settle the behavior between routers of different types on the same TCP entryPoint.
 // It has been introduced as a regression test following a fix on the v2.7 TCP Muxer.
@@ -113,13 +74,11 @@ func Test_Routing(t *testing.T) {
 		for {
 			conn, err := tcpBackendListener.Accept()
 			if err != nil {
-				var opErr *net.OpError
-				if errors.As(err, &opErr) && opErr.Temporary() {
+				if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Temporary() {
 					continue
 				}
 
-				var urlErr *url.Error
-				if errors.As(err, &urlErr) && urlErr.Temporary() {
+				if urlErr, ok := errors.AsType[*url.Error](err); ok && urlErr.Temporary() {
 					continue
 				}
 
@@ -134,11 +93,10 @@ func Test_Routing(t *testing.T) {
 			buf := make([]byte, 100)
 			_, err = conn.Read(buf)
 
-			var opErr *net.OpError
 			if err == nil {
 				_, err = fmt.Fprint(conn, "TCP-CLIENT-FIRST")
 				require.NoError(t, err)
-			} else if errors.As(err, &opErr) && opErr.Timeout() {
+			} else if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Timeout() {
 				_, err = fmt.Fprint(conn, "TCP-SERVER-FIRST")
 				require.NoError(t, err)
 			}
@@ -165,7 +123,7 @@ func Test_Routing(t *testing.T) {
 		},
 	}
 
-	dialerManager := tcp2.NewDialerManager(nil)
+	dialerManager := traefiktcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 	serviceManager := tcp.NewManager(conf, dialerManager)
 
@@ -201,7 +159,7 @@ func Test_Routing(t *testing.T) {
 	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
-		nil, nil, tlsManager)
+		nil, nil, tlsManager, nil)
 
 	type checkCase struct {
 		checkRouter
@@ -639,6 +597,16 @@ func Test_Routing(t *testing.T) {
 					_, err = fmt.Fprint(w, "HTTPS")
 					require.NoError(t, err)
 				}),
+
+				ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+					if tlsConn, ok := c.(*tls.Conn); ok {
+						if tlsConnWithOptionsName, ok := tlsConn.NetConn().(traefiktcp.TLSConn); ok {
+							return traefiktcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+						}
+					}
+
+					return ctx
+				},
 			}
 
 			stoppedHTTPS := make(chan struct{})
@@ -648,6 +616,7 @@ func Test_Routing(t *testing.T) {
 				_ = serverHTTPS.Serve(httpsForwarder)
 			}()
 
+			// The HTTPS forwarder will be added as tcp.TLSHandler (to handle TLS).
 			router.SetHTTPSForwarder(httpsForwarder)
 
 			stoppedTCP := make(chan struct{})
@@ -699,7 +668,7 @@ func Test_Routing(t *testing.T) {
 }
 
 func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
-	router, err := NewRouter()
+	router, err := NewRouter(nil)
 	require.NoError(t, err)
 
 	router.httpsTLSConfig = &tls.Config{}
@@ -754,6 +723,272 @@ func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("Error: Timeout waiting for acmeTLSALPNHandler to close the connection")
 	}
+}
+
+// Test_clientHelloInfo_oversizedRecordLength verifies that clientHelloInfo
+// does not block or allocate excessive memory when a client sends a TLS
+// record header with a maliciously large record length (up to 0xFFFF).
+//
+// Without the fix, clientHelloInfo allocates a ~65KB bufio.Reader and blocks
+// on Peek(65540), waiting for bytes that never arrive (until readTimeout).
+// With the fix, records exceeding the TLS maximum plaintext size (16384)
+// are rejected immediately.
+func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		recLen uint16
+	}{
+		{
+			desc:   "max uint16 record length (0xFFFF)",
+			recLen: 0xFFFF,
+		},
+		{
+			desc:   "just above TLS maximum (18433)",
+			recLen: 18433,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			serverConn, clientConn := net.Pipe()
+			defer serverConn.Close()
+			defer clientConn.Close()
+
+			type result struct {
+				hello *clientHello
+				err   error
+			}
+			resultCh := make(chan result, 1)
+
+			go func() {
+				pConn := &peekConn{reader: bufio.NewReader(serverConn)}
+				hello, err := clientHelloInfo(pConn)
+				resultCh <- result{hello, err}
+			}()
+
+			// Send a TLS record header with an oversized record length.
+			// Only the 5-byte header is sent; the client then stalls.
+			hdr := []byte{
+				0x16,       // Content Type: Handshake
+				0x03, 0x03, // Version: TLS 1.2
+				byte(test.recLen >> 8),   // Length high byte
+				byte(test.recLen & 0xFF), // Length low byte
+			}
+			_, err := clientConn.Write(hdr)
+			require.NoError(t, err)
+
+			// Without the fix, clientHelloInfo blocks on Peek(recLen+5)
+			// since only 5 bytes are available. The test would time out.
+			// With the fix, it returns immediately.
+			select {
+			case r := <-resultCh:
+				require.Error(t, r.err)
+			case <-time.After(5 * time.Second):
+				t.Fatal("clientHelloInfo blocked on oversized TLS record length — recLen is not capped")
+			}
+		})
+	}
+}
+
+// Test_clientHelloInfo_tlsRecordFragmentation documents a known limitation:
+// clientHelloInfo only reads a single TLS record. When a ClientHello handshake
+// message is split across multiple TLS records (RFC 5246 §6.2.1), the SNI cannot
+// be extracted, leaving serverName empty and allowing SNI-based routing to be bypassed.
+func Test_clientHelloInfo_tlsRecordFragmentation(t *testing.T) {
+	serverName := "foo.example.com"
+	record := buildClientHelloRecord(t, serverName)
+
+	const hdrLen = 5
+	payload := record[hdrLen:]
+
+	ver1, ver2 := record[1], record[2]
+
+	var recordsData bytes.Buffer
+	for _, part := range [][]byte{payload[:len(serverName)/2], payload[len(serverName)/2:]} {
+		recordsData.WriteByte(0x16)
+		recordsData.WriteByte(ver1)
+		recordsData.WriteByte(ver2)
+		recordsData.WriteByte(byte(len(part) >> 8))
+		recordsData.WriteByte(byte(len(part)))
+		recordsData.Write(part)
+	}
+
+	serverConn, clientConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = serverConn.Close()
+		_ = clientConn.Close()
+	})
+
+	type result struct {
+		hello *clientHello
+		err   error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		pConn := &peekConn{reader: bufio.NewReader(serverConn)}
+		hello, err := clientHelloInfo(pConn)
+		resultCh <- result{hello, err}
+	}()
+
+	_, err := clientConn.Write(recordsData.Bytes())
+	require.NoError(t, err)
+	_ = clientConn.Close()
+
+	select {
+	case r := <-resultCh:
+		require.NoError(t, r.err)
+		require.NotNil(t, r.hello)
+		assert.True(t, r.hello.isTLS)
+		assert.Equal(t, serverName, r.hello.serverName)
+	case <-time.After(5 * time.Second):
+		t.Fatal("clientHelloInfo blocked")
+	}
+}
+
+func TestPostgresTLSTermination(t *testing.T) {
+	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
+	require.NoError(t, err)
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	router, err := NewRouter(nil)
+	require.NoError(t, err)
+
+	// Register a TCPTLS route (TLS termination, not passthrough) with a TLSHandler.
+	// The TLSHandler wraps the actual handler, performing the TLS handshake.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", &traefiktcp.TLSHandler{
+		Config: tlsConf,
+		Next: traefiktcp.HandlerFunc(func(conn traefiktcp.WriteCloser) {
+			_, _ = conn.Write([]byte("OK"))
+			_ = conn.Close()
+		}),
+	})
+	require.NoError(t, err)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+
+		tcpConn := conn.(*net.TCPConn)
+		router.ServeTCP(tcpConn)
+	}()
+
+	clientConn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.Close() })
+
+	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
+	_, err = clientConn.Write(PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	// Step 2: Client receives PostgresStartTLSReply ('S').
+	reply := make([]byte, 1)
+	_, err = io.ReadFull(clientConn, reply)
+	require.NoError(t, err)
+	require.Equal(t, PostgresStartTLSReply, reply)
+
+	// Step 3: Client performs TLS handshake.
+	tlsClient := tls.Client(clientConn, &tls.Config{
+		ServerName:         "test.localhost",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(t, tlsClient.Handshake())
+	t.Cleanup(func() { _ = tlsClient.Close() })
+
+	// Step 4: Read the response from the handler through the TLS connection.
+	buf := make([]byte, 256)
+	n, err := tlsClient.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, "OK", string(buf[:n]))
+}
+
+func TestPostgresTLSPassthrough(t *testing.T) {
+	certPEM, keyPEM, err := generate.KeyPair("test.localhost", time.Time{})
+	require.NoError(t, err)
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	router, err := NewRouter(nil)
+	require.NoError(t, err)
+
+	// Register a TCPTLS route (TLS passthrough) with a tcp.Handler.
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", traefiktcp.HandlerFunc(func(conn traefiktcp.WriteCloser) {
+		// First we should receive the PostgresStartTLSMsg.
+		buf := make([]byte, len(PostgresStartTLSMsg))
+		_, err := conn.Read(buf)
+		require.NoError(t, err)
+		assert.Equal(t, PostgresStartTLSMsg, buf)
+
+		// Next we should answer with the PostgresStartTLSReply.
+		_, err = conn.Write(PostgresStartTLSReply)
+		require.NoError(t, err)
+
+		// Then we should do the TLS handshake.
+		tlsConn := tls.Server(conn, tlsConf)
+		require.NoError(t, tlsConn.Handshake())
+
+		// Finally we write the response through the TLS connection.
+		_, err = tlsConn.Write([]byte("OK"))
+		require.NoError(t, err)
+	}))
+	require.NoError(t, err)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+
+		tcpConn := conn.(*net.TCPConn)
+		router.ServeTCP(tcpConn)
+	}()
+
+	clientConn, err := net.Dial("tcp", ln.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.Close() })
+
+	// Step 1: Client sends PostgresStartTLSMsg (SSLRequest).
+	_, err = clientConn.Write(PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	// Step 2: Client receives PostgresStartTLSReply ('S').
+	reply := make([]byte, 1)
+	_, err = io.ReadFull(clientConn, reply)
+	require.NoError(t, err)
+	require.Equal(t, PostgresStartTLSReply, reply)
+
+	// Step 3: Client performs TLS handshake.
+	tlsClient := tls.Client(clientConn, &tls.Config{
+		ServerName:         "test.localhost",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(t, tlsClient.Handshake())
+	t.Cleanup(func() { _ = tlsClient.Close() })
+
+	// Step 4: Read the response from the handler through the TLS connection.
+	buf := make([]byte, 256)
+	n, err := tlsClient.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, "OK", string(buf[:n]))
 }
 
 // routerTCPCatchAll configures a TCP CatchAll No TLS - HostSNI(`*`) router.
@@ -829,7 +1064,8 @@ func routerHTTPSPathPrefix(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "PathPrefix(`/`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls10",
+				Options:         "tls10",
+				ResolvedOptions: "tls10",
 			},
 		},
 	}
@@ -843,7 +1079,8 @@ func routerHTTPS(conf *runtime.Configuration) {
 			Service:     "http",
 			Rule:        "Host(`foo.bar`)",
 			TLS: &dynamic.RouterTLSConfig{
-				Options: "tls12",
+				Options:         "tls12",
+				ResolvedOptions: "tls12",
 			},
 		},
 	}
@@ -1082,88 +1319,73 @@ func checkHTTPSTLS12(addr string, timeout time.Duration) error {
 	return checkHTTPS(addr, timeout, tls.VersionTLS12)
 }
 
-func TestPostgres(t *testing.T) {
-	router, err := NewRouter()
-	require.NoError(t, err)
+// buildClientHelloRecord captures a real TLS ClientHello record from Go's TLS stack
+// for the given serverName.
+// It returns the raw record bytes and the byte offset of the SNI value within those bytes.
+func buildClientHelloRecord(t *testing.T, serverName string) []byte {
+	t.Helper()
 
-	// This test requires to have a TLS route, but does not actually check the
-	// content of the handler. It would require to code a TLS handshake to
-	// check the SNI and content of the handlerFunc.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
-	require.NoError(t, err)
+	serverConn, clientConn := net.Pipe()
 
-	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-		_, _ = conn.Write([]byte("OK"))
-		_ = conn.Close()
-	}))
-	require.NoError(t, err)
+	recordCh := make(chan []byte, 1)
+	go func() {
+		buf := make([]byte, 65536)
+		n, _ := serverConn.Read(buf)
+		_ = serverConn.Close()
+		recordCh <- buf[:n]
+	}()
 
-	mockConn := NewMockConn()
-	go router.ServeTCP(mockConn)
+	go func() {
+		tlsConn := tls.Client(clientConn, &tls.Config{
+			ServerName:         serverName,
+			InsecureSkipVerify: true, //nolint:gosec
+		})
+		_ = tlsConn.Handshake()
+		_ = clientConn.Close()
+	}()
 
-	mockConn.dataRead <- PostgresStartTLSMsg
-	b := <-mockConn.dataWrite
-	require.Equal(t, PostgresStartTLSReply, b)
+	record := <-recordCh
 
-	mockConn = NewMockConn()
-	go router.ServeTCP(mockConn)
-
-	mockConn.dataRead <- []byte("HTTP")
-	b = <-mockConn.dataWrite
-	require.Equal(t, []byte("OK"), b)
+	return record
 }
 
-type MockConn struct {
-	dataRead  chan []byte
-	dataWrite chan []byte
+type applyRouter func(conf *runtime.Configuration)
+
+type checkRouter func(addr string, timeout time.Duration) error
+
+type httpForwarder struct {
+	net.Listener
+
+	connChan chan net.Conn
+	errChan  chan error
 }
 
-func NewMockConn() *MockConn {
-	return &MockConn{
-		dataRead:  make(chan []byte),
-		dataWrite: make(chan []byte),
+func newHTTPForwarder(ln net.Listener) *httpForwarder {
+	return &httpForwarder{
+		Listener: ln,
+		connChan: make(chan net.Conn),
+		errChan:  make(chan error),
 	}
 }
 
-func (m *MockConn) Read(b []byte) (n int, err error) {
-	temp := <-m.dataRead
-	copy(b, temp)
-	return len(temp), nil
-}
+// Close closes the Listener.
+func (h *httpForwarder) Close() error {
+	h.errChan <- http.ErrServerClosed
 
-func (m *MockConn) Write(b []byte) (n int, err error) {
-	m.dataWrite <- b
-	return len(b), nil
-}
-
-func (m *MockConn) Close() error {
-	close(m.dataRead)
-	close(m.dataWrite)
 	return nil
 }
 
-func (m *MockConn) LocalAddr() net.Addr {
-	return nil
+// ServeTCP uses the connection to serve it later in "Accept".
+func (h *httpForwarder) ServeTCP(conn traefiktcp.WriteCloser) {
+	h.connChan <- conn
 }
 
-func (m *MockConn) RemoteAddr() net.Addr {
-	return &net.TCPAddr{}
-}
-
-func (m *MockConn) SetDeadline(t time.Time) error {
-	return nil
-}
-
-func (m *MockConn) SetReadDeadline(t time.Time) error {
-	return nil
-}
-
-func (m *MockConn) SetWriteDeadline(t time.Time) error {
-	return nil
-}
-
-func (m *MockConn) CloseWrite() error {
-	close(m.dataRead)
-	close(m.dataWrite)
-	return nil
+// Accept retrieves a served connection in ServeTCP.
+func (h *httpForwarder) Accept() (net.Conn, error) {
+	select {
+	case conn := <-h.connChan:
+		return conn, nil
+	case err := <-h.errChan:
+		return nil, err
+	}
 }

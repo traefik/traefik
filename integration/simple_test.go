@@ -949,7 +949,7 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	s.traefikCmd(withConfigFile(file))
 
 	// All errors
-	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"]`))
 	require.NoError(s.T(), err)
 
 	// router3 has an error because it uses an unknown entrypoint
@@ -957,11 +957,11 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	require.NoError(s.T(), err)
 
 	// router4 is enabled, but in warning state because its tls options conf was messed up
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
 	require.NoError(s.T(), err)
 
 	// router5 is disabled because its middleware conf is broken
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router5@file", 1000*time.Millisecond, try.BodyContains())
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router5@file", 1000*time.Millisecond, try.BodyContains())
 	require.NoError(s.T(), err)
 }
 
@@ -2365,6 +2365,317 @@ func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
 	}
 }
 
+func (s *SimpleSuite) TestDDOS() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	file := s.adaptFile("fixtures/simple_ddos.toml", struct{}{})
+
+	_, output := s.cmdTraefik(withConfigFile(file))
+
+	defer func() {
+		if s.T().Failed() {
+			s.T().Log("---- Traefik Logs ----")
+			s.T().Log(output)
+		}
+	}()
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
+
+	// Try with an http router.
+	conn, err := net.Dial("tcp", "127.0.0.1:8000")
+	require.NoError(s.T(), err)
+
+	waitForWritePartial(s.T(), conn)
+
+	// Try with a tcp router only.
+	conn, err = net.Dial("tcp", "127.0.0.1:8001")
+	require.NoError(s.T(), err)
+
+	waitForWritePartial(s.T(), conn)
+}
+
+func waitForWritePartial(t *testing.T, conn net.Conn) {
+	t.Helper()
+
+	end := make(chan struct{})
+	go func() {
+		if _, err := conn.Write([]byte{0x16, 0x03, 0x03, 0x00, 0x10}); err != nil {
+			require.NoError(t, err)
+		}
+
+		_, err := conn.Read(make([]byte, 1))
+		require.ErrorIs(t, err, io.EOF)
+
+		close(end)
+	}()
+
+	select {
+	case <-end:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatalf("timeout waiting for connection timeout")
+	}
+}
+
+func (s *SimpleSuite) TestAllowACMEByPassRedirect() {
+	// Start a local server that simulates an ACME challenge solver.
+	acmeSolver := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write([]byte("acme-challenge-token"))
+	}))
+	defer acmeSolver.Close()
+
+	file := s.adaptFile("fixtures/simple_acme_bypass_redirect.toml", struct {
+		AcmeSolverURL string
+	}{
+		AcmeSolverURL: acmeSolver.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to be ready with the user-defined ACME challenge router.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("acme-challenge@file"))
+	require.NoError(s.T(), err)
+
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	// ACME challenge path should NOT be redirected — it should reach the solver.
+	resp, err := noRedirectClient.Get("http://127.0.0.1:8888/.well-known/acme-challenge/test-token")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, resp.StatusCode)
+
+	// Normal path should be redirected to HTTPS.
+	resp, err = noRedirectClient.Get("http://127.0.0.1:8888/other-path")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusMovedPermanently, resp.StatusCode)
+}
+
+func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_underscore_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the underscore variant directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
+}
+
+func (s *SimpleSuite) TestFailoverService() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	whoami1IP := s.getComposeServiceIP("whoami1")
+	whoami2IP := s.getComposeServiceIP("whoami2")
+
+	file := s.adaptFile("fixtures/failover.toml", struct {
+		MainServer     string
+		FallbackServer string
+	}{
+		MainServer:     whoami1IP,
+		FallbackServer: whoami2IP,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to be ready
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 2*time.Second, try.BodyContains("failover-service"))
+	require.NoError(s.T(), err)
+
+	// Test 1: When main service is healthy, traffic should go to main
+	var primaryCount, fallbackCount int
+	for range 5 {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		require.NoError(s.T(), err)
+
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+		body, err := io.ReadAll(response.Body)
+		require.NoError(s.T(), err)
+
+		if strings.Contains(string(body), whoami1IP) {
+			primaryCount++
+		}
+		if strings.Contains(string(body), whoami2IP) {
+			fallbackCount++
+		}
+	}
+
+	// All requests should go to the main service (whoami1)
+	assert.Equal(s.T(), 5, primaryCount, "Expected all requests to go to main service")
+	assert.Equal(s.T(), 0, fallbackCount, "Expected no requests to go to fallback service")
+
+	// Test 2: Stop the main service to trigger failover via health check
+	s.composeStop("whoami1")
+
+	// Wait for health check to detect the main service is down
+	time.Sleep(3 * time.Second)
+
+	// Now all traffic should go to the fallback service (whoami2)
+	primaryCount, fallbackCount = 0, 0
+	for range 5 {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		require.NoError(s.T(), err)
+
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+		body, err := io.ReadAll(response.Body)
+		require.NoError(s.T(), err)
+
+		if strings.Contains(string(body), whoami1IP) {
+			primaryCount++
+		}
+		if strings.Contains(string(body), whoami2IP) {
+			fallbackCount++
+		}
+	}
+
+	assert.Equal(s.T(), 0, primaryCount, "Expected no requests to go to main service when down")
+	assert.Equal(s.T(), 5, fallbackCount, "Expected all requests to go to fallback service")
+
+	// Test 3: Restart main service and verify traffic returns to main
+	s.composeUp("whoami1")
+
+	// Wait for health check to detect the main service is back up
+	time.Sleep(3 * time.Second)
+
+	primaryCount, fallbackCount = 0, 0
+	for range 5 {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		require.NoError(s.T(), err)
+
+		response, err := http.DefaultClient.Do(req)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+		body, err := io.ReadAll(response.Body)
+		require.NoError(s.T(), err)
+
+		if strings.Contains(string(body), whoami1IP) {
+			primaryCount++
+		}
+		if strings.Contains(string(body), whoami2IP) {
+			fallbackCount++
+		}
+	}
+
+	// Traffic should return to the main service
+	assert.Equal(s.T(), 5, primaryCount, "Expected all requests to return to main service when back up")
+	assert.Equal(s.T(), 0, fallbackCount, "Expected no requests to go to fallback service")
+
+	// Test 4: Stop both services and verify we get 503
+	s.composeStop("whoami1")
+	s.composeStop("whoami2")
+
+	// Wait for health checks to detect both services are down
+	time.Sleep(3 * time.Second)
+
+	// Request should return 503 Service Unavailable when both services are down
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+	require.NoError(s.T(), err)
+
+	response, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusServiceUnavailable, response.StatusCode)
+}
+
+func (s *SimpleSuite) TestFailoverServiceWithStatusCode() {
+	var mainCallCount, fallbackCallCount atomic.Int32
+
+	// Create a test server that returns 503 to trigger error-based failover
+	mainServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		mainCallCount.Add(1)
+		rw.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = rw.Write([]byte("main service unavailable"))
+	}))
+	defer mainServer.Close()
+
+	// Create a fallback server that returns 200
+	fallbackServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		fallbackCallCount.Add(1)
+		rw.WriteHeader(http.StatusOK)
+
+		_, _ = rw.Write([]byte("fallback service"))
+	}))
+	defer fallbackServer.Close()
+
+	file := s.adaptFile("fixtures/failover_statuscode.toml", struct {
+		MainServer     string
+		FallbackServer string
+	}{
+		MainServer:     mainServer.URL,
+		FallbackServer: fallbackServer.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to be ready and verify the configuration is loaded
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("PathPrefix"))
+	require.NoError(s.T(), err)
+
+	// Make a request - should failover to fallback because main returns 503
+	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("fallback service"))
+	require.NoError(s.T(), err)
+
+	// Main was called but returned 503, triggering failover to fallback
+	assert.GreaterOrEqual(s.T(), mainCallCount.Load(), int32(1), "Main service should have been called at least once")
+	assert.GreaterOrEqual(s.T(), fallbackCallCount.Load(), int32(1), "Fallback service should have been called at least once")
+}
+
 func (s *SimpleSuite) TestServiceMiddleware() {
 	s.createComposeProject("base")
 
@@ -2397,4 +2708,89 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 
 	// The whoami service should have received the X-Custom-Header that was added by the service middleware
 	assert.Contains(s.T(), string(body), "X-Custom-Header: service-middleware-test")
+}
+
+// TestProviderPrecedenceFileWins verifies that, when two providers define
+// routes with the same rule and auto-computed priority, the provider listed
+// first in providers.precedence takes precedence (lower index = higher
+// provider priority).
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - precedence     = ["file", "docker"]  → file is index 0 → wins
+func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
+	s.createComposeProject("providers-precedence")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
+	}{
+		Precedence:         `["file", "docker"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The file provider has higher priority → requests must reach the file backend.
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+}
+
+// TestProviderPrecedenceDockerWins mirrors TestProviderPrecedenceFileWins
+// but reverses the precedence so that the Docker provider wins instead.
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - precedence     = ["docker", "file"]  → docker is index 0 → wins
+func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
+	s.createComposeProject("providers-precedence")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
+	}{
+		Precedence:         `["docker", "file"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The Docker provider has higher priority → requests must reach the whoami container.
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
 }

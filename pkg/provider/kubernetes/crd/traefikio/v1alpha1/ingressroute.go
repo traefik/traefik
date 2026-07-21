@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -13,24 +14,24 @@ type IngressRouteSpec struct {
 	IngressClassName *string `json:"ingressClassName,omitempty"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// Routes defines the list of routes.
 	Routes []Route `json:"routes"`
 	// TLS defines the TLS configuration.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/router/#tls
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#tls
 	TLS *TLS `json:"tls,omitempty"`
 	// ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
 	// When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
-	// More info: https://doc.traefik.io/traefik/v3.6/routing/routers/#parentrefs
+	// More info: https://doc.traefik.io/traefik/v3.7/routing/routers/#parentrefs
 	ParentRefs []IngressRouteRef `json:"parentRefs,omitempty"`
 }
 
 // Route holds the HTTP route configuration.
 type Route struct {
 	// Match defines the router's rule.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/rules-and-priority/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/
 	Match string `json:"match"`
 	// Kind defines the kind of the route.
 	// Rule is the only supported kind.
@@ -38,11 +39,11 @@ type Route struct {
 	// +kubebuilder:validation:Enum=Rule
 	Kind string `json:"kind,omitempty"`
 	// Priority defines the router's priority.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/rules-and-priority/#priority
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#priority
 	// +kubebuilder:validation:Maximum=9223372036854774807
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/rules-and-priority/#rulesyntax
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#rulesyntax
 	//
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	Syntax string `json:"syntax,omitempty"`
@@ -50,51 +51,66 @@ type Route struct {
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
 	Services []Service `json:"services,omitempty"`
 	// Middlewares defines the list of references to Middleware resources.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/middleware/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/middleware/
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 	// Observability defines the observability configuration for a router.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/observability/
-	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty"`
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
+	Observability *RouterObservabilityConfig `json:"observability,omitempty"`
+}
+
+// RouterObservabilityConfig holds the observability configuration for a router.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
+type RouterObservabilityConfig struct {
+	// AccessLogs enables access logs for this router.
+	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	// Metrics enables metrics for this router.
+	Metrics *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	// Tracing enables tracing for this router.
+	Tracing *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	// TraceVerbosity defines the verbosity level of the tracing for this router.
+	// +kubebuilder:validation:Enum=minimal;detailed
+	// +kubebuilder:default=minimal
+	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // TLS holds the TLS configuration.
-// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/overview/
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/overview/
 type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretName string `json:"secretName,omitempty"`
 	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
 	// If not defined, the `default` TLSOption is used.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/tls-options/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-options/
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
 	Store *TLSStoreRef `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/tls/certificate-resolvers/acme/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/tls/certificate-resolvers/acme/
 	CertResolver string `json:"certResolver,omitempty"`
 	// Domains defines the list of domains that will be used to issue certificates.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/tls-certificates/#domains
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#domains
 	Domains []types.Domain `json:"domains,omitempty"`
 }
 
 // TLSOptionRef is a reference to a TLSOption resource.
 type TLSOptionRef struct {
 	// Name defines the name of the referenced TLSOption.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/tlsoption/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsoption/
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced TLSOption.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/tlsoption/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsoption/
 	Namespace string `json:"namespace,omitempty"`
 }
 
 // TLSStoreRef is a reference to a TLSStore resource.
 type TLSStoreRef struct {
 	// Name defines the name of the referenced TLSStore.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/tlsstore/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsstore/
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced TLSStore.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/tlsstore/
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsstore/
 	Namespace string `json:"namespace,omitempty"`
 }
 
@@ -113,7 +129,7 @@ type LoadBalancerSpec struct {
 	// Middlewares defines the list of references to Middleware resources to apply to the service.
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 	// Sticky defines the sticky sessions configuration.
-	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/service/#sticky-sessions
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/load-balancing/service/#sticky-sessions
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.

@@ -8,7 +8,7 @@ description: "Looking to contribute to Traefik Proxy? This guide will show you t
 This guide is for contributors who already have a pull request to submit.
 If you are looking for information on setting up your developer environment
 and creating code to contribute to Traefik Proxy or related projects,
-see the [development guide](https://docs.traefik.io/contributing/building-testing/).
+see the [development guide](./building-testing.md).
 
 Looking for a way to contribute to Traefik Proxy?
 Check out this list of [Priority Issues](https://github.com/traefik/traefik/labels/contributor%2Fwanted),
@@ -46,7 +46,7 @@ Read more about the [Triage process](https://github.com/traefik/contributors-gui
 Merging a PR requires the following steps to be completed before it is merged automatically.
 
 * Make sure your pull request adheres to our best practices. These include:
-    * [Following project conventions](https://github.com/traefik/traefik/blob/master/docs/content/contributing/maintainers-guidelines.md); including using the PR Template.
+    * [Following project conventions](./maintainers-guidelines.md); including using the PR Template.
     * Make small pull requests.
     * Solve only one problem at a time.
     * Comment thoroughly.
@@ -77,6 +77,8 @@ in short, it looks like this:
     * During code review, we ask that you be reasonably responsive,
       if a PR languishes in code review it is at risk of rejection,
       or we may take ownership of the PR and the contributor will become a co-author.
+    * Maintainers may add the `ai/review` label to trigger an automated AI review of the pull request.
+      The review is based on repository-specific guidelines and posted as inline comments.
 * Merge.
     * Success!
 
@@ -224,6 +226,26 @@ In this situation, you can ask the primary reviewer (assignee) whether they want
 to clear out all the comments.
 You do not have to fix every issue raised by every person who feels like commenting,
 but you should answer reasonable comments with an explanation.
+
+## AI-Assisted Code Review
+
+Maintainers may add the `ai/review` label to a pull request to trigger an automated AI code review.
+
+When the label is applied, an AI agent reads the diff and the full content of every changed file,
+then posts inline comments directly on the pull request.
+The review follows repository-specific guidelines covering security, correctness, breaking changes,
+performance, and Go conventions (error wrapping, context propagation, logging, test style, and more).
+
+**What to expect:**
+
+* Comments are categorized by severity: `CRITICAL`, `IMPORTANT`, `MINOR`, or `QUESTION`.
+* The agent checks call sites before flagging a change as unsafe — a finding that does not survive that check will not be posted.
+* Generated files, `//nolint:` directives, and patterns already used consistently across the codebase are not flagged.
+
+**How to respond:**
+
+Treat AI review comments the same way you would a human reviewer's comments.
+If a finding is incorrect or does not apply to your change, explain why in a reply — maintainers read every thread before approving.
 
 ## Common Sense and Courtesy
 

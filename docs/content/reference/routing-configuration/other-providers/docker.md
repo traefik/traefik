@@ -100,7 +100,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 
 #### Service definition
 
---8<-- "content/routing/providers/service-by-label.md"
+{% include-markdown "includes/service-by-label.md" %}
 
 ??? example "Automatic assignment with one Service"
 
@@ -294,7 +294,7 @@ More information about available middlewares in the dedicated [middlewares secti
     ```yaml
     # ...
     # Declaring a middleware
-    traefik.tcp.middlewares.test-inflightconn.amount=10
+    traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10
     # Referencing a middleware
     traefik.tcp.routers.my-service.middlewares=test-inflightconn
     ```

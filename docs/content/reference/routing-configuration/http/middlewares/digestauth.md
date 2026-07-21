@@ -67,12 +67,11 @@ spec:
 
 ### Passwords format
 
-Passwords must be hashed using MD5, SHA1, or BCrypt.
-Use `htpasswd` to generate the passwords.
+Use `htdigest` to generate the passwords.
 
 ### users & usersFile
 
-- If both `users` and `usersFile` are provided, they are merged. The contents of `usersFile` have precedence over the values in users.
+- If both `users` and `usersFile` are provided, they are merged. The values in `users` have precedence over the contents of `usersFile`.
 - Because referencing a file path isn’t feasible on Kubernetes, the `users` & `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the `secret` field.
 
 ### Kubernetes Secrets

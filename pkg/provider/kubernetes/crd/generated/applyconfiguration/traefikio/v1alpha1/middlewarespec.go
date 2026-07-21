@@ -33,13 +33,16 @@ import (
 
 // MiddlewareSpecApplyConfiguration represents a declarative configuration of the MiddlewareSpec type for use
 // with apply.
+//
+// MiddlewareSpec defines the desired state of a Middleware.
 type MiddlewareSpecApplyConfiguration struct {
-	AddPrefix         *dynamic.AddPrefix                `json:"addPrefix,omitempty"`
-	StripPrefix       *dynamic.StripPrefix              `json:"stripPrefix,omitempty"`
-	StripPrefixRegex  *dynamic.StripPrefixRegex         `json:"stripPrefixRegex,omitempty"`
-	ReplacePath       *dynamic.ReplacePath              `json:"replacePath,omitempty"`
-	ReplacePathRegex  *dynamic.ReplacePathRegex         `json:"replacePathRegex,omitempty"`
-	Chain             *ChainApplyConfiguration          `json:"chain,omitempty"`
+	AddPrefix        *dynamic.AddPrefix        `json:"addPrefix,omitempty"`
+	StripPrefix      *dynamic.StripPrefix      `json:"stripPrefix,omitempty"`
+	StripPrefixRegex *dynamic.StripPrefixRegex `json:"stripPrefixRegex,omitempty"`
+	ReplacePath      *dynamic.ReplacePath      `json:"replacePath,omitempty"`
+	ReplacePathRegex *dynamic.ReplacePathRegex `json:"replacePathRegex,omitempty"`
+	Chain            *ChainApplyConfiguration  `json:"chain,omitempty"`
+	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *dynamic.IPWhiteList              `json:"ipWhiteList,omitempty"`
 	IPAllowList       *dynamic.IPAllowList              `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers                  `json:"headers,omitempty"`
@@ -52,14 +55,16 @@ type MiddlewareSpecApplyConfiguration struct {
 	DigestAuth        *DigestAuthApplyConfiguration     `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuthApplyConfiguration    `json:"forwardAuth,omitempty"`
 	InFlightReq       *dynamic.InFlightReq              `json:"inFlightReq,omitempty"`
-	Buffering         *dynamic.Buffering                `json:"buffering,omitempty"`
+	Buffering         *BufferingApplyConfiguration      `json:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreakerApplyConfiguration `json:"circuitBreaker,omitempty"`
 	Compress          *CompressApplyConfiguration       `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert        `json:"passTLSClientCert,omitempty"`
 	Retry             *RetryApplyConfiguration          `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType              `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb                  `json:"grpcWeb,omitempty"`
-	Plugin            map[string]v1.JSON                `json:"plugin,omitempty"`
+	// Plugin defines the middleware plugin configuration.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
+	Plugin map[string]v1.JSON `json:"plugin,omitempty"`
 }
 
 // MiddlewareSpecApplyConfiguration constructs a declarative configuration of the MiddlewareSpec type for use with
@@ -215,8 +220,8 @@ func (b *MiddlewareSpecApplyConfiguration) WithInFlightReq(value dynamic.InFligh
 // WithBuffering sets the Buffering field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Buffering field is set to the value of the last call.
-func (b *MiddlewareSpecApplyConfiguration) WithBuffering(value dynamic.Buffering) *MiddlewareSpecApplyConfiguration {
-	b.Buffering = &value
+func (b *MiddlewareSpecApplyConfiguration) WithBuffering(value *BufferingApplyConfiguration) *MiddlewareSpecApplyConfiguration {
+	b.Buffering = value
 	return b
 }
 

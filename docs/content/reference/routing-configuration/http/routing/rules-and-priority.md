@@ -10,13 +10,11 @@ An HTTP router is in charge of connecting incoming requests to the services that
 Rules are a set of matchers configured with values, that determine if a particular request matches a specific criteria. 
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
-- The character `@` is not authorized in the router name.
-- To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ` or escaped double-quotes ``\"``.
-- Single quotes ' are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
-- Regular Expressions:
-    - Matchers that accept a regexp as their value use a [Go](https://golang.org/pkg/regexp/) flavored syntax.
-    - The usual `AND` (&&) and `OR` (||) logical operators can be used, with the expected precedence rules, as well as parentheses to express complex rules.
-    - The `NOT` (!) operator allows you to invert the matcher.
+- To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes ``\"``.
+    - Single quotes `'` are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
+- Matchers that accept a regular expression (`regexp`) use the [Go flavored syntax](https://golang.org/pkg/regexp/).
+- The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules, as well as parentheses to express complex rules.
+- The NOT (`!`) operator allows you to invert the matcher.
 
 The table below lists all the available matchers:
 
@@ -24,7 +22,7 @@ The table below lists all the available matchers:
 |-----------------------------------------------------------------|:-------------------------------------------------------------------------------|
 | <a id="opt-Headerkey-value" href="#opt-Headerkey-value" title="#opt-Headerkey-value">[```Header(`key`, `value`)```](#header-and-headerregexp)</a> | Matches requests containing a header named `key` set to `value`.               |
 | <a id="opt-HeaderRegexpkey-regexp" href="#opt-HeaderRegexpkey-regexp" title="#opt-HeaderRegexpkey-regexp">[```HeaderRegexp(`key`, `regexp`)```](#header-and-headerregexp)</a> | Matches requests containing a header named `key` matching `regexp`.            |
-| <a id="opt-Hostdomain" href="#opt-Hostdomain" title="#opt-Hostdomain">[```Host(`domain`)```](#host-and-hostregexp)</a> | Matches requests host set to `domain`.                                         |
+| <a id="opt-Hostdomain" href="#opt-Hostdomain" title="#opt-Hostdomain">[```Host(`domain`)```](#host-and-hostregexp)</a> | Matches requests host set to `domain`. Supports wildcard subdomain matching (e.g. `*.example.com`). |
 | <a id="opt-HostRegexpregexp" href="#opt-HostRegexpregexp" title="#opt-HostRegexpregexp">[```HostRegexp(`regexp`)```](#host-and-hostregexp)</a> | Matches requests host matching `regexp`.                                       |
 | <a id="opt-Methodmethod" href="#opt-Methodmethod" title="#opt-Methodmethod">[```Method(`method`)```](#method)</a> | Matches requests method set to `method`.                                       |
 | <a id="opt-Pathpath" href="#opt-Pathpath" title="#opt-Pathpath">[```Path(`path`)```](#path-pathprefix-and-pathregexp)</a> | Matches requests path set to `path`.                                           |
@@ -41,8 +39,8 @@ The `Header` and `HeaderRegexp` matchers allow matching requests that contain sp
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-requests-with-a-Content-Type-header-set-to-applicationyaml" href="#opt-Match-requests-with-a-Content-Type-header-set-to-applicationyaml" title="#opt-Match-requests-with-a-Content-Type-header-set-to-applicationyaml">Match requests with a `Content-Type` header set to `application/yaml`.</a> | ```Header(`Content-Type`, `application/yaml`)``` |
-| <a id="opt-Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml" href="#opt-Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml" title="#opt-Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml">Match requests with a `Content-Type` header set to either `application/json` or `application/yaml`.</a> | ```HeaderRegexp(`Content-Type`, `^application/(json\|yaml)$`)``` |
-| <a id="opt-Match-headers-case-insensitively" href="#opt-Match-headers-case-insensitively" title="#opt-Match-headers-case-insensitively">Match headers [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HeaderRegexp(`Content-Type`, `(?i)^application/(json\|yaml)$`)``` |
+| <a id="opt-Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml" href="#opt-Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml" title="#opt-Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml">Match requests with a `Content-Type` header set to either `application/json` or `application/yaml`.</a> | ```HeaderRegexp(`Content-Type`, `^application/(json|yaml)$`)``` |
+| <a id="opt-Match-headers-case-insensitively" href="#opt-Match-headers-case-insensitively" title="#opt-Match-headers-case-insensitively">Match headers [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HeaderRegexp(`Content-Type`, `(?i)^application/(json|yaml)$`)``` |
 
 ### Host and HostRegexp
 
@@ -54,12 +52,28 @@ If no `Host` is set in the request URL (for example, it's an IP address), these 
 
 These matchers will match the request's host in lowercase.
 
+!!! info "Wildcard subdomain matching"
+
+    The `Host` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
+    It should be preferred over the `HostRegexp` matcher as it allows attaching a TLS option and is more efficient.
+
+    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.    
+
+    This is only available with the **v3 rule syntax** (the default).
+
+!!! info "Exception: a bare wildcard matches every request"
+
+    As an exception to the rules above, a bare `*` is not treated as a subdomain wildcard but as a catch-all:
+    ``Host(`*`)`` matches every request regardless of its host, including requests with no host at all.
+    This mirrors the behaviour of the TCP [``HostSNI(`*`)``](../../tcp/routing/rules-and-priority.md#hostsni-and-hostsniregexp) matcher, so both stay consistent.
+
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-requests-with-Host-set-to-example-com" href="#opt-Match-requests-with-Host-set-to-example-com" title="#opt-Match-requests-with-Host-set-to-example-com">Match requests with `Host` set to `example.com`.</a> | ```Host(`example.com`)``` |
+| <a id="opt-Match-every-request-regardless-of-its-host-see-the-exception-above" href="#opt-Match-every-request-regardless-of-its-host-see-the-exception-above" title="#opt-Match-every-request-regardless-of-its-host-see-the-exception-above">Match every request regardless of its host (see the exception above).</a> | ```Host(`*`)``` |
 | <a id="opt-Match-requests-sent-to-any-subdomain-of-example-com" href="#opt-Match-requests-sent-to-any-subdomain-of-example-com" title="#opt-Match-requests-sent-to-any-subdomain-of-example-com">Match requests sent to any subdomain of `example.com`.</a> | ```HostRegexp(`^.+\.example\.com$`)``` |
-| <a id="opt-Match-requests-with-Host-set-to-either-example-com-or-example-org" href="#opt-Match-requests-with-Host-set-to-either-example-com-or-example-org" title="#opt-Match-requests-with-Host-set-to-either-example-com-or-example-org">Match requests with `Host` set to either `example.com` or `example.org`.</a> | ```HostRegexp(`^example\.(com\|org)$`)``` |
-| <a id="opt-Match-Host-case-insensitively" href="#opt-Match-Host-case-insensitively" title="#opt-Match-Host-case-insensitively">Match `Host` [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HostRegexp(`(?i)^example\.(com\|org)$`)``` |
+| <a id="opt-Match-requests-with-Host-set-to-either-example-com-or-example-org" href="#opt-Match-requests-with-Host-set-to-either-example-com-or-example-org" title="#opt-Match-requests-with-Host-set-to-either-example-com-or-example-org">Match requests with `Host` set to either `example.com` or `example.org`.</a> | ```HostRegexp(`^example\.(com|org)$`)``` |
+| <a id="opt-Match-Host-case-insensitively" href="#opt-Match-Host-case-insensitively" title="#opt-Match-Host-case-insensitively">Match `Host` [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HostRegexp(`(?i)^example\.(com|org)$`)``` |
 
 ### Method
 
@@ -81,8 +95,8 @@ Path are always starting with a `/`, except for `PathRegexp`.
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-products-but-neither-productsshoes-nor-products" href="#opt-Match-products-but-neither-productsshoes-nor-products" title="#opt-Match-products-but-neither-productsshoes-nor-products">Match `/products` but neither `/products/shoes` nor `/products/`.</a> | ```Path(`/products`)``` |
 | <a id="opt-Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale" href="#opt-Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale" title="#opt-Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale">Match `/products` as well as everything under `/products`, such as `/products/shoes`, `/products/` but also `/products-for-sale`.</a> | ```PathPrefix(`/products`)``` |
-| <a id="opt-Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31" href="#opt-Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31" title="#opt-Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31">Match both `/products/shoes` and `/products/socks` with and ID like `/products/shoes/31`.</a> | ```PathRegexp(`^/products/(shoes\|socks)/[0-9]+$`)``` |
-| <a id="opt-Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png" href="#opt-Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png" title="#opt-Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png">Match requests with a path ending in either `.jpeg`, `.jpg` or `.png`.</a> | ```PathRegexp(`\.(jpeg\|jpg\|png)$`)``` |
+| <a id="opt-Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31" href="#opt-Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31" title="#opt-Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31">Match both `/products/shoes` and `/products/socks` with and ID like `/products/shoes/31`.</a> | ```PathRegexp(`^/products/(shoes|socks)/[0-9]+$`)``` |
+| <a id="opt-Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png" href="#opt-Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png" title="#opt-Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png">Match requests with a path ending in either `.jpeg`, `.jpg` or `.png`.</a> | ```PathRegexp(`\.(jpeg|jpg|png)$`)``` |
 | <a id="opt-Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale-case-insensitively" href="#opt-Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale-case-insensitively" title="#opt-Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale-case-insensitively">Match `/products` as well as everything under `/products`, such as `/products/shoes`, `/products/` but also `/products-for-sale`, [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```PathRegexp(`(?i)^/products`)``` |
 
 ### Query and QueryRegexp
@@ -93,9 +107,9 @@ The `Query` and `QueryRegexp` matchers allow matching requests based on query pa
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-requests-with-a-mobile-query-parameter-set-to-true-such-as-in-searchmobiletrue" href="#opt-Match-requests-with-a-mobile-query-parameter-set-to-true-such-as-in-searchmobiletrue" title="#opt-Match-requests-with-a-mobile-query-parameter-set-to-true-such-as-in-searchmobiletrue">Match requests with a `mobile` query parameter set to `true`, such as in `/search?mobile=true`.</a> | ```Query(`mobile`, `true`)``` |
 | <a id="opt-Match-requests-with-a-query-parameter-mobile-that-has-no-value-such-as-in-searchmobile" href="#opt-Match-requests-with-a-query-parameter-mobile-that-has-no-value-such-as-in-searchmobile" title="#opt-Match-requests-with-a-query-parameter-mobile-that-has-no-value-such-as-in-searchmobile">Match requests with a query parameter `mobile` that has no value, such as in `/search?mobile`.</a> | ```Query(`mobile`)``` |
-| <a id="opt-Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes" href="#opt-Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes" title="#opt-Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes">Match requests with a `mobile` query parameter set to either `true` or `yes`.</a> | ```QueryRegexp(`mobile`, `^(true\|yes)$`)``` |
+| <a id="opt-Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes" href="#opt-Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes" title="#opt-Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes">Match requests with a `mobile` query parameter set to either `true` or `yes`.</a> | ```QueryRegexp(`mobile`, `^(true|yes)$`)``` |
 | <a id="opt-Match-requests-with-a-mobile-query-parameter-set-to-any-value-including-the-empty-value" href="#opt-Match-requests-with-a-mobile-query-parameter-set-to-any-value-including-the-empty-value" title="#opt-Match-requests-with-a-mobile-query-parameter-set-to-any-value-including-the-empty-value">Match requests with a `mobile` query parameter set to any value (including the empty value).</a> | ```QueryRegexp(`mobile`, `^.*$`)``` |
-| <a id="opt-Match-query-parameters-case-insensitively" href="#opt-Match-query-parameters-case-insensitively" title="#opt-Match-query-parameters-case-insensitively">Match query parameters [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```QueryRegexp(`mobile`, `(?i)^(true\|yes)$`)``` |
+| <a id="opt-Match-query-parameters-case-insensitively" href="#opt-Match-query-parameters-case-insensitively" title="#opt-Match-query-parameters-case-insensitively">Match query parameters [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```QueryRegexp(`mobile`, `(?i)^(true|yes)$`)``` |
 
 ### ClientIP
 
@@ -117,9 +131,9 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
     RuleSyntax option is deprecated and will be removed in the next major version.
     Please do not use this field and rewrite the router rules to use the v3 syntax.
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). the `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis. This allows to have heterogeneous router configurations and ease migration.
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). The `ruleSyntax` option allows configuring the rule syntax to be used for parsing the rule on a per-router basis. This allows having heterogeneous router configurations and eases migration.
 
-The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
+The default value of the `ruleSyntax` option is inherited from the `core.defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `core.defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
 
 #### Configuration Example
 
@@ -142,10 +156,10 @@ http:
 [http.routers]
   [http.routers.Router-v3]
     rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
-    ruleSyntax = v3
+    ruleSyntax = "v3"
   [http.routers.Router-v2]
     rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
-    ruleSyntax = v2
+    ruleSyntax = "v2"
 ```
 
 ```yaml tab="Labels"
@@ -229,8 +243,14 @@ Negative priority values are supported.
 
 Traefik reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
 
-- `(MaxInt32 - 1000)` for 32-bit platforms,
-- `(MaxInt64 - 1000)` for 64-bit platforms.
+- `(MaxInt32 - 1000)` = `2147482647` for 32-bit platforms,
+- `(MaxInt64 - 1000)` = `9223372036854774807` for 64-bit platforms.
+
+!!! info "Providers Precedence"
+
+    When two routes from **different providers** share the same numeric priority,
+    Traefik uses the [`providers.precedence`](../../../install-configuration/providers/overview.md#providers-precedence) install configuration option to determine which route takes precedence.
+    The provider listed first in `precedence` wins the tie.
 
 ### Example
 

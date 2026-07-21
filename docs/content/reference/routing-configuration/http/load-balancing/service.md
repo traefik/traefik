@@ -40,9 +40,9 @@ http:
           path: "/health"
           interval: "10s"
           timeout: "3s"
-        passiveHealthcheck:
+        passiveHealthCheck:
           failureWindow: "3s"
-          maxFailedAttempts: "3"
+          maxFailedAttempts: 3
         passHostHeader: true
         serversTransport: "customTransport@file"
         responseForwarding:
@@ -64,9 +64,9 @@ http:
       interval = "10s"
       timeout = "3s"
 
-    [http.services.my-service.loadBalancer.passiveHealthcheck]
+    [http.services.my-service.loadBalancer.passiveHealthCheck]
       failureWindow = "3s"
-      maxFailedAttempts = "3"
+      maxFailedAttempts = 3
     
     passHostHeader = true
     serversTransport = "customTransport@file"
@@ -85,8 +85,8 @@ labels:
   - "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health"
   - "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s"
   - "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s"
-  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s"
-  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.failureWindow=3s"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.maxFailedAttempts=3"
   - "traefik.http.services.my-service.loadBalancer.passHostHeader=true"
   - "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file"
   - "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
@@ -103,8 +103,8 @@ labels:
     "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health",
     "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s",
     "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
-    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s",
-    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.failureWindow=3s",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthCheck.maxFailedAttempts=3",
     "traefik.http.services.my-service.loadBalancer.passHostHeader=true",
     "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file",
     "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
@@ -120,11 +120,11 @@ labels:
 | <a id="opt-strategy" href="#opt-strategy" title="#opt-strategy">`strategy`</a> | Load balancing strategy for distributing traffic among servers. Valid values: `wrr` (default), `p2c`, `hrw`, `leasttime`.                                                                                                                                                                                                                                                                     | No       |
 | <a id="opt-sticky" href="#opt-sticky" title="#opt-sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
-| <a id="opt-passiveHealthcheck" href="#opt-passiveHealthcheck" title="#opt-passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
+| <a id="opt-passiveHealthCheck" href="#opt-passiveHealthCheck" title="#opt-passiveHealthCheck">`passiveHealthCheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
 | <a id="opt-passHostHeader" href="#opt-passHostHeader" title="#opt-passHostHeader">`passHostHeader`</a> | Allows forwarding of the client Host header to server. By default, `passHostHeader` is true.                                                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
 | <a id="opt-responseForwarding" href="#opt-responseForwarding" title="#opt-responseForwarding">`responseForwarding`</a> | Configures how Traefik forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
-| <a id="opt-responseForwarding-FlushInterval" href="#opt-responseForwarding-FlushInterval" title="#opt-responseForwarding-FlushInterval">`responseForwarding.FlushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
+| <a id="opt-responseForwarding-flushInterval" href="#opt-responseForwarding-flushInterval" title="#opt-responseForwarding-flushInterval">`responseForwarding.flushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
 
 #### Servers
 
@@ -292,15 +292,15 @@ To propagate status changes (e.g. all servers of this service are down) upwards,
 
 Below are the available options for the health check mechanism:
 
-| Field               | Description                                                                                                                   | Default | Required |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Defines the server URL path for the health check endpoint.                                                                    | ""      | Yes      |
+| Field                                                                                                              | Description                                                                                                                   | Default | Required |
+|--------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|---------|----------|
+| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Defines the server URL path for the health check endpoint. The configured path must be relative URL.                          | ""      | Yes      |
 | <a id="opt-scheme" href="#opt-scheme" title="#opt-scheme">`scheme`</a> | Replaces the server URL scheme for the health check endpoint.                                                                 |         | No       |
 | <a id="opt-mode" href="#opt-mode" title="#opt-mode">`mode`</a> | If defined to `grpc`, will use the gRPC health check protocol to probe the server.                                            | http    | No       |
 | <a id="opt-hostname" href="#opt-hostname" title="#opt-hostname">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
 | <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server URL port for the health check endpoint.                                                                   |         | No       |
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                          | 30s     | No       |
-| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s     | No       |
+| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | -       | No       |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
 | <a id="opt-headers" href="#opt-headers" title="#opt-headers">`headers`</a> | Defines custom headers to be sent to the health check endpoint.                                                               |         | No       |
 | <a id="opt-followRedirects" href="#opt-followRedirects" title="#opt-followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
@@ -336,7 +336,7 @@ When set to a negative number, the cookie expires immediately.
 By default, the affinity cookie is created without those flags.
 One however can change that through configuration.
 
-`SameSite` can be `none`, `lax`, `strict` or empty.
+`SameSite` can be `none`, `lax`, `strict` or empty. Values are case-insensitive.
 
 #### Domain
 
@@ -467,7 +467,7 @@ curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
 
 ### Passive Health Check
 
-The `passiveHealthcheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
+The `passiveHealthCheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
 
 Passive health checks rely on real traffic to assess server health.
 Traefik forwards requests as usual and evaluates each response or timeout,
@@ -482,6 +482,67 @@ Below are the available options for the passive health check mechanism:
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
 | <a id="opt-failureWindow" href="#opt-failureWindow" title="#opt-failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
 | <a id="opt-maxFailedAttempts" href="#opt-maxFailedAttempts" title="#opt-maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
+
+### Middlewares
+
+You can attach a list of [middlewares](../middlewares/overview.md) to each HTTP service.
+The middlewares will take effect for all requests handled by the service, regardless of which router forwards the request.
+
+!!! info "Middlewares Execution Order"
+
+    When both a router and a service have middlewares configured, the router middlewares are applied first, followed by the service middlewares.
+    This means the request passes through router middlewares before reaching service middlewares.
+
+!!! info "Supported Providers"
+
+    Service-level middlewares can be configured with the [File](../../../install-configuration/providers/others/file.md), [Docker](../../other-providers/docker.md), [Swarm](../../other-providers/docker.md), [Kubernetes IngressRoute](../../kubernetes/crd/http/ingressroute.md), [Kubernetes Ingress](../../kubernetes/ingress.md), and [Kubernetes Gateway API](../../kubernetes/gateway-api.md) providers.
+
+??? example "Attaching Middlewares to a Service -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          middlewares:
+            - add-header
+          loadBalancer:
+            servers:
+              - url: "http://127.0.0.1:8080"
+
+      middlewares:
+        add-header:
+          headers:
+            customRequestHeaders:
+              X-Custom-Header: "service-middleware"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service]
+        middlewares = ["add-header"]
+        [http.services.my-service.loadBalancer]
+          [[http.services.my-service.loadBalancer.servers]]
+            url = "http://127.0.0.1:8080"
+
+    [http.middlewares]
+      [http.middlewares.add-header.headers]
+        [http.middlewares.add-header.headers.customRequestHeaders]
+          X-Custom-Header = "service-middleware"
+    ```
+
+??? example "Attaching Middlewares to a Service -- Using [Docker Labels](../../other-providers/docker.md)"
+
+    ```yaml
+    labels:
+      # Define the middleware
+      - "traefik.http.middlewares.add-header.headers.customRequestHeaders.X-Custom-Header=service-middleware"
+      # Attach middleware to the service (at service level, not loadBalancer level)
+      - "traefik.http.services.my-service.middlewares=add-header"
+      # Configure the service
+      - "traefik.http.services.my-service.loadbalancer.server.port=8080"
+    ```
 
 ## Advanced Service Types
 
@@ -760,7 +821,7 @@ The `mirroring` service type mirrors requests sent to a service to other service
 !!! info "Supported Providers"
 
     This service type can be defined currently with the [File](../../../install-configuration/providers/others/file.md) provider or [IngressRoute](../../../routing-configuration/kubernetes/crd/http/ingressroute.md).
-    
+
 ```yaml tab="Structured (YAML)"
 ## Routing configuration
 http:
@@ -887,15 +948,19 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-### Failover 
+### Failover
 
-The `failover` service type forwards all requests to a fallback service when the main service becomes unreachable.
+The `failover` service type forwards requests to a fallback service when the main service is unavailable.
+Failover can be triggered in two ways:
+
+- **Health check-based**: When the main service becomes unreachable based on [health checks](#health-check).
+- **Status code-based**: When the main service responds with specific HTTP status codes defined in the [errors](#errors) configuration.
 
 !!! info "Relation to HealthCheck"
     The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
 
-!!! info "Supported Provider"
-    This service type can currently only be defined with the [File](../../../install-configuration/providers/others/file.md) provider.
+!!! info "Supported Providers"
+    This service type can be defined with the [File](../../../install-configuration/providers/others/file.md) and [Kubernetes CRD](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
 
 #### HealthCheck
 
@@ -905,7 +970,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
+    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md). 
 
 ```yaml tab="Structured (YAML)"
 ## Routing configuration
@@ -940,15 +1005,15 @@ http:
 ## Routing configuration
 [http.services]
   [http.services.app]
-    [http.services.app.failover.healthCheck]
     [http.services.app.failover]
       service = "main"
       fallback = "backup"
+      [http.services.app.failover.healthCheck]
 
   [http.services.main]
     [http.services.main.loadBalancer]
       [http.services.main.loadBalancer.healthCheck]
-        path = "/health"
+        path = "/status"
         interval = "10s"
         timeout = "3s"
       [[http.services.main.loadBalancer.servers]]
@@ -957,9 +1022,163 @@ http:
   [http.services.backup]
     [http.services.backup.loadBalancer]
       [http.services.backup.loadBalancer.healthCheck]
-        path = "/health"
+        path = "/status"
         interval = "10s"
         timeout = "3s"
       [[http.services.backup.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
+```
+
+#### Errors
+
+The `errors` option enables status code-based failover.
+When the main service responds with an HTTP status code matching one of the configured ranges, Traefik automatically retries the request on the fallback service.
+
+To support request replay, the request body is buffered up to `maxRequestBodyBytes`.
+Requests with bodies larger than this limit receive a `413 Request Entity Too Large` response.
+
+Below is a list of options available for the `errors` option and an example of how to configure it for a failover service:
+
+| Field                 | Description                                                                                                       | Default |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------|---------|
+| <a id="opt-status-2" href="#opt-status-2" title="#opt-status-2">`status`</a> | List of HTTP status code ranges that trigger failover. Supports single codes (`"500"`) and ranges (`"500-504"`).  | None    |
+| <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum request body size (in bytes) to buffer for replay to the fallback service. Set to `-1` for no limit.      | `-1`    |
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    app:
+      failover:
+        service: main
+        fallback: backup
+        errors:
+          status:
+            - "500-504"
+          maxRequestBodyBytes: 1048576
+
+    main:
+      loadBalancer:
+        servers:
+          - url: "http://private-ip-server-1/"
+
+    backup:
+      loadBalancer:
+        servers:
+          - url: "http://private-ip-server-2/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.failover]
+      service = "main"
+      fallback = "backup"
+      [http.services.app.failover.errors]
+        status = ["500-504"]
+        maxRequestBodyBytes = 1048576
+
+  [http.services.main]
+    [http.services.main.loadBalancer]
+      [[http.services.main.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.backup]
+    [http.services.backup.loadBalancer]
+      [[http.services.backup.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Chaining Failover Services
+
+Failover services can be chained together for multi-level redundancy.
+In the following example, if the primary service fails, traffic goes to the secondary service.
+If both primary and secondary fail, traffic goes to the tertiary service.
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    app:
+      failover:
+        healthCheck: {}
+        service: primary-failover
+        fallback: tertiary
+
+    primary-failover:
+      failover:
+        healthCheck: {}
+        service: primary
+        fallback: secondary
+
+    primary:
+      loadBalancer:
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://primary-server/"
+
+    secondary:
+      loadBalancer:
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://secondary-server/"
+
+    tertiary:
+      loadBalancer:
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://tertiary-server/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.failover]
+      service = "primary-failover"
+      fallback = "tertiary"
+      [http.services.app.failover.healthCheck]
+
+  [http.services.primary-failover]
+    [http.services.primary-failover.failover]
+      service = "primary"
+      fallback = "secondary"
+      [http.services.primary-failover.failover.healthCheck]
+
+  [http.services.primary]
+    [http.services.primary.loadBalancer]
+      [http.services.primary.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.primary.loadBalancer.servers]]
+        url = "http://primary-server/"
+
+  [http.services.secondary]
+    [http.services.secondary.loadBalancer]
+      [http.services.secondary.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.secondary.loadBalancer.servers]]
+        url = "http://secondary-server/"
+
+  [http.services.tertiary]
+    [http.services.tertiary.loadBalancer]
+      [http.services.tertiary.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.tertiary.loadBalancer.servers]]
+        url = "http://tertiary-server/"
 ```

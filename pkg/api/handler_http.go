@@ -17,8 +17,9 @@ import (
 type routerRepresentation struct {
 	*runtime.RouterInfo
 
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Provider    string `json:"provider,omitempty"`
+	PriorityStr string `json:"priorityStr,omitempty"`
 }
 
 func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresentation {
@@ -27,9 +28,10 @@ func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresen
 	}
 
 	return routerRepresentation{
-		RouterInfo: rt,
-		Name:       name,
-		Provider:   getProviderName(name),
+		RouterInfo:  rt,
+		Name:        name,
+		Provider:    getProviderName(name),
+		PriorityStr: strconv.FormatInt(int64(rt.Priority), 10),
 	}
 }
 
@@ -69,7 +71,7 @@ func newMiddlewareRepresentation(name string, mi *runtime.MiddlewareInfo) middle
 	}
 }
 
-func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]routerRepresentation, 0, len(h.runtimeConfiguration.Routers))
 
 	query := request.URL.Query()
@@ -100,7 +102,7 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 	scapedRouterID := mux.Vars(request)["routerID"]
 
 	routerID, err := url.PathUnescape(scapedRouterID)
@@ -126,7 +128,7 @@ func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]serviceRepresentation, 0, len(h.runtimeConfiguration.Services))
 
 	query := request.URL.Query()
@@ -157,7 +159,7 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getService(rw http.ResponseWriter, request *http.Request) {
 	scapedServiceID := mux.Vars(request)["serviceID"]
 
 	serviceID, err := url.PathUnescape(scapedServiceID)
@@ -183,7 +185,7 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 	results := make([]middlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
 
 	query := request.URL.Query()
@@ -214,7 +216,7 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
 	scapedMiddlewareID := mux.Vars(request)["middlewareID"]
 
 	middlewareID, err := url.PathUnescape(scapedMiddlewareID)

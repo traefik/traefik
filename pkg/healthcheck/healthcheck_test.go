@@ -20,8 +20,6 @@ import (
 
 const delta float64 = 1e-10
 
-func pointer[T any](v T) *T { return &v }
-
 func TestNewServiceHealthChecker_durations(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -146,6 +144,14 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 			expTarget:   "http://backend1:80/test",
 			expHostname: "backend1:80",
 			expMethod:   http.MethodGet,
+		},
+		{
+			desc:      "path is an ablsolute URL",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "http://backend2/health?powpow=do",
+			},
+			expError: true,
 		},
 		{
 			desc:      "path with param",
@@ -289,7 +295,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 
 	config := &dynamic.ServerHealthCheck{
 		Path:            "/path",
-		FollowRedirects: pointer(false),
+		FollowRedirects: new(false),
 		Interval:        dynamic.DefaultHealthCheckInterval,
 		Timeout:         dynamic.DefaultHealthCheckTimeout,
 	}
@@ -430,7 +436,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 				Status:            test.status,
 				Path:              "/path",
 				Interval:          ptypes.Duration(500 * time.Millisecond),
-				UnhealthyInterval: pointer(ptypes.Duration(500 * time.Millisecond)),
+				UnhealthyInterval: new(ptypes.Duration(500 * time.Millisecond)),
 				Timeout:           ptypes.Duration(499 * time.Millisecond),
 			}
 
@@ -439,12 +445,9 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
 
 			wg := sync.WaitGroup{}
-			wg.Add(1)
-
-			go func() {
+			wg.Go(func() {
 				hc.Launch(ctx)
-				wg.Done()
-			}()
+			})
 
 			// Wait for expected health check events using channel synchronization.
 			for i := range expectedEvents {
@@ -499,7 +502,7 @@ func TestDifferentIntervals(t *testing.T) {
 		Mode:              "http",
 		Path:              "/path",
 		Interval:          ptypes.Duration(500 * time.Millisecond),
-		UnhealthyInterval: pointer(ptypes.Duration(50 * time.Millisecond)),
+		UnhealthyInterval: new(ptypes.Duration(50 * time.Millisecond)),
 		Timeout:           ptypes.Duration(499 * time.Millisecond),
 	}
 
@@ -508,12 +511,9 @@ func TestDifferentIntervals(t *testing.T) {
 	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
+	wg.Go(func() {
 		hc.Launch(ctx)
-		wg.Done()
-	}()
+	})
 
 	select {
 	case <-time.After(2 * time.Second):

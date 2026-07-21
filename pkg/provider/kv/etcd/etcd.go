@@ -11,6 +11,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
+// ProviderName is the Etcd provider name.
+const ProviderName = "etcd"
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
@@ -44,5 +47,5 @@ func (p *Provider) Init() error {
 		}
 	}
 
-	return p.Provider.Init(etcdv3.StoreName, "etcd", config)
+	return p.Provider.Init(etcdv3.StoreName, ProviderName, config)
 }

@@ -8,6 +8,9 @@ on:
       - '.github/workflows/check_doc.yaml'
       - 'docs/**'
 
+permissions:
+  contents: read
+
 jobs:
 
   docs:
@@ -18,7 +21,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Install markdownlint
         run: |

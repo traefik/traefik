@@ -8,6 +8,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv"
 )
 
+// ProviderName is the ZooKeeper provider name.
+const ProviderName = "zookeeper"
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
@@ -32,5 +35,5 @@ func (p *Provider) Init() error {
 		Password:          p.Password,
 	}
 
-	return p.Provider.Init(zookeeper.StoreName, "zookeeper", config)
+	return p.Provider.Init(zookeeper.StoreName, ProviderName, config)
 }

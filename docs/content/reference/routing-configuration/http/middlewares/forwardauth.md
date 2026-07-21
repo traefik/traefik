@@ -54,15 +54,16 @@ spec:
 ## Configuration Options
 
 | Field                                                                                                                                          | Description                                                                                                                                                                                                                                                                 | Default | Required |
-|:-----------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+|:-----------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address.                                                                                                                                                                                                                                              | "" | Yes      |
-| <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers.                                                                                                                                                                                                                                          | false | No      |
+| <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers.                                                                                                                                                                                                                                          <br/>The trustForwardHeader option is deprecated and will be removed in the next major version. <br/>More information [here](#trustforwardheader)| - | No      |
 | <a id="opt-authResponseHeaders" href="#opt-authResponseHeaders" title="#opt-authResponseHeaders">`authResponseHeaders`</a> | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.                                                                                                                                   | [] | No      |
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex).                                                     | "" | No      |
 | <a id="opt-authRequestHeaders" href="#opt-authRequestHeaders" title="#opt-authRequestHeaders">`authRequestHeaders`</a> | List of the headers to copy from the request to the authentication server. <br /> It allows filtering headers that should not be passed to the authentication server. <br /> If not set or empty, then all request headers are passed.                                      | [] | No      |
 | <a id="opt-addAuthCookiesToResponse" href="#opt-addAuthCookiesToResponse" title="#opt-addAuthCookiesToResponse">`addAuthCookiesToResponse`</a> | List of cookies to copy from the authentication server to the response, replacing any existing conflicting cookie from the forwarded response.<br /> Please note that all backend cookies matching the configured list will not be added to the response.                   | [] | No      |
 | <a id="opt-forwardBody" href="#opt-forwardBody" title="#opt-forwardBody">`forwardBody`</a> | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Traefik before forwarding, this breaks streaming.                                                                                                                                          | false | No      |
-| <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). If left unset, the request body size is unrestricted which can have performance or security implications. < br/>More information [here](#maxbodysize). | -1 | No      |
+| <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). If left unset, the request body size is unrestricted which can have performance or security implications. <br/>More information [here](#maxbodysize). | -1 | No      |
+| <a id="opt-maxResponseBodySize" href="#opt-maxResponseBodySize" title="#opt-maxResponseBodySize">`maxResponseBodySize`</a> | Set the `maxResponseBodySize` to limit the response body size from the authentication server in bytes. If the response body exceeds this limit, it returns a 401 (unauthorized). If left unset, the response body size is unrestricted which can have performance or security implications. <br/>More information [here](#maxresponsebodysize).| - | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Defines a header field to store the authenticated user.                                                                                                                                                                                                                     | "" | No      |
 | <a id="opt-preserveLocationHeader" href="#opt-preserveLocationHeader" title="#opt-preserveLocationHeader">`preserveLocationHeader`</a> | Defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server.                                                                                                                                          | false | No      |
 | <a id="opt-preserveRequestMethod" href="#opt-preserveRequestMethod" title="#opt-preserveRequestMethod">`preserveRequestMethod`</a> | Defines whether to preserve the original request method while forwarding the request to the authentication server.                                                                                                                                                          | false | No      |
@@ -115,6 +116,36 @@ maxBodySize: 104857600  # 100MB in bytes
 - **API Endpoints**: Consider your largest expected JSON/XML payload + buffer
 - **File Uploads**: Set based on your maximum expected file size
 - **High-Traffic Services**: Use smaller limits to prevent resource exhaustion
+
+### maxResponseBodySize
+
+The `maxResponseBodySize` option defines the maximum allowed response body size in bytes from the authentication server.
+If the response body exceeds the configured limit, the request is rejected with a 401 (Unauthorized) status.
+If left unset, the request body size is unrestricted which can have performance or security implications.
+
+!!! warning
+
+    It is strongly recommended to set this option to a suitable value.
+    Not setting it (or setting it to `-1`) allows unlimited response body sizes which can lead to DoS attacks and memory exhaustion.
+
+### trustForwardHeader
+
+!!! warning
+
+    `trustForwardHeader` option is deprecated and will be removed in the next major version.
+    
+    Configure the trusted IPs at the [EntryPoint level](../../../install-configuration/entrypoints.md#forwarded-headers) using `forwardedHeaders.trustedIPs`, 
+    and set `trustForwardHeader` to `true` on this middleware.
+
+    With this setup, the EntryPoint is responsible for sanitizing incoming `X-Forwarded-*` headers:
+    it strips any such headers sent by untrusted clients and only preserves those coming from trusted upstream proxies.
+    By the time the ForwardAuth middleware processes the request, all `X-Forwarded-*` headers are guaranteed to be trustworthy,
+    including those intentionally added by other middlewares in the chain — for example, the `X-Forwarded-Prefix` header set by the [StripPrefix](stripprefix.md) middleware.
+
+    If `trustForwardHeader` is not explicitly set, Traefik will log a warning at startup and use a legacy behavior where some `X-Forwarded-*` headers (e.g. `X-Forwarded-For`, `X-Forwarded-Proto`) are removed but others (e.g. `X-Forwarded-Prefix`) are forwarded untouched.
+    To silence this warning, explicitly set `trustForwardHeader` to `true` or `false`.
+
+Set the `trustForwardHeader` option to `true` to trust all `X-Forwarded-*` headers.
 
 ## Forward-Request Headers
 

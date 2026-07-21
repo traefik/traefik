@@ -19,7 +19,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.redis.endpoints=true
+--providers.redis.endpoints=127.0.0.1:6379
 ```
 
 ## Configuration Options
@@ -43,9 +43,9 @@ providers:
 | <a id="opt-providers-redis-sentinel-password" href="#opt-providers-redis-sentinel-password" title="#opt-providers-redis-sentinel-password">`providers.redis.sentinel.password`</a> | Defines the password for Sentinel authentication. | "" | No   |
 | <a id="opt-providers-redis-sentinel-latencyStrategy" href="#opt-providers-redis-sentinel-latencyStrategy" title="#opt-providers-redis-sentinel-latencyStrategy">`providers.redis.sentinel.latencyStrategy`</a> | Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy). | false   | No   |
 | <a id="opt-providers-redis-sentinel-randomStrategy" href="#opt-providers-redis-sentinel-randomStrategy" title="#opt-providers-redis-sentinel-randomStrategy">`providers.redis.sentinel.randomStrategy`</a> | Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). | false   | No   |
-| <a id="opt-providers-redis-sentinel-replicaStrategy" href="#opt-providers-redis-sentinel-replicaStrategy" title="#opt-providers-redis-sentinel-replicaStrategy">`providers.redis.sentinel.replicaStrategy`</a> | Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). | false   | No   |
+| <a id="opt-providers-redis-sentinel-replicaStrategy" href="#opt-providers-redis-sentinel-replicaStrategy" title="#opt-providers-redis-sentinel-replicaStrategy">`providers.redis.sentinel.replicaStrategy`</a> | Routes all commands exclusively to replica nodes (mutually exclusive with LatencyStrategy and RandomStrategy). | false   | No   |
 | <a id="opt-providers-redis-sentinel-useDisconnectedReplicas" href="#opt-providers-redis-sentinel-useDisconnectedReplicas" title="#opt-providers-redis-sentinel-useDisconnectedReplicas">`providers.redis.sentinel.useDisconnectedReplicas`</a> | Defines whether to use replicas disconnected with master when cannot get connected replicas. | false   | false   |
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kv.md).
+See the dedicated section in [routing](../../../../reference/routing-configuration/other-providers/kv.md).

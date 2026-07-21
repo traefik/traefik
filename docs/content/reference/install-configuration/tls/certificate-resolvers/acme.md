@@ -79,12 +79,12 @@ ACME certificate resolvers have the following configuration options:
 | <a id="opt-acme-caServer" href="#opt-acme-caServer" title="#opt-acme-caServer">`acme.caServer`</a> | CA server to use. | https://acme-v02.api.letsencrypt.org/directory | No |
 | <a id="opt-acme-preferredChain" href="#opt-acme-preferredChain" title="#opt-acme-preferredChain">`acme.preferredChain`</a> | Preferred chain to use. If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used. | "" | No |
 | <a id="opt-acme-keyType" href="#opt-acme-keyType" title="#opt-acme-keyType">`acme.keyType`</a> | KeyType to use. | "RSA4096" | No |
-| <a id="opt-acme-disableCommonName" href="#opt-acme-disableCommonName" title="#opt-acme-disableCommonName">`acme.disableCommonName`</a> | Disable common name inside CSR and certificates.                                                                                                                                                                                                                        | false                                          | No       |
+| <a id="opt-acme-disableCommonName" href="#opt-acme-disableCommonName" title="#opt-acme-disableCommonName">`acme.disableCommonName`</a> | Disable the common name in the CSR.                                                                                                                                                                                                                        | false                                          | No       |
 | <a id="opt-acme-profile" href="#opt-acme-profile" title="#opt-acme-profile">`acme.profile`</a> | Certificate profile to use. | "" | No |
 | <a id="opt-acme-caCertificates" href="#opt-acme-caCertificates" title="#opt-acme-caCertificates">`acme.caCertificates`</a> | Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list. | [] | No |
 | <a id="opt-acme-caSystemCertPool" href="#opt-acme-caSystemCertPool" title="#opt-acme-caSystemCertPool">`acme.caSystemCertPool`</a> | Defines if the certificates pool must use a copy of the system cert pool. | false | No |
 | <a id="opt-acme-caServerName" href="#opt-acme-caServerName" title="#opt-acme-caServerName">`acme.caServerName`</a> | Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list. | "" | No |
-| <a id="opt-acme-emailAddresses" href="#opt-acme-emailAddresses" title="#opt-acme-emailAddresses">`acme.emailAddresses`</a> | CSR email addresses to use. | "" | No |
+| <a id="opt-acme-emailAddresses" href="#opt-acme-emailAddresses" title="#opt-acme-emailAddresses">`acme.emailAddresses`</a> | CSR email addresses to use. | [] | No |
 | <a id="opt-acme-eab" href="#opt-acme-eab" title="#opt-acme-eab">`acme.eab`</a> | Enable external account binding. | | No |
 | <a id="opt-acme-eab-kid" href="#opt-acme-eab-kid" title="#opt-acme-eab-kid">`acme.eab.kid`</a> | Key identifier from External CA. | "" | No |
 | <a id="opt-acme-eab-hmacEncoded" href="#opt-acme-eab-hmacEncoded" title="#opt-acme-eab-hmacEncoded">`acme.eab.hmacEncoded`</a> | HMAC key from External CA, should be in Base64 URL Encoding without padding format. | "" | No |
@@ -140,11 +140,11 @@ with instructions about which environment variables need to be setup.
 
       Multiple DNS challenge provider are not supported with Traefik, but you can use CNAME to handle that.
       For example, if you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
-      This way, you can obtain certificates for `example.com` with the foo account.
+      This way, you can obtain certificates for `example.org` with the bar account.
 
-??? info "`delayBeforeCheck`"
+??? info "`delayBeforeChecks`"
     By default, the `provider` verifies the TXT record _before_ letting ACME verify.
-    You can delay this operation by specifying a delay (in seconds) with `delayBeforeCheck` (value must be greater than zero).
+    You can delay this operation by specifying a delay (in seconds) with `delayBeforeChecks` (value must be greater than zero).
     This option is useful when internal networks block external DNS queries.      
 
 ### `tlsChallenge`

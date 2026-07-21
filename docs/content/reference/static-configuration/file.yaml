@@ -61,6 +61,7 @@ entryPoints:
       connection:
         - foobar
         - foobar
+      addXForwardedSchemeHeaders: true
     http:
       redirections:
         entryPoint:
@@ -94,6 +95,7 @@ entryPoints:
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42
+      underscoreHeadersStrategy: foobar
     http2:
       maxConcurrentStreams: 42
     http3:
@@ -354,6 +356,7 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
+    maxResponseBodySize: 42
   plugin:
     PluginConf0:
       name0: foobar

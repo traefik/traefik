@@ -47,6 +47,8 @@ func (s *stripPrefixRegex) GetTracingInformation() (string, string) {
 }
 
 func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), s.name, typeName)
+
 	for _, exp := range s.expressions {
 		parts := exp.FindStringSubmatch(req.URL.Path)
 		if len(parts) > 0 && len(parts[0]) > 0 {
@@ -59,16 +61,46 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 			req.URL.Path = ensureLeadingSlash(strings.Replace(req.URL.Path, prefix, "", 1))
 			if req.URL.RawPath != "" {
-				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[len(prefix):])
+				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[encodedPrefixLen(req.URL.RawPath, prefix):])
+			}
+
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			path := req.URL.Path
+			if path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
+			// Stop here if the normalization of the path produces a different path.
+			if path != req.URL.Path {
+				logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
+				http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
 			}
 
 			req.RequestURI = req.URL.RequestURI()
-			s.next.ServeHTTP(rw, req)
-			return
+			break
 		}
 	}
 
 	s.next.ServeHTTP(rw, req)
+}
+
+// encodedPrefixLen returns the number of bytes in rawPath that correspond to
+// the decoded prefix, advancing 3 bytes per %XX sequence and 1 byte otherwise.
+func encodedPrefixLen(rawPath, decodedPrefix string) int {
+	decoded := 0
+	i := 0
+	for i < len(rawPath) && decoded < len(decodedPrefix) {
+		if rawPath[i] == '%' && i+2 < len(rawPath) {
+			i += 3
+		} else {
+			i++
+		}
+		decoded++
+	}
+	return i
 }
 
 func ensureLeadingSlash(str string) string {

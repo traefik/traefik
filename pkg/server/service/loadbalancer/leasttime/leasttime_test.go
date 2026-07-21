@@ -18,8 +18,6 @@ type key string
 
 const serviceName key = "serviceName"
 
-func pointer[T any](v T) *T { return &v }
-
 // responseRecorder tracks which servers handled requests.
 type responseRecorder struct {
 	*httptest.ResponseRecorder
@@ -43,13 +41,13 @@ func TestBalancer(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for range 10 {
@@ -78,11 +76,11 @@ func TestBalancerNoServiceUp(t *testing.T) {
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "first", false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
@@ -100,11 +98,11 @@ func TestBalancerOneServerDown(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), pointer(1), false)
+	}), new(1), false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -124,13 +122,13 @@ func TestBalancerOneServerDownThenUp(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -155,8 +153,8 @@ func TestBalancerOneServerDownThenUp(t *testing.T) {
 func TestBalancerAllServersZeroWeight(t *testing.T) {
 	balancer := New(nil, false)
 
-	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(0), false)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(0), false)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -171,9 +169,9 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(0), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for range 3 {
@@ -192,25 +190,25 @@ func TestBalancerPropagate(t *testing.T) {
 	balancer1.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 	balancer1.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer2 := New(nil, true)
 	balancer2.Add("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "third")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 	balancer2.Add("fourth", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "fourth")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	topBalancer := New(nil, true)
-	topBalancer.Add("balancer1", balancer1, pointer(1), false)
-	topBalancer.Add("balancer2", balancer2, pointer(1), false)
+	topBalancer.Add("balancer1", balancer1, new(1), false)
+	topBalancer.Add("balancer2", balancer2, new(1), false)
 	err := balancer1.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
 	})
@@ -242,12 +240,12 @@ func TestBalancerOneServerFenced(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), true) // fenced
+	}), new(1), true) // fenced
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for range 3 {
@@ -263,8 +261,8 @@ func TestBalancerOneServerFenced(t *testing.T) {
 func TestBalancerAllFencedServers(t *testing.T) {
 	balancer := New(nil, false)
 
-	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(1), true)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(1), true)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -292,12 +290,12 @@ func TestBalancerSticky(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// First request should set cookie.
 	recorder := httptest.NewRecorder()
@@ -334,13 +332,13 @@ func TestBalancerStickyFallback(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Make initial request to establish sticky session with server1.
 	recorder1 := httptest.NewRecorder()
@@ -405,12 +403,12 @@ func TestBalancerStickyFenced(t *testing.T) {
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Establish sticky session with any server.
 	recorder1 := httptest.NewRecorder()
@@ -527,7 +525,7 @@ func TestInflightCounter(t *testing.T) {
 		inflightAtRequest.Store(balancer.handlers[0].inflightCount.Load())
 		rw.Header().Set("server", "test")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Check that inflight count is 0 initially.
 	balancer.handlersMu.RLock()
@@ -560,13 +558,11 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 	updatesPerGoroutine := 20
 
 	for i := range numGoroutines {
-		wg.Add(1)
-		go func(id int) {
-			defer wg.Done()
+		wg.Go(func() {
 			for range updatesPerGoroutine {
-				handler.updateResponseTime(time.Duration(id+1) * time.Millisecond)
+				handler.updateResponseTime(time.Duration(i+1) * time.Millisecond)
 			}
-		}(i)
+		})
 	}
 
 	wg.Wait()
@@ -592,9 +588,7 @@ func TestConcurrentInflightTracking(t *testing.T) {
 	numRequests := 50
 
 	for range numRequests {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			handler.inflightCount.Add(1)
 			defer handler.inflightCount.Add(-1)
 
@@ -608,7 +602,7 @@ func TestConcurrentInflightTracking(t *testing.T) {
 			}
 
 			time.Sleep(1 * time.Millisecond)
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -634,14 +628,14 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		<-blockChan // Wait for signal to proceed.
 		time.Sleep(10 * time.Millisecond)
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Pre-warm both servers to establish equal average response times.
 	for i := range sampleSize {
@@ -661,12 +655,10 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	inflightRequests := 5
 
 	for range inflightRequests {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			recorder := httptest.NewRecorder()
 			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-		}()
+		})
 	}
 
 	// Wait for goroutines to start and increment inflight counters.
@@ -687,9 +679,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	// Launch new requests in background so they don't block.
 	var newWg sync.WaitGroup
 	for range newRequests {
-		newWg.Add(1)
-		go func() {
-			defer newWg.Done()
+		newWg.Go(func() {
 			rec := httptest.NewRecorder()
 			balancer.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 			server := rec.Header().Get("server")
@@ -698,7 +688,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 				save[server]++
 				saveMu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Wait for new requests to start and see the inflight counts.
@@ -734,7 +724,7 @@ func TestTTFBMeasurement(t *testing.T) {
 		rw.Header().Set("server", "slow")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Make multiple requests to build average.
 	for range 5 {
@@ -772,14 +762,14 @@ func TestScoreCalculationWithWeights(t *testing.T) {
 		rw.Header().Set("server", "weighted")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(3), false) // Weight 3
+	}), new(3), false) // Weight 3
 
 	balancer.Add("normal", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "normal")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(1), false) // Weight 1
+	}), new(1), false) // Weight 1
 
 	// Make requests to build up response time averages.
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -807,11 +797,11 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 	// Add two servers with dummy handlers (we test selection logic directly).
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Pre-fill response times directly (10ms average for both servers).
 	for _, h := range balancer.handlers {
@@ -853,7 +843,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 		rw.Header().Set("server", "warm")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Warm up the first server
 	for range 10 {
@@ -867,7 +857,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 		rw.Header().Set("server", "cold")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Cold server should get selected because:
 	// Score for warm: (50 × (1 + 0)) / 1 = 50
@@ -901,14 +891,14 @@ func TestFastServerGetsMoreTraffic(t *testing.T) {
 		rw.Header().Set("server", "fast")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("slow", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(100 * time.Millisecond)
 		rw.Header().Set("server", "slow")
 		rw.WriteHeader(http.StatusOK)
 		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// After just 1 request to each server, the algorithm identifies the fastest server
 	// and routes nearly all subsequent traffic there (converges in ~2 requests).
@@ -931,11 +921,11 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	// Add two servers with dummy handlers (we'll test selection logic directly).
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Pre-fill ring buffers with equal response times (5ms each).
 	for _, h := range balancer.handlers {
@@ -995,19 +985,19 @@ func TestMultipleServersWithSameScore(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	balancer.Add("server3", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "server3")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
+	}), new(1), false)
 
 	// Set all servers to identical response times to trigger tie-breaking.
 	for _, h := range balancer.handlers {
@@ -1047,13 +1037,13 @@ func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 		time.Sleep(15 * time.Millisecond) // 3x longer due to 3x weight
 		rw.Header().Set("server", "weighted")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(3), false) // Weight 3
+	}), new(3), false) // Weight 3
 
 	balancer.Add("normal", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "normal")
 		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false) // Weight 1
+	}), new(1), false) // Weight 1
 
 	// Since response times is proportional to weights, both scores are equal, so WRR tie-breaking will apply.
 	// weighted: score = (15 * 1) / 3 = 5
