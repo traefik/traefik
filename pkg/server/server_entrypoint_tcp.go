@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"expvar"
 	"fmt"
@@ -246,13 +247,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		if err != nil {
 			logger.Error().Err(err).Send()
 
-			var opErr *net.OpError
-			if errors.As(err, &opErr) && opErr.Temporary() {
+			if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Temporary() {
 				continue
 			}
 
-			var urlErr *url.Error
-			if errors.As(err, &urlErr) && urlErr.Temporary() {
+			if urlErr, ok := errors.AsType[*url.Error](err); ok && urlErr.Temporary() {
 				continue
 			}
 
@@ -642,6 +641,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
 		configuration.ForwardedHeaders.NotAppendXForwardedFor,
+		configuration.ForwardedHeaders.AddXForwardedSchemeHeaders,
 		next)
 	if err != nil {
 		return nil, err
@@ -677,6 +677,55 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = denyFragment(handler)
 
+	switch configuration.HTTP.UnderscoreHeadersStrategy {
+	case "", static.UnderscoreHeadersStrategyKeep:
+		// Headers with underscores are forwarded as is.
+	case static.UnderscoreHeadersStrategyDelete:
+		handler = removeHeadersWithUnderscores(handler)
+	case static.UnderscoreHeadersStrategyReject:
+		handler = rejectHeadersWithUnderscores(handler)
+	default:
+		return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
+	}
+
+	var connContext multipleConnContext
+	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = service.AddTransportOnContext(ctx)
+
+		if tlsConn, ok := c.(*tls.Conn); ok {
+			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
+				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+			}
+		}
+
+		return ctx
+	})
+
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
+			cState := &connState{Start: time.Now()}
+			if debugConnection {
+				clientConnectionStatesMu.Lock()
+				clientConnectionStates[getConnKey(c)] = cState
+				clientConnectionStatesMu.Unlock()
+			}
+
+			return context.WithValue(ctx, connStateKey, cState)
+		})
+	}
+
+	var connState func(c net.Conn, state http.ConnState)
+	if debugConnection {
+		connState = func(c net.Conn, state http.ConnState) {
+			clientConnectionStatesMu.Lock()
+			if clientConnectionStates[getConnKey(c)] != nil {
+				clientConnectionStates[getConnKey(c)].State = state.String()
+			}
+			clientConnectionStatesMu.Unlock()
+		}
+	}
+
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
 		Handler:        handler,
@@ -690,37 +739,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
 			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
 		},
-	}
-	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-			cState := &connState{Start: time.Now()}
-			if debugConnection {
-				clientConnectionStatesMu.Lock()
-				clientConnectionStates[getConnKey(c)] = cState
-				clientConnectionStatesMu.Unlock()
-			}
-			return context.WithValue(ctx, connStateKey, cState)
-		}
-
-		if debugConnection {
-			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
-				clientConnectionStatesMu.Lock()
-				if clientConnectionStates[getConnKey(c)] != nil {
-					clientConnectionStates[getConnKey(c)].State = state.String()
-				}
-				clientConnectionStatesMu.Unlock()
-			}
-		}
-	}
-
-	prevConnContext := serverHTTP.ConnContext
-	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
-		if prevConnContext != nil {
-			return prevConnContext(ctx, c)
-		}
-		return ctx
+		ConnContext: connContext.Build(),
+		ConnState:   connState,
 	}
 
 	listener := newHTTPForwarder(ln)
@@ -772,6 +792,33 @@ func denyFragment(h http.Handler) http.Handler {
 			rw.WriteHeader(http.StatusBadRequest)
 
 			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+func removeHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				delete(req.Header, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
 		}
 
 		h.ServeHTTP(rw, req)

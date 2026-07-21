@@ -270,6 +270,11 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		}
 	}
 	in.Service.DeepCopyInto(&out.Service)
+	if in.ErrorRequestHeaders != nil {
+		in, out := &in.ErrorRequestHeaders, &out.ErrorRequestHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -1618,6 +1623,11 @@ func (in *ServersTransportSpec) DeepCopyInto(out *ServersTransportSpec) {
 		*out = new(ForwardingTimeouts)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.PeerCertSANs != nil {
+		in, out := &in.PeerCertSANs, &out.PeerCertSANs
+		*out = make([]tls.SAN, len(*in))
+		copy(*out, *in)
+	}
 	if in.Spiffe != nil {
 		in, out := &in.Spiffe, &out.Spiffe
 		*out = new(dynamic.Spiffe)
@@ -1869,6 +1879,11 @@ func (in *TLSClientConfig) DeepCopyInto(out *TLSClientConfig) {
 	if in.CertificatesSecrets != nil {
 		in, out := &in.CertificatesSecrets, &out.CertificatesSecrets
 		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.PeerCertSANs != nil {
+		in, out := &in.PeerCertSANs, &out.PeerCertSANs
+		*out = make([]tls.SAN, len(*in))
 		copy(*out, *in)
 	}
 	if in.Spiffe != nil {

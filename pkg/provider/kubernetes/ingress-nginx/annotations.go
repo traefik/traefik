@@ -90,6 +90,7 @@ type IngressConfig struct {
 	LimitRPS             *int    `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
 	LimitWhitelist       *string `annotation:"nginx.ingress.kubernetes.io/limit-whitelist"`
 	LimitBurstMultiplier *int    `annotation:"nginx.ingress.kubernetes.io/limit-burst-multiplier"`
+	LimitConnections     *int    `annotation:"nginx.ingress.kubernetes.io/limit-connections"`
 
 	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVHost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`

@@ -61,6 +61,7 @@ type Middleware struct {
 	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -271,6 +272,10 @@ type ErrorPage struct {
 	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
 	// The {url} variable can be used in order to insert the escaped request URL.
 	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+	// ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+	// When nil (not set), all original request headers are forwarded.
+	// Set to an empty list to forward no headers, or list specific headers to forward only those.
+	ErrorRequestHeaders []string `json:"errorRequestHeaders,omitempty" toml:"errorRequestHeaders,omitempty" yaml:"errorRequestHeaders,omitempty" export:"true"`
 
 	// NginxHeaders defines the headers to forward to the Error page service.
 	// NginxHeaders option is unexposed to other providers than the IngressNGINX one.
@@ -361,7 +366,7 @@ type Headers struct {
 	// AccessControlExposeHeaders defines the Access-Control-Expose-Headers values sent in preflight response.
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty" export:"true"`
 	// AccessControlMaxAge defines the time that a preflight request may be cached.
-	AccessControlMaxAge int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
+	AccessControlMaxAge *int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
 	// AddVaryHeader defines whether the Vary header is automatically added/updated when the AccessControlAllowOriginList is set.
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
 	// AllowedHosts defines the fully qualified list of allowed domain names.
@@ -437,7 +442,7 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 		len(h.AccessControlAllowOriginList) != 0 ||
 		len(h.AccessControlAllowOriginListRegex) != 0 ||
 		len(h.AccessControlExposeHeaders) != 0 ||
-		h.AccessControlMaxAge != 0 ||
+		h.AccessControlMaxAge != nil ||
 		h.AddVaryHeader)
 }
 
@@ -951,4 +956,12 @@ type UpstreamVHost struct {
 	// Vars holds provider-resolved custom variables, keyed with their leading "$".
 	// For example: {"$service_name": "my-app", "$namespace": "foo"}.
 	Vars map[string]string `json:"vars,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AppRoot holds the app-root middleware configuration used by the ingress-nginx provider.
+type AppRoot struct {
+	// Path defines the path that should be treated as the app root.
+	Path string `json:"path,omitempty"`
 }

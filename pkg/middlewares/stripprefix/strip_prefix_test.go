@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"k8s.io/utils/ptr"
 )
 
 func TestStripPrefix(t *testing.T) {
@@ -148,10 +147,7 @@ func TestStripPrefix(t *testing.T) {
 				Prefixes: []string{"/api"},
 			},
 			path:               "/api./foo",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/foo",
-			expectedRawPath:    "",
-			expectedHeader:     "/api",
+			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
 			desc: "multiple dots in the path not stripped by the prefix",
@@ -159,22 +155,16 @@ func TestStripPrefix(t *testing.T) {
 				Prefixes: []string{"/api"},
 			},
 			path:               "/api../foo",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/foo",
-			expectedRawPath:    "",
-			expectedHeader:     "/api",
+			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
 			desc: "multiple dots in the path not stripped by the prefix with forceSlash",
 			config: dynamic.StripPrefix{
 				Prefixes:   []string{"/api"},
-				ForceSlash: ptr.To(true),
+				ForceSlash: new(true),
 			},
 			path:               "/api../foo",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/foo",
-			expectedRawPath:    "",
-			expectedHeader:     "/api",
+			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
 
@@ -190,8 +180,7 @@ func TestStripPrefix(t *testing.T) {
 				requestURI = r.RequestURI
 			})
 
-			pointer := func(v bool) *bool { return &v }
-			test.config.ForceSlash = pointer(false)
+			test.config.ForceSlash = new(false)
 
 			handler, err := New(t.Context(), next, test.config, "foo-strip-prefix")
 			require.NoError(t, err)
@@ -204,6 +193,10 @@ func TestStripPrefix(t *testing.T) {
 			handler.ServeHTTP(resp, req)
 
 			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			if test.expectedStatusCode != http.StatusOK {
+				return
+			}
+
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)

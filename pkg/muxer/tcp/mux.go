@@ -22,10 +22,10 @@ type ConnData struct {
 }
 
 // NewConnData builds a connData struct from the given parameters.
-func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (ConnData, error) {
-	remoteIP, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+func NewConnData(serverName string, remoteAddr net.Addr, alpnProtos []string) (ConnData, error) {
+	remoteIP, _, err := net.SplitHostPort(remoteAddr.String())
 	if err != nil {
-		return ConnData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)
+		return ConnData{}, fmt.Errorf("parsing remote address %q: %w", remoteAddr.String(), err)
 	}
 
 	return ConnData{

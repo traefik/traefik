@@ -1167,6 +1167,14 @@ spec:
                   This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
                   More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/errorpages/
                 properties:
+                  errorRequestHeaders:
+                    description: |-
+                      ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+                      When nil (not set), all original request headers are forwarded.
+                      Set to an empty list to forward no headers, or list specific headers to forward only those.
+                    items:
+                      type: string
+                    type: array
                   query:
                     description: |-
                       Query defines the URL for the error page (hosted by service).
@@ -2494,9 +2502,25 @@ spec:
                 description: MinVersion defines the minimum TLS version to use when
                   contacting backend servers.
                 type: string
+              peerCertSANs:
+                description: PeerCertSANs defines the peer cert Subject Alternative
+                  Names used to match against SAN during the peer certificate verification.
+                items:
+                  description: SAN represents a Subject Alternative Name.
+                  properties:
+                    type:
+                      description: SANType is the type of the Subject Alternative
+                        Name.
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               peerCertURI:
-                description: PeerCertURI defines the peer cert URI used to match against
-                  SAN URI during the peer certificate verification.
+                description: |-
+                  PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+
+                  Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
                 type: string
               rootCAs:
                 description: RootCAs defines a list of CA certificate Secrets or ConfigMaps
@@ -2648,10 +2672,26 @@ spec:
                   insecureSkipVerify:
                     description: InsecureSkipVerify disables TLS certificate verification.
                     type: boolean
+                  peerCertSANs:
+                    description: PeerCertSANs defines the peer cert Subject Alternative
+                      Names used to match against SAN during the peer certificate
+                      verification.
+                    items:
+                      description: SAN represents a Subject Alternative Name.
+                      properties:
+                        type:
+                          description: SANType is the type of the Subject Alternative
+                            Name.
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
                   peerCertURI:
                     description: |-
-                      MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
                       PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+
+                      Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
                     type: string
                   rootCAs:
                     description: RootCAs defines a list of CA certificate Secrets

@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mailgun/ttlmap"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/ttlmap"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/utils"
 	lua "github.com/yuin/gopher-lua"
@@ -634,11 +634,11 @@ func TestRedisRateLimit(t *testing.T) {
 
 type mockRedisClient struct {
 	ttl  int
-	keys *ttlmap.TtlMap
+	keys *ttlmap.Map[[]string]
 }
 
 func newMockRedisClient(ttl int) Rediser {
-	buckets, _ := ttlmap.NewConcurrent(65536)
+	buckets, _ := ttlmap.New[[]string](65536)
 	return &mockRedisClient{
 		ttl:  ttl,
 		keys: buckets,
@@ -679,16 +679,10 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 				if !ok {
 					state.Push(table)
 				} else {
-					switch v := value.(type) {
-					case []string:
-						if len(v) != 4 {
-							break
+					if len(value) == 4 {
+						for i := range value {
+							table.Append(lua.LString(value[i]))
 						}
-						for i := range v {
-							table.Append(lua.LString(v[i]))
-						}
-					default:
-						fmt.Printf("Unknown type: %T\n", v)
 					}
 					state.Push(table)
 				}

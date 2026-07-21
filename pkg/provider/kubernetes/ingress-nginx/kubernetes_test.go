@@ -17,9 +17,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	netv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/utils/ptr"
 )
 
 func TestLoadIngresses(t *testing.T) {
@@ -30,9 +31,11 @@ func TestLoadIngresses(t *testing.T) {
 		defaultBackendServiceNamespace string
 		allowCrossNamespaceResources   bool
 		globalAllowedResponseHeaders   []string
+		ipAllowListStrategy            *dynamic.IPStrategy
 		allowSnippetAnnotations        bool
 		globalAuthURL                  string
 		strictValidatePathType         *bool
+		proxyRequestBuffering          bool
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
@@ -54,7 +57,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -119,12 +122,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-service-unavailable-http-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-unavailable-http-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -132,7 +137,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-service-unavailable-http-unavailable-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -141,7 +146,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -215,26 +220,28 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-service-unavailable-http-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-unavailable-http-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-unavailable-http-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://foo.bar.com",
-								StatusCode:  ptr.To(301),
+								StatusCode:  new(301),
 							},
 						},
 						"default-ingress-with-service-unavailable-http-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://foo.bar.com",
-								StatusCode:  ptr.To(301),
+								StatusCode:  new(301),
 							},
 						},
 					},
@@ -242,7 +249,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-service-unavailable-http-unavailable-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -251,7 +258,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -360,22 +367,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-service-unavailable-default-backend-default-backend-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-unavailable-default-backend-default-backend-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-unavailable-default-backend-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-unavailable-default-backend-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -383,7 +394,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-service-unavailable-default-backend-default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -400,7 +411,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-service-unavailable-default-backend",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -410,7 +421,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -526,7 +537,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
@@ -536,7 +548,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers": {
@@ -546,7 +559,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers": {
@@ -556,7 +570,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -564,7 +579,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -581,7 +596,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-custom-headers",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -599,7 +614,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-cross-namespace-headers",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -617,6 +632,95 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-cross-namespace-headers": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                         "Custom Headers with invalid header value returns 503",
+			globalAllowedResponseHeaders: []string{"X-Custom-Header"},
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-invalid-header-value.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-invalid-header-value-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-invalid-header-value",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-invalid-header-value-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-invalid-header-value",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-invalid-header-value-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-invalid-header-value",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-invalid-header-value": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -726,12 +830,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -739,7 +845,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -756,7 +862,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-custom-headers",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -774,7 +880,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-cross-namespace-headers",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -904,12 +1010,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
@@ -924,12 +1032,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -937,7 +1047,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -954,7 +1064,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-custom-headers",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -972,7 +1082,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-cross-namespace-headers",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -1039,8 +1149,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-no-annotation-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-no-annotation-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-no-annotation-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -1054,14 +1167,22 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
 						"default-ingress-with-no-annotation-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -1069,7 +1190,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1086,7 +1207,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-no-annotation",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -1186,12 +1307,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-basicauth-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-basicauth-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -1199,7 +1322,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1216,7 +1339,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-basicauth",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -1234,6 +1357,37 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Basic Auth with missing secret — ingress is skipped entirely",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-basicauth-secret-missing.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1311,12 +1465,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-forwardauth-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-forwardauth-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -1324,7 +1480,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1341,7 +1497,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-forwardauth",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -1383,7 +1539,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1471,12 +1627,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-forwardauth-snippet-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-forwardauth-snippet-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -1484,7 +1642,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1501,7 +1659,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-forwardauth-snippet",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -1590,17 +1748,17 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-without-auth-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-without-auth-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1613,7 +1771,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1688,17 +1846,17 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-global-auth-disabled-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-global-auth-disabled-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1711,7 +1869,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1806,17 +1964,17 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-forwardauth-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-forwardauth-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1829,7 +1987,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-forwardauth",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -1903,17 +2061,17 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-without-auth-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-without-auth-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1926,7 +2084,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1985,8 +2143,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-ssl-redirect-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-ssl-redirect-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-ssl-redirect-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -2037,8 +2198,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("forcesslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-force-ssl-redirect-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -2070,34 +2234,52 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2105,7 +2287,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2122,7 +2304,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-ssl-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -2140,7 +2322,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-without-ssl-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -2158,7 +2340,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-force-ssl-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -2206,6 +2388,124 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			// Regression test: force-ssl-redirect with no TLS section on the Ingress (LB-terminated TLS).
+			// The HTTP router must use the real backend service so that requests arriving with
+			// X-Forwarded-Proto: https (redirect bypassed) are forwarded to the backend instead
+			// of hitting noop@internal and receiving HTTP 418.
+			desc: "Force SSL Redirect without Ingress TLS section",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-force-ssl-redirect-no-tls.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("forcesslredirectnotls.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-force-ssl-redirect-no-tls-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-retry",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-force-ssl-redirect-no-tls",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("forcesslredirectnotls.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Service:     "default-ingress-with-force-ssl-redirect-no-tls-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-tls-retry",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-force-ssl-redirect-no-tls",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-no-tls-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-no-tls-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-force-ssl-redirect-no-tls",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-force-ssl-redirect-no-tls": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "SSL Passthrough",
 			paths: []string{
 				"services.yml",
@@ -2248,7 +2548,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2314,12 +2614,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-sticky-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-sticky-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2327,7 +2629,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2344,7 +2646,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-sticky",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -2356,7 +2658,7 @@ func TestLoadIngresses(t *testing.T) {
 										HTTPOnly: true,
 										MaxAge:   42,
 										Expires:  42,
-										Path:     ptr.To("/foobar"),
+										Path:     new("/foobar"),
 										SameSite: "none",
 										Secure:   true,
 									},
@@ -2432,12 +2734,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-ssl-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-ssl-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2445,7 +2749,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2462,7 +2766,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2545,7 +2849,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
-								AccessControlMaxAge:           42,
+								AccessControlMaxAge:           new(int64(42)),
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-tls-cors": {
@@ -2555,17 +2859,19 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
-								AccessControlMaxAge:           42,
+								AccessControlMaxAge:           new(int64(42)),
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2573,7 +2879,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2590,7 +2896,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-cors",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -2665,12 +2971,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-service-upstream-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-service-upstream-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2678,7 +2986,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2692,7 +3000,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-service-upstream",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -2791,12 +3099,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-upstream-vhost-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-upstream-vhost-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2804,7 +3114,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2821,7 +3131,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2896,12 +3206,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-x-forwarded-prefix-no-rewrite-target-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-no-rewrite-target-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -2909,7 +3221,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -2926,7 +3238,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3085,12 +3397,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target": {
@@ -3109,12 +3423,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target": {
@@ -3133,12 +3449,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -3146,7 +3464,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3163,7 +3481,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3181,7 +3499,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3199,7 +3517,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3290,12 +3608,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-use-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -3303,7 +3623,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3320,7 +3640,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3430,22 +3750,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-a-with-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-a-with-use-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-b-without-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-b-without-use-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -3453,7 +3777,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3470,7 +3794,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3488,7 +3812,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3606,22 +3930,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-a-with-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-a-with-use-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-b-without-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-b-without-use-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -3629,7 +3957,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3646,7 +3974,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3664,7 +3992,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3794,22 +4122,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -3817,7 +4149,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3834,7 +4166,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3852,7 +4184,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3953,12 +4285,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -3966,7 +4300,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -3983,7 +4317,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4104,23 +4438,23 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-b-without-rewrite-target-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-b-without-rewrite-target-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4133,7 +4467,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4147,7 +4481,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4276,23 +4610,23 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-a-with-rewrite-target-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-b-without-rewrite-target-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-b-without-rewrite-target-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4305,7 +4639,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4319,7 +4653,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4413,17 +4747,17 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-rewrite-target-use-regex-false-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4436,7 +4770,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4510,25 +4844,25 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-app-root-rule-0-path-0-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -4536,7 +4870,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4553,7 +4887,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-app-root",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -4628,12 +4962,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-app-root-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -4641,7 +4977,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4658,7 +4994,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-app-root",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -4770,24 +5106,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
 								Replacement: "$1://www.host.localhost$2/$3",
-								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+								StatusCode:  new(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-tls-from-to-www-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
 								Replacement: "$1://www.host.localhost$2/$3",
-								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+								StatusCode:  new(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -4795,7 +5133,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4812,7 +5150,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-www-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -4924,24 +5262,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
 								Replacement: "$1://host.localhost$2/$3",
-								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+								StatusCode:  new(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-host-rule-0-path-0-tls-from-to-www-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
 								Replacement: "$1://host.localhost$2/$3",
-								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+								StatusCode:  new(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-host-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-host-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -4949,7 +5289,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4966,7 +5306,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -5076,22 +5416,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-host-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-host-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5099,7 +5443,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5116,7 +5460,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -5134,7 +5478,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-www-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -5215,7 +5559,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5232,7 +5576,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5240,6 +5584,315 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Ingress default backend without rules emits catch-all routers with middleware annotations applied",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-no-rules.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							Service:     "default-backend",
+							Middlewares: []string{"default-backend-cors", "default-backend-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-no-rules",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							Service:     "default-backend",
+							Middlewares: []string{"default-backend-tls-cors", "default-backend-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-no-rules",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-backend-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlExposeHeaders:    []string{},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
+								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlMaxAge:           new(int64(1728000)),
+							},
+						},
+						"default-backend-tls-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlExposeHeaders:    []string{},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
+								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlMaxAge:           new(int64(1728000)),
+							},
+						},
+						"default-backend-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-backend-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-default-backend-no-rules",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-default-backend-no-rules": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Ingress default backend respects backend-protocol and affinity annotations",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-annotations.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-default-backend-annotations-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-whoami-tls-443",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+						"default-ingress-with-default-backend-annotations-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-whoami-tls-443",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+						// The ingress-level default backend should also use the ingress annotations
+						// (backend-protocol=HTTPS → https:// scheme, affinity=cookie → sticky session).
+						"default-ingress-with-default-backend-annotations-default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-default-backend",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-default-backend-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+						"default-ingress-with-default-backend-annotations-default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotations-default-backend",
+							Middlewares: []string{"default-ingress-with-default-backend-annotations-default-backend-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-annotations",
+										ServiceName: "whoami-tls",
+										ServicePort: "443",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-default-backend-annotations-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-default-backend-annotations-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-default-backend-annotations-default-backend-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-default-backend-annotations-default-backend-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						// Regular path backend: https:// scheme + sticky cookie from annotations.
+						"default-ingress-with-default-backend-annotations-whoami-tls-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "https://10.10.0.3:8443"},
+									{URL: "https://10.10.0.4:8443"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-default-backend-annotations",
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "MYSTICKYNESS",
+										HTTPOnly: true,
+										Path:     new("/"),
+									},
+								},
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						// Ingress-level default backend: must also use https:// scheme + sticky cookie.
+						"default-ingress-with-default-backend-annotations-default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "https://10.10.0.3:8443"},
+									{URL: "https://10.10.0.4:8443"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-default-backend-annotations",
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "MYSTICKYNESS",
+										HTTPOnly: true,
+										Path:     new("/"),
+									},
+								},
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-default-backend-annotations": {
+							ServerName:         "",
+							InsecureSkipVerify: true,
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -5307,12 +5960,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5320,7 +5975,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5337,7 +5992,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5422,12 +6077,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5435,7 +6092,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5452,7 +6109,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5537,12 +6194,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5550,7 +6209,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5567,7 +6226,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5642,12 +6301,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-whitelist-empty-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-whitelist-empty-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5655,7 +6316,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5672,7 +6333,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5747,12 +6408,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-allowlist-empty-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-allowlist-empty-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5760,7 +6423,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5777,7 +6440,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5862,12 +6525,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5875,7 +6540,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5892,7 +6557,131 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-allowlist-single-ip",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-allowlist-single-ip": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "AllowlistSourceRange with global IPAllowListDepth",
+			ipAllowListStrategy: &dynamic.IPStrategy{Depth: 2},
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-allowlist-single-ip.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-allowlist-single-ip",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-allowlist-single-ip",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.20.1"},
+								IPStrategy: &dynamic.IPStrategy{
+									Depth: 2,
+								},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.20.1"},
+								IPStrategy: &dynamic.IPStrategy{
+									Depth: 2,
+								},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -5977,12 +6766,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -5990,7 +6781,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6007,7 +6798,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6092,12 +6883,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -6105,7 +6898,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6122,7 +6915,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6165,7 +6958,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-access-log-enabled-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-access-log-enabled-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: ptr.To(true),
+								AccessLogs: new(true),
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
 										Namespace:   "default",
@@ -6184,7 +6977,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-access-log-enabled-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: ptr.To(true),
+								AccessLogs: new(true),
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
 										Namespace:   "default",
@@ -6202,7 +6995,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-access-log-disabled-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-access-log-disabled-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: ptr.To(false),
+								AccessLogs: new(false),
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
 										Namespace:   "default",
@@ -6221,7 +7014,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-access-log-disabled-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: ptr.To(false),
+								AccessLogs: new(false),
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
 										Namespace:   "default",
@@ -6269,18 +7062,18 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-access-log-enabled-rule-0-path-0-retry":      {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-access-log-enabled-rule-0-path-0-tls-retry":  {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-access-log-disabled-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-access-log-disabled-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-access-log-default-rule-0-path-0-retry":      {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-access-log-default-rule-0-path-0-tls-retry":  {Retry: &dynamic.Retry{Attempts: 3}},
+						"default-ingress-with-access-log-enabled-rule-0-path-0-retry":      {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-access-log-enabled-rule-0-path-0-tls-retry":  {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-access-log-disabled-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-access-log-disabled-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-access-log-default-rule-0-path-0-retry":      {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-access-log-default-rule-0-path-0-tls-retry":  {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6293,7 +7086,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6307,7 +7100,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6321,7 +7114,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6414,24 +7207,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusMovedPermanently),
+								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusMovedPermanently),
+								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -6439,7 +7234,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6456,7 +7251,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-permanent-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -6533,24 +7328,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusMovedPermanently),
+								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusMovedPermanently),
+								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -6558,7 +7355,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6575,7 +7372,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-permanent-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -6652,24 +7449,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusMultipleChoices),
+								StatusCode:  new(http.StatusMultipleChoices),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusMultipleChoices),
+								StatusCode:  new(http.StatusMultipleChoices),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -6677,7 +7476,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6694,7 +7493,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-permanent-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -6771,24 +7570,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusFound),
+								StatusCode:  new(http.StatusFound),
 							},
 						},
 						"default-ingress-with-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusFound),
+								StatusCode:  new(http.StatusFound),
 							},
 						},
 						"default-ingress-with-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -6796,7 +7597,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6813,7 +7614,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -6890,24 +7691,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusFound),
+								StatusCode:  new(http.StatusFound),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusFound),
+								StatusCode:  new(http.StatusFound),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -6915,7 +7718,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -6932,7 +7735,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-temporal-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -7009,24 +7812,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusFound),
+								StatusCode:  new(http.StatusFound),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusFound),
+								StatusCode:  new(http.StatusFound),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7034,7 +7839,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7051,7 +7856,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-temporal-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -7128,24 +7933,26 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+								StatusCode:  new(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
-								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+								StatusCode:  new(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7153,7 +7960,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7170,7 +7977,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-temporal-redirect",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -7245,12 +8052,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-timeout-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-timeout-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7258,7 +8067,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7271,7 +8080,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7346,12 +8155,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-timeout-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-timeout-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7359,7 +8170,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7372,7 +8183,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7447,12 +8258,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-timeout-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-timeout-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7460,7 +8273,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7473,7 +8286,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7534,8 +8347,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-auth-tls-secret-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-auth-tls-secret-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-auth-tls-secret-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-auth-tls-secret-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -7549,14 +8365,22 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-secret-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7564,7 +8388,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7581,7 +8405,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7675,8 +8499,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-auth-tls-verify-client-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-auth-tls-verify-client-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-auth-tls-verify-client-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -7690,14 +8517,22 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7705,7 +8540,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7722,7 +8557,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7853,12 +8688,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -7866,7 +8703,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7883,7 +8720,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7901,7 +8738,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -7914,7 +8751,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.6:8000"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8051,12 +8888,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-custom-http-errors-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-custom-http-errors-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -8064,7 +8903,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8081,7 +8920,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8099,7 +8938,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8172,17 +9011,17 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-custom-http-errors-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-custom-http-errors-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8199,7 +9038,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8274,12 +9113,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-default-backend-annotation-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-default-backend-annotation-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -8287,7 +9128,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8304,7 +9145,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8395,12 +9236,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-proxy-body-size-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(10 * 1024 * 1024)),
 							},
 						},
 						"default-ingress-with-proxy-body-size-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(10 * 1024 * 1024)),
 							},
 						},
 					},
@@ -8408,7 +9251,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8425,7 +9268,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8435,6 +9278,437 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-body-size": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                  "Proxy request buffering off keeps network retry when no status codes are set",
+			proxyRequestBuffering: true,
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-request-buffering-off.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-request-buffering-off-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-request-buffering-off-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-request-buffering-off",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-request-buffering-off-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-request-buffering-off",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-proxy-request-buffering-off-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-proxy-request-buffering-off-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-request-buffering-off",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-request-buffering-off": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Proxy body size influences retry max request body bytes",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-body-size-retry.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-body-size-retry-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-body-size-retry-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-proxy-body-size-retry-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-body-size-retry",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-proxy-body-size-retry-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-body-size-retry-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-proxy-body-size-retry-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-body-size-retry",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-body-size-retry-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(5 * 1024 * 1024)),
+							},
+						},
+						"default-ingress-with-proxy-body-size-retry-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(5 * 1024 * 1024)),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-proxy-body-size-retry-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-body-size-retry",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-body-size-retry": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Proxy body size zero influences retry max request body bytes",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-body-size-zero-retry.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-body-size-zero-retry-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-body-size-zero-retry-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-proxy-body-size-zero-retry-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-body-size-zero-retry",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-proxy-body-size-zero-retry-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-body-size-zero-retry-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-proxy-body-size-zero-retry-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-body-size-zero-retry",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-body-size-zero-retry-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(-1)),
+							},
+						},
+						"default-ingress-with-proxy-body-size-zero-retry-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(-1)),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-proxy-body-size-zero-retry-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-body-size-zero-retry",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-body-size-zero-retry": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "HTTP status retry disabled when request buffering off",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-http-status-retry-and-buffering-off.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-http-status-retry-and-buffering-off-whoami-80",
+							Middlewares: []string{"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-http-status-retry-and-buffering-off",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("hostname.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-http-status-retry-and-buffering-off-whoami-80",
+							Middlewares: []string{"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-tls-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-http-status-retry-and-buffering-off",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								Status:              []string{"502"},
+								MaxRequestBodyBytes: new(int64(0)),
+							},
+						},
+						"default-ingress-with-http-status-retry-and-buffering-off-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								Status:              []string{"502"},
+								MaxRequestBodyBytes: new(int64(0)),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-http-status-retry-and-buffering-off-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-http-status-retry-and-buffering-off",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-http-status-retry-and-buffering-off": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -8516,12 +9790,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-client-body-buffer-size-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-client-body-buffer-size-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -8529,7 +9805,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8546,7 +9822,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8637,12 +9913,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(10 * 1024 * 1024)),
 							},
 						},
 						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(int64(10 * 1024 * 1024)),
 							},
 						},
 					},
@@ -8650,7 +9928,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8667,7 +9945,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8760,12 +10038,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-proxy-buffer-size-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-buffer-size-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -8773,7 +10053,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8790,7 +10070,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8883,12 +10163,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-proxy-buffers-number-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-buffers-number-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -8896,7 +10178,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -8913,7 +10195,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9006,12 +10288,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9019,7 +10303,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9036,7 +10320,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9129,12 +10413,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9142,7 +10428,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9159,7 +10445,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9251,12 +10537,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-server-snippet-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-server-snippet-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9264,7 +10552,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9277,7 +10565,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-server-snippet",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -9369,12 +10657,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-configuration-snippet-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-configuration-snippet-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9382,7 +10672,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9395,7 +10685,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-configuration-snippet",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -9489,12 +10779,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-both-snippets-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-both-snippets-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9502,7 +10794,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9515,7 +10807,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-both-snippets",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -9557,7 +10849,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9589,7 +10881,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9621,7 +10913,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9697,12 +10989,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-server-snippet-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-server-snippet-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9710,7 +11004,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9723,7 +11017,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-server-snippet",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -9809,12 +11103,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-configuration-snippet-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-configuration-snippet-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9822,7 +11118,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9835,7 +11131,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-configuration-snippet",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -9923,12 +11219,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-both-snippets-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-both-snippets-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -9936,7 +11234,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -9949,7 +11247,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-both-snippets",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -10010,8 +11308,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-pass-certificate-to-upstream.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -10032,14 +11333,22 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -10047,7 +11356,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10064,7 +11373,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10138,6 +11447,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-rule-0-path-0-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -10148,7 +11458,6 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-proxy-next-upstream-off-rule-0-path-0": {
 							EntryPoints: []string{"http"},
@@ -10171,6 +11480,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -10181,8 +11491,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{},
 						},
 						"default-ingress-with-proxy-next-upstream-off-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -10208,6 +11517,7 @@ func TestLoadIngresses(t *testing.T) {
 								Attempts:                 3,
 								Status:                   []string{"400"},
 								RetryNonIdempotentMethod: true,
+								MaxRequestBodyBytes:      new(int64(0)),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry": {
@@ -10215,6 +11525,7 @@ func TestLoadIngresses(t *testing.T) {
 								Attempts:                 3,
 								Status:                   []string{"400"},
 								RetryNonIdempotentMethod: true,
+								MaxRequestBodyBytes:      new(int64(0)),
 							},
 						},
 					},
@@ -10222,7 +11533,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10235,7 +11546,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10249,7 +11560,321 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-next-upstream-off",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-next-upstream": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-off": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Proxy next upstream with status only conditions",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-next-upstream-status-only.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-next-upstream-status-only-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-status-only-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-status-only-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-next-upstream-status-only",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-status-only-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-status-only-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-status-only-rule-0-path-0-tls-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-next-upstream-status-only",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-next-upstream-status-only-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:                   3,
+								Status:                     []string{"502", "503"},
+								DisableRetryOnNetworkError: true,
+								MaxRequestBodyBytes:        new(int64(0)),
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-status-only-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:                   3,
+								Status:                     []string{"502", "503"},
+								DisableRetryOnNetworkError: true,
+								MaxRequestBodyBytes:        new(int64(0)),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-status-only-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-next-upstream-status-only",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-next-upstream-status-only": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Proxy next upstream with proxyRequestBuffering true",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-next-upstream.yml",
+			},
+			proxyRequestBuffering: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-next-upstream",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{
+								"default-ingress-with-proxy-next-upstream-rule-0-path-0-buffering",
+								"default-ingress-with-proxy-next-upstream-rule-0-path-0-retry",
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-off-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-off-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-next-upstream-off",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{
+								"default-ingress-with-proxy-next-upstream-off-rule-0-path-0-buffering",
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-next-upstream",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{
+								"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-buffering",
+								"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry",
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+						"default-ingress-with-proxy-next-upstream-off-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-off-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-proxy-next-upstream-off",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{
+								"default-ingress-with-proxy-next-upstream-off-rule-0-path-0-tls-buffering",
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-next-upstream-off-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes:   defaultProxyBodySize,
+								MemRequestBodyBytes:   defaultClientBodyBufferSize,
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-off-rule-0-path-0-tls-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes:   defaultProxyBodySize,
+								MemRequestBodyBytes:   defaultClientBodyBufferSize,
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes:   defaultProxyBodySize,
+								MemRequestBodyBytes:   defaultClientBodyBufferSize,
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes:   defaultProxyBodySize,
+								MemRequestBodyBytes:   defaultClientBodyBufferSize,
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:                 3,
+								Status:                   []string{"400"},
+								RetryNonIdempotentMethod: true,
+								MaxRequestBodyBytes:      new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:                 3,
+								Status:                   []string{"400"},
+								RetryNonIdempotentMethod: true,
+								MaxRequestBodyBytes:      new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-next-upstream",
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-off-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10367,22 +11992,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 2,
+								Attempts:            2,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 2,
+								Attempts:            2,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 5,
+								Attempts:            5,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 5,
+								Attempts:            5,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -10390,7 +12019,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10403,7 +12032,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10417,7 +12046,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10500,14 +12129,16 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
-								Timeout:  ptypes.Duration(30 * time.Second),
+								Attempts:            3,
+								Timeout:             ptypes.Duration(30 * time.Second),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
-								Timeout:  ptypes.Duration(30 * time.Second),
+								Attempts:            3,
+								Timeout:             ptypes.Duration(30 * time.Second),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -10515,7 +12146,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10528,7 +12159,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10603,12 +12234,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-server-alias-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-server-alias-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -10617,7 +12250,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10634,7 +12267,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10744,22 +12377,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-primary-ingress-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-primary-ingress-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-alias-ingress-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-alias-ingress-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -10767,7 +12404,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10780,7 +12417,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10794,7 +12431,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10912,22 +12549,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-first-ingress-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-first-ingress-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-second-ingress-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-second-ingress-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -10935,7 +12576,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10948,7 +12589,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -10962,7 +12603,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11045,12 +12686,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-http-version-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-http-version-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11058,7 +12701,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11071,7 +12714,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11147,12 +12790,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-http-version-unsupported-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-proxy-http-version-unsupported-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11160,7 +12805,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11173,7 +12818,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11248,12 +12893,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-upstream-hash-by-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-upstream-hash-by-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11261,7 +12908,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11275,7 +12922,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 								Strategy:            "hrw",
 								NginxUpstreamHashBy: "$request_uri",
-								PassHostHeader:      ptr.To(true),
+								PassHostHeader:      new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11350,12 +12997,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11363,7 +13012,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11380,7 +13029,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11398,7 +13047,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11410,11 +13059,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -11487,12 +13136,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-and-sticky-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-and-sticky-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11500,7 +13151,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11515,7 +13166,7 @@ func TestLoadIngresses(t *testing.T) {
 										HTTPOnly: true,
 										MaxAge:   42,
 										Expires:  42,
-										Path:     ptr.To("/foobar"),
+										Path:     new("/foobar"),
 										SameSite: "none",
 										Secure:   true,
 									},
@@ -11529,7 +13180,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-and-sticky",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11545,7 +13196,7 @@ func TestLoadIngresses(t *testing.T) {
 										HTTPOnly: true,
 										MaxAge:   42,
 										Expires:  42,
-										Path:     ptr.To("/foobar"),
+										Path:     new("/foobar"),
 										SameSite: "none",
 										Secure:   true,
 									},
@@ -11559,7 +13210,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-and-sticky",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11575,7 +13226,7 @@ func TestLoadIngresses(t *testing.T) {
 										HTTPOnly: true,
 										MaxAge:   42,
 										Expires:  42,
-										Path:     ptr.To("/foobar"),
+										Path:     new("/foobar"),
 										SameSite: "none",
 										Secure:   true,
 									},
@@ -11583,11 +13234,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-and-sticky-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-and-sticky-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -11660,12 +13311,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-weight-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-weight-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11673,7 +13326,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11690,7 +13343,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-weight",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11708,7 +13361,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-weight",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11720,11 +13373,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-weight-whoami-80",
-										Weight: ptr.To(110),
+										Weight: new(110),
 									},
 									{
 										Name:   "default-ingress-with-canary-weight-whoami-80-canary",
-										Weight: ptr.To(10),
+										Weight: new(10),
 									},
 								},
 							},
@@ -11832,22 +13485,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-header-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -11855,7 +13512,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -11872,7 +13529,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11890,7 +13547,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -11902,11 +13559,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-by-header-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-by-header-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -12014,22 +13671,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-header-value-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-value-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-value-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-value-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -12037,7 +13698,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -12054,7 +13715,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-value",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12072,7 +13733,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-value",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12084,11 +13745,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-by-header-value-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-by-header-value-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -12196,22 +13857,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -12219,7 +13884,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -12236,7 +13901,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-pattern",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12254,7 +13919,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-pattern",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12266,11 +13931,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-by-header-pattern-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-by-header-pattern-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -12343,12 +14008,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-header-misconfigured-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-misconfigured-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -12356,7 +14023,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -12373,7 +14040,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-misconfigured",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12391,7 +14058,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-misconfigured",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12403,11 +14070,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-by-header-misconfigured-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-by-header-misconfigured-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -12515,22 +14182,26 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -12538,7 +14209,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -12555,7 +14226,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-cookie",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12573,7 +14244,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-cookie",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12585,11 +14256,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-by-cookie-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-by-cookie-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -12732,32 +14403,38 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -12765,7 +14442,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -12782,7 +14459,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-and-cookie-and-weight",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12800,7 +14477,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-by-header-and-cookie-and-weight",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -12812,11 +14489,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80",
-										Weight: ptr.To(90),
+										Weight: new(90),
 									},
 									{
 										Name:   "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary",
-										Weight: ptr.To(10),
+										Weight: new(10),
 									},
 								},
 							},
@@ -12935,47 +14612,47 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-middlewares-rule-0-path-0-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-tls-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-tls-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -12983,7 +14660,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13000,7 +14677,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-middlewares",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -13018,7 +14695,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-middlewares",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -13030,11 +14707,11 @@ func TestLoadIngresses(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-ingress-with-canary-middlewares-whoami-80",
-										Weight: ptr.To(100),
+										Weight: new(100),
 									},
 									{
 										Name:   "default-ingress-with-canary-middlewares-whoami-80-canary",
-										Weight: ptr.To(0),
+										Weight: new(0),
 									},
 								},
 							},
@@ -13107,12 +14784,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-non-matching-canary-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-non-matching-canary-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -13120,7 +14799,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13137,7 +14816,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-non-matching-canary",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -13189,7 +14868,11 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root", "default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry"},
+							Middlewares: []string{
+								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root",
+								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry",
+							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary": {
 							EntryPoints: []string{"http"},
@@ -13206,7 +14889,11 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-app-root", "default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry"},
+							Middlewares: []string{
+								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-redirect-scheme",
+								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-app-root",
+								"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry",
+							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -13252,48 +14939,60 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-app-root": {
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-app-root": {
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
-							},
-						},
-						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/(\?.*)?$`,
-								Replacement: "$1/foo",
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-app-root": {
+							AppRoot: &dynamic.AppRoot{
+								Path: "/foo",
 							},
 						},
 						"default-ingress-with-canary-middlewares-and-tls-rule-0-path-0-canary-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -13301,7 +15000,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13314,7 +15013,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-middlewares-and-tls",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -13328,7 +15027,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.8:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-canary-middlewares-and-tls",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -13338,8 +15037,8 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-canary-middlewares-and-tls-whoami-80-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
-									{Name: "default-ingress-with-canary-middlewares-and-tls-whoami-80", Weight: ptr.To(100)},
-									{Name: "default-ingress-with-canary-middlewares-and-tls-whoami-80-canary", Weight: ptr.To(0)},
+									{Name: "default-ingress-with-canary-middlewares-and-tls-whoami-80", Weight: new(100)},
+									{Name: "default-ingress-with-canary-middlewares-and-tls-whoami-80-canary", Weight: new(0)},
 								},
 							},
 						},
@@ -13455,12 +15154,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-limit-rps-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-limit-rps-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-limit-rps-rule-0-path-0-limit-rps": {
@@ -13479,12 +15180,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-limit-rps-zero-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-limit-rps-zero-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -13492,7 +15195,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13505,7 +15208,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13519,7 +15222,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13601,14 +15304,10 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-limit-whitelist-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-limit-whitelist-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-limit-whitelist-rule-0-path-0-limit-rps": {
 							RateLimit: &dynamic.RateLimit{
@@ -13635,7 +15334,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13645,7 +15344,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13754,12 +15453,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-limit-rpm-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-limit-rpm-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-limit-rpm-rule-0-path-0-limit-rpm": {
@@ -13778,12 +15479,14 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-limit-rpm-zero-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-limit-rpm-zero-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -13791,7 +15494,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13804,7 +15507,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13818,7 +15521,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13931,10 +15634,10 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-limit-burst-multiplier-rule-0-path-0-retry":          {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-limit-burst-multiplier-rule-0-path-0-tls-retry":      {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3}},
+						"default-ingress-with-limit-burst-multiplier-rule-0-path-0-retry":          {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-limit-burst-multiplier-rule-0-path-0-tls-retry":      {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-ingress-with-limit-burst-multiplier-zero-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
 						"default-ingress-with-limit-burst-multiplier-rule-0-path-0-limit-rps": {
 							RateLimit: &dynamic.RateLimit{Average: 10, Burst: 100, Period: ptypes.Duration(time.Second)},
 						},
@@ -13952,7 +15655,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -13962,7 +15665,7 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers:            []dynamic.Server{{URL: "http://10.10.0.1:80"}, {URL: "http://10.10.0.2:80"}},
 								Strategy:           "wrr",
-								PassHostHeader:     ptr.To(true),
+								PassHostHeader:     new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								ServersTransport:   "default-ingress-with-limit-burst-multiplier",
 							},
@@ -13971,7 +15674,7 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers:            []dynamic.Server{{URL: "http://10.10.0.1:80"}, {URL: "http://10.10.0.2:80"}},
 								Strategy:           "wrr",
-								PassHostHeader:     ptr.To(true),
+								PassHostHeader:     new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								ServersTransport:   "default-ingress-with-limit-burst-multiplier-zero",
 							},
@@ -13982,6 +15685,115 @@ func TestLoadIngresses(t *testing.T) {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{DialTimeout: ptypes.Duration(60 * time.Second), ReadTimeout: ptypes.Duration(60 * time.Second), WriteTimeout: ptypes.Duration(60 * time.Second), IdleConnTimeout: ptypes.Duration(60 * time.Second)},
 						},
 						"default-ingress-with-limit-burst-multiplier-zero": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{DialTimeout: ptypes.Duration(60 * time.Second), ReadTimeout: ptypes.Duration(60 * time.Second), WriteTimeout: ptypes.Duration(60 * time.Second), IdleConnTimeout: ptypes.Duration(60 * time.Second)},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Limit connections",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-limit-connections.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-limit-connections-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-limit-connections-rule-0-path-0-limit-connections", "default-ingress-with-limit-connections-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-limit-connections-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-connections",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-limit-connections-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-limit-connections-rule-0-path-0-tls-limit-connections", "default-ingress-with-limit-connections-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-limit-connections-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-limit-connections",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-limit-connections-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-limit-connections-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-limit-connections-rule-0-path-0-limit-connections": {
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 10,
+								SourceCriterion: &dynamic.SourceCriterion{
+									IPStrategy: &dynamic.IPStrategy{},
+								},
+							},
+						},
+						"default-ingress-with-limit-connections-rule-0-path-0-tls-limit-connections": {
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 10,
+								SourceCriterion: &dynamic.SourceCriterion{
+									IPStrategy: &dynamic.IPStrategy{},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-limit-connections-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers:            []dynamic.Server{{URL: "http://10.10.0.1:80"}, {URL: "http://10.10.0.2:80"}},
+								Strategy:           "wrr",
+								PassHostHeader:     new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								ServersTransport:   "default-ingress-with-limit-connections",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-limit-connections": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{DialTimeout: ptypes.Duration(60 * time.Second), ReadTimeout: ptypes.Duration(60 * time.Second), WriteTimeout: ptypes.Duration(60 * time.Second), IdleConnTimeout: ptypes.Duration(60 * time.Second)},
 						},
 					},
@@ -14008,7 +15820,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -14027,7 +15839,7 @@ func TestLoadIngresses(t *testing.T) {
 				"ingressclasses.yml",
 				"ingresses/ingress-with-use-regex-prefix-pathtype.yml",
 			},
-			strictValidatePathType: ptr.To(false),
+			strictValidatePathType: new(false),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:  map[string]*dynamic.TCPRouter{},
@@ -14073,17 +15885,17 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-use-regex-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-ingress-with-use-regex-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{Attempts: 3},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -14096,7 +15908,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -14171,12 +15983,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-wildcard-host-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-wildcard-host-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -14184,7 +15998,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -14197,7 +16011,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-wildcard-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -14238,8 +16052,11 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("*.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry"},
-							Service:     "default-ingress-with-wildcard-host-tls-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-wildcard-host-tls-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-wildcard-host-tls-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -14271,14 +16088,22 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-wildcard-host-tls-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
 						"default-ingress-with-wildcard-host-tls-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-wildcard-host-tls-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 3,
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -14286,7 +16111,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -14299,7 +16124,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								PassHostHeader:   new(true),
 								ServersTransport: "default-ingress-with-wildcard-host-tls",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
@@ -14349,7 +16174,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -14357,6 +16182,1204 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "External name service",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-external-name.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-external-name-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-external-name-external-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-1-retry"},
+							Service:     "default-ingress-with-external-name-external-http",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "http",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-1-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-http",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "http",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-2-retry"},
+							Service:     "default-ingress-with-external-name-external-3000",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "3000",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-2-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-3000",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "3000",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-3-retry"},
+							Service:     "default-ingress-with-external-name-external-foo",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "foo",
+									},
+								},
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("external.localhost") && Path("/external-with-non-matching-named-port")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-external-name-rule-0-path-3-tls-retry"},
+							Service:     "default-ingress-with-external-name-external-foo",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-external-name",
+										ServiceName: "external",
+										ServicePort: "foo",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-external-name-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-1-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-2-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-external-name-rule-0-path-3-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-external-name-external-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:8080",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"default-ingress-with-external-name-external-3000": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:3000",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"default-ingress-with-external-name-external-http": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:8080",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"default-ingress-with-external-name-external-foo": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://external.com:0",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-external-name",
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-external-name": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			// Two TLS sections that reference distinct Secrets must produce two TLS certificate entries,
+			// even when the Secrets carry identical PEM content.
+			desc: "TLS multiple secrets are not deduplicated by PEM content",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-tls-multi-secrets.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-tls-multi-secrets-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("first.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-ingress-with-tls-multi-secrets-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-tls-multi-secrets-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-tls-multi-secrets-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-tls-multi-secrets",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("first.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-tls-multi-secrets-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-tls-multi-secrets-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-tls-multi-secrets",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-1-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("second.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-ingress-with-tls-multi-secrets-rule-1-path-0-redirect-scheme",
+								"default-ingress-with-tls-multi-secrets-rule-1-path-0-retry",
+							},
+							Service: "default-ingress-with-tls-multi-secrets-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-tls-multi-secrets",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-1-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("second.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-tls-multi-secrets-rule-1-path-0-tls-retry"},
+							Service:     "default-ingress-with-tls-multi-secrets-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-tls-multi-secrets",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-tls-multi-secrets-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-1-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-1-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-rule-1-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-tls-multi-secrets-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-tls-multi-secrets",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-tls-multi-secrets": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// An ingress with ssl-passthrough must still load TLS certificates from its Spec.TLS section,
+			// so the certificate is registered as a default cert even though TCP passthrough takes over the actual routing.
+			desc: "SSL Passthrough still loads TLS section certificates",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-ssl-passthrough-and-tls-section.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-ingress-with-ssl-passthrough-and-tls-section-passthrough-tls-whoami-localhost": {
+							EntryPoints: []string{"https"},
+							Rule:        `HostSNI("passthrough-tls.whoami.localhost")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+							Service: "default-whoami-tls-443",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-whoami-tls-443": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "10.10.0.3:8443"},
+									{Address: "10.10.0.4:8443"},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// When auth-tls-pass-certificate-to-upstream is enabled together with auth-tls-verify-client=optional_no_ca (RequestClientCert),
+			// the auth-tls-secret's CA bytes must be forwarded to the upstream via the AuthTLSPassCertificateToUpstream middleware's CAFiles field.
+			desc: "Auth TLS pass certificate to upstream with optional_no_ca populates CAFiles",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-pass-cert-optional-no-ca.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-pass-cert-optional-no-ca.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-default-ca-secret",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-default-ca-secret": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequestClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			// When an ingress combines custom-http-errors + a per-ingress default-backend annotation + upstream-hash-by,
+			// the per-router error-backend service must inherit the upstream-hash-by configuration (HRW strategy + NginxUpstreamHashBy)
+			// from the ingress location config — not fall back to the default WRR strategy.
+			desc: "Custom HTTP errors error-backend service inherits upstream-hash-by",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-custom-http-errors-and-upstream-hash-by.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-custom-http-errors-and-upstream-hash-by-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-custom-http-errors",
+								"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-retry",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-custom-http-errors-and-upstream-hash-by",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-custom-http-errors-and-upstream-hash-by-whoami-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Middlewares: []string{
+								"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls-custom-http-errors",
+								"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls-retry",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-custom-http-errors-and-upstream-hash-by",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-custom-http-errors": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "500"},
+								Service: "default-backend-default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0",
+								NginxHeaders: &http.Header{
+									"X-Namespaces":   {"default"},
+									"X-Ingress-Name": {"ingress-with-custom-http-errors-and-upstream-hash-by"},
+									"X-Service-Name": {"whoami"},
+									"X-Service-Port": {"80"},
+								},
+							},
+						},
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls-custom-http-errors": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "500"},
+								Service: "default-backend-default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls",
+								NginxHeaders: &http.Header{
+									"X-Namespaces":   {"default"},
+									"X-Ingress-Name": {"ingress-with-custom-http-errors-and-upstream-hash-by"},
+									"X-Service-Name": {"whoami"},
+									"X-Service-Port": {"80"},
+								},
+							},
+						},
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:            dynamic.BalancerStrategyHRW,
+								NginxUpstreamHashBy: "$request_uri",
+								PassHostHeader:      new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-custom-http-errors-and-upstream-hash-by",
+							},
+						},
+						"default-backend-default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.5:8000"},
+									{URL: "http://10.10.0.6:8000"},
+								},
+								Strategy:            dynamic.BalancerStrategyHRW,
+								NginxUpstreamHashBy: "$request_uri",
+								PassHostHeader:      new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-backend-default-ingress-with-custom-http-errors-and-upstream-hash-by-rule-0-path-0-tls": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.5:8000"},
+									{URL: "http://10.10.0.6:8000"},
+								},
+								Strategy:            dynamic.BalancerStrategyHRW,
+								NginxUpstreamHashBy: "$request_uri",
+								PassHostHeader:      new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-custom-http-errors-and-upstream-hash-by": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Ingress with endpoint conditions",
+			paths: []string{
+				"ingressclasses.yml",
+				"ingresses/ingress-with-endpoint-conditions.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-endpoint-conditions-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-endpoint-conditions-whoami-80",
+							Middlewares: []string{"default-ingress-with-endpoint-conditions-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-endpoint-conditions",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-endpoint-conditions-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-endpoint-conditions-whoami-80",
+							Middlewares: []string{"default-ingress-with-endpoint-conditions-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-endpoint-conditions",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-endpoint-conditions-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-endpoint-conditions-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-endpoint-conditions-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80", Fenced: true},
+								},
+								Strategy:         dynamic.BalancerStrategyWRR,
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-endpoint-conditions",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-endpoint-conditions": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Auth TLS secret missing — ingress is skipped entirely",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-missing.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "EndpointSlice with nil port name",
+			paths: []string{
+				"ingressclasses.yml",
+				"services.yml",
+				"ingresses/ingress-with-nil-endpointslice-port-name.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80",
+							Middlewares: []string{"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-nil-endpointslice-port-name",
+										ServiceName: "whoami-nil-port-name",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80",
+							Middlewares: []string{"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-nil-endpointslice-port-name",
+										ServiceName: "whoami-nil-port-name",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-nil-endpointslice-port-name-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-nil-endpointslice-port-name-whoami-nil-port-name-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-nil-endpointslice-port-name": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "EndpointSlice with nil port value",
+			paths: []string{
+				"ingressclasses.yml",
+				"services.yml",
+				"ingresses/ingress-with-nil-endpointslice-port-value.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80",
+							Middlewares: []string{"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-nil-endpointslice-port-value",
+										ServiceName: "whoami-nil-port-value",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80",
+							Middlewares: []string{"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-nil-endpointslice-port-value",
+										ServiceName: "whoami-nil-port-value",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-nil-endpointslice-port-value-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-nil-endpointslice-port-value-whoami-nil-port-value-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-nil-endpointslice-port-value": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -14387,8 +17410,10 @@ func TestLoadIngresses(t *testing.T) {
 				NonTLSEntryPoints:              []string{"http"},
 				TLSEntryPoints:                 []string{"https"},
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
+				IPAllowListStrategy:            test.ipAllowListStrategy,
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 				GlobalAuthURL:                  test.globalAuthURL,
+				ProxyRequestBuffering:          test.proxyRequestBuffering,
 			}
 			p.SetDefaults()
 			if test.strictValidatePathType != nil {
@@ -14479,6 +17504,82 @@ func TestNginxSizeToBytes(t *testing.T) {
 			size, err := nginxSizeToBytes(test.value)
 			assert.Equal(t, test.err, err)
 			assert.Equal(t, test.expected, size)
+		})
+	}
+}
+
+func TestLoadConfigurationIngressStatus(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc         string
+		paths        []string
+		ingressNames []string
+		wantStatus   bool
+	}{
+		{
+			desc:         "SSL passthrough ingress",
+			paths:        []string{"ingresses/ingress-with-ssl-passthrough.yml"},
+			ingressNames: []string{"ingress-with-ssl-passthrough"},
+			wantStatus:   true,
+		},
+		{
+			desc:         "normal ingress",
+			paths:        []string{"ingresses/ingress-with-host.yml"},
+			ingressNames: []string{"ingress-with-host"},
+			wantStatus:   true,
+		},
+		{
+			desc:         "canary ingress",
+			paths:        []string{"ingresses/ingresses-with-canary.yml"},
+			ingressNames: []string{"ingress-with-canary", "canary"},
+			wantStatus:   true,
+		},
+		{
+			desc:         "skipped ingress",
+			paths:        []string{"secrets.yml", "ingresses/ingress-with-auth-tls-secret-missing.yml"},
+			ingressNames: []string{"ingress-with-auth-tls-secret-missing"},
+		},
+		{
+			desc:         "skipped SSL passthrough ingress",
+			paths:        []string{"ingresses/ingress-with-ssl-passthrough-no-root.yml"},
+			ingressNames: []string{"ingress-with-ssl-passthrough-no-root"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			paths := append([]string{"services.yml", "ingressclasses.yml"}, test.paths...)
+			k8sObjects := readResources(t, paths)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			client := newClient(kubeClient)
+
+			eventCh, err := client.WatchAll(t.Context(), "", "")
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				PublishStatusAddress: []string{"203.0.113.10"},
+				k8sClient:            client,
+				NonTLSEntryPoints:    []string{"http"},
+				TLSEntryPoints:       []string{"https"},
+			}
+			p.SetDefaults()
+
+			require.NotNil(t, p.loadConfiguration(t.Context()))
+
+			for _, name := range test.ingressNames {
+				ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+
+				if test.wantStatus {
+					assert.Equal(t, []netv1.IngressLoadBalancerIngress{{IP: "203.0.113.10"}}, ing.Status.LoadBalancer.Ingress)
+				} else {
+					assert.Empty(t, ing.Status.LoadBalancer.Ingress)
+				}
+			}
 		})
 	}
 }

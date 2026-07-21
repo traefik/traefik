@@ -66,6 +66,7 @@ spec:
 | <a id="opt-traefik-ingress-kubernetes-iorouter-observability-accesslogs" href="#opt-traefik-ingress-kubernetes-iorouter-observability-accesslogs" title="#opt-traefik-ingress-kubernetes-iorouter-observability-accesslogs">`traefik.ingress.kubernetes.io/router.observability.accesslogs`</a> | Controls whether the router produces access logs.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
 | <a id="opt-traefik-ingress-kubernetes-iorouter-observability-metrics" href="#opt-traefik-ingress-kubernetes-iorouter-observability-metrics" title="#opt-traefik-ingress-kubernetes-iorouter-observability-metrics">`traefik.ingress.kubernetes.io/router.observability.metrics`</a> | Controls whether the router produces metrics.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
 | <a id="opt-traefik-ingress-kubernetes-iorouter-observability-tracing" href="#opt-traefik-ingress-kubernetes-iorouter-observability-tracing" title="#opt-traefik-ingress-kubernetes-iorouter-observability-tracing">`traefik.ingress.kubernetes.io/router.observability.tracing`</a> | Controls whether the router produces traces.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-observability-traceVerbosity" href="#opt-traefik-ingress-kubernetes-iorouter-observability-traceVerbosity" title="#opt-traefik-ingress-kubernetes-iorouter-observability-traceVerbosity">`traefik.ingress.kubernetes.io/router.observability.traceVerbosity`</a> | Defines the verbosity level of tracing for the router.<br/>Valid values: `minimal`, `detailed`.<br/>Default: `minimal`.<br/>See [observability](../http/routing/observability.md) for more information. | `detailed` |
 
 ### On Service
 
@@ -84,6 +85,14 @@ spec:
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-httponly" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-httponly" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-httponly">`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`</a> | Sets the HttpOnly flag on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `"true"` |
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage">`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`</a> | Sets the Max-Age attribute (in seconds) on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `42` |
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path">`traefik.ingress.kubernetes.io/service.sticky.cookie.path`</a> | Sets the Path attribute on the sticky session cookie, defining the path that must exist in the requested URL.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `/foobar` |
+
+??? info "`traefik.ingress.kubernetes.io/service.middlewares`"
+
+    See [service middlewares](../http/load-balancing/service.md#middlewares) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.middlewares: auth@file,prefix@kubernetescrd
+    ```
 
 ## TLS
 

@@ -320,9 +320,20 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
+!!! info "Supported Filter Types"
+
+    Traefik supports the following route-level filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
 !!! info "ExtensionRef Filters"
 
-    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-ingress.md). 
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
 
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
@@ -427,6 +438,107 @@ Once everything is deployed, sending a `GET` request should return the following
     X-Forwarded-Proto: http
     X-Forwarded-Server: traefik-6b66d45748-ns8mt
     X-Real-Ip: 10.42.2.1
+    ```
+
+#### Backend-Level Filters
+
+In addition to route-level filters, the Gateway API also supports applying filters directly to individual backends through the `backendRefs[].filters` field.
+This allows request modifications to be applied to specific backends, enabling the `HTTPRouteBackendRequestHeaderModification` extended feature.
+
+!!! info "Supported Filter Types"
+
+    Backend-level filters support the same filter types as route-level filters:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
+!!! info "Middlewares Execution Order"
+
+    When both route-level and backend-level filters are configured, route-level filters are applied first, followed by backend-level filters.
+
+For more information on service-level middlewares, see [service middlewares](../http/load-balancing/service.md#middlewares).
+
+??? example "Using RequestHeaderModifier on a Backend"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+
+          backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+              filters:
+                - type: RequestHeaderModifier
+                  requestHeaderModifier:
+                    set:
+                      - name: X-Backend-Header
+                        value: "backend-filter"
+    ```
+
+??? example "Using ExtensionRef (Traefik Middleware) on a Backend"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+              filters:
+                - type: ExtensionRef
+                  extensionRef:
+                    group: traefik.io
+                    kind: Middleware
+                    name: add-prefix
+    ```
+
+    ```yaml tab="AddPrefix Middleware"
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: add-prefix
+      namespace: default
+    spec:
+      addPrefix:
+        prefix: /api
     ```
 
 ### GRPC
@@ -669,11 +781,6 @@ Once everything is deployed, sending the WHO command should return the following
     ```
 
 ### TLS
-
-!!! info "Experimental Channel"
-
-    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
-    Therefore, to use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) option must be enabled.
 
 The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.

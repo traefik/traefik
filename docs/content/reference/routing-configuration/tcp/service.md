@@ -76,7 +76,7 @@ labels:
 | <a id="opt-servers" href="#opt-servers" title="#opt-servers">`servers`</a> |  Servers declare a single instance of your program.  | "" |
 | <a id="opt-servers-address" href="#opt-servers-address" title="#opt-servers-address">`servers.address`</a> |   The address option (IP:Port) point to a specific instance. | "" |
 | <a id="opt-servers-tls" href="#opt-servers-tls" title="#opt-servers-tls">`servers.tls`</a> | The `tls` option determines whether to use TLS when dialing with the backend. | false |
-| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
+| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | `serversTransport` allows referencing a TCP [ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
 | <a id="opt-healthCheck" href="#opt-healthCheck" title="#opt-healthCheck">`healthCheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation. See [HealthCheck](#health-check) for details. | | No |
 
 ### Health Check
@@ -95,7 +95,7 @@ Below are the available options for the health check mechanism:
 | <a id="opt-send" href="#opt-send" title="#opt-send">`send`</a> | Defines the payload to send to the server during the health check. | "" | No |
 | <a id="opt-expect" href="#opt-expect" title="#opt-expect">`expect`</a> | Defines the expected response payload from the server. | "" | No |
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
-| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
+| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | - | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check connection before considering the server unhealthy. | 5s | No |
 
 ## Weighted Round Robin

@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"sync/atomic"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -48,30 +49,25 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 	}
 }
 
-type shouldRetryContextKey struct{}
-
-// ShouldRetry is a function allowing to enable/disable the retry middleware mechanism.
-type ShouldRetry func(shouldRetry bool)
-
-// ContextShouldRetry returns the ShouldRetry function if it has been set by the Retry middleware in the chain.
-func ContextShouldRetry(ctx context.Context) ShouldRetry {
-	f, _ := ctx.Value(shouldRetryContextKey{}).(ShouldRetry)
-	return f
-}
+type retryResponseWriterContextKey struct{}
 
 // WrapHandler wraps a given http.Handler to inject the httptrace.ClientTrace in the request context when it is needed
 // by the retry middleware.
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if shouldRetry := ContextShouldRetry(req.Context()); shouldRetry != nil {
-			shouldRetry(true)
+		if retryResponseWriter, _ := req.Context().Value(retryResponseWriterContextKey{}).(*responseWriter); retryResponseWriter != nil {
+			// Reaching this handler means the request reached the proxy layer,
+			// which arms the network-error retry (a dial failure still reaches here and writes
+			// a 502 without sending bytes). Responses produced earlier in the chain
+			// (e.g. an auth middleware returning 401) never reach here and must not be retried.
+			retryResponseWriter.proxyReached.Store(true)
 
 			trace := &httptrace.ClientTrace{
 				WroteHeaders: func() {
-					shouldRetry(false)
+					retryResponseWriter.wroteRequest.Store(true)
 				},
 				WroteRequest: func(httptrace.WroteRequestInfo) {
-					shouldRetry(false)
+					retryResponseWriter.wroteRequest.Store(true)
 				},
 			}
 			newCtx := httptrace.WithClientTrace(req.Context(), trace)
@@ -146,21 +142,40 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
 
+	// statusCodes contains the retriable status codes,
+	// it stands as a condition for HTTP retry.
+	var statusCodes types.HTTPCodeRanges
+	isIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
+	if r.retryNonIdempotentMethod || isIdempotent {
+		// statusCode controls whether the request is retried.
+		// A nil value bypass the retry.
+		statusCodes = r.statusCode
+	}
+
 	var reusableReq *mirror.ReusableRequest
-	if len(r.statusCode) > 0 {
+	if len(statusCodes) > 0 {
 		var err error
-		reusableReq, _, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
+		var readBytes []byte
+		reusableReq, readBytes, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
 		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
 			logger.Debug().Err(err).Msg("Error while creating reusable request for retry middleware")
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
+		// If the request body has failed to be read,
+		// disable the HTTP retry.
 		if errors.Is(err, mirror.ErrBodyTooLarge) {
-			http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
-			return
+			statusCodes = nil
+
+			req.Body = &peekedBody{
+				ReadCloser: req.Body,
+				peeked:     readBytes,
+			}
 		}
-	} else {
+	}
+
+	if reusableReq == nil {
 		closableBody := req.Body
 		defer closableBody.Close()
 
@@ -197,34 +212,27 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req = req.WithContext(tracingCtx)
 		}
 
-		remainAttempts := attempts < r.attempts
-
-		var statusCodes types.HTTPCodeRanges
-		isIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
-		if r.retryNonIdempotentMethod || isIdempotent {
-			// statusCode controls whether the request is retried.
-			// A nil value bypass the retry.
-			statusCodes = r.statusCode
-		}
-
-		retryResponseWriter := newResponseWriter(rw, statusCodes, remainAttempts, start, r.timeout)
-
 		if reusableReq != nil {
 			req = reusableReq.Clone(req.Context())
 		}
 
+		if attempts == r.attempts {
+			r.next.ServeHTTP(rw, req)
+			return nil
+		}
+
+		retryResponseWriter := newResponseWriter(rw, statusCodes, start, r.timeout, r.disableRetryOnNetworkError)
+
 		retryReq := req
 		if !r.disableRetryOnNetworkError {
-			var shouldRetry ShouldRetry = func(shouldRetry bool) {
-				timedOut := r.timeout > 0 && time.Since(start) >= r.timeout
-				retryResponseWriter.SetShouldRetry(shouldRetry && remainAttempts && !timedOut)
-			}
-			retryReq = req.Clone(context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry))
+			retryReq = req.Clone(context.WithValue(req.Context(), retryResponseWriterContextKey{}, retryResponseWriter))
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
 
-		if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
+		// End the operation as soon as the client received something
+		// or when the request is hijacked.
+		if retryResponseWriter.written || retryResponseWriter.hijacked {
 			return nil
 		}
 
@@ -269,62 +277,64 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, remainAttempts bool, start time.Time, timeout time.Duration) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, start time.Time, timeout time.Duration, disableRetryOnNetworkError bool) *responseWriter {
 	return &responseWriter{
-		responseWriter:  rw,
-		headers:         make(http.Header),
-		statusCodeRange: statusCodeRanges,
-		remainAttempts:  remainAttempts,
-		start:           start,
-		timeout:         timeout,
+		responseWriter:             rw,
+		headers:                    make(http.Header),
+		statusCodeRange:            statusCodeRanges,
+		start:                      start,
+		timeout:                    timeout,
+		disableRetryOnNetworkError: disableRetryOnNetworkError,
 	}
 }
 
 type responseWriter struct {
-	responseWriter  http.ResponseWriter
-	headers         http.Header
-	shouldRetry     bool
-	written         bool
-	statusCodeRange types.HTTPCodeRanges
-	remainAttempts  bool
-	start           time.Time
-	timeout         time.Duration
-}
+	responseWriter http.ResponseWriter
+	headers        http.Header
 
-func (r *responseWriter) ShouldRetry() bool {
-	return r.shouldRetry
-}
+	disableRetryOnNetworkError bool
+	statusCodeRange            types.HTTPCodeRanges
+	start                      time.Time
+	timeout                    time.Duration
 
-func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
-	r.shouldRetry = shouldRetry
+	proxyReached   atomic.Bool
+	wroteRequest   atomic.Bool
+	hijacked       bool
+	written        bool
+	shouldNotWrite bool
 }
 
 func (r *responseWriter) Header() http.Header {
-	// After headers have been written to the downstream client and no retry is pending,
-	// return the real response writer's headers. During a retry (shouldRetry=true),
-	// even after written=true, return the internal headers map so that failed-attempt
-	// headers are discarded and not leaked to the client.
-	if r.written && !r.shouldRetry {
-		return r.responseWriter.Header()
+	if r.shouldNotWrite || !r.written {
+		return r.headers
 	}
 
-	return r.headers
+	return r.responseWriter.Header()
 }
 
 func (r *responseWriter) Write(buf []byte) (int, error) {
-	if r.shouldRetry {
-		return len(buf), nil
-	}
-
 	if !r.written {
 		r.WriteHeader(http.StatusOK)
+	}
+
+	if r.shouldNotWrite {
+		return len(buf), nil
 	}
 
 	return r.responseWriter.Write(buf)
 }
 
 func (r *responseWriter) WriteHeader(code int) {
-	if r.shouldRetry || r.written {
+	if r.shouldNotWrite || r.written {
+		return
+	}
+
+	timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
+	// Retry on a network error only when the request reached the backend proxy
+	// but no bytes were sent to the backend yet. Responses produced before reaching the
+	// proxy (e.g. an auth middleware returning 401) must flow through to the client.
+	if !timedOut && !r.disableRetryOnNetworkError && r.proxyReached.Load() && !r.wroteRequest.Load() {
+		r.shouldNotWrite = true
 		return
 	}
 
@@ -340,11 +350,10 @@ func (r *responseWriter) WriteHeader(code int) {
 	}
 
 	if r.statusCodeRange != nil {
-		timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
-		r.shouldRetry = r.statusCodeRange.Contains(code) && r.remainAttempts && !timedOut
+		r.shouldNotWrite = !timedOut && r.statusCodeRange.Contains(code)
 	}
 
-	if r.shouldRetry {
+	if r.shouldNotWrite {
 		return
 	}
 
@@ -364,6 +373,11 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
 	}
+
+	// When the connection is Hijacked when using Websockets, we don't want to retry anymore,
+	// so we set the hijacked flag to true.
+	r.hijacked = true
+
 	return hijacker.Hijack()
 }
 
@@ -371,4 +385,24 @@ func (r *responseWriter) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+type peekedBody struct {
+	io.ReadCloser
+
+	peeked []byte
+}
+
+// Read drains accumulated peeked bytes first, then reads the body.
+func (p *peekedBody) Read(b []byte) (int, error) {
+	if len(p.peeked) > 0 {
+		n := copy(b, p.peeked)
+		p.peeked = p.peeked[n:]
+		if len(p.peeked) == 0 {
+			p.peeked = nil
+		}
+		return n, nil
+	}
+
+	return p.ReadCloser.Read(b)
 }
