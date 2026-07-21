@@ -1,154 +1,137 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -euo pipefail
 
-ENV_FILE="${ENV_FILE:-$(pwd)/script/.env}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+
+ENV_FILE="${ENV_FILE:-${SCRIPT_DIR}/.env}"
 ASSIMILIS_VERSION="${ASSIMILIS_VERSION:-v1.0.2}"
 AIKIDO_BASE_URL="${AIKIDO_BASE_URL:-https://app.aikido.dev}"
-SBOM_DIR="${SBOM_DIR:-$(pwd)/third_party/sbom}"
+SBOM_DIR="${SBOM_DIR:-${ROOT_DIR}/third_party/sbom}"
+TIMESTAMP_FILE="${ROOT_DIR}/third_party/.last_generated_at"
 REPO_NAME="traefik"
-ASSIMILIS_ERROR_LOG="$(pwd)/third_party/assimilis.log"
-TIMESTAMP_FILE="$(pwd)/third_party/.last_generated_at"
 
-if [[ ! -f "$ENV_FILE" ]]; then
-    printf "Credentials file not found: %s
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+log() { printf '==> %s\n' "$*"; }
+
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+load_env() {
+    if [[ ! -f "$ENV_FILE" ]]; then
+        die "Credentials file not found: ${ENV_FILE}
+
 Create it with:
 
-  cp .env.example .env
+  cp script/.env.example script/.env
 
-Then add your Aikido credentials." "$ENV_FILE"
-    exit 1
-fi
-
-set -a
-# shellcheck source=/dev/null
-source "$ENV_FILE"
-set +a
-
-TMP_DIR=$(mktemp -d)
-
-log() {
-    printf '==> %s\n' "$*"
-}
-
-format_timestamp_utc() {
-    local timestamp="$1"
-
-    if date --version >/dev/null 2>&1; then
-        # GNU date: Linux
-        formatted_scan_time="$(
-            date -u -d "@${timestamp}" '+%Y-%m-%d %H:%M:%S UTC'
-        )"
-    else
-        # BSD date: macOS
-        formatted_scan_time="$(
-            date -u -r "${timestamp}" '+%Y-%m-%d %H:%M:%S UTC'
-        )"
+Then add your Aikido credentials."
     fi
+
+    set -a
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+    set +a
+
+    [[ -n "${AIK_CLIENT:-}" ]] || die "AIK_CLIENT is not set in ${ENV_FILE}"
+    [[ -n "${AIK_SECRET:-}" ]] || die "AIK_SECRET is not set in ${ENV_FILE}"
+    [[ -n "${AIKIDO_REPO_CODE:-}" ]] || die "AIKIDO_REPO_CODE is not set in ${ENV_FILE}"
 }
 
-cleanup() {
-  rm -rf "$TMP_DIR"
-  rm -f "$ASSIMILIS_ERROR_LOG"
+aikido_api() {
+    local method="$1"
+    local path="$2"
+    local body="${TMP_DIR}/response"
+    local code
+
+    shift 2
+
+    code="$(
+        curl -sS -X "$method" "${AIKIDO_BASE_URL}${path}" \
+            -w '%{http_code}' -o "$body" "$@")" || die "Cannot reach Aikido (${path})"
+
+    if [[ ! "$code" =~ ^2[0-9][0-9]$ ]]; then
+        die "Aikido ${path} returned HTTP ${code}: $(cat "$body")"
+    fi
+
+    cat "$body"
 }
 
-trap cleanup EXIT
-
-log "Requesting access token from Aikido"
-
-OAUTH_RESPONSE="${TMP_DIR}/oauth-response.json"
-
-if ! oauth_http_code="$(
-    curl -sS -u "${AIK_CLIENT}:${AIK_SECRET}" --request POST \
-        --url "${AIKIDO_BASE_URL}"/api/oauth/token \
-        --write-out '%{http_code}' \
+get_token() {
+    aikido_api POST /api/oauth/token \
+        --user "${AIK_CLIENT}:${AIK_SECRET}" \
         --header 'accept: application/json' \
         --header 'content-type: application/json' \
-        --data '{"grant_type": "client_credentials"}' \
-        -o "${OAUTH_RESPONSE}"
-)"; then
-    printf "Could not connect to the Aikido authentication endpoint"
-    exit 1
-fi
+        --data '{"grant_type":"client_credentials"}' |
+        jq -er '.access_token | strings | select(length > 0)'
+}
 
-if [[ ! "$oauth_http_code" =~ ^2[0-9][0-9]$ ]]; then
-    printf "Aikido API error: %s" "$OAUTH_RESPONSE"
-    printf "Aikido authentication failed with HTTP status %s" "$oauth_http_code"
-    exit 1
-fi
+download_sbom() {
+    local token="$1"
+    local output="${SBOM_DIR}/${REPO_NAME}.cdx.json"
+    local temporary_sbom="${TMP_DIR}/sbom.json"
 
-if ! AIKIDO_TOKEN="$(jq -er '.access_token' "${OAUTH_RESPONSE}")"; then
-    printf "Failed to get access token from Aikido"
-    exit 1
-fi
+    mkdir -p "$SBOM_DIR"
 
-log "Downloading the CycloneDX SBOM for Aikido repository ${AIKIDO_REPO_CODE}"
-
-mkdir -p "${SBOM_DIR}"
-if ! sbom_http_code="$(
-    curl -sS --request GET \
-        --write-out '%{http_code}' \
-        --url "${AIKIDO_BASE_URL}/api/public/v1/repositories/code/${AIKIDO_REPO_CODE}/licenses/export?format=sbom" \
+    aikido_api GET \
+        "/api/public/v1/repositories/code/${AIKIDO_REPO_CODE}/licenses/export?format=sbom" \
         --header 'accept: application/json' \
-        --header "authorization: Bearer ${AIKIDO_TOKEN}" \
-        -o "${SBOM_DIR}"/${REPO_NAME}.cdx.json
-)"; then
-    printf "Could not download the SBOM from Aikido"
-    exit 1
-fi
+        --header "authorization: Bearer ${token}" \
+        > "$temporary_sbom"
 
-if [[ ! "$sbom_http_code" =~ ^2[0-9][0-9]$ ]]; then
-    printf "Aikido API error: %s/%s" "$SBOM_DIR" "${REPO_NAME}.cdx.json"
-    printf "Aikido SBOM export failed with HTTP status %s" "$sbom_http_code"
-    exit 1
-fi
+    mv "$temporary_sbom" "$output"
 
-log "SBOM saved to ${SBOM_DIR}/${REPO_NAME}.cdx.json"
+    log "SBOM saved to ${output}"
+}
 
-REPOSITORY_RESPONSE="${TMP_DIR}/repository-response.json"
+# TODO: update with new Assimilis release
+install_assimilis() {
+    local bin_dir="${TMP_DIR}/assimilis-bin"
 
-if repository_http_code="$(
-    curl -sS --request GET \
-        --url "${AIKIDO_BASE_URL}"/api/public/v1/repositories/code/"${AIKIDO_REPO_CODE}" \
-        --write-out '%{http_code}' \
-        --header 'accept: application/json' \
-        --header "authorization: Bearer ${AIKIDO_TOKEN}" \
-        -o "${REPOSITORY_RESPONSE}"
-)"; then
-  if [[ "$repository_http_code" =~ ^2[0-9][0-9]$ ]]; then
-    last_scanned_at="$(
-      jq -er '.last_scanned_at' "$REPOSITORY_RESPONSE"
-    )"
-    if [[ -n "$last_scanned_at" ]]; then
-      format_timestamp_utc "$last_scanned_at"
-      log "Aikido repository last scanned at: ${formatted_scan_time}"
-    else
-      printf "Warning: Aikido did not provide a last_scanned_at value"
+    mkdir -p "$bin_dir"
+
+    log "Installing Assimilis ${ASSIMILIS_VERSION}"
+
+    GOBIN="$bin_dir" go install \
+        "github.com/traefik/assimilis/cmd@${ASSIMILIS_VERSION}"
+
+    ASSIMILIS_BIN="${bin_dir}/cmd"
+
+    [[ -x "$ASSIMILIS_BIN" ]] ||
+        die "Assimilis executable was not created"
+}
+
+main() {
+    local token
+    local generated_at
+
+    load_env
+
+    log "Requesting access token from Aikido"
+
+    token="$(get_token)" ||
+        die "Aikido response did not contain an access token"
+
+    log "Downloading the CycloneDX SBOM for Aikido repository ${AIKIDO_REPO_CODE}"
+
+    download_sbom "$token"
+    # install_assimilis
+
+    log "Generating third-party attribution files"
+
+    if ! (
+        cd "$ROOT_DIR"
+        # "$ASSIMILIS_BIN" --repo-name "$REPO_NAME"
+        assimilis --repo-name "$REPO_NAME"
+    ); then
+        die "Assimilis failed"
     fi
-  else
-    printf "Warning: Could not retrieve the Aikido scan time; HTTP status %s" "${repository_http_code}"
-  fi
-else
-  printf "Warning: Could not retrieve the Aikido repository metadata"
-fi
 
-log "Generating third-party attribution files"
+    date -u '+%s' > "$TIMESTAMP_FILE"
 
-set +e
-assimilis --repo-name ${REPO_NAME} 2>&1 | tee "${ASSIMILIS_ERROR_LOG}"
-assimilis_exit_code="${PIPESTATUS[0]}"
-set -e
+    log "Third-party files generated successfully"
+    log "Generation timestamp: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+}
 
-if [[ "$assimilis_exit_code" -ne 0 ]]; then
-    printf "Error: Assimilis failed with exit code %s.
-
-The complete log was saved to:
-  ${ASSIMILIS_ERROR_LOG}" "${assimilis_exit_code}"
-    exit 1
-fi
-
-# Record when the attribution generation was completed successfully
-generated_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-printf '%s\n' "$generated_at" > "$TIMESTAMP_FILE"
-
-log "Third-party files generated successfully"
-log "Generation timestamp: ${generated_at}"
+main "$@"
