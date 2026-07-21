@@ -255,6 +255,48 @@ func Test_New(t *testing.T) {
 	}
 }
 
+func Test_NewReturnsParseErrorForMalformedSnippets(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		serverSnippet string
+	}{
+		{
+			desc:          "unterminated quoted string",
+			serverSnippet: `add_header X-Test "unterminated;`,
+		},
+		{
+			desc:          "unterminated lua block with nested table",
+			serverSnippet: `content_by_lua_block { local t = { a = 1`,
+		},
+		{
+			desc:          "include without path",
+			serverSnippet: `include;`,
+		},
+		{
+			desc:          "include with multiple paths",
+			serverSnippet: `include first.conf second.conf;`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			_, err := New(t.Context(), next, &dynamic.Snippet{
+				ServerSnippet: test.serverSnippet,
+			}, "test-snippet")
+
+			require.Error(t, err)
+			require.ErrorContains(t, err, "parsing server-snippet:")
+			require.NotContains(t, err.Error(), "snippet parsing recover:")
+		})
+	}
+}
+
 func Test_Directives(t *testing.T) {
 	testCases := []struct {
 		desc                       string
