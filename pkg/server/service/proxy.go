@@ -86,10 +86,6 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 				delete(outReq.Header, "Sec-Websocket-Protocol")
 				delete(outReq.Header, "Sec-Websocket-Version")
 			}
-
-			if outReq.Method == http.MethodConnect {
-				deferConnectPayload(outReq)
-			}
 		},
 		Transport:     roundTripper,
 		FlushInterval: time.Duration(flushInterval),
@@ -128,10 +124,9 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 				log.WithoutContext().Debugf("Error while writing status code", werr)
 			}
 		},
-		ModifyResponse: openConnectTunnel,
 	}
 
-	return proxy, nil
+	return newConnectHandler(proxy), nil
 }
 
 // isTLSError returns true if the error is a TLS error which is related to configuration.

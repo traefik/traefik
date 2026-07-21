@@ -19,6 +19,55 @@ import (
 // hoping a refusing backend parses it as a second request.
 const smuggled = "GET /smuggled HTTP/1.1\r\nHost: victim\r\n\r\n"
 
+func TestConnect_HTTP2_TunnelEstablished(t *testing.T) {
+	backend := newConnectBackend(t, true)
+	addr := serveProxy(t, backend.url)
+
+	transport := http2Transport()
+
+	pipeReader, pipeWriter := io.Pipe()
+	t.Cleanup(func() { _ = pipeWriter.Close() })
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, pipeReader)
+	require.NoError(t, err)
+	req.Host = "tunnel.example.com:443"
+
+	res, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	// Payload sent after the tunnel is established must reach the backend and echo back.
+	_, err = io.WriteString(pipeWriter, "ping\n")
+	require.NoError(t, err)
+
+	echo, err := bufio.NewReader(res.Body).ReadString('\n')
+	require.NoError(t, err)
+	assert.Equal(t, "PING", strings.TrimSpace(echo))
+}
+
+func TestConnect_HTTP2_RefusedTunnelDropsPayload(t *testing.T) {
+	backend := newConnectBackend(t, false)
+	addr := serveProxy(t, backend.url)
+
+	transport := http2Transport()
+
+	// The attacker pushes the smuggled request immediately, without waiting for the tunnel.
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, strings.NewReader(smuggled))
+	require.NoError(t, err)
+	req.Host = "tunnel.example.com:443"
+
+	res, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
+
+	time.Sleep(500 * time.Millisecond)
+	assert.Empty(t, backend.received())
+}
+
 // http2Transport returns a Transport speaking prior-knowledge HTTP/2 over plain TCP.
 func http2Transport() *http.Transport {
 	protocols := new(http.Protocols)
@@ -147,53 +196,4 @@ func serveProxy(t *testing.T, target *url.URL) string {
 	t.Cleanup(func() { _ = srv.Close() })
 
 	return listener.Addr().String()
-}
-
-func TestConnect_HTTP2_TunnelEstablished(t *testing.T) {
-	backend := newConnectBackend(t, true)
-	addr := serveProxy(t, backend.url)
-
-	transport := http2Transport()
-
-	pipeReader, pipeWriter := io.Pipe()
-	t.Cleanup(func() { _ = pipeWriter.Close() })
-
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, pipeReader)
-	require.NoError(t, err)
-	req.Host = "tunnel.example.com:443"
-
-	res, err := transport.RoundTrip(req)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = res.Body.Close() })
-
-	require.Equal(t, http.StatusOK, res.StatusCode)
-
-	// Payload sent after the tunnel is established must reach the backend and echo back.
-	_, err = io.WriteString(pipeWriter, "ping\n")
-	require.NoError(t, err)
-
-	echo, err := bufio.NewReader(res.Body).ReadString('\n')
-	require.NoError(t, err)
-	assert.Equal(t, "PING", strings.TrimSpace(echo))
-}
-
-func TestConnect_HTTP2_RefusedTunnelDropsPayload(t *testing.T) {
-	backend := newConnectBackend(t, false)
-	addr := serveProxy(t, backend.url)
-
-	transport := http2Transport()
-
-	// The attacker pushes the smuggled request immediately, without waiting for the tunnel.
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, strings.NewReader(smuggled))
-	require.NoError(t, err)
-	req.Host = "tunnel.example.com:443"
-
-	res, err := transport.RoundTrip(req)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = res.Body.Close() })
-
-	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
-
-	time.Sleep(500 * time.Millisecond)
-	assert.Empty(t, backend.received())
 }

@@ -1,14 +1,53 @@
 package service
 
 import (
-	"context"
+	"bufio"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 )
 
-// connectTunnelKey is the context key carrying the deferred payload of an in-flight CONNECT request.
-type connectTunnelKey struct{}
+// connectHandler defers the payload of a CONNECT request until the backend has accepted the tunnel.
+// net/http writes a CONNECT body unframed onto the backend connection, so forwarding it before the tunnel is
+// accepted would let a client smuggle a pipelined request into the backend's HTTP/1 parser.
+type connectHandler struct {
+	next http.Handler
+}
+
+// newConnectHandler wraps next with the CONNECT payload deferral behavior.
+func newConnectHandler(next http.Handler) http.Handler {
+	return &connectHandler{next: next}
+}
+
+func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodConnect {
+		h.next.ServeHTTP(rw, req)
+		return
+	}
+
+	// The CONNECT method is not supported in HTTP/1.1 so we are rejecting it.
+	// This avoids putting a half-open tunnel to the backend to the pool.
+	if req.Proto == "HTTP/1.1" {
+		rw.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Nothing to defer for a CONNECT without body.
+	if req.Body == nil {
+		h.next.ServeHTTP(rw, req)
+		return
+	}
+
+	pipeReader, pipeWriter := io.Pipe()
+	tunnel := &connectTunnel{in: pipeWriter, payload: req.Body}
+
+	// The Transport blocks on the empty pipe, so only the header section reaches the backend until
+	// connectResponseWriter releases the payload once the backend accepts the tunnel.
+	req.Body = pipeReader
+
+	h.next.ServeHTTP(&connectResponseWriter{ResponseWriter: rw, req: req, tunnel: tunnel}, req)
+}
 
 // connectTunnel holds the payload of a CONNECT request until the backend has accepted the tunnel.
 type connectTunnel struct {
@@ -16,48 +55,80 @@ type connectTunnel struct {
 	payload io.Reader
 }
 
-// deferConnectPayload detaches the body of an outgoing CONNECT request so it only reaches the backend
-// once the tunnel is established.
-// net/http writes a CONNECT body unframed onto the backend connection, so forwarding it before the tunnel is
-// accepted would let a client smuggle a pipelined request into the backend's HTTP/1 parser.
-func deferConnectPayload(outReq *http.Request) {
-	if outReq.Body == nil {
+// release forwards the deferred payload to the backend once it has accepted the tunnel, or drops it otherwise.
+// RFC 9110 §9.3.6 states that any 2xx response makes the sender switch to tunnel mode immediately after the response
+// header section, which is the point where the payload legitimately becomes tunnel data.
+func (t *connectTunnel) release(req *http.Request, statusCode int) {
+	// The tunnel was refused, so the payload never becomes tunnel data and must not reach the backend.
+	if statusCode/100 != 2 {
+		_ = t.in.Close()
 		return
 	}
 
-	pipeReader, pipeWriter := io.Pipe()
-	tunnel := &connectTunnel{in: pipeWriter, payload: outReq.Body}
-
-	// The Transport blocks on the empty pipe, so only the header section reaches the backend until
-	// openConnectTunnel releases the payload.
-	*outReq = *outReq.WithContext(context.WithValue(outReq.Context(), connectTunnelKey{}, tunnel))
-	outReq.Body = pipeReader
-	outReq.ContentLength = -1
-}
-
-// openConnectTunnel releases the deferred payload of a CONNECT request once the backend has accepted the tunnel.
-// RFC 9110 §9.3.6 states that any 2xx response makes the sender switch to tunnel mode immediately after the response
-// header section, which is the point where the payload legitimately becomes tunnel data.
-func openConnectTunnel(res *http.Response) error {
-	tunnel, ok := res.Request.Context().Value(connectTunnelKey{}).(*connectTunnel)
-	if !ok {
-		return nil
-	}
-
-	if res.StatusCode/100 != 2 {
-		// The tunnel was refused, so the payload never becomes tunnel data and must not reach the backend.
-		if err := tunnel.in.Close(); err != nil {
-			return fmt.Errorf("closing refused CONNECT tunnel: %w", err)
-		}
-
-		return nil
-	}
-
+	// Forward the payload to the backend in the background: for an established tunnel this copy runs
+	// for the lifetime of the tunnel, so release must return to let the response direction be pumped.
+	copyDoneCh := make(chan struct{})
 	go func() {
-		_, err := io.Copy(tunnel.in, tunnel.payload)
-		// CloseWithError propagates the failure to the Transport reading the outgoing body.
-		_ = tunnel.in.CloseWithError(err)
+		_, err := io.Copy(t.in, t.payload)
+		_ = t.in.CloseWithError(err)
+		close(copyDoneCh)
 	}()
 
-	return nil
+	// If the request is canceled, the payload must not reach the backend, so close the pipe to unblock the Transport.
+	go func() {
+		select {
+		case <-req.Context().Done():
+			_ = t.in.Close()
+		case <-copyDoneCh:
+		}
+	}()
+}
+
+// connectResponseWriter releases the deferred CONNECT payload as soon as the backend's response status is known,
+// then behaves as the wrapped ResponseWriter.
+type connectResponseWriter struct {
+	http.ResponseWriter
+
+	req         *http.Request
+	tunnel      *connectTunnel
+	headersSent bool
+	released    bool
+}
+
+func (w *connectResponseWriter) WriteHeader(statusCode int) {
+	// Informational responses (1xx) are not the final response, so the tunnel decision must wait.
+	if statusCode >= 200 && !w.released {
+		w.released = true
+		w.tunnel.release(w.req, statusCode)
+	}
+
+	w.headersSent = true
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+// As a CONNECT response should never send a body per the specification, this method should never be called.
+func (w *connectResponseWriter) Write(b []byte) (int, error) {
+	// This case happen when Write is called without calling WriteHeader first, so the default status code 200 is used.
+	if !w.headersSent && !w.released {
+		w.released = true
+		w.tunnel.release(w.req, http.StatusOK)
+	}
+
+	return w.ResponseWriter.Write(b)
+}
+
+// Flush forwards flushes so the reverse proxy can stream the tunnel in both directions.
+func (w *connectResponseWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Hijack forwards hijacking for the HTTP/1 tunnels the wrapped ResponseWriter supports.
+func (w *connectResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return hijacker.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("not a hijacker: %T", w.ResponseWriter)
 }
