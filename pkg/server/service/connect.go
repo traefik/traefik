@@ -89,10 +89,9 @@ func (t *connectTunnel) release(req *http.Request, statusCode int) {
 type connectResponseWriter struct {
 	http.ResponseWriter
 
-	req         *http.Request
-	tunnel      *connectTunnel
-	headersSent bool
-	released    bool
+	req      *http.Request
+	tunnel   *connectTunnel
+	released bool
 }
 
 func (w *connectResponseWriter) WriteHeader(statusCode int) {
@@ -102,19 +101,7 @@ func (w *connectResponseWriter) WriteHeader(statusCode int) {
 		w.tunnel.release(w.req, statusCode)
 	}
 
-	w.headersSent = true
 	w.ResponseWriter.WriteHeader(statusCode)
-}
-
-// As a CONNECT response should never send a body per the specification, this method should never be called.
-func (w *connectResponseWriter) Write(b []byte) (int, error) {
-	// This case happen when Write is called without calling WriteHeader first, so the default status code 200 is used.
-	if !w.headersSent && !w.released {
-		w.released = true
-		w.tunnel.release(w.req, http.StatusOK)
-	}
-
-	return w.ResponseWriter.Write(b)
 }
 
 // Flush forwards flushes so the reverse proxy can stream the tunnel in both directions.
