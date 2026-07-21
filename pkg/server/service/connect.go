@@ -24,10 +24,9 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// The CONNECT method is not supported in HTTP/1.1 so we are rejecting it.
-	// This avoids putting a half-open tunnel to the backend to the pool.
-	if req.Proto == "HTTP/1.1" {
-		rw.WriteHeader(http.StatusMethodNotAllowed)
+	// Tunneling is only supported for clients speaking HTTP/2 and above.
+	if req.ProtoMajor == 1 {
+		rw.WriteHeader(http.StatusNotImplemented)
 		return
 	}
 
@@ -114,4 +113,8 @@ func (w *connectResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 
 	return nil, nil, fmt.Errorf("not a hijacker: %T", w.ResponseWriter)
+}
+
+func (w *connectResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
