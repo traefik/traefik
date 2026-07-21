@@ -69,7 +69,7 @@ func TestConnect_HTTP2_TunnelEstablished(t *testing.T) {
 	assert.Equal(t, "PING", strings.TrimSpace(echo))
 }
 
-func TestConnect_HTTP2_RefusedTunnelDropsPayload(t *testing.T) {
+func TestConnect_HTTP2_RefusedTunnelWithContentLength(t *testing.T) {
 	backend := newConnectBackend(t, false)
 	addr := serveProxy(t, backend.url)
 
@@ -85,8 +85,26 @@ func TestConnect_HTTP2_RefusedTunnelDropsPayload(t *testing.T) {
 	t.Cleanup(func() { _ = res.Body.Close() })
 
 	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
+	assert.Equal(t, "foo", *backend.payload.Load())
+}
 
-	time.Sleep(500 * time.Millisecond)
+func TestConnect_HTTP2_RefusedTunnelDropsPayloadWithoutContentLength(t *testing.T) {
+	backend := newConnectBackend(t, false)
+	addr := serveProxy(t, backend.url)
+
+	// Wrapping the reader hides its length, so the request is sent without a Content-Length header.
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, io.NopCloser(strings.NewReader("foo")))
+	require.NoError(t, err)
+
+	protocols := new(http.Protocols)
+	protocols.SetUnencryptedHTTP2(true)
+	transport := http.Transport{Protocols: protocols}
+
+	res, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
 	assert.Empty(t, *backend.payload.Load())
 }
 
@@ -100,80 +118,81 @@ type connectBackend struct {
 func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 	t.Helper()
 
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = listener.Close() })
-
 	backend := &connectBackend{payload: &atomic.Pointer[string]{}}
 	empty := ""
 	backend.payload.Store(&empty)
 
-	go func() {
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if !accept {
+			if req.ContentLength > 0 {
+				// A declared body means the proxy forwarded payload; read it to capture what leaked.
+				body, _ := io.ReadAll(req.Body)
+				got := string(body)
+				backend.payload.Store(&got)
+
+				rw.WriteHeader(http.StatusMethodNotAllowed)
+
 				return
 			}
 
-			go func() {
-				defer conn.Close()
+			// No declared body: hijack to make sure the proxy did not push anything on the raw connection.
+			conn, brw, err := rw.(http.Hijacker).Hijack()
+			if err != nil {
+				return
+			}
+			defer conn.Close()
 
-				br := bufio.NewReader(conn)
-				// Consume the CONNECT header section.
-				for {
-					line, err := br.ReadString('\n')
-					if err != nil {
-						return
-					}
-					if strings.TrimSpace(line) == "" {
-						break
-					}
+			var payload strings.Builder
+			buf := make([]byte, 1)
+			for {
+				_ = conn.SetReadDeadline(time.Now().Add(300 * time.Millisecond))
+				n, err := brw.Read(buf)
+				if n > 0 {
+					payload.Write(buf[:n])
 				}
-
-				if !accept {
-					_, _ = io.WriteString(conn, "HTTP/1.1 405 Method Not Allowed\r\nContent-Length: 0\r\n\r\n")
-					// Record anything the proxy pushed despite the refusal.
-					var payload strings.Builder
-					buf := make([]byte, 1)
-					for {
-						_ = conn.SetReadDeadline(time.Now().Add(300 * time.Millisecond))
-						n, err := br.Read(buf)
-						if n > 0 {
-							payload.Write(buf[:n])
-						}
-						if err != nil {
-							break
-						}
-					}
-					got := payload.String()
-					backend.payload.Store(&got)
-
-					return
+				if err != nil {
+					break
 				}
+			}
+			got := payload.String()
+			backend.payload.Store(&got)
 
-				_, _ = io.WriteString(conn, "HTTP/1.1 200 Connection Established\r\n\r\n")
+			_, _ = io.WriteString(conn, "HTTP/1.1 405 Method Not Allowed\r\nContent-Length: 0\r\n\r\n")
 
-				// Blind relay: echo every line back uppercased.
-				var payload strings.Builder
-				for {
-					_ = conn.SetReadDeadline(time.Now().Add(3 * time.Second))
-					line, err := br.ReadString('\n')
-					if len(line) > 0 {
-						payload.WriteString(line)
-						got := payload.String()
-						backend.payload.Store(&got)
-						_, _ = io.WriteString(conn, strings.ToUpper(line))
-					}
-					if err != nil {
-						return
-					}
-				}
-			}()
+			return
 		}
-	}()
 
-	backend.url, err = url.Parse("http://" + listener.Addr().String())
+		// The tunnel is a raw byte stream, so hijack the connection to bypass the HTTP response machinery.
+		// The returned reader already holds any payload buffered alongside the CONNECT header section.
+		conn, brw, err := rw.(http.Hijacker).Hijack()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		_, _ = io.WriteString(conn, "HTTP/1.1 200 Connection Established\r\n\r\n")
+
+		// Blind relay: echo every line back uppercased.
+		var payload strings.Builder
+		for {
+			_ = conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+			line, err := brw.ReadString('\n')
+			if len(line) > 0 {
+				payload.WriteString(line)
+				got := payload.String()
+				backend.payload.Store(&got)
+				_, _ = io.WriteString(conn, strings.ToUpper(line))
+			}
+			if err != nil {
+				return
+			}
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	backendURL, err := url.Parse(server.URL)
 	require.NoError(t, err)
+	backend.url = backendURL
 
 	return backend
 }

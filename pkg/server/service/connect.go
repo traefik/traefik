@@ -30,8 +30,8 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Nothing to defer for a CONNECT without body.
-	if req.Body == nil {
+	// Nothing to defer for a CONNECT without body or with a fixed Content-Length.
+	if req.ContentLength > 0 || req.Body == nil {
 		h.next.ServeHTTP(rw, req)
 		return
 	}
