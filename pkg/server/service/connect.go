@@ -9,8 +9,6 @@ import (
 )
 
 // connectHandler defers the payload of a CONNECT request until the backend has accepted the tunnel.
-// net/http writes a CONNECT body unframed onto the backend connection, so forwarding it before the tunnel is
-// accepted would let a client smuggle a pipelined request into the backend's HTTP/1 parser.
 type connectHandler struct {
 	next http.Handler
 }
