@@ -257,24 +257,54 @@ func Test_New(t *testing.T) {
 
 func Test_NewReturnsParseErrorForMalformedSnippets(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		serverSnippet string
+		desc        string
+		config      dynamic.Snippet
+		expectedErr string
 	}{
 		{
-			desc:          "unterminated quoted string",
-			serverSnippet: `add_header X-Test "unterminated;`,
+			desc: "unterminated quoted string",
+			config: dynamic.Snippet{
+				ServerSnippet: `add_header X-Test "unterminated;`,
+			},
+			expectedErr: "parsing server-snippet:",
 		},
 		{
-			desc:          "unterminated lua block with nested table",
-			serverSnippet: `content_by_lua_block { local t = { a = 1`,
+			desc: "unterminated lua block with nested table",
+			config: dynamic.Snippet{
+				ServerSnippet: `content_by_lua_block { local t = { a = 1`,
+			},
+			expectedErr: "parsing server-snippet:",
 		},
 		{
-			desc:          "include without path",
-			serverSnippet: `include;`,
+			desc: "include without path",
+			config: dynamic.Snippet{
+				ServerSnippet: `include;`,
+			},
+			expectedErr: "parsing server-snippet:",
 		},
 		{
-			desc:          "include with multiple paths",
-			serverSnippet: `include first.conf second.conf;`,
+			desc: "include with multiple paths",
+			config: dynamic.Snippet{
+				ServerSnippet: `include first.conf second.conf;`,
+			},
+			expectedErr: "parsing server-snippet:",
+		},
+		{
+			desc: "unterminated quoted string in configuration snippet",
+			config: dynamic.Snippet{
+				ConfigurationSnippet: `add_header X-Test "unterminated;`,
+			},
+			expectedErr: "parsing configuration-snippet:",
+		},
+		{
+			desc: "unterminated quoted string in auth snippet",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address: "http://auth.example.com",
+					Snippet: `add_header X-Test "unterminated;`,
+				},
+			},
+			expectedErr: "parsing auth-snippet:",
 		},
 	}
 
@@ -286,12 +316,10 @@ func Test_NewReturnsParseErrorForMalformedSnippets(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			})
 
-			_, err := New(t.Context(), next, &dynamic.Snippet{
-				ServerSnippet: test.serverSnippet,
-			}, "test-snippet")
+			_, err := New(t.Context(), next, &test.config, "test-snippet")
 
 			require.Error(t, err)
-			require.ErrorContains(t, err, "parsing server-snippet:")
+			require.ErrorContains(t, err, test.expectedErr)
 			require.NotContains(t, err.Error(), "snippet parsing recover:")
 		})
 	}
