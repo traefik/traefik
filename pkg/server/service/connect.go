@@ -102,14 +102,12 @@ func (w *connectResponseWriter) WriteHeader(statusCode int) {
 	w.ResponseWriter.WriteHeader(statusCode)
 }
 
-// Flush forwards flushes so the reverse proxy can stream the tunnel in both directions.
 func (w *connectResponseWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
 }
 
-// Hijack forwards hijacking for the HTTP/1 tunnels the wrapped ResponseWriter supports.
 func (w *connectResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if hijacker, ok := w.ResponseWriter.(http.Hijacker); ok {
 		return hijacker.Hijack()
