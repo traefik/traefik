@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"sync/atomic"
@@ -14,6 +15,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestConnect_HTTP1_Rejected(t *testing.T) {
+	var backendCalled bool
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		backendCalled = true
+	}))
+	t.Cleanup(backend.Close)
+
+	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+
+	addr := serveProxy(t, backendURL)
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, nil)
+	require.NoError(t, err)
+
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
+	assert.False(t, backendCalled)
+}
 
 func TestConnect_HTTP2_TunnelEstablished(t *testing.T) {
 	backend := newConnectBackend(t, true)
