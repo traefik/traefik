@@ -40,7 +40,7 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	pipeReader, pipeWriter := io.Pipe()
-	tunnel := &connectTunnel{in: pipeWriter, payload: req.Body}
+	tunnel := &connectTunnel{in: pipeWriter, data: req.Body}
 
 	// The Transport blocks on the empty pipe, so only the header section reaches the backend until
 	// connectResponseWriter releases the payload once the backend accepts the tunnel.
@@ -49,27 +49,27 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	h.next.ServeHTTP(&connectResponseWriter{ResponseWriter: rw, req: req, tunnel: tunnel}, req)
 }
 
-// connectTunnel holds the payload of a CONNECT request until the backend has accepted the tunnel.
+// connectTunnel holds the data of a CONNECT request until the backend has accepted the tunnel.
 type connectTunnel struct {
-	in      *io.PipeWriter
-	payload io.Reader
+	in   *io.PipeWriter
+	data io.Reader
 }
 
-// release forwards the deferred payload to the backend once it has accepted the tunnel, or drops it otherwise.
+// release forwards the deferred request body to the backend once it has accepted the tunnel, or drops it otherwise.
 // RFC 9110 §9.3.6 states that any 2xx response makes the sender switch to tunnel mode immediately after the response
-// header section, which is the point where the payload legitimately becomes tunnel data.
+// header section, which is the point where the request body legitimately becomes tunnel data.
 func (t *connectTunnel) release(req *http.Request, statusCode int) {
-	// The tunnel was refused, so the payload never becomes tunnel data and must not reach the backend.
+	// The tunnel was refused, so the request body never becomes tunnel data and must not reach the backend.
 	if statusCode/100 != 2 {
 		_ = t.in.Close()
 		return
 	}
 
-	// Forward the payload to the backend in the background: for an established tunnel this copy runs
+	// Forward the tunnel data to the backend in the background: for an established tunnel this copy runs
 	// for the lifetime of the tunnel, so release must return to let the response direction be pumped.
 	copyDoneCh := make(chan struct{})
 	go func() {
-		_, err := io.Copy(t.in, t.payload)
+		_, err := io.Copy(t.in, t.data)
 		_ = t.in.CloseWithError(err)
 		close(copyDoneCh)
 	}()

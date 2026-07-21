@@ -73,8 +73,7 @@ func TestConnect_HTTP2_RefusedTunnelDropsPayload(t *testing.T) {
 	backend := newConnectBackend(t, false)
 	addr := serveProxy(t, backend.url)
 
-	payload := strings.NewReader("GET /foo HTTP/1.1\r\nHost: foo\r\n\r\n")
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, payload)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, strings.NewReader("foo"))
 	require.NoError(t, err)
 
 	protocols := new(http.Protocols)
