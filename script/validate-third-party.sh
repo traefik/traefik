@@ -1,31 +1,39 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -euo pipefail
 
-timestamp_file="$(pwd)/third_party/.last_generated_at"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
-if [[ ! -f "${timestamp_file}" ]]; then
-    echo "Timestamp file not found: ${timestamp_file}"
-    echo "Please run 'make third-party' to generate third-party files first."
-    exit 1
-fi
+TIMESTAMP_FILE="${TIMESTAMP_FILE:-${ROOT_DIR}/third_party/.last_generated_at}"
+MAX_AGE="${MAX_AGE:-12h}"
 
-generated_at="$(tr -d '[:space:]' < "${timestamp_file}")"
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-if [[ ! "${generated_at}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]; then
-    echo "Invalid timestamp format in ${timestamp_file}: ${generated_at}"
-    exit 1
-fi
+value="${MAX_AGE%?}"
+unit="${MAX_AGE: -1}"
 
-generated_date="${generated_at%%T*}"
-release_date="$(date -u '+%Y-%m-%d')"
+[[ "$value" =~ ^[1-9][0-9]*$ ]] ||
+    die "MAX_AGE must be a positive duration such as 4h or 2d"
 
-echo "Generated at: ${generated_date}"
-echo "Release date: ${release_date}"
+case "$unit" in
+    m) max_age_seconds=$((value * 60)) ;;
+    h) max_age_seconds=$((value * 60 * 60)) ;;
+    d) max_age_seconds=$((value * 24 * 60 * 60)) ;;
+    *) die "Unsupported MAX_AGE unit '${unit}'; use m, h, or d" ;;
+esac
 
-if [[ "${generated_date}" != "${release_date}" ]]; then
-    echo "Error: Third-party files were not generated on the same day as the release."
-    echo "Please run 'make third-party' to regenerate third-party files for this release."
-    exit 1
-fi
+[[ -f "$TIMESTAMP_FILE" ]] ||
+    die "Timestamp file not found: ${TIMESTAMP_FILE}. Run 'make third-party' first."
 
-echo "Third-party files are up-to-date for this release."
+generated_at="$(tr -d '[:space:]' < "$TIMESTAMP_FILE")"
+
+[[ "$generated_at" =~ ^[0-9]+$ ]] ||
+    die "Invalid timestamp in ${TIMESTAMP_FILE}"
+
+current_time="$(date -u '+%s')"
+age=$((current_time - generated_at))
+
+(( age >= 0 )) || die "Third-party generation timestamp is in the future"
+(( age <= max_age_seconds )) || die "Third-party files are too old. Run 'make third-party' before releasing."
+
+printf 'Third-party files are recent enough for this release.\n'
