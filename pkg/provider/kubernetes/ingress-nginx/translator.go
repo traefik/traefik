@@ -94,6 +94,18 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
 		// ingress reach its catch-all routers.
 		if loc := mc.DefaultBackendLocation; loc != nil {
+			// Client-auth TLS option (auth-tls-secret) must gate the catch-all TLS
+			// router too, matching ingress-nginx which enforces it server-wide.
+			if loc.TLSOption != nil && loc.TLSOptionName != "" {
+				if conf.TLS.Options == nil {
+					conf.TLS.Options = make(map[string]tls.Options)
+				}
+				if _, exists := conf.TLS.Options[loc.TLSOptionName]; !exists {
+					conf.TLS.Options[loc.TLSOptionName] = *loc.TLSOption
+				}
+				rtTLS.TLS.Options = loc.TLSOptionName
+			}
+
 			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
