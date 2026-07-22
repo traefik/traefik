@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 )
 
 // connectHandler defers the payload of a CONNECT request until the backend has accepted the tunnel.
@@ -48,37 +49,38 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // connectTunnel holds the data of a CONNECT request until the backend has accepted the tunnel.
 type connectTunnel struct {
-	in   *io.PipeWriter
-	data io.Reader
+	in          *io.PipeWriter
+	releaseOnce sync.Once
+	data        io.Reader
 }
 
-// release forwards the deferred request body to the backend once it has accepted the tunnel, or drops it otherwise.
+func (t *connectTunnel) Close() {
+	_ = t.in.Close()
+}
+
+// Release forwards the deferred request body to the backend and copy the subsequent bytes to the tunnel.
 // RFC 9110 §9.3.6 states that any 2xx response makes the sender switch to tunnel mode immediately after the response
 // header section, which is the point where the request body legitimately becomes tunnel data.
-func (t *connectTunnel) release(req *http.Request, statusCode int) {
-	// The tunnel was refused, so the request body never becomes tunnel data and must not reach the backend.
-	if statusCode/100 != 2 {
-		_ = t.in.Close()
-		return
-	}
+func (t *connectTunnel) Release(req *http.Request) {
+	t.releaseOnce.Do(func() {
+		// Forward the tunnel data to the backend in the background: for an established tunnel this copy runs
+		// for the lifetime of the tunnel, so release must return to let the response direction be pumped.
+		copyDoneCh := make(chan struct{})
+		go func() {
+			_, err := io.Copy(t.in, t.data)
+			_ = t.in.CloseWithError(err)
+			close(copyDoneCh)
+		}()
 
-	// Forward the tunnel data to the backend in the background: for an established tunnel this copy runs
-	// for the lifetime of the tunnel, so release must return to let the response direction be pumped.
-	copyDoneCh := make(chan struct{})
-	go func() {
-		_, err := io.Copy(t.in, t.data)
-		_ = t.in.CloseWithError(err)
-		close(copyDoneCh)
-	}()
-
-	// If the request is canceled, the payload must not reach the backend, so close the pipe to unblock the Transport.
-	go func() {
-		select {
-		case <-req.Context().Done():
-			_ = t.in.Close()
-		case <-copyDoneCh:
-		}
-	}()
+		// If the request is canceled, the payload must not reach the backend, so close the pipe to unblock the Transport.
+		go func() {
+			select {
+			case <-req.Context().Done():
+				_ = t.in.Close()
+			case <-copyDoneCh:
+			}
+		}()
+	})
 }
 
 // connectResponseWriter releases the deferred CONNECT payload as soon as the backend's response status is known,
@@ -86,16 +88,16 @@ func (t *connectTunnel) release(req *http.Request, statusCode int) {
 type connectResponseWriter struct {
 	http.ResponseWriter
 
-	req      *http.Request
-	tunnel   *connectTunnel
-	released bool
+	req    *http.Request
+	tunnel *connectTunnel
 }
 
 func (w *connectResponseWriter) WriteHeader(statusCode int) {
-	// Informational responses (1xx) are not the final response, so the tunnel decision must wait.
-	if statusCode >= 200 && !w.released {
-		w.released = true
-		w.tunnel.release(w.req, statusCode)
+	// The tunnel was refused, so the request body never becomes tunnel data and must not reach the backend.
+	if statusCode/100 != 2 {
+		w.tunnel.Close()
+	} else {
+		w.tunnel.Release(w.req)
 	}
 
 	w.ResponseWriter.WriteHeader(statusCode)
