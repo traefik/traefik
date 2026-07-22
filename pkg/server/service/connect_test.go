@@ -3,7 +3,6 @@ package service
 import (
 	"bufio"
 	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -28,7 +27,7 @@ func TestConnect_HTTP1_Rejected(t *testing.T) {
 
 	addr := serveProxy(t, backendURL)
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, addr, nil)
 	require.NoError(t, err)
 
 	res, err := http.DefaultClient.Do(req)
@@ -46,7 +45,7 @@ func TestConnect_HTTP2_TunnelEstablished(t *testing.T) {
 	pipeReader, pipeWriter := io.Pipe()
 	t.Cleanup(func() { _ = pipeWriter.Close() })
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, pipeReader)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, addr, pipeReader)
 	require.NoError(t, err)
 
 	protocols := new(http.Protocols)
@@ -73,7 +72,7 @@ func TestConnect_HTTP2_RefusedTunnelWithContentLength(t *testing.T) {
 	backend := newConnectBackend(t, false)
 	addr := serveProxy(t, backend.url)
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, strings.NewReader("foo"))
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, addr, strings.NewReader("foo"))
 	require.NoError(t, err)
 
 	protocols := new(http.Protocols)
@@ -93,7 +92,7 @@ func TestConnect_HTTP2_RefusedTunnelDropsPayloadWithoutContentLength(t *testing.
 	addr := serveProxy(t, backend.url)
 
 	// Wrapping the reader hides its length, so the request is sent without a Content-Length header.
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, "http://"+addr, io.NopCloser(strings.NewReader("foo")))
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, addr, io.NopCloser(strings.NewReader("foo")))
 	require.NoError(t, err)
 
 	protocols := new(http.Protocols)
@@ -137,9 +136,7 @@ func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 
 			// No declared body: hijack to make sure the proxy did not push anything on the raw connection.
 			conn, brw, err := rw.(http.Hijacker).Hijack()
-			if err != nil {
-				return
-			}
+			require.NoError(t, err)
 			defer conn.Close()
 
 			var payload strings.Builder
@@ -165,9 +162,7 @@ func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 		// The tunnel is a raw byte stream, so hijack the connection to bypass the HTTP response machinery.
 		// The returned reader already holds any payload buffered alongside the CONNECT header section.
 		conn, brw, err := rw.(http.Hijacker).Hijack()
-		if err != nil {
-			return
-		}
+		require.NoError(t, err)
 		defer conn.Close()
 
 		_, _ = io.WriteString(conn, "HTTP/1.1 200 Connection Established\r\n\r\n")
@@ -197,8 +192,8 @@ func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 	return backend
 }
 
-// serveProxy exposes the Traefik proxy handler over a plain TCP listener, with h2c enabled so that
-// both HTTP/1 and prior-knowledge HTTP/2 clients can reach it.
+// serveProxy exposes the Traefik proxy handler over a httptest server,
+// with h2c enabled so that both HTTP/1 and prior-knowledge HTTP/2 clients can reach it.
 func serveProxy(t *testing.T, target *url.URL) string {
 	t.Helper()
 
@@ -212,17 +207,14 @@ func serveProxy(t *testing.T, target *url.URL) string {
 		proxy.ServeHTTP(rw, req)
 	})
 
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = listener.Close() })
-
 	protocols := new(http.Protocols)
 	protocols.SetHTTP1(true)
 	protocols.SetUnencryptedHTTP2(true)
 
-	srv := &http.Server{Handler: handler, Protocols: protocols}
-	go func() { _ = srv.Serve(listener) }()
-	t.Cleanup(func() { _ = srv.Close() })
+	srv := httptest.NewUnstartedServer(handler)
+	srv.Config.Protocols = protocols
+	srv.Start()
+	t.Cleanup(srv.Close)
 
-	return listener.Addr().String()
+	return srv.URL
 }
