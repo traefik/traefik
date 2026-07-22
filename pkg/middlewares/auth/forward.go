@@ -172,7 +172,17 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if fa.forwardBody {
+	forwardBody := fa.forwardBody
+	// When a CONNECT method has a body with an unknown length we consider the bytes as tunnel data.
+	// Therefore, we do not want to forward them to the auth server.
+	if req.Method == http.MethodConnect && req.ContentLength < 0 {
+		forwardBody = false
+	}
+
+	if forwardBody {
+		forwardReq.ContentLength = req.ContentLength
+		forwardReq.TransferEncoding = req.TransferEncoding
+
 		bodyBytes, err := fa.readBodyBytes(req)
 		if errors.Is(err, errBodyTooLarge) {
 			logger.Debug().Msgf("Request body is too large, maxBodySize: %d", fa.maxBodySize)

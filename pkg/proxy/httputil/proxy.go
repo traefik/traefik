@@ -52,7 +52,7 @@ func ShouldNotAppendXFF(ctx context.Context) bool {
 }
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
-	return &httputil.ReverseProxy{
+	proxy := &httputil.ReverseProxy{
 		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
@@ -60,6 +60,8 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
+
+	return newConnectHandler(proxy)
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
