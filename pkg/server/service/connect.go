@@ -54,13 +54,14 @@ type connectTunnel struct {
 	data        io.Reader
 }
 
+// Close closes tunnel.
 func (t *connectTunnel) Close() {
 	_ = t.in.Close()
 }
 
 // Release forwards the deferred request body to the backend and copy the subsequent bytes to the tunnel.
-// RFC 9110 §9.3.6 states that any 2xx response makes the sender switch to tunnel mode immediately after the response
-// header section, which is the point where the request body legitimately becomes tunnel data.
+// As described in https://datatracker.ietf.org/doc/html/rfc9931#name-requirements-for-http-conne we must wait for a 2xx (Successful)
+// response before forwarding any tunnel data.
 func (t *connectTunnel) Release(req *http.Request) {
 	t.releaseOnce.Do(func() {
 		// Forward the tunnel data to the backend in the background: for an established tunnel this copy runs
