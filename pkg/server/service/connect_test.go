@@ -170,7 +170,6 @@ func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 		// Blind relay: echo every line back uppercased.
 		var payload strings.Builder
 		for {
-			_ = conn.SetReadDeadline(time.Now().Add(3 * time.Second))
 			line, err := brw.ReadString('\n')
 			if len(line) > 0 {
 				payload.WriteString(line)
