@@ -35,7 +35,7 @@ func TestConnect_HTTP1_Rejected(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = res.Body.Close() })
 
-	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
+	assert.Equal(t, http.StatusNotImplemented, res.StatusCode)
 	assert.False(t, backendCalled)
 }
 
