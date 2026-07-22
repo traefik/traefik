@@ -192,10 +192,6 @@ func TestForwardAuthDoesNotForwardCONNECTBody(t *testing.T) {
 				forwardedData, err := io.ReadAll(req.Body)
 				require.NoError(t, err)
 
-				fmt.Println(req.ContentLength)
-				fmt.Println(req.TransferEncoding)
-				fmt.Println(forwardedData)
-
 				assert.Equal(t, test.expectedBody, string(forwardedData))
 			}))
 			t.Cleanup(server.Close)
@@ -220,8 +216,8 @@ func TestForwardAuthDoesNotForwardCONNECTBody(t *testing.T) {
 			}
 			t.Cleanup(ts.Close)
 
-			// Using a NopCloser avoids the new request to have a ContentLength of -1,
-			// which would cause the request to be sent with chunked encoding.
+			// Explicitly set ContentLength so we can cover both fixed-length and unknown-length bodies.
+			// For unknown length (ContentLength = -1), the HTTP/1.1 client will use chunked encoding.
 			req := testhelpers.MustNewRequest(http.MethodConnect, ts.URL, bytes.NewReader([]byte("foo")))
 			req.ContentLength = test.contentLength
 

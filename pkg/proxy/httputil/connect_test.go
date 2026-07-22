@@ -117,10 +117,6 @@ type connectBackend struct {
 func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 	t.Helper()
 
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = listener.Close() })
-
 	backend := &connectBackend{payload: &atomic.Pointer[string]{}}
 	empty := ""
 	backend.payload.Store(&empty)
