@@ -29,7 +29,7 @@ const (
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	proxy := &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader, preservePath),
+		Rewrite:       rewriteBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
@@ -40,41 +40,63 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 	return newConnectHandler(proxy)
 }
 
-func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(req *http.Request) {
-	return func(outReq *http.Request) {
-		outReq.URL.Scheme = target.Scheme
-		outReq.URL.Host = target.Host
+func rewriteBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(pr *httputil.ProxyRequest) {
+	return func(pr *httputil.ProxyRequest) {
+		copyForwardedHeader(pr.Out.Header, pr.In.Header)
 
-		u := outReq.URL
-		if outReq.RequestURI != "" {
-			parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
+		if clientIP, _, err := net.SplitHostPort(pr.In.RemoteAddr); err == nil {
+			// If we aren't the first proxy retain prior
+			// X-Forwarded-For information as a comma+space
+			// separated list and fold multiple headers into one.
+			prior, ok := pr.Out.Header["X-Forwarded-For"]
+			omit := ok && prior == nil // Issue 38079: nil now means don't populate the header
+			if len(prior) > 0 {
+				clientIP = strings.Join(prior, ", ") + ", " + clientIP
+			}
+			if !omit {
+				pr.Out.Header.Set("X-Forwarded-For", clientIP)
+			}
+		}
+
+		pr.Out.URL.Scheme = target.Scheme
+		pr.Out.URL.Host = target.Host
+
+		u := pr.Out.URL
+		if pr.Out.RequestURI != "" {
+			parsedURL, err := url.ParseRequestURI(pr.Out.RequestURI)
 			if err == nil {
 				u = parsedURL
 			}
 		}
 
-		outReq.URL.Path = u.Path
-		outReq.URL.RawPath = u.RawPath
+		pr.Out.URL.Path = u.Path
+		pr.Out.URL.RawPath = u.RawPath
 
 		if preservePath {
-			outReq.URL.Path, outReq.URL.RawPath = JoinURLPath(target, u)
+			pr.Out.URL.Path, pr.Out.URL.RawPath = JoinURLPath(target, u)
 		}
 
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
-		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
-		outReq.RequestURI = "" // Outgoing request should not have RequestURI
+		pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
+		pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
 
-		outReq.Proto = "HTTP/1.1"
-		outReq.ProtoMajor = 1
-		outReq.ProtoMinor = 1
+		pr.Out.Proto = "HTTP/1.1"
+		pr.Out.ProtoMajor = 1
+		pr.Out.ProtoMinor = 1
+
+		// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
+		// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
+		if pr.Out.Method == http.MethodConnect {
+			pr.Out.Close = true
+		}
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
-			outReq.Host = outReq.URL.Host
+			pr.Out.Host = pr.Out.URL.Host
 		}
 
-		if isWebSocketUpgrade(outReq) {
-			cleanWebSocketHeaders(outReq)
+		if isWebSocketUpgrade(pr.Out) {
+			cleanWebSocketHeaders(pr.Out)
 		}
 	}
 }
@@ -103,6 +125,26 @@ func cleanWebSocketHeaders(req *http.Request) {
 func isWebSocketUpgrade(req *http.Request) bool {
 	return httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") &&
 		strings.EqualFold(req.Header.Get("Upgrade"), "websocket")
+}
+
+// copyForwardedHeader copies headers that are removed by ReverseProxy when Rewrite is used.
+func copyForwardedHeader(dst, src http.Header) {
+	prior, ok := src["X-Forwarded-For"]
+	if ok {
+		dst["X-Forwarded-For"] = prior
+	}
+	prior, ok = src["Forwarded"]
+	if ok {
+		dst["Forwarded"] = prior
+	}
+	prior, ok = src["X-Forwarded-Host"]
+	if ok {
+		dst["X-Forwarded-Host"] = prior
+	}
+	prior, ok = src["X-Forwarded-Proto"]
+	if ok {
+		dst["X-Forwarded-Proto"] = prior
+	}
 }
 
 // ErrorHandler is the http.Handler called when something goes wrong when forwarding the request.

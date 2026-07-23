@@ -122,6 +122,9 @@ func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 	backend.payload.Store(&empty)
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Test that the proxy sets the Connection: close header on CONNECT requests to avoid reusing the connection.
+		assert.True(t, req.Close)
+
 		if !accept {
 			if req.ContentLength > 0 {
 				// A declared body means the proxy forwarded payload; read it to capture what leaked.
