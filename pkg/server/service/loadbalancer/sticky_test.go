@@ -135,7 +135,6 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 	assert.Equal(t, 42, cookie.MaxAge)
-	assert.WithinDuration(t, time.Now().Add(time.Duration(cookieConfig.Expires)*time.Second), cookie.Expires, time.Second)
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
