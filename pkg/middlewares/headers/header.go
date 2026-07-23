@@ -82,17 +82,22 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		match, ok := s.matchOrigin(res.Request.Header.Get("Origin"))
 		if ok {
 			res.Header.Set("Access-Control-Allow-Origin", match)
-		}
-	}
 
-	if s.headers.AccessControlAllowCredentials {
-		res.Header.Set("Access-Control-Allow-Credentials", "true")
-	}
+			// Access-Control-* headers are only meaningful alongside a matching Access-Control-Allow-Origin:
+			// per the W3C CORS Recommendation's §7.2 "Resource Sharing Check"
+			// (https://www.w3.org/TR/2020/SPSD-cors-20200602/#resource-requests), and its modern equivalent, the
+			// "CORS check" in the WHATWG Fetch Standard (https://fetch.spec.whatwg.org/#cors-check).
+			// The request gets a network error as soon as the Origin fails to match.
+			if s.headers.AccessControlAllowCredentials {
+				res.Header.Set("Access-Control-Allow-Credentials", "true")
+			}
 
-	if len(s.headers.AccessControlExposeHeaders) > 0 {
-		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
-		if !(slices.Contains(s.headers.AccessControlExposeHeaders, "*") && s.headers.AccessControlAllowCredentials) {
-			res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+			if len(s.headers.AccessControlExposeHeaders) > 0 {
+				exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+				if !(slices.Contains(s.headers.AccessControlExposeHeaders, "*") && s.headers.AccessControlAllowCredentials) {
+					res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+				}
+			}
 		}
 	}
 
@@ -150,6 +155,19 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 		// If the request is an OPTIONS request with an Access-Control-Request-Method header,
 		// and Origin headers, then it is a CORS preflight request,
 		// and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
+
+		// Per the Fetch Standard's "CORS-preflight fetch" algorithm (https://fetch.spec.whatwg.org/#cors-preflight-fetch),
+		// and formerly the W3C CORS Recommendation's equivalent §7.1.5 "Cross-Origin Request with Preflight"
+		// (https://www.w3.org/TR/2020/SPSD-cors-20200602/#resource-preflight-requests), the preflight response is validated
+		// against the Origin via the same Resource Sharing Check used for actual requests before other Access-Control-* headers
+		// are inspected, and a mismatch discards the whole preflight response as a network error.
+		match, ok := s.matchOrigin(originHeader)
+		if !ok {
+			return true
+		}
+
+		rw.Header().Set("Access-Control-Allow-Origin", match)
+
 		if s.headers.AccessControlAllowCredentials {
 			rw.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
@@ -168,11 +186,6 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 			rw.Header().Set("Access-Control-Allow-Methods", reqAcMethod)
 		} else if allowMethods != "" {
 			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
-		}
-
-		match, ok := s.matchOrigin(originHeader)
-		if ok {
-			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
 
 		if s.headers.AccessControlMaxAge != nil {
