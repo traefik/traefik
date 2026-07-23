@@ -41,7 +41,7 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	bodyDeferrer := newBodyDeferrer(req.Context().Done(), req.Body)
 	req.Body = bodyDeferrer
 
-	h.next.ServeHTTP(&connectResponseWriter{ResponseWriter: rw, req: req, bodyDeferrer: bodyDeferrer}, req)
+	h.next.ServeHTTP(&connectResponseWriter{ResponseWriter: rw, bodyDeferrer: bodyDeferrer}, req)
 }
 
 // bodyDeferrer holds the body of a CONNECT request until the backend has accepted the tunnel.
@@ -92,7 +92,6 @@ func (bd *bodyDeferrer) Release() {
 type connectResponseWriter struct {
 	http.ResponseWriter
 
-	req          *http.Request
 	bodyDeferrer *bodyDeferrer
 }
 
