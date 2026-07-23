@@ -74,7 +74,7 @@ func (bd *bodyDeferrer) Read(p []byte) (n int, err error) {
 	return bd.body.Read(p)
 }
 
-// Close releases the deferred request body and closes the underlying request body.
+// Close closes the underlying request body before releasing the deferred request body read operation.
 func (bd *bodyDeferrer) Close() error {
 	defer bd.closeReleaseOnce()
 	return bd.body.Close()
