@@ -231,7 +231,7 @@ func mergeCertificates(ctx context.Context, certificates []*tls.CertAndStores, n
 				case ResourceStrategySkipDuplicates:
 					log.Ctx(ctx).Warn().
 						Str("origin", origin).
-						Msgf("TLS certificate %v already configured, skipping", certificate.Certificate)
+						Msgf("TLS certificate %s already configured, skipping", certificate.Certificate.GetTruncatedCertificateName())
 				}
 
 				break
