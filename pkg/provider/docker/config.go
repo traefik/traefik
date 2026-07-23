@@ -166,7 +166,9 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.HTTPConfiguration) error {
 	serviceName := getServiceName(container)
 
+	autoCreatedService := false
 	if len(configuration.Services) == 0 {
+		autoCreatedService = true
 		configuration.Services = make(map[string]*dynamic.Service)
 		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
@@ -187,11 +189,45 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 	for name, service := range configuration.Services {
 		ctx := log.Ctx(ctx).With().Str(logs.ServiceName, name).Logger().WithContext(ctx)
 		if err := p.addServer(ctx, container, service.LoadBalancer); err != nil {
+			// If this service was auto-created (the user declared no service
+			// via labels) and every declared router already has an explicit
+			// Service set (e.g. pointing at an internal service such as
+			// api@internal), nothing in this container's configuration
+			// actually needs this default service. In that case, don't take
+			// down the whole container's configuration (routers included)
+			// over a backend that was never going to be used; drop the
+			// unusable service and keep going.
+			if autoCreatedService && !p.defaultServiceRequired(configuration) {
+				log.Ctx(ctx).Warn().Err(err).
+					Msgf("Ignoring auto-created service %q: no router references it", name)
+				delete(configuration.Services, name)
+				continue
+			}
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
 
 	return nil
+}
+
+// defaultServiceRequired reports whether the (as yet unbuilt) default router
+// wiring could still end up depending on the container's auto-created,
+// name-based default service. This is true whenever there are no routers
+// declared at all (provider.BuildRouterConfiguration will create one and
+// auto-assign it the container's sole service), or when at least one
+// declared router has no explicit Service set (same auto-assignment logic
+// applies to it). If every declared router already has an explicit Service,
+// the default service is unreachable dead weight and safe to drop on error.
+func (p *DynConfBuilder) defaultServiceRequired(configuration *dynamic.HTTPConfiguration) bool {
+	if len(configuration.Routers) == 0 {
+		return true
+	}
+	for _, router := range configuration.Routers {
+		if router.Service == "" {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *DynConfBuilder) keepContainer(ctx context.Context, container dockerData) bool {
