@@ -135,8 +135,8 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	postgres, err := isPostgres(pConn)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+		opErr, ok := errors.AsType[*net.OpError](err)
+		if !errors.Is(err, io.EOF) && (!ok || !opErr.Timeout()) {
 			log.Debug().Err(err).Msg("Error while peeking first bytes")
 		}
 		_ = pConn.Close()
@@ -145,8 +145,8 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	if postgres {
 		if err := r.servePostgres(pConn); err != nil {
-			var opErr *net.OpError
-			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			opErr, ok := errors.AsType[*net.OpError](err)
+			if !errors.Is(err, io.EOF) && (!ok || !opErr.Timeout()) {
 				log.Debug().Err(err).Msg("Error while serving Postgres connection")
 			}
 		}
@@ -156,8 +156,8 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	hello, err := clientHelloInfo(pConn)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+		opErr, ok := errors.AsType[*net.OpError](err)
+		if !errors.Is(err, io.EOF) && (!ok || !opErr.Timeout()) {
 			log.Debug().Err(err).Msg("Error while reading client hello")
 		}
 		_ = pConn.Close()

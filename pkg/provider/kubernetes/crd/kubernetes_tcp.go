@@ -15,6 +15,7 @@ import (
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
@@ -295,8 +296,8 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			for _, p := range endpointSlice.Ports {
-				if svcPort.Name == *p.Name {
-					port = *p.Port
+				if p.Name != nil && svcPort.Name == *p.Name {
+					port = ptr.Deref(p.Port, 0)
 					break
 				}
 			}
@@ -336,14 +337,18 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 		return "", nil
 	}
 
-	if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+ProviderName) {
-		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
-		// if the provider namespace kubernetescrd is used,
-		// we don't allow this format to avoid cross namespace references.
-		return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
-	}
-
 	if strings.Contains(serversTransportName, providerNamespaceSeparator) {
+		if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+ProviderName) {
+			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+			// if the provider namespace kubernetescrd is used,
+			// we don't allow this format to avoid cross namespace references.
+			return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
+		}
+
+		if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, parentNamespace) {
+			return "", fmt.Errorf("serversTransport %q reference is not allowed: namespace %q is not in crossProviderNamespaces", serversTransportName, parentNamespace)
+		}
+
 		return serversTransportName, nil
 	}
 

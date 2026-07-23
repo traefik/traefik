@@ -77,7 +77,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithLis
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadGRPCRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames, statusReport)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = ptr.To(condition)
+					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
@@ -161,7 +161,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 									Code: codes.Unavailable,
 									Msg:  "Service Unavailable",
 								},
-								Weight: ptr.To(1),
+								Weight: new(1),
 							},
 						},
 					},
@@ -193,7 +193,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
 		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, listener, conf, routeKey, route, bi, backendRef, statusReport)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
@@ -378,11 +378,11 @@ func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.
 
 			policyAncestorStatus := gatev1.PolicyAncestorStatus{
 				AncestorRef: gatev1.ParentReference{
-					Group:       ptr.To(gatev1.Group(groupGateway)),
-					Kind:        ptr.To(gatev1.Kind(kindGateway)),
-					Namespace:   ptr.To(gatev1.Namespace(namespace)),
+					Group:       new(gatev1.Group(groupGateway)),
+					Kind:        new(gatev1.Kind(kindGateway)),
+					Namespace:   new(gatev1.Namespace(namespace)),
 					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+					SectionName: new(gatev1.SectionName(listener.Name)),
 				},
 				ControllerName: controllerName,
 			}

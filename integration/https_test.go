@@ -501,7 +501,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 	assert.Equal(s.T(), "h2", proto)
 }
 
-// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// TestWithOverlappingStaticCertificate involves a client sending a SNI hostname of
 // "www.snitest.com", which matches the CN of two static certificates:
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
 // verifies that traefik returns the non-wildcard certificate.
@@ -533,7 +533,7 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 	assert.Equal(s.T(), "h2", proto)
 }
 
-// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// TestWithOverlappingDynamicCertificate involves a client sending a SNI hostname of
 // "www.snitest.com", which matches the CN of two dynamic certificates:
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
 // verifies that traefik returns the non-wildcard certificate.
