@@ -182,7 +182,7 @@ func statusText(statusCode int) string {
 	return http.StatusText(statusCode)
 }
 
-// copyForwardedHeader copies header that are removed by the reverseProxy when a rewriteRequest is used.
+// copyForwardedHeader copies headers that are removed by ReverseProxy when Rewrite is used.
 func copyForwardedHeader(dst, src http.Header) {
 	prior, ok := src["X-Forwarded-For"]
 	if ok {
