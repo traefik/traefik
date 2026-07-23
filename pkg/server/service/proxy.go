@@ -46,45 +46,67 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 	}
 
 	proxy := &httputil.ReverseProxy{
-		Director: func(outReq *http.Request) {
-			u := outReq.URL
-			if outReq.RequestURI != "" {
-				parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			copyForwardedHeader(pr.Out.Header, pr.In.Header)
+
+			if clientIP, _, err := net.SplitHostPort(pr.In.RemoteAddr); err == nil {
+				// If we aren't the first proxy retain prior
+				// X-Forwarded-For information as a comma+space
+				// separated list and fold multiple headers into one.
+				prior, ok := pr.Out.Header["X-Forwarded-For"]
+				omit := ok && prior == nil // Issue 38079: nil now means don't populate the header
+				if len(prior) > 0 {
+					clientIP = strings.Join(prior, ", ") + ", " + clientIP
+				}
+				if !omit {
+					pr.Out.Header.Set("X-Forwarded-For", clientIP)
+				}
+			}
+
+			u := pr.Out.URL
+			if pr.Out.RequestURI != "" {
+				parsedURL, err := url.ParseRequestURI(pr.Out.RequestURI)
 				if err == nil {
 					u = parsedURL
 				}
 			}
 
-			outReq.URL.Path = u.Path
-			outReq.URL.RawPath = u.RawPath
+			pr.Out.URL.Path = u.Path
+			pr.Out.URL.RawPath = u.RawPath
 			// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
-			outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
-			outReq.RequestURI = "" // Outgoing request should not have RequestURI
+			pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
+			pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
 
-			outReq.Proto = "HTTP/1.1"
-			outReq.ProtoMajor = 1
-			outReq.ProtoMinor = 1
+			pr.Out.Proto = "HTTP/1.1"
+			pr.Out.ProtoMajor = 1
+			pr.Out.ProtoMinor = 1
+
+			// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
+			// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
+			if pr.Out.Method == http.MethodConnect {
+				pr.Out.Close = true
+			}
 
 			// Do not pass client Host header unless optsetter PassHostHeader is set.
 			if passHostHeader != nil && !*passHostHeader {
-				outReq.Host = outReq.URL.Host
+				pr.Out.Host = pr.Out.URL.Host
 			}
 
 			// Even if the websocket RFC says that headers should be case-insensitive,
 			// some servers need Sec-WebSocket-Key, Sec-WebSocket-Extensions, Sec-WebSocket-Accept,
 			// Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
 			// https://tools.ietf.org/html/rfc6455#page-20
-			if isWebSocketUpgrade(outReq) {
-				outReq.Header["Sec-WebSocket-Key"] = outReq.Header["Sec-Websocket-Key"]
-				outReq.Header["Sec-WebSocket-Extensions"] = outReq.Header["Sec-Websocket-Extensions"]
-				outReq.Header["Sec-WebSocket-Accept"] = outReq.Header["Sec-Websocket-Accept"]
-				outReq.Header["Sec-WebSocket-Protocol"] = outReq.Header["Sec-Websocket-Protocol"]
-				outReq.Header["Sec-WebSocket-Version"] = outReq.Header["Sec-Websocket-Version"]
-				delete(outReq.Header, "Sec-Websocket-Key")
-				delete(outReq.Header, "Sec-Websocket-Extensions")
-				delete(outReq.Header, "Sec-Websocket-Accept")
-				delete(outReq.Header, "Sec-Websocket-Protocol")
-				delete(outReq.Header, "Sec-Websocket-Version")
+			if isWebSocketUpgrade(pr.Out) {
+				pr.Out.Header["Sec-WebSocket-Key"] = pr.Out.Header["Sec-Websocket-Key"]
+				pr.Out.Header["Sec-WebSocket-Extensions"] = pr.Out.Header["Sec-Websocket-Extensions"]
+				pr.Out.Header["Sec-WebSocket-Accept"] = pr.Out.Header["Sec-Websocket-Accept"]
+				pr.Out.Header["Sec-WebSocket-Protocol"] = pr.Out.Header["Sec-Websocket-Protocol"]
+				pr.Out.Header["Sec-WebSocket-Version"] = pr.Out.Header["Sec-Websocket-Version"]
+				delete(pr.Out.Header, "Sec-Websocket-Key")
+				delete(pr.Out.Header, "Sec-Websocket-Extensions")
+				delete(pr.Out.Header, "Sec-Websocket-Accept")
+				delete(pr.Out.Header, "Sec-Websocket-Protocol")
+				delete(pr.Out.Header, "Sec-Websocket-Version")
 			}
 		},
 		Transport:     roundTripper,
@@ -158,4 +180,24 @@ func statusText(statusCode int) string {
 		return StatusClientClosedRequestText
 	}
 	return http.StatusText(statusCode)
+}
+
+// copyForwardedHeader copies header that are removed by the reverseProxy when a rewriteRequest is used.
+func copyForwardedHeader(dst, src http.Header) {
+	prior, ok := src["X-Forwarded-For"]
+	if ok {
+		dst["X-Forwarded-For"] = prior
+	}
+	prior, ok = src["Forwarded"]
+	if ok {
+		dst["Forwarded"] = prior
+	}
+	prior, ok = src["X-Forwarded-Host"]
+	if ok {
+		dst["X-Forwarded-Host"] = prior
+	}
+	prior, ok = src["X-Forwarded-Proto"]
+	if ok {
+		dst["X-Forwarded-Proto"] = prior
+	}
 }
