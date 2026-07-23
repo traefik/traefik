@@ -67,9 +67,14 @@ func newBodyDeferrer(doneCh <-chan struct{}, body io.ReadCloser) *bodyDeferrer {
 
 func (bd *bodyDeferrer) Read(p []byte) (n int, err error) {
 	select {
-	case <-bd.doneCh:
-		return 0, context.Canceled
 	case <-bd.releaseCh:
+		// already released
+	default:
+		select {
+		case <-bd.doneCh:
+			return 0, context.Canceled
+		case <-bd.releaseCh:
+		}
 	}
 	return bd.body.Read(p)
 }
