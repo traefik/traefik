@@ -122,6 +122,20 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:     pt.BackendName,
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
 		}
+
+		if pt.ForceSSLRedirect {
+			redirectMWName := pt.RouterKey + "-redirect-scheme"
+			conf.HTTP.Middlewares[redirectMWName] = &dynamic.Middleware{
+				RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
+			}
+			conf.HTTP.Routers[pt.RouterKey+"-http"] = &dynamic.Router{
+				EntryPoints: p.NonTLSEntryPoints,
+				Rule:        fmt.Sprintf("Host(%q)", pt.Hostname),
+				RuleSyntax:  "default",
+				Middlewares: []string{redirectMWName},
+				Service:     "noop@internal",
+			}
+		}
 	}
 
 	for _, srv := range mc.Servers {

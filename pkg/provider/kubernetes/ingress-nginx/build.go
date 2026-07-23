@@ -312,9 +312,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ing.Namespace+"-"+ing.Name+"-"+rule.Host), "-")
 				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
-					BackendName: ptBackendName,
-					Hostname:    rule.Host,
-					RouterKey:   routerKey,
+					BackendName:      ptBackendName,
+					Hostname:         rule.Host,
+					RouterKey:        routerKey,
+					ForceSSLRedirect: ptr.Deref(ing.config.ForceSSLRedirect, false),
 				})
 				markProcessedIngress(ing.Ingress)
 			}
