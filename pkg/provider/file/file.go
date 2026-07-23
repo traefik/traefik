@@ -520,7 +520,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for _, conf := range c.TLS.Certificates {
 			if _, exists := configTLSMaps[conf]; exists {
-				logger.Warn().Msgf("TLS configuration %v already configured, skipping", conf)
+				logger.Warn().Msgf("TLS certificate %s already configured, skipping", conf.Certificate.GetTruncatedCertificateName())
 			} else {
 				configTLSMaps[conf] = struct{}{}
 			}
