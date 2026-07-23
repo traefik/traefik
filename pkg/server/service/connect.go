@@ -2,7 +2,7 @@ package service
 
 import (
 	"bufio"
-	"errors"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -68,7 +68,7 @@ func newBodyDeferrer(doneCh <-chan struct{}, body io.ReadCloser) *bodyDeferrer {
 func (bd *bodyDeferrer) Read(p []byte) (n int, err error) {
 	select {
 	case <-bd.doneCh:
-		return 0, errors.New("request context canceled")
+		return 0, context.Canceled
 	case <-bd.releaseCh:
 	}
 	return bd.body.Read(p)
