@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -134,7 +135,7 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 	assert.Equal(t, 42, cookie.MaxAge)
-	assert.WithinDuration(t, time.Now(), cookie.Expires, time.Duration(cookieConfig.Expires)*time.Second)
+	assert.WithinDuration(t, time.Now().Add(time.Duration(cookieConfig.Expires)*time.Second), cookie.Expires, time.Second)
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
@@ -164,23 +165,28 @@ func TestConvertSameSite_CaseInsensitive(t *testing.T) {
 }
 
 func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
-	sticky := NewSticky(dynamic.Cookie{Name: "test", Expires: 3600})
-	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+	synctest.Test(t, func(t *testing.T) {
+		expiration := time.Hour
+		sticky := NewSticky(dynamic.Cookie{Name: "test", Expires: int(expiration / time.Second)})
+		sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 
-	res1 := httptest.NewRecorder()
-	require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
-	exp1 := res1.Result().Cookies()[0].Expires
+		wantExp1 := time.Now().Add(expiration)
+		res1 := httptest.NewRecorder()
+		require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
+		exp1 := res1.Result().Cookies()[0].Expires
+		require.WithinDuration(t, wantExp1, exp1, time.Second)
 
-	// The Expires must be recomputed at write time, not frozen at construction; a
-	// real gap is needed because HTTP-date has 1-second granularity and there is no
-	// injectable clock.
-	time.Sleep(2 * time.Second)
+		// Advance fake time beyond HTTP-date's one-second granularity.
+		time.Sleep(2 * time.Second)
 
-	res2 := httptest.NewRecorder()
-	require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
-	exp2 := res2.Result().Cookies()[0].Expires
+		wantExp2 := time.Now().Add(expiration)
+		res2 := httptest.NewRecorder()
+		require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
+		exp2 := res2.Result().Cookies()[0].Expires
+		require.WithinDuration(t, wantExp2, exp2, time.Second)
 
-	assert.True(t, exp2.After(exp1))
+		require.True(t, exp2.After(exp1))
+	})
 }
 
 func TestSticky_WriteStickyCookie_NoExpiresIsSessionCookie(t *testing.T) {
