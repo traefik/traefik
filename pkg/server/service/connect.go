@@ -46,8 +46,8 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // bodyDeferrer holds the body of a CONNECT request until the backend has accepted the tunnel.
 type bodyDeferrer struct {
-	doneCh           <-chan struct{}
 	body             io.ReadCloser
+	doneCh           <-chan struct{}
 	releaseCh        chan struct{}
 	closeReleaseOnce func()
 }
@@ -56,8 +56,8 @@ func newBodyDeferrer(doneCh <-chan struct{}, body io.ReadCloser) *bodyDeferrer {
 	releaseCh := make(chan struct{})
 
 	return &bodyDeferrer{
-		doneCh:    doneCh,
 		body:      body,
+		doneCh:    doneCh,
 		releaseCh: releaseCh,
 		closeReleaseOnce: sync.OnceFunc(func() {
 			close(releaseCh)
