@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -266,6 +267,9 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 	}
 
 	regex := loc.Path
+	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific {
+		regex = makeTrailingGroupOptional(loc.Path)
+	}
 
 	xfp := ""
 	if loc.Config.XForwardedPrefix != nil && regexPathWithCapture.MatchString(*loc.Config.XForwardedPrefix) {
