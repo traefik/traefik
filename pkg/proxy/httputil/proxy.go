@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -212,6 +213,26 @@ func isTLSConfigError(err error) bool {
 	return ok
 }
 
+// invalidChunkedBodyErrors are the messages of the net/http chunked reader
+// errors raised while decoding a malformed chunked request body. They are
+// unexported (net/http/internal/chunked.go), so they can only be matched by
+// message.
+var invalidChunkedBodyErrors = []string{
+	"invalid byte in chunk length",
+	"empty hex number for chunk length",
+	"http chunk length too large",
+	"malformed chunked encoding",
+	"invalid CR in chunked line",
+	"chunked line ends with bare LF",
+	"chunked encoding contains too much non-data",
+}
+
+// isInvalidChunkedBodyError reports whether err was raised while decoding a
+// malformed chunked request body, which is a client fault.
+func isInvalidChunkedBodyError(err error) bool {
+	return slices.Contains(invalidChunkedBodyErrors, err.Error())
+}
+
 // ComputeStatusCode computes the HTTP status code according to the given error.
 func ComputeStatusCode(err error) int {
 	switch {
@@ -219,6 +240,8 @@ func ComputeStatusCode(err error) int {
 		return http.StatusBadGateway
 	case errors.Is(err, context.Canceled):
 		return StatusClientClosedRequest
+	case isInvalidChunkedBodyError(err):
+		return http.StatusBadRequest
 	default:
 		if netErr, ok := errors.AsType[net.Error](err); ok {
 			if netErr.Timeout() {
