@@ -120,7 +120,15 @@ func variableValue(rawVariable, variable string, req *http.Request, responseHead
 		return "http", nil
 
 	case args, queryString:
-		return req.URL.RawQuery, nil
+		if req.URL.RawQuery != "" {
+			return req.URL.RawQuery, nil
+		}
+		// Fallback: req.RequestURI is immutable from the wire and retains the query string
+		// even when req.URL is rebuilt by middleware without copying RawQuery.
+		if _, q, found := strings.Cut(req.RequestURI, "?"); found {
+			return q, nil
+		}
+		return "", nil
 
 	case remoteAddress:
 		return stripPort(req.RemoteAddr), nil
@@ -161,6 +169,10 @@ func variableValue(rawVariable, variable string, req *http.Request, responseHead
 
 	case isArgs:
 		if req.URL.RawQuery != "" {
+			return "?", nil
+		}
+		// Fallback: check RequestURI for cases where req.URL.RawQuery is lost by middleware.
+		if strings.Contains(req.RequestURI, "?") {
 			return "?", nil
 		}
 		return "", nil
