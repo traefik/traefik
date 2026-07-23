@@ -38,7 +38,7 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	bodyDeferrer := newBodyDeferrer(req.Body)
+	bodyDeferrer := newBodyDeferrer(req.Context().Done(), req.Body)
 	req.Body = bodyDeferrer
 
 	h.next.ServeHTTP(&connectResponseWriter{ResponseWriter: rw, req: req, bodyDeferrer: bodyDeferrer}, req)
@@ -46,62 +46,45 @@ func (h *connectHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // bodyDeferrer holds the body of a CONNECT request until the backend has accepted the tunnel.
 type bodyDeferrer struct {
-	*io.PipeReader
-
-	writer      *io.PipeWriter
-	body        io.ReadCloser
-	releaseOnce sync.Once
+	doneCh           <-chan struct{}
+	body             io.ReadCloser
+	releaseCh        chan struct{}
+	closeReleaseOnce func()
 }
 
-func newBodyDeferrer(body io.ReadCloser) *bodyDeferrer {
-	pipeReader, pipeWriter := io.Pipe()
+func newBodyDeferrer(doneCh <-chan struct{}, body io.ReadCloser) *bodyDeferrer {
+	releaseCh := make(chan struct{})
 
 	return &bodyDeferrer{
-		PipeReader: pipeReader,
-		writer:     pipeWriter,
-		body:       body,
+		doneCh:    doneCh,
+		body:      body,
+		releaseCh: releaseCh,
+		closeReleaseOnce: sync.OnceFunc(func() {
+			close(releaseCh)
+		}),
 	}
 }
 
-// Close the deferrer.
-func (bd *bodyDeferrer) Close() error {
-	var errs []error
-	if err := bd.writer.Close(); err != nil {
-		errs = append(errs, fmt.Errorf("closing bodyDeferrer pipe writer: %w", err))
+func (bd *bodyDeferrer) Read(p []byte) (n int, err error) {
+	select {
+	case <-bd.doneCh:
+		return 0, errors.New("request context canceled")
+	case <-bd.releaseCh:
 	}
-	if err := bd.PipeReader.Close(); err != nil {
-		errs = append(errs, fmt.Errorf("closing bodyDeferrer pipe reader: %w", err))
-	}
-	if err := bd.body.Close(); err != nil {
-		errs = append(errs, fmt.Errorf("closing bodyDeferrer request body: %w", err))
-	}
+	return bd.body.Read(p)
+}
 
-	return errors.Join(errs...)
+// Close releases the deferred request body and closes the underlying request body.
+func (bd *bodyDeferrer) Close() error {
+	defer bd.closeReleaseOnce()
+	return bd.body.Close()
 }
 
 // Release forwards the deferred request body to the backend and copy the subsequent bytes to the tunnel.
 // As described in https://datatracker.ietf.org/doc/html/rfc9931#name-requirements-for-http-conne we must wait for a 2xx (Successful)
 // response before forwarding any tunnel data.
-func (bd *bodyDeferrer) Release(req *http.Request) {
-	bd.releaseOnce.Do(func() {
-		// Forward the tunnel data to the backend in the background: for an established tunnel this copy runs
-		// for the lifetime of the tunnel, so release must return to let the response direction be pumped.
-		copyDoneCh := make(chan struct{})
-		go func() {
-			_, err := io.Copy(bd.writer, bd.body)
-			_ = bd.writer.CloseWithError(err)
-			close(copyDoneCh)
-		}()
-
-		// If the request is canceled, the payload must not reach the backend, so close the pipe to unblock the Transport.
-		go func() {
-			select {
-			case <-req.Context().Done():
-				bd.Close()
-			case <-copyDoneCh:
-			}
-		}()
-	})
+func (bd *bodyDeferrer) Release() {
+	bd.closeReleaseOnce()
 }
 
 // connectResponseWriter releases the deferred CONNECT payload as soon as the backend's response status is known,
@@ -118,7 +101,7 @@ func (w *connectResponseWriter) WriteHeader(statusCode int) {
 	if statusCode/100 != 2 {
 		_ = w.bodyDeferrer.Close()
 	} else {
-		w.bodyDeferrer.Release(w.req)
+		w.bodyDeferrer.Release()
 	}
 
 	w.ResponseWriter.WriteHeader(statusCode)
