@@ -174,7 +174,7 @@ func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
 		res1 := httptest.NewRecorder()
 		require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
 		exp1 := res1.Result().Cookies()[0].Expires
-		require.WithinDuration(t, wantExp1, exp1, time.Second)
+		require.Equal(t, wantExp1.Unix(), exp1.Unix())
 
 		// Advance fake time beyond HTTP-date's one-second granularity.
 		time.Sleep(2 * time.Second)
@@ -183,7 +183,7 @@ func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
 		res2 := httptest.NewRecorder()
 		require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
 		exp2 := res2.Result().Cookies()[0].Expires
-		require.WithinDuration(t, wantExp2, exp2, time.Second)
+		require.Equal(t, wantExp2.Unix(), exp2.Unix())
 
 		require.True(t, exp2.After(exp1))
 	})
