@@ -961,7 +961,7 @@ func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.Ing
 		return class == p.IngressClass
 	}
 
-	return p.WatchIngressWithoutClass
+	return p.WatchIngressWithoutClass && ing.Spec.IngressClassName == nil
 }
 
 func (p *Provider) validateIngress(ing *netv1.Ingress, cfg IngressConfig) error {
