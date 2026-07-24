@@ -7,12 +7,47 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	retrymiddleware "github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 const defaultMaxBodySize int64 = -1
+
+func TestMirrorRequestStripsRetryContext(t *testing.T) {
+	pool := safe.NewPool(t.Context())
+	defer pool.Stop()
+
+	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if shouldRetry := retrymiddleware.ContextShouldRetry(req.Context()); shouldRetry != nil {
+			shouldRetry(false)
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	}), pool, true, defaultMaxBodySize, nil)
+
+	mirrorSawRetryContext := make(chan bool, 1)
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		mirrorSawRetryContext <- retrymiddleware.ContextShouldRetry(req.Context()) != nil
+	}), 100)
+	require.NoError(t, err)
+
+	retry, err := retrymiddleware.New(t.Context(), mirror, dynamic.Retry{Attempts: 2}, retrymiddleware.Listeners{}, "traefikTest")
+	require.NoError(t, err)
+
+	retry.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+	select {
+	case sawRetryContext := <-mirrorSawRetryContext:
+		assert.False(t, sawRetryContext)
+	case <-time.After(time.Second):
+		t.Fatal("mirror handler was not called")
+	}
+}
 
 func TestMirroringOn100(t *testing.T) {
 	var countMirror1, countMirror2 int32
