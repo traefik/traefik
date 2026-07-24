@@ -397,6 +397,9 @@ http:
           readTimeout: 42s
           writeTimeout: 42s
           dialTimeout: 42s
+          masterName: foobar
+          sentinelUsername: foobar
+          sentinelPassword: foobar
     Middleware19:
       redirectRegex:
         regex: foobar
