@@ -1292,6 +1292,11 @@ func (in *Redis) DeepCopyInto(out *Redis) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
+	if in.DenyOnError != nil {
+		in, out := &in.DenyOnError, &out.DenyOnError
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
