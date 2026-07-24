@@ -48,6 +48,7 @@ const (
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
+	kindListenerSet    = "ListenerSet"
 	kindConfigMap      = "ConfigMap"
 	kindSecret         = "Secret"
 
@@ -135,7 +136,34 @@ type gatewayListener struct {
 
 	Attached bool
 
-	EPName string
+	GWName       string
+	GWNamespace  string
+	GWGeneration int64
+	EPName       string
+
+	// Source tracks whether this listener originated from a Gateway or a ListenerSet.
+	// When empty, it is treated as kindGateway for backward compatibility.
+	Source          string
+	SourceName      string
+	SourceNamespace string
+}
+
+// routeKeySegment returns the segment used in route keys to distinguish between
+// Gateway-sourced and ListenerSet-sourced listeners.
+// For Gateway-sourced listeners: "gw-<namespace>-<name>"
+// For ListenerSet-sourced listeners: "ls-<namespace>-<name>".
+func (l gatewayListener) routeKeySegment() string {
+	source := l.Source
+	if source == "" {
+		source = kindGateway
+	}
+
+	switch source {
+	case kindListenerSet:
+		return fmt.Sprintf("ls-%s-%s", l.SourceNamespace, l.SourceName)
+	default:
+		return fmt.Sprintf("gw-%s-%s", l.GWNamespace, l.GWName)
+	}
 }
 
 type gatewayWithListeners struct {
@@ -377,16 +405,26 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	}
 
 	var selectedGateways []gatewayWithListeners
+	// listenerSetInfosByGateway tracks per-ListenerSet status info, keyed by gateway NamespacedName.
+	listenerSetInfosByGateway := make(map[ktypes.NamespacedName]map[ktypes.NamespacedName]*listenerSetInfo)
+
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
 
+		gwListeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)
+
+		var lsInfoMap map[ktypes.NamespacedName]*listenerSetInfo
+		gwListeners, lsInfoMap = p.loadListenerSetListeners(logger.WithContext(ctx), gateway, gwListeners, conf)
+		gwNSN := ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}
+		listenerSetInfosByGateway[gwNSN] = lsInfoMap
+
 		selectedGateways = append(selectedGateways, gatewayWithListeners{
 			Name:      gateway.Name,
 			Namespace: gateway.Namespace,
-			listeners: p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf),
+			listeners: gwListeners,
 		})
 	}
 
@@ -408,6 +446,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gateway.Namespace).
 			Logger()
 
+		gwNSN := ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}
+
+		// Collect this gateway's listeners (both Gateway- and ListenerSet-sourced).
 		var listeners []gatewayListener
 		for _, selectedGateway := range selectedGateways {
 			if selectedGateway.Name == gateway.Name && selectedGateway.Namespace == gateway.Namespace {
@@ -415,7 +456,31 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			}
 		}
 
-		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
+		// Only Gateway-sourced listeners are passed to makeGatewayStatus.
+		var gwOnlyListeners []gatewayListener
+		for _, listener := range listeners {
+			source := listener.Source
+			if source == "" {
+				source = kindGateway
+			}
+			if source == kindGateway {
+				gwOnlyListeners = append(gwOnlyListeners, listener)
+			}
+		}
+
+		// Count accepted ListenerSets for this gateway.
+		var attachedListenerSets *int32
+		if lsInfoMap, ok := listenerSetInfosByGateway[gwNSN]; ok {
+			var count int32
+			for _, info := range lsInfoMap {
+				if info.accepted {
+					count++
+				}
+			}
+			attachedListenerSets = &count
+		}
+
+		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, gwOnlyListeners, addresses, attachedListenerSets)
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -430,7 +495,34 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 				Msg("Gateway Not Accepted")
 		}
 
-		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus)
+		// Build ListenerSet statuses (may set info.accepted = false when gateway is not accepted).
+		lsStatuses := make(map[ktypes.NamespacedName]gatev1.ListenerSetStatus)
+		if lsInfoMap, ok := listenerSetInfosByGateway[gwNSN]; ok {
+			for nsn, info := range lsInfoMap {
+				lsStatuses[nsn] = makeListenerSetStatus(info, listeners, gatewayStatus)
+			}
+		}
+
+		// Recount accepted ListenerSets after makeListenerSetStatus may have flipped accepted to false.
+		if lsInfoMap, ok := listenerSetInfosByGateway[gwNSN]; ok {
+			var count int32
+			for _, info := range lsInfoMap {
+				if info.accepted {
+					count++
+				}
+			}
+			newAttachedListenerSets := &count
+			// If the count changed, recompute the gateway status with the correct count.
+			if attachedListenerSets == nil || *attachedListenerSets != *newAttachedListenerSets {
+				gatewayStatus, _ = p.makeGatewayStatus(gateway, gwOnlyListeners, addresses, newAttachedListenerSets)
+			}
+		}
+
+		statusReport.RecordGatewayStatus(gwNSN, gatewayStatus)
+
+		for nsn, lsStatus := range lsStatuses {
+			statusReport.RecordListenerSetStatus(nsn, lsStatus)
+		}
 	}
 
 	return conf, statusReport, nil
@@ -443,11 +535,17 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 	for i, listener := range gateway.Spec.Listeners {
 		gatewayListeners[i] = gatewayListener{
-			Name:     string(listener.Name),
-			Port:     listener.Port,
-			Protocol: listener.Protocol,
-			TLS:      listener.TLS,
-			Hostname: listener.Hostname,
+			Name:            string(listener.Name),
+			GWName:          gateway.Name,
+			GWNamespace:     gateway.Namespace,
+			GWGeneration:    gateway.Generation,
+			Port:            listener.Port,
+			Protocol:        listener.Protocol,
+			TLS:             listener.TLS,
+			Hostname:        listener.Hostname,
+			Source:          kindGateway,
+			SourceName:      gateway.Name,
+			SourceNamespace: gateway.Namespace,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
 				SupportedKinds: []gatev1.RouteGroupKind{},
@@ -661,8 +759,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	return gatewayListeners
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
-	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress, attachedListenerSets *int32) (gatev1.GatewayStatus, []metav1.Condition) {
+	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses, AttachedListenerSets: attachedListenerSets}
 
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
@@ -1111,8 +1209,10 @@ type gatewayListenersForParentRef struct {
 }
 
 // matchingGatewayListenersForParentRef returns, for each parentRef referring to a
-// Gateway managed by this controller, all the listeners of that Gateway.
-// parentRefs that do not refer to one of our Gateways are omitted.
+// Gateway or a ListenerSet managed by this controller, the corresponding listeners.
+// A Gateway parentRef yields the Gateway-sourced listeners of that Gateway, while a
+// ListenerSet parentRef yields the listeners sourced from the referenced ListenerSet.
+// parentRefs that do not refer to one of our Gateways or ListenerSets are omitted.
 func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
 	var matches []gatewayListenersForParentRef
 
@@ -1121,36 +1221,72 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			continue
 		}
 
-		if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
-			continue
-		}
-
+		refKind := string(ptr.Deref(parentRef.Kind, kindGateway))
 		parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
 
-		var matchingGateway *gatewayWithListeners
-		for _, gateway := range gateways {
-			if parentRefNamespace != gateway.Namespace {
+		// Source discrimination: a Gateway parentRef targets only Gateway-sourced
+		// listeners, and a ListenerSet parentRef targets only the listeners of the
+		// referenced ListenerSet.
+		switch refKind {
+		case kindGateway:
+			for _, gateway := range gateways {
+				if parentRefNamespace != gateway.Namespace || string(parentRef.Name) != gateway.Name {
+					continue
+				}
+
+				var listeners []gatewayListener
+				for _, listener := range gateway.listeners {
+					source := listener.Source
+					if source == "" {
+						source = kindGateway
+					}
+					if source == kindGateway {
+						listeners = append(listeners, listener)
+					}
+				}
+
+				// All the Gateway listeners are kept: the parentRef is associated to its
+				// Gateway here, and whether each listener is actually targeted (SectionName,
+				// Port) is decided when loading the route, so that ResolvedRefs is reported
+				// even for parentRefs that match no listener.
+				matches = append(matches, gatewayListenersForParentRef{
+					parentRef:        parentRef,
+					gatewayName:      gateway.Name,
+					gatewayNamespace: gateway.Namespace,
+					listeners:        listeners,
+				})
+				break
+			}
+
+		case kindListenerSet:
+			// A ListenerSet parentRef targets the listeners sourced from the referenced
+			// ListenerSet, regardless of which Gateway it is attached to.
+			var listeners []gatewayListener
+			var gatewayName, gatewayNamespace string
+			for _, gateway := range gateways {
+				for _, listener := range gateway.listeners {
+					if listener.Source != kindListenerSet {
+						continue
+					}
+					if listener.SourceNamespace != parentRefNamespace || string(parentRef.Name) != listener.SourceName {
+						continue
+					}
+
+					listeners = append(listeners, listener)
+					gatewayName = gateway.Name
+					gatewayNamespace = gateway.Namespace
+				}
+			}
+
+			if len(listeners) == 0 {
 				continue
 			}
 
-			if string(parentRef.Name) != gateway.Name {
-				continue
-			}
-
-			matchingGateway = &gateway
-			break
-		}
-
-		if matchingGateway != nil {
-			// All the Gateway listeners are kept: the parentRef is associated to its
-			// Gateway here, and whether each listener is actually targeted (SectionName,
-			// Port) is decided when loading the route, so that ResolvedRefs is reported
-			// even for parentRefs that match no listener.
 			matches = append(matches, gatewayListenersForParentRef{
 				parentRef:        parentRef,
-				gatewayName:      matchingGateway.Name,
-				gatewayNamespace: matchingGateway.Namespace,
-				listeners:        matchingGateway.listeners,
+				gatewayName:      gatewayName,
+				gatewayNamespace: gatewayNamespace,
+				listeners:        listeners,
 			})
 		}
 	}
@@ -1291,6 +1427,572 @@ func makeListenerKey(l gatev1.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+// makeListenerKeyFromGatewayListener builds a conflict-detection key from an existing gatewayListener.
+func makeListenerKeyFromGatewayListener(gl gatewayListener) string {
+	var hostname gatev1.Hostname
+	if gl.Hostname != nil {
+		hostname = *gl.Hostname
+	}
+	return fmt.Sprintf("%s|%s|%d", gl.Protocol, hostname, gl.Port)
+}
+
+// makeListenerKeyFromEntry builds a conflict-detection key from a ListenerEntry.
+func makeListenerKeyFromEntry(e gatev1.ListenerEntry) string {
+	var hostname gatev1.Hostname
+	if e.Hostname != nil {
+		hostname = *e.Hostname
+	}
+	return fmt.Sprintf("%s|%s|%d", e.Protocol, hostname, e.Port)
+}
+
+type listenerSetInfo struct {
+	listenerSet *gatev1.ListenerSet
+	accepted    bool
+}
+
+// loadListenerSetListeners loads listeners from ListenerSets that reference the given gateway,
+// merging them into the existing gatewayListeners slice. It returns the updated slice plus
+// per-ListenerSet status information.
+func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, existingListeners []gatewayListener, conf *dynamic.Configuration) ([]gatewayListener, map[ktypes.NamespacedName]*listenerSetInfo) {
+	listenerSets := p.client.ListListenerSets()
+
+	// Filter ListenerSets that reference this gateway and are in allowed namespaces.
+	var matching []*gatev1.ListenerSet
+	var disallowed []*gatev1.ListenerSet
+	for _, ls := range listenerSets {
+		if !listenerSetRefsGateway(ls, gateway) {
+			continue
+		}
+		if !p.isListenerSetAllowed(gateway, ls) {
+			log.Ctx(ctx).Debug().
+				Str("listenerset", ls.Name).
+				Str("namespace", ls.Namespace).
+				Msg("ListenerSet not allowed by Gateway's AllowedListeners")
+			disallowed = append(disallowed, ls)
+			continue
+		}
+		matching = append(matching, ls)
+	}
+
+	// Sort by creation timestamp, then by namespace/name for stable ordering.
+	sort.SliceStable(matching, func(i, j int) bool {
+		if !matching[i].CreationTimestamp.Equal(&matching[j].CreationTimestamp) {
+			return matching[i].CreationTimestamp.Before(&matching[j].CreationTimestamp)
+		}
+		ni := matching[i].Namespace + "/" + matching[i].Name
+		nj := matching[j].Namespace + "/" + matching[j].Name
+		return ni < nj
+	})
+
+	// Build a set of already-allocated listener keys from the gateway listeners.
+	allocatedListeners := make(map[string]struct{})
+	for _, gl := range existingListeners {
+		allocatedListeners[makeListenerKeyFromGatewayListener(gl)] = struct{}{}
+	}
+
+	tlsConfigs := make(map[string]*tls.CertAndStores)
+	infoMap := make(map[ktypes.NamespacedName]*listenerSetInfo, len(matching))
+
+	for _, ls := range matching {
+		nsn := ktypes.NamespacedName{Name: ls.Name, Namespace: ls.Namespace}
+		info := &listenerSetInfo{listenerSet: ls, accepted: true}
+		infoMap[nsn] = info
+
+		for _, entry := range ls.Spec.Listeners {
+			gl := gatewayListener{
+				Name:            string(entry.Name),
+				GWName:          gateway.Name,
+				GWNamespace:     gateway.Namespace,
+				GWGeneration:    gateway.Generation,
+				Port:            entry.Port,
+				Protocol:        entry.Protocol,
+				TLS:             entry.TLS,
+				Hostname:        entry.Hostname,
+				Source:          kindListenerSet,
+				SourceName:      ls.Name,
+				SourceNamespace: ls.Namespace,
+				Status: &gatev1.ListenerStatus{
+					Name:           entry.Name,
+					SupportedKinds: []gatev1.RouteGroupKind{},
+					Conditions:     []metav1.Condition{},
+				},
+			}
+
+			ep, err := p.entryPointName(entry.Port, entry.Protocol)
+			if err != nil {
+				gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonPortUnavailable),
+					Message:            fmt.Sprintf("Cannot find entryPoint for ListenerSet listener: %v", err),
+				})
+				existingListeners = append(existingListeners, gl)
+				continue
+			}
+			gl.EPName = ep
+
+			allowedRoutes := ptr.Deref(entry.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: ptr.To(gatev1.NamespacesFromSame)}})
+			// For ListenerSet listeners, "Same" means the ListenerSet's own namespace,
+			// not the parent Gateway's namespace.
+			gl.AllowedNamespaces, err = p.allowedNamespaces(ls.Namespace, allowedRoutes.Namespaces)
+			if err != nil {
+				gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             "InvalidRouteNamespacesSelector",
+					Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
+				})
+				existingListeners = append(existingListeners, gl)
+				continue
+			}
+
+			supportedKinds, conditions := supportedRouteKinds(entry.Protocol, p.ExperimentalChannel)
+			if len(conditions) > 0 {
+				gl.Status.Conditions = append(gl.Status.Conditions, conditions...)
+				existingListeners = append(existingListeners, gl)
+				continue
+			}
+
+			routeKinds, conditions := allowedRouteKindsFromListenerEntry(ls, entry, supportedKinds)
+			for _, kind := range routeKinds {
+				gl.AllowedRouteKinds = append(gl.AllowedRouteKinds, string(kind.Kind))
+			}
+			gl.Status.SupportedKinds = routeKinds
+			if len(conditions) > 0 {
+				gl.Status.Conditions = append(gl.Status.Conditions, conditions...)
+				existingListeners = append(existingListeners, gl)
+				continue
+			}
+
+			listenerKey := makeListenerKeyFromEntry(entry)
+			if _, ok := allocatedListeners[listenerKey]; ok {
+				gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+					Type:               string(gatev1.ListenerConditionConflicted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             "DuplicateListener",
+					Message:            "A listener with same protocol, port and hostname already exists",
+				})
+				existingListeners = append(existingListeners, gl)
+				continue
+			}
+			allocatedListeners[listenerKey] = struct{}{}
+
+			if (entry.Protocol == gatev1.HTTPProtocolType || entry.Protocol == gatev1.TCPProtocolType) && entry.TLS != nil {
+				gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             "InvalidTLSConfiguration",
+					Message:            "TLS configuration must not be defined when using HTTP or TCP protocol",
+				})
+				existingListeners = append(existingListeners, gl)
+				continue
+			}
+
+			// TLS handling
+			if entry.Protocol == gatev1.HTTPSProtocolType || entry.Protocol == gatev1.TLSProtocolType {
+				if entry.TLS == nil || (len(entry.TLS.CertificateRefs) == 0 && entry.TLS.Mode != nil && *entry.TLS.Mode != gatev1.TLSModePassthrough) {
+					gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionAccepted),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: ls.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             "InvalidTLSConfiguration",
+						Message: fmt.Sprintf("No TLS configuration for ListenerSet listener %s:%d and protocol %q",
+							entry.Name, entry.Port, entry.Protocol),
+					})
+					existingListeners = append(existingListeners, gl)
+					continue
+				}
+
+				var tlsModeType gatev1.TLSModeType
+				if entry.TLS.Mode != nil {
+					tlsModeType = *entry.TLS.Mode
+				}
+
+				isTLSPassthrough := tlsModeType == gatev1.TLSModePassthrough
+
+				if isTLSPassthrough && len(entry.TLS.CertificateRefs) > 0 {
+					log.Ctx(ctx).Warn().Msg("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
+				}
+
+				if entry.Protocol == gatev1.HTTPSProtocolType && isTLSPassthrough {
+					gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionAccepted),
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: ls.Generation,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
+						Message:            "HTTPS protocol is not supported with TLS mode Passthrough",
+					})
+					existingListeners = append(existingListeners, gl)
+					continue
+				}
+
+				if !isTLSPassthrough {
+					if len(entry.TLS.CertificateRefs) == 0 {
+						gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: ls.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+							Message:            "One TLS CertificateRef is required in Terminate mode",
+						})
+						existingListeners = append(existingListeners, gl)
+						continue
+					}
+
+					certificateRef := entry.TLS.CertificateRefs[0]
+
+					if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" ||
+						certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
+						gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: ls.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+							Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)),
+						})
+						existingListeners = append(existingListeners, gl)
+						continue
+					}
+
+					certificateNamespace := ls.Namespace
+					if certificateRef.Namespace != nil && string(*certificateRef.Namespace) != ls.Namespace {
+						certificateNamespace = string(*certificateRef.Namespace)
+					}
+
+					// ReferenceGrants for ListenerSet use kindListenerSet as the from-kind.
+					if err := p.isReferenceGranted(kindListenerSet, ls.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+						gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
+							Type:               string(gatev1.ListenerConditionResolvedRefs),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: ls.Generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+							Message:            fmt.Sprintf("Cannot load CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
+						})
+						existingListeners = append(existingListeners, gl)
+						continue
+					}
+
+					configKey := certificateNamespace + "/" + string(certificateRef.Name)
+					if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
+						tlsConf, err := p.getTLSCert(certificateRef.Name, certificateNamespace)
+						if err != nil {
+							gl.Status.Conditions = append(gl.Status.Conditions,
+								metav1.Condition{
+									Type:               string(gatev1.ListenerConditionResolvedRefs),
+									Status:             metav1.ConditionFalse,
+									ObservedGeneration: ls.Generation,
+									LastTransitionTime: metav1.Now(),
+									Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+									Message:            fmt.Sprintf("Error while retrieving certificate: %v", err),
+								},
+								metav1.Condition{
+									Type:               string(gatev1.ListenerConditionProgrammed),
+									Status:             metav1.ConditionFalse,
+									ObservedGeneration: ls.Generation,
+									LastTransitionTime: metav1.Now(),
+									Reason:             string(gatev1.ListenerReasonInvalid),
+									Message:            fmt.Sprintf("Error while retrieving certificate: %v", err),
+								},
+							)
+							existingListeners = append(existingListeners, gl)
+							continue
+						}
+						tlsConfigs[configKey] = tlsConf
+					}
+				}
+			}
+
+			gl.Attached = true
+			existingListeners = append(existingListeners, gl)
+		}
+	}
+
+	if len(tlsConfigs) > 0 {
+		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
+	}
+
+	// Track disallowed ListenerSets so they receive a NotAllowed status condition.
+	for _, ls := range disallowed {
+		nsn := ktypes.NamespacedName{Name: ls.Name, Namespace: ls.Namespace}
+		infoMap[nsn] = &listenerSetInfo{listenerSet: ls, accepted: false}
+	}
+
+	return existingListeners, infoMap
+}
+
+// listenerSetRefsGateway returns true if the ListenerSet's ParentRef references the given gateway.
+func listenerSetRefsGateway(ls *gatev1.ListenerSet, gw *gatev1.Gateway) bool {
+	ref := ls.Spec.ParentRef
+
+	if ref.Group != nil && string(*ref.Group) != gatev1.GroupName {
+		return false
+	}
+	if ref.Kind != nil && string(*ref.Kind) != kindGateway {
+		return false
+	}
+	if string(ref.Name) != gw.Name {
+		return false
+	}
+
+	refNS := ls.Namespace
+	if ref.Namespace != nil {
+		refNS = string(*ref.Namespace)
+	}
+	return refNS == gw.Namespace
+}
+
+// isListenerSetAllowed checks whether the gateway's AllowedListeners permits the given ListenerSet.
+func (p *Provider) isListenerSetAllowed(gw *gatev1.Gateway, ls *gatev1.ListenerSet) bool {
+	if gw.Spec.AllowedListeners == nil {
+		return false
+	}
+
+	ns := gw.Spec.AllowedListeners.Namespaces
+	if ns == nil || ns.From == nil {
+		return false
+	}
+
+	switch *ns.From {
+	case gatev1.NamespacesFromNone:
+		return false
+	case gatev1.NamespacesFromSame:
+		return ls.Namespace == gw.Namespace
+	case gatev1.NamespacesFromAll:
+		return true
+	case gatev1.NamespacesFromSelector:
+		if ns.Selector == nil {
+			return false
+		}
+		selector, err := metav1.LabelSelectorAsSelector(ns.Selector)
+		if err != nil {
+			return false
+		}
+		namespaces, err := p.client.ListNamespaces(selector)
+		if err != nil {
+			return false
+		}
+		return slices.Contains(namespaces, ls.Namespace)
+	}
+
+	return false
+}
+
+// allowedRouteKindsFromListenerEntry mirrors allowedRouteKinds but operates on a ListenerEntry.
+func allowedRouteKindsFromListenerEntry(ls *gatev1.ListenerSet, entry gatev1.ListenerEntry, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+	if entry.AllowedRoutes == nil || len(entry.AllowedRoutes.Kinds) == 0 {
+		return supportedKinds, nil
+	}
+
+	var conditions []metav1.Condition
+	routeKinds := []gatev1.RouteGroupKind{}
+	uniqRouteKinds := map[gatev1.Kind]struct{}{}
+	for _, routeKind := range entry.AllowedRoutes.Kinds {
+		var isSupported bool
+		for _, kind := range supportedKinds {
+			if routeKind.Kind == kind.Kind && routeKind.Group != nil && *routeKind.Group == *kind.Group {
+				isSupported = true
+				break
+			}
+		}
+
+		if !isSupported {
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %s/%s", entry.Protocol, groupToString(routeKind.Group), routeKind.Kind),
+			})
+			continue
+		}
+
+		if _, exists := uniqRouteKinds[routeKind.Kind]; !exists {
+			routeKinds = append(routeKinds, routeKind)
+			uniqRouteKinds[routeKind.Kind] = struct{}{}
+		}
+	}
+
+	return routeKinds, conditions
+}
+
+func makeListenerSetStatus(info *listenerSetInfo, allListeners []gatewayListener, gwStatus gatev1.GatewayStatus) gatev1.ListenerSetStatus {
+	ls := info.listenerSet
+
+	status := gatev1.ListenerSetStatus{}
+
+	// If the ListenerSet was rejected by the Gateway's AllowedListeners policy,
+	// return a NotAllowed status immediately without processing listeners.
+	if !info.accepted {
+		status.Conditions = append(status.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonNotAllowed),
+				Message:            "ListenerSet is not allowed by the Gateway's AllowedListeners policy",
+			},
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionProgrammed),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonNotAllowed),
+				Message:            "ListenerSet is not allowed by the Gateway's AllowedListeners policy",
+			},
+		)
+		return status
+	}
+
+	// Build per-listener entry statuses from the gatewayListeners that came from this ListenerSet.
+	for _, gl := range allListeners {
+		if gl.Source != kindListenerSet || gl.SourceName != ls.Name || gl.SourceNamespace != ls.Namespace {
+			continue
+		}
+
+		entryStatus := gatev1.ListenerEntryStatus{
+			Name:           gatev1.SectionName(gl.Name),
+			SupportedKinds: gl.Status.SupportedKinds,
+			AttachedRoutes: gl.Status.AttachedRoutes,
+		}
+
+		if len(gl.Status.Conditions) == 0 {
+			entryStatus.Conditions = append(entryStatus.Conditions,
+				metav1.Condition{
+					Type:               string(gatev1.ListenerEntryConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonAccepted),
+					Message:            "No error found",
+				},
+				metav1.Condition{
+					Type:               string(gatev1.ListenerEntryConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonResolvedRefs),
+					Message:            "No error found",
+				},
+				metav1.Condition{
+					Type:               string(gatev1.ListenerEntryConditionProgrammed),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: ls.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonProgrammed),
+					Message:            "No error found",
+				},
+			)
+		} else {
+			entryStatus.Conditions = gl.Status.Conditions
+		}
+
+		status.Listeners = append(status.Listeners, entryStatus)
+	}
+
+	// Determine top-level ListenerSet conditions.
+	hasListenerErrors := false
+	for _, entryStatus := range status.Listeners {
+		for _, cond := range entryStatus.Conditions {
+			if cond.Status == metav1.ConditionFalse {
+				hasListenerErrors = true
+				break
+			}
+		}
+		if hasListenerErrors {
+			break
+		}
+	}
+
+	// Check if the parent Gateway is accepted.
+	gatewayAccepted := false
+	for _, cond := range gwStatus.Conditions {
+		if cond.Type == string(gatev1.GatewayConditionAccepted) && cond.Status == metav1.ConditionTrue {
+			gatewayAccepted = true
+			break
+		}
+	}
+
+	if !gatewayAccepted {
+		info.accepted = false
+		status.Conditions = append(status.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonParentNotAccepted),
+				Message:            "Parent Gateway is not accepted",
+			},
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionProgrammed),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonInvalid),
+				Message:            "Parent Gateway is not accepted",
+			},
+		)
+		return status
+	}
+
+	if hasListenerErrors {
+		status.Conditions = append(status.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonListenersNotValid),
+				Message:            "Some listeners have errors",
+			},
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionProgrammed),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonListenersNotValid),
+				Message:            "Not all listeners are valid",
+			},
+		)
+	} else {
+		status.Conditions = append(status.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonAccepted),
+				Message:            "ListenerSet accepted",
+			},
+			metav1.Condition{
+				Type:               string(gatev1.ListenerSetConditionProgrammed),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: ls.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerSetReasonProgrammed),
+				Message:            "ListenerSet programmed",
+			},
+		)
+	}
+
+	return status
 }
 
 func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {

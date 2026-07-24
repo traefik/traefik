@@ -15,6 +15,7 @@ import (
 type statusReport struct {
 	gatewayClasses     map[string]gatev1.GatewayClassStatus
 	gateways           map[ktypes.NamespacedName]gatev1.GatewayStatus
+	listenerSets       map[ktypes.NamespacedName]gatev1.ListenerSetStatus
 	httpRoutes         map[ktypes.NamespacedName]gatev1.RouteStatus
 	grpcRoutes         map[ktypes.NamespacedName]gatev1.RouteStatus
 	tcpRoutes          map[ktypes.NamespacedName]gatev1.RouteStatus
@@ -28,6 +29,7 @@ func newStatusReport() *statusReport {
 	return &statusReport{
 		gatewayClasses:     map[string]gatev1.GatewayClassStatus{},
 		gateways:           map[ktypes.NamespacedName]gatev1.GatewayStatus{},
+		listenerSets:       map[ktypes.NamespacedName]gatev1.ListenerSetStatus{},
 		httpRoutes:         map[ktypes.NamespacedName]gatev1.RouteStatus{},
 		grpcRoutes:         map[ktypes.NamespacedName]gatev1.RouteStatus{},
 		tcpRoutes:          map[ktypes.NamespacedName]gatev1.RouteStatus{},
@@ -50,6 +52,12 @@ func (r *statusReport) Flush(ctx context.Context, client *clientWrapper) {
 	for name, status := range r.gateways {
 		if err := client.UpdateGatewayStatus(ctx, name, status); err != nil {
 			logger.Warn().Err(err).Str("gateway", name.Name).Str("namespace", name.Namespace).Msg("Unable to update Gateway status")
+		}
+	}
+
+	for name, status := range r.listenerSets {
+		if err := client.UpdateListenerSetStatus(ctx, name, status); err != nil {
+			logger.Warn().Err(err).Str("listener_set", name.Name).Str("namespace", name.Namespace).Msg("Unable to update ListenerSet status")
 		}
 	}
 
@@ -94,6 +102,10 @@ func (r *statusReport) RecordGatewayClassStatus(gatewayClassName string, status 
 
 func (r *statusReport) RecordGatewayStatus(gateway ktypes.NamespacedName, status gatev1.GatewayStatus) {
 	r.gateways[gateway] = status
+}
+
+func (r *statusReport) RecordListenerSetStatus(listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) {
+	r.listenerSets[listenerSet] = status
 }
 
 func (r *statusReport) RecordHTTPRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {

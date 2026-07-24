@@ -206,6 +206,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
+		_, err = factoryGateway.Gateway().V1().ListenerSets().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
 		if c.experimentalChannel {
 			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
 			if err != nil {
@@ -364,6 +369,21 @@ func (c *clientWrapper) ListGateways() []*gatev1.Gateway {
 			continue
 		}
 		result = append(result, gateways...)
+	}
+
+	return result
+}
+
+func (c *clientWrapper) ListListenerSets() []*gatev1.ListenerSet {
+	var result []*gatev1.ListenerSet
+
+	for ns, factory := range c.factoriesGateway {
+		listenerSets, err := factory.Gateway().V1().ListenerSets().Lister().ListenerSets(ns).List(labels.Everything())
+		if err != nil {
+			log.Error().Err(err).Msgf("Failed to list ListenerSets in namespace %s", ns)
+			continue
+		}
+		result = append(result, listenerSets...)
 	}
 
 	return result
@@ -723,6 +743,41 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 	return nil
 }
 
+func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) error {
+	if !c.isWatchedNamespace(listenerSet.Namespace) {
+		return fmt.Errorf("cannot update ListenerSet status %s/%s: namespace is not within watched namespaces", listenerSet.Namespace, listenerSet.Name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentListenerSet, err := c.factoriesGateway[c.lookupNamespace(listenerSet.Namespace)].Gateway().V1().ListenerSets().Lister().ListenerSets(listenerSet.Namespace).Get(listenerSet.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		if listenerSetStatusEqual(currentListenerSet.Status, status) {
+			return nil
+		}
+
+		currentListenerSet = currentListenerSet.DeepCopy()
+		currentListenerSet.Status = status
+
+		if _, err = c.csGateway.GatewayV1().ListenerSets(listenerSet.Namespace).UpdateStatus(ctx, currentListenerSet, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update ListenerSet %s/%s status: %w", listenerSet.Namespace, listenerSet.Name, err)
+	}
+
+	return nil
+}
+
 // lookupNamespace returns the lookup namespace listenerKey for the given namespace.
 // When listening on all namespaces, it returns the client-go identifier ("")
 // for all-namespaces. Otherwise, it returns the given namespace.
@@ -761,11 +816,25 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
 		// Also, keep statuses from gateways managed by other Traefik instances.
 		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
+		// A ListenerSet parentRef is managed when one of the managed gateways carries a listener sourced from that ListenerSet.
 		// SectionName or Port is not used.
 		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
-		isManaged := slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
-			return gw.Namespace == parentNamespace && gw.Name == string(currentParent.ParentRef.Name)
-		})
+
+		var isManaged bool
+		switch string(ptr.Deref(currentParent.ParentRef.Kind, kindGateway)) {
+		case kindListenerSet:
+			isManaged = slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
+				return slices.ContainsFunc(gw.listeners, func(l gatewayListener) bool {
+					return l.Source == kindListenerSet &&
+						l.SourceNamespace == parentNamespace &&
+						l.SourceName == string(currentParent.ParentRef.Name)
+				})
+			})
+		default:
+			isManaged = slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
+				return gw.Namespace == parentNamespace && gw.Name == string(currentParent.ParentRef.Name)
+			})
+		}
 
 		if !isManaged {
 			parentStatuses = append(parentStatuses, currentParent)
@@ -777,6 +846,7 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
 	return reflect.DeepEqual(statusA.Addresses, statusB.Addresses) &&
+		reflect.DeepEqual(statusA.AttachedListenerSets, statusB.AttachedListenerSets) &&
 		listenersStatusEqual(statusA.Listeners, statusB.Listeners) &&
 		conditionsEqual(statusA.Conditions, statusB.Conditions)
 }
@@ -856,5 +926,18 @@ func conditionsEqual(conditionsA, conditionsB []metav1.Condition) bool {
 			cA.Status == cB.Status &&
 			cA.Message == cB.Message &&
 			cA.ObservedGeneration == cB.ObservedGeneration
+	})
+}
+
+func listenerSetStatusEqual(statusA, statusB gatev1.ListenerSetStatus) bool {
+	return listenerEntryStatusesEqual(statusA.Listeners, statusB.Listeners) &&
+		conditionsEqual(statusA.Conditions, statusB.Conditions)
+}
+
+func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntryStatus) bool {
+	return slices.EqualFunc(listenersA, listenersB, func(lA gatev1.ListenerEntryStatus, lB gatev1.ListenerEntryStatus) bool {
+		return lA.Name == lB.Name &&
+			lA.AttachedRoutes == lB.AttachedRoutes &&
+			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
 }
