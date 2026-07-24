@@ -1,3 +1,20 @@
+## [v3.6.24](https://github.com/traefik/traefik/tree/v3.6.24) (2026-07-24)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.23...v3.6.24)
+
+**Bug fixes:**
+- **[middleware, k8s/crd]** Add missing ErrorRequestHeaders field to CRDs ([#13498](https://github.com/traefik/traefik/pull/13498) @kevinpollet)
+- **[logs]** Remove unrelated error from nonexistent cert resolver log ([#13469](https://github.com/traefik/traefik/pull/13469) @ArthurHlt)
+- **[middleware]** Disable Zstd support in the gzhttp wrapper ([#13533](https://github.com/traefik/traefik/pull/13533) @kevinpollet)
+- **[server]** Defer the CONNECT payload until the backend accepts the tunnel ([#13542](https://github.com/traefik/traefik/pull/13542) @sdelicata)
+- **[server]** Discard CONNECT body in forwardauth and reject CONNECT requests with fast proxy ([#13543](https://github.com/traefik/traefik/pull/13543) @sdelicata)
+- **[server]** Bump google.golang.org/grpc to v1.82.1 ([#13551](https://github.com/traefik/traefik/pull/13551) @piscue)
+- **[server]** Do not add back CONNECT requests to the pool ([#13556](https://github.com/traefik/traefik/pull/13556) @kevinpollet)
+
+**Documentation:**
+- **[k8s]** Align certificateRef and indicate ports ([#13473](https://github.com/traefik/traefik/pull/13473) @veenoise)
+- **[rules]** Fix syntax notes in routing rule documentation ([#13501](https://github.com/traefik/traefik/pull/13501) @stevenlele)
+- Add a migration note for CONNECT requests ([#13554](https://github.com/traefik/traefik/pull/13554) @kevinpollet)
+
 ## [v2.11.53](https://github.com/traefik/traefik/tree/v2.11.53) (2026-07-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.52...v2.11.53)
 
