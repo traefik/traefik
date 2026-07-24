@@ -149,7 +149,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 		},
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(helmSecret, secret)
+	kubeClient := kubefake.NewClientset(helmSecret, secret)
 
 	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
 	discovery.FakedServerVersion = &kversion.Info{
@@ -218,7 +218,7 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 		}},
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(emptyEndpoint, filledEndpoint)
+	kubeClient := kubefake.NewClientset(emptyEndpoint, filledEndpoint)
 
 	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
 	discovery.FakedServerVersion = &kversion.Info{
@@ -302,7 +302,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 		},
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(ingressV1Beta, ingressV1)
+	kubeClient := kubefake.NewClientset(ingressV1Beta, ingressV1)
 
 	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
 	discovery.FakedServerVersion = &kversion.Info{

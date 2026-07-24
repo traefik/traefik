@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
+	typedtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeTLSOptions implements TLSOptionInterface
 type fakeTLSOptions struct {
-	*gentype.FakeClientWithList[*v1alpha1.TLSOption, *v1alpha1.TLSOptionList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.TLSOption, *v1alpha1.TLSOptionList, *traefikcontainousv1alpha1.TLSOptionApplyConfiguration]
 	Fake *FakeTraefikContainousV1alpha1
 }
 
-func newFakeTLSOptions(fake *FakeTraefikContainousV1alpha1, namespace string) traefikcontainousv1alpha1.TLSOptionInterface {
+func newFakeTLSOptions(fake *FakeTraefikContainousV1alpha1, namespace string) typedtraefikcontainousv1alpha1.TLSOptionInterface {
 	return &fakeTLSOptions{
-		gentype.NewFakeClientWithList[*v1alpha1.TLSOption, *v1alpha1.TLSOptionList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.TLSOption, *v1alpha1.TLSOptionList, *traefikcontainousv1alpha1.TLSOptionApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("tlsoptions"),

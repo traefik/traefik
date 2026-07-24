@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
 	scheme "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type TLSOptionInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikcontainousv1alpha1.TLSOptionList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikcontainousv1alpha1.TLSOption, err error)
+	Apply(ctx context.Context, tLSOption *applyconfigurationtraefikcontainousv1alpha1.TLSOptionApplyConfiguration, opts v1.ApplyOptions) (result *traefikcontainousv1alpha1.TLSOption, err error)
 	TLSOptionExpansion
 }
 
 // tLSOptions implements TLSOptionInterface
 type tLSOptions struct {
-	*gentype.ClientWithList[*traefikcontainousv1alpha1.TLSOption, *traefikcontainousv1alpha1.TLSOptionList]
+	*gentype.ClientWithListAndApply[*traefikcontainousv1alpha1.TLSOption, *traefikcontainousv1alpha1.TLSOptionList, *applyconfigurationtraefikcontainousv1alpha1.TLSOptionApplyConfiguration]
 }
 
 // newTLSOptions returns a TLSOptions
 func newTLSOptions(c *TraefikContainousV1alpha1Client, namespace string) *tLSOptions {
 	return &tLSOptions{
-		gentype.NewClientWithList[*traefikcontainousv1alpha1.TLSOption, *traefikcontainousv1alpha1.TLSOptionList](
+		gentype.NewClientWithListAndApply[*traefikcontainousv1alpha1.TLSOption, *traefikcontainousv1alpha1.TLSOptionList, *applyconfigurationtraefikcontainousv1alpha1.TLSOptionApplyConfiguration](
 			"tlsoptions",
 			c.RESTClient(),
 			scheme.ParameterCodec,
