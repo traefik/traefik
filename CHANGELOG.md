@@ -1,3 +1,15 @@
+## [v2.11.53](https://github.com/traefik/traefik/tree/v2.11.53) (2026-07-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.52...v2.11.53)
+
+**Bug fixes:**
+- **[middleware, k8s/crd]** Add missing ErrorRequestHeaders field to CRDs ([#13498](https://github.com/traefik/traefik/pull/13498) @kevinpollet)
+- **[server]** Defer the CONNECT payload until the backend accepts the tunnel ([#13542](https://github.com/traefik/traefik/pull/13542) @sdelicata)
+- **[server]** Bump google.golang.org/grpc to v1.82.1 ([#13551](https://github.com/traefik/traefik/pull/13551) @piscue)
+- **[server]** Do not add back CONNECT requests to the pool ([#13556](https://github.com/traefik/traefik/pull/13556) @kevinpollet)
+
+**Documentation:**
+- Add a migration note for CONNECT requests ([#13554](https://github.com/traefik/traefik/pull/13554) @kevinpollet)
+
 ## [v3.6.23](https://github.com/traefik/traefik/tree/v3.6.23) (2026-07-08)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.22...v3.6.23)
 
