@@ -132,6 +132,13 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
 	}
 
+	// The FastProxy does not support CONNECT tunneling,
+	// so any CONNECT request is rejected.
+	if req.Method == http.MethodConnect {
+		rw.WriteHeader(http.StatusNotImplemented)
+		return
+	}
+
 	outReq := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(outReq)
 

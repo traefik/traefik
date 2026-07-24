@@ -52,7 +52,7 @@ func ShouldNotAppendXFF(ctx context.Context) bool {
 }
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
-	return &httputil.ReverseProxy{
+	proxy := &httputil.ReverseProxy{
 		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
@@ -60,6 +60,8 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
+
+	return newConnectHandler(proxy)
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
@@ -106,6 +108,12 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1
 		pr.Out.ProtoMinor = 1
+
+		// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
+		// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
+		if pr.Out.Method == http.MethodConnect {
+			pr.Out.Close = true
+		}
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
