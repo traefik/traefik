@@ -175,5 +175,9 @@ When using the `json` format, you can customize which fields are included in you
 - **Request Headers:** You can also specify which request headers should be included in the logs, and whether their values should be `kept`, `dropped`, or `redacted`.
 - **Request Query Parameters:** You can choose to `keep` or `drop` the query parameters for a request.
 
+## Client IP Anonymization
+
+To comply with privacy requirements, you can truncate client IP addresses in the access logs by configuring `accessLog.anonymization`. Set `ipv4Subnet` and/or `ipv6Subnet` to the prefix length to keep (for example `24` for v4 and `48` for v6); Traefik then logs only the network prefix of the client connection IP, in the `ClientAddr` field and in the `ClientHost` field when it is derived from the connection remote address.
+
 !!! info
     For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).

@@ -92,6 +92,34 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 	return ""
 }
 
+// MaskIP truncates ip to the prefix length configured for its address family.
+// It returns ip unchanged on a parse failure or when the matching subnet is <= 0.
+func MaskIP(ip string, ipv4Subnet, ipv6Subnet int) string {
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
+		return ip
+	}
+
+	// Normalize 4-in-6 addresses so the family detection below is accurate.
+	addr = addr.Unmap()
+
+	subnet := ipv4Subnet
+	if addr.Is6() {
+		subnet = ipv6Subnet
+	}
+
+	if subnet <= 0 {
+		return ip
+	}
+
+	prefix, err := addr.Prefix(subnet)
+	if err != nil {
+		return ip
+	}
+
+	return prefix.Addr().String()
+}
+
 // getIPv6SubnetIP returns the IPv6 subnet IP.
 // It returns the original IP when it is not an IPv6, or if parsing the IP has failed with an error.
 func getIPv6SubnetIP(ip string, ipv6Subnet int) string {
