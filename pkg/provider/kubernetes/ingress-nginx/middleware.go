@@ -307,20 +307,40 @@ func (p *Provider) buildRateLimit(loc *location) {
 	}
 
 	burst := getLimitBurstMultiplier(loc.Config)
+	excludedIPs := parseLimitWhitelist(loc.Config.LimitWhitelist)
 	if rpm > 0 {
 		loc.RateLimitRPM = &dynamic.RateLimit{
-			Average: int64(rpm),
-			Period:  ptypes.Duration(time.Minute),
-			Burst:   int64(rpm) * burst,
+			Average:     int64(rpm),
+			Period:      ptypes.Duration(time.Minute),
+			Burst:       int64(rpm) * burst,
+			ExcludedIPs: excludedIPs,
 		}
 	}
 	if rps > 0 {
 		loc.RateLimitRPS = &dynamic.RateLimit{
-			Average: int64(rps),
-			Period:  ptypes.Duration(time.Second),
-			Burst:   int64(rps) * burst,
+			Average:     int64(rps),
+			Period:      ptypes.Duration(time.Second),
+			Burst:       int64(rps) * burst,
+			ExcludedIPs: excludedIPs,
 		}
 	}
+}
+
+// parseLimitWhitelist parses the comma-separated CIDRs/IPs from the
+// limit-whitelist annotation into the RateLimit ExcludedIPs list.
+func parseLimitWhitelist(whitelist *string) []string {
+	if whitelist == nil {
+		return nil
+	}
+
+	var result []string
+	for cidr := range strings.SplitSeq(*whitelist, ",") {
+		if cidr = strings.TrimSpace(cidr); cidr != "" {
+			result = append(result, cidr)
+		}
+	}
+
+	return result
 }
 
 func (p *Provider) buildLimitConnections(loc *location) {

@@ -86,10 +86,11 @@ type IngressConfig struct {
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
-	LimitRPM             *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
-	LimitRPS             *int `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
-	LimitBurstMultiplier *int `annotation:"nginx.ingress.kubernetes.io/limit-burst-multiplier"`
-	LimitConnections     *int `annotation:"nginx.ingress.kubernetes.io/limit-connections"`
+	LimitRPM             *int    `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
+	LimitRPS             *int    `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
+	LimitWhitelist       *string `annotation:"nginx.ingress.kubernetes.io/limit-whitelist"`
+	LimitBurstMultiplier *int    `annotation:"nginx.ingress.kubernetes.io/limit-burst-multiplier"`
+	LimitConnections     *int    `annotation:"nginx.ingress.kubernetes.io/limit-connections"`
 
 	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVHost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
