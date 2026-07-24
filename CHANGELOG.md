@@ -1,3 +1,19 @@
+## [v3.7.9](https://github.com/traefik/traefik/tree/v3.7.9) (2026-07-24)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.8...v3.7.9)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix redirect with use-regex in IngressNGINX provider ([#13476](https://github.com/traefik/traefik/pull/13476) @AmariahAK)
+- **[middleware]** Disable Zstd support in the gzhttp wrapper ([#13533](https://github.com/traefik/traefik/pull/13533) @kevinpollet)
+- **[server]** Defer the CONNECT payload until the backend accepts the tunnel ([#13542](https://github.com/traefik/traefik/pull/13542) @sdelicata)
+- **[server]** Discard CONNECT body in forwardauth and reject CONNECT requests with fast proxy ([#13543](https://github.com/traefik/traefik/pull/13543) @sdelicata)
+- **[server]** Bump google.golang.org/grpc to v1.82.1 ([#13551](https://github.com/traefik/traefik/pull/13551) @piscue)
+- **[server]** Do not add back CONNECT requests to the pool ([#13556](https://github.com/traefik/traefik/pull/13556) @kevinpollet)
+
+**Documentation:**
+- **[k8s/gatewayapi]** Document Gateway API generated service names change in the migration guide ([#13541](https://github.com/traefik/traefik/pull/13541) @rtribotte)
+- **[k8s/ingress-nginx]** Fix typo in nginx annotation proxy-buffer-numbers ([#13545](https://github.com/traefik/traefik/pull/13545) @fischerman)
+- Add a migration note for CONNECT requests ([#13554](https://github.com/traefik/traefik/pull/13554) @kevinpollet)
+
 ## [v3.6.24](https://github.com/traefik/traefik/tree/v3.6.24) (2026-07-24)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.23...v3.6.24)
 
