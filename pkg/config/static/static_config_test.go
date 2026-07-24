@@ -39,6 +39,100 @@ func TestHasEntrypoint(t *testing.T) {
 	}
 }
 
+func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
+	allowAll := &EncodedCharacters{}
+	allowAll.SetDefaults()
+
+	denySlash := &EncodedCharacters{}
+	denySlash.SetDefaults()
+	denySlash.AllowEncodedSlash = false
+
+	denyHash := &EncodedCharacters{}
+	denyHash.SetDefaults()
+	denyHash.AllowEncodedHash = false
+
+	tests := []struct {
+		desc        string
+		entryPoints map[string]*EntryPoint
+		wantWarning bool
+	}{
+		{
+			desc:        "empty configuration creates default TCP entryPoint",
+			wantWarning: true,
+		},
+		{
+			desc: "TCP entryPoint allowing all encoded characters",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			wantWarning: true,
+		},
+		{
+			desc: "TCP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			wantWarning: false,
+		},
+		{
+			desc: "UDP-only entryPoint",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {
+					Address: ":53/udp",
+				},
+			},
+			wantWarning: false,
+		},
+		{
+			desc: "UDP and TCP entryPoints allowing all encoded characters",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {
+					Address: ":53/udp",
+				},
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			wantWarning: true,
+		},
+		{
+			desc: "UDP and TCP entryPoints disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {
+					Address: ":53/udp",
+				},
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
+				},
+			},
+			wantWarning: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			if test.entryPoints == nil {
+				assert.Contains(t, cfg.EntryPoints, "http")
+			}
+			assert.Equal(t, test.wantWarning, cfg.ShouldWarnAboutEncodedCharacters())
+		})
+	}
+}
+
 func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string

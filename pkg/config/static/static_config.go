@@ -482,6 +482,35 @@ func (c *Configuration) ValidateConfiguration() error {
 	return nil
 }
 
+// ShouldWarnAboutEncodedCharacters reports whether TCP entrypoints are configured and none disallow an encoded character in the request path.
+func (c *Configuration) ShouldWarnAboutEncodedCharacters() bool {
+	hasTCPEntryPoint := false
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err != nil || protocol != "tcp" {
+			continue
+		}
+		hasTCPEntryPoint = true
+
+		encodedCharacters := ep.HTTP.EncodedCharacters
+		if encodedCharacters == nil {
+			continue
+		}
+
+		if !encodedCharacters.AllowEncodedSlash ||
+			!encodedCharacters.AllowEncodedBackSlash ||
+			!encodedCharacters.AllowEncodedNullCharacter ||
+			!encodedCharacters.AllowEncodedSemicolon ||
+			!encodedCharacters.AllowEncodedPercent ||
+			!encodedCharacters.AllowEncodedQuestionMark ||
+			!encodedCharacters.AllowEncodedHash {
+			return false
+		}
+	}
+
+	return hasTCPEntryPoint
+}
+
 func (c *Configuration) hasUserDefinedEntrypoint() bool {
 	return len(c.EntryPoints) != 0
 }
