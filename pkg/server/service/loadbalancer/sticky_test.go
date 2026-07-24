@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -134,7 +135,6 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 	assert.Equal(t, 42, cookie.MaxAge)
-	assert.WithinDuration(t, time.Now(), cookie.Expires, time.Duration(cookieConfig.Expires)*time.Second)
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
@@ -161,4 +161,41 @@ func TestConvertSameSite_CaseInsensitive(t *testing.T) {
 			assert.Equal(t, tt.expected, convertSameSite(tt.input))
 		})
 	}
+}
+
+func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		expiration := time.Hour
+		sticky := NewSticky(dynamic.Cookie{Name: "test", Expires: int(expiration / time.Second)})
+		sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+		wantExp1 := time.Now().Add(expiration)
+		res1 := httptest.NewRecorder()
+		require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
+		exp1 := res1.Result().Cookies()[0].Expires
+		require.Equal(t, wantExp1.Unix(), exp1.Unix())
+
+		// Advance fake time beyond HTTP-date's one-second granularity.
+		time.Sleep(2 * time.Second)
+
+		wantExp2 := time.Now().Add(expiration)
+		res2 := httptest.NewRecorder()
+		require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
+		exp2 := res2.Result().Cookies()[0].Expires
+		require.Equal(t, wantExp2.Unix(), exp2.Unix())
+
+		require.True(t, exp2.After(exp1))
+	})
+}
+
+func TestSticky_WriteStickyCookie_NoExpiresIsSessionCookie(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{Name: "test"})
+	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+	res := httptest.NewRecorder()
+	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+
+	// Without an expiry configured the cookie stays a session cookie, so the
+	// per-request Expires branch must not add an Expires attribute.
+	assert.True(t, res.Result().Cookies()[0].Expires.IsZero())
 }

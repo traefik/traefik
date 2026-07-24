@@ -29,7 +29,7 @@ type stickyCookie struct {
 	httpOnly bool
 	sameSite http.SameSite
 	maxAge   int
-	expires  time.Time
+	expires  time.Duration
 	path     string
 	domain   string
 }
@@ -63,7 +63,7 @@ func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 		cookie.path = *cookieConfig.Path
 	}
 	if cookieConfig.Expires > 0 {
-		cookie.expires = time.Now().Add(time.Duration(cookieConfig.Expires) * time.Second)
+		cookie.expires = time.Duration(cookieConfig.Expires) * time.Second
 	}
 
 	return &Sticky{
@@ -143,7 +143,9 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 		Secure:   s.cookie.secure,
 		SameSite: s.cookie.sameSite,
 		MaxAge:   s.cookie.maxAge,
-		Expires:  s.cookie.expires,
+	}
+	if s.cookie.expires > 0 {
+		cookie.Expires = time.Now().Add(s.cookie.expires)
 	}
 	http.SetCookie(rw, cookie)
 
