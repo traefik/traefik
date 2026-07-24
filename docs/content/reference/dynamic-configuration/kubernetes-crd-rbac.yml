@@ -64,6 +64,21 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+      - traefik.io
+    resources:
+      - middlewares/status
+      - middlewaretcps/status
+      - ingressroutes/status
+      - traefikservices/status
+      - ingressroutetcps/status
+      - ingressrouteudps/status
+      - tlsoptions/status
+      - tlsstores/status
+      - serverstransports/status
+      - serverstransporttcps/status
+    verbs:
+      - update
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

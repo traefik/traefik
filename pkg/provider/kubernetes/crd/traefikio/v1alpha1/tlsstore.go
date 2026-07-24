@@ -8,6 +8,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // TLSStore is the CRD implementation of a Traefik TLS Store.
 // For the time being, only the TLSStore named default is supported.
@@ -19,7 +20,18 @@ type TLSStore struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec TLSStoreSpec `json:"spec"`
+	Spec   TLSStoreSpec   `json:"spec"`
+	Status TLSStoreStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TLSStoreStatus defines the observed state of TLSStore.
+type TLSStoreStatus struct {
+	// Conditions lists the conditions of the TLSStore.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

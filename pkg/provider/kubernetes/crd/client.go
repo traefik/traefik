@@ -1,6 +1,7 @@
 package crd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -25,6 +26,7 @@ import (
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 )
 
 const resyncPeriod = 10 * time.Minute
@@ -50,6 +52,16 @@ type Client interface {
 	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetNodes() ([]*corev1.Node, bool, error)
 	GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error)
+	UpdateIngressRouteStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateIngressRouteTCPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateIngressRouteUDPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateMiddlewareStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateMiddlewareTCPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateServersTransportStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateServersTransportTCPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateTLSOptionStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateTLSStoreStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
+	UpdateTraefikServiceStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -500,6 +512,286 @@ func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
 	return nodes, exist, err
 }
 
+func (c *clientWrapper) UpdateIngressRouteStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update IngressRoute status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().IngressRoutes().Lister().IngressRoutes(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().IngressRoutes(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update IngressRoute %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateIngressRouteTCPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update IngressRouteTCP status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().IngressRouteTCPs().Lister().IngressRouteTCPs(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().IngressRouteTCPs(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update IngressRouteTCP %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateIngressRouteUDPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update IngressRouteUDP status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().IngressRouteUDPs().Lister().IngressRouteUDPs(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().IngressRouteUDPs(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update IngressRouteUDP %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateMiddlewareStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update Middleware status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().Middlewares().Lister().Middlewares(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().Middlewares(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update Middleware %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateMiddlewareTCPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update MiddlewareTCP status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().MiddlewareTCPs().Lister().MiddlewareTCPs(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().MiddlewareTCPs(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update MiddlewareTCP %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateServersTransportStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update ServersTransport status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().ServersTransports().Lister().ServersTransports(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().ServersTransports(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update ServersTransport %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateServersTransportTCPStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update ServersTransportTCP status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().ServersTransportTCPs().Lister().ServersTransportTCPs(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().ServersTransportTCPs(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update ServersTransportTCP %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateTLSOptionStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update TLSOption status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().TLSOptions().Lister().TLSOptions(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().TLSOptions(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update TLSOption %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateTLSStoreStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update TLSStore status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().TLSStores().Lister().TLSStores(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().TLSStores(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update TLSStore %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateTraefikServiceStatus(ctx context.Context, namespace, name string, conditions []metav1.Condition) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("cannot update TraefikService status %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().TraefikServices().Lister().TraefikServices(namespace).Get(name)
+		if err != nil {
+			return err
+		}
+
+		if conditionsEqual(current.Status.Conditions, conditions) {
+			return nil
+		}
+
+		current = current.DeepCopy()
+		current.Status.Conditions = conditions
+
+		_, err = c.csCrd.TraefikV1alpha1().TraefikServices(namespace).UpdateStatus(ctx, current, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update TraefikService %s/%s status: %w", namespace, name, err)
+	}
+
+	return nil
+}
+
 // lookupNamespace returns the lookup namespace key for the given namespace.
 // When listening on all namespaces, it returns the client-go identifier ("")
 // for all-namespaces. Otherwise, it returns the given namespace.
@@ -521,6 +813,16 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, ns)
+}
+
+func conditionsEqual(a, b []metav1.Condition) bool {
+	return slices.EqualFunc(a, b, func(cA, cB metav1.Condition) bool {
+		return cA.Type == cB.Type &&
+			cA.Reason == cB.Reason &&
+			cA.Status == cB.Status &&
+			cA.Message == cB.Message &&
+			cA.ObservedGeneration == cB.ObservedGeneration
+	})
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return

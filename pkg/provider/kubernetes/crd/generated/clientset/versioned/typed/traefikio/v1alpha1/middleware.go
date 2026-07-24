@@ -48,6 +48,8 @@ type MiddlewaresGetter interface {
 type MiddlewareInterface interface {
 	Create(ctx context.Context, middleware *traefikiov1alpha1.Middleware, opts v1.CreateOptions) (*traefikiov1alpha1.Middleware, error)
 	Update(ctx context.Context, middleware *traefikiov1alpha1.Middleware, opts v1.UpdateOptions) (*traefikiov1alpha1.Middleware, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, middleware *traefikiov1alpha1.Middleware, opts v1.UpdateOptions) (*traefikiov1alpha1.Middleware, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikiov1alpha1.Middleware, error)
@@ -55,6 +57,8 @@ type MiddlewareInterface interface {
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.Middleware, err error)
 	Apply(ctx context.Context, middleware *applyconfigurationtraefikiov1alpha1.MiddlewareApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.Middleware, err error)
+	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
+	ApplyStatus(ctx context.Context, middleware *applyconfigurationtraefikiov1alpha1.MiddlewareApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.Middleware, err error)
 	MiddlewareExpansion
 }
 

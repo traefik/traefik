@@ -8,6 +8,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // TraefikService is the CRD implementation of a Traefik Service.
 // TraefikService object allows to:
@@ -20,7 +21,18 @@ type TraefikService struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec TraefikServiceSpec `json:"spec"`
+	Spec   TraefikServiceSpec   `json:"spec"`
+	Status TraefikServiceStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TraefikServiceStatus defines the observed state of TraefikService.
+type TraefikServiceStatus struct {
+	// Conditions lists the conditions of the TraefikService.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

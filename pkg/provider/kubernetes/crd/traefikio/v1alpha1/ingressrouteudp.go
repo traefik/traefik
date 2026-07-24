@@ -52,6 +52,7 @@ type ServiceUDP struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
 type IngressRouteUDP struct {
@@ -60,7 +61,18 @@ type IngressRouteUDP struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec IngressRouteUDPSpec `json:"spec"`
+	Spec   IngressRouteUDPSpec   `json:"spec"`
+	Status IngressRouteUDPStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// IngressRouteUDPStatus defines the observed state of IngressRouteUDP.
+type IngressRouteUDPStatus struct {
+	// Conditions lists the conditions of the IngressRouteUDP.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
