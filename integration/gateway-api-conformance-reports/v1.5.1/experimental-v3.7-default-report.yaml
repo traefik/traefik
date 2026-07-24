@@ -30,7 +30,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 29
+      Passed: 30
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -52,6 +52,7 @@ profiles:
     - HTTPRoutePathRewrite
     - HTTPRoutePortRedirect
     - HTTPRouteQueryParamMatching
+    - HTTPRouteRequestTimeout
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
@@ -67,7 +68,6 @@ profiles:
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
-    - HTTPRouteRequestTimeout
     - ListenerSet
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.

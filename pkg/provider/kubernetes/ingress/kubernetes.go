@@ -357,6 +357,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
+				rt.RespondingTimeouts = rtConfig.Router.RespondingTimeouts
 
 				if rtConfig.Router.Observability != nil {
 					rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
@@ -773,6 +774,7 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
 		rt.TLS = rtConfig.Router.TLS
+		rt.RespondingTimeouts = rtConfig.Router.RespondingTimeouts
 
 		if rtConfig.Router.Observability != nil {
 			rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs

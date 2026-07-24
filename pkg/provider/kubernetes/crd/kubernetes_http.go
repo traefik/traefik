@@ -141,6 +141,16 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 			}
 
+			if route.RespondingTimeouts != nil && route.RespondingTimeouts.RoundTrip != nil {
+				var roundTrip ptypes.Duration
+				if err := roundTrip.Set(route.RespondingTimeouts.RoundTrip.String()); err != nil {
+					// An invalid duration only disables the timeout: the route stays routable.
+					logger.Error().Err(err).Msg("Error while reading RoundTrip")
+				} else {
+					r.RespondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: roundTrip}
+				}
+			}
+
 			if ingressRoute.Spec.TLS != nil {
 				r.TLS = &dynamic.RouterTLSConfig{
 					CertResolver: ingressRoute.Spec.TLS.CertResolver,

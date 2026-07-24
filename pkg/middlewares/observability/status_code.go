@@ -39,3 +39,8 @@ func (s *statusCodeRecorder) Flush() {
 		flusher.Flush()
 	}
 }
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (s *statusCodeRecorder) Unwrap() http.ResponseWriter {
+	return s.ResponseWriter
+}

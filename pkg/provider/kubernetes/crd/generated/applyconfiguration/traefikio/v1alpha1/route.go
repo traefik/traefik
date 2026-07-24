@@ -55,6 +55,8 @@ type RouteApplyConfiguration struct {
 	// Observability defines the observability configuration for a router.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
 	Observability *RouterObservabilityConfigApplyConfiguration `json:"observability,omitempty"`
+	// RespondingTimeouts defines the timeouts for responding to client requests.
+	RespondingTimeouts *RouterRespondingTimeoutsApplyConfiguration `json:"respondingTimeouts,omitempty"`
 }
 
 // RouteApplyConfiguration constructs a declarative configuration of the Route type for use with
@@ -126,5 +128,13 @@ func (b *RouteApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyC
 // If called multiple times, the Observability field is set to the value of the last call.
 func (b *RouteApplyConfiguration) WithObservability(value *RouterObservabilityConfigApplyConfiguration) *RouteApplyConfiguration {
 	b.Observability = value
+	return b
+}
+
+// WithRespondingTimeouts sets the RespondingTimeouts field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RespondingTimeouts field is set to the value of the last call.
+func (b *RouteApplyConfiguration) WithRespondingTimeouts(value *RouterRespondingTimeoutsApplyConfiguration) *RouteApplyConfiguration {
+	b.RespondingTimeouts = value
 	return b
 }
