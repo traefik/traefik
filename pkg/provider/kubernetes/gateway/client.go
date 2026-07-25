@@ -12,8 +12,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
+	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -152,6 +154,20 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.experimentalChannel {
+		clusterTrustBundleAvailable, err := c.clusterTrustBundleAvailable()
+		if err != nil {
+			return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
+		}
+
+		if clusterTrustBundleAvailable {
+			_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions), gateinformers.WithTransform(k8s.StripManagedFields))
@@ -410,6 +426,11 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	}
 
 	return servicePolicies, nil
+}
+
+// GetClusterTrustBundle returns the named ClusterTrustBundle.
+func (c *clientWrapper) GetClusterTrustBundle(name string) (*certv1beta1.ClusterTrustBundle, error) {
+	return c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Lister().Get(name)
 }
 
 // GetService returns the named service from the given namespace.
@@ -857,4 +878,20 @@ func conditionsEqual(conditionsA, conditionsB []metav1.Condition) bool {
 			cA.Message == cB.Message &&
 			cA.ObservedGeneration == cB.ObservedGeneration
 	})
+}
+
+func (c *clientWrapper) clusterTrustBundleAvailable() (bool, error) {
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion("certificates.k8s.io/v1beta1")
+	if err != nil {
+		if kerror.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	for _, r := range resourceList.APIResources {
+		if r.Name == "clustertrustbundles" {
+			return true, nil
+		}
+	}
+	return false, nil
 }

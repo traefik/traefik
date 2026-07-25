@@ -509,7 +509,8 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
-				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+				policyAncestorStatus.Conditions = append(
+					policyAncestorStatus.Conditions,
 					metav1.Condition{
 						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -645,14 +646,17 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != kindConfigMap && caCertRef.Kind != kindSecret) {
+		isConfigMapOrSecret := (caCertRef.Group == "" || caCertRef.Group == groupCore) && (caCertRef.Kind == kindConfigMap || caCertRef.Kind == kindSecret)
+		isClusterTrustBundle := caCertRef.Group == groupCertificates && caCertRef.Kind == kindClusterTrustBundle && p.ExperimentalChannel
+
+		if !isClusterTrustBundle && !isConfigMapOrSecret {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps and Secrets are supported",
+				Message:            "Only ConfigMaps, Secrets, and ClusterTrustBundles (with experimentalChannel enabled) are supported",
 			}
 		}
 
@@ -684,6 +688,20 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 				}
 			}
 			caCRT = string(secret.Data["ca.crt"])
+
+		case kindClusterTrustBundle:
+			ctb, err := p.client.GetClusterTrustBundle(string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting ClusterTrustBundle %s: %s", string(caCertRef.Name), err),
+				}
+			}
+			caCRT = ctb.Spec.TrustBundle
 		}
 
 		if caCRT == "" {
