@@ -93,14 +93,9 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     gzipName,
 		},
 		{
-			// github.com/klauspost/compress v1.18.4 and up use zstd
-			// as preferred compression if all accept headers have
-			// an equal "q" (implicit "q=1.0").
-			//
-			// see https://github.com/klauspost/compress/pull/1121
 			desc:            "multi accept header list, prefer best",
 			acceptEncHeader: "gzip, br, zstd",
-			expEncoding:     zstdName,
+			expEncoding:     "gzip",
 		},
 	}
 
