@@ -643,7 +643,8 @@ func buildPrefixRule(path string) string {
 // makeTrailingGroupOptional converts an ImplementationSpecific regex path like /foo/(.*)
 // into /foo(?:/(.*))? so it also matches the bare /foo (without trailing slash).
 // Only applies when the path starts with a literal prefix (not a capture group),
-// i.e. when the path does not begin with "/(".
+// and the group opened after the last "/(" closes at the very end of the path:
+// otherwise trailing literals (e.g. /foo/(.*)/bar) would become optional too.
 func makeTrailingGroupOptional(path string) string {
 	if strings.HasPrefix(path, "/(") {
 		return path
@@ -652,5 +653,22 @@ func makeTrailingGroupOptional(path string) string {
 	if idx < 0 {
 		return path
 	}
+
+	depth := 0
+	for i := idx + 1; i < len(path); i++ {
+		switch path[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 && i != len(path)-1 {
+				return path
+			}
+		}
+	}
+	if depth != 0 {
+		return path
+	}
+
 	return path[:idx] + "(?:" + path[idx:] + ")?"
 }

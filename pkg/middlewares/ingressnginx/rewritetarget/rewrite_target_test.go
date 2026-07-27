@@ -185,6 +185,36 @@ func TestRewriteTarget(t *testing.T) {
 			expectedRedirectURL: "https://bar.example.org/",
 		},
 		{
+			desc: "regex with optional capture group and full URL replacement does not leak suffix",
+			path: "/originalfoo",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original(?:/(.*))?`,
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/",
+		},
+		{
+			desc: "regex with optional capture group and full URL replacement keeps capture",
+			path: "/original/foo",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original(?:/(.*))?`,
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/foo",
+		},
+		{
+			desc: "regex with optional capture group and full URL replacement matches bare path",
+			path: "/original",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original(?:/(.*))?`,
+				Replacement: "https://bar.example.org/$1",
+			},
+			expectedStatusCode:  http.StatusFound,
+			expectedRedirectURL: "https://bar.example.org/",
+		},
+		{
 			desc: "full URL replacement preserves incoming query",
 			path: "/some/path?foo=bar&baz=qux",
 			config: dynamic.RewriteTarget{

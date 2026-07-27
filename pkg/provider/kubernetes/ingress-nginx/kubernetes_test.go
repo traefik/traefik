@@ -4230,7 +4230,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-rewrite-target-absolute-url-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("rewrite-target-absolute-url.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`  ,
+							Rule:        `Host("rewrite-target-absolute-url.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-absolute-url-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -4247,7 +4247,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-rewrite-target-absolute-url-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("rewrite-target-absolute-url.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`  ,
+							Rule:        `Host("rewrite-target-absolute-url.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-absolute-url-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -4280,13 +4280,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-rewrite-target-absolute-url-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 						"default-ingress-with-rewrite-target-absolute-url-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
-								MaxRequestBodyBytes: ptr.To(defaultProxyBodySize),
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
 					},
@@ -4294,7 +4294,7 @@ func TestLoadIngresses(t *testing.T) {
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4311,7 +4311,7 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4321,6 +4321,125 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-rewrite-target-absolute-url": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Rewrite Target with ImplementationSpecific trailing capture group path",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-rewrite-target-trailing-group.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("rewrite-target-trailing-group.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-trailing-group-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-rewrite-target-trailing-group",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("rewrite-target-trailing-group.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-trailing-group-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-rewrite-target-trailing-group",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls-rewrite-target", "default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "/original(?:/(.*))?",
+								Replacement: "/newpath/$1",
+							},
+						},
+						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "/original(?:/(.*))?",
+								Replacement: "/newpath/$1",
+							},
+						},
+						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-rewrite-target-trailing-group-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-rewrite-target-trailing-group",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-rewrite-target-trailing-group": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
