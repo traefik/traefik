@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
+	typedtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeTraefikServices implements TraefikServiceInterface
 type fakeTraefikServices struct {
-	*gentype.FakeClientWithList[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList, *traefikcontainousv1alpha1.TraefikServiceApplyConfiguration]
 	Fake *FakeTraefikContainousV1alpha1
 }
 
-func newFakeTraefikServices(fake *FakeTraefikContainousV1alpha1, namespace string) traefikcontainousv1alpha1.TraefikServiceInterface {
+func newFakeTraefikServices(fake *FakeTraefikContainousV1alpha1, namespace string) typedtraefikcontainousv1alpha1.TraefikServiceInterface {
 	return &fakeTraefikServices{
-		gentype.NewFakeClientWithList[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList, *traefikcontainousv1alpha1.TraefikServiceApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("traefikservices"),
