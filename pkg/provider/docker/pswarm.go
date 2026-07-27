@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"strconv"
 	"time"
 
@@ -202,7 +203,7 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 			}
 		} else {
 			isGlobalSvc := service.Spec.Mode.Global != nil
-			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
+			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc, service.Endpoint.Ports)
 			if err != nil {
 				logger.Warn().Err(err).Send()
 			} else {
@@ -263,6 +264,7 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
 	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
+	endpointPorts []swarmtypes.PortConfig,
 ) ([]dockerData, error) {
 	taskList, err := dockerClient.TaskList(ctx, client.TaskListOptions{
 		Filters: make(client.Filters).Add("service", serviceID).Add("desired-state", "running"),
@@ -276,7 +278,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dData, err := parseTasks(ctx, dockerClient, task, serviceDockerData, networkMap, isGlobalSvc)
+		dData, err := parseTasks(ctx, dockerClient, task, serviceDockerData, networkMap, isGlobalSvc, endpointPorts)
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msgf("Error while parsing task %s", getServiceName(dData))
 			continue
@@ -289,7 +291,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 }
 
 func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmtypes.Task, serviceDockerData dockerData,
-	networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
+	networkMap map[string]*networktypes.Summary, isGlobalSvc bool, endpointPorts []swarmtypes.PortConfig,
 ) (dockerData, error) {
 	dData := dockerData{
 		ID:              task.ID,
@@ -311,6 +313,8 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 		}
 		dData.NodeIP = res.Node.Status.Addr
 	}
+
+	dData.NetworkSettings.Ports = bindPortsFromEndpoint(ctx, dData.NodeIP, endpointPorts, task.Status.PortStatus.Ports)
 
 	if task.NetworksAttachments != nil {
 		dData.NetworkSettings.Networks = make(map[string]*networkData)
@@ -337,4 +341,65 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 		}
 	}
 	return dData, nil
+}
+
+// bindPortsFromEndpoint builds the port bindings of a Swarm task, so that useBindPortIP
+// can route to the published port on the Swarm node, instead of the (potentially
+// unreachable) overlay network IP.
+//
+// The resolved published port lives in two different places depending on the publish
+// mode, and reading the wrong one for a given mode yields either a stale or a zero port:
+//   - ingress mode is brokered by the swarm manager and is the same on every node,
+//     dynamically-assigned ports included, so it is resolved on the service's endpoint
+//     (endpointPorts, i.e. Service.Endpoint.Ports, as opposed to the desired
+//     Service.Spec.EndpointSpec.Ports).
+//   - host mode binds directly on the node the task landed on, so a dynamically-assigned
+//     port is only known to that node's kernel: Service.Endpoint.Ports keeps reporting it
+//     as unset, and the resolved value is only available on the task itself (taskPorts,
+//     i.e. Task.Status.PortStatus.Ports).
+func bindPortsFromEndpoint(ctx context.Context, nodeIP string, endpointPorts, taskPorts []swarmtypes.PortConfig) networktypes.PortMap {
+	if nodeIP == "" {
+		return nil
+	}
+
+	hostIP, err := netip.ParseAddr(nodeIP)
+	if err != nil {
+		log.Ctx(ctx).Debug().Err(err).Msgf("Unable to parse node IP %q", nodeIP)
+		return nil
+	}
+
+	ports := make(networktypes.PortMap)
+
+	addPort := func(portConfig swarmtypes.PortConfig) {
+		if portConfig.PublishedPort == 0 {
+			return
+		}
+
+		port, ok := networktypes.PortFrom(uint16(portConfig.TargetPort), portConfig.Protocol)
+		if !ok {
+			return
+		}
+
+		ports[port] = []networktypes.PortBinding{{
+			HostIP:   hostIP,
+			HostPort: strconv.Itoa(int(portConfig.PublishedPort)),
+		}}
+	}
+
+	for _, portConfig := range endpointPorts {
+		if portConfig.PublishMode == swarmtypes.PortConfigPublishModeIngress {
+			addPort(portConfig)
+		}
+	}
+
+	for _, portConfig := range taskPorts {
+		if portConfig.PublishMode == swarmtypes.PortConfigPublishModeHost {
+			addPort(portConfig)
+		}
+	}
+
+	if len(ports) == 0 {
+		return nil
+	}
+	return ports
 }

@@ -194,6 +194,14 @@ Traefik tries to find a binding on port `traefik.http.services.<name>.loadbalanc
 If it cannot find such a binding, Traefik falls back on the internal network IP of the container,
 but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that is set in the label.
 
+!!! info "Swarm published ports"
+    For Swarm services, the binding is derived from the service's published ports (`--publish`, or `ports:` in a stack file),
+    in both `ingress` and `host` publish mode, using the IP of the Swarm node the task is running on.
+    This includes ports whose host port is dynamically assigned (published port `0`), whether the assignment is
+    brokered by the Swarm manager (`ingress` mode) or by the kernel of the node the task landed on (`host` mode).
+    `useBindPortIP` only applies to per-task routing (the default); it has no effect when `traefik.swarm.lbswarm=true`,
+    since a Swarm service in that mode is routed through its virtual IP, which isn't tied to a single node.
+
 ??? example "Examples of `usebindportip` in different situations."
 
     | port label         | Container's binding                                | Routes to      |
