@@ -83,6 +83,20 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 			wantWarning: false,
 		},
 		{
+			desc: "one TCP entryPoint among others disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+				"websecure": {
+					Address: ":443/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
+				},
+			},
+			wantWarning: false,
+		},
+		{
 			desc: "UDP-only entryPoint",
 			entryPoints: map[string]*EntryPoint{
 				"dns": {
