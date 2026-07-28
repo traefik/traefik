@@ -106,13 +106,13 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS.TLS.Options = loc.TLSOptionName
 			}
 
-			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+			if !p.DisableHTTPEntryPoint {
+				p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+			}
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
 
-		if !p.DisableHTTPEntryPoint {
-			conf.HTTP.Routers[defaultBackendName] = rt
-		}
+		p.addNonTLSRouter(conf, defaultBackendName, rt)
 		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
 	}
 
@@ -232,13 +232,11 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS.Service = unavailableServiceName
 			}
 
-			if !p.DisableHTTPEntryPoint {
-				conf.HTTP.Routers[routerKey] = rt
-			}
+			registered := p.addNonTLSRouter(conf, routerKey, rt)
 			conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
 
 			if !loc.Error {
-				if !p.DisableHTTPEntryPoint {
+				if registered {
 					p.applyMiddlewares(mc, loc, routerKey, rt, conf)
 					applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
 				}
@@ -255,8 +253,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Service:       canarySvcName,
 					Observability: obs,
 				}
-				conf.HTTP.Routers[canaryKey] = canaryRouter
-				p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
+				if p.addNonTLSRouter(conf, canaryKey, canaryRouter) {
+					p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
+				}
 
 				canaryKeyTLS := canaryKey + "-tls"
 				canaryRouterTLS := &dynamic.Router{
@@ -280,8 +279,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Service:       primarySvcName,
 					Observability: obs,
 				}
-				conf.HTTP.Routers[nonCanaryKey] = nonCanaryRouter
-				p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
+				if p.addNonTLSRouter(conf, nonCanaryKey, nonCanaryRouter) {
+					p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
+				}
 
 				nonCanaryKeyTLS := nonCanaryKey + "-tls"
 				nonCanaryRouterTLS := &dynamic.Router{
@@ -299,6 +299,16 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	}
 
 	return conf
+}
+
+// addNonTLSRouter registers a router on the non-TLS entryPoints,
+// unless HTTP routes are disabled.
+func (p *Provider) addNonTLSRouter(conf *dynamic.Configuration, key string, rt *dynamic.Router) bool {
+	if p.DisableHTTPEntryPoint {
+		return false
+	}
+	conf.HTTP.Routers[key] = rt
+	return true
 }
 
 func buildService(backend *backend, serversTransportName string) *dynamic.Service {

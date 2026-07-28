@@ -2,6 +2,7 @@ package ingressnginx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -99,9 +100,9 @@ type Provider struct {
 
 	IPAllowListStrategy *dynamic.IPStrategy `description:"Defines the IP strategy to determine the client IP for allowlist/whitelist source range annotations." json:"ipAllowListStrategy,omitempty" toml:"ipAllowListStrategy,omitempty" yaml:"ipAllowListStrategy,omitempty" export:"true"`
 
-	HTTPEntryPoint  		string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
-	HTTPSEntryPoint 		string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
-	DisableHTTPEntryPoint 	bool   `description:"Disables the creation of HTTP routes for Ingress resources. Takes precedence over httpEntryPoint." json:"disableHTTPEntryPoint,omitempty" toml:"disableHTTPEntryPoint,omitempty" yaml:"disableHTTPEntryPoint,omitempty" export:"true"`
+	HTTPEntryPoint        string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
+	HTTPSEntryPoint       string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
+	DisableHTTPEntryPoint bool   `description:"Disables the HTTP EntryPoint, so that no HTTP router is created for Ingress resources. Takes precedence over httpEntryPoint." json:"disableHTTPEntryPoint,omitempty" toml:"disableHTTPEntryPoint,omitempty" yaml:"disableHTTPEntryPoint,omitempty" export:"true"`
 	// TLSEntryPoints is set to the HTTPSEntryPoint value if it is set, otherwise it is left empty.
 	TLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
@@ -271,6 +272,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) validateConfiguration() error {
+	if p.DisableHTTPEntryPoint && p.HTTPEntryPoint != "" {
+		return errors.New("httpEntryPoint cannot be set when disableHTTPEntryPoint is true")
+	}
+
 	// Validates and parses the default backend configuration.
 	if p.DefaultBackendService != "" {
 		parts := strings.Split(p.DefaultBackendService, "/")

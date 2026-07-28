@@ -18969,6 +18969,211 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Disable HTTP entrypoint with canary by header",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header.yml",
+			},
+			disableHTTPEntryPoint: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("production.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-whoami-80-wrr",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-canary-by-header",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+						"default-ingress-with-canary-by-header-rule-0-path-0-canary-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (Header("Foo", "always"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-whoami-80-canary",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-canary-by-header",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-canary-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-rule-0-path-0-canary-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                           "Disable HTTP entrypoint with default backend",
+			defaultBackendServiceName:      "whoami",
+			defaultBackendServiceNamespace: "default",
+			disableHTTPEntryPoint:          true,
+			paths: []string{
+				"services.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							TLS:         &dynamic.RouterTLSConfig{},
+							Service:     "default-backend",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										ServiceName: "whoami",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8000",
+									},
+									{
+										URL: "http://10.10.0.2:8000",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Auth TLS secret missing — ingress is skipped entirely",
 			paths: []string{
 				"services.yml",
@@ -19419,6 +19624,8 @@ func TestProvider_validateConfiguration(t *testing.T) {
 		defaultBackendService           string
 		expectedBackendServiceName      string
 		expectedBackendServiceNamespace string
+		disableHTTPEntryPoint           bool
+		httpEntryPoint                  string
 		expectError                     bool
 	}{
 		{
@@ -19452,6 +19659,16 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			defaultBackendService: "namespace",
 			expectError:           true,
 		},
+		{
+			desc:                  "Disable HTTP entrypoint with httpEntryPoint set",
+			disableHTTPEntryPoint: true,
+			httpEntryPoint:        "web",
+			expectError:           true,
+		},
+		{
+			desc:                  "Disable HTTP entrypoint without httpEntryPoint",
+			disableHTTPEntryPoint: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -19461,6 +19678,8 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			provider := &Provider{
 				GlobalAllowedResponseHeaders: test.globalAllowedResponseHeaders,
 				DefaultBackendService:        test.defaultBackendService,
+				DisableHTTPEntryPoint:        test.disableHTTPEntryPoint,
+				HTTPEntryPoint:               test.httpEntryPoint,
 			}
 
 			err := provider.validateConfiguration()
