@@ -35,5 +35,17 @@ func (b *BackOff) NextBackOff() time.Duration {
 	if b.GetElapsedTime() >= b.MinJobInterval {
 		b.Reset()
 	}
-	return b.ExponentialBackOff.NextBackOff()
+
+	next := b.ExponentialBackOff.NextBackOff()
+
+	// Defensive guard: if the underlying backoff returns Stop (which can
+	// happen despite MaxElapsedTime=0 under certain edge conditions such as
+	// the wrapped context being cancelled), reset and restart from initial
+	// interval so that long-running jobs never permanently stop retrying.
+	if next == backoff.Stop {
+		b.Reset()
+		return b.InitialInterval
+	}
+
+	return next
 }
