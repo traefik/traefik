@@ -1207,7 +1207,7 @@ func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName, 
 	h := sha256.New()
 
 	for _, c := range []string{namespace, name, gatewayNamespace, gatewayName, epName, strconv.Itoa(ruleIndex)} {
-		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter
+		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
 		fmt.Fprintf(h, "%d:%s", len(c), c)
 	}
 
