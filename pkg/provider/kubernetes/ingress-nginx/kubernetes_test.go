@@ -2542,9 +2542,30 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-ssl-passthrough-passthrough-whoami-localhost-http": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("passthrough.whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-ssl-passthrough-whoami-tls-443",
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
+						"default-ingress-with-ssl-passthrough-whoami-tls-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: "wrr",
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.3:8443"},
+									{URL: "http://10.10.0.4:8443"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-ssl-passthrough",
+							},
+						},
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
@@ -2555,7 +2576,16 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-ssl-passthrough": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2603,7 +2633,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("passthrough-redirect.whoami.localhost")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-ssl-passthrough-and-force-ssl-redirect-passthrough-redirect-whoami-localhost-redirect-scheme"},
-							Service:     "noop@internal",
+							Service:     "default-ingress-with-ssl-passthrough-and-force-ssl-redirect-whoami-tls-443",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2615,17 +2645,40 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
+						"default-ingress-with-ssl-passthrough-and-force-ssl-redirect-whoami-tls-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: "wrr",
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.3:8443"},
+									{URL: "http://10.10.0.4:8443"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-ssl-passthrough-and-force-ssl-redirect",
+							},
+						},
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-ssl-passthrough-and-force-ssl-redirect": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -18513,9 +18566,30 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-ssl-passthrough-and-tls-section-passthrough-tls-whoami-localhost-http": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("passthrough-tls.whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-ssl-passthrough-and-tls-section-whoami-tls-443",
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
+						"default-ingress-with-ssl-passthrough-and-tls-section-whoami-tls-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: "wrr",
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.3:8443"},
+									{URL: "http://10.10.0.4:8443"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-ssl-passthrough-and-tls-section",
+							},
+						},
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
@@ -18526,7 +18600,16 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-ssl-passthrough-and-tls-section": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{

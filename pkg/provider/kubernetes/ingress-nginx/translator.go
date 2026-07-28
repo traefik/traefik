@@ -135,19 +135,33 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
 		}
 
+		// Like ingress-nginx, the host also gets an HTTP router proxying to the backend
+		// (honoring backend-protocol), so plain HTTP requests and requests bypassing the
+		// force-ssl-redirect (e.g. X-Forwarded-Proto: https) behave like nginx instead of
+		// hitting an internal service.
+		if pt.ServersTransport != nil && pt.ServersTransportName != "" {
+			if _, exists := conf.HTTP.ServersTransports[pt.ServersTransportName]; !exists {
+				conf.HTTP.ServersTransports[pt.ServersTransportName] = pt.ServersTransport
+			}
+		}
+		conf.HTTP.Services[pt.HTTPServiceName] = buildServiceWithLocConfig(backend, pt.ServersTransportName, pt.Config)
+
+		rt := &dynamic.Router{
+			EntryPoints: p.NonTLSEntryPoints,
+			Rule:        fmt.Sprintf("Host(%q)", pt.Hostname),
+			RuleSyntax:  "default",
+			Service:     pt.HTTPServiceName,
+		}
+
 		if pt.ForceSSLRedirect {
 			redirectMWName := pt.RouterKey + "-redirect-scheme"
 			conf.HTTP.Middlewares[redirectMWName] = &dynamic.Middleware{
 				RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
 			}
-			conf.HTTP.Routers[pt.RouterKey+"-http"] = &dynamic.Router{
-				EntryPoints: p.NonTLSEntryPoints,
-				Rule:        fmt.Sprintf("Host(%q)", pt.Hostname),
-				RuleSyntax:  "default",
-				Middlewares: []string{redirectMWName},
-				Service:     "noop@internal",
-			}
+			rt.Middlewares = []string{redirectMWName}
 		}
+
+		conf.HTTP.Routers[pt.RouterKey+"-http"] = rt
 	}
 
 	for _, srv := range mc.Servers {

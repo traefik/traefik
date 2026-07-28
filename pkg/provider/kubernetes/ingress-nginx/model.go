@@ -294,4 +294,19 @@ type sslPassthroughBackend struct {
 	// ForceSSLRedirect indicates that HTTP requests to this host should be
 	// redirected to HTTPS with a 308 Permanent Redirect.
 	ForceSSLRedirect bool
+
+	// HTTPServiceName is the key for the HTTP service proxying to the backend.
+	// Unlike BackendName it is scoped to the ingress, because per-ingress
+	// annotations (e.g. backend-protocol) shape the service.
+	HTTPServiceName string
+
+	// ServersTransportName is the unique name of the per-ingress transport.
+	ServersTransportName string
+
+	// ServersTransport holds the resolved per-ingress transport config for the
+	// HTTP router. The translator registers it once per unique ServersTransportName.
+	ServersTransport *dynamic.ServersTransport
+
+	// Config holds all parsed annotation values for the ingress.
+	Config IngressConfig
 }
