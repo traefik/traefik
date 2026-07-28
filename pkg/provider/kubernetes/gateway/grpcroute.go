@@ -134,9 +134,6 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindGRPCRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
-
 		matches := routeRule.Matches
 		if len(matches) == 0 {
 			matches = []gatev1.GRPCRouteMatch{{}}
@@ -157,7 +154,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 			}
 
 			var err error
-			routerName := makeRouterName(rule, routeKey)
+			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 			router.Middlewares, err = p.loadGRPCMiddlewares(conf, route.Namespace, routerName, routeRule.Filters)
 			switch {
 			case err != nil:
@@ -195,8 +192,8 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 	return conf, condition
 }
 
-func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
-	name := routeKey + "-wrr"
+func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
+	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
 	}

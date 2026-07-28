@@ -142,10 +142,8 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 			}
 		}
 
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindTCPRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
 		// Routing criteria should be introduced at some point.
-		routerName := makeRouterName("", routeKey)
+		routerName := makeRouterName(strings.ToLower(kindTCPRoute), "", route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 
 		if len(rule.BackendRefs) == 1 && isInternalService(rule.BackendRefs[0]) {
 			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
@@ -179,8 +177,8 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 }
 
 // loadTCPWRRService is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routeKey string, backendRefs []gatev1.BackendRef, route *gatev1alpha2.TCPRoute) (string, *metav1.Condition) {
-	name := routeKey + "-wrr"
+func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1alpha2.TCPRoute) (string, *metav1.Condition) {
+	name := routerName + "-wrr"
 	if _, ok := conf.TCP.Services[name]; ok {
 		return name, nil
 	}
@@ -194,7 +192,7 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routeKey strin
 		if errCondition != nil {
 			condition = errCondition
 
-			errName := routeKey + "-err-lb"
+			errName := routerName + "-err-lb"
 			conf.TCP.Services[errName] = &dynamic.TCPService{
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{
 					Servers: []dynamic.TCPServer{},
