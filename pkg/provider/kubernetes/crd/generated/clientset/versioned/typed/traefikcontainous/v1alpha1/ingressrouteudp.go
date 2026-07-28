@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
 	scheme "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type IngressRouteUDPInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikcontainousv1alpha1.IngressRouteUDPList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikcontainousv1alpha1.IngressRouteUDP, err error)
+	Apply(ctx context.Context, ingressRouteUDP *applyconfigurationtraefikcontainousv1alpha1.IngressRouteUDPApplyConfiguration, opts v1.ApplyOptions) (result *traefikcontainousv1alpha1.IngressRouteUDP, err error)
 	IngressRouteUDPExpansion
 }
 
 // ingressRouteUDPs implements IngressRouteUDPInterface
 type ingressRouteUDPs struct {
-	*gentype.ClientWithList[*traefikcontainousv1alpha1.IngressRouteUDP, *traefikcontainousv1alpha1.IngressRouteUDPList]
+	*gentype.ClientWithListAndApply[*traefikcontainousv1alpha1.IngressRouteUDP, *traefikcontainousv1alpha1.IngressRouteUDPList, *applyconfigurationtraefikcontainousv1alpha1.IngressRouteUDPApplyConfiguration]
 }
 
 // newIngressRouteUDPs returns a IngressRouteUDPs
 func newIngressRouteUDPs(c *TraefikContainousV1alpha1Client, namespace string) *ingressRouteUDPs {
 	return &ingressRouteUDPs{
-		gentype.NewClientWithList[*traefikcontainousv1alpha1.IngressRouteUDP, *traefikcontainousv1alpha1.IngressRouteUDPList](
+		gentype.NewClientWithListAndApply[*traefikcontainousv1alpha1.IngressRouteUDP, *traefikcontainousv1alpha1.IngressRouteUDPList, *applyconfigurationtraefikcontainousv1alpha1.IngressRouteUDPApplyConfiguration](
 			"ingressrouteudps",
 			c.RESTClient(),
 			scheme.ParameterCodec,

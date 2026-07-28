@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
 	scheme "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type MiddlewareInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikcontainousv1alpha1.MiddlewareList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikcontainousv1alpha1.Middleware, err error)
+	Apply(ctx context.Context, middleware *applyconfigurationtraefikcontainousv1alpha1.MiddlewareApplyConfiguration, opts v1.ApplyOptions) (result *traefikcontainousv1alpha1.Middleware, err error)
 	MiddlewareExpansion
 }
 
 // middlewares implements MiddlewareInterface
 type middlewares struct {
-	*gentype.ClientWithList[*traefikcontainousv1alpha1.Middleware, *traefikcontainousv1alpha1.MiddlewareList]
+	*gentype.ClientWithListAndApply[*traefikcontainousv1alpha1.Middleware, *traefikcontainousv1alpha1.MiddlewareList, *applyconfigurationtraefikcontainousv1alpha1.MiddlewareApplyConfiguration]
 }
 
 // newMiddlewares returns a Middlewares
 func newMiddlewares(c *TraefikContainousV1alpha1Client, namespace string) *middlewares {
 	return &middlewares{
-		gentype.NewClientWithList[*traefikcontainousv1alpha1.Middleware, *traefikcontainousv1alpha1.MiddlewareList](
+		gentype.NewClientWithListAndApply[*traefikcontainousv1alpha1.Middleware, *traefikcontainousv1alpha1.MiddlewareList, *applyconfigurationtraefikcontainousv1alpha1.MiddlewareApplyConfiguration](
 			"middlewares",
 			c.RESTClient(),
 			scheme.ParameterCodec,

@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikcontainous/v1alpha1"
+	typedtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeIngressRoutes implements IngressRouteInterface
 type fakeIngressRoutes struct {
-	*gentype.FakeClientWithList[*v1alpha1.IngressRoute, *v1alpha1.IngressRouteList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.IngressRoute, *v1alpha1.IngressRouteList, *traefikcontainousv1alpha1.IngressRouteApplyConfiguration]
 	Fake *FakeTraefikContainousV1alpha1
 }
 
-func newFakeIngressRoutes(fake *FakeTraefikContainousV1alpha1, namespace string) traefikcontainousv1alpha1.IngressRouteInterface {
+func newFakeIngressRoutes(fake *FakeTraefikContainousV1alpha1, namespace string) typedtraefikcontainousv1alpha1.IngressRouteInterface {
 	return &fakeIngressRoutes{
-		gentype.NewFakeClientWithList[*v1alpha1.IngressRoute, *v1alpha1.IngressRouteList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.IngressRoute, *v1alpha1.IngressRouteList, *traefikcontainousv1alpha1.IngressRouteApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("ingressroutes"),

@@ -65,20 +65,32 @@ func NewIngressRouteTCPInformer(client versioned.Interface, namespace string, re
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredIngressRouteTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikContainousV1alpha1().IngressRouteTCPs(namespace).List(context.TODO(), options)
+				return client.TraefikContainousV1alpha1().IngressRouteTCPs(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikContainousV1alpha1().IngressRouteTCPs(namespace).Watch(context.TODO(), options)
+				return client.TraefikContainousV1alpha1().IngressRouteTCPs(namespace).Watch(context.Background(), options)
 			},
-		},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikContainousV1alpha1().IngressRouteTCPs(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikContainousV1alpha1().IngressRouteTCPs(namespace).Watch(ctx, options)
+			},
+		}, client),
 		&crdtraefikcontainousv1alpha1.IngressRouteTCP{},
 		resyncPeriod,
 		indexers,

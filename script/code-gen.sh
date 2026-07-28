@@ -4,7 +4,7 @@ set -e -o pipefail
 
 PROJECT_MODULE="github.com/traefik/traefik"
 MODULE_VERSION="v2"
-KUBE_VERSION=v0.32.3
+KUBE_VERSION=v0.35.1
 CURRENT_DIR="$(pwd)"
 
 go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
@@ -21,6 +21,7 @@ kube::codegen::gen_helpers \
 
 kube::codegen::gen_client \
     --with-watch \
+    --with-applyconfig \
     --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
     --output-pkg "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
     --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
