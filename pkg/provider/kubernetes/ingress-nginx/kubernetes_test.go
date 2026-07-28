@@ -2920,14 +2920,15 @@ func TestLoadIngresses(t *testing.T) {
 								},
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "foobar",
-										Domain:   "foo.localhost",
-										HTTPOnly: true,
-										MaxAge:   42,
-										Expires:  42,
-										Path:     new("/foobar"),
-										SameSite: "none",
-										Secure:   true,
+										Name:               "foobar",
+										Domain:             "foo.localhost",
+										HTTPOnly:           true,
+										MaxAge:             42,
+										Expires:            42,
+										Path:               new("/foobar"),
+										SameSite:           "none",
+										Secure:             true,
+										PreserveLeadingDot: true,
 									},
 								},
 							},
@@ -7398,9 +7399,10 @@ func TestLoadIngresses(t *testing.T) {
 								ServersTransport: "default-ingress-with-default-backend-annotations",
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "MYSTICKYNESS",
-										HTTPOnly: true,
-										Path:     new("/"),
+										Name:               "MYSTICKYNESS",
+										HTTPOnly:           true,
+										Path:               new("/"),
+										PreserveLeadingDot: true,
 									},
 								},
 								ResponseForwarding: &dynamic.ResponseForwarding{
@@ -7420,9 +7422,10 @@ func TestLoadIngresses(t *testing.T) {
 								ServersTransport: "default-ingress-with-default-backend-annotations",
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "MYSTICKYNESS",
-										HTTPOnly: true,
-										Path:     new("/"),
+										Name:               "MYSTICKYNESS",
+										HTTPOnly:           true,
+										Path:               new("/"),
+										PreserveLeadingDot: true,
 									},
 								},
 								ResponseForwarding: &dynamic.ResponseForwarding{
@@ -15287,14 +15290,15 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "foobar",
-										Domain:   "foo.localhost",
-										HTTPOnly: true,
-										MaxAge:   42,
-										Expires:  42,
-										Path:     new("/foobar"),
-										SameSite: "none",
-										Secure:   true,
+										Name:               "foobar",
+										Domain:             "foo.localhost",
+										HTTPOnly:           true,
+										MaxAge:             42,
+										Expires:            42,
+										Path:               new("/foobar"),
+										SameSite:           "none",
+										Secure:             true,
+										PreserveLeadingDot: true,
 									},
 								},
 								Servers: []dynamic.Server{
@@ -15317,14 +15321,15 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "foobar",
-										Domain:   "foo.localhost",
-										HTTPOnly: true,
-										MaxAge:   42,
-										Expires:  42,
-										Path:     new("/foobar"),
-										SameSite: "none",
-										Secure:   true,
+										Name:               "foobar",
+										Domain:             "foo.localhost",
+										HTTPOnly:           true,
+										MaxAge:             42,
+										Expires:            42,
+										Path:               new("/foobar"),
+										SameSite:           "none",
+										Secure:             true,
+										PreserveLeadingDot: true,
 									},
 								},
 								Servers: []dynamic.Server{
@@ -15347,14 +15352,15 @@ func TestLoadIngresses(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "foobar-wrr",
-										Domain:   "foo.localhost",
-										HTTPOnly: true,
-										MaxAge:   42,
-										Expires:  42,
-										Path:     new("/foobar"),
-										SameSite: "none",
-										Secure:   true,
+										Name:               "foobar-wrr",
+										Domain:             "foo.localhost",
+										HTTPOnly:           true,
+										MaxAge:             42,
+										Expires:            42,
+										Path:               new("/foobar"),
+										SameSite:           "none",
+										Secure:             true,
+										PreserveLeadingDot: true,
 									},
 								},
 								Services: []dynamic.WRRService{

@@ -143,19 +143,42 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
 	// Go's stdlib http.SetCookie strips the leading dot from the Domain attribute per RFC 6265.
 	// nginx-ingress-controller preserves the leading dot (Domain=.example.com), so Traefik must
-	// also preserve it for migration compatibility.
-	cookieConfig := dynamic.Cookie{
-		Name:   "test",
-		Domain: ".example.com",
+	// also preserve it for migration compatibility, but only when the provider opts in.
+	testCases := []struct {
+		desc               string
+		preserveLeadingDot bool
+		wantDomain         string
+	}{
+		{
+			desc:               "leading dot preserved when the provider opts in",
+			preserveLeadingDot: true,
+			wantDomain:         "Domain=.example.com",
+		},
+		{
+			desc:       "leading dot stripped by default",
+			wantDomain: "Domain=example.com",
+		},
 	}
-	sticky := NewSticky(cookieConfig)
-	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 
-	res := httptest.NewRecorder()
-	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	setCookie := res.Header().Get("Set-Cookie")
-	assert.Contains(t, setCookie, "Domain=.example.com", "leading dot in Domain must be preserved")
+			cookieConfig := dynamic.Cookie{
+				Name:               "test",
+				Domain:             ".example.com",
+				PreserveLeadingDot: test.preserveLeadingDot,
+			}
+			sticky := NewSticky(cookieConfig)
+			sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+			res := httptest.NewRecorder()
+			require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+
+			setCookie := res.Header().Get("Set-Cookie")
+			assert.Contains(t, setCookie, test.wantDomain)
+		})
+	}
 }
 
 func TestConvertSameSite_CaseInsensitive(t *testing.T) {
