@@ -123,9 +123,25 @@ spec:
                 description: MinVersion defines the minimum TLS version to use when
                   contacting backend servers.
                 type: string
+              peerCertSANs:
+                description: PeerCertSANs defines the peer cert Subject Alternative
+                  Names used to match against SAN during the peer certificate verification.
+                items:
+                  description: SAN represents a Subject Alternative Name.
+                  properties:
+                    type:
+                      description: SANType is the type of the Subject Alternative
+                        Name.
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               peerCertURI:
-                description: PeerCertURI defines the peer cert URI used to match against
-                  SAN URI during the peer certificate verification.
+                description: |-
+                  PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+
+                  Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
                 type: string
               rootCAs:
                 description: RootCAs defines a list of CA certificate Secrets or ConfigMaps

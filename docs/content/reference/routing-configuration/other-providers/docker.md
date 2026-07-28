@@ -294,7 +294,7 @@ More information about available middlewares in the dedicated [middlewares secti
     ```yaml
     # ...
     # Declaring a middleware
-    traefik.tcp.middlewares.test-inflightconn.amount=10
+    traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10
     # Referencing a middleware
     traefik.tcp.routers.my-service.middlewares=test-inflightconn
     ```

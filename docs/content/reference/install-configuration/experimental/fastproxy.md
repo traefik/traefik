@@ -38,3 +38,9 @@ experimental:
 ```bash tab="CLI"
 --experimental.fastProxy
 ```
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| <a id="opt-experimental-fastProxy-debug" href="#opt-experimental-fastProxy-debug" title="#opt-experimental-fastProxy-debug">`experimental.fastProxy.debug`</a> | `bool` | `false` | Enable debug mode for the FastProxy implementation. |

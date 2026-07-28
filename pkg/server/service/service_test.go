@@ -23,8 +23,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func pointer[T any](v T) *T { return &v }
-
 func TestGetLoadBalancer(t *testing.T) {
 	sm := Manager{
 		transportManager: &transportManagerMock{},
@@ -175,7 +173,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
-				PassHostHeader: pointer(true),
+				PassHostHeader: new(true),
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -277,7 +275,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
-				PassHostHeader: pointer(true),
+				PassHostHeader: new(true),
 				Servers: []dynamic.Server{
 					{
 						URL: serverPassHost.URL,
@@ -296,7 +294,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
-				PassHostHeader: pointer(false),
+				PassHostHeader: new(false),
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 				Servers: []dynamic.Server{
 					{
@@ -772,7 +770,7 @@ func TestGetServiceHandler_HealthCheck(t *testing.T) {
 				"wrr@file": {
 					Service: &dynamic.Service{
 						Weighted: &dynamic.WeightedRoundRobin{
-							Services:    []dynamic.WRRService{{Name: "child@file", Weight: pointer(1)}},
+							Services:    []dynamic.WRRService{{Name: "child@file", Weight: new(1)}},
 							HealthCheck: &dynamic.HealthCheck{},
 						},
 					},

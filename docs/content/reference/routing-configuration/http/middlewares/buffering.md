@@ -9,6 +9,11 @@ With buffering, Traefik reads the entire request into memory (possibly buffering
 
 This can help services avoid large amounts of data (`multipart/form-data` for example), and can minimize the time spent sending data to a Service
 
+!!! info
+
+    When the middleware is attached, Traefik buffers the request body before forwarding it.
+    As a result, Traefik can send the request upstream with a fixed `Content-Length` instead of streaming the original chunked body.
+
 ## Configuration Examples
 
 ```yaml tab="Structured (YAML)"
@@ -38,7 +43,7 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+    "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
   ]
 }
 ```
@@ -95,10 +100,10 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum allowed body size for the request (in bytes). <br /> If the request exceeds the allowed size, it is not forwarded to the Service, and the client gets a `413` (Request Entity Too Large) response. | 0 | No |
-| <a id="opt-memRequestBodyBytes" href="#opt-memRequestBodyBytes" title="#opt-memRequestBodyBytes">`memRequestBodyBytes`</a> | Threshold (in bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option.| 1048576 | No |
-| <a id="opt-maxResponseBodyBytes" href="#opt-maxResponseBodyBytes" title="#opt-maxResponseBodyBytes">`maxResponseBodyBytes`</a> | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. | 0 | No |
-| <a id="opt-memResponseBodyBytes" href="#opt-memResponseBodyBytes" title="#opt-memResponseBodyBytes">`memResponseBodyBytes`</a> | Threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.| 1048576 | No |
+| <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum allowed body size for the request (in bytes). <br /> If the request exceeds the allowed size, it is not forwarded to the Service, and the client gets a `413` (Request Entity Too Large) response. <br /> `0` means unlimited. | 0 | No |
+| <a id="opt-memRequestBodyBytes" href="#opt-memRequestBodyBytes" title="#opt-memRequestBodyBytes">`memRequestBodyBytes`</a> | Threshold (in bytes) from which the request will be buffered on disk instead of in memory.| 1048576 | No |
+| <a id="opt-maxResponseBodyBytes" href="#opt-maxResponseBodyBytes" title="#opt-maxResponseBodyBytes">`maxResponseBodyBytes`</a> | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. <br /> `0` means unlimited. | 0 | No |
+| <a id="opt-memResponseBodyBytes" href="#opt-memResponseBodyBytes" title="#opt-memResponseBodyBytes">`memResponseBodyBytes`</a> | Threshold (in bytes) from which the response will be buffered on disk instead of in memory.| 1048576 | No |
 | <a id="opt-retryExpression" href="#opt-retryExpression" title="#opt-retryExpression">`retryExpression`</a> | Replay the request using `retryExpression`.<br /> More information [here](#retryexpression). | "" | No |
 | <a id="opt-disableRequestBuffer" href="#opt-disableRequestBuffer" title="#opt-disableRequestBuffer">`disableRequestBuffer`</a> | Disables request body buffering so the request body is streamed directly to the backend.<br />When `true`, `maxRequestBodyBytes` is not enforced. More information [here](#streaming). | false | No |
 | <a id="opt-disableResponseBuffer" href="#opt-disableResponseBuffer" title="#opt-disableResponseBuffer">`disableResponseBuffer`</a> | Disables response body buffering so the response is streamed directly to the client.<br />Required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll `watch` endpoints.<br />When `true`, `maxResponseBodyBytes` is not enforced. More information [here](#streaming). | false | No |

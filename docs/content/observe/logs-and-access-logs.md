@@ -26,11 +26,10 @@ log:
 ```
 
 ```yaml tab="Helm Chart Values"
-logs:
-  general:
-    filePath: "/path/to/log-file.log"
-    format: json
-    level: INFO
+log:
+  filePath: "/path/to/log-file.log"
+  format: json
+  level: INFO
 ```
 
 ## Access Logs
@@ -78,23 +77,22 @@ accessLog:
 
 ```yaml tab="Helm Chart Values"
 # values.yaml
-logs:
-  access:
-    enabled: true
-    format: json
-    filters:
-      statusCodes:
-        - "200"
-        - "400-404"
-        - "500-503"
-    fields:
+accessLog:
+  enabled: true
+  format: json
+  filters:
+    statusCodes:
+      - "200"
+      - "400-404"
+      - "500-503"
+  fields:
+    names:
+      ClientUsername: drop
+    headers:
+      defaultMode: keep
       names:
-        ClientUsername: drop
-      headers:
-        defaultMode: keep
-        names:
-          User-Agent: redact
-          Content-Type: keep
+        User-Agent: redact
+        Content-Type: keep
 ```
 
 ## Per-Router Access Logs

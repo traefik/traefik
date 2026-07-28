@@ -322,6 +322,11 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
 
     Example configuration in `values.yaml`:
     ```yaml
+    ports:
+      web:
+        port: 80
+      websecure:
+        port: 443
     gateway:
       listeners:
         web:
@@ -337,7 +342,7 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
           mode: Terminate
           certificateRefs:
             - kind: Secret
-              name: local-selfsigned-tls
+              name: whoami-tls
               group: ""
     ```
 

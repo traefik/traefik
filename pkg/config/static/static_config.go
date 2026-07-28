@@ -3,16 +3,16 @@ package static
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"slices"
 	"strings"
 	"time"
 
-	legolog "github.com/go-acme/lego/v4/log"
-	"github.com/rs/zerolog"
+	legolog "github.com/go-acme/lego/v5/log"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -536,8 +536,13 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
+	legolog.SetDefault(
+		slog.New(
+			slogzerolog.Option{Logger: &log.Logger}.
+				NewZerologHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

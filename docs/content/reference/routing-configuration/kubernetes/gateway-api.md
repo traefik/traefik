@@ -320,9 +320,20 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
+!!! info "Supported Filter Types"
+
+    Traefik supports the following route-level filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
 !!! info "ExtensionRef Filters"
 
-    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-ingress.md). 
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
 
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
@@ -442,6 +453,7 @@ This allows request modifications to be applied to specific backends, enabling t
     - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"
@@ -769,11 +781,6 @@ Once everything is deployed, sending the WHO command should return the following
     ```
 
 ### TLS
-
-!!! info "Experimental Channel"
-
-    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
-    Therefore, to use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) option must be enabled.
 
 The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.

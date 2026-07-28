@@ -415,7 +415,7 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 	}
 	for _, network := range container.NetworkSettings.Networks {
 		if netNotFound {
-			logger.Warn().Msgf("Defaulting to first available network (%q) for container %q.", network, container.Name)
+			logger.Warn().Msgf("Defaulting to first available network (%q) for container %q.", network.Name, container.Name)
 		}
 		return network.Addr
 	}

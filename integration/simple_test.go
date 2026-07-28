@@ -2456,6 +2456,59 @@ func (s *SimpleSuite) TestAllowACMEByPassRedirect() {
 	assert.Equal(s.T(), http.StatusMovedPermanently, resp.StatusCode)
 }
 
+func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_underscore_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the underscore variant directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
+}
+
 func (s *SimpleSuite) TestFailoverService() {
 	s.createComposeProject("base")
 

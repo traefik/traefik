@@ -33,7 +33,7 @@ spiffe:
 ```toml tab="File (TOML)"
 ## Static configuration
 [spiffe]
-    workloadAPIAddr: localhost
+    workloadAPIAddr = "localhost"
 ```
 
 ```bash tab="CLI"

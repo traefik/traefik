@@ -195,7 +195,8 @@ http:
           - GET
           - OPTIONS
           - PUT
-        accessControlAllowHeaders: "*"
+        accessControlAllowHeaders:
+          - "*"
         accessControlAllowOriginList:
           - https://foo.bar.org
           - https://example.org
@@ -279,7 +280,7 @@ spec:
 | <a id="opt-allowedHosts" href="#opt-allowedHosts" title="#opt-allowedHosts">`allowedHosts`</a> | Lists allowed domain names.                      | []      | No |
 | <a id="opt-hostsProxyHeaders" href="#opt-hostsProxyHeaders" title="#opt-hostsProxyHeaders">`hostsProxyHeaders`</a> | Specifies header keys for proxied hostname.      | []      | No |
 | <a id="opt-sslProxyHeaders" href="#opt-sslProxyHeaders" title="#opt-sslProxyHeaders">`sslProxyHeaders`</a> | Defines a set of header keys with associated values that would indicate a valid HTTPS request. It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).        |   {}   | No |
-| <a id="opt-stsSeconds" href="#opt-stsSeconds" title="#opt-stsSeconds">`stsSeconds`</a> | Max age for `Strict-Transport-Security` header.    | 0         | No |
+| <a id="opt-stsSeconds" href="#opt-stsSeconds" title="#opt-stsSeconds">`stsSeconds`</a> | Max age for `Strict-Transport-Security` header.    | -         | No |
 | <a id="opt-stsIncludeSubdomains" href="#opt-stsIncludeSubdomains" title="#opt-stsIncludeSubdomains">`stsIncludeSubdomains`</a> | If set to `true`, the `includeSubDomains` directive is appended to the `Strict-Transport-Security` header.    | false     | No |
 | <a id="opt-stsPreload" href="#opt-stsPreload" title="#opt-stsPreload">`stsPreload`</a> | Adds preload flag to STS header.                 | false     | No |
 | <a id="opt-forceSTSHeader" href="#opt-forceSTSHeader" title="#opt-forceSTSHeader">`forceSTSHeader`</a> | Adds STS header for HTTP connections.            | false     | No |
@@ -287,8 +288,8 @@ spec:
 | <a id="opt-customFrameOptionsValue" href="#opt-customFrameOptionsValue" title="#opt-customFrameOptionsValue">`customFrameOptionsValue`</a> | allows the `X-Frame-Options` header value to be set with a custom value. This overrides the `FrameDeny` option.  |    ""  | No |
 | <a id="opt-contentTypeNosniff" href="#opt-contentTypeNosniff" title="#opt-contentTypeNosniff">`contentTypeNosniff`</a> | Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with the value `nosniff`.  | false     | No |
 | <a id="opt-browserXssFilter" href="#opt-browserXssFilter" title="#opt-browserXssFilter">`browserXssFilter`</a> | Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.  | false     | No |
-| <a id="opt-customBrowserXSSValue" href="#opt-customBrowserXSSValue" title="#opt-customBrowserXSSValue">`customBrowserXSSValue`</a> | allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the `BrowserXssFilter` option.   | false | No |
-| <a id="opt-contentSecurityPolicy" href="#opt-contentSecurityPolicy" title="#opt-contentSecurityPolicy">`contentSecurityPolicy`</a> | allows the `Content-Security-Policy` header value to be set with a custom value.           | false | No |
+| <a id="opt-customBrowserXSSValue" href="#opt-customBrowserXSSValue" title="#opt-customBrowserXSSValue">`customBrowserXSSValue`</a> | allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the `BrowserXssFilter` option.   | "" | No |
+| <a id="opt-contentSecurityPolicy" href="#opt-contentSecurityPolicy" title="#opt-contentSecurityPolicy">`contentSecurityPolicy`</a> | allows the `Content-Security-Policy` header value to be set with a custom value.           | "" | No |
 | <a id="opt-contentSecurityPolicyReportOnly" href="#opt-contentSecurityPolicyReportOnly" title="#opt-contentSecurityPolicyReportOnly">`contentSecurityPolicyReportOnly`</a> | allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.    |   ""  | No |
 | <a id="opt-publicKey" href="#opt-publicKey" title="#opt-publicKey">`publicKey`</a> | Implements HPKP for certificate pinning.         |  "" | No |
 | <a id="opt-referrerPolicy" href="#opt-referrerPolicy" title="#opt-referrerPolicy">`referrerPolicy`</a> | Controls forwarding of `Referer` header.         | "" | No |

@@ -14,8 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-func pointer[T any](v T) *T { return &v }
-
 func Test_buildConfiguration(t *testing.T) {
 	provider := newProviderMock(mapToPairs(map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0":                                                 "foobar",
@@ -400,7 +398,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						ForceSlash: pointer(true),
+						ForceSlash: new(true),
 					},
 				},
 				"Middleware00": {
@@ -445,9 +443,9 @@ func Test_buildConfiguration(t *testing.T) {
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
-							CAOptional:         pointer(true),
+							CAOptional:         new(true),
 						},
-						TrustForwardHeader: pointer(true),
+						TrustForwardHeader: new(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"foobar",
@@ -456,9 +454,9 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						MaxResponseBodySize:    pointer[int64](42),
+						MaxResponseBodySize:    new(int64(42)),
 						ForwardBody:            true,
-						MaxBodySize:            pointer(int64(42)),
+						MaxBodySize:            new(int64(42)),
 						PreserveLocationHeader: true,
 						PreserveRequestMethod:  true,
 					},
@@ -480,7 +478,7 @@ func Test_buildConfiguration(t *testing.T) {
 						Attempts:                   42,
 						Timeout:                    ptypes.Duration(time.Second),
 						InitialInterval:            ptypes.Duration(time.Second),
-						MaxRequestBodyBytes:        pointer[int64](42),
+						MaxRequestBodyBytes:        new(int64(42)),
 						Status:                     []string{"400", "500-599"},
 						DisableRetryOnNetworkError: true,
 						RetryNonIdempotentMethod:   true,
@@ -619,7 +617,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						AccessControlMaxAge: 42,
+						AccessControlMaxAge: new(int64(42)),
 						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",
@@ -629,15 +627,15 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						SSLRedirect:          pointer(true),
-						SSLTemporaryRedirect: pointer(true),
-						SSLHost:              pointer("foobar"),
+						SSLRedirect:          new(true),
+						SSLTemporaryRedirect: new(true),
+						SSLHost:              new("foobar"),
 						SSLProxyHeaders: map[string]string{
 							"name1": "foobar",
 							"name0": "foobar",
 						},
-						SSLForceHost:                    pointer(true),
-						STSSeconds:                      pointer(int64(42)),
+						SSLForceHost:                    new(true),
+						STSSeconds:                      new(int64(42)),
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
 						ForceSTSHeader:                  true,
@@ -650,7 +648,7 @@ func Test_buildConfiguration(t *testing.T) {
 						ContentSecurityPolicyReportOnly: "foobar",
 						PublicKey:                       "foobar",
 						ReferrerPolicy:                  "foobar",
-						FeaturePolicy:                   pointer("foobar"),
+						FeaturePolicy:                   new("foobar"),
 						PermissionsPolicy:               "foobar",
 						IsDevelopment:                   true,
 					},
@@ -688,16 +686,16 @@ func Test_buildConfiguration(t *testing.T) {
 							Path:              "foobar",
 							Port:              42,
 							Interval:          ptypes.Duration(time.Second),
-							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
+							UnhealthyInterval: new(ptypes.Duration(time.Second)),
 							Timeout:           ptypes.Duration(time.Second),
 							Hostname:          "foobar",
-							FollowRedirects:   pointer(true),
+							FollowRedirects:   new(true),
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -706,8 +704,8 @@ func Test_buildConfiguration(t *testing.T) {
 				"Service02": {
 					Mirroring: &dynamic.Mirroring{
 						Service:     "foobar",
-						MirrorBody:  pointer(true),
-						MaxBodySize: pointer[int64](42),
+						MirrorBody:  new(true),
+						MaxBodySize: new(int64(42)),
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",
@@ -725,11 +723,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Services: []dynamic.WRRService{
 							{
 								Name:   "foobar",
-								Weight: pointer(42),
+								Weight: new(42),
 							},
 							{
 								Name:   "foobar",
-								Weight: pointer(42),
+								Weight: new(42),
 							},
 						},
 						Sticky: &dynamic.Sticky{
@@ -814,7 +812,7 @@ func Test_buildConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.TCPService{
 				"TCPService01": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 						Servers: []dynamic.TCPServer{
 							{Address: "foobar"},
 							{Address: "foobar"},
@@ -826,11 +824,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Services: []dynamic.TCPWRRService{
 							{
 								Name:   "foobar",
-								Weight: pointer(42),
+								Weight: new(42),
 							},
 							{
 								Name:   "foobar",
-								Weight: pointer(43),
+								Weight: new(43),
 							},
 						},
 					},

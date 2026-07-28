@@ -190,11 +190,13 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 
 	if len(c.includes) > 0 {
 		wrapper, err = gzhttp.NewWrapper(
+			gzhttp.EnableZstd(false),
 			gzhttp.ContentTypes(c.includes),
 			gzhttp.MinSize(c.minSize),
 		)
 	} else {
 		wrapper, err = gzhttp.NewWrapper(
+			gzhttp.EnableZstd(false),
 			gzhttp.ExceptContentTypes(c.excludes),
 			gzhttp.MinSize(c.minSize),
 		)

@@ -20,6 +20,8 @@ type statusReport struct {
 	tcpRoutes          map[ktypes.NamespacedName]gatev1.RouteStatus
 	tlsRoutes          map[ktypes.NamespacedName]gatev1.RouteStatus
 	backendTLSPolicies map[ktypes.NamespacedName]gatev1.PolicyStatus
+
+	gatewayListeners []gatewayWithListeners
 }
 
 func newStatusReport() *statusReport {
@@ -53,28 +55,28 @@ func (r *statusReport) Flush(ctx context.Context, client *clientWrapper) {
 
 	for name, routeStatus := range r.httpRoutes {
 		status := gatev1.HTTPRouteStatus{RouteStatus: routeStatus}
-		if err := client.UpdateHTTPRouteStatus(ctx, name, status); err != nil {
+		if err := client.UpdateHTTPRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
 			logger.Warn().Err(err).Str("http_route", name.Name).Str("namespace", name.Namespace).Msg("Unable to update HTTPRoute status")
 		}
 	}
 
 	for name, routeStatus := range r.grpcRoutes {
 		status := gatev1.GRPCRouteStatus{RouteStatus: routeStatus}
-		if err := client.UpdateGRPCRouteStatus(ctx, name, status); err != nil {
+		if err := client.UpdateGRPCRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
 			logger.Warn().Err(err).Str("grpc_route", name.Name).Str("namespace", name.Namespace).Msg("Unable to update GRPCRoute status")
 		}
 	}
 
 	for name, routeStatus := range r.tcpRoutes {
 		status := gatev1alpha2.TCPRouteStatus{RouteStatus: routeStatus}
-		if err := client.UpdateTCPRouteStatus(ctx, name, status); err != nil {
+		if err := client.UpdateTCPRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
 			logger.Warn().Err(err).Str("tcp_route", name.Name).Str("namespace", name.Namespace).Msg("Unable to update TCPRoute status")
 		}
 	}
 
 	for name, routeStatus := range r.tlsRoutes {
 		status := gatev1.TLSRouteStatus{RouteStatus: routeStatus}
-		if err := client.UpdateTLSRouteStatus(ctx, name, status); err != nil {
+		if err := client.UpdateTLSRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
 			logger.Warn().Err(err).Str("tls_route", name.Name).Str("namespace", name.Namespace).Msg("Unable to update TLSRoute status")
 		}
 	}

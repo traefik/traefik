@@ -1,0 +1,99 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: other-gateway-class
+spec:
+  controllerName: example.com/other-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: GRPCRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+# Gateway owned by another controller. Traefik must ignore it, and must not write
+# any status for parentRefs pointing to it.
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: other-gateway
+  namespace: default
+spec:
+  gatewayClassName: other-gateway-class
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: GRPCRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+# References both our Gateway and the foreign one: only our parent must be managed,
+# and the listener must count this route only once.
+kind: GRPCRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: grpc-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: other-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "foo.com"
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+
+---
+# References only the foreign Gateway: Traefik must not write any status for it.
+kind: GRPCRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: grpc-app-2
+  namespace: default
+spec:
+  parentRefs:
+    - name: other-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "bar.com"
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1

@@ -172,7 +172,17 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if fa.forwardBody {
+	forwardBody := fa.forwardBody
+	// When a CONNECT method has a body with an unknown length we consider the bytes as tunnel data.
+	// Therefore, we do not want to forward them to the auth server.
+	if req.Method == http.MethodConnect && req.ContentLength < 0 {
+		forwardBody = false
+	}
+
+	if forwardBody {
+		forwardReq.ContentLength = req.ContentLength
+		forwardReq.TransferEncoding = req.TransferEncoding
+
 		bodyBytes, err := fa.readBodyBytes(req)
 		if errors.Is(err, errBodyTooLarge) {
 			logger.Debug().Msgf("Request body is too large, maxBodySize: %d", fa.maxBodySize)
@@ -301,6 +311,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Only the operator-listed authResponseHeaders are stripped and replaced with
+	// the auth server's verified values. Any other header the client sends is
+	// forwarded to the backend unchanged, mirroring ingress-nginx's
+	// auth-response-headers semantics. By design, Traefik asserts no identity the
+	// operator did not opt into: trusting unlisted client headers downstream is a
+	// backend misconfiguration, not a spoofing flaw here.
 	for _, headerName := range fa.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
@@ -446,7 +462,7 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	}
 
 	if _, ok := forwardReq.Header[forwardedheaders.XForwardedPort]; !ok {
-		forwardReq.Header.Set(forwardedheaders.XForwardedPort, forwardedPort(req))
+		forwardReq.Header.Set(forwardedheaders.XForwardedPort, forwardedPort(req, forwardReq))
 	}
 
 	if _, ok := forwardReq.Header[forwardedheaders.XForwardedHost]; !ok {
@@ -498,7 +514,7 @@ func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeade
 	return filteredHeaders
 }
 
-func forwardedPort(req *http.Request) string {
+func forwardedPort(req, forwardReq *http.Request) string {
 	if req == nil {
 		return ""
 	}
@@ -507,7 +523,7 @@ func forwardedPort(req *http.Request) string {
 		return port
 	}
 
-	if req.Header.Get(forwardedheaders.XForwardedProto) == "https" || req.Header.Get(forwardedheaders.XForwardedProto) == "wss" {
+	if forwardReq.Header.Get(forwardedheaders.XForwardedProto) == "https" || forwardReq.Header.Get(forwardedheaders.XForwardedProto) == "wss" {
 		return "443"
 	}
 

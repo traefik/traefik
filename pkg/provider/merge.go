@@ -175,7 +175,7 @@ func mergeResourceMap(ctx context.Context, dst, src reflect.Value, origin string
 // tryMerge attempts to merge two resources.
 // Returns true if the merge succeeds, false if values conflict.
 func tryMerge(dst, src reflect.Value) bool {
-	if dst.Kind() != reflect.Ptr {
+	if dst.Kind() != reflect.Pointer {
 		return reflect.DeepEqual(dst.Interface(), src.Interface())
 	}
 
@@ -275,7 +275,7 @@ func logSkippedDuplicate(ctx context.Context, resourceType reflect.Type, resourc
 
 // resourceLogMeta returns the log field name and human-readable type description for the given resource element type.
 func resourceLogMeta(resourceType reflect.Type) (resourceNameField, resourceTypeWords string) {
-	if resourceType.Kind() == reflect.Ptr {
+	if resourceType.Kind() == reflect.Pointer {
 		resourceType = resourceType.Elem()
 	}
 
