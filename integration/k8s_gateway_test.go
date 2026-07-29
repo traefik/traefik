@@ -59,7 +59,7 @@ func (s *GatewayAPISuite) TestGatewayConfiguration() {
 			require.NoError(s.T(), err)
 
 			s.T().Cleanup(func() {
-				// The test context is already cancelled at cleanup time.
+				// The test context is already canceled at cleanup time.
 				if err := k3sContainer.Terminate(context.Background()); err != nil {
 					log.Warn().Err(err).Send()
 				}
