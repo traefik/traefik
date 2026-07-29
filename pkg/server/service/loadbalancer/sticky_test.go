@@ -147,16 +147,16 @@ func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		preserveLeadingDot bool
-		wantDomain         string
+		wantSetCookie      string
 	}{
 		{
 			desc:               "leading dot preserved when the provider opts in",
 			preserveLeadingDot: true,
-			wantDomain:         "Domain=.example.com",
+			wantSetCookie:      "test=" + sha256Hash("first") + "; Path=/foo; Domain=.example.com; Max-Age=42; HttpOnly; Secure; SameSite=None",
 		},
 		{
-			desc:       "leading dot stripped by default",
-			wantDomain: "Domain=example.com",
+			desc:          "leading dot stripped by default",
+			wantSetCookie: "test=" + sha256Hash("first") + "; Path=/foo; Domain=example.com; Max-Age=42; HttpOnly; Secure; SameSite=None",
 		},
 	}
 
@@ -166,6 +166,11 @@ func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
 
 			cookieConfig := dynamic.Cookie{
 				Name:               "test",
+				Secure:             true,
+				HTTPOnly:           true,
+				SameSite:           "none",
+				MaxAge:             42,
+				Path:               new("/foo"),
 				Domain:             ".example.com",
 				PreserveLeadingDot: test.preserveLeadingDot,
 			}
@@ -175,8 +180,7 @@ func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
 			res := httptest.NewRecorder()
 			require.NoError(t, sticky.WriteStickyCookie(res, "first"))
 
-			setCookie := res.Header().Get("Set-Cookie")
-			assert.Contains(t, setCookie, test.wantDomain)
+			assert.Equal(t, test.wantSetCookie, res.Header().Get("Set-Cookie"))
 		})
 	}
 }
