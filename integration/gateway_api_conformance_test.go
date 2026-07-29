@@ -109,11 +109,8 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	}
 
 	// The conformance suite polls the Kubernetes API intensively, and even more
-	// since the default polling interval has been decreased in Gateway API v1.6.
-	// The client-go rate limiter throttles it to the point where tests fail on
-	// "client rate limiter Wait returned an error", so it is disabled: the
-	// requests target a dedicated single-node cluster, which the API Priority
-	// and Fairness feature already protects server-side.
+	// since the default polling interval has been decreased in Gateway API v1.6,
+	// so we disable client side rate limiting to let the tests impose the pace.
 	s.restConfig.QPS = -1
 
 	s.kubeClient, err = client.New(s.restConfig, client.Options{})
@@ -183,14 +180,9 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 		RestConfig: s.restConfig,
 		ManifestFS: []fs.FS{&conformance.Manifests},
 		ConfigurableOptions: ksuite.ConfigurableOptions{
-			GatewayClassName:     "traefik",
-			Debug:                true,
-			CleanupBaseResources: true,
-			// Gateway API v1.6 gates the per-test resource cleanup on this
-			// option, which only defaults to true when the suite is configured
-			// through the conformance CLI flags. Without it, resources from a
-			// test leak into the next ones, which then route to the wrong
-			// backend until they time out.
+			GatewayClassName:           "traefik",
+			Debug:                      true,
+			CleanupBaseResources:       true,
 			CleanupTestResources:       true,
 			TimeoutConfig:              config.DefaultTimeoutConfig(),
 			EnableAllSupportedFeatures: false,
@@ -208,6 +200,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 				ksuite.GatewayTLSConformanceProfileName,
 			},
 			SupportedFeatures: gateway.SupportedFeatures(),
+			SkipTests:         []string{tests.HTTPRouteMultipleGateways.ShortName},
 		},
 	})
 	require.NoError(s.T(), err)

@@ -21,15 +21,13 @@ profiles:
   name: GATEWAY-GRPC
   summary: Core tests succeeded.
 - core:
-    failedTests:
+    result: partial
+    skippedTests:
     - HTTPRouteMultipleGateways
-    - HTTPRouteNoBackendRefs
-    - HTTPRouteWeight
-    result: failure
     statistics:
-      Failed: 3
-      Passed: 34
-      Skipped: 0
+      Failed: 0
+      Passed: 36
+      Skipped: 1
   extended:
     result: success
     statistics:
@@ -77,7 +75,7 @@ profiles:
     - HTTPRouteRetryConnectionError
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests failed with 3 test failures. Extended tests succeeded.
+  summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
 - core:
     result: success
     statistics:
