@@ -55,7 +55,7 @@ func TestNewIPAllowLister(t *testing.T) {
 	}
 }
 
-func TestIPAllowLister_ServeHTTP(t *testing.T) {
+func TestIPAllowLister_ServeTCP(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		allowList  dynamic.TCPIPAllowList
