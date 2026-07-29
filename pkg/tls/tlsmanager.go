@@ -173,11 +173,16 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		}
 	}
 
-	m.stores = make(map[string]*CertificateStore)
+	newStores := make(map[string]*CertificateStore)
 
 	for storeName, storeConfig := range m.storesConfig {
-		st := NewCertificateStore(m.ocspStapler)
-		m.stores[storeName] = st
+		st, exists := m.stores[storeName]
+		if !exists {
+			st = NewCertificateStore(m.ocspStapler)
+		} else {
+			st.ResetCache()
+		}
+		newStores[storeName] = st
 
 		if certs, ok := storesCertificates[storeName]; ok {
 			st.DynamicCerts.Set(certs)
@@ -198,6 +203,8 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 		st.DefaultCertificate = certificate
 	}
+
+	m.stores = newStores
 
 	if m.ocspStapler != nil {
 		m.ocspStapler.ForceStapleUpdates()
