@@ -272,7 +272,7 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 	}
 
 	regex := loc.Path
-	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific {
+	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
 		regex = makeTrailingGroupOptional(loc.Path)
 	}
 

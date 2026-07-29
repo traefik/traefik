@@ -6,6 +6,7 @@ import (
 	"maps"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -608,7 +609,9 @@ func buildRule(host string, loc *location) string {
 		regexPath := loc.Path
 		if pathType == netv1.PathTypeImplementationSpecific {
 			pathType = netv1.PathTypePrefix
-			regexPath = makeTrailingGroupOptional(loc.Path)
+			if hasAbsoluteRewriteTarget(loc) {
+				regexPath = makeTrailingGroupOptional(loc.Path)
+			}
 		}
 
 		switch pathType {
@@ -638,6 +641,24 @@ func buildPrefixRule(path string) string {
 	}
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, path+"/")
+}
+
+// hasAbsoluteRewriteTarget reports whether the location's rewrite-target
+// annotation is an absolute URL (e.g. https://bar.example.org/$1).
+// With an absolute rewrite-target, requests that do not match the nginx
+// location fall through to the implicit catch-all whose rewrite still issues
+// the redirect, so nginx answers 302 for any path on the host. Traefik has no
+// such catch-all: widening the route regex with makeTrailingGroupOptional
+// approximates it for paths sharing the location prefix. With a non-absolute
+// rewrite-target, the catch-all proxies to the default backend (404), so the
+// route must not be widened.
+func hasAbsoluteRewriteTarget(loc *location) bool {
+	rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
+	if rewrite == "" {
+		return false
+	}
+	parsed, err := url.Parse(rewrite)
+	return err == nil && parsed.Scheme != ""
 }
 
 // makeTrailingGroupOptional converts an ImplementationSpecific regex path like /foo/(.*)
