@@ -21,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -9461,6 +9462,79 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	}
 
 	return k8sObjects, gwObjects
+}
+
+func Test_makeGatewayStatus(t *testing.T) {
+	acceptedListener := func() gatewayListener {
+		return gatewayListener{Status: &gatev1.ListenerStatus{Name: "valid"}}
+	}
+	invalidListener := func() gatewayListener {
+		return gatewayListener{Status: &gatev1.ListenerStatus{
+			Name: "invalid",
+			Conditions: []metav1.Condition{{
+				Type:   string(gatev1.ListenerConditionAccepted),
+				Status: metav1.ConditionFalse,
+				Reason: string(gatev1.ListenerReasonUnsupportedProtocol),
+			}},
+		}}
+	}
+
+	testCases := []struct {
+		desc           string
+		infrastructure *gatev1.GatewayInfrastructure
+		listeners      []gatewayListener
+		wantStatus     metav1.ConditionStatus
+		wantReason     gatev1.GatewayConditionReason
+	}{
+		{
+			desc:       "all listeners valid",
+			listeners:  []gatewayListener{acceptedListener()},
+			wantStatus: metav1.ConditionTrue,
+			wantReason: gatev1.GatewayReasonAccepted,
+		},
+		{
+			desc:       "one listener valid among invalid ones",
+			listeners:  []gatewayListener{acceptedListener(), invalidListener()},
+			wantStatus: metav1.ConditionTrue,
+			wantReason: gatev1.GatewayReasonListenersNotValid,
+		},
+		{
+			desc:       "no listener valid",
+			listeners:  []gatewayListener{invalidListener()},
+			wantStatus: metav1.ConditionFalse,
+			wantReason: gatev1.GatewayReasonListenersNotValid,
+		},
+		{
+			desc:      "infrastructure parametersRef",
+			listeners: []gatewayListener{acceptedListener()},
+			infrastructure: &gatev1.GatewayInfrastructure{
+				ParametersRef: &gatev1.LocalParametersReference{
+					Group: "invalid.io",
+					Kind:  "InvalidParameters",
+					Name:  "invalid",
+				},
+			},
+			wantStatus: metav1.ConditionFalse,
+			wantReason: gatev1.GatewayReasonInvalidParameters,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{}
+			gateway := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Infrastructure: test.infrastructure}}
+
+			status, _ := p.makeGatewayStatus(gateway, test.listeners, nil)
+
+			condition := meta.FindStatusCondition(status.Conditions, string(gatev1.GatewayConditionAccepted))
+			require.NotNil(t, condition)
+			assert.Equal(t, test.wantStatus, condition.Status)
+			assert.Equal(t, string(test.wantReason), condition.Reason)
+			assert.Len(t, status.Listeners, len(test.listeners))
+		})
+	}
 }
 
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
