@@ -11,7 +11,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/utils"
@@ -34,11 +33,10 @@ type rateLimiter struct {
 	rate rate.Limit // reqs/s
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
 	// For now it is somewhat arbitrarily set to 1/(2*rate).
-	maxDelay        time.Duration
-	sourceMatcher   utils.SourceExtractor
-	excludedChecker *ip.Checker
-	next            http.Handler
-	logger          *zerolog.Logger
+	maxDelay      time.Duration
+	sourceMatcher utils.SourceExtractor
+	next          http.Handler
+	logger        *zerolog.Logger
 
 	limiter limiter
 }
@@ -61,14 +59,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
 	if err != nil {
 		return nil, fmt.Errorf("getting source extractor: %w", err)
-	}
-
-	var excludedChecker *ip.Checker
-	if len(config.ExcludedIPs) > 0 {
-		excludedChecker, err = ip.NewChecker(config.ExcludedIPs)
-		if err != nil {
-			return nil, fmt.Errorf("parsing excludedIPs: %w", err)
-		}
 	}
 
 	burst := max(config.Burst, 1)
@@ -123,14 +113,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}
 
 	return &rateLimiter{
-		logger:          logger,
-		name:            name,
-		rate:            rate.Limit(rtl),
-		maxDelay:        maxDelay,
-		next:            next,
-		sourceMatcher:   sourceMatcher,
-		excludedChecker: excludedChecker,
-		limiter:         limiter,
+		logger:        logger,
+		name:          name,
+		rate:          rate.Limit(rtl),
+		maxDelay:      maxDelay,
+		next:          next,
+		sourceMatcher: sourceMatcher,
+		limiter:       limiter,
 	}, nil
 }
 
@@ -147,13 +136,6 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Error().Err(err).Msg("Could not extract source of request")
 		http.Error(rw, "could not extract source of request", http.StatusInternalServerError)
 		return
-	}
-
-	if rl.excludedChecker != nil {
-		if err = rl.excludedChecker.IsAuthorized(source); err == nil {
-			rl.next.ServeHTTP(rw, req)
-			return
-		}
 	}
 
 	if amount != 1 {

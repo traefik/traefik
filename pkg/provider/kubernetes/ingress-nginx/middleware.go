@@ -37,6 +37,7 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildUpstreamVhost(loc)
 	p.buildRateLimit(loc)
 	p.buildLimitConnections(loc)
+	p.buildLimitAllowlist(loc)
 	p.buildAuthTLSPassCert(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
@@ -302,40 +303,33 @@ func (p *Provider) buildRateLimit(loc *location) {
 	}
 
 	burst := getLimitBurstMultiplier(loc.Config)
-	excludedIPs := parseLimitWhitelist(loc.Config.LimitWhitelist)
 	if rpm > 0 {
 		loc.RateLimitRPM = &dynamic.RateLimit{
-			Average:     int64(rpm),
-			Period:      ptypes.Duration(time.Minute),
-			Burst:       int64(rpm) * burst,
-			ExcludedIPs: excludedIPs,
+			Average: int64(rpm),
+			Period:  ptypes.Duration(time.Minute),
+			Burst:   int64(rpm) * burst,
 		}
 	}
 	if rps > 0 {
 		loc.RateLimitRPS = &dynamic.RateLimit{
-			Average:     int64(rps),
-			Period:      ptypes.Duration(time.Second),
-			Burst:       int64(rps) * burst,
-			ExcludedIPs: excludedIPs,
+			Average: int64(rps),
+			Period:  ptypes.Duration(time.Second),
+			Burst:   int64(rps) * burst,
 		}
 	}
 }
 
-// parseLimitWhitelist parses the comma-separated CIDRs/IPs from the
-// limit-whitelist annotation into the RateLimit ExcludedIPs list.
-func parseLimitWhitelist(whitelist *string) []string {
-	if whitelist == nil {
-		return nil
-	}
+// buildLimitAllowlist collects the client IP ranges exempted from the rate and
+// connection limits. limit-allowlist is the canonical annotation, limit-whitelist
+// its legacy alias.
+func (p *Provider) buildLimitAllowlist(loc *location) {
+	allowlist := ptr.Deref(loc.Config.LimitAllowlist, ptr.Deref(loc.Config.LimitWhitelist, nil))
 
-	var result []string
-	for cidr := range strings.SplitSeq(*whitelist, ",") {
-		if cidr = strings.TrimSpace(cidr); cidr != "" {
-			result = append(result, cidr)
+	for _, cidr := range allowlist {
+		if cidr != "" {
+			loc.LimitAllowlist = append(loc.LimitAllowlist, cidr)
 		}
 	}
-
-	return result
 }
 
 func (p *Provider) buildLimitConnections(loc *location) {
