@@ -21,7 +21,6 @@ import (
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -81,7 +80,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.5.1.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.1.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -108,6 +107,14 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	if err != nil {
 		s.T().Fatalf("Error loading Kubernetes config: %v", err)
 	}
+
+	// The conformance suite polls the Kubernetes API intensively, and even more
+	// since the default polling interval has been decreased in Gateway API v1.6.
+	// The client-go rate limiter throttles it to the point where tests fail on
+	// "client rate limiter Wait returned an error", so it is disabled: the
+	// requests target a dedicated single-node cluster, which the API Priority
+	// and Fairness feature already protects server-side.
+	s.restConfig.QPS = -1
 
 	s.kubeClient, err = client.New(s.restConfig, client.Options{})
 	if err != nil {
@@ -171,36 +178,49 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	require.NoError(s.T(), err)
 
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
-		Client:                     s.kubeClient,
-		Clientset:                  s.clientSet,
-		GatewayClassName:           "traefik",
-		Debug:                      true,
-		CleanupBaseResources:       true,
-		RestConfig:                 s.restConfig,
-		TimeoutConfig:              config.DefaultTimeoutConfig(),
-		ManifestFS:                 []fs.FS{&conformance.Manifests},
-		EnableAllSupportedFeatures: false,
-		RunTest:                    *gatewayAPIConformanceRunTest,
-		Implementation: v1.Implementation{
-			Organization: "traefik",
-			Project:      "traefik",
-			URL:          "https://traefik.io/",
-			Version:      *traefikVersion,
-			Contact:      []string{"@traefik/maintainers"},
+		Client:     s.kubeClient,
+		Clientset:  s.clientSet,
+		RestConfig: s.restConfig,
+		ManifestFS: []fs.FS{&conformance.Manifests},
+		ConfigurableOptions: ksuite.ConfigurableOptions{
+			GatewayClassName:     "traefik",
+			Debug:                true,
+			CleanupBaseResources: true,
+			// Gateway API v1.6 gates the per-test resource cleanup on this
+			// option, which only defaults to true when the suite is configured
+			// through the conformance CLI flags. Without it, resources from a
+			// test leak into the next ones, which then route to the wrong
+			// backend until they time out.
+			CleanupTestResources:       true,
+			TimeoutConfig:              config.DefaultTimeoutConfig(),
+			EnableAllSupportedFeatures: false,
+			RunTest:                    *gatewayAPIConformanceRunTest,
+			Implementation: v1.Implementation{
+				Organization: "traefik",
+				Project:      "traefik",
+				URL:          "https://traefik.io/",
+				Version:      *traefikVersion,
+				Contact:      []string{"@traefik/maintainers"},
+			},
+			ConformanceProfiles: []ksuite.ConformanceProfileName{
+				ksuite.GatewayHTTPConformanceProfileName,
+				ksuite.GatewayGRPCConformanceProfileName,
+				ksuite.GatewayTLSConformanceProfileName,
+			},
+			SupportedFeatures: gateway.SupportedFeatures(),
 		},
-		ConformanceProfiles: sets.New(
-			ksuite.GatewayHTTPConformanceProfileName,
-			ksuite.GatewayGRPCConformanceProfileName,
-			ksuite.GatewayTLSConformanceProfileName,
-		),
-		SupportedFeatures: sets.New(gateway.SupportedFeatures()...),
 	})
 	require.NoError(s.T(), err)
 
-	cSuite.Setup(s.T(), tests.ConformanceTests)
+	// Since Gateway API v1.6, conformance tests spawn parallel subtests, which
+	// Go only runs once their parent test function returns. Running the suite
+	// in a subtest guarantees they have all completed, and that their results
+	// are recorded, before the report is generated.
+	s.T().Run("conformance", func(t *testing.T) {
+		cSuite.Setup(t, tests.ConformanceTests)
 
-	err = cSuite.Run(s.T(), tests.ConformanceTests)
-	require.NoError(s.T(), err)
+		require.NoError(t, cSuite.Run(t, tests.ConformanceTests))
+	})
 
 	report, err := cSuite.Report()
 	require.NoError(s.T(), err, "failed generating conformance report")
