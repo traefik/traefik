@@ -151,7 +151,11 @@ func (s *GatewayAPIConformanceSuite) TearDownSuite() {
 			}
 		}
 
-		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", traefikNamespace, traefikDeployment})
+		// The Traefik logs are truncated, because Exec only returns its reader
+		// once the command has completed: an output large enough to fill the
+		// stream buffer blocks the command, and the call never returns.
+		logsCmd := fmt.Sprintf("kubectl logs -n %s %s | tail -c 32768", traefikNamespace, traefikDeployment)
+		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"sh", "-c", logsCmd})
 		if err == nil || exitCode == 0 {
 			if res, err := io.ReadAll(result); err == nil {
 				s.T().Log(string(res))
