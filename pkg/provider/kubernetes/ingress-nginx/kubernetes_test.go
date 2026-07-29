@@ -4890,7 +4890,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("rewrite-target-trailing-group.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`,
+							Rule:        `Host("rewrite-target-trailing-group.localhost") && PathRegexp("(?i)^/original/(.*)")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-trailing-group-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -4907,7 +4907,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("rewrite-target-trailing-group.localhost") && PathRegexp("(?i)^/original(?:/(.*))?")`,
+							Rule:        `Host("rewrite-target-trailing-group.localhost") && PathRegexp("(?i)^/original/(.*)")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-trailing-group-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -4927,13 +4927,13 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "/original(?:/(.*))?",
+								Regex:       "/original/(.*)",
 								Replacement: "/newpath/$1",
 							},
 						},
 						"default-ingress-with-rewrite-target-trailing-group-rule-0-path-0-tls-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
-								Regex:       "/original(?:/(.*))?",
+								Regex:       "/original/(.*)",
 								Replacement: "/newpath/$1",
 							},
 						},

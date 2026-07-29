@@ -215,6 +215,35 @@ func TestRewriteTarget(t *testing.T) {
 			expectedRedirectURL: "https://bar.example.org/",
 		},
 		{
+			desc: "trailing group regex with path replacement keeps capture",
+			path: "/original/foo",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original/(.*)`,
+				Replacement: "/newpath/$1",
+			},
+			expectedPath: "/newpath/foo",
+		},
+		{
+			desc: "trailing group regex with path replacement does not match bare path",
+			path: "/original",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original/(.*)`,
+				Replacement: "/newpath/$1",
+			},
+			expectedPath:    "/original",
+			expectedRawPath: "",
+		},
+		{
+			desc: "trailing group regex with path replacement does not match prefix without slash",
+			path: "/originalfoo",
+			config: dynamic.RewriteTarget{
+				Regex:       `/original/(.*)`,
+				Replacement: "/newpath/$1",
+			},
+			expectedPath:    "/originalfoo",
+			expectedRawPath: "",
+		},
+		{
 			desc: "full URL replacement preserves incoming query",
 			path: "/some/path?foo=bar&baz=qux",
 			config: dynamic.RewriteTarget{
