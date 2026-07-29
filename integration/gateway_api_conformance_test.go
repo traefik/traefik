@@ -229,11 +229,6 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	report, err := cSuite.Report()
 	require.NoError(s.T(), err, "failed generating conformance report")
 
-	// Ignore report date to avoid diff with CI job.
-	// However, we can track the date of the report thanks to the commit.
-	// TODO: to publish this report automatically, we have to figure out how to handle the date diff.
-	report.Date = "-"
-
 	// Ordering profile reports for the serialized report to be comparable.
 	slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
 		return strings.Compare(a.Name, b.Name)
