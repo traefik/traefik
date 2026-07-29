@@ -208,6 +208,25 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 		return name, nil
 	}
 
+	// A rule with omitted or empty backendRefs, and without any filter that
+	// could make the request receive a response, has no backend to forward to,
+	// and must explicitly respond with a 500 status code.
+	if len(routeRule.BackendRefs) == 0 && len(routeRule.Filters) == 0 {
+		conf.HTTP.Services[name] = &dynamic.Service{
+			Weighted: &dynamic.WeightedRoundRobin{
+				Services: []dynamic.WRRService{
+					{
+						Name:   "no-backend-refs",
+						Status: new(500),
+						Weight: new(1),
+					},
+				},
+			},
+		}
+
+		return name, nil
+	}
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
