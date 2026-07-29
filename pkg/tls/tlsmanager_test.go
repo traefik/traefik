@@ -455,3 +455,42 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
 	}, config.CipherSuites)
 }
+
+func TestManager_UpdateConfigs_ReusesStores(t *testing.T) {
+	dynamicConfigs := []*CertAndStores{{
+		Certificate: Certificate{
+			CertFile: localhostCert,
+			KeyFile:  localhostKey,
+		},
+	}}
+
+	tlsManager := NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(), map[string]Store{"other": {}}, nil, dynamicConfigs)
+
+	defaultStore := tlsManager.GetStore("default")
+	require.NotNil(t, defaultStore)
+
+	otherStore := tlsManager.GetStore("other")
+	require.NotNil(t, otherStore)
+
+	defaultStore.CertCache.SetDefault("example.com", &CertificateData{})
+
+	tlsManager.UpdateConfigs(t.Context(), map[string]Store{"other": {}}, nil, nil)
+
+	// Rebuilding the stores on every update would leave the janitor goroutine of
+	// each discarded go-cache instance running, so the stores have to be kept.
+	assert.Same(t, defaultStore, tlsManager.GetStore("default"))
+	assert.Same(t, otherStore, tlsManager.GetStore("other"))
+
+	// A kept store must not serve what the replaced configuration produced.
+	_, found := defaultStore.CertCache.Get("example.com")
+	assert.False(t, found)
+	assert.Empty(t, defaultStore.DynamicCerts.Get().(map[string]*CertificateData))
+
+	// A store that is no longer configured is dropped, which allows its cache,
+	// and the janitor holding it, to be collected.
+	tlsManager.UpdateConfigs(t.Context(), nil, nil, nil)
+
+	assert.Same(t, defaultStore, tlsManager.GetStore("default"))
+	assert.Nil(t, tlsManager.GetStore("other"))
+}
