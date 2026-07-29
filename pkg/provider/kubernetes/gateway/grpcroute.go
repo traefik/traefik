@@ -11,7 +11,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -200,8 +199,8 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routerName strin
 
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(route, backendRef)
+	for bi, backendRef := range routeRule.BackendRefs {
+		svcName, svc, errCondition := p.loadGRPCBackendRef(routerName, route, bi, backendRef)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -230,7 +229,7 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routerName strin
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -243,7 +242,7 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)
 
 	if group != groupCore || kind != kindService {
 		return serviceName, nil, &metav1.Condition{
@@ -278,9 +277,6 @@ func (p *Provider) loadGRPCBackendRef(route *gatev1.GRPCRoute, backendRef gatev1
 			Message:            fmt.Sprintf("Cannot load GRPCBackendRef %s/%s/%s/%s: port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
-
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr + "-grpc")
 
 	lb, errCondition := p.loadGRPCServers(namespace, route, backendRef)
 	if errCondition != nil {

@@ -185,8 +185,8 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName str
 
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTCPService(route, backendRef)
+	for bi, backendRef := range backendRefs {
+		svcName, svc, errCondition := p.loadTCPService(routerName, route, bi, backendRef)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -220,7 +220,7 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName str
 	return name, condition
 }
 
-func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTCPService(routerName string, route *gatev1alpha2.TCPRoute, backendIndex int, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -233,7 +233,7 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			return provider.Normalize(namespace + "-" + string(backendRef.Name)), nil, &metav1.Condition{
+			return provider.Normalize(fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)), nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -244,7 +244,7 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 		}
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name))
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)
 
 	if err := p.isReferenceGranted(kindTCPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, nil, &metav1.Condition{
@@ -284,9 +284,6 @@ func (p *Provider) loadTCPService(route *gatev1alpha2.TCPRoute, backendRef gatev
 			Message:            fmt.Sprintf("Cannot load TCPRoute BackendRef %s/%s/%s/%s port is required", group, kind, namespace, backendRef.Name),
 		}
 	}
-
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
 	lb, errCondition := p.loadTCPServers(namespace, route, backendRef)
 	if errCondition != nil {
