@@ -19,4 +19,4 @@ services:
       - whoami-c
 
   whoami-d:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0

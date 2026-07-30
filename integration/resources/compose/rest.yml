@@ -1,4 +1,4 @@
 version: "3.8"
 services:
   whoami1:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0

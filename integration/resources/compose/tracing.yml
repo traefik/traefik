@@ -12,4 +12,4 @@ services:
       COLLECTOR_ZIPKIN_HTTP_PORT: 9411
 
   whoami:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0

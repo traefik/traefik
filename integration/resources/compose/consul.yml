@@ -3,4 +3,4 @@ services:
   consul:
     image: consul:1.6
   whoami:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
