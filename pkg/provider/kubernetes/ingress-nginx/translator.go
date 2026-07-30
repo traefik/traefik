@@ -89,6 +89,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Observability: obs,
 		}
 
+		registered := p.addNonTLSRouter(conf, defaultBackendName, rt)
+		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
+
 		// Apply the full middleware stack from the ingress location annotations to
 		// both catch-all routers, so options like enable-cors, custom-headers,
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
@@ -106,14 +109,11 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS.TLS.Options = loc.TLSOptionName
 			}
 
-			if !p.DisableHTTPEntryPoint {
+			if registered {
 				p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
 			}
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
-
-		p.addNonTLSRouter(conf, defaultBackendName, rt)
-		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
 	}
 
 	for _, pt := range mc.PassthroughBackends {

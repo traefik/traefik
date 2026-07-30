@@ -102,7 +102,7 @@ type Provider struct {
 
 	HTTPEntryPoint        string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
 	HTTPSEntryPoint       string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
-	DisableHTTPEntryPoint bool   `description:"Disables the HTTP EntryPoint, so that no HTTP router is created for Ingress resources. Takes precedence over httpEntryPoint." json:"disableHTTPEntryPoint,omitempty" toml:"disableHTTPEntryPoint,omitempty" yaml:"disableHTTPEntryPoint,omitempty" export:"true"`
+	DisableHTTPEntryPoint bool   `description:"Disables the HTTP EntryPoint, so that no HTTP router is created for Ingress resources. Cannot be used together with httpEntryPoint." json:"disableHTTPEntryPoint,omitempty" toml:"disableHTTPEntryPoint,omitempty" yaml:"disableHTTPEntryPoint,omitempty" export:"true"`
 	// TLSEntryPoints is set to the HTTPSEntryPoint value if it is set, otherwise it is left empty.
 	TLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
@@ -166,7 +166,7 @@ func (p *Provider) Init() error {
 		return fmt.Errorf("validating %s provider configuration: %w", ProviderName, err)
 	}
 
-	if !p.DisableHTTPEntryPoint && p.HTTPEntryPoint != "" {
+	if p.HTTPEntryPoint != "" {
 		p.NonTLSEntryPoints = []string{p.HTTPEntryPoint}
 	}
 	if p.HTTPSEntryPoint != "" {
