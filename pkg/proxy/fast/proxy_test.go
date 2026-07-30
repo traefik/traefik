@@ -327,6 +327,35 @@ func TestHeadRequest(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestNoContentType(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+
+		assert.Equal(t, http.MethodDelete, req.Method)
+
+		_, exists := req.Header["Content-Type"]
+		assert.False(t, exists, "Content-Type header should not be added")
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL, err := url.JoinPath(server.URL)
+	require.NoError(t, err)
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
 func TestNoContentLength(t *testing.T) {
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
