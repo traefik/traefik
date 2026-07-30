@@ -69,7 +69,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate() {
 	app.Container.
 		Expose(80).
 		Docker.
-		Container("traefik/whoami")
+		Container("traefik/whoami:v1.12.0")
 	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
@@ -89,7 +89,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate() {
 	app.Container.
 		Expose(80).
 		Docker.
-		Container("traefik/whoami")
+		Container("traefik/whoami:v1.12.0")
 	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.

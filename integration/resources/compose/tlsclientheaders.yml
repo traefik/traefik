@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   whoami:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.http.routers.route1.rule: PathPrefix(`/foo`)
       traefik.http.routers.route1.middlewares: passtls

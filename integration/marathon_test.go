@@ -78,7 +78,7 @@ func (s *MarathonSuite) TestConfigurationUpdate() {
 		AddLabel("traefik.http.Routers.rt.Rule", "PathPrefix(`/service`)")
 	app.Container.Docker.Bridged().
 		Expose(80).
-		Container("traefik/whoami")
+		Container("traefik/whoami:v1.12.0")
 
 	// Deploy the test application.
 	s.deployApplication(client, app)
@@ -95,7 +95,7 @@ func (s *MarathonSuite) TestConfigurationUpdate() {
 		AddLabel("traefik.http.Routers.app.Rule", "PathPrefix(`/app`)")
 	app.Container.Docker.Bridged().
 		Expose(80).
-		Container("traefik/whoami")
+		Container("traefik/whoami:v1.12.0")
 
 	// Deploy the test application.
 	s.deployApplication(client, app)

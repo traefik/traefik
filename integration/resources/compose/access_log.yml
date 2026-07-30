@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   server0:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-server0.entryPoints: web
@@ -9,7 +9,7 @@ services:
       traefik.http.services.service1.loadbalancer.server.port: 80
 
   server1:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-server1.entryPoints: web
@@ -18,7 +18,7 @@ services:
       traefik.http.services.service1.loadbalancer.server.port: 80
 
   server2:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-server2.entryPoints: web
@@ -26,7 +26,7 @@ services:
       traefik.http.services.service2.loadbalancer.server.port: 80
 
   server3:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-server3.entryPoints: web
@@ -34,7 +34,7 @@ services:
       traefik.http.services.service2.loadbalancer.server.port: 80
 
   authFrontend:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-authFrontend.entryPoints: httpFrontendAuth
@@ -44,7 +44,7 @@ services:
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   digestAuthMiddleware:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-digestAuthMiddleware.entryPoints: digestAuth
@@ -54,7 +54,7 @@ services:
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   frontendRedirect:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-frontendRedirect.entryPoints: frontendRedirect
@@ -65,7 +65,7 @@ services:
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   rateLimit:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-rateLimit.entryPoints: httpRateLimit
@@ -76,7 +76,7 @@ services:
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   frontendWhitelist:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-frontendWhitelist.entryPoints: web
@@ -86,7 +86,7 @@ services:
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   preflightCORS:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt-preflightCORS.entryPoints: preflight

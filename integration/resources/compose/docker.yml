@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   simple:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
 
   withtcplabels:
     image: traefik/whoamitcp
@@ -12,22 +12,22 @@ services:
       traefik.tcp.Services.Super.Loadbalancer.server.port: 8080
 
   withlabels1:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.http.Routers.Super.Rule: Host(`my.super.host`)
 
   withlabels2:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.http.Routers.SuperHost.Rule: Host(`my-super.host`)
 
   withonelabelmissing:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.random.value: my.super.host
 
   powpow:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     command:
       - --port=2375
     labels:
