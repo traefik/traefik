@@ -1386,16 +1386,17 @@ func (s *SimpleSuite) TestDenyFragment() {
 }
 
 func (s *SimpleSuite) TestSanitizePath() {
-	s.createComposeProject("base")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+	// A plain handler, without a ServeMux, echoes the received request URI,
+	// so that assertions rely on the path Traefik forwards,
+	// not on the backend routing behavior which may change with Go releases.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(rw, req.RequestURI)
+	}))
+	defer backend.Close()
 
 	file := s.adaptFile("fixtures/simple_clean_path.toml", struct {
 		Server1 string
-	}{whoami1URL})
+	}{backend.URL})
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -1420,7 +1421,7 @@ func (s *SimpleSuite) TestSanitizePath() {
 			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
 			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			body:     "/without",
 		},
 		{
 			desc:     "Implicit call to the route with a middleware",
@@ -1451,14 +1452,15 @@ func (s *SimpleSuite) TestSanitizePath() {
 			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8001",
 			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			body:     "/without",
 		},
 		{
 			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
 			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:  "127.0.0.1:8001",
-			// The whoami is redirecting to /with, but the path is not sanitized.
-			expected: http.StatusMovedPermanently,
+			// The path is not sanitized and reaches the backend as-is.
+			expected: http.StatusOK,
+			body:     "/without/../with",
 		},
 	}
 
@@ -1477,7 +1479,7 @@ func (s *SimpleSuite) TestSanitizePath() {
 		if test.body != "" {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(s.T(), err)
-			assert.Contains(s.T(), string(body), test.body)
+			assert.Equal(s.T(), test.body, string(body))
 		}
 	}
 }
