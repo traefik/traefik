@@ -432,7 +432,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			for message := range messages {
 				conditionsErr = errors.Join(conditionsErr, errors.New(message))
 			}
-			logger.Error().
+			logger.Debug().
 				Err(conditionsErr).
 				Msg("Gateway Not Accepted")
 		}
@@ -469,7 +469,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		// The listener protocol is validated first, so that an unsupported protocol
 		// is reported as such instead of being masked by the entryPoint lookup,
 		// which cannot succeed for a protocol Traefik does not know about.
-		supportedKinds, conditions := supportedRouteKinds(listener.Protocol, p.ExperimentalChannel)
+		supportedKinds, conditions := supportedRouteKinds(gateway.Generation, listener.Protocol, p.ExperimentalChannel)
 		if len(conditions) > 0 {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
 			continue
@@ -736,39 +736,36 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		return gatewayStatus, append(errorConditions, condition)
 	}
 
-	if len(errorConditions) > 0 {
-		// A Gateway is accepted and programmed as soon as one of its Listeners is,
-		// the invalid ones being reported through their own status.
-		status := metav1.ConditionFalse
-		message := "All Listeners must be valid"
-		programmedReason := gatev1.GatewayReasonInvalid
-		if acceptedListeners > 0 {
-			status = metav1.ConditionTrue
-			message = "Gateway successfully scheduled, but some Listeners are not valid"
-			programmedReason = gatev1.GatewayReasonProgrammed
-		}
-
+	if len(errorConditions) > 0 && acceptedListeners == 0 {
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions,
-			// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
+			// update "Accepted" status with "Accepted" reason
 			metav1.Condition{
 				Type:               string(gatev1.GatewayConditionAccepted),
-				Status:             status,
+				Status:             metav1.ConditionFalse,
 				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.GatewayReasonListenersNotValid),
-				Message:            message,
+				Message:            "At least one Listener must be valid",
+				LastTransitionTime: metav1.Now(),
 			},
+			// update "Programmed" status with "Programmed" reason
 			metav1.Condition{
 				Type:               string(gatev1.GatewayConditionProgrammed),
-				Status:             status,
+				Status:             metav1.ConditionFalse,
 				ObservedGeneration: gateway.Generation,
+				Reason:             string(gatev1.GatewayReasonInvalid),
+				Message:            "No Listener is valid",
 				LastTransitionTime: metav1.Now(),
-				Reason:             string(programmedReason),
-				Message:            message,
 			},
 		)
 
 		return gatewayStatus, errorConditions
+	}
+
+	acceptedConditionMessage := "Gateway successfully scheduled"
+	programmedConditionMessage := "Gateway successfully programmed"
+	if len(errorConditions) > 0 && len(listeners) > 0 && acceptedListeners != len(listeners) {
+		acceptedConditionMessage = "Gateway successfully scheduled, but some Listeners are not valid"
+		programmedConditionMessage = "Gateway successfully programmed, but some Listeners are not valid"
 	}
 
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
@@ -778,7 +775,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gateway.Generation,
 			Reason:             string(gatev1.GatewayReasonAccepted),
-			Message:            "Gateway successfully scheduled",
+			Message:            acceptedConditionMessage,
 			LastTransitionTime: metav1.Now(),
 		},
 		// update "Programmed" status with "Programmed" reason
@@ -787,7 +784,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gateway.Generation,
 			Reason:             string(gatev1.GatewayReasonProgrammed),
-			Message:            "Gateway successfully scheduled",
+			Message:            programmedConditionMessage,
 			LastTransitionTime: metav1.Now(),
 		},
 	)
@@ -1022,7 +1019,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	return backendServers, *svcPort, nil
 }
 
-func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(gatewayGeneration int64, protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
@@ -1034,6 +1031,7 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 		return nil, []metav1.Condition{{
 			Type:               string(gatev1.ListenerConditionConflicted),
 			Status:             metav1.ConditionTrue,
+			ObservedGeneration: gatewayGeneration,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonProtocolConflict),
 			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
@@ -1054,6 +1052,7 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 	return nil, []metav1.Condition{{
 		Type:               string(gatev1.ListenerConditionAccepted),
 		Status:             metav1.ConditionFalse,
+		ObservedGeneration: gatewayGeneration,
 		LastTransitionTime: metav1.Now(),
 		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
