@@ -697,16 +697,16 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c7661fc1a41b4c623046": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-b0d3512b71b7695aa511": {
 							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c7661fc1a41b4c623046-wrr",
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-b0d3512b71b7695aa511-wrr",
 							Rule:        `Host("foo.com") && Path("/omitted")`,
 							Priority:    100009,
 							RuleSyntax:  "default",
 						},
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-3807952841d61e347234": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-28c8ec797c4b0f521cf7": {
 							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-3807952841d61e347234-wrr",
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-28c8ec797c4b0f521cf7-wrr",
 							Rule:        `Host("foo.com") && Path("/empty")`,
 							Priority:    100008,
 							RuleSyntax:  "default",
@@ -714,7 +714,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c7661fc1a41b4c623046-wrr": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-b0d3512b71b7695aa511-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -725,7 +725,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								},
 							},
 						},
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-3807952841d61e347234-wrr": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-28c8ec797c4b0f521cf7-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
