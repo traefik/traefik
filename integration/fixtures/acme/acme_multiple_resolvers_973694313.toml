@@ -28,11 +28,25 @@
 
 
 
+[certificatesResolvers.tchouk.acme]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  keyType = "EC256"
+  caServer = "https://172.31.42.2:14000/dir"
+
+  
+
+  
+  [certificatesResolvers.tchouk.acme.tlsChallenge]
+  
+
+
+
 [api]
   insecure = true
 
 [providers.file]
-  filename = "fixtures/acme/acme_domains_1615649480.toml"
+  filename = "fixtures/acme/acme_multiple_resolvers_973694313.toml"
 
 ## dynamic configuration ##
 
@@ -44,14 +58,14 @@
 [http.routers]
   [http.routers.test]
     entryPoints = ["websecure"]
-    rule = "PathPrefix(`/`)"
+    rule = "Host(`traefik.acme.wtf`)"
     service = "test"
     [http.routers.test.tls]
       certResolver = "default"
 
-  [[http.routers.test.tls.domains]]
-    main = "acme.wtf"
-    sans = [
-      "traefik.acme.wtf",
-      ]
-
+  [http.routers.tchouk]
+    entryPoints = ["websecure"]
+    rule = "Host(`tchouk.acme.wtf`)"
+    service = "test"
+    [http.routers.tchouk.tls]
+      certResolver = "tchouk"
