@@ -1464,13 +1464,12 @@ func (s *SimpleSuite) TestSanitizePath() {
 		require.NoError(s.T(), err)
 
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		s.T().Cleanup(func() { _ = resp.Body.Close() })
 		require.NoError(s.T(), err)
 
-		if test.expectedBody != "" {
-			body, err := io.ReadAll(resp.Body)
-			require.NoError(s.T(), err)
-			assert.Equal(s.T(), test.expectedBody, string(body))
-		}
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), test.expectedBody, string(body))
 	}
 }
 
