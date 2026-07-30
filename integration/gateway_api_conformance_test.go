@@ -216,15 +216,10 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	})
 	require.NoError(s.T(), err)
 
-	// Since Gateway API v1.6, conformance tests spawn parallel subtests, which
-	// Go only runs once their parent test function returns. Running the suite
-	// in a subtest guarantees they have all completed, and that their results
-	// are recorded, before the report is generated.
-	s.T().Run("conformance", func(t *testing.T) {
-		cSuite.Setup(t, tests.ConformanceTests)
+	cSuite.Setup(s.T(), tests.ConformanceTests)
 
-		require.NoError(t, cSuite.Run(t, tests.ConformanceTests))
-	})
+	err = cSuite.Run(s.T(), tests.ConformanceTests)
+	require.NoError(s.T(), err)
 
 	report, err := cSuite.Report()
 	require.NoError(s.T(), err, "failed generating conformance report")
