@@ -29,7 +29,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // No tag on the repo.
 	github.com/hashicorp/consul/api v1.26.1
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-retryablehttp v0.7.8
@@ -38,7 +38,7 @@ require (
 	github.com/http-wasm/http-wasm-host-go v0.7.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
-	github.com/klauspost/compress v1.18.5
+	github.com/klauspost/compress v1.18.7
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.3
 	github.com/kvtools/redis v1.2.1
