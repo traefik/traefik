@@ -1,0 +1,85 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: whoami
+  namespace: default
+  labels:
+    app: traefiklabs
+    name: whoami
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: traefiklabs
+      task: whoami
+  template:
+    metadata:
+      labels:
+        app: traefiklabs
+        task: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: whoamitcp
+  namespace: default
+  labels:
+    app: traefiklabs
+    name: whoamitcp
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: traefiklabs
+      task: whoamitcp
+  template:
+    metadata:
+      labels:
+        app: traefiklabs
+        task: whoamitcp
+    spec:
+      containers:
+        - name: whoamitcp
+          image: traefik/whoamitcp
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp
+  namespace: default
+
+spec:
+  ports:
+    - name: footcp
+      port: 8080
+  selector:
+    app: traefiklabs
+    task: whoamitcp
