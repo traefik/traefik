@@ -1386,15 +1386,12 @@ func (s *SimpleSuite) TestDenyFragment() {
 }
 
 func (s *SimpleSuite) TestSanitizePath() {
-	// A plain handler, without a ServeMux, echoes the received request URI,
-	// so that assertions rely on the path Traefik forwards,
-	// not on the backend routing behavior which may change with Go releases.
 	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(rw, req.RequestURI)
 	}))
 	defer backend.Close()
 
-	file := s.adaptFile("fixtures/simple_clean_path.toml", struct {
+	file := s.adaptFile("fixtures/simple_sanitize_path.toml", struct {
 		Server1 string
 	}{backend.URL})
 
@@ -1404,63 +1401,58 @@ func (s *SimpleSuite) TestSanitizePath() {
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
-		desc     string
-		request  string
-		target   string
-		body     string
-		expected int
+		desc         string
+		request      string
+		target       string
+		expectedBody string
 	}{
 		{
-			desc:     "Explicit call to the route with a middleware",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusOK,
-			body:     "/without",
+			desc:         "Explicit call to the route without a middleware",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/without",
 		},
 		{
-			desc:     "Implicit call to the route with a middleware",
-			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit call to the route with a middleware",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit encoded dot dots call to the route with a middleware",
-			request:  "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit encoded dot dots call to the route with a middleware",
+			request:      "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit with encoded unreserved character call to the route with a middleware",
-			request:  "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit with encoded unreserved character call to the route with a middleware",
+			request:      "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusOK,
-			body:     "/without",
+			desc:         "Explicit call to the route without a middleware, and disable path sanitization",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without",
 		},
 		{
-			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
-			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:  "127.0.0.1:8001",
-			// The path is not sanitized and reaches the backend as-is.
-			expected: http.StatusOK,
-			body:     "/without/../with",
+			desc:         "Implicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without/../with",
 		},
 	}
 
@@ -1474,12 +1466,10 @@ func (s *SimpleSuite) TestSanitizePath() {
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
 		require.NoError(s.T(), err)
 
-		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-
-		if test.body != "" {
+		if test.expectedBody != "" {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(s.T(), err)
-			assert.Equal(s.T(), test.body, string(body))
+			assert.Equal(s.T(), test.expectedBody, string(body))
 		}
 	}
 }

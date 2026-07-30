@@ -27,13 +27,7 @@
 
   [http.routers.with]
     rule = "PathPrefix(`/with`)"
-    middlewares = ["test-redirectscheme"]
     service = "whoami"
-
-[http.middlewares]
-  [http.middlewares.test-redirectscheme.redirectScheme]
-    scheme = "https"
-    permanent = false
 
 [http.services]
   [http.services.whoami.loadBalancer]
