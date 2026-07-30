@@ -761,9 +761,11 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		return gatewayStatus, errorConditions
 	}
 
+	acceptedConditionReason := gatev1.GatewayReasonAccepted
 	acceptedConditionMessage := "Gateway successfully scheduled"
 	programmedConditionMessage := "Gateway successfully programmed"
-	if len(errorConditions) > 0 && len(listeners) > 0 && acceptedListeners != len(listeners) {
+	if len(errorConditions) > 0 {
+		acceptedConditionReason = gatev1.GatewayReasonListenersNotValid
 		acceptedConditionMessage = "Gateway successfully scheduled, but some Listeners are not valid"
 		programmedConditionMessage = "Gateway successfully programmed, but some Listeners are not valid"
 	}
@@ -774,7 +776,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gateway.Generation,
-			Reason:             string(gatev1.GatewayReasonAccepted),
+			Reason:             string(acceptedConditionReason),
 			Message:            acceptedConditionMessage,
 			LastTransitionTime: metav1.Now(),
 		},

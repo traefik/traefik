@@ -169,12 +169,15 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
-	// A test deletes its routes when it completes, and the next one can create
-	// routes matching the same requests before Traefik has observed the deletion.
-	// Isolating the test cases leaves the time for the configuration to converge,
-	// which the tests asserting on a traffic distribution are sensitive to.
+	// Traefik reconciles a resource in a couple of seconds or less.
+	// They are shortened for a status Traefik will never report to fail before
+	// the test binary timeout, which would discard the whole run and its report.
 	timeoutConfig := config.DefaultTimeoutConfig()
-	//timeoutConfig.TestIsolation = time.Second
+	timeoutConfig.GatewayMustHaveAddress = 30 * time.Second
+	timeoutConfig.GatewayMustHaveCondition = 30 * time.Second
+	timeoutConfig.GWCMustBeAccepted = 30 * time.Second
+	timeoutConfig.ListenerSetMustHaveCondition = 30 * time.Second
+	timeoutConfig.NamespacesMustBeReady = 60 * time.Second
 
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
 		Client:     s.kubeClient,
