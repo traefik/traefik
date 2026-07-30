@@ -737,24 +737,36 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	}
 
 	if len(errorConditions) > 0 {
-		// A Gateway is accepted as soon as one of its Listeners is, the invalid
-		// ones being reported through their own status.
+		// A Gateway is accepted and programmed as soon as one of its Listeners is,
+		// the invalid ones being reported through their own status.
 		status := metav1.ConditionFalse
 		message := "All Listeners must be valid"
+		programmedReason := gatev1.GatewayReasonInvalid
 		if acceptedListeners > 0 {
 			status = metav1.ConditionTrue
 			message = "Gateway successfully scheduled, but some Listeners are not valid"
+			programmedReason = gatev1.GatewayReasonProgrammed
 		}
 
-		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
-		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
-			Type:               string(gatev1.GatewayConditionAccepted),
-			Status:             status,
-			ObservedGeneration: gateway.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.GatewayReasonListenersNotValid),
-			Message:            message,
-		})
+		gatewayStatus.Conditions = append(gatewayStatus.Conditions,
+			// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
+			metav1.Condition{
+				Type:               string(gatev1.GatewayConditionAccepted),
+				Status:             status,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.GatewayReasonListenersNotValid),
+				Message:            message,
+			},
+			metav1.Condition{
+				Type:               string(gatev1.GatewayConditionProgrammed),
+				Status:             status,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(programmedReason),
+				Message:            message,
+			},
+		)
 
 		return gatewayStatus, errorConditions
 	}

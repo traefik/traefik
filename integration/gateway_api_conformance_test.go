@@ -108,11 +108,6 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		s.T().Fatalf("Error loading Kubernetes config: %v", err)
 	}
 
-	// The conformance suite polls the Kubernetes API intensively, and even more
-	// since the default polling interval has been decreased in Gateway API v1.6,
-	// so we disable client side rate limiting to let the tests impose the pace.
-	s.restConfig.QPS = -1
-
 	s.kubeClient, err = client.New(s.restConfig, client.Options{})
 	if err != nil {
 		s.T().Fatalf("Error initializing Kubernetes client: %v", err)
@@ -151,11 +146,7 @@ func (s *GatewayAPIConformanceSuite) TearDownSuite() {
 			}
 		}
 
-		// The Traefik logs are truncated, because Exec only returns its reader
-		// once the command has completed: an output large enough to fill the
-		// stream buffer blocks the command, and the call never returns.
-		logsCmd := fmt.Sprintf("kubectl logs -n %s %s | tail -c 32768", traefikNamespace, traefikDeployment)
-		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"sh", "-c", logsCmd})
+		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", traefikNamespace, traefikDeployment})
 		if err == nil || exitCode == 0 {
 			if res, err := io.ReadAll(result); err == nil {
 				s.T().Log(string(res))
@@ -183,7 +174,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	// Isolating the test cases leaves the time for the configuration to converge,
 	// which the tests asserting on a traffic distribution are sensitive to.
 	timeoutConfig := config.DefaultTimeoutConfig()
-	timeoutConfig.TestIsolation = time.Second
+	//timeoutConfig.TestIsolation = time.Second
 
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
 		Client:     s.kubeClient,

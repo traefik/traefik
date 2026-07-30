@@ -9485,24 +9485,28 @@ func Test_makeGatewayStatus(t *testing.T) {
 		listeners      []gatewayListener
 		wantStatus     metav1.ConditionStatus
 		wantReason     gatev1.GatewayConditionReason
+		wantProgrammed metav1.ConditionStatus
 	}{
 		{
-			desc:       "all listeners valid",
-			listeners:  []gatewayListener{acceptedListener()},
-			wantStatus: metav1.ConditionTrue,
-			wantReason: gatev1.GatewayReasonAccepted,
+			desc:           "all listeners valid",
+			listeners:      []gatewayListener{acceptedListener()},
+			wantStatus:     metav1.ConditionTrue,
+			wantReason:     gatev1.GatewayReasonAccepted,
+			wantProgrammed: metav1.ConditionTrue,
 		},
 		{
-			desc:       "one listener valid among invalid ones",
-			listeners:  []gatewayListener{acceptedListener(), invalidListener()},
-			wantStatus: metav1.ConditionTrue,
-			wantReason: gatev1.GatewayReasonListenersNotValid,
+			desc:           "one listener valid among invalid ones",
+			listeners:      []gatewayListener{acceptedListener(), invalidListener()},
+			wantStatus:     metav1.ConditionTrue,
+			wantReason:     gatev1.GatewayReasonListenersNotValid,
+			wantProgrammed: metav1.ConditionTrue,
 		},
 		{
-			desc:       "no listener valid",
-			listeners:  []gatewayListener{invalidListener()},
-			wantStatus: metav1.ConditionFalse,
-			wantReason: gatev1.GatewayReasonListenersNotValid,
+			desc:           "no listener valid",
+			listeners:      []gatewayListener{invalidListener()},
+			wantStatus:     metav1.ConditionFalse,
+			wantReason:     gatev1.GatewayReasonListenersNotValid,
+			wantProgrammed: metav1.ConditionFalse,
 		},
 		{
 			desc:      "infrastructure parametersRef",
@@ -9533,6 +9537,14 @@ func Test_makeGatewayStatus(t *testing.T) {
 			assert.Equal(t, test.wantStatus, condition.Status)
 			assert.Equal(t, string(test.wantReason), condition.Reason)
 			assert.Len(t, status.Listeners, len(test.listeners))
+
+			programmed := meta.FindStatusCondition(status.Conditions, string(gatev1.GatewayConditionProgrammed))
+			if test.wantProgrammed == "" {
+				assert.Nil(t, programmed)
+				return
+			}
+			require.NotNil(t, programmed)
+			assert.Equal(t, test.wantProgrammed, programmed.Status)
 		})
 	}
 }
