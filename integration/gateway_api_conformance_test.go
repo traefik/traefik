@@ -175,7 +175,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	// create-request-delete cycle can outrun the Gateway API provider's
 	// reconciliation, leaving a previous test's routers transiently active during
 	// the next test's assertions. See https://github.com/kubernetes-sigs/gateway-api/pull/3243.
-	timeoutConfig.TestIsolation = 2 * time.Second
+	timeoutConfig.TestIsolation = time.Second
 
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
 		Client:                     s.kubeClient,
