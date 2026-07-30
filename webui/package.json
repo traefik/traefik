@@ -77,6 +77,7 @@
     "react-infinite-scroll-hook": "^4.1.1",
     "react-router-dom": "6.30.4",
     "swr": "^2.2.4",
+    "tar": "7.5.19",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.38.0",
     "usehooks-ts": "^2.14.0",
