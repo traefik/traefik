@@ -1,4 +1,4 @@
-package loadbalancet
+package loadbalancer
 
 import (
 	"crypto/sha256"
