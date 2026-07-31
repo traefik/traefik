@@ -28,8 +28,6 @@ import (
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	"sigs.k8s.io/gateway-api/conformance"
 	v1 "sigs.k8s.io/gateway-api/conformance/apis/v1"
 	"sigs.k8s.io/gateway-api/conformance/tests"
@@ -118,14 +116,6 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		s.T().Fatalf("Error initializing Kubernetes REST client: %v", err)
 	}
 
-	if err = gatev1alpha2.Install(s.kubeClient.Scheme()); err != nil {
-		s.T().Fatal(err)
-	}
-
-	if err = gatev1beta1.Install(s.kubeClient.Scheme()); err != nil {
-		s.T().Fatal(err)
-	}
-
 	if err = gatev1.Install(s.kubeClient.Scheme()); err != nil {
 		s.T().Fatal(err)
 	}
@@ -203,9 +193,16 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 				ksuite.GatewayHTTPConformanceProfileName,
 				ksuite.GatewayGRPCConformanceProfileName,
 				ksuite.GatewayTLSConformanceProfileName,
+				ksuite.GatewayTCPConformanceProfileName,
 			},
 			SupportedFeatures: gateway.SupportedFeatures(),
-			SkipTests:         []string{tests.HTTPRouteMultipleGateways.ShortName},
+			SkipTests: []string{
+				tests.HTTPRouteMultipleGateways.ShortName,
+				// Traefik attaches every TCPRoute of a listener instead of keeping
+				// only the oldest one, so traffic is split across the conflicting
+				// routes rather than served by the oldest.
+				tests.TCPRouteMultipleRoutesAttachment.ShortName,
+			},
 		},
 	})
 	require.NoError(s.T(), err)
