@@ -1,3 +1,12 @@
+## [v2.11.54](https://github.com/traefik/traefik/tree/v2.11.54) (2026-07-31)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.53...v2.11.54)
+
+**Bug fixes:**
+- **[tracing]** Bump github.com/DataDog/dd-trace-go/v2 to 2.8.1 ([#13530](https://github.com/traefik/traefik/pull/13530) @kevinpollet)
+- Bump golang.org/x/text to v0.40.0 and golang.org/x/net v0.57.0 ([#13574](https://github.com/traefik/traefik/pull/13574) @mmatur)
+- **[k8s/crd]** Fix cross-namespace service reference check in Kubernetes CRD provider ([#13573](https://github.com/traefik/traefik/pull/13573) @gndz07)
+- **[middleware]** Bump github.com/klauspost/compress to v1.18.7 ([#13587](https://github.com/traefik/traefik/pull/13587) @mmatur)
+
 ## [v3.6.24](https://github.com/traefik/traefik/tree/v3.6.24) (2026-07-24)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.23...v3.6.24)
 
