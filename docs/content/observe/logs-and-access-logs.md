@@ -165,7 +165,7 @@ Access logs report two status codes, named relative to Traefik:
 Client <---- DownstreamStatus ---- Traefik <---- OriginStatus ---- Backend
 ```
 
-- `OriginStatus` is the outcome of proxying the request to a backend. It is either the status returned by that backend, or, when the backend could not be reached or did not answer properly (`502`, `504`, ...).
+- `OriginStatus` is the outcome of proxying the request to a backend. It is either the status returned by that backend or the computed status code, when the backend could not be reached or did not answer properly (`502`, `504`, ...).
 - `DownstreamStatus` is what Traefik returned to the client, after the middleware chain has run.
 
 Both are equal when the request is proxied unchanged. 
@@ -173,6 +173,7 @@ When both are set but differ, a middleware rewrote the response.
 When `OriginStatus` is empty (logged as `0`), the request was never proxied to a backend: the response comes from routing (no matching router) or from a middleware (authentication, rate limiting, redirection).
 
 !!! info
+
     Both fields are only available with the `json` format. 
     The `common` and `genericCLF` formats, and the `statusCodes` filter, use the `DownstreamStatus` value.
 
@@ -195,4 +196,5 @@ When using the `json` format, you can customize which fields are included in you
 - **Request Query Parameters:** You can choose to `keep` or `drop` the query parameters for a request.
 
 !!! info
+
     For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
