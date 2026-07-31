@@ -1,3 +1,15 @@
+## [v3.6.25](https://github.com/traefik/traefik/tree/v3.6.25) (2026-07-31)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.24...v3.6.25)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 to v5.3.1 ([#13547](https://github.com/traefik/traefik/pull/13547) @ldez)
+- **[middleware, authentication]** Fix auth singleflight key collision ([#13572](https://github.com/traefik/traefik/pull/13572) @mmatur)
+- **[k8s/gatewayapi]** Avoid router name collisions in Kubernetes Gateway API provider ([#13580](https://github.com/traefik/traefik/pull/13580) @gndz07)
+- **[tracing]** Bump github.com/DataDog/dd-trace-go/v2 to 2.8.1 ([#13530](https://github.com/traefik/traefik/pull/13530) @kevinpollet)
+- Bump golang.org/x/text to v0.40.0 and golang.org/x/net v0.57.0 ([#13574](https://github.com/traefik/traefik/pull/13574) @mmatur)
+- **[k8s/crd]** Fix cross-namespace service reference check in Kubernetes CRD provider ([#13573](https://github.com/traefik/traefik/pull/13573) @gndz07)
+- **[middleware]** Bump github.com/klauspost/compress to v1.18.7 ([#13587](https://github.com/traefik/traefik/pull/13587) @mmatur)
+
 ## [v2.11.54](https://github.com/traefik/traefik/tree/v2.11.54) (2026-07-31)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.53...v2.11.54)
 
