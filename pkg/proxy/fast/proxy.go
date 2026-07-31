@@ -108,6 +108,26 @@ type ReverseProxy struct {
 	preservePath   bool
 }
 
+// headerSentWriter wraps an http.ResponseWriter to track whether
+// WriteHeader has been called (i.e. the response has started).
+type headerSentWriter struct {
+	http.ResponseWriter
+
+	headerSent bool
+}
+
+func (w *headerSentWriter) WriteHeader(statusCode int) {
+	w.headerSent = true
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *headerSentWriter) Write(p []byte) (int, error) {
+	if !w.headerSent {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(p)
+}
+
 // NewReverseProxy creates a new ReverseProxy.
 func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, preservePath bool, connPool *connPool) (*ReverseProxy, error) {
 	var proxyAuth string
@@ -236,7 +256,20 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	if err := p.roundTrip(rw, req, outReq, reqUpType); err != nil {
+	// Wrap the ResponseWriter to track whether the response has started
+	// (WriteHeader was called). This lets us detect when roundTrip returns
+	// an error after the response headers have already been sent to the
+	// client — e.g. a body copy failure mid-chunked response.
+	rwWrapper := &headerSentWriter{ResponseWriter: rw}
+	if err := p.roundTrip(rwWrapper, req, outReq, reqUpType); err != nil {
+		if rwWrapper.headerSent {
+			// The response has already started (headers sent by handleResponse).
+			// ErrorHandler would write into the response body, corrupting the
+			// payload with "Internal Server Error" bytes. Abort the response
+			// cleanly, following the same pattern as net/http/httputil.ReverseProxy
+			// and the recovery middleware (ErrAbortHandler sentinel panic).
+			panic(http.ErrAbortHandler)
+		}
 		proxyhttputil.ErrorHandler(rw, req, err)
 	}
 }
