@@ -76,6 +76,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	allHosts := make(map[string]bool)
 	hostsWithUseRegex := make(map[string]bool)
+	hostsWithRootPath := make(map[string]bool)
 	claimedAliases := make(map[string]string)
 
 	// Provider-level default backend.
@@ -168,6 +169,12 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					if pa.Backend.Service == nil {
 						continue
 					}
+
+					// An empty path produces a host-only rule, which matches "/" as well.
+					if pa.Path == "/" || pa.Path == "" {
+						hostsWithRootPath[rule.Host] = true
+					}
+
 					key := ingressPathKey(ingress.Namespace, rule.Host, pa)
 					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg}
 				}
@@ -257,6 +264,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	// Third pass: build Servers and Locations from regular ingresses.
 	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
+
+	// The app-root "/" router is synthesized at most once per host, on the first
+	// location that needs it, to avoid emitting several routers with the same rule.
+	hostsWithAppRootRouter := make(map[string]bool)
 
 	for _, ing := range regularIngresses {
 		logger := log.Ctx(ctx).With().
@@ -504,7 +515,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				if backend, ok := mc.Backends[backendName]; ok {
 					endpointCount = len(backend.Endpoints)
 				}
-				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				needsAppRootRouter := !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host]
+				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount, needsAppRootRouter)
+				if loc.AppRootExtraRouterRule != "" {
+					hostsWithAppRootRouter[rule.Host] = true
+				}
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)
@@ -560,7 +575,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					mc.Backends[defaultBackendName] = bk
 					mc.DefaultBackend = bk
 
-					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
+					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints), false)
 					mc.DefaultBackendLocation = loc
 					markProcessedIngress(ing.Ingress)
 				}
@@ -617,7 +632,9 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				if backend, ok := mc.Backends[ingDefaultBackendName]; ok {
 					endpointCount = len(backend.Endpoints)
 				}
-				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				// The ingress default backend is a host-only catch-all, so it already
+				// matches "/" and needs no extra app-root router.
+				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount, false)
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)

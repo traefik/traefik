@@ -20,14 +20,14 @@ import (
 // buildMiddlewares populates all middleware-related fields on loc from its
 // IngressConfig and provider defaults. It is called once per location in Phase 1,
 // after all k8s resources (secrets, configmaps, endpoints) are resolved.
-func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname string, allHosts map[string]bool, endpointCount int) {
+func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname string, allHosts map[string]bool, endpointCount int, needsAppRootRouter bool) {
 	// SSL redirect only suppresses other middlewares on the non-TLS router; the
 	// TLS router still gets the full middleware stack.
 	p.buildSSLRedirect(loc)
 
 	p.buildAccessLog(loc)
 	p.buildCustomHTTPErrors(loc)
-	p.buildAppRoot(loc)
+	p.buildAppRoot(loc, hostname, needsAppRootRouter)
 	p.buildFromToWwwRedirect(loc, hostname, allHosts)
 	p.buildRedirect(loc)
 	p.buildBuffering(ctx, loc)
@@ -93,12 +93,19 @@ func (p *Provider) buildCustomHTTPErrors(loc *location) {
 	loc.CustomHTTPErrors = mw
 }
 
-func (p *Provider) buildAppRoot(loc *location) {
+func (p *Provider) buildAppRoot(loc *location, hostname string, needsAppRootRouter bool) {
 	if loc.Config.AppRoot == nil || !strings.HasPrefix(*loc.Config.AppRoot, "/") {
 		return
 	}
 	loc.AppRoot = &dynamic.AppRoot{
 		Path: *loc.Config.AppRoot,
+	}
+
+	// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
+	// even when the Ingress declares no "/" path. In Traefik a request has to match
+	// a router before any middleware runs, hence the extra router.
+	if needsAppRootRouter && hostname != "" {
+		loc.AppRootExtraRouterRule = fmt.Sprintf("%s && Path(%q)", buildHostRule(hostname, loc.Aliases), "/")
 	}
 }
 
