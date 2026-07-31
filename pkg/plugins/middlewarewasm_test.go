@@ -107,8 +107,12 @@ func TestSettingsWithoutSocket(t *testing.T) {
 			}), cfg, "test")
 			require.NoError(t, err)
 
+			reqCtx, cleanup, err := applyCtx(ctx)
+			require.NoError(t, err)
+			defer cleanup()
+
 			rw := httptest.NewRecorder()
-			req := httptest.NewRequestWithContext(applyCtx(ctx), "GET", "/", http.NoBody)
+			req := httptest.NewRequestWithContext(reqCtx, "GET", "/", http.NoBody)
 
 			m.ServeHTTP(rw, req)
 
