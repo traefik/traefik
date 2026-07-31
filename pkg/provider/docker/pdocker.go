@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/cenkalti/backoff/v4"
 	eventtypes "github.com/moby/moby/api/types/events"
 	"github.com/moby/moby/client"
@@ -33,6 +34,7 @@ type Provider struct {
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	p.Watch = true
+	p.WatchTimeout = ptypes.Duration(5 * time.Minute)
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.DefaultRule = DefaultTemplateRule
@@ -130,6 +132,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							logger.Debug().Msg("Provider event stream closed")
 						}
 						return err
+					case <-time.After(time.Duration(p.WatchTimeout)):
+						return fmt.Errorf("docker events stream timed out after %s, forcing reconnection", p.WatchTimeout)
 					case <-ctx.Done():
 						return nil
 					}
