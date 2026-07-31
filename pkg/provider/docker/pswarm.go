@@ -36,7 +36,6 @@ type SwarmProvider struct {
 // SetDefaults sets the default values.
 func (p *SwarmProvider) SetDefaults() {
 	p.Watch = true
-	p.WatchTimeout = ptypes.Duration(5 * time.Minute)
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.RefreshSeconds = ptypes.Duration(15 * time.Second)

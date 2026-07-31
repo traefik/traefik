@@ -116,6 +116,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					}
 				}
 
+				watchdog := time.NewTimer(time.Duration(p.WatchTimeout))
+				defer watchdog.Stop()
+
 				res := dockerClient.Events(ctx, client.EventsListOptions{
 					Filters: make(client.Filters).Add("type", string(eventtypes.ContainerEventType)),
 				})
@@ -127,12 +130,16 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							strings.HasPrefix(string(event.Action), "health_status") {
 							startStopHandle(event)
 						}
+						if !watchdog.Stop() {
+							<-watchdog.C
+						}
+						watchdog.Reset(time.Duration(p.WatchTimeout))
 					case err := <-res.Err:
 						if errors.Is(err, io.EOF) {
 							logger.Debug().Msg("Provider event stream closed")
 						}
 						return err
-					case <-time.After(time.Duration(p.WatchTimeout)):
+					case <-watchdog.C:
 						return fmt.Errorf("docker events stream timed out after %s, forcing reconnection", p.WatchTimeout)
 					case <-ctx.Done():
 						return nil
