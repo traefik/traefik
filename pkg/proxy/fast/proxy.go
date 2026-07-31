@@ -142,6 +142,8 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	outReq := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(outReq)
 
+	outReq.Header.SetNoDefaultContentType(true)
+
 	// This is not required as the headers are already normalized by net/http.
 	outReq.Header.DisableNormalizing()
 
