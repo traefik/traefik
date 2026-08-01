@@ -192,9 +192,35 @@ The available filters are:
 When using the `json` format, you can customize which fields are included in your access logs.
 
 - **Request Fields:** You can choose to `keep`, `drop`, or `redact` any of the standard request fields. A complete list of available fields like `ClientHost`, `RequestMethod`, and `Duration` can be found in the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md#json-format-fields).
-- **Request Headers:** You can also specify which request headers should be included in the logs, and whether their values should be `kept`, `dropped`, or `redacted`.
+- **HTTP Headers:** You can also specify which headers should be included in the logs, and whether their values should be `kept`, `dropped`, or `redacted`. Configure headers by their HTTP name (for example `User-Agent`), without any prefix.
 - **Request Query Parameters:** You can choose to `keep` or `drop` the query parameters for a request.
+
+### Interpreting JSON Header Fields
+
+When headers are included in JSON access logs, Traefik writes them as additional fields with a prefix that identifies which side of the proxy the header came from:
+
+| Prefix | Meaning |
+|--------|---------|
+| `request_` | Headers from the incoming client request |
+| `origin_` | Headers from the upstream (origin) response |
+| `downstream_` | Headers in the response returned to the client |
+
+For example, with `accessLog.format=json` and `User-Agent` / `Content-Type` kept, a log entry may include fields such as:
+
+```json
+{
+  "ClientHost": "10.0.0.1",
+  "RequestMethod": "GET",
+  "RequestPath": "/api",
+  "DownstreamStatus": 200,
+  "request_User-Agent": "curl/8.5.0",
+  "origin_Content-Type": "application/json",
+  "downstream_Content-Type": "application/json"
+}
+```
+
+Use these prefixes when parsing or filtering JSON access logs. Do not include the prefix in `accessLog.fields.headers.names` configuration — use the plain header name instead.
 
 !!! info
 
-    For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
+    For the full list of JSON fields and configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
