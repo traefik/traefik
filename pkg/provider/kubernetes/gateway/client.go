@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -160,6 +161,19 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
+	// An informer for a resource that is not served never syncs and prevents the whole shared factory cache from becoming ready.
+	var tcpRouteSupported bool
+	if c.experimentalChannel {
+		tcpRouteSupported, err = c.supportsTCPRoute()
+		if err != nil {
+			return nil, err
+		}
+
+		if !tcpRouteSupported {
+			log.Warn().Msgf("The %s TCPRoute resource is not served by the Kubernetes cluster, TCPRoutes will be ignored", gatev1alpha2.SchemeGroupVersion)
+		}
+	}
+
 	for _, ns := range namespaces {
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
@@ -206,7 +220,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		if c.experimentalChannel {
+		if tcpRouteSupported {
 			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
 			if err != nil {
 				return nil, err
@@ -266,6 +280,20 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	return eventCh, nil
+}
+
+func (c *clientWrapper) supportsTCPRoute() (bool, error) {
+	resources, err := c.csGateway.Discovery().ServerResourcesForGroupVersion(gatev1alpha2.SchemeGroupVersion.String())
+	if err != nil {
+		if kerror.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return slices.ContainsFunc(resources.APIResources, func(resource metav1.APIResource) bool {
+		return resource.Kind == kindTCPRoute
+	}), nil
 }
 
 func (c *clientWrapper) ListNamespaces(selector labels.Selector) ([]string, error) {

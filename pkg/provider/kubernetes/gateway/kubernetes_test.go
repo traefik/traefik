@@ -9426,6 +9426,11 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 	t.Helper()
 
 	client := gatefake.NewSimpleClientset(objects...)
+	client.Resources = append(client.Resources, &metav1.APIResourceList{
+		GroupVersion: gatev1alpha2.SchemeGroupVersion.String(),
+		APIResources: []metav1.APIResource{{Kind: kindTCPRoute}},
+	})
+
 	for _, object := range objects {
 		gateway, ok := object.(*gatev1.Gateway)
 		if !ok {
@@ -9711,6 +9716,37 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 			assert.Equal(t, test.wantError, hasError)
 		})
 	}
+}
+
+// TestExperimentalChannelWithUnservedTCPRoute ensures that an unserved v1alpha2
+// TCPRoute resource does not prevent the other resources from being loaded, as
+// its informer would otherwise never sync and block the whole shared factory.
+func TestExperimentalChannelWithUnservedTCPRoute(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"services.yml", "tcproute/with_httproute.yml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+	gwClient.Resources = nil
+
+	client := newClientImpl(kubeClient, gwClient)
+	client.experimentalChannel = true
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	// just wait for the first event
+	<-eventCh
+
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}, "tcp": {Address: ":9000"}},
+		client:              client,
+		ExperimentalChannel: true,
+	}
+
+	conf := p.loadConfigurationFromGateways(t.Context())
+
+	assert.NotEmpty(t, conf.HTTP.Routers)
+	assert.Empty(t, conf.TCP.Routers)
 }
 
 // TestCrossProviderNamespaces_TLSRoute verifies that the option also gates
