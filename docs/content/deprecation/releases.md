@@ -6,7 +6,7 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 | Version | Release Date | Active Support     | Security Support  |
 |---------|--------------|--------------------|-------------------|
-| 3.6     | Nov 07, 2025 | Yes                | Yes               |
+| 3.6     | Nov 07, 2025 | Ends May 07, 2026  | Ends Aug 16, 2026 |
 | 3.5     | Jul 23, 2025 | Ended Nov 07, 2025 | No                |
 | 3.4     | May 05, 2025 | Ended Jul 23, 2025 | No                |
 | 3.3     | Jan 06, 2025 | Ended May 05, 2025 | No                |
@@ -31,8 +31,13 @@ Please refer to our migration guides for specific instructions on upgrading betw
 
 The Traefik Proxy project follows the [semantic versioning](https://semver.org/) scheme and maintains a separate branch for each minor version. The main branch always represents the next upcoming minor or major version.
 
-And these are our guiding rules for version support:
+And these are our guiding rules for version support, as of Traefik v3.6:
 
-- **Only the latest `minor`** will be on active support at any given time
-- **The last `minor` after releasing a new `major`** will be supported for 1 year following the `major` release
+- **Every `minor`** is supported for 6 months from its GA release date, which means several `minor` versions can be supported at the same time
+- **The last `minor` after releasing a new `major`** is supported for 2 years following the `major` release (starting with v3)
+- **Any `minor` maintenance can be extended** beyond its active support period for security purposes, in which case it receives only critical bug and security fixes
 - **Previous rules are subject to change** and in such cases an announcement will be made publicly, [here](https://traefik.io/blog/traefik-2-1-in-the-wild/) is an example extending v1.x branch support.
+
+!!! note "Versions released before v3.6"
+
+    These rules apply starting with Traefik v3.6. Before that, only the latest `minor` was on active support at any given time, and support for a `minor` ended as soon as the next one was released.
