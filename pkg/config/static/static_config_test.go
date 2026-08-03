@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
 
 func TestHasEntrypoint(t *testing.T) {
@@ -269,6 +270,56 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			desc: "Ingress NGINX provider, no asDefault, traefik entrypoint excluded",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{
+						NonTLSEntryPoints: []string{"web"},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Ingress NGINX provider, asDefault set, only marked entrypoint included",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"web":     {Address: ":80", AsDefault: true},
+					"admin":   {Address: ":8081"},
+					"traefik": {Address: ":8080"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{
+						NonTLSEntryPoints: []string{"web"},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"web":     {Address: ":80", AsDefault: true},
+					"admin":   {Address: ":8081"},
+					"traefik": {Address: ":8080"},
 				},
 			},
 		},
