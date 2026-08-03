@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-07-31T15:15:55+02:00"
+date: "2026-07-31T16:55:17+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -77,15 +77,13 @@ profiles:
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
 - core:
-    result: partial
-    skippedTests:
-    - TCPRouteMultipleRoutesAttachment
+    result: success
     statistics:
       Failed: 0
-      Passed: 18
-      Skipped: 1
+      Passed: 19
+      Skipped: 0
   name: GATEWAY-TCP
-  summary: Core tests partially succeeded with 1 test skips.
+  summary: Core tests succeeded.
 - core:
     result: success
     statistics:

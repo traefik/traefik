@@ -196,13 +196,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 				ksuite.GatewayTCPConformanceProfileName,
 			},
 			SupportedFeatures: gateway.SupportedFeatures(),
-			SkipTests: []string{
-				tests.HTTPRouteMultipleGateways.ShortName,
-				// Traefik attaches every TCPRoute of a listener instead of keeping
-				// only the oldest one, so traffic is split across the conflicting
-				// routes rather than served by the oldest.
-				tests.TCPRouteMultipleRoutesAttachment.ShortName,
-			},
+			SkipTests:         []string{tests.HTTPRouteMultipleGateways.ShortName},
 		},
 	})
 	require.NoError(s.T(), err)

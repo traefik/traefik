@@ -45,9 +45,6 @@ spec:
           imagePullPolicy: Never
           args:
             - --log.level=DEBUG
-            # The conformance tests probe the data plane right after applying a
-            # manifest, so the default reload throttling loses the race.
-            - --providers.providersThrottleDuration=0s
             - --api.insecure
             - --entrypoints.web.address=:80
             - --entrypoints.websecure.address=:443
@@ -56,9 +53,9 @@ spec:
             - --entrypoints.tls8443.address=:8443
             - --entrypoints.tls8883.address=:8883
             - --entrypoints.web5300.address=:5300
-            # Until a TCPRoute is programmed, Traefik peeks at the first bytes to
-            # detect TLS, which blocks against the server-speaks-first backend the
-            # TCP conformance tests use, hence the short readTimeout below.
+            # A TCP entryPoint peeks at the first bytes to detect TLS as long as no
+            # TCPRoute is programmed on it. The conformance TCP backend speaks first,
+            # so without this timeout the connection blocks until the route shows up.
             - --entrypoints.tcp9300.address=:9300
             - --entrypoints.tcp9300.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.tcp9301.address=:9301
@@ -78,6 +75,11 @@ spec:
             - --entrypoints.tcp9321.address=:9321
             - --entrypoints.tcp9321.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.traefik.address=:9000
+            # Route statuses are written as soon as the configuration is built, while
+            # the configuration itself waits out the throttling interval before reaching
+            # the routers. Conformance tests probe the data plane right after seeing the
+            # Accepted status, so the default 2s interval loses the race.
+            - --providers.providersThrottleDuration=0s
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
             - --providers.kubernetesgateway.statusaddress.service.name=traefik
           ports:
