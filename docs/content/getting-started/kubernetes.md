@@ -60,11 +60,16 @@ helm repo add traefik https://traefik.github.io/charts
 helm repo update
 ```
 
+As a prerequisite, enable the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md):
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
+```
+
 Create a values file. This configuration:
 
 - Maps ports 80 and 443 to the web and websecure [entrypoints](../reference/install-configuration/entrypoints.md)
 - Enables the [dashboard](../reference/install-configuration/api-dashboard.md) with a specific hostname rule
-- Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Allows the Gateway to expose [HTTPRoutes](https://gateway-api.sigs.k8s.io/api-types/httproute/) from all namespaces
 
 ```yaml
@@ -100,7 +105,6 @@ Alternatively, you can install Traefik using CLI arguments. This command:
 
 - Maps ports `30000` and `30001` to the web and websecure entrypoints
 - Enables the dashboard with a specific hostname rule
-- Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Allows the Gateway to expose HTTPRoutes from all namespaces
 
 ```bash
