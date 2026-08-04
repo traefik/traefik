@@ -27,9 +27,6 @@ import (
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatev1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
-	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 )
 
@@ -37,16 +34,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 func init() {
 	// required by k8s.MustParseYaml
-	if err := gatev1.AddToScheme(kscheme.Scheme); err != nil {
-		panic(err)
-	}
-	if err := gatev1beta1.AddToScheme(kscheme.Scheme); err != nil {
-		panic(err)
-	}
-	if err := gatev1alpha2.AddToScheme(kscheme.Scheme); err != nil {
-		panic(err)
-	}
-	if err := gatev1alpha3.AddToScheme(kscheme.Scheme); err != nil {
+	if err := gatev1.Install(kscheme.Scheme); err != nil {
 		panic(err)
 	}
 }
@@ -116,13 +104,12 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		ingressClass        string
-		paths               []string
-		expected            *dynamic.Configuration
-		entryPoints         map[string]Entrypoint
-		experimentalChannel bool
-		nativeLB            bool
+		desc         string
+		ingressClass string
+		paths        []string
+		expected     *dynamic.Configuration
+		entryPoints  map[string]Entrypoint
+		nativeLB     bool
 	}{
 		{
 			desc: "Empty",
@@ -563,7 +550,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			entryPoints: map[string]Entrypoint{"TCP": {
 				Address: ":8080",
 			}},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3051,7 +3037,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -3062,10 +3047,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				ExperimentalChannel: test.experimentalChannel,
-				NativeLBByDefault:   test.nativeLB,
-				client:              client,
+				EntryPoints:       test.entryPoints,
+				NativeLBByDefault: test.nativeLB,
+				client:            client,
 			}
 
 			conf, _, err := p.loadConfigurationFromGateways(t.Context())
@@ -5059,6 +5043,62 @@ func TestLoadTCPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Conflicting TCPRoutes on the same listener, only the oldest is bound",
+			paths: []string{"services.yml", "tcproute/with_conflicting_routes.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcproute-default-tcp-app-older-gw-default-my-tcp-gateway-ep-tcp-0-6aa3057a8ee9e5d61398": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tcproute-default-tcp-app-older-gw-default-my-tcp-gateway-ep-tcp-0-6aa3057a8ee9e5d61398-wrr",
+							Rule:        `HostSNI("*")`,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tcproute-default-tcp-app-older-gw-default-my-tcp-gateway-ep-tcp-0-6aa3057a8ee9e5d61398-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tcproute-default-tcp-app-older-gw-default-my-tcp-gateway-ep-tcp-0-6aa3057a8ee9e5d61398-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tcproute-default-tcp-app-older-gw-default-my-tcp-gateway-ep-tcp-0-6aa3057a8ee9e5d61398-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "TCPRoute with Same namespace selector",
 			paths: []string{"services.yml", "tcproute/with_namespace_same.yml"},
 			entryPoints: map[string]Entrypoint{
@@ -5127,12 +5167,6 @@ func TestLoadTCPRoutes(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-9c02509721599badb6c4": {
-							EntryPoints: []string{"tcp"},
-							Service:     "tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-9c02509721599badb6c4-wrr",
-							Rule:        `HostSNI("*")`,
-							RuleSyntax:  "default",
-						},
 						"tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-18313c5ba079a1d9e171": {
 							EntryPoints: []string{"tcp"},
 							Service:     "tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-18313c5ba079a1d9e171-wrr",
@@ -5142,34 +5176,12 @@ func TestLoadTCPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-9c02509721599badb6c4-wrr": {
-							Weighted: &dynamic.TCPWeightedRoundRobin{
-								Services: []dynamic.TCPWRRService{
-									{
-										Name:   "tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-9c02509721599badb6c4-svc-default-whoamitcp-0",
-										Weight: new(1),
-									},
-								},
-							},
-						},
 						"tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-18313c5ba079a1d9e171-wrr": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "tcproute-bar-tcp-app-bar-gw-default-my-tcp-gateway-ep-tcp-0-18313c5ba079a1d9e171-svc-bar-whoamitcp-bar-0",
 										Weight: new(1),
-									},
-								},
-							},
-						},
-						"tcproute-default-tcp-app-default-gw-default-my-tcp-gateway-ep-tcp-0-9c02509721599badb6c4-svc-default-whoamitcp-0": {
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "10.10.0.9:9000",
-									},
-									{
-										Address: "10.10.0.10:9000",
 									},
 								},
 							},
@@ -5528,7 +5540,6 @@ func TestLoadTCPRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -5539,10 +5550,9 @@ func TestLoadTCPRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				NativeLBByDefault:   test.nativeLB,
-				ExperimentalChannel: true,
-				client:              client,
+				EntryPoints:       test.entryPoints,
+				NativeLBByDefault: test.nativeLB,
+				client:            client,
 			}
 
 			conf, _, err := p.loadConfigurationFromGateways(t.Context())
@@ -7204,7 +7214,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -7215,10 +7224,9 @@ func TestLoadTLSRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				NativeLBByDefault:   test.nativeLB,
-				ExperimentalChannel: true,
-				client:              client,
+				EntryPoints:       test.entryPoints,
+				NativeLBByDefault: test.nativeLB,
+				client:            client,
 			}
 
 			conf, _, err := p.loadConfigurationFromGateways(t.Context())
@@ -7231,12 +7239,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 
 func TestLoadMixedRoutes(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		ingressClass        string
-		paths               []string
-		expected            *dynamic.Configuration
-		entryPoints         map[string]Entrypoint
-		experimentalChannel bool
+		desc         string
+		ingressClass string
+		paths        []string
+		expected     *dynamic.Configuration
+		entryPoints  map[string]Entrypoint
 	}{
 		{
 			desc: "Empty",
@@ -7348,7 +7355,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7558,7 +7564,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7740,7 +7745,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7753,12 +7757,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Priority: 1,
 							Service:  "deny-unknown-host",
 							TLS:      &dynamic.RouterTCPTLSConfig{},
-						},
-						"tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-df24b7f0f1d9b443e55b": {
-							EntryPoints: []string{"tcp"},
-							Service:     "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-df24b7f0f1d9b443e55b-wrr",
-							Rule:        `HostSNI("*")`,
-							RuleSyntax:  "default",
 						},
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-4f1a8abab411e162ce4d": {
 							EntryPoints: []string{"tls-2"},
@@ -7782,34 +7780,12 @@ func TestLoadMixedRoutes(t *testing.T) {
 						"deny-unknown-host": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 						},
-						"tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-df24b7f0f1d9b443e55b-wrr": {
-							Weighted: &dynamic.TCPWeightedRoundRobin{
-								Services: []dynamic.TCPWRRService{
-									{
-										Name:   "tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-df24b7f0f1d9b443e55b-svc-default-whoamitcp-0",
-										Weight: new(1),
-									},
-								},
-							},
-						},
 						"tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-4f1a8abab411e162ce4d-wrr": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
 										Name:   "tlsroute-default-tls-app-default-gw-default-my-gateway-ep-tls-2-0-4f1a8abab411e162ce4d-svc-default-whoamitcp-0",
 										Weight: new(1),
-									},
-								},
-							},
-						},
-						"tcproute-default-tcp-app-default-gw-default-my-gateway-ep-tcp-0-df24b7f0f1d9b443e55b-svc-default-whoamitcp-0": {
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "10.10.0.9:9000",
-									},
-									{
-										Address: "10.10.0.10:9000",
 									},
 								},
 							},
@@ -8019,7 +7995,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tls-1":     {Address: ":10000"},
 				"tls-2":     {Address: ":11000"},
 			},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -8200,7 +8175,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 				"tcp":       {Address: ":9000"},
 				"tls":       {Address: ":10000"},
 			},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -8347,7 +8321,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -8358,9 +8331,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				ExperimentalChannel: test.experimentalChannel,
-				client:              client,
+				EntryPoints: test.entryPoints,
+				client:      client,
 			}
 
 			conf, _, err := p.loadConfigurationFromGateways(t.Context())
@@ -8373,12 +8345,11 @@ func TestLoadMixedRoutes(t *testing.T) {
 
 func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		ingressClass        string
-		paths               []string
-		expected            *dynamic.Configuration
-		entryPoints         map[string]Entrypoint
-		experimentalChannel bool
+		desc         string
+		ingressClass string
+		paths        []string
+		expected     *dynamic.Configuration
+		entryPoints  map[string]Entrypoint
 	}{
 		{
 			desc: "Empty",
@@ -8694,7 +8665,6 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -8705,9 +8675,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				ExperimentalChannel: test.experimentalChannel,
-				client:              client,
+				EntryPoints: test.entryPoints,
+				client:      client,
 			}
 
 			conf, _, err := p.loadConfigurationFromGateways(t.Context())
@@ -8988,13 +8957,12 @@ func Test_matchingGatewayListener(t *testing.T) {
 // Gateway, and counts each attached Route only once in the listener AttachedRoutes.
 func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		path                string
-		entryPoints         map[string]Entrypoint
-		experimentalChannel bool
-		gatewayName         string
-		route1, route2      string
-		getParents          func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus
+		desc           string
+		path           string
+		entryPoints    map[string]Entrypoint
+		gatewayName    string
+		route1, route2 string
+		getParents     func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus
 	}{
 		{
 			desc:        "HTTPRoute",
@@ -9025,28 +8993,26 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 			},
 		},
 		{
-			desc:                "TCPRoute",
-			path:                "tcproute/with_multiple_gateways_parent_refs.yml",
-			entryPoints:         map[string]Entrypoint{"tcp": {Address: ":9000"}},
-			experimentalChannel: true,
-			gatewayName:         "my-tcp-gateway",
-			route1:              "tcp-app-1",
-			route2:              "tcp-app-2",
+			desc:        "TCPRoute",
+			path:        "tcproute/with_multiple_gateways_parent_refs.yml",
+			entryPoints: map[string]Entrypoint{"tcp": {Address: ":9000"}},
+			gatewayName: "my-tcp-gateway",
+			route1:      "tcp-app-1",
+			route2:      "tcp-app-2",
 			getParents: func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus {
 				t.Helper()
-				route, err := gwClient.GatewayV1alpha2().TCPRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+				route, err := gwClient.GatewayV1().TCPRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
 				require.NoError(t, err)
 				return route.Status.Parents
 			},
 		},
 		{
-			desc:                "TLSRoute",
-			path:                "tlsroute/with_multiple_gateways_parent_refs.yml",
-			entryPoints:         map[string]Entrypoint{"tls": {Address: ":9000"}},
-			experimentalChannel: true,
-			gatewayName:         "my-tls-gateway",
-			route1:              "tls-app-1",
-			route2:              "tls-app-2",
+			desc:        "TLSRoute",
+			path:        "tlsroute/with_multiple_gateways_parent_refs.yml",
+			entryPoints: map[string]Entrypoint{"tls": {Address: ":9000"}},
+			gatewayName: "my-tls-gateway",
+			route1:      "tls-app-1",
+			route2:      "tls-app-2",
 			getParents: func(t *testing.T, gwClient *gatefake.Clientset, name string) []gatev1.RouteParentStatus {
 				t.Helper()
 				route, err := gwClient.GatewayV1().TLSRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
@@ -9062,16 +9028,14 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
-			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
 			<-eventCh
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				ExperimentalChannel: test.experimentalChannel,
-				client:              client,
+				EntryPoints: test.entryPoints,
+				client:      client,
 			}
 
 			_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
@@ -9634,7 +9598,7 @@ func Test_makeListenerKey(t *testing.T) {
 func Test_referenceGrantMatchesFrom(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		referenceGrant gatev1beta1.ReferenceGrant
+		referenceGrant gatev1.ReferenceGrant
 		group          string
 		kind           string
 		namespace      string
@@ -9642,9 +9606,9 @@ func Test_referenceGrantMatchesFrom(t *testing.T) {
 	}{
 		{
 			desc: "matches",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					From: []gatev1beta1.ReferenceGrantFrom{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					From: []gatev1.ReferenceGrantFrom{
 						{
 							Group:     "correct-group",
 							Kind:      "correct-kind",
@@ -9660,9 +9624,9 @@ func Test_referenceGrantMatchesFrom(t *testing.T) {
 		},
 		{
 			desc: "empty group matches core",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					From: []gatev1beta1.ReferenceGrantFrom{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					From: []gatev1.ReferenceGrantFrom{
 						{
 							Group:     "",
 							Kind:      "correct-kind",
@@ -9678,9 +9642,9 @@ func Test_referenceGrantMatchesFrom(t *testing.T) {
 		},
 		{
 			desc: "wrong group",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					From: []gatev1beta1.ReferenceGrantFrom{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					From: []gatev1.ReferenceGrantFrom{
 						{
 							Group:     "wrong-group",
 							Kind:      "correct-kind",
@@ -9696,9 +9660,9 @@ func Test_referenceGrantMatchesFrom(t *testing.T) {
 		},
 		{
 			desc: "wrong kind",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					From: []gatev1beta1.ReferenceGrantFrom{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					From: []gatev1.ReferenceGrantFrom{
 						{
 							Group:     "correct-group",
 							Kind:      "wrong-kind",
@@ -9714,9 +9678,9 @@ func Test_referenceGrantMatchesFrom(t *testing.T) {
 		},
 		{
 			desc: "wrong namespace",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					From: []gatev1beta1.ReferenceGrantFrom{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					From: []gatev1.ReferenceGrantFrom{
 						{
 							Group:     "correct-group",
 							Kind:      "correct-kind",
@@ -9744,7 +9708,7 @@ func Test_referenceGrantMatchesFrom(t *testing.T) {
 func Test_referenceGrantMatchesTo(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		referenceGrant gatev1beta1.ReferenceGrant
+		referenceGrant gatev1.ReferenceGrant
 		group          string
 		kind           string
 		name           string
@@ -9752,9 +9716,9 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 	}{
 		{
 			desc: "matches",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					To: []gatev1beta1.ReferenceGrantTo{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					To: []gatev1.ReferenceGrantTo{
 						{
 							Group: "correct-group",
 							Kind:  "correct-kind",
@@ -9770,9 +9734,9 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		},
 		{
 			desc: "matches without name",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					To: []gatev1beta1.ReferenceGrantTo{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					To: []gatev1.ReferenceGrantTo{
 						{
 							Group: "correct-group",
 							Kind:  "correct-kind",
@@ -9788,9 +9752,9 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		},
 		{
 			desc: "empty group matches core",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					To: []gatev1beta1.ReferenceGrantTo{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					To: []gatev1.ReferenceGrantTo{
 						{
 							Group: "",
 							Kind:  "correct-kind",
@@ -9806,9 +9770,9 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		},
 		{
 			desc: "wrong group",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					To: []gatev1beta1.ReferenceGrantTo{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					To: []gatev1.ReferenceGrantTo{
 						{
 							Group: "wrong-group",
 							Kind:  "correct-kind",
@@ -9824,9 +9788,9 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		},
 		{
 			desc: "wrong kind",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					To: []gatev1beta1.ReferenceGrantTo{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					To: []gatev1.ReferenceGrantTo{
 						{
 							Group: "correct-group",
 							Kind:  "wrong-kind",
@@ -9842,9 +9806,9 @@ func Test_referenceGrantMatchesTo(t *testing.T) {
 		},
 		{
 			desc: "wrong name",
-			referenceGrant: gatev1beta1.ReferenceGrant{
-				Spec: gatev1beta1.ReferenceGrantSpec{
-					To: []gatev1beta1.ReferenceGrantTo{
+			referenceGrant: gatev1.ReferenceGrant{
+				Spec: gatev1.ReferenceGrantSpec{
+					To: []gatev1.ReferenceGrantTo{
 						{
 							Group: "correct-group",
 							Kind:  "correct-kind",
@@ -10233,7 +10197,6 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -10247,7 +10210,6 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 				EntryPoints:             map[string]Entrypoint{"tcp": {Address: ":9000"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 				client:                  client,
-				ExperimentalChannel:     true,
 			}
 
 			conf, _, err := p.loadConfigurationFromGateways(t.Context())
@@ -10308,7 +10270,6 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)

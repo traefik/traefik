@@ -143,8 +143,6 @@ linters:
           alias: gateclientset
         - pkg: sigs.k8s.io/gateway-api/pkg/client/informers/gateway/externalversions
           alias: gateinformers
-        - pkg: sigs.k8s.io/gateway-api/apis/v1alpha2
-          alias: gatev1alpha2
 
         # Traefik Kubernetes rewrites:
         - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1

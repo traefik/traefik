@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-07-30T16:26:37+02:00"
+date: "2026-07-31T16:55:17+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -8,7 +8,7 @@ implementation:
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.7
+  version: v3.8
 kind: ConformanceReport
 mode: default
 profiles:
@@ -80,6 +80,14 @@ profiles:
     result: success
     statistics:
       Failed: 0
+      Passed: 19
+      Skipped: 0
+  name: GATEWAY-TCP
+  summary: Core tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
       Passed: 20
       Skipped: 0
   extended:
@@ -110,5 +118,12 @@ succeededProvisionalTests:
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
 - HTTPRouteNamedRule
+- TCPRouteInvalidBackendRefNonexistent
+- TCPRouteInvalidCrossNamespaceBackendRef
+- TCPRouteInvalidNonTCPListener
+- TCPRouteParentRefAttachAll
+- TCPRouteParentRefPortAndSectionName
+- TCPRouteReferenceGrant
+- TCPRouteWeightedRouting
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace

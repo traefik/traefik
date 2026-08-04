@@ -11,17 +11,14 @@ spec:
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
-  name: my-tls-gateway
+  name: my-tcp-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners: # Use GatewayClass defaults for listener definition.
-    - name: tls
-      protocol: TLS
-      hostname: foo.example.com
+    - name: tcp
+      protocol: TCP
       port: 9000
-      tls:
-        mode: Passthrough
       allowedRoutes:
         kinds:
           - kind: TCPRoute
@@ -30,14 +27,36 @@ spec:
           from: Same
 
 ---
+# Sorts before tcp-app-older by name, so only the creation timestamp can make it lose.
 kind: TCPRoute
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
-  name: tcp-app-1
+  name: tcp-app-newer
   namespace: default
+  creationTimestamp: "2026-01-02T00:00:00Z"
 spec:
   parentRefs:
-    - name: my-tls-gateway
+    - name: my-tcp-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tcp-app-older
+  namespace: default
+  creationTimestamp: "2026-01-01T00:00:00Z"
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
       kind: Gateway
       group: gateway.networking.k8s.io
   rules:
