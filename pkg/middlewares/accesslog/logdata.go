@@ -57,6 +57,9 @@ const (
 	// OriginStatus is the map key used for the HTTP status code returned by the origin server.
 	// If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.
 	OriginStatus = "OriginStatus"
+	// OriginError is the map key used for the error message when forwarding to the origin server fails.
+	// Empty when the request succeeds or when the client closes the request.
+	OriginError = "OriginError"
 	// DownstreamStatus is the map key used for the HTTP status code returned to the client.
 	DownstreamStatus = "DownstreamStatus"
 	// DownstreamContentSize is the map key used for the number of bytes in the response entity returned to the client.
@@ -130,6 +133,7 @@ var defaultCoreKeys = [...]string{
 	OriginDuration,
 	OriginContentSize,
 	OriginStatus,
+	OriginError,
 	DownstreamStatus,
 	DownstreamContentSize,
 	RequestCount,

@@ -382,6 +382,7 @@ Below the fields displayed with the generic CLF format:
 | <a id="opt-OriginContentSize" href="#opt-OriginContentSize" title="#opt-OriginContentSize">`OriginContentSize`</a> | The content length specified by the origin server, or 0 if unspecified.    |
 | <a id="opt-OriginStatus" href="#opt-OriginStatus" title="#opt-OriginStatus">`OriginStatus`</a> | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent (0). |
 | <a id="opt-OriginStatusLine" href="#opt-OriginStatusLine" title="#opt-OriginStatusLine">`OriginStatusLine`</a> | `OriginStatus` + Status code explanation   |
+| <a id="opt-OriginError" href="#opt-OriginError" title="#opt-OriginError">`OriginError`</a> | The error message returned when forwarding to the origin server fails. Empty when the request succeeds or when the client closes the request. |
 | <a id="opt-DownstreamStatus" href="#opt-DownstreamStatus" title="#opt-DownstreamStatus">`DownstreamStatus`</a> | The HTTP status code returned to the client.    |
 | <a id="opt-DownstreamStatusLine" href="#opt-DownstreamStatusLine" title="#opt-DownstreamStatusLine">`DownstreamStatusLine`</a> | The `DownstreamStatus` and status code explanation.     |
 | <a id="opt-DownstreamContentSize" href="#opt-DownstreamContentSize" title="#opt-DownstreamContentSize">`DownstreamContentSize`</a> | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |

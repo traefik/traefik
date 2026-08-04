@@ -437,7 +437,12 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 // GetLogData gets the request context object that contains logging data.
 // This creates data as the request passes through the middleware chain.
 func GetLogData(req *http.Request) *LogData {
-	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
+	return GetLogDataTable(req.Context())
+}
+
+// GetLogDataTable gets the logging data from the given context.
+func GetLogDataTable(ctx context.Context) *LogData {
+	if ld, ok := ctx.Value(DataTableKey).(*LogData); ok {
 		return ld
 	}
 	return nil
