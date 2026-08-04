@@ -3042,9 +3042,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
 							EntryPoints: []string{"websecure"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-wrr",
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
 							Rule:        `Host("foo.com") && Path("/bar")`,
 							Priority:    100008,
 							RuleSyntax:  "default",
@@ -3055,17 +3055,17 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-wrr": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-svc-default-whoami-0",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-svc-default-whoami-0",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-af329269dd38031b03e3-svc-default-whoami-0": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-svc-default-whoami-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4209,9 +4209,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64": {
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2": {
 							EntryPoints: []string{"websecure"},
-							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-wrr",
+							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2-wrr",
 							Rule:        `Host("foo.com") && PathPrefix("/")`,
 							Priority:    22,
 							RuleSyntax:  "default",
@@ -4222,17 +4222,17 @@ func TestLoadGRPCRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-wrr": {
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-svc-default-whoami-0",
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2-svc-default-whoami-0",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-6a1e0890d475642f7c64-svc-default-whoami-0": {
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2-svc-default-whoami-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
