@@ -177,7 +177,7 @@ func extractType(element any) string {
 			}
 		}
 
-		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+		if field.Kind() == reflect.Pointer && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
 				return v.Type().Field(i).Name
 			}

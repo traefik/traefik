@@ -3,7 +3,7 @@ package acme
 import "os"
 
 // CheckFile checks file content size
-// Do not check file permissions on Windows right now
+// Do not check file permissions on Windows right now.
 func CheckFile(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {

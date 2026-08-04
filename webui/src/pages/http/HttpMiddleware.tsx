@@ -1,4 +1,4 @@
-import { Box, Card, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Box, Card, H1, Skeleton, styled, Text } from '@traefik-labs/faency'
 import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 

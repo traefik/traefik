@@ -19,16 +19,16 @@ func Test_GetStrategy_ipv6Subnet(t *testing.T) {
 		{
 			desc:        "Zero subnet",
 			expectError: true,
-			ipv6Subnet:  intPtr(0),
+			ipv6Subnet:  new(0),
 		},
 		{
 			desc:        "Subnet greater that 128",
 			expectError: true,
-			ipv6Subnet:  intPtr(129),
+			ipv6Subnet:  new(129),
 		},
 		{
 			desc:       "Valid subnet",
-			ipv6Subnet: intPtr(128),
+			ipv6Subnet: new(128),
 		},
 	}
 
@@ -52,6 +52,58 @@ func Test_GetStrategy_ipv6Subnet(t *testing.T) {
 	}
 }
 
-func intPtr(value int) *int {
-	return &value
+func TestHasSecureHeadersDefined(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		headers  *Headers
+		expected bool
+	}{
+		{
+			desc:     "Nil headers",
+			headers:  nil,
+			expected: false,
+		},
+		{
+			desc:     "Empty headers",
+			headers:  &Headers{},
+			expected: false,
+		},
+		{
+			desc: "STSSeconds set to non-zero",
+			headers: &Headers{
+				STSSeconds: new(int64(42)),
+			},
+			expected: true,
+		},
+		{
+			desc: "STSSeconds set to zero",
+			headers: &Headers{
+				STSSeconds: new(int64(0)),
+			},
+			expected: true,
+		},
+		{
+			desc: "STSSeconds nil (not set)",
+			headers: &Headers{
+				FrameDeny: true,
+			},
+			expected: true,
+		},
+		{
+			desc: "Only ForceSTSHeader",
+			headers: &Headers{
+				ForceSTSHeader: true,
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := test.headers.HasSecureHeadersDefined()
+			assert.Equal(t, test.expected, result)
+		})
+	}
 }

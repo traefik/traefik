@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-systemd/v22/daemon"
-	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v5/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
@@ -97,9 +97,9 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
-	log.Warn().Msg("Traefik can reject some encoded characters in the request path." +
-		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
-		"it is recommended to set these options to `false` to avoid split-view situation." +
+	log.Warn().Msg("Traefik can reject some encoded characters in the request path. " +
+		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986), " +
+		"it is recommended to set these options to `false` to avoid split-view situation. " +
 		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.6/migrate/v3/#encoded-characters-configuration-default-values")
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
@@ -385,7 +385,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			}
 
 			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
-				log.Error().Err(err).Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
+				log.Error().Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
 					Msg("Router uses a nonexistent certificate resolver")
 			}
 		}

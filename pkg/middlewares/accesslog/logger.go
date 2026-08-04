@@ -207,6 +207,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		if spanContext.HasTraceID() && spanContext.HasSpanID() {
 			logDataTable.Core[TraceID] = spanContext.TraceID().String()
 			logDataTable.Core[SpanID] = spanContext.SpanID().String()
+			logDataTable.Core[OTelTraceID] = spanContext.TraceID().String()
+			logDataTable.Core[OTelSpanID] = spanContext.SpanID().String()
 		}
 	}
 
@@ -217,12 +219,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestAddr] = req.Host
 		core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
 	}
+
+	queryParameters := ""
+	if h.config.Fields.KeepQueryParameters() {
+		queryParameters = req.URL.RawQuery
+	}
+
 	// copy the URL without the scheme, hostname etc
 	urlCopy := &url.URL{
 		Path:       req.URL.Path,
 		RawPath:    req.URL.RawPath,
-		RawQuery:   req.URL.RawQuery,
-		ForceQuery: req.URL.ForceQuery,
+		RawQuery:   queryParameters,
+		ForceQuery: req.URL.ForceQuery && h.config.Fields.KeepQueryParameters(),
 		Fragment:   req.URL.Fragment,
 	}
 	urlCopyString := urlCopy.String()
@@ -456,8 +464,8 @@ func usernameIfPresent(theURL *url.URL) string {
 	return "-"
 }
 
-var requestCounter uint64 // Request ID
+var requestCounter atomic.Uint64 // Request ID
 
 func nextRequestCount() uint64 {
-	return atomic.AddUint64(&requestCounter, 1)
+	return requestCounter.Add(1)
 }

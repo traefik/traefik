@@ -17,8 +17,9 @@ import (
 type routerRepresentation struct {
 	*runtime.RouterInfo
 
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Provider    string `json:"provider,omitempty"`
+	PriorityStr string `json:"priorityStr,omitempty"`
 }
 
 func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresentation {
@@ -27,9 +28,10 @@ func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresen
 	}
 
 	return routerRepresentation{
-		RouterInfo: rt,
-		Name:       name,
-		Provider:   getProviderName(name),
+		RouterInfo:  rt,
+		Name:        name,
+		Provider:    getProviderName(name),
+		PriorityStr: strconv.FormatInt(int64(rt.Priority), 10),
 	}
 }
 

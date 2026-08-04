@@ -24,6 +24,9 @@ description: "Traefik Proxy is an open source software with a thriving community
 * Baptiste Mayelle [@youkoulayley](https://github.com/youkoulayley)
 * Jesper Noordsij [@jnoordsij](https://github.com/jnoordsij)
 * Gina Adzani [@gndz07](https://github.com/gndz07)
+* Mathis Urien [@LBF38](https://github.com/LBF38)
+* Kangmin Kim [@amazon7737](https://github.com/amazon7737)
+* Nándor Kollár [@nandorKollar](https://github.com/nandorKollar)
 
 ## Past Maintainers
 
@@ -38,4 +41,4 @@ People who have had an incredibly positive impact on the project, and are now fo
 
 ## Maintainer's Guidelines
 
-Please read the [maintainer's guidelines](maintainers-guidelines.md).
+Please read the [maintainer's guidelines](./maintainers-guidelines.md).

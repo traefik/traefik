@@ -12,13 +12,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
+	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
-
-func pointer[T any](v T) *T { return &v }
 
 func Test_createConfiguration(t *testing.T) {
 	testCases := []struct {
@@ -187,9 +186,9 @@ func Test_createConfiguration(t *testing.T) {
 							},
 						},
 						Observability: &static.ObservabilityConfig{
-							AccessLogs: pointer(false),
-							Tracing:    pointer(false),
-							Metrics:    pointer(false),
+							AccessLogs: new(false),
+							Tracing:    new(false),
+							Metrics:    new(false),
 						},
 					},
 				},
@@ -257,6 +256,60 @@ func Test_createConfiguration(t *testing.T) {
 					},
 					"websecure": {
 						Address: ":443/tcp",
+					},
+				},
+			},
+		},
+		{
+			desc: "redirection_with_acme_bypass.json",
+			staticCfg: static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"web": {
+						Address:         ":80",
+						AllowACMEByPass: true,
+						HTTP: static.HTTPConfig{
+							Redirections: &static.Redirections{
+								EntryPoint: &static.RedirectEntryPoint{
+									To:        "websecure",
+									Scheme:    "https",
+									Permanent: true,
+								},
+							},
+						},
+					},
+					"websecure": {
+						Address: ":443",
+					},
+				},
+			},
+		},
+		{
+			desc: "redirection_without_acme_bypass.json",
+			staticCfg: static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"web": {
+						Address: ":80",
+						HTTP: static.HTTPConfig{
+							Redirections: &static.Redirections{
+								EntryPoint: &static.RedirectEntryPoint{
+									To:        "websecure",
+									Scheme:    "https",
+									Permanent: true,
+								},
+							},
+						},
+					},
+					"websecure": {
+						Address: ":443",
+					},
+				},
+				CertificatesResolvers: map[string]static.CertificateResolver{
+					"default": {
+						ACME: &acmeprovider.Configuration{
+							HTTPChallenge: &acmeprovider.HTTPChallenge{
+								EntryPoint: "web",
+							},
+						},
 					},
 				},
 			},

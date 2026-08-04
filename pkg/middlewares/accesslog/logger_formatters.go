@@ -3,6 +3,7 @@ package accesslog
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -108,7 +109,7 @@ func toLogEntry(s, defaultValue string, quote bool) string {
 	}
 
 	if quote {
-		return `"` + s + `"`
+		return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
 	}
 	return s
 }

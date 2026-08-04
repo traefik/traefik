@@ -9,7 +9,6 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -131,9 +130,10 @@ func (r *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
 
 // RouterTLSConfig holds the TLS configuration for a router.
 type RouterTLSConfig struct {
-	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
-	CertResolver string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
-	Domains      []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
+	Options         string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
+	ResolvedOptions string         `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	CertResolver    string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
+	Domains         []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -286,7 +286,7 @@ type Cookie struct {
 	HTTPOnly bool `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
 	// SameSite defines the same site policy.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-	// +kubebuilder:validation:Enum=none;lax;strict
+	// +kubebuilder:validation:Enum=none;lax;strict;None;Lax;Strict
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
 	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.
@@ -358,7 +358,7 @@ func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool 
 
 // SetDefaults Default values for a ServersLoadBalancer.
 func (l *ServersLoadBalancer) SetDefaults() {
-	l.PassHostHeader = ptr.To(DefaultPassHostHeader)
+	l.PassHostHeader = new(DefaultPassHostHeader)
 
 	l.Strategy = BalancerStrategyWRR
 	l.ResponseForwarding = &ResponseForwarding{}
@@ -415,7 +415,7 @@ type ServerHealthCheck struct {
 
 // SetDefaults Default values for a HealthCheck.
 func (h *ServerHealthCheck) SetDefaults() {
-	h.FollowRedirects = ptr.To(true)
+	h.FollowRedirects = new(true)
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout

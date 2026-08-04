@@ -25,7 +25,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/ptr"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	"knative.dev/pkg/network"
@@ -368,7 +367,7 @@ func (p *Provider) buildWeightedRoundRobin(routerKey string, splits []knativenet
 
 		wrr.Services = append(wrr.Services, dynamic.WRRService{
 			Name:    serviceKey,
-			Weight:  ptr.To(percent),
+			Weight:  new(percent),
 			Headers: split.AppendHeaders,
 		})
 	}
@@ -452,7 +451,7 @@ func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.Head
 	if len(hosts) > 0 {
 		var hostRules []string
 		for _, host := range hosts {
-			hostRules = append(hostRules, fmt.Sprintf("Host(`%v`)", host))
+			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", host))
 		}
 		operands = append(operands, fmt.Sprintf("(%s)", strings.Join(hostRules, " || ")))
 	}
@@ -463,13 +462,13 @@ func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.Head
 
 		var headerRules []string
 		for _, key := range headerKeys {
-			headerRules = append(headerRules, fmt.Sprintf("Header(`%s`,`%s`)", key, headers[key].Exact))
+			headerRules = append(headerRules, fmt.Sprintf("Header(%q,%q)", key, headers[key].Exact))
 		}
 		operands = append(operands, fmt.Sprintf("(%s)", strings.Join(headerRules, " && ")))
 	}
 
 	if len(path) > 0 {
-		operands = append(operands, fmt.Sprintf("PathPrefix(`%s`)", path))
+		operands = append(operands, fmt.Sprintf("PathPrefix(%q)", path))
 	}
 
 	return strings.Join(operands, " && ")

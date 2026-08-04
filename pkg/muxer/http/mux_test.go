@@ -47,7 +47,7 @@ func TestMuxer(t *testing.T) {
 			desc: "Host IPv6",
 			rule: "Host(`10::10`)",
 			expected: map[string]int{
-				"http://10::10/foo": http.StatusOK,
+				"http://[10::10]/foo": http.StatusOK,
 			},
 		},
 		{

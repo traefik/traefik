@@ -16,6 +16,7 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 		Insert(features.ReferenceGrantCoreFeatures.UnsortedList()...).
 		Insert(features.BackendTLSPolicyCoreFeatures.UnsortedList()...).
 		Insert(features.GRPCRouteCoreFeatures.UnsortedList()...).
+		Insert(features.GRPCRouteExtendedFeatures.Intersection(extendedGRPCRouteFeatures()).UnsortedList()...).
 		Insert(features.TLSRouteCoreFeatures.UnsortedList()...)
 
 	featureNames := make([]features.FeatureName, 0, featureSet.Len())
@@ -44,5 +45,14 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteBackendProtocolH2CFeature,
 		features.HTTPRouteBackendProtocolWebSocketFeature,
 		features.HTTPRouteDestinationPortMatchingFeature,
+		features.HTTPRouteNamedRouteRule,
+		features.HTTPRouteParentRefPortFeature,
+	)
+}
+
+// extendedGRPCRouteFeatures returns the supported extended GRPC Route features.
+func extendedGRPCRouteFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.GRPCRouteNamedRouteRule,
 	)
 }

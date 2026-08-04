@@ -208,6 +208,9 @@ http:
           name1: 42
         service: foobar
         query: foobar
+        errorRequestHeaders:
+          - foobar
+          - foobar
     Middleware10:
       forwardAuth:
         address: foobar
@@ -231,6 +234,7 @@ http:
         headerField: foobar
         forwardBody: true
         maxBodySize: 42
+        maxResponseBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
     Middleware11:

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	netv1 "k8s.io/api/networking/v1"
-	"k8s.io/utils/ptr"
 )
 
 func Test_parseIngressConfig(t *testing.T) {
@@ -30,16 +29,16 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/cors-expose-headers":     "foo, bar",
 			},
 			expected: ingressConfig{
-				SSLPassthrough:        ptr.To(true),
-				Affinity:              ptr.To("cookie"),
-				SessionCookieName:     ptr.To("mycookie"),
-				SessionCookieSecure:   ptr.To(true),
-				SessionCookiePath:     ptr.To("/foo"),
-				SessionCookieDomain:   ptr.To("example.com"),
-				SessionCookieSameSite: ptr.To("Strict"),
-				SessionCookieMaxAge:   ptr.To(3600),
-				BackendProtocol:       ptr.To("HTTPS"),
-				CORSExposeHeaders:     ptr.To([]string{"foo", "bar"}),
+				SSLPassthrough:        new(true),
+				Affinity:              new("cookie"),
+				SessionCookieName:     new("mycookie"),
+				SessionCookieSecure:   new(true),
+				SessionCookiePath:     new("/foo"),
+				SessionCookieDomain:   new("example.com"),
+				SessionCookieSameSite: new("Strict"),
+				SessionCookieMaxAge:   new(3600),
+				BackendProtocol:       new("HTTPS"),
+				CORSExposeHeaders:     new([]string{"foo", "bar"}),
 			},
 		},
 		{
@@ -48,7 +47,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/ssl-passthrough": "false",
 			},
 			expected: ingressConfig{
-				SSLPassthrough: ptr.To(false),
+				SSLPassthrough: new(false),
 			},
 		},
 		{

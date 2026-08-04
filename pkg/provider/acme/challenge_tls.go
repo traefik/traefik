@@ -1,12 +1,13 @@
 package acme
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"sync"
 	"time"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
@@ -37,7 +38,7 @@ func NewChallengeTLSALPN() *ChallengeTLSALPN {
 }
 
 // Present presents a challenge to obtain new ACME certificate.
-func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
+func (c *ChallengeTLSALPN) Present(ctx context.Context, domain, _, keyAuth string) error {
 	logger := log.With().Str(logs.ProviderName, providerNameALPN).Logger()
 	logger.Debug().Msgf("TLS Challenge Present temp certificate for %s", domain)
 
@@ -71,7 +72,7 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 		c.cleanChan(string(certPEMBlock))
 		c.muChans.Unlock()
 
-		err = c.CleanUp(domain, "", keyAuth)
+		err = c.CleanUp(ctx, domain, "", keyAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to clean up TLS challenge")
 		}
@@ -84,7 +85,7 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 }
 
 // CleanUp cleans the challenges when certificate is obtained.
-func (c *ChallengeTLSALPN) CleanUp(domain, _, keyAuth string) error {
+func (c *ChallengeTLSALPN) CleanUp(ctx context.Context, domain, _, keyAuth string) error {
 	log.Debug().Str(logs.ProviderName, providerNameALPN).
 		Msgf("TLS Challenge CleanUp temp certificate for %s", domain)
 

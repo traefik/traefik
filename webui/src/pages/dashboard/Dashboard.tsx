@@ -1,4 +1,4 @@
-import { Card, CSS, Flex, Grid, H2, Text } from '@traefiklabs/faency'
+import { Card, CSS, Flex, Grid, H2, Text } from '@traefik-labs/faency'
 import { ReactNode, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import useSWR from 'swr'

@@ -35,7 +35,7 @@ spec:
 | <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | List of entrypoints names.  | | No |
 | <a id="opt-routes" href="#opt-routes" title="#opt-routes">` routes `</a> | List of routes.  | | Yes |
 | <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].services`</a> | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. See [here](#externalname-service) for `ExternalName Service` setup. | | No |
-| <a id="opt-servicesn-name" href="#opt-servicesn-name" title="#opt-servicesn-name">`services[n].name`</a> | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). |  | Yes |
+| <a id="opt-routesn-servicesn-name" href="#opt-routesn-servicesn-name" title="#opt-routesn-servicesn-name">`routes[n].services[n].name`</a> | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). |  | Yes |
 | <a id="opt-routesn-servicesn-port" href="#opt-routesn-servicesn-port" title="#opt-routesn-servicesn-port">`routes[n].services[n].port`</a> | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.|  | Yes |
 | <a id="opt-routesn-servicesn-weight" href="#opt-routesn-servicesn-weight" title="#opt-routesn-servicesn-weight">`routes[n].services[n].weight`</a> | Defines the weight to apply to the server load balancing. | 1 | No |
 | <a id="opt-routesn-servicesn-nativeLB" href="#opt-routesn-servicesn-nativeLB" title="#opt-routesn-servicesn-nativeLB">`routes[n].services[n].nativeLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
@@ -63,9 +63,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
       entryPoints:
         - foo
       routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
+      - services:
         - name: external-svc
           port: 80
     ```
@@ -95,9 +93,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
       entryPoints:
         - foo
       routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
+      - services:
         - name: external-svc
     ```
 
@@ -128,9 +124,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
       entryPoints:
         - foo
       routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
+      - services:
         - name: external-svc
           port: 80
     ```

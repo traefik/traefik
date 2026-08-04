@@ -1,4 +1,4 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'

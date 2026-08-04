@@ -12,8 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-acme/lego/v4/challenge/dns01"
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/dns01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"

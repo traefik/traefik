@@ -9,6 +9,7 @@
 		],
 		"name": "test@myprovider",
 		"provider": "myprovider",
+		"priorityStr": "0",
 		"rule": "Host(`fii.bar.other`)",
 		"service": "fii-service@myprovider",
 		"status": "enabled",

@@ -59,7 +59,7 @@ labels:
 {
   //...
   "Tags": [
-    "traefik.tcp.routers.my-tls-router.tls=true"
+    "traefik.tcp.routers.my-tls-router.tls=true",
     "traefik.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)",
     "traefik.tcp.routers.my-tls-router.service=my-tcp-service",
     "traefik.tcp.routers.my-tls-router.tls.passthrough=true",

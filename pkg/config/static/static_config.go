@@ -3,15 +3,15 @@ package static
 import (
 	"errors"
 	"fmt"
-	"path"
+	"log/slog"
+	"regexp"
 	"strings"
 	"time"
 
-	legolog "github.com/go-acme/lego/v4/log"
-	"github.com/rs/zerolog"
+	legolog "github.com/go-acme/lego/v5/log"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -56,6 +56,9 @@ const (
 	// before releasing all resources related to that session.
 	DefaultUDPTimeout = 3 * time.Second
 )
+
+// Allowed characters in URL following RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986#section-2)
+var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.:~-]*$`)
 
 // Configuration is the static configuration.
 type Configuration struct {
@@ -464,8 +467,8 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
-	if c.API != nil && !path.IsAbs(c.API.BasePath) {
-		return errors.New("API basePath must be a valid absolute path")
+	if c.API != nil && !validBasePath.MatchString(c.API.BasePath) {
+		return errors.New("API basePath must be a valid absolute URL path")
 	}
 
 	if c.OCSP != nil {
@@ -490,8 +493,13 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
+	legolog.SetDefault(
+		slog.New(
+			slogzerolog.Option{Logger: &log.Logger}.
+				NewZerologHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

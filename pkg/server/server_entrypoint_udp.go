@@ -51,8 +51,6 @@ func (eps UDPEntryPoints) Stop() {
 
 	for epn, ep := range eps {
 		wg.Go(func() {
-			defer wg.Done()
-
 			logger := log.With().Str(logs.EntryPointName, epn).Logger()
 			ep.Shutdown(logger.WithContext(context.Background()))
 

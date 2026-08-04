@@ -161,11 +161,16 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 			continue
 		}
 
+		rule := "HostRegexp(`^.+$`)"
+		if ep.AllowACMEByPass {
+			rule = "HostRegexp(`^.+$`) && !PathPrefix(`/.well-known/acme-challenge/`)"
+		}
+
 		rtName := provider.Normalize(name + "-to-" + def.EntryPoint.To)
 		mdName := "redirect-" + rtName
 
 		rt := &dynamic.Router{
-			Rule: "HostRegexp(`^.+$`)",
+			Rule: rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
 			EntryPoints: []string{name},

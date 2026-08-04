@@ -1,4 +1,4 @@
-import { Flex } from '@traefiklabs/faency'
+import { Flex } from '@traefik-labs/faency'
 import { motion } from 'framer-motion'
 import { FiLoader } from 'react-icons/fi'
 

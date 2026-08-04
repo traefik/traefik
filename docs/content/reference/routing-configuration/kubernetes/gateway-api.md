@@ -292,7 +292,7 @@ There are three types of filters:
 
 !!! info "ExtensionRef Filters"
 
-    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-ingress.md). 
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
 
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:

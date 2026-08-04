@@ -339,6 +339,9 @@ spec:
                                     - none
                                     - lax
                                     - strict
+                                    - None
+                                    - Lax
+                                    - Strict
                                     type: string
                                   secure:
                                     description: Secure defines whether the cookie
@@ -1099,6 +1102,14 @@ spec:
                   This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
                   More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/errorpages/
                 properties:
+                  errorRequestHeaders:
+                    description: |-
+                      ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+                      When nil (not set), all original request headers are forwarded.
+                      Set to an empty list to forward no headers, or list specific headers to forward only those.
+                    items:
+                      type: string
+                    type: array
                   query:
                     description: |-
                       Query defines the URL for the error page (hosted by service).
@@ -1307,6 +1318,9 @@ spec:
                                 - none
                                 - lax
                                 - strict
+                                - None
+                                - Lax
+                                - Strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -1403,6 +1417,11 @@ spec:
                       allowed to be forwarded to the authentication server.
                     format: int64
                     type: integer
+                  maxResponseBodySize:
+                    description: MaxResponseBodySize defines the maximum body size
+                      in bytes allowed in the response from the authentication server.
+                    format: int64
+                    type: integer
                   preserveLocationHeader:
                     description: PreserveLocationHeader defines whether to forward
                       the Location header to the client as is or prefix it with the
@@ -1437,8 +1456,10 @@ spec:
                         type: boolean
                     type: object
                   trustForwardHeader:
-                    description: 'TrustForwardHeader defines whether to trust (ie:
-                      forward) all X-Forwarded-* headers.'
+                    description: |-
+                      TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+
+                      Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
                     type: boolean
                 type: object
               grpcWeb:
@@ -3031,6 +3052,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3360,6 +3384,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3509,6 +3536,9 @@ spec:
                             - none
                             - lax
                             - strict
+                            - None
+                            - Lax
+                            - Strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -3743,6 +3773,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -3813,6 +3846,9 @@ spec:
                             - none
                             - lax
                             - strict
+                            - None
+                            - Lax
+                            - Strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only

@@ -139,7 +139,7 @@ func TestMirroringWithBody(t *testing.T) {
 	const numMirrors = 10
 
 	var (
-		countMirror int32
+		countMirror atomic.Int32
 		body        = []byte(`body`)
 	)
 
@@ -161,7 +161,7 @@ func TestMirroringWithBody(t *testing.T) {
 			bb, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, body, bb)
-			atomic.AddInt32(&countMirror, 1)
+			countMirror.Add(1)
 		}), 100)
 		assert.NoError(t, err)
 	}
@@ -172,7 +172,7 @@ func TestMirroringWithBody(t *testing.T) {
 
 	pool.Stop()
 
-	val := atomic.LoadInt32(&countMirror)
+	val := countMirror.Load()
 	assert.Equal(t, numMirrors, int(val))
 }
 
@@ -180,7 +180,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 	const numMirrors = 10
 
 	var (
-		countMirror int32
+		countMirror atomic.Int32
 		body        = []byte(`body`)
 		emptyBody   = []byte(``)
 	)
@@ -203,7 +203,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 			bb, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, emptyBody, bb)
-			atomic.AddInt32(&countMirror, 1)
+			countMirror.Add(1)
 		}), 100)
 		assert.NoError(t, err)
 	}
@@ -214,7 +214,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 
 	pool.Stop()
 
-	val := atomic.LoadInt32(&countMirror)
+	val := countMirror.Load()
 	assert.Equal(t, numMirrors, int(val))
 }
 
@@ -300,6 +300,43 @@ func TestCloneRequest(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
 		assert.Empty(t, rr.body)
+	})
+
+	t.Run("valid empty body with unknown content length", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		assert.NoError(t, err)
+
+		req.Body = io.NopCloser(bytes.NewReader(nil))
+		req.ContentLength = -1
+
+		rr, expectedBytes, err := newReusableRequest(req, true, 20)
+		assert.NoError(t, err)
+		assert.Nil(t, expectedBytes)
+		assert.Empty(t, rr.body)
+
+		cloned := rr.clone(req.Context())
+		body, err := io.ReadAll(cloned.Body)
+		assert.NoError(t, err)
+		assert.Empty(t, body)
+	})
+
+	t.Run("valid body with unknown content length", func(t *testing.T) {
+		bb := []byte(`unknown length body`)
+
+		req, err := http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(bb))
+		assert.NoError(t, err)
+
+		req.ContentLength = -1
+
+		rr, expectedBytes, err := newReusableRequest(req, true, 20)
+		assert.NoError(t, err)
+		assert.Nil(t, expectedBytes)
+		assert.Equal(t, bb, rr.body)
+
+		cloned := rr.clone(req.Context())
+		body, err := io.ReadAll(cloned.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, bb, body)
 	})
 
 	t.Run("no request given", func(t *testing.T) {

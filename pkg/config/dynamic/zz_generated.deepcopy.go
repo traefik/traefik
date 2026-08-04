@@ -321,6 +321,11 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 			(*out)[key] = val
 		}
 	}
+	if in.ErrorRequestHeaders != nil {
+		in, out := &in.ErrorRequestHeaders, &out.ErrorRequestHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -363,6 +368,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = new(ClientTLS)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.TrustForwardHeader != nil {
+		in, out := &in.TrustForwardHeader, &out.TrustForwardHeader
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AuthResponseHeaders != nil {
 		in, out := &in.AuthResponseHeaders, &out.AuthResponseHeaders
 		*out = make([]string, len(*in))
@@ -372,6 +382,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		in, out := &in.AuthRequestHeaders, &out.AuthRequestHeaders
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.MaxResponseBodySize != nil {
+		in, out := &in.MaxResponseBodySize, &out.MaxResponseBodySize
+		*out = new(int64)
+		**out = **in
 	}
 	if in.AddAuthCookiesToResponse != nil {
 		in, out := &in.AddAuthCookiesToResponse, &out.AddAuthCookiesToResponse
@@ -638,6 +653,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AccessControlMaxAge != nil {
+		in, out := &in.AccessControlMaxAge, &out.AccessControlMaxAge
+		*out = new(int64)
+		**out = **in
+	}
 	if in.AllowedHosts != nil {
 		in, out := &in.AllowedHosts, &out.AllowedHosts
 		*out = make([]string, len(*in))
@@ -654,6 +674,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		for key, val := range *in {
 			(*out)[key] = val
 		}
+	}
+	if in.STSSeconds != nil {
+		in, out := &in.STSSeconds, &out.STSSeconds
+		*out = new(int64)
+		**out = **in
 	}
 	if in.FeaturePolicy != nil {
 		in, out := &in.FeaturePolicy, &out.FeaturePolicy

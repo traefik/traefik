@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -491,7 +491,7 @@ func Test_addTCPRouteV2(t *testing.T) {
 				remoteAddr: fakeAddr{addr: addr},
 			}
 
-			connData, err := NewConnData(test.serverName, conn, test.protos)
+			connData, err := NewConnData(test.serverName, conn.RemoteAddr(), test.protos)
 			require.NoError(t, err)
 
 			matchingHandler, _ := router.Match(connData)

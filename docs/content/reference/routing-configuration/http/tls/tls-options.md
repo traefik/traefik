@@ -106,7 +106,7 @@ tls:
 
 ### Curve Preferences
 
-This option allows to set the preferred elliptic curves.
+This option allows setting the preferred elliptic curves.
 
 The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
 
@@ -158,7 +158,7 @@ tls:
 
 _Optional, Default="h2, http/1.1, acme-tls/1"_
 
-This option allows to specify the list of supported application level protocols for the TLS handshake,
+This option allows specifying the list of supported application level protocols for the TLS handshake,
 in order of preference.
 If the client supports ALPN, the selected protocol will be one from this list, 
 and the connection will fail if there is no mutually supported protocol.
@@ -231,8 +231,8 @@ _Optional, Default="false"_
 
 When set to true, Traefik disables the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.
 
-```yaml tab="File (YAML)"
-# Dynamic configuration
+```yaml tab="Structured (YAML)"
+# routing configuration
 
 tls:
   options:
@@ -240,8 +240,8 @@ tls:
       disableSessionTickets: true
 ```
 
-```toml tab="File (TOML)"
-# Dynamic configuration
+```toml tab="Structured (TOML)"
+# routing configuration
 
 [tls.options]
   [tls.options.default]

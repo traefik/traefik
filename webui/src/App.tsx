@@ -1,4 +1,4 @@
-import { globalCss, Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
+import { globalCss, Box, darkTheme, FaencyProvider, lightTheme } from '@traefik-labs/faency'
 import { Suspense, useContext, useEffect } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import { HashRouter, Navigate, Route, Routes as RouterRoutes, useLocation } from 'react-router-dom'

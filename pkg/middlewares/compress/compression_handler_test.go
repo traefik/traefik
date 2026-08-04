@@ -374,25 +374,18 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		desc           string
 		cfg            Config
 		algo           string
-		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
-			desc: "brotli",
-			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo: brotliName,
-			readerBuilder: func(reader io.Reader) (io.Reader, error) {
-				return brotli.NewReader(reader), nil
-			},
+			desc:           "brotli",
+			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo:           brotliName,
 			acceptEncoding: "br",
 		},
 		{
-			desc: "zstd",
-			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo: zstdName,
-			readerBuilder: func(reader io.Reader) (io.Reader, error) {
-				return zstd.NewReader(reader)
-			},
+			desc:           "zstd",
+			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo:           zstdName,
 			acceptEncoding: "zstd",
 		},
 	}
@@ -423,13 +416,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Empty(t, res.Header.Get(contentEncoding))
-
-			reader, err := test.readerBuilder(res.Body)
-			require.NoError(t, err)
-
-			got, err := io.ReadAll(reader)
-			require.NoError(t, err)
-			assert.Empty(t, got)
+			assert.Equal(t, http.NoBody, res.Body)
 		})
 	}
 }

@@ -55,6 +55,7 @@ Below is the list of the currently supported providers in Traefik.
 | <a id="opt-Docker-Swarm" href="#opt-Docker-Swarm" title="#opt-Docker-Swarm">[Docker Swarm](./swarm.md)</a> | Orchestrator | Label                | `swarm`             |
 | <a id="opt-Kubernetes-IngressRoute" href="#opt-Kubernetes-IngressRoute" title="#opt-Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
 | <a id="opt-Kubernetes-Ingress" href="#opt-Kubernetes-Ingress" title="#opt-Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
+| <a id="opt-Kubernetes-Ingress-NGINX" href="#opt-Kubernetes-Ingress-NGINX" title="#opt-Kubernetes-Ingress-NGINX">[Kubernetes Ingress NGINX](./kubernetes/kubernetes-ingress-nginx.md)</a> | Orchestrator | Ingress-NGINX              | `kubernetesIngressNGINX`        |
 | <a id="opt-Kubernetes-Gateway-API" href="#opt-Kubernetes-Gateway-API" title="#opt-Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
 | <a id="opt-Consul-Catalog" href="#opt-Consul-Catalog" title="#opt-Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
 | <a id="opt-Nomad" href="#opt-Nomad" title="#opt-Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
@@ -133,31 +134,36 @@ metadata:
 spec:
 ```
 
+## Restrict the Scope of Service Discovery
+
 By default, Traefik creates routes for all detected containers.
 
 If you want to limit the scope of the Traefik service discovery,
 i.e. disallow route creation for some containers,
 you can do so in two different ways:
 
-- the generic configuration option `exposedByDefault`,
-- a finer granularity mechanism based on constraints.
+1. With [Consul Catalog](./hashicorp/consul-catalog.md#opt-providers-consulCatalog-exposedByDefault),
+ [Docker](./docker.md#opt-providers-docker-exposedByDefault),
+ [ECS](./others/ecs.md#opt-providers-ecs-exposedByDefault),
+ [Nomad](./hashicorp/nomad.md#opt-providers-nomad-exposedByDefault) and
+ [Swarm](./swarm.md#opt-providers-swarm-exposedByDefault)
+ providers, you can set `exposedByDefault` to `false` and add a label `traefik.enable=true`
+ on containers you want to expose
 
-### `exposedByDefault` and `traefik.enable`
+2. Use a finer-grained mechanism based on label selector or constraints.
 
-List of providers that support these features:
+!!! info "The following providers support constraints"
 
-- [Docker](./docker.md#configuration-options)
-- [ECS](./others/ecs.md#configuration-options)
-- [Consul Catalog](./hashicorp/consul-catalog.md#configuration-options)
-- [Nomad](./hashicorp/nomad.md#configuration-options)
+    - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
+    - [Docker](./docker.md#constraints)
+    - [ECS](./others/ecs.md#constraints)
+    - [Nomad](./hashicorp/nomad.md#constraints)
+    - [Swarm](./swarm.md#constraints)
 
-### Constraints
+!!! info "The following providers support label selectors"
 
-List of providers that support constraints:
-
-- [Docker](./docker.md#constraints)
-- [ECS](./others/ecs.md#constraints)
-- [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
-- [Nomad](./hashicorp/nomad.md#constraints)
+    - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelselector)
+    - [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-labelselector)
+    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}

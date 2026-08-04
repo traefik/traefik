@@ -56,6 +56,7 @@ type Provider struct {
 	Namespaces                   []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	AllowCrossNamespace          bool                `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	AllowExternalNameServices    bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	CrossProviderNamespaces      []string            `description:"List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	LabelSelector                string              `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass                 string              `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration             ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
@@ -90,6 +91,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	if p.AllowExternalNameServices {
 		logger.Info().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+	}
+
+	if p.CrossProviderNamespaces != nil {
+		logger.Warn().Msgf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -266,16 +271,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
 			continue
 		}
 
-		if errorPage != nil && errorPageService != nil {
-			serviceName := id + "-errorpage-service"
-			errorPage.Service = serviceName
-			conf.HTTP.Services[serviceName] = errorPageService
+		if errorPage != nil {
+			if errorPageService != nil {
+				serviceName := id + "-errorpage-service"
+				errorPage.Service = serviceName
+				conf.HTTP.Services[serviceName] = errorPageService
+			} else {
+				errorPage.Service = errorPageName
+			}
 		}
 
 		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
@@ -302,13 +311,19 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		chain, err := p.createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading chain middleware")
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
 			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
 			ReplacePath:       middleware.Spec.ReplacePath,
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
-			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			Chain:             chain,
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			IPAllowList:       middleware.Spec.IPAllowList,
 			Headers:           middleware.Spec.Headers,
@@ -346,6 +361,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
 	}
 
 	for _, service := range client.GetTraefikServices() {
@@ -598,15 +614,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
-		return nil, nil, nil
-	}
-
-	errorPageMiddleware := &dynamic.ErrorPage{
-		Status:         errorPage.Status,
-		StatusRewrites: errorPage.StatusRewrites,
-		Query:          errorPage.Query,
+		return "", nil, nil, nil
 	}
 
 	cb := configBuilder{
@@ -614,14 +624,40 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
 	}
 
-	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, err
 	}
 
-	return errorPageMiddleware, balancerServerHTTP, nil
+	return balancerName, &dynamic.ErrorPage{
+		Status:              errorPage.Status,
+		StatusRewrites:      errorPage.StatusRewrites,
+		Query:               errorPage.Query,
+		ErrorRequestHeaders: errorPage.ErrorRequestHeaders,
+	}, balancerServerHTTP, nil
+}
+
+func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace string, chain *traefikv1alpha1.Chain) (*dynamic.Chain, error) {
+	if chain == nil {
+		return nil, nil
+	}
+
+	var mds []string
+	for _, mi := range chain.Middlewares {
+		ctxMid := log.Ctx(ctx).With().Str("middlewareRef", mi.Namespace+"/"+mi.Name).Logger().WithContext(ctx)
+
+		middlewareRef, err := resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
+		}
+
+		mds = append(mds, middlewareRef)
+	}
+
+	return &dynamic.Chain{Middlewares: mds}, nil
 }
 
 // getServicePort always returns a valid port, an error otherwise.
@@ -967,6 +1003,10 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 	}
 	forwardAuth.SetDefaults()
 
+	if auth.MaxResponseBodySize != nil {
+		forwardAuth.MaxResponseBodySize = auth.MaxResponseBodySize
+	}
+
 	if auth.MaxBodySize != nil {
 		forwardAuth.MaxBodySize = auth.MaxBodySize
 	}
@@ -1188,30 +1228,6 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	}
 
 	return credentials, nil
-}
-
-func createChainMiddleware(ctx context.Context, namespace string, chain *traefikv1alpha1.Chain) *dynamic.Chain {
-	if chain == nil {
-		return nil
-	}
-
-	var mds []string
-	for _, mi := range chain.Middlewares {
-		if strings.Contains(mi.Name, providerNamespaceSeparator) {
-			if len(mi.Namespace) > 0 {
-				log.Ctx(ctx).Warn().Msgf("namespace %q is ignored in cross-provider context", mi.Namespace)
-			}
-			mds = append(mds, mi.Name)
-			continue
-		}
-
-		ns := mi.Namespace
-		if len(ns) == 0 {
-			ns = namespace
-		}
-		mds = append(mds, makeID(ns, mi.Name))
-	}
-	return &dynamic.Chain{Middlewares: mds}
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
@@ -1540,4 +1556,40 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace string) bool {
 	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
 	return allowCrossNamespace || parentNamespace == namespace
+}
+
+// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare direct references to Traefik resources.
+// A nil allowList means references are unrestricted, and an empty allowList disables them entirely.
+func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool {
+	if allowList == nil {
+		return true
+	}
+
+	return slices.Contains(allowList, namespace)
+}
+
+func resolveReference(ctx context.Context, parentNs, ns, name string, crossProviderNamespaces []string, allowCrossNamespace bool) (string, error) {
+	if strings.Contains(name, providerNamespaceSeparator) {
+		if !allowCrossNamespace && strings.HasSuffix(name, providerNamespaceSeparator+providerName) {
+			return "", errors.New("when allowCrossNamespace is disabled, @kubernetescrd references are disallowed")
+		}
+
+		if !isCrossProviderNamespaceAllowed(crossProviderNamespaces, parentNs) {
+			return "", fmt.Errorf("namespace %q is not in crossProviderNamespaces", parentNs)
+		}
+
+		if ns != "" {
+			log.Ctx(ctx).Warn().Msgf("Namespace %q is ignored in cross-provider context", ns)
+		}
+
+		return name, nil
+	}
+
+	ns = namespaceOrParentNamespace(ns, parentNs)
+
+	if !isNamespaceAllowed(allowCrossNamespace, parentNs, ns) {
+		return "", errors.New("allowCrossNamespace is disabled, cross-namespace are disallowed")
+	}
+
+	return provider.Normalize(ns + "-" + name), nil
 }

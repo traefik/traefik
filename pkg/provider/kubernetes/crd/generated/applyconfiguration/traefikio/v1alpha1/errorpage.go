@@ -29,10 +29,11 @@ package v1alpha1
 // ErrorPageApplyConfiguration represents a declarative configuration of the ErrorPage type for use
 // with apply.
 type ErrorPageApplyConfiguration struct {
-	Status         []string                   `json:"status,omitempty"`
-	StatusRewrites map[string]int             `json:"statusRewrites,omitempty"`
-	Service        *ServiceApplyConfiguration `json:"service,omitempty"`
-	Query          *string                    `json:"query,omitempty"`
+	Status              []string                   `json:"status,omitempty"`
+	StatusRewrites      map[string]int             `json:"statusRewrites,omitempty"`
+	Service             *ServiceApplyConfiguration `json:"service,omitempty"`
+	Query               *string                    `json:"query,omitempty"`
+	ErrorRequestHeaders []string                   `json:"errorRequestHeaders,omitempty"`
 }
 
 // ErrorPageApplyConfiguration constructs a declarative configuration of the ErrorPage type for use with
@@ -78,5 +79,15 @@ func (b *ErrorPageApplyConfiguration) WithService(value *ServiceApplyConfigurati
 // If called multiple times, the Query field is set to the value of the last call.
 func (b *ErrorPageApplyConfiguration) WithQuery(value string) *ErrorPageApplyConfiguration {
 	b.Query = &value
+	return b
+}
+
+// WithErrorRequestHeaders adds the given value to the ErrorRequestHeaders field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ErrorRequestHeaders field.
+func (b *ErrorPageApplyConfiguration) WithErrorRequestHeaders(values ...string) *ErrorPageApplyConfiguration {
+	for i := range values {
+		b.ErrorRequestHeaders = append(b.ErrorRequestHeaders, values[i])
+	}
 	return b
 }

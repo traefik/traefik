@@ -24,7 +24,7 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 **Best Practices:**
 
 - Use IngressClass to specify which Ingresses should be handled by this provider
-- Configure `watchNamespace` to limit discovery to specific namespaces
+- Configure `watchNamespace` to limit discovery to a single namespace
 - Use `watchNamespaceSelector` to target Ingresses based on namespace labels
 
 ## Routing Configuration
@@ -252,6 +252,15 @@ This provider watches for incoming Ingress events and automatically translates N
 This section lists all known NGINX Ingress annotations.
 The following annotations are organized by category for easier navigation.
 
+### Coming Soon: More Annotations in Active Development
+
+ Several annotations currently listed as unsupported are actively being implemented and will become available in upcoming release.
+
+!!! tip "Preview upcoming annotation support"
+    You can follow the progress and explore annotations that are already available in the next version of Traefik by visiting the **[experimental documentation (master branch)](https://doc.traefik.io/traefik/master/reference/routing-configuration/kubernetes/ingress-nginx/)**.
+
+    The experimental page reflects the state of the `master` branch and may include annotations not yet available in the current stable release. Features shown there are subject to change before the final release.
+
 ### Authentication
 
 | Annotation                                            | Limitations / Notes                                                                        |
@@ -261,7 +270,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioauth-secret-type" href="#opt-nginx-ingress-kubernetes-ioauth-secret-type" title="#opt-nginx-ingress-kubernetes-ioauth-secret-type">`nginx.ingress.kubernetes.io/auth-secret-type`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-realm" href="#opt-nginx-ingress-kubernetes-ioauth-realm" title="#opt-nginx-ingress-kubernetes-ioauth-realm">`nginx.ingress.kubernetes.io/auth-realm`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-url" href="#opt-nginx-ingress-kubernetes-ioauth-url" title="#opt-nginx-ingress-kubernetes-ioauth-url">`nginx.ingress.kubernetes.io/auth-url`</a> | Only URL and response headers copy supported. Forward auth behaves differently than NGINX. |
-| <a id="opt-nginx-ingress-kubernetes-ioauth-method" href="#opt-nginx-ingress-kubernetes-ioauth-method" title="#opt-nginx-ingress-kubernetes-ioauth-method">`nginx.ingress.kubernetes.io/auth-method`</a> |                                                                                            |
+| <a id="opt-nginx-ingress-kubernetes-ioauth-method" href="#opt-nginx-ingress-kubernetes-ioauth-method" title="#opt-nginx-ingress-kubernetes-ioauth-method">`nginx.ingress.kubernetes.io/auth-method`</a> | Not implemented; silently ignored.                                                         |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-response-headers" href="#opt-nginx-ingress-kubernetes-ioauth-response-headers" title="#opt-nginx-ingress-kubernetes-ioauth-response-headers">`nginx.ingress.kubernetes.io/auth-response-headers`</a> |                                                                                            |
 
 ### SSL/TLS
@@ -281,7 +290,7 @@ The following annotations are organized by category for easier navigation.
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-ioaffinity" href="#opt-nginx-ingress-kubernetes-ioaffinity" title="#opt-nginx-ingress-kubernetes-ioaffinity">`nginx.ingress.kubernetes.io/affinity`</a> |                                                                                            |
-| <a id="opt-nginx-ingress-kubernetes-ioaffinity-mode" href="#opt-nginx-ingress-kubernetes-ioaffinity-mode" title="#opt-nginx-ingress-kubernetes-ioaffinity-mode">`nginx.ingress.kubernetes.io/affinity-mode`</a> | Only persistent mode supported; balanced/canary not supported.                             |
+| <a id="opt-nginx-ingress-kubernetes-ioaffinity-mode" href="#opt-nginx-ingress-kubernetes-ioaffinity-mode" title="#opt-nginx-ingress-kubernetes-ioaffinity-mode">`nginx.ingress.kubernetes.io/affinity-mode`</a> | Not implemented; silently ignored.                                                         |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-name" href="#opt-nginx-ingress-kubernetes-iosession-cookie-name" title="#opt-nginx-ingress-kubernetes-iosession-cookie-name">`nginx.ingress.kubernetes.io/session-cookie-name`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-secure" href="#opt-nginx-ingress-kubernetes-iosession-cookie-secure" title="#opt-nginx-ingress-kubernetes-iosession-cookie-secure">`nginx.ingress.kubernetes.io/session-cookie-secure`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-path" href="#opt-nginx-ingress-kubernetes-iosession-cookie-path" title="#opt-nginx-ingress-kubernetes-iosession-cookie-path">`nginx.ingress.kubernetes.io/session-cookie-path`</a> |                                                                                            |
@@ -293,7 +302,7 @@ The following annotations are organized by category for easier navigation.
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioload-balance" href="#opt-nginx-ingress-kubernetes-ioload-balance" title="#opt-nginx-ingress-kubernetes-ioload-balance">`nginx.ingress.kubernetes.io/load-balance`</a> | Only round_robin supported; ewma and IP hash not supported.                                |
+| <a id="opt-nginx-ingress-kubernetes-ioload-balance" href="#opt-nginx-ingress-kubernetes-ioload-balance" title="#opt-nginx-ingress-kubernetes-ioload-balance">`nginx.ingress.kubernetes.io/load-balance`</a> | Not implemented; silently ignored.                                                         |
 | <a id="opt-nginx-ingress-kubernetes-iobackend-protocol" href="#opt-nginx-ingress-kubernetes-iobackend-protocol" title="#opt-nginx-ingress-kubernetes-iobackend-protocol">`nginx.ingress.kubernetes.io/backend-protocol`</a> | FCGI and AUTO_HTTP not supported.                                                          |
 | <a id="opt-nginx-ingress-kubernetes-ioservice-upstream" href="#opt-nginx-ingress-kubernetes-ioservice-upstream" title="#opt-nginx-ingress-kubernetes-ioservice-upstream">`nginx.ingress.kubernetes.io/service-upstream`</a> |                                                                                            |
 

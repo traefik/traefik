@@ -123,7 +123,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	connCount := pointer[int32](0)
+	connCount := new(int32(0))
 	srv.Config.ConnState = func(conn net.Conn, state http.ConnState) {
 		if state == http.StateNew {
 			atomic.AddInt32(connCount, 1)

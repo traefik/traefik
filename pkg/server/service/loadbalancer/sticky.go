@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -144,7 +145,7 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 }
 
 func convertSameSite(sameSite string) http.SameSite {
-	switch sameSite {
+	switch strings.ToLower(sameSite) {
 	case "none":
 		return http.SameSiteNoneMode
 	case "lax":
@@ -165,7 +166,7 @@ func fnvHash(input string) string {
 	return strconv.FormatUint(hasher.Sum64(), 16)
 }
 
-// sha256 returns the SHA-256 hash, truncated to 16 characters, of the input string.
+// sha256Hash returns the SHA-256 hash, truncated to 16 characters, of the input string.
 func sha256Hash(input string) string {
 	hash := sha256.New()
 	// We purposely ignore the error because the implementation always returns nil.
