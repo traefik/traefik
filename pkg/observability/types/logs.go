@@ -66,7 +66,15 @@ type AccessLog struct {
 	AddInternals  bool              `description:"Enables access log for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
 	DualOutput    bool              `description:"Enables access log output alongside OTLP. By default, this output is disabled when OTLP is configured." json:"dualOutput,omitempty" toml:"dualOutput,omitempty" yaml:"dualOutput,omitempty" export:"true"`
 
+	Anonymization *AccessLogAnonymization `description:"Access log client IP anonymization settings." json:"anonymization,omitempty" toml:"anonymization,omitempty" yaml:"anonymization,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
 	OTLP *OTelLog `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// AccessLogAnonymization holds the client IP truncation settings for access logs.
+type AccessLogAnonymization struct {
+	IPv4Subnet int `description:"Truncate client IPv4 addresses to this prefix length (1-32); 0 disables truncation." json:"ipv4Subnet,omitempty" toml:"ipv4Subnet,omitempty" yaml:"ipv4Subnet,omitempty" export:"true"`
+	IPv6Subnet int `description:"Truncate client IPv6 addresses to this prefix length (1-128); 0 disables truncation." json:"ipv6Subnet,omitempty" toml:"ipv6Subnet,omitempty" yaml:"ipv6Subnet,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

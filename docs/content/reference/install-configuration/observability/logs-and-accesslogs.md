@@ -174,6 +174,11 @@ accessLog:
     queryParameters:
       # Drop all query parameters
       defaultMode: drop
+  anonymization:
+    # Truncate client IPv4 addresses to their /24 network
+    ipv4Subnet: 24
+    # Truncate client IPv6 addresses to their /48 network
+    ipv6Subnet: 48
 ```
 
 ```toml tab="File (TOML)"
@@ -200,6 +205,10 @@ accessLog:
 
     [accessLog.fields.queryParameters]
       defaultMode = "drop"
+
+  [accessLog.anonymization]
+    ipv4Subnet = 24
+    ipv6Subnet = 48
 ```
 
 ```sh tab="CLI"
@@ -215,6 +224,8 @@ accessLog:
 --accesslog.fields.headers.names.User-Agent=redact
 --accesslog.fields.headers.names.Authorization=drop
 --accesslog.fields.queryparameters.defaultmode=drop
+--accesslog.anonymization.ipv4subnet=24
+--accesslog.anonymization.ipv6subnet=48
 ```
 
 ### Configuration Options
@@ -236,6 +247,8 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-fields-headers-defaultMode" href="#opt-accesslog-fields-headers-defaultMode" title="#opt-accesslog-fields-headers-defaultMode">`accesslog.fields.headers.defaultMode`</a> | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
 | <a id="opt-accesslog-fields-headers-names" href="#opt-accesslog-fields-headers-names" title="#opt-accesslog-fields-headers-names">`accesslog.fields.headers.names`</a> | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
 | <a id="opt-accesslog-fields-queryParameters-defaultMode" href="#opt-accesslog-fields-queryParameters-defaultMode" title="#opt-accesslog-fields-queryParameters-defaultMode">`accesslog.fields.queryParameters.defaultMode`</a> | Mode to apply by default to the access logs query parameters (`keep` or `drop`) | keep | No      |
+| <a id="opt-accesslog-anonymization-ipv4Subnet" href="#opt-accesslog-anonymization-ipv4Subnet" title="#opt-accesslog-anonymization-ipv4Subnet">`accesslog.anonymization.ipv4Subnet`</a> | Truncate client IPv4 addresses in the access logs to the given prefix length (`1`-`32`).<br />`0` disables IPv4 truncation. Applies to the `ClientAddr` field and to the `ClientHost` field when it is derived from the connection remote address; the `X-Forwarded-For` value is logged in full. | 0 | No      |
+| <a id="opt-accesslog-anonymization-ipv6Subnet" href="#opt-accesslog-anonymization-ipv6Subnet" title="#opt-accesslog-anonymization-ipv6Subnet">`accesslog.anonymization.ipv6Subnet`</a> | Truncate client IPv6 addresses in the access logs to the given prefix length (`1`-`128`).<br />`0` disables IPv6 truncation. Applies to the `ClientAddr` field and to the `ClientHost` field when it is derived from the connection remote address; the `X-Forwarded-For` value is logged in full. | 0 | No      |
 
 ### OpenTelemetry
 
