@@ -44,9 +44,14 @@ func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader,
 		return nil, fmt.Errorf("getting RoundTripper: %w", err)
 	}
 
+	tlsConfig, err := r.transportManager.GetTLSConfig(cfgName)
+	if err != nil {
+		return nil, fmt.Errorf("getting TLS config: %w", err)
+	}
+
 	// Wrapping the roundTripper with the Tracing roundTripper,
 	// to create, if necessary, the reverseProxy client span and the semConv client metric.
 	roundTripper = newObservabilityRoundTripper(r.semConvMetricsRegistry, roundTripper)
 
-	return buildSingleHostProxy(targetURL, passHostHeader, preservePath, flushInterval, roundTripper, r.bufferPool), nil
+	return buildSingleHostProxy(targetURL, passHostHeader, preservePath, flushInterval, roundTripper, r.bufferPool, tlsConfig), nil
 }

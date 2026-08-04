@@ -51,7 +51,7 @@ func ShouldNotAppendXFF(ctx context.Context) bool {
 	return notAppendXFF
 }
 
-func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool, tlsConfig *tls.Config) http.Handler {
 	proxy := &httputil.ReverseProxy{
 		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
@@ -61,7 +61,11 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorHandler:  ErrorHandler,
 	}
 
-	return newConnectHandler(proxy)
+	// WebTransport sessions must be intercepted before the regular CONNECT
+	// handler so that the original http3.ResponseWriter (which implements the
+	// http3.Settingser / http3.HTTPStreamer interfaces required by Upgrade) is
+	// never replaced by a connectResponseWriter wrapper.
+	return newWebTransportProxyHandler(newConnectHandler(proxy), target, tlsConfig)
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {

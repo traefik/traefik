@@ -199,7 +199,7 @@ func newConnectBackend(t *testing.T, accept bool) *connectBackend {
 func serveProxy(t *testing.T, target *url.URL) string {
 	t.Helper()
 
-	proxy := buildSingleHostProxy(target, false, false, 0, http.DefaultTransport, newBufferPool())
+	proxy := buildSingleHostProxy(target, false, false, 0, http.DefaultTransport, newBufferPool(), nil)
 
 	protocols := new(http.Protocols)
 	protocols.SetHTTP1(true)
