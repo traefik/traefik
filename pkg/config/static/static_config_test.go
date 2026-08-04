@@ -274,13 +274,14 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress NGINX provider, no asDefault, traefik entrypoint excluded",
+			desc: "Ingress NGINX provider, no asDefault, all non-TLS non-internal entrypoints included",
 			conf: &Configuration{
 				Providers: &Providers{
 					KubernetesIngressNGINX: &ingressnginx.Provider{},
 				},
 				EntryPoints: EntryPoints{
 					"web":       {Address: ":80"},
+					"admin":     {Address: ":8081"},
 					"traefik":   {Address: ":8080"},
 					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
 				},
@@ -288,11 +289,12 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			expected: &Configuration{
 				Providers: &Providers{
 					KubernetesIngressNGINX: &ingressnginx.Provider{
-						NonTLSEntryPoints: []string{"web"},
+						NonTLSEntryPoints: []string{"admin", "web"},
 					},
 				},
 				EntryPoints: EntryPoints{
 					"web":       {Address: ":80"},
+					"admin":     {Address: ":8081"},
 					"traefik":   {Address: ":8080"},
 					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
 				},
@@ -305,9 +307,10 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					KubernetesIngressNGINX: &ingressnginx.Provider{},
 				},
 				EntryPoints: EntryPoints{
-					"web":     {Address: ":80", AsDefault: true},
-					"admin":   {Address: ":8081"},
-					"traefik": {Address: ":8080"},
+					"web":       {Address: ":80", AsDefault: true},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
 				},
 			},
 			expected: &Configuration{
@@ -317,9 +320,10 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					},
 				},
 				EntryPoints: EntryPoints{
-					"web":     {Address: ":80", AsDefault: true},
-					"admin":   {Address: ":8081"},
-					"traefik": {Address: ":8080"},
+					"web":       {Address: ":80", AsDefault: true},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
 				},
 			},
 		},
@@ -330,6 +334,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			t.Parallel()
 
 			test.conf.SetEffectiveConfiguration()
+
+			// NonTLSEntryPoints is built from a map iteration, so its order isn't deterministic.
+			if p := test.conf.Providers.KubernetesIngressNGINX; p != nil {
+				assert.ElementsMatch(t, test.expected.Providers.KubernetesIngressNGINX.NonTLSEntryPoints, p.NonTLSEntryPoints)
+				p.NonTLSEntryPoints = nil
+				test.expected.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nil
+			}
 
 			assert.Equal(t, test.expected, test.conf)
 		})
