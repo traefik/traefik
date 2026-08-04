@@ -35,7 +35,6 @@ And these are our guiding rules for version support, as of Traefik v3.6:
 
 - **Every `minor`** is supported for 6 months from its GA release date, which means several `minor` versions can be supported at the same time
 - **The last `minor` after releasing a new `major`** is supported for 2 years following the `major` release (starting with v3)
-- **Any `minor` maintenance can be extended** beyond its active support period for security purposes, in which case it receives only critical bug and security fixes
 - **Previous rules are subject to change** and in such cases an announcement will be made publicly, [here](https://traefik.io/blog/traefik-2-1-in-the-wild/) is an example extending v1.x branch support.
 
 !!! note "Versions released before v3.6"
