@@ -329,8 +329,8 @@ func TestHeadRequest(t *testing.T) {
 
 func TestInvalidStatusCode(t *testing.T) {
 	testCases := []struct {
-		desc           string
-		rawStatusLine  string
+		desc          string
+		rawStatusLine string
 	}{
 		{
 			desc:          "status code above 999",
@@ -338,7 +338,7 @@ func TestInvalidStatusCode(t *testing.T) {
 		},
 		{
 			desc:          "status code below 100",
-			rawStatusLine: "HTTP/1.1 0 X",
+			rawStatusLine: "HTTP/1.1 50 X",
 		},
 	}
 
