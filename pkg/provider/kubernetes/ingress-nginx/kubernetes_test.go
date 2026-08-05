@@ -8461,7 +8461,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
+								Options: "9-default-ca-secret-require-and-verify-client-cert",
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0": {
@@ -8555,7 +8555,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-default-ca-secret-RequireAndVerifyClientCert": {
+						"9-default-ca-secret-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -8613,7 +8613,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-default-ca-secret-VerifyClientCertIfGiven",
+								Options: "9-default-ca-secret-verify-client-cert-if-given",
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0": {
@@ -8707,7 +8707,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-default-ca-secret-VerifyClientCertIfGiven": {
+						"9-default-ca-secret-verify-client-cert-if-given": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
@@ -8765,7 +8765,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
+								Options: "9-default-ca-secret-require-and-verify-client-cert",
 							},
 						},
 						"default-protected-ingress-rule-0-path-0": {
@@ -8805,7 +8805,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
+								Options: "9-default-ca-secret-require-and-verify-client-cert",
 							},
 						},
 						"default-same-host-second-ingress-rule-0-path-0": {
@@ -8943,7 +8943,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-default-ca-secret-RequireAndVerifyClientCert": {
+						"9-default-ca-secret-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -11658,7 +11658,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
+								Options: "9-default-ca-secret-require-and-verify-client-cert",
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0": {
@@ -11759,7 +11759,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-default-ca-secret-RequireAndVerifyClientCert": {
+						"9-default-ca-secret-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -17012,7 +17012,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-default-ca-secret-RequestClientCert",
+								Options: "9-default-ca-secret-request-client-cert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -17098,7 +17098,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-default-ca-secret-RequestClientCert": {
+						"9-default-ca-secret-request-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequestClientCert,
