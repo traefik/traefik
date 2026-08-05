@@ -351,7 +351,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
 			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
-			optName := provider.Normalize(strconv.Itoa(len(secretName)) + "-" + secretNamespace + "-" + secretName + "-" + clientAuthTypeKey)
+			optName := provider.Normalize(secretNamespace + "-" + strconv.Itoa(len(secretName)) + "-" + secretName + "-" + clientAuthTypeKey)
 			if cached, exists := tlsOptionCache[optName]; exists {
 				tlsOptionName = optName
 				tlsOption = cached
