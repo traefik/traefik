@@ -11,11 +11,12 @@ import (
 
 func TestURLRewriteHandler(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		config   dynamic.URLRewrite
-		url      string
-		wantURL  string
-		wantHost string
+		desc           string
+		config         dynamic.URLRewrite
+		url            string
+		wantURL        string
+		wantHost       string
+		wantStatusCode int
 	}{
 		{
 			desc: "replace path",
@@ -103,6 +104,34 @@ func TestURLRewriteHandler(t *testing.T) {
 			wantURL:  "http://foo.com/baz/bar",
 			wantHost: "foo.com",
 		},
+		{
+			desc: "dot-segment traversal in the trimmed tail is rejected",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:            "http://foo.com/foo/../admin",
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "dot-segment traversal fused with an encoded slash is rejected",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:            "http://foo.com/foo/..%2Fadmin",
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "encoded slash in the trimmed tail succeeds",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:      "http://foo.com/foo/a%2Fb",
+			wantURL:  "http://foo.com/baz/a/b",
+			wantHost: "foo.com",
+		},
 	}
 
 	for _, test := range testCases {
@@ -116,6 +145,16 @@ func TestURLRewriteHandler(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, test.url, nil)
 			handler.ServeHTTP(recorder, req)
+
+			wantStatusCode := test.wantStatusCode
+			if wantStatusCode == 0 {
+				wantStatusCode = http.StatusOK
+			}
+			assert.Equal(t, wantStatusCode, recorder.Code)
+
+			if wantStatusCode != http.StatusOK {
+				return
+			}
 
 			assert.Equal(t, test.wantURL, req.URL.String())
 			assert.Equal(t, test.wantHost, req.Host)

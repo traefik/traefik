@@ -3,6 +3,7 @@ package urlrewrite
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 
@@ -42,12 +43,31 @@ func (u urlRewrite) GetTracingInformation() (string, string) {
 }
 
 func (u urlRewrite) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), u.name, typeName)
+
 	newPath := req.URL.Path
 	if u.path != nil && u.pathPrefix == nil {
 		newPath = *u.path
 	}
 	if u.path != nil && u.pathPrefix != nil {
-		newPath = path.Join(*u.path, strings.TrimPrefix(req.URL.Path, *u.pathPrefix))
+		tail := strings.TrimPrefix(req.URL.Path, *u.pathPrefix)
+
+		// Here we are sanitizing the tail kept after trimming the prefix,
+		// as path.Join below silently resolves any ".." or "." segments it contains.
+		sanitizedTail := tail
+		if sanitizedTail != "" {
+			sanitizedTail = (&url.URL{Path: sanitizedTail}).JoinPath().Path
+		}
+
+		// Stop here if the normalization of the tail produces a different path,
+		// as it would let the rewritten path escape the configured replacement path.
+		if tail != sanitizedTail {
+			logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to trimmed path: %q", sanitizedTail, tail)
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		newPath = path.Join(*u.path, tail)
 
 		// add the trailing slash if needed, as path.Join removes trailing slashes.
 		if strings.HasSuffix(req.URL.Path, "/") && !strings.HasSuffix(newPath, "/") {
