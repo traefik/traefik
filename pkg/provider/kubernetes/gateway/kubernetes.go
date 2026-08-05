@@ -862,7 +862,7 @@ func (p *Provider) gatewayTCPRouteToTCPConf(ctx context.Context, ep string, list
 		}
 
 		router := dynamic.TCPRouter{
-			Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
+			Rule:        `HostSNI("*")`, // Gateway listener hostname not available in TCP
 			EntryPoints: []string{ep},
 		}
 
@@ -1217,20 +1217,31 @@ func hostRule(hostnames []gatev1alpha2.Hostname) (string, error) {
 
 	var res string
 	if len(hostNames) > 0 {
-		res = "Host(`" + strings.Join(hostNames, "`, `") + "`)"
+		res = "Host(" + quoteAll(hostNames) + ")"
 	}
 
 	if len(hostRegexNames) == 0 {
 		return res, nil
 	}
 
-	hostRegexp := "HostRegexp(`" + strings.Join(hostRegexNames, "`, `") + "`)"
+	hostRegexp := "HostRegexp(" + quoteAll(hostRegexNames) + ")"
 
 	if len(res) > 0 {
 		return "(" + res + " || " + hostRegexp + ")", nil
 	}
 
 	return hostRegexp, nil
+}
+
+// quoteAll quotes each value as a Go string literal and joins them with a comma,
+// so that user-controlled values cannot escape the matcher they are embedded in.
+func quoteAll(values []string) string {
+	quoted := make([]string, 0, len(values))
+	for _, value := range values {
+		quoted = append(quoted, strconv.Quote(value))
+	}
+
+	return strings.Join(quoted, ", ")
 }
 
 func hostSNIRule(hostnames []gatev1alpha2.Hostname) (string, error) {
@@ -1253,12 +1264,12 @@ func hostSNIRule(hostnames []gatev1alpha2.Hostname) (string, error) {
 			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
 		}
 
-		matchers = append(matchers, "`"+h+"`")
+		matchers = append(matchers, strconv.Quote(h))
 		uniqHostnames[hostname] = struct{}{}
 	}
 
 	if len(matchers) == 0 {
-		return "HostSNI(`*`)", nil
+		return `HostSNI("*")`, nil
 	}
 
 	return "HostSNI(" + strings.Join(matchers, ",") + ")", nil
@@ -1279,9 +1290,9 @@ func extractRule(routeRule gatev1alpha2.HTTPRouteRule, hostRule string) (string,
 			// TODO handle other path types
 			switch *match.Path.Type {
 			case gatev1alpha2.PathMatchExact:
-				matchRules = append(matchRules, fmt.Sprintf("Path(`%s`)", *match.Path.Value))
+				matchRules = append(matchRules, fmt.Sprintf("Path(%q)", *match.Path.Value))
 			case gatev1alpha2.PathMatchPathPrefix:
-				matchRules = append(matchRules, fmt.Sprintf("PathPrefix(`%s`)", *match.Path.Value))
+				matchRules = append(matchRules, fmt.Sprintf("PathPrefix(%q)", *match.Path.Value))
 			default:
 				return "", fmt.Errorf("unsupported path match %s", *match.Path.Type)
 			}
@@ -1300,7 +1311,7 @@ func extractRule(routeRule gatev1alpha2.HTTPRouteRule, hostRule string) (string,
 	// path match on "/", which has the effect of matching every
 	// HTTP request.
 	if len(routeRule.Matches) == 0 {
-		matchesRules = append(matchesRules, "PathPrefix(`/`)")
+		matchesRules = append(matchesRules, `PathPrefix("/")`)
 	}
 
 	if hostRule != "" {
@@ -1333,7 +1344,7 @@ func extractHeaderRules(headers []gatev1alpha2.HTTPHeaderMatch) ([]string, error
 
 		switch *header.Type {
 		case gatev1alpha2.HeaderMatchExact:
-			headerRules = append(headerRules, fmt.Sprintf("Headers(`%s`,`%s`)", header.Name, header.Value))
+			headerRules = append(headerRules, fmt.Sprintf("Headers(%q,%q)", header.Name, header.Value))
 		default:
 			return nil, fmt.Errorf("unsupported header match type %s", *header.Type)
 		}
