@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 
@@ -56,6 +57,8 @@ func (r redirect) GetTracingInformation() (string, string) {
 }
 
 func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
+
 	redirectURL := *req.URL
 	redirectURL.Host = req.Host
 
@@ -89,7 +92,24 @@ func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if r.path != nil && r.pathPrefix != nil {
-		redirectURL.Path = path.Join(*r.path, strings.TrimPrefix(req.URL.Path, *r.pathPrefix))
+		tail := strings.TrimPrefix(req.URL.Path, *r.pathPrefix)
+
+		// Here we are sanitizing the tail kept after trimming the prefix,
+		// as path.Join below silently resolves any ".." or "." segments it contains.
+		sanitizedTail := tail
+		if sanitizedTail != "" {
+			sanitizedTail = (&url.URL{Path: sanitizedTail}).JoinPath().Path
+		}
+
+		// Stop here if the normalization of the tail produces a different path,
+		// as it would let the redirect target escape the configured replacement path.
+		if tail != sanitizedTail {
+			logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to trimmed path: %q", sanitizedTail, tail)
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		redirectURL.Path = path.Join(*r.path, tail)
 
 		// add the trailing slash if needed, as path.Join removes trailing slashes.
 		if strings.HasSuffix(req.URL.Path, "/") && !strings.HasSuffix(redirectURL.Path, "/") {

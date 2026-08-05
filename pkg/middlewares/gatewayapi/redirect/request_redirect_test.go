@@ -171,6 +171,34 @@ func TestRequestRedirectHandler(t *testing.T) {
 			wantStatus: http.StatusFound,
 		},
 		{
+			desc: "dot-segment traversal in the trimmed tail is rejected",
+			config: dynamic.RequestRedirect{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:        "http://foo.com:80/foo/../admin",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			desc: "dot-segment traversal fused with an encoded slash is rejected",
+			config: dynamic.RequestRedirect{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:        "http://foo.com:80/foo/..%2Fadmin",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			desc: "encoded slash in the trimmed tail succeeds",
+			config: dynamic.RequestRedirect{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:        "http://foo.com:80/foo/a%2Fb",
+			wantURL:    "http://foo.com:80/baz/a/b",
+			wantStatus: http.StatusFound,
+		},
+		{
 			desc: "simple redirection",
 			config: dynamic.RequestRedirect{
 				Scheme:   new("https"),
