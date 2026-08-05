@@ -300,6 +300,91 @@ func TestPreservePath(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestSanitizeRequestHeaderValue(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		value    string
+		expected string
+	}{
+		{
+			desc:     "carriage return and line feed",
+			value:    "benign\r\nX-Injected: admin",
+			expected: "benign  X-Injected: admin",
+		},
+		{
+			desc:     "carriage return",
+			value:    "before\rafter",
+			expected: "before after",
+		},
+		{
+			desc:     "line feed",
+			value:    "before\nafter",
+			expected: "before after",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			assert.Equal(t, test.expected, sanitizeRequestHeaderValue(test.value))
+		})
+	}
+}
+
+func TestRequestHeaderSanitization(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		values   []string
+		expected []string
+	}{
+		{
+			desc:     "carriage return and line feed",
+			values:   []string{"benign\r\nX-Injected: admin"},
+			expected: []string{"benign  X-Injected: admin"},
+		},
+		{
+			desc:     "carriage return",
+			values:   []string{"before\rafter"},
+			expected: []string{"before after"},
+		},
+		{
+			desc:     "line feed",
+			values:   []string{"before\nafter"},
+			expected: []string{"before after"},
+		},
+		{
+			desc:     "multiple values",
+			values:   []string{"first\r\nX-Injected: admin", "second"},
+			expected: []string{"first  X-Injected: admin", "second"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var receivedValues []string
+			var injectedValue string
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				receivedValues = req.Header.Values("X-Tenant-Note")
+				injectedValue = req.Header.Get("X-Injected")
+			}))
+			t.Cleanup(server.Close)
+
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, true)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			req.Header["X-Tenant-Note"] = test.values
+			res := httptest.NewRecorder()
+
+			proxyHandler.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusOK, res.Code)
+			assert.Equal(t, test.expected, receivedValues)
+			assert.Empty(t, injectedValue)
+		})
+	}
+}
+
 func TestHeadRequest(t *testing.T) {
 	var callCount int
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
