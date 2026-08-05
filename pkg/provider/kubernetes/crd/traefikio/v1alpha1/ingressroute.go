@@ -247,6 +247,7 @@ type IngressRouteRef struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // IngressRoute is the CRD implementation of a Traefik HTTP Router.
 type IngressRoute struct {
@@ -255,7 +256,18 @@ type IngressRoute struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec IngressRouteSpec `json:"spec"`
+	Spec   IngressRouteSpec   `json:"spec"`
+	Status IngressRouteStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// IngressRouteStatus defines the observed state of IngressRoute.
+type IngressRouteStatus struct {
+	// Conditions lists the conditions of the IngressRoute.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

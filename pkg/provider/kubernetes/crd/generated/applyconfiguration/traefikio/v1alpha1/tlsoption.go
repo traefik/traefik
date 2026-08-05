@@ -42,7 +42,8 @@ type TLSOptionApplyConfiguration struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *TLSOptionSpecApplyConfiguration `json:"spec,omitempty"`
+	Spec                             *TLSOptionSpecApplyConfiguration   `json:"spec,omitempty"`
+	Status                           *TLSOptionStatusApplyConfiguration `json:"status,omitempty"`
 }
 
 // TLSOption constructs a declarative configuration of the TLSOption type for use with
@@ -221,6 +222,14 @@ func (b *TLSOptionApplyConfiguration) ensureObjectMetaApplyConfigurationExists()
 // If called multiple times, the Spec field is set to the value of the last call.
 func (b *TLSOptionApplyConfiguration) WithSpec(value *TLSOptionSpecApplyConfiguration) *TLSOptionApplyConfiguration {
 	b.Spec = value
+	return b
+}
+
+// WithStatus sets the Status field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Status field is set to the value of the last call.
+func (b *TLSOptionApplyConfiguration) WithStatus(value *TLSOptionStatusApplyConfiguration) *TLSOptionApplyConfiguration {
+	b.Status = value
 	return b
 }
 

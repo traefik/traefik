@@ -25,7 +25,7 @@ const (
 	httpProtocol  = "http"
 )
 
-func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
+func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores, statuses *statusTracker) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:           map[string]*dynamic.Router{},
 		Middlewares:       map[string]*dynamic.Middleware{},
@@ -44,9 +44,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			continue
 		}
 
+		statuses.visit(ingressRoute.Namespace, ingressRoute.Name)
+
 		err := getTLSHTTP(ctx, ingressRoute, client, tlsConfigs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error configuring TLS")
+			statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 		}
 
 		ingressName := ingressRoute.Name
@@ -67,17 +70,22 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		parentRouterNames, err := resolveParentRouterNames(client, ingressRoute, p.AllowCrossNamespace)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error resolving parent routers")
+			statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 			continue
 		}
 
 		for _, route := range ingressRoute.Spec.Routes {
 			if len(route.Kind) > 0 && route.Kind != "Rule" {
+				err := fmt.Errorf("unsupported match kind: %s", route.Kind)
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
+				statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 				continue
 			}
 
 			if len(route.Match) == 0 {
+				err := errors.New("empty match rule")
 				logger.Error().Msg("Empty match rule")
+				statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 				continue
 			}
 
@@ -86,6 +94,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			mds, err := makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to create middleware keys")
+				statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 				continue
 			}
 
@@ -103,12 +112,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
 				if errBuild != nil {
 					logger.Error().Err(errBuild).Send()
+					statuses.addError(ingressRoute.Namespace, ingressRoute.Name, errBuild)
 					continue
 				}
 			case len(route.Services) == 1:
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
 					logger.Error().Err(err).Send()
+					statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 					continue
 				}
 
@@ -154,6 +165,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
 					if err != nil {
 						logger.Error().Err(err).Msgf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
+						statuses.addError(ingressRoute.Namespace, ingressRoute.Name, err)
 						continue
 					}
 				}

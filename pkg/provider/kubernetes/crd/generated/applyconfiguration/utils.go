@@ -78,14 +78,20 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.IngressRouteRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteSpec"):
 		return &traefikiov1alpha1.IngressRouteSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteStatus"):
+		return &traefikiov1alpha1.IngressRouteStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteTCP"):
 		return &traefikiov1alpha1.IngressRouteTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteTCPSpec"):
 		return &traefikiov1alpha1.IngressRouteTCPSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteTCPStatus"):
+		return &traefikiov1alpha1.IngressRouteTCPStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteUDP"):
 		return &traefikiov1alpha1.IngressRouteUDPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteUDPSpec"):
 		return &traefikiov1alpha1.IngressRouteUDPSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("IngressRouteUDPStatus"):
+		return &traefikiov1alpha1.IngressRouteUDPStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LoadBalancerSpec"):
 		return &traefikiov1alpha1.LoadBalancerSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Middleware"):
@@ -94,10 +100,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.MiddlewareRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareSpec"):
 		return &traefikiov1alpha1.MiddlewareSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareStatus"):
+		return &traefikiov1alpha1.MiddlewareStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCP"):
 		return &traefikiov1alpha1.MiddlewareTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCPSpec"):
 		return &traefikiov1alpha1.MiddlewareTCPSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCPStatus"):
+		return &traefikiov1alpha1.MiddlewareTCPStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Mirroring"):
 		return &traefikiov1alpha1.MirroringApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MirrorService"):
@@ -130,10 +140,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.ServersTransportApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransportSpec"):
 		return &traefikiov1alpha1.ServersTransportSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransportStatus"):
+		return &traefikiov1alpha1.ServersTransportStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransportTCP"):
 		return &traefikiov1alpha1.ServersTransportTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransportTCPSpec"):
 		return &traefikiov1alpha1.ServersTransportTCPSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransportTCPStatus"):
+		return &traefikiov1alpha1.ServersTransportTCPStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Service"):
 		return &traefikiov1alpha1.ServiceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServiceTCP"):
@@ -150,18 +164,24 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.TLSOptionRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSOptionSpec"):
 		return &traefikiov1alpha1.TLSOptionSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TLSOptionStatus"):
+		return &traefikiov1alpha1.TLSOptionStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSStore"):
 		return &traefikiov1alpha1.TLSStoreApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSStoreRef"):
 		return &traefikiov1alpha1.TLSStoreRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSStoreSpec"):
 		return &traefikiov1alpha1.TLSStoreSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TLSStoreStatus"):
+		return &traefikiov1alpha1.TLSStoreStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSTCP"):
 		return &traefikiov1alpha1.TLSTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TraefikService"):
 		return &traefikiov1alpha1.TraefikServiceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TraefikServiceSpec"):
 		return &traefikiov1alpha1.TraefikServiceSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TraefikServiceStatus"):
+		return &traefikiov1alpha1.TraefikServiceStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WeightedRoundRobin"):
 		return &traefikiov1alpha1.WeightedRoundRobinApplyConfiguration{}
 

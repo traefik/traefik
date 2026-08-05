@@ -41,7 +41,8 @@ type IngressRouteUDPApplyConfiguration struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *IngressRouteUDPSpecApplyConfiguration `json:"spec,omitempty"`
+	Spec                             *IngressRouteUDPSpecApplyConfiguration   `json:"spec,omitempty"`
+	Status                           *IngressRouteUDPStatusApplyConfiguration `json:"status,omitempty"`
 }
 
 // IngressRouteUDP constructs a declarative configuration of the IngressRouteUDP type for use with
@@ -220,6 +221,14 @@ func (b *IngressRouteUDPApplyConfiguration) ensureObjectMetaApplyConfigurationEx
 // If called multiple times, the Spec field is set to the value of the last call.
 func (b *IngressRouteUDPApplyConfiguration) WithSpec(value *IngressRouteUDPSpecApplyConfiguration) *IngressRouteUDPApplyConfiguration {
 	b.Spec = value
+	return b
+}
+
+// WithStatus sets the Status field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Status field is set to the value of the last call.
+func (b *IngressRouteUDPApplyConfiguration) WithStatus(value *IngressRouteUDPStatusApplyConfiguration) *IngressRouteUDPApplyConfiguration {
+	b.Status = value
 	return b
 }
 

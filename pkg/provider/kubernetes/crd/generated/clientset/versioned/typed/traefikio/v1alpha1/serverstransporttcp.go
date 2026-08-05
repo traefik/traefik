@@ -48,6 +48,8 @@ type ServersTransportTCPsGetter interface {
 type ServersTransportTCPInterface interface {
 	Create(ctx context.Context, serversTransportTCP *traefikiov1alpha1.ServersTransportTCP, opts v1.CreateOptions) (*traefikiov1alpha1.ServersTransportTCP, error)
 	Update(ctx context.Context, serversTransportTCP *traefikiov1alpha1.ServersTransportTCP, opts v1.UpdateOptions) (*traefikiov1alpha1.ServersTransportTCP, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, serversTransportTCP *traefikiov1alpha1.ServersTransportTCP, opts v1.UpdateOptions) (*traefikiov1alpha1.ServersTransportTCP, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikiov1alpha1.ServersTransportTCP, error)
@@ -55,6 +57,8 @@ type ServersTransportTCPInterface interface {
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.ServersTransportTCP, err error)
 	Apply(ctx context.Context, serversTransportTCP *applyconfigurationtraefikiov1alpha1.ServersTransportTCPApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.ServersTransportTCP, err error)
+	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
+	ApplyStatus(ctx context.Context, serversTransportTCP *applyconfigurationtraefikiov1alpha1.ServersTransportTCPApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.ServersTransportTCP, err error)
 	ServersTransportTCPExpansion
 }
 

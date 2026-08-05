@@ -7,6 +7,7 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
 
 // MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/middlewares/overview/
@@ -16,7 +17,18 @@ type MiddlewareTCP struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec MiddlewareTCPSpec `json:"spec"`
+	Spec   MiddlewareTCPSpec   `json:"spec"`
+	Status MiddlewareTCPStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// MiddlewareTCPStatus defines the observed state of MiddlewareTCP.
+type MiddlewareTCPStatus struct {
+	// Conditions lists the conditions of the MiddlewareTCP.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
