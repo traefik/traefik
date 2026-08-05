@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
@@ -391,6 +392,89 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			assert.Equal(t, test.expectedError, allErrors)
+		})
+	}
+}
+
+func TestConflictingTLSOptions(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		conflictingOptions bool
+		expectedTLSConf    bool
+	}{
+		{
+			desc:            "not conflicting, the resolved TLS options are applied",
+			expectedTLSConf: true,
+		},
+		{
+			desc:               "conflicting TLS options, no TLS configuration is mounted for the domain",
+			conflictingOptions: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			conf := &runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"foo-service": {
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{{URL: "127.0.0.1:8085"}},
+							},
+						},
+					},
+				},
+				Routers: map[string]*runtime.RouterInfo{
+					"foo": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service",
+							Rule:        "Host(`bar.foo`)",
+							TLS: &dynamic.RouterTLSConfig{
+								Options:            "foo",
+								ResolvedOptions:    "foo",
+								ConflictingOptions: test.conflictingOptions,
+							},
+						},
+					},
+				},
+			}
+
+			serviceManager := tcp.NewManager(conf)
+			tlsManager := traefiktls.NewManager()
+			tlsManager.UpdateConfigs(
+				t.Context(),
+				map[string]traefiktls.Store{},
+				map[string]traefiktls.Options{
+					"default": {MinVersion: "VersionTLS10"},
+					"foo":     {MinVersion: "VersionTLS12"},
+				},
+				[]*traefiktls.CertAndStores{})
+
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+
+			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, nil, tlsManager)
+
+			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"})
+
+			require.Contains(t, handlers, "web")
+
+			if test.expectedTLSConf {
+				tlsConf, ok := handlers["web"].hostHTTPTLSConfig["bar.foo"]
+				require.True(t, ok, "no TLS configuration for the router domain")
+
+				assert.Equal(t, "foo", tlsConf.optionsName)
+				assert.NotNil(t, tlsConf.cfg)
+				assert.Empty(t, conf.Routers["foo"].Err)
+
+				return
+			}
+
+			// The router being disabled, its domain is not mapped to any TLS configuration,
+			// and is therefore served with the default TLS options.
+			assert.NotContains(t, handlers["web"].hostHTTPTLSConfig, "bar.foo")
 		})
 	}
 }

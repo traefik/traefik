@@ -65,6 +65,7 @@ const (
 // Configuration is the static configuration.
 type Configuration struct {
 	Global *Global `description:"Global configuration options" json:"global,omitempty" toml:"global,omitempty" yaml:"global,omitempty" export:"true"`
+	Core   *Core   `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	ServersTransport *ServersTransport `description:"Servers default transport." json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 	EntryPoints      EntryPoints       `description:"Entry points definition." json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
@@ -91,6 +92,11 @@ type Configuration struct {
 // CertificateResolver contains the configuration for the different types of certificates resolver.
 type CertificateResolver struct {
 	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
+}
+
+// Core configures Traefik core behavior.
+type Core struct {
+	StrictTLSOptions bool `description:"Disables the unsafe fallback to the default TLS options for the routers with conflicting TLS options." json:"strictTLSOptions,omitempty" toml:"strictTLSOptions,omitempty" yaml:"strictTLSOptions,omitempty" export:"true"`
 }
 
 // Global holds the global configuration.
