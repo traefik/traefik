@@ -74,14 +74,16 @@ routers coming from different providers, for example a router defined with a con
 and another one defined with the file provider, conflict with each other as soon as they serve
 the same host name on the same entry point.
 
-!!! warning "Security"
+!!! important "Default TLS Options"
 
-    This fallback means that any router introducing such a conflict, willingly or not,
-    silently changes the TLS options of every other router serving the same host name,
-    which can for example disable a mutual TLS authentication (`clientAuth`).
+    The `default` TLS options are the fallback of the conflict resolution,
+    and should therefore not be less secure than the options they can replace.
+    A router relying on a mutual TLS authentication (`clientAuth`), for example,
+    no longer enforces it if a conflict on its host name falls back to `default`
+    TLS options that do not require it.
 
-    Make sure that all the routers serving the same host name on the same entry point
-    reference the same TLS options.
+    The surest way to avoid this is to have all the routers serving the same host name,
+    on the same entry point, reference the same TLS options.
 
 ### Minimum TLS Version
 

@@ -228,11 +228,10 @@ If that happens, both mappings are discarded, and the host name
 (`example.net` in the example) for these routers gets associated with
  the default TLS options instead.
 
-!!! warning "Security"
+!!! important "Default TLS Options"
 
-    This fallback means that any `IngressRoute` introducing such a conflict, willingly or
-    not, silently changes the TLS options of every other router serving the same host name,
-    which can for example disable a mutual TLS authentication (`clientAuth`).
+    The `default` TLS options are the fallback of the conflict resolution, and should
+    therefore not be less secure than the options they can replace.
 
     See [Conflicting TLS Options](../../../http/tls/tls-options.md#conflicting-tls-options)
     for more information.
