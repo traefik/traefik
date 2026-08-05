@@ -18,6 +18,66 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
     TLS options are not supported by label or tag-based providers. However, you can define them when using a [KV provider](../../other-providers/kv.md).
 
+### Server Name Association
+
+The TLS options are configured on a router, but they are applied during the TLS handshake,
+that is to say before the routing occurs, when the server name (SNI) is the only information available.
+A TLS options reference is therefore always mapped to the host names found in the `Host` part of the router rule,
+and neither to the router nor to its rule.
+There could also be several `Host` parts in a rule, in which case the TLS options reference is mapped to as many host names.
+
+In the case of domain fronting, if the TLS options associated with the Host header and the SNI are different,
+Traefik responds with a `421 Misdirected Request` status code.
+
+### Conflicting TLS Options
+
+Since a TLS options reference is mapped to a host name, a conflict occurs when a configuration introduces a situation
+where the same host name, on the same entry point, is matched with two different TLS options references,
+such as in the example below:
+
+```yaml tab="Structured (YAML)"
+# Dynamic configuration
+
+http:
+  routers:
+    routerfoo:
+      rule: "Host(`example.com`) && Path(`/foo`)"
+      tls:
+        options: foo
+
+    routerbar:
+      rule: "Host(`example.com`) && Path(`/bar`)"
+      tls:
+        options: bar
+```
+
+```toml tab="Structured (TOML)"
+# Dynamic configuration
+
+[http.routers]
+  [http.routers.routerfoo]
+    rule = "Host(`example.com`) && Path(`/foo`)"
+    [http.routers.routerfoo.tls]
+      options = "foo"
+
+  [http.routers.routerbar]
+    rule = "Host(`example.com`) && Path(`/bar`)"
+    [http.routers.routerbar.tls]
+      options = "bar"
+```
+
+If that happens, both mappings are discarded, and the host name (`example.com` in this example)
+gets associated with the `default` TLS options instead.
+
+!!! warning "Security"
+
+    This fallback means that any router introducing such a conflict, willingly or not,
+    silently changes the TLS options of every other router serving the same host name,
+    which can for example disable a mutual TLS authentication (`clientAuth`).
+
+    Make sure that all the routers serving the same host name on the same entry point
+    reference the same TLS options.
+
 ### Minimum TLS Version
 
 ```yaml tab="Structured (YAML)"
