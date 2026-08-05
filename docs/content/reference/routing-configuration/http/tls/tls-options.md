@@ -69,6 +69,11 @@ http:
 If that happens, both mappings are discarded, and the host name (`example.com` in this example)
 gets associated with the `default` TLS options instead.
 
+The conflict detection is not limited to a single provider:
+routers coming from different providers, for example a router defined with a container label
+and another one defined with the file provider, conflict with each other as soon as they serve
+the same host name on the same entry point.
+
 !!! warning "Security"
 
     This fallback means that any router introducing such a conflict, willingly or not,

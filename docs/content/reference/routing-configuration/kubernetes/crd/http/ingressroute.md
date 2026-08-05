@@ -181,6 +181,10 @@ Since a TLS options reference is mapped to a host name, if a configuration intro
 a situation where the same host name (from a `Host` rule) gets matched with two 
 TLS options references, a conflict occurs, such as in the example below.
 
+The conflict detection is not scoped to a namespace: an `IngressRoute` defined in any
+namespace, and even a router coming from another provider, conflicts with this one as
+soon as it serves the same host name on the same entry point.
+
 ??? example
 
     ```yaml tab="IngressRoute01"
@@ -223,6 +227,15 @@ TLS options references, a conflict occurs, such as in the example below.
 If that happens, both mappings are discarded, and the host name
 (`example.net` in the example) for these routers gets associated with
  the default TLS options instead.
+
+!!! warning "Security"
+
+    This fallback means that any `IngressRoute` introducing such a conflict, willingly or
+    not, silently changes the TLS options of every other router serving the same host name,
+    which can for example disable a mutual TLS authentication (`clientAuth`).
+
+    See [Conflicting TLS Options](../../../http/tls/tls-options.md#conflicting-tls-options)
+    for more information.
 
 ### Multi-Layer Routing with IngressRoutes
 
