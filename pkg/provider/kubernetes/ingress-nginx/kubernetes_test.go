@@ -8461,7 +8461,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-ingress-with-auth-tls-secret-default-ca-secret",
+								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0": {
@@ -8555,7 +8555,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-ingress-with-auth-tls-secret-default-ca-secret": {
+						"default-default-ca-secret-RequireAndVerifyClientCert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -8613,7 +8613,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-ingress-with-auth-tls-verify-client-default-ca-secret",
+								Options: "default-default-ca-secret-VerifyClientCertIfGiven",
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0": {
@@ -8707,10 +8707,246 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-ingress-with-auth-tls-verify-client-default-ca-secret": {
+						"default-default-ca-secret-VerifyClientCertIfGiven": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS secret shared across Ingresses on the same host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-shared-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-protected-ingress-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("mtls-conflict.localhost") && Path("/protected")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-protected-ingress-rule-0-path-0-tls-retry"},
+							Service:     "default-protected-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "protected-ingress",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
+							},
+						},
+						"default-protected-ingress-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("mtls-conflict.localhost") && Path("/protected")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-protected-ingress-rule-0-path-0-redirect-scheme",
+								"default-protected-ingress-rule-0-path-0-retry",
+							},
+							Service: "default-protected-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "protected-ingress",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-same-host-second-ingress-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("mtls-conflict.localhost") && Path("/second")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-same-host-second-ingress-rule-0-path-0-tls-retry"},
+							Service:     "default-same-host-second-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "same-host-second-ingress",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
+							},
+						},
+						"default-same-host-second-ingress-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("mtls-conflict.localhost") && Path("/second")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-same-host-second-ingress-rule-0-path-0-redirect-scheme",
+								"default-same-host-second-ingress-rule-0-path-0-retry",
+							},
+							Service: "default-same-host-second-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "same-host-second-ingress",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-protected-ingress-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-protected-ingress-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-protected-ingress-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-same-host-second-ingress-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-same-host-second-ingress-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-same-host-second-ingress-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-protected-ingress-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-protected-ingress",
+							},
+						},
+						"default-same-host-second-ingress-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-same-host-second-ingress",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-protected-ingress": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-same-host-second-ingress": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-default-ca-secret-RequireAndVerifyClientCert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
 							},
 							CipherSuites: []string{
 								"TLS_AES_128_GCM_SHA256",
@@ -11422,7 +11658,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-ingress-with-auth-tls-pass-certificate-to-upstream-default-ca-secret",
+								Options: "default-default-ca-secret-RequireAndVerifyClientCert",
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0": {
@@ -11523,7 +11759,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-ingress-with-auth-tls-pass-certificate-to-upstream-default-ca-secret": {
+						"default-default-ca-secret-RequireAndVerifyClientCert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -16776,7 +17012,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-default-ca-secret",
+								Options: "default-default-ca-secret-RequestClientCert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -16862,7 +17098,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-default-ca-secret": {
+						"default-default-ca-secret-RequestClientCert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequestClientCert,
