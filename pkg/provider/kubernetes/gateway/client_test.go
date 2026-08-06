@@ -4,9 +4,46 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 )
+
+func TestUpdateGatewayClassStatusSupportedFeatures(t *testing.T) {
+	acceptedCondition := metav1.Condition{
+		Type:   string(gatev1.GatewayClassConditionStatusAccepted),
+		Status: metav1.ConditionTrue,
+		Reason: "Handled",
+	}
+
+	gatewayClass := &gatev1.GatewayClass{
+		ObjectMeta: metav1.ObjectMeta{Name: "traefik"},
+		Status: gatev1.GatewayClassStatus{
+			Conditions:        []metav1.Condition{acceptedCondition},
+			SupportedFeatures: []gatev1.SupportedFeature{{Name: "TCPRoute"}},
+		},
+	}
+
+	gatewayClient := gatefake.NewSimpleClientset(gatewayClass)
+	client := newClientImpl(kubefake.NewClientset(), gatewayClient)
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	desiredStatus := gatev1.GatewayClassStatus{
+		Conditions:        []metav1.Condition{acceptedCondition},
+		SupportedFeatures: []gatev1.SupportedFeature{{Name: "TCPRoute"}, {Name: "UDPRoute"}},
+	}
+	require.NoError(t, client.UpdateGatewayClassStatus(t.Context(), gatewayClass.Name, desiredStatus))
+
+	updatedGatewayClass, err := gatewayClient.GatewayV1().GatewayClasses().Get(t.Context(), gatewayClass.Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, desiredStatus, updatedGatewayClass.Status)
+}
 
 func Test_gatewayStatusEquals(t *testing.T) {
 	testCases := []struct {

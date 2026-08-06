@@ -1,0 +1,68 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: udp-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: udp-gateway
+  namespace: default
+spec:
+  gatewayClassName: udp-gateway-class
+  listeners:
+    - name: udp
+      protocol: UDP
+      port: 8190
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+
+---
+kind: UDPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: udp-route
+  namespace: default
+spec:
+  parentRefs:
+    - name: udp-gateway
+  rules:
+    - backendRefs:
+        - name: udp-backend
+          port: 8090
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: udp-backend
+  namespace: default
+spec:
+  ports:
+    - name: fooudp
+      protocol: UDP
+      port: 8090
+
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: udp-backend-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: udp-backend
+addressType: IPv4
+ports:
+  - name: fooudp
+    protocol: UDP
+    port: 8090
+endpoints:
+  - addresses:
+      - 10.10.0.3
+    conditions:
+      ready: true

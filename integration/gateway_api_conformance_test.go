@@ -152,11 +152,11 @@ func (s *GatewayAPIConformanceSuite) TearDownSuite() {
 }
 
 func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
-	// Wait for traefik to start
+	// Wait for the k3s ServiceLB to expose Traefik.
 	k3sContainerIP, err := s.k3sContainer.ContainerIP(s.T().Context())
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
+	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 60*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
 	// Traefik reconciles a resource in a couple of seconds or less.
@@ -194,6 +194,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 				ksuite.GatewayGRPCConformanceProfileName,
 				ksuite.GatewayTLSConformanceProfileName,
 				ksuite.GatewayTCPConformanceProfileName,
+				ksuite.GatewayUDPConformanceProfileName,
 			},
 			SupportedFeatures: gateway.SupportedFeatures(),
 			SkipTests:         []string{tests.HTTPRouteMultipleGateways.ShortName},

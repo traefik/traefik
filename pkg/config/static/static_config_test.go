@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 )
 
 func TestHasEntrypoint(t *testing.T) {
@@ -284,6 +285,24 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			assert.Equal(t, test.expected, test.conf)
 		})
 	}
+}
+
+func TestConfiguration_SetEffectiveConfigurationGatewayEntryPointProtocols(t *testing.T) {
+	cfg := &Configuration{
+		EntryPoints: EntryPoints{
+			"tcp": {Address: ":5300"},
+			"udp": {Address: ":5300/udp"},
+		},
+		Providers: &Providers{
+			Precedence:        providerNames,
+			KubernetesGateway: &gateway.Provider{},
+		},
+	}
+
+	cfg.SetEffectiveConfiguration()
+
+	assert.Equal(t, gateway.Entrypoint{Address: ":5300", Protocol: "tcp"}, cfg.Providers.KubernetesGateway.EntryPoints["tcp"])
+	assert.Equal(t, gateway.Entrypoint{Address: ":5300", Protocol: "udp"}, cfg.Providers.KubernetesGateway.EntryPoints["udp"])
 }
 
 func TestValidateConfiguration_BasePath(t *testing.T) {

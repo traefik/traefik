@@ -9995,9 +9995,54 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	return k8sObjects, gwObjects
 }
 
+func TestEntryPointNameMatchesTransportProtocol(t *testing.T) {
+	p := Provider{EntryPoints: map[string]Entrypoint{
+		"tcp": {Address: ":5300", Protocol: entryPointProtocolTCP},
+		"udp": {Address: ":5300", Protocol: entryPointProtocolUDP},
+	}}
+
+	tcpName, err := p.entryPointName(5300, gatev1.TCPProtocolType)
+	require.NoError(t, err)
+	assert.Equal(t, "tcp", tcpName)
+
+	udpName, err := p.entryPointName(5300, gatev1.UDPProtocolType)
+	require.NoError(t, err)
+	assert.Equal(t, "udp", udpName)
+}
+
+func TestEntryPointNameRejectsAmbiguousMatches(t *testing.T) {
+	for _, test := range []struct {
+		desc        string
+		entryPoints map[string]Entrypoint
+	}{
+		{
+			desc: "same address",
+			entryPoints: map[string]Entrypoint{
+				"udp-b": {Address: ":5300", Protocol: entryPointProtocolUDP},
+				"udp-a": {Address: ":5300", Protocol: entryPointProtocolUDP},
+				"tcp":   {Address: ":5300", Protocol: entryPointProtocolTCP},
+			},
+		},
+		{
+			desc: "different addresses",
+			entryPoints: map[string]Entrypoint{
+				"udp-b": {Address: "192.0.2.2:5300", Protocol: entryPointProtocolUDP},
+				"udp-a": {Address: "192.0.2.1:5300", Protocol: entryPointProtocolUDP},
+			},
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			p := Provider{EntryPoints: test.entryPoints}
+
+			_, err := p.entryPointName(5300, gatev1.UDPProtocolType)
+			assert.EqualError(t, err, `multiple entryPoints match port 5300 and protocol "UDP": udp-a, udp-b`)
+		})
+	}
+}
+
 func Test_makeGatewayStatus(t *testing.T) {
 	acceptedListener := func() gatewayListener {
-		return gatewayListener{Status: &gatev1.ListenerStatus{Name: "valid"}}
+		return gatewayListener{Attached: true, Status: &gatev1.ListenerStatus{Name: "valid"}}
 	}
 	invalidListener := func() gatewayListener {
 		return gatewayListener{Status: &gatev1.ListenerStatus{
@@ -10006,6 +10051,16 @@ func Test_makeGatewayStatus(t *testing.T) {
 				Type:   string(gatev1.ListenerConditionAccepted),
 				Status: metav1.ConditionFalse,
 				Reason: string(gatev1.ListenerReasonUnsupportedProtocol),
+			}},
+		}}
+	}
+	conflictedListener := func() gatewayListener {
+		return gatewayListener{Status: &gatev1.ListenerStatus{
+			Name: "conflicted",
+			Conditions: []metav1.Condition{{
+				Type:   string(gatev1.ListenerConditionConflicted),
+				Status: metav1.ConditionTrue,
+				Reason: string(gatev1.ListenerReasonProtocolConflict),
 			}},
 		}}
 	}
@@ -10040,6 +10095,13 @@ func Test_makeGatewayStatus(t *testing.T) {
 			wantProgrammed: metav1.ConditionFalse,
 		},
 		{
+			desc:           "all listeners conflicted",
+			listeners:      []gatewayListener{conflictedListener()},
+			wantStatus:     metav1.ConditionFalse,
+			wantReason:     gatev1.GatewayReasonListenersNotValid,
+			wantProgrammed: metav1.ConditionFalse,
+		},
+		{
 			desc:      "infrastructure parametersRef",
 			listeners: []gatewayListener{acceptedListener()},
 			infrastructure: &gatev1.GatewayInfrastructure{
@@ -10068,6 +10130,11 @@ func Test_makeGatewayStatus(t *testing.T) {
 			assert.Equal(t, test.wantStatus, condition.Status)
 			assert.Equal(t, string(test.wantReason), condition.Reason)
 			assert.Len(t, status.Listeners, len(test.listeners))
+			for _, listener := range status.Listeners {
+				assert.NotNil(t, meta.FindStatusCondition(listener.Conditions, string(gatev1.ListenerConditionAccepted)))
+				assert.NotNil(t, meta.FindStatusCondition(listener.Conditions, string(gatev1.ListenerConditionResolvedRefs)))
+				assert.NotNil(t, meta.FindStatusCondition(listener.Conditions, string(gatev1.ListenerConditionProgrammed)))
+			}
 
 			programmed := meta.FindStatusCondition(status.Conditions, string(gatev1.GatewayConditionProgrammed))
 			if test.wantProgrammed == "" {
@@ -10078,6 +10145,41 @@ func Test_makeGatewayStatus(t *testing.T) {
 			assert.Equal(t, test.wantProgrammed, programmed.Status)
 		})
 	}
+}
+
+func TestMakeGatewayStatusPreservesListenerConditions(t *testing.T) {
+	gateway := &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Generation: 4}}
+	listener := gatewayListener{Status: &gatev1.ListenerStatus{
+		Name: "invalid",
+		Conditions: []metav1.Condition{
+			{
+				Type:   string(gatev1.ListenerConditionAccepted),
+				Status: metav1.ConditionFalse,
+				Reason: string(gatev1.ListenerReasonPortUnavailable),
+			},
+			{
+				Type:   string(gatev1.ListenerConditionResolvedRefs),
+				Status: metav1.ConditionFalse,
+				Reason: string(gatev1.ListenerReasonInvalidRouteKinds),
+			},
+		},
+	}}
+
+	status, _ := (&Provider{}).makeGatewayStatus(gateway, []gatewayListener{listener}, nil)
+
+	require.Len(t, status.Listeners, 1)
+	accepted := meta.FindStatusCondition(status.Listeners[0].Conditions, string(gatev1.ListenerConditionAccepted))
+	require.NotNil(t, accepted)
+	assert.Equal(t, metav1.ConditionFalse, accepted.Status)
+	assert.Equal(t, string(gatev1.ListenerReasonPortUnavailable), accepted.Reason)
+	resolvedRefs := meta.FindStatusCondition(status.Listeners[0].Conditions, string(gatev1.ListenerConditionResolvedRefs))
+	require.NotNil(t, resolvedRefs)
+	assert.Equal(t, metav1.ConditionFalse, resolvedRefs.Status)
+	assert.Equal(t, string(gatev1.ListenerReasonInvalidRouteKinds), resolvedRefs.Reason)
+	programmed := meta.FindStatusCondition(status.Listeners[0].Conditions, string(gatev1.ListenerConditionProgrammed))
+	require.NotNil(t, programmed)
+	assert.Equal(t, metav1.ConditionFalse, programmed.Status)
+	assert.Equal(t, string(gatev1.ListenerReasonInvalid), programmed.Reason)
 }
 
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {

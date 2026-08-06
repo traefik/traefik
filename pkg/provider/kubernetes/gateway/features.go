@@ -20,7 +20,8 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 		Insert(features.GRPCRouteExtendedFeatures.Intersection(extendedGRPCRouteFeatures()).UnsortedList()...).
 		Insert(features.TLSRouteCoreFeatures.UnsortedList()...).
 		Insert(features.TLSRouteExtendedFeatures.Intersection(extendedTLSRouteFeatures()).UnsortedList()...).
-		Insert(features.TCPRouteFeature)
+		Insert(features.TCPRouteFeature).
+		Insert(features.UDPRouteFeature)
 
 	featureNames := make([]features.FeatureName, 0, featureSet.Len())
 	for f := range featureSet {

@@ -53,6 +53,12 @@ spec:
             - --entrypoints.tls8443.address=:8443
             - --entrypoints.tls8883.address=:8883
             - --entrypoints.web5300.address=:5300
+            - --entrypoints.udp5300.address=:5300/udp
+            - --entrypoints.udp5301.address=:5301/udp
+            - --entrypoints.udp5302.address=:5302/udp
+            - --entrypoints.udp5310.address=:5310/udp
+            - --entrypoints.udp5311.address=:5311/udp
+            - --entrypoints.udp5312.address=:5312/udp
             # A TCP entryPoint peeks at the first bytes to detect TLS as long as no
             # TCPRoute is programmed on it. The conformance TCP backend speaks first,
             # so without this timeout the connection blocks until the route shows up.
@@ -97,6 +103,24 @@ spec:
               containerPort: 8883
             - name: web5300
               containerPort: 5300
+            - name: udp5300
+              containerPort: 5300
+              protocol: UDP
+            - name: udp5301
+              containerPort: 5301
+              protocol: UDP
+            - name: udp5302
+              containerPort: 5302
+              protocol: UDP
+            - name: udp5310
+              containerPort: 5310
+              protocol: UDP
+            - name: udp5311
+              containerPort: 5311
+              protocol: UDP
+            - name: udp5312
+              containerPort: 5312
+              protocol: UDP
             - name: tcp9300
               containerPort: 9300
             - name: tcp9301
@@ -150,6 +174,30 @@ spec:
     - port: 5300
       name: web5300
       targetPort: web5300
+    - port: 5300
+      name: udp5300
+      targetPort: udp5300
+      protocol: UDP
+    - port: 5301
+      name: udp5301
+      targetPort: udp5301
+      protocol: UDP
+    - port: 5302
+      name: udp5302
+      targetPort: udp5302
+      protocol: UDP
+    - port: 5310
+      name: udp5310
+      targetPort: udp5310
+      protocol: UDP
+    - port: 5311
+      name: udp5311
+      targetPort: udp5311
+      protocol: UDP
+    - port: 5312
+      name: udp5312
+      targetPort: udp5312
+      protocol: UDP
     - port: 9300
       name: tcp9300
       targetPort: tcp9300

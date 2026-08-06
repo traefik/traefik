@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -82,6 +83,23 @@ func TestStatusReport_RecordTCPRouteStatus(t *testing.T) {
 	report.RecordTCPRouteStatus(route, otherParent)
 
 	assert.Equal(t, []gatev1.RouteParentStatus{gatewayParent, otherParent}, report.tcpRoutes[route].Parents)
+}
+
+func TestStatusReport_RecordUDPRouteStatus(t *testing.T) {
+	report := newStatusReport()
+	route := ktypes.NamespacedName{Namespace: "default", Name: "my-route"}
+
+	gatewayParent := gatev1.RouteParentStatus{ParentRef: gatev1.ParentReference{Name: "gateway"}}
+	otherParent := gatev1.RouteParentStatus{ParentRef: gatev1.ParentReference{Name: "other-gateway"}}
+
+	report.RecordUDPRouteStatus(route, gatewayParent)
+	report.RecordUDPRouteStatus(route, otherParent)
+
+	assert.Equal(t, []gatev1.RouteParentStatus{gatewayParent, otherParent}, report.udpRoutes[route].Parents)
+
+	report.RecordUDPRouteStatusReset(route)
+	require.Contains(t, report.udpRoutes, route)
+	assert.Empty(t, report.udpRoutes[route].Parents)
 }
 
 func TestStatusReport_RecordTLSRouteStatus(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
@@ -29,14 +30,59 @@ func TestGatewayAPISuite(t *testing.T) {
 }
 
 func (s *GatewayAPISuite) TestGatewayConfiguration() {
-	ctx := s.T().Context()
-
-	k3sContainer, err := k3s.Run(ctx, k3sImage,
+	s.setupK3s(
 		k3s.WithManifest("./fixtures/k8s-gateway/00-experimental-v1.6.1.yml"),
 		k3s.WithManifest("./fixtures/k8s-gateway/01-services.yml"),
 		k3s.WithManifest("./fixtures/k8s-gateway/02-gateway.yml"),
 		k3s.WithManifest("./fixtures/k8s-gateway/03-tcproute.yml"),
 	)
+
+	s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
+
+	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
+}
+
+func (s *GatewayAPISuite) TestGatewayStandardUDPRouteConfiguration() {
+	s.setupK3s(
+		k3s.WithManifest("./fixtures/k8s-gateway/00-standard-v1.6.1.yml"),
+		k3s.WithManifest("./fixtures/k8s-gateway/04-udproute.yml"),
+	)
+
+	s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
+
+	const routerName = "udproute-default-udp-route-gw-default-udp-gateway-ep-fooudp-0-1fc1d4b986fa9662732b"
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/udp/routers/"+routerName+"@kubernetesgateway", 1*time.Minute,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains(
+			`"entryPoints":["fooudp"]`,
+			`"name":"`+routerName+`@kubernetesgateway"`,
+			`"provider":"kubernetesgateway"`,
+			`"service":"`+routerName+`-wrr"`,
+			`"status":"enabled"`,
+		),
+	)
+	require.NoError(s.T(), err)
+
+	const serviceName = routerName + "-svc-default-udp-backend-0"
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/"+serviceName+"@kubernetesgateway", 1*time.Minute,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains(
+			`"address":"10.10.0.3:8090"`,
+			`"name":"`+serviceName+`@kubernetesgateway"`,
+			`"provider":"kubernetesgateway"`,
+			`"status":"enabled"`,
+			`"type":"loadbalancer"`,
+		),
+	)
+	require.NoError(s.T(), err)
+}
+
+func (s *GatewayAPISuite) setupK3s(opts ...testcontainers.ContainerCustomizer) {
+	ctx := s.T().Context()
+
+	k3sContainer, err := k3s.Run(ctx, k3sImage, opts...)
 	require.NoError(s.T(), err)
 
 	s.T().Cleanup(func() {
@@ -52,10 +98,6 @@ func (s *GatewayAPISuite) TestGatewayConfiguration() {
 	kubeconfigPath := filepath.Join(s.T().TempDir(), "kubeconfig.yaml")
 	require.NoError(s.T(), os.WriteFile(kubeconfigPath, kubeConfigYaml, 0o644))
 	s.T().Setenv("KUBECONFIG", kubeconfigPath)
-
-	s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
-
-	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
 }
 
 func (s *GatewayAPISuite) testConfiguration(path, apiPort string) {
