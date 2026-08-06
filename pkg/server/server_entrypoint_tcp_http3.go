@@ -49,7 +49,17 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 
 	if conn == nil {
 		listenConfig := newListenConfig(config)
-		conn, err = listenConfig.ListenPacket(ctx, "udp", config.GetAddress())
+		network := "udp"
+		if host, _, err := net.SplitHostPort(config.GetAddress()); err == nil {
+			if ip := net.ParseIP(host); ip != nil {
+				if ip.To4() != nil {
+					network = "udp4"
+				} else {
+					network = "udp6"
+				}
+			}
+		}
+		conn, err = listenConfig.ListenPacket(ctx, network, config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("starting listener: %w", err)
 		}
