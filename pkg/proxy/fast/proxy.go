@@ -127,6 +127,28 @@ func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, preser
 	}, nil
 }
 
+// headerSentResponseWriter wraps an http.ResponseWriter and tracks
+// whether WriteHeader (or an implicit header write via Write) has been called.
+// This is used to detect whether the response has already started when
+// roundTrip returns an error, so we can abort the connection instead of
+// appending error text to an already-sent response body.
+type headerSentResponseWriter struct {
+	http.ResponseWriter
+	headerSent bool
+}
+
+func (w *headerSentResponseWriter) WriteHeader(statusCode int) {
+	w.headerSent = true
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *headerSentResponseWriter) Write(p []byte) (int, error) {
+	if !w.headerSent {
+		w.headerSent = true
+	}
+	return w.ResponseWriter.Write(p)
+}
+
 func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.Body != nil {
 		defer req.Body.Close()
@@ -236,7 +258,17 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	if err := p.roundTrip(rw, req, outReq, reqUpType); err != nil {
+	// Wrap the ResponseWriter to track whether headers have been sent.
+	// If roundTrip returns an error after the response headers have already
+	// been written (e.g., the backend disconnects mid-body), calling
+	// ErrorHandler would append "Internal Server Error" to the body.
+	// Instead, we abort the connection, matching the behavior of
+	// net/http/httputil.ReverseProxy and Traefik's own recovery middleware.
+	hsw := &headerSentResponseWriter{ResponseWriter: rw}
+	if err := p.roundTrip(hsw, req, outReq, reqUpType); err != nil {
+		if hsw.headerSent {
+			panic(http.ErrAbortHandler)
+		}
 		proxyhttputil.ErrorHandler(rw, req, err)
 	}
 }
