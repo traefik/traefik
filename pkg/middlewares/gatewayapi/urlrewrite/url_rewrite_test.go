@@ -105,6 +105,26 @@ func TestURLRewriteHandler(t *testing.T) {
 			wantHost: "foo.com",
 		},
 		{
+			desc: "replace prefix path with trailing slash prefix",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo/"),
+			},
+			url:      "http://foo.com/foo",
+			wantURL:  "http://foo.com/baz",
+			wantHost: "foo.com",
+		},
+		{
+			desc: "replace prefix path with empty replacement with slash",
+			config: dynamic.URLRewrite{
+				Path:       new(""),
+				PathPrefix: new("/foo"),
+			},
+			url:      "http://foo.com/foo",
+			wantURL:  "http://foo.com/",
+			wantHost: "foo.com",
+		},
+		{
 			desc: "dot-segment traversal in the trimmed tail is rejected",
 			config: dynamic.URLRewrite{
 				Path:       new("/baz"),

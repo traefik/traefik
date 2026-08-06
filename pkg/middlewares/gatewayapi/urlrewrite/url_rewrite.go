@@ -50,7 +50,9 @@ func (u urlRewrite) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		newPath = *u.path
 	}
 	if u.path != nil && u.pathPrefix != nil {
-		tail := strings.TrimPrefix(req.URL.Path, *u.pathPrefix)
+		// Per the Gateway API spec, a trailing slash on the prefix match value is
+		// ignored, so "/foo/" and "/foo" must be stripped identically.
+		tail := strings.TrimPrefix(req.URL.Path, strings.TrimSuffix(*u.pathPrefix, "/"))
 
 		// Here we are sanitizing the tail kept after trimming the prefix,
 		// as path.Join below silently resolves any ".." or "." segments it contains.
@@ -68,6 +70,11 @@ func (u urlRewrite) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		newPath = path.Join(*u.path, tail)
+		// path.Join returns an empty string when both the replacement and the tail
+		// are empty, but the Gateway API spec requires the root path in that case.
+		if newPath == "" {
+			newPath = "/"
+		}
 
 		// add the trailing slash if needed, as path.Join removes trailing slashes.
 		if strings.HasSuffix(req.URL.Path, "/") && !strings.HasSuffix(newPath, "/") {

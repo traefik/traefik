@@ -92,7 +92,9 @@ func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if r.path != nil && r.pathPrefix != nil {
-		tail := strings.TrimPrefix(req.URL.Path, *r.pathPrefix)
+		// Per the Gateway API spec, a trailing slash on the prefix match value is
+		// ignored, so "/foo/" and "/foo" must be stripped identically.
+		tail := strings.TrimPrefix(req.URL.Path, strings.TrimSuffix(*r.pathPrefix, "/"))
 
 		// Here we are sanitizing the tail kept after trimming the prefix,
 		// as path.Join below silently resolves any ".." or "." segments it contains.
@@ -110,6 +112,11 @@ func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		redirectURL.Path = path.Join(*r.path, tail)
+		// path.Join returns an empty string when both the replacement and the tail
+		// are empty, but the Gateway API spec requires the root path in that case.
+		if redirectURL.Path == "" {
+			redirectURL.Path = "/"
+		}
 
 		// add the trailing slash if needed, as path.Join removes trailing slashes.
 		if strings.HasSuffix(req.URL.Path, "/") && !strings.HasSuffix(redirectURL.Path, "/") {
