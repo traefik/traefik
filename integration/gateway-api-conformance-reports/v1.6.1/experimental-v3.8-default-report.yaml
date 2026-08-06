@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-07-31T16:55:17+02:00"
+date: "2026-08-04T11:57:16Z"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -112,6 +112,14 @@ profiles:
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 20
+      Skipped: 0
+  name: GATEWAY-UDP
+  summary: Core tests succeeded.
 succeededProvisionalTests:
 - GRPCRouteNamedRule
 - HTTPRoute303Redirect
@@ -127,3 +135,12 @@ succeededProvisionalTests:
 - TCPRouteWeightedRouting
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace
+- UDPRoute
+- UDPRouteInvalidBackendRefNonexistent
+- UDPRouteInvalidCrossNamespaceBackendRef
+- UDPRouteMultipleRoutesAttachment
+- UDPRouteNotAllowedByListeners
+- UDPRouteParentRefAttachAllListeners
+- UDPRouteParentRefPortAndSectionName
+- UDPRouteReferenceGrant
+- UDPRouteWeightedRouting
