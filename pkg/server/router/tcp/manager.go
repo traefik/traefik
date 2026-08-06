@@ -168,7 +168,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		// We do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
 		if routerHTTPConfig.TLS.ConflictingOptions {
-			logger.Debugf("Skipping TLS configuration for %v because of conflicting TLS options", domains)
 			continue
 		}
 
