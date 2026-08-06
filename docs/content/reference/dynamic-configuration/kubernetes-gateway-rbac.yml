@@ -43,6 +43,7 @@ rules:
       - httproutes
       - grpcroutes
       - tcproutes
+      - udproutes
       - tlsroutes
       - referencegrants
       - backendtlspolicies
@@ -58,6 +59,7 @@ rules:
       - httproutes/status
       - grpcroutes/status
       - tcproutes/status
+      - udproutes/status
       - tlsroutes/status
       - referencegrants/status
       - backendtlspolicies/status

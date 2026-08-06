@@ -33,6 +33,13 @@ spec:
         kinds:
           - kind: TCPRoute
 
+    - name: udp
+      protocol: UDP
+      port: 5300
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+
     - name: tls
       protocol: TLS
       port: 9443
@@ -112,4 +119,22 @@ spec:
     - backendRefs:
         - name: whoamitcp
           port: 9000
+          weight: 1
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: UDPRoute
+metadata:
+  name: udp-app
+  namespace: default
+
+spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: udp
+
+  rules:
+    - backendRefs:
+        - name: whoamiudp
+          port: 5300
           weight: 1
