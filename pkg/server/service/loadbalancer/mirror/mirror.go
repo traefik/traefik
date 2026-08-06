@@ -87,6 +87,19 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// When mirrorBody is false, we still need to buffer the body for the main
+	// handler to prevent the main handler from consuming the original request's
+	// body reader. Mirror clones will receive body-less copies.
+	if !m.mirrorBody && req.Body != nil && req.ContentLength != 0 {
+		var err error
+		rr, _, err = NewReusableRequest(req, -1) // unbounded
+		if err != nil {
+			logger.Debug().Err(err).Msg("Error while creating reusable request for mirroring")
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	m.handler.ServeHTTP(rw, rr.Clone(req.Context()))
 
 	select {
@@ -101,6 +114,14 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		for _, handler := range mirrors {
 			// prepare request, update body from buffer
 			r := rr.Clone(req.Context())
+
+			// When mirrorBody is false, the mirror should receive a body-less
+			// copy of the request so the mirrored leg does not try to read a
+			// body that was already consumed by the main handler.
+			if !m.mirrorBody {
+				r.Body = nil
+				r.ContentLength = 0
+			}
 
 			// In ServeHTTP, we rely on the presence of the accessLog datatable found in the request's context
 			// to know whether we should mutate said datatable (and contribute some fields to the log).
