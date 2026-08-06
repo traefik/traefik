@@ -147,6 +147,12 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	for k, v := range req.Header {
 		for _, s := range v {
+			// Strip CR and LF from header values before forwarding to the
+			// upstream. fasthttp's RequestHeader.Set neutralizes newlines via
+			// removeNewLines, but Add (used here) appends the value unchanged,
+			// so a CRLF inside a configured header value would otherwise be
+			// emitted verbatim and split one header into two on the wire.
+			s = strings.NewReplacer("\r", "", "\n", "").Replace(s)
 			outReq.Header.Add(k, s)
 		}
 	}
