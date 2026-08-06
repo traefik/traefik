@@ -173,11 +173,18 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		}
 	}
 
-	m.stores = make(map[string]*CertificateStore)
+	newStores := make(map[string]*CertificateStore, len(m.storesConfig))
 
 	for storeName, storeConfig := range m.storesConfig {
-		st := NewCertificateStore(m.ocspStapler)
-		m.stores[storeName] = st
+		// Reuse existing CertificateStore when the store name already exists.
+		// Each NewCertificateStore creates a new go-cache, which starts a janitor
+		// goroutine that is never stopped when the old store is discarded,
+		// causing a goroutine leak (one janitor per dynamic-config apply per store).
+		st, ok := m.stores[storeName]
+		if !ok {
+			st = NewCertificateStore(m.ocspStapler)
+		}
+		newStores[storeName] = st
 
 		if certs, ok := storesCertificates[storeName]; ok {
 			st.DynamicCerts.Set(certs)
@@ -198,6 +205,8 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 		st.DefaultCertificate = certificate
 	}
+
+	m.stores = newStores
 
 	if m.ocspStapler != nil {
 		m.ocspStapler.ForceStapleUpdates()
