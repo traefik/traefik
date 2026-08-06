@@ -17,6 +17,7 @@ type statusReport struct {
 	httpRoutes         map[ktypes.NamespacedName]gatev1.RouteStatus
 	grpcRoutes         map[ktypes.NamespacedName]gatev1.RouteStatus
 	tcpRoutes          map[ktypes.NamespacedName]gatev1.RouteStatus
+	udpRoutes          map[ktypes.NamespacedName]gatev1.RouteStatus
 	tlsRoutes          map[ktypes.NamespacedName]gatev1.RouteStatus
 	backendTLSPolicies map[ktypes.NamespacedName]gatev1.PolicyStatus
 
@@ -30,6 +31,7 @@ func newStatusReport() *statusReport {
 		httpRoutes:         map[ktypes.NamespacedName]gatev1.RouteStatus{},
 		grpcRoutes:         map[ktypes.NamespacedName]gatev1.RouteStatus{},
 		tcpRoutes:          map[ktypes.NamespacedName]gatev1.RouteStatus{},
+		udpRoutes:          map[ktypes.NamespacedName]gatev1.RouteStatus{},
 		tlsRoutes:          map[ktypes.NamespacedName]gatev1.RouteStatus{},
 		backendTLSPolicies: map[ktypes.NamespacedName]gatev1.PolicyStatus{},
 	}
@@ -73,6 +75,13 @@ func (r *statusReport) Flush(ctx context.Context, client *clientWrapper) {
 		}
 	}
 
+	for name, routeStatus := range r.udpRoutes {
+		status := gatev1.UDPRouteStatus{RouteStatus: routeStatus}
+		if err := client.UpdateUDPRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
+			logger.Warn().Err(err).Str("udp_route", name.Name).Str("namespace", name.Namespace).Msg("Unable to update UDPRoute status")
+		}
+	}
+
 	for name, routeStatus := range r.tlsRoutes {
 		status := gatev1.TLSRouteStatus{RouteStatus: routeStatus}
 		if err := client.UpdateTLSRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
@@ -111,6 +120,16 @@ func (r *statusReport) RecordTCPRouteStatus(route ktypes.NamespacedName, status 
 	r.tcpRoutes[route] = gatev1.RouteStatus{
 		Parents: append(r.tcpRoutes[route].Parents, status),
 	}
+}
+
+func (r *statusReport) RecordUDPRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
+	r.udpRoutes[route] = gatev1.RouteStatus{
+		Parents: append(r.udpRoutes[route].Parents, status),
+	}
+}
+
+func (r *statusReport) RecordUDPRouteStatusReset(route ktypes.NamespacedName) {
+	r.udpRoutes[route] = gatev1.RouteStatus{}
 }
 
 func (r *statusReport) RecordTLSRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {

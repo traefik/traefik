@@ -207,6 +207,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
+		_, err = factoryGateway.Gateway().V1().UDPRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
@@ -320,6 +324,20 @@ func (c *clientWrapper) ListTCPRoutes() ([]*gatev1.TCPRoute, error) {
 	}
 
 	return tcpRoutes, nil
+}
+
+func (c *clientWrapper) ListUDPRoutes() ([]*gatev1.UDPRoute, error) {
+	var udpRoutes []*gatev1.UDPRoute
+	for _, namespace := range c.watchedNamespaces {
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().UDPRoutes().Lister().UDPRoutes(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, fmt.Errorf("listing UDP routes in namespace %s: %w", namespace, err)
+		}
+
+		udpRoutes = append(udpRoutes, routes...)
+	}
+
+	return udpRoutes, nil
 }
 
 func (c *clientWrapper) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
@@ -440,7 +458,7 @@ func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name strin
 			return err
 		}
 
-		if conditionsEqual(currentGatewayClass.Status.Conditions, status.Conditions) {
+		if gatewayClassStatusEqual(currentGatewayClass.Status, status) {
 			return nil
 		}
 
@@ -623,6 +641,48 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
+func (c *clientWrapper) UpdateUDPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.UDPRouteStatus) error {
+	if !c.isWatchedNamespace(route.Namespace) {
+		return fmt.Errorf("updating UDPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().UDPRoutes().Lister().UDPRoutes(route.Namespace).Get(route.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
+
+		// do not update status when nothing has changed.
+		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
+			return nil
+		}
+
+		currentRoute = currentRoute.DeepCopy()
+		currentRoute.Status = gatev1.UDPRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
+				Parents: parentStatuses,
+			},
+		}
+
+		if _, err = c.csGateway.GatewayV1().UDPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update UDPRoute %s/%s status: %w", route.Namespace, route.Name, err)
+	}
+
+	return nil
+}
+
 func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TLSRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TLSRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
@@ -773,6 +833,11 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
 	return reflect.DeepEqual(statusA.Addresses, statusB.Addresses) &&
 		listenersStatusEqual(statusA.Listeners, statusB.Listeners) &&
+		conditionsEqual(statusA.Conditions, statusB.Conditions)
+}
+
+func gatewayClassStatusEqual(statusA, statusB gatev1.GatewayClassStatus) bool {
+	return slices.Equal(statusA.SupportedFeatures, statusB.SupportedFeatures) &&
 		conditionsEqual(statusA.Conditions, statusB.Conditions)
 }
 
