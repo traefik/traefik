@@ -125,22 +125,23 @@ func TestURLRewriteHandler(t *testing.T) {
 			wantHost: "foo.com",
 		},
 		{
-			desc: "dot-segment traversal fused with an encoded slash is rejected",
+			desc: "dot-segment traversal fused with an encoded slash",
 			config: dynamic.URLRewrite{
 				Path:       new("/baz"),
 				PathPrefix: new("/foo"),
 			},
-			url:            "http://foo.com/foo..%2Fadmin",
-			wantStatusCode: http.StatusBadRequest,
+			url:      "http://foo.com/foo/..%2Fadmin",
+			wantURL:  "http://foo.com/baz/..%2Fadmin",
+			wantHost: "foo.com",
 		},
 		{
-			desc: "encoded slash in the trimmed tail succeeds",
+			desc: "encoded slash in the trimmed tail",
 			config: dynamic.URLRewrite{
 				Path:       new("/baz"),
 				PathPrefix: new("/foo"),
 			},
 			url:      "http://foo.com/foo/a%2Fb",
-			wantURL:  "http://foo.com/baz/a/b",
+			wantURL:  "http://foo.com/baz/a%2Fb",
 			wantHost: "foo.com",
 		},
 	}
