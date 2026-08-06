@@ -52,7 +52,7 @@ func (al *ipAllowLister) ServeTCP(conn tcp.WriteCloser) {
 
 	err := al.allowLister.IsAuthorized(addr)
 	if err != nil {
-		logger.Error().Err(err).Msgf("Connection from %s rejected", addr)
+		logger.Debug().Err(err).Msgf("Connection from %s rejected", addr)
 		conn.Close()
 		return
 	}
@@ -61,3 +61,4 @@ func (al *ipAllowLister) ServeTCP(conn tcp.WriteCloser) {
 
 	al.next.ServeTCP(conn)
 }
+
