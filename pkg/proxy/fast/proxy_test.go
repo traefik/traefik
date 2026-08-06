@@ -1,6 +1,7 @@
 package fast
 
 import (
+	"bufio"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -525,4 +526,63 @@ func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
 
 func (r *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
 	return &dynamic.ServersTransport{}, nil
+}
+
+// TestBackendDisconnectsMidBody verifies that when the backend disconnects
+// mid-response (e.g., a pod being rolled during a long-lived stream),
+// the proxy does not append "Internal Server Error" to the response body.
+// See https://github.com/traefik/traefik/issues/13568
+func TestBackendDisconnectsMidBody(t *testing.T) {
+	// A backend that commits a chunked 200, writes one chunk,
+	// then goes away without the terminating chunk.
+	backendListener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = backendListener.Close() })
+
+	go func() {
+		for {
+			conn, err := backendListener.Accept()
+			if err != nil {
+				return
+			}
+
+			go func() {
+				defer conn.Close()
+
+				reader := bufio.NewReader(conn)
+				for {
+					line, err := reader.ReadString('\n')
+					if err != nil || line == "\r\n" {
+						break
+					}
+				}
+
+				_, _ = io.WriteString(conn, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n")
+				_, _ = io.WriteString(conn, "5\r\nchunk\r\n")
+			}()
+		}
+	}()
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL("http://"+backendListener.Addr().String()), true, true)
+	require.NoError(t, err)
+
+	proxyServer := httptest.NewServer(proxyHandler)
+	t.Cleanup(proxyServer.Close)
+
+	res, err := proxyServer.Client().Get(proxyServer.URL)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	body, readErr := io.ReadAll(res.Body)
+
+	// The body should contain only the data the backend managed to send,
+	// without "Internal Server Error" appended.
+	assert.Equal(t, "chunk", string(body), "body should not contain 'Internal Server Error'")
+
+	// The client should detect that the response is incomplete.
+	require.Error(t, readErr, "client should receive an error for incomplete response")
+	assert.Contains(t, readErr.Error(), "unexpected EOF", "error should indicate truncated response")
 }
