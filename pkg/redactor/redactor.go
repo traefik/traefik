@@ -76,7 +76,7 @@ func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
 	}
 
 	switch field.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if !field.IsNil() {
 			if err := doOnStruct(field.Elem(), tag, redactByDefault); err != nil {
 				return err
@@ -154,7 +154,7 @@ func reset(field reflect.Value, name string) error {
 	}
 
 	switch field.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if !field.IsNil() {
 			field.Set(reflect.Zero(field.Type()))
 		}

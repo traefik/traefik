@@ -45,6 +45,11 @@ var (
 		`X25519`:         tls.X25519,
 		`x25519mlkem768`: tls.X25519MLKEM768,
 		`X25519MLKEM768`: tls.X25519MLKEM768,
+		// Post-quantum hybrid key exchanges enabled by default since Go 1.26.
+		`secp256r1mlkem768`:  tls.SecP256r1MLKEM768,
+		`SecP256r1MLKEM768`:  tls.SecP256r1MLKEM768,
+		`secp384r1mlkem1024`: tls.SecP384r1MLKEM1024,
+		`SecP384r1MLKEM1024`: tls.SecP384r1MLKEM1024,
 	}
 )
 

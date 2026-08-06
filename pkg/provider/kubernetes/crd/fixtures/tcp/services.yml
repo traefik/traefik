@@ -352,3 +352,73 @@ spec:
       nodePort: 32456
   type: NodePort
   clusterIP: 10.10.0.1
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-nil-port-name
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+
+  selector:
+    app: traefiklabs
+    task: whoamitcp
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoamitcp-nil-port-name-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-nil-port-name
+
+addressType: IPv4
+ports:
+  - protocol: TCP
+    port: 8000
+endpoints:
+  - addresses:
+      - 10.10.0.100
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-nil-port-value
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+
+  selector:
+    app: traefiklabs
+    task: whoamitcp
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoamitcp-nil-port-value-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-nil-port-value
+
+addressType: IPv4
+ports:
+  - name: myapp
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 10.10.0.100
+    conditions:
+      ready: true

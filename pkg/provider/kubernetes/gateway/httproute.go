@@ -80,7 +80,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames, statusReport)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = ptr.To(condition)
+					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
@@ -125,9 +125,6 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindHTTPRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
-
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
@@ -142,7 +139,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 			}
 
 			var err error
-			routerName := makeRouterName(rule, routeKey)
+			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 			// TODO loadMiddlewares errors could change the condition.
 			router.Middlewares, err = p.loadMiddlewares(conf, route.Namespace, routerName, routeRule.Filters, match.Path)
 			switch {
@@ -155,8 +152,8 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 						Services: []dynamic.WRRService{
 							{
 								Name:   "invalid-httproute-filter",
-								Status: ptr.To(500),
-								Weight: ptr.To(1),
+								Status: new(500),
+								Weight: new(1),
 							},
 						},
 					},
@@ -194,9 +191,28 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 	return conf, condition
 }
 
-func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
-	name := routeKey + "-wrr"
+func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
+		return name, nil
+	}
+
+	// A rule with omitted or empty backendRefs, and without any filter that
+	// could make the request receive a response, has no backend to forward to,
+	// and must explicitly respond with a 500 status code.
+	if len(routeRule.BackendRefs) == 0 && len(routeRule.Filters) == 0 {
+		conf.HTTP.Services[name] = &dynamic.Service{
+			Weighted: &dynamic.WeightedRoundRobin{
+				Services: []dynamic.WRRService{
+					{
+						Name:   "no-backend-refs",
+						Status: new(500),
+						Weight: new(1),
+					},
+				},
+			},
+		}
+
 		return name, nil
 	}
 
@@ -205,8 +221,8 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, listener, conf, routeKey, route, bi, backendRef, pathMatch, statusReport)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+		svcName, errCondition := p.loadService(gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
 				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
@@ -214,7 +230,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
 				Name:   svcName,
-				Status: ptr.To(500),
+				Status: new(500),
 				Weight: weight,
 			})
 			continue
@@ -232,7 +248,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -245,8 +261,7 @@ func (p *Provider) loadService(gatewayName string, listener gatewayListener, con
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			svcKey := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
-			return provider.Normalize(svcKey), &metav1.Condition{
+			return provider.Normalize(fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)), &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -257,7 +272,7 @@ func (p *Provider) loadService(gatewayName string, listener gatewayListener, con
 		}
 	}
 
-	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)
 
 	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, &metav1.Condition{
@@ -270,7 +285,7 @@ func (p *Provider) loadService(gatewayName string, listener gatewayListener, con
 		}
 	}
 
-	middlewares, err := p.loadMiddlewares(conf, namespace, serviceName, backendRef.Filters, pathMatch)
+	middlewares, err := p.loadMiddlewares(conf, route.Namespace, serviceName, backendRef.Filters, pathMatch)
 	if err != nil {
 		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -360,8 +375,8 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 	}
 
 	pm := ptr.Deref(pathMatch, gatev1.HTTPPathMatch{
-		Type:  ptr.To(gatev1.PathMatchPathPrefix),
-		Value: ptr.To("/"),
+		Type:  new(gatev1.PathMatchPathPrefix),
+		Value: new("/"),
 	})
 
 	var middlewares []namedMiddleware
@@ -405,6 +420,12 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 			middlewares = append(middlewares, namedMiddleware{
 				name,
 				middleware,
+			})
+
+		case gatev1.HTTPRouteFilterCORS:
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				createCORS(filter.CORS),
 			})
 
 		default:
@@ -492,11 +513,11 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 
 			policyAncestorStatus := gatev1.PolicyAncestorStatus{
 				AncestorRef: gatev1.ParentReference{
-					Group:       ptr.To(gatev1.Group(groupGateway)),
-					Kind:        ptr.To(gatev1.Kind(kindGateway)),
-					Namespace:   ptr.To(gatev1.Namespace(namespace)),
+					Group:       new(gatev1.Group(groupGateway)),
+					Kind:        new(gatev1.Kind(kindGateway)),
+					Namespace:   new(gatev1.Namespace(namespace)),
 					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+					SectionName: new(gatev1.SectionName(listener.Name)),
 				},
 				ControllerName: controllerName,
 			}
@@ -747,8 +768,8 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 // In case of multiple matches for a route, the maximum priority among all matches is retain.
 func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (string, int) {
 	path := ptr.Deref(match.Path, gatev1.HTTPPathMatch{
-		Type:  ptr.To(gatev1.PathMatchPathPrefix),
-		Value: ptr.To("/"),
+		Type:  new(gatev1.PathMatchPathPrefix),
+		Value: new("/"),
 	})
 
 	var priority int
@@ -895,16 +916,16 @@ func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Midd
 func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch gatev1.HTTPPathMatch) *dynamic.Middleware {
 	var hostname *string
 	if filter.Hostname != nil {
-		hostname = ptr.To(string(*filter.Hostname))
+		hostname = new(string(*filter.Hostname))
 	}
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
 	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
-		port = ptr.To("")
+		port = new("")
 	}
 	if filter.Port != nil {
-		port = ptr.To(strconv.Itoa(int(*filter.Port)))
+		port = new(strconv.Itoa(int(*filter.Port)))
 	}
 
 	var path *string
@@ -938,7 +959,7 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 
 	var host *string
 	if filter.Hostname != nil {
-		host = ptr.To(string(*filter.Hostname))
+		host = new(string(*filter.Hostname))
 	}
 
 	var path *string
@@ -960,6 +981,52 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 			PathPrefix: pathPrefix,
 		},
 	}, nil
+}
+
+func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
+	var allowOrigins, allowOriginsRegex []string
+	for _, origin := range filter.AllowOrigins {
+		if prefix, suffix, found := strings.Cut(string(origin), "*"); found {
+			switch {
+			case prefix != "" || suffix != "":
+				allowOriginsRegex = append(allowOriginsRegex, "^"+regexp.QuoteMeta(prefix)+`.*`+regexp.QuoteMeta(suffix)+"$")
+			default:
+				// Convert to regex so the middleware echoes the specific request origin rather than the literal "*".
+				// The Gateway API conformance tests require the specific origin, even when AllowCredentials is false/unset.
+				allowOriginsRegex = append(allowOriginsRegex, ".*")
+			}
+			continue
+		}
+
+		allowOrigins = append(allowOrigins, string(origin))
+	}
+
+	var allowMethods []string
+	for _, m := range filter.AllowMethods {
+		allowMethods = append(allowMethods, string(m))
+	}
+
+	var allowHeaders []string
+	for _, h := range filter.AllowHeaders {
+		allowHeaders = append(allowHeaders, string(h))
+	}
+
+	var exposeHeaders []string
+	for _, h := range filter.ExposeHeaders {
+		exposeHeaders = append(exposeHeaders, string(h))
+	}
+
+	return &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			AccessControlAllowCredentials:     ptr.Deref(filter.AllowCredentials, false),
+			AccessControlAllowOriginList:      allowOrigins,
+			AccessControlAllowOriginListRegex: allowOriginsRegex,
+			AccessControlAllowMethods:         allowMethods,
+			AccessControlAllowHeaders:         allowHeaders,
+			AccessControlExposeHeaders:        exposeHeaders,
+			AccessControlMaxAge:               new(int64(filter.MaxAge)),
+		},
+	}
 }
 
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {

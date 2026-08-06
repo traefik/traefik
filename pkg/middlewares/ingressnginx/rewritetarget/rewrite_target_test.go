@@ -43,8 +43,7 @@ func TestRewriteTarget(t *testing.T) {
 			config: dynamic.RewriteTarget{
 				Replacement: "/replacement",
 			},
-			expectedPath:    "/replacement",
-			expectedRawPath: "/replacement",
+			expectedPath: "/replacement",
 		},
 		{
 			desc: "plain replacement with escaped char in replacement",
@@ -63,7 +62,6 @@ func TestRewriteTarget(t *testing.T) {
 				XForwardedPrefix: "/foo",
 			},
 			expectedPath:             "/replacement",
-			expectedRawPath:          "/replacement",
 			expectedXForwardedPrefix: "/foo",
 		},
 		{
@@ -73,8 +71,7 @@ func TestRewriteTarget(t *testing.T) {
 				Regex:       `^/foo/(.*)`,
 				Replacement: "/new/$1",
 			},
-			expectedPath:    "/new/bar",
-			expectedRawPath: "/new/bar",
+			expectedPath: "/new/bar",
 		},
 		{
 			desc: "regex with multiple capture groups",
@@ -83,8 +80,7 @@ func TestRewriteTarget(t *testing.T) {
 				Regex:       `^(?i)/downloads/([^/]+)/([^/]+)$`,
 				Replacement: "/downloads/$1-$2",
 			},
-			expectedPath:    "/downloads/src-source.go",
-			expectedRawPath: "/downloads/src-source.go",
+			expectedPath: "/downloads/src-source.go",
 		},
 		{
 			desc: "regex with escaped char in replacement",
@@ -115,7 +111,6 @@ func TestRewriteTarget(t *testing.T) {
 				XForwardedPrefix: "$1",
 			},
 			expectedPath:             "/bar",
-			expectedRawPath:          "/bar",
 			expectedXForwardedPrefix: "/foo",
 		},
 		{
@@ -127,7 +122,6 @@ func TestRewriteTarget(t *testing.T) {
 				XForwardedPrefix: "/$1/$2",
 			},
 			expectedPath:             "/endpoint",
-			expectedRawPath:          "/endpoint",
 			expectedXForwardedPrefix: "/prefix/sub",
 		},
 		{
@@ -178,9 +172,7 @@ func TestRewriteTarget(t *testing.T) {
 				Regex:       `^/prefix/(.*)`,
 				Replacement: "$1",
 			},
-			expectedPath:       "http://evil.com/malicious",
-			expectedRawPath:    "http://evil.com/malicious",
-			expectedStatusCode: http.StatusOK,
+			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
 			desc: "regex with full URL replacement with no capture groups",
@@ -219,6 +211,24 @@ func TestRewriteTarget(t *testing.T) {
 			},
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://portal.example.org/site/foo/bar?tenant=acme&id=42",
+		},
+		{
+			desc: "path with ..",
+			path: "/foo../bar",
+			config: dynamic.RewriteTarget{
+				Regex:       `^/foo(.*)`,
+				Replacement: "/$1",
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "capture group without path separator introducing dot-segment traversal",
+			path: "/api../admin",
+			config: dynamic.RewriteTarget{
+				Regex:       `^/api(.*)`,
+				Replacement: "/$1",
+			},
+			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
 

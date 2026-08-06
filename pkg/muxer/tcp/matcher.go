@@ -70,7 +70,7 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 
 	if hostExpr == "*" {
 		// Since a HostSNI(`*`) rule has been provided as catchAll for non-TLS TCP,
-		// it allows matching with an empty serverName.
+		// it allows matching with an empty serverName or every serverName.
 		tree.matcher = func(meta ConnData) bool { return true }
 		return nil
 	}

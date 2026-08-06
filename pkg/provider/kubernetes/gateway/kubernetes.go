@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -30,7 +30,6 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
@@ -73,7 +72,7 @@ type Provider struct {
 	Namespaces              []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	LabelSelector           string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	ThrottleDuration        ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	ExperimentalChannel     bool                  `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	ExperimentalChannel     bool                  `description:"Toggles Experimental Channel resources support." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress           *StatusAddress        `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
 	NativeLBByDefault       bool                  `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 	CrossProviderNamespaces []string              `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
@@ -83,8 +82,6 @@ type Provider struct {
 	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
 	// groupKindBackendFuncs is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
 	groupKindBackendFuncs map[string]map[string]BuildBackendFunc
-
-	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
 	client          *clientWrapper
@@ -224,7 +221,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
@@ -232,18 +229,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					if err != nil {
 						logger.Error().Err(err).Msg("Unable to load configuration from Gateways")
 					} else {
-						confHash, err := hashstructure.Hash(conf, nil)
-						switch {
-						case err != nil:
-							logger.Error().Msg("Unable to hash the configuration")
-						case p.lastConfiguration.Get() == confHash:
-							logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-						default:
-							p.lastConfiguration.Set(confHash)
-							configurationChan <- dynamic.Message{
-								ProviderName:  ProviderName,
-								Configuration: conf,
-							}
+						configurationChan <- dynamic.Message{
+							ProviderName:  ProviderName,
+							Configuration: conf,
 						}
 
 						// Flush regardless of whether the dynamic configuration changed: the
@@ -311,7 +299,6 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
-	client.experimentalChannel = p.ExperimentalChannel
 
 	return client, nil
 }
@@ -410,9 +397,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
 
-	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
-	}
+	p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
 
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
@@ -437,7 +422,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			for message := range messages {
 				conditionsErr = errors.Join(conditionsErr, errors.New(message))
 			}
-			logger.Error().
+			logger.Debug().
 				Err(conditionsErr).
 				Msg("Gateway Not Accepted")
 		}
@@ -467,6 +452,15 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			},
 		}
 
+		// The listener protocol is validated first, so that an unsupported protocol
+		// is reported as such instead of being masked by the entryPoint lookup,
+		// which cannot succeed for a protocol Traefik does not know about.
+		supportedKinds, conditions := supportedRouteKinds(gateway.Generation, listener.Protocol)
+		if len(conditions) > 0 {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
+			continue
+		}
+
 		ep, err := p.entryPointName(listener.Port, listener.Protocol)
 		if err != nil {
 			// update "Detached" status with "PortUnavailable" reason
@@ -483,7 +477,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		}
 		gatewayListeners[i].EPName = ep
 
-		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: ptr.To(gatev1.NamespacesFromSame)}})
+		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)}})
 		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(gateway.Namespace, allowedRoutes.Namespaces)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
@@ -496,12 +490,6 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
 			})
 
-			continue
-		}
-
-		supportedKinds, conditions := supportedRouteKinds(listener.Protocol, p.ExperimentalChannel)
-		if len(conditions) > 0 {
-			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
 			continue
 		}
 
@@ -676,9 +664,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
+	var acceptedListeners int
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
 		if len(listener.Status.Conditions) == 0 {
+			acceptedListeners++
+
 			listener.Status.Conditions = append(listener.Status.Conditions,
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
@@ -715,18 +706,54 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
 	}
 
-	if len(errorConditions) > 0 {
-		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
-		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
+	// Traefik supports no infrastructure parameters, and the specification requires
+	// a parametersRef that cannot be resolved to be reported instead of ignored.
+	if gateway.Spec.Infrastructure != nil && gateway.Spec.Infrastructure.ParametersRef != nil {
+		condition := metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: gateway.Generation,
 			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.GatewayReasonListenersNotValid),
-			Message:            "All Listeners must be valid",
-		})
+			Reason:             string(gatev1.GatewayReasonInvalidParameters),
+			Message:            "Gateway infrastructure parametersRef is not supported",
+		}
+		gatewayStatus.Conditions = append(gatewayStatus.Conditions, condition)
+
+		return gatewayStatus, append(errorConditions, condition)
+	}
+
+	if len(errorConditions) > 0 && acceptedListeners == 0 {
+		gatewayStatus.Conditions = append(gatewayStatus.Conditions,
+			// update "Accepted" status with "Accepted" reason
+			metav1.Condition{
+				Type:               string(gatev1.GatewayConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				Reason:             string(gatev1.GatewayReasonListenersNotValid),
+				Message:            "At least one Listener must be valid",
+				LastTransitionTime: metav1.Now(),
+			},
+			// update "Programmed" status with "Programmed" reason
+			metav1.Condition{
+				Type:               string(gatev1.GatewayConditionProgrammed),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				Reason:             string(gatev1.GatewayReasonInvalid),
+				Message:            "No Listener is valid",
+				LastTransitionTime: metav1.Now(),
+			},
+		)
 
 		return gatewayStatus, errorConditions
+	}
+
+	acceptedConditionReason := gatev1.GatewayReasonAccepted
+	acceptedConditionMessage := "Gateway successfully scheduled"
+	programmedConditionMessage := "Gateway successfully programmed"
+	if len(errorConditions) > 0 {
+		acceptedConditionReason = gatev1.GatewayReasonListenersNotValid
+		acceptedConditionMessage = "Gateway successfully scheduled, but some Listeners are not valid"
+		programmedConditionMessage = "Gateway successfully programmed, but some Listeners are not valid"
 	}
 
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
@@ -735,8 +762,8 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gateway.Generation,
-			Reason:             string(gatev1.GatewayReasonAccepted),
-			Message:            "Gateway successfully scheduled",
+			Reason:             string(acceptedConditionReason),
+			Message:            acceptedConditionMessage,
 			LastTransitionTime: metav1.Now(),
 		},
 		// update "Programmed" status with "Programmed" reason
@@ -745,7 +772,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: gateway.Generation,
 			Reason:             string(gatev1.GatewayReasonProgrammed),
-			Message:            "Gateway successfully scheduled",
+			Message:            programmedConditionMessage,
 			LastTransitionTime: metav1.Now(),
 		},
 	)
@@ -760,14 +787,14 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 
 	if p.StatusAddress.IP != "" {
 		return []gatev1.GatewayStatusAddress{{
-			Type:  ptr.To(gatev1.IPAddressType),
+			Type:  new(gatev1.IPAddressType),
 			Value: p.StatusAddress.IP,
 		}}, nil
 	}
 
 	if p.StatusAddress.Hostname != "" {
 		return []gatev1.GatewayStatusAddress{{
-			Type:  ptr.To(gatev1.HostnameAddressType),
+			Type:  new(gatev1.HostnameAddressType),
 			Value: p.StatusAddress.Hostname,
 		}}, nil
 	}
@@ -784,13 +811,13 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 			switch {
 			case addr.IP != "":
 				addresses = append(addresses, gatev1.GatewayStatusAddress{
-					Type:  ptr.To(gatev1.IPAddressType),
+					Type:  new(gatev1.IPAddressType),
 					Value: addr.IP,
 				})
 
 			case addr.Hostname != "":
 				addresses = append(addresses, gatev1.GatewayStatusAddress{
-					Type:  ptr.To(gatev1.HostnameAddressType),
+					Type:  new(gatev1.HostnameAddressType),
 					Value: addr.Hostname,
 				})
 			}
@@ -949,8 +976,8 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if svcPort.Name == *p.Name {
-				port = *p.Port
+			if p.Name != nil && svcPort.Name == *p.Name {
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}
@@ -980,22 +1007,12 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	return backendServers, *svcPort, nil
 }
 
-func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(gatewayGeneration int64, protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		if experimentalChannel {
-			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
-		}
-
-		return nil, []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonProtocolConflict),
-			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
-		}}
+		return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{
@@ -1010,8 +1027,9 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 	}
 
 	return nil, []metav1.Condition{{
-		Type:               string(gatev1.ListenerConditionConflicted),
-		Status:             metav1.ConditionTrue,
+		Type:               string(gatev1.ListenerConditionAccepted),
+		Status:             metav1.ConditionFalse,
+		ObservedGeneration: gatewayGeneration,
 		LastTransitionTime: metav1.Now(),
 		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
@@ -1183,14 +1201,21 @@ func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) b
 	return true
 }
 
-func makeRouterName(rule, name string) string {
+func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName, epName string, ruleIndex int) string {
+	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", kind, namespace, name, gatewayNamespace, gatewayName, epName, ruleIndex))
+
 	h := sha256.New()
+
+	for _, c := range []string{namespace, name, gatewayNamespace, gatewayName, epName, strconv.Itoa(ruleIndex)} {
+		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
+		fmt.Fprintf(h, "%d:%s", len(c), c)
+	}
 
 	// As explained in https://pkg.go.dev/hash#Hash,
 	// Write never returns an error.
 	h.Write([]byte(rule))
 
-	return fmt.Sprintf("%s-%.10x", name, h.Sum(nil))
+	return fmt.Sprintf("%s-%.10x", label, h.Sum(nil))
 }
 
 func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
@@ -1305,8 +1330,8 @@ func makeListenerKey(l gatev1.Listener) string {
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
 }
 
-func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
-	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
+func filterReferenceGrantsFrom(referenceGrants []*gatev1.ReferenceGrant, group, kind, namespace string) []*gatev1.ReferenceGrant {
+	var matchingReferenceGrants []*gatev1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
 		if referenceGrantMatchesFrom(referenceGrant, group, kind, namespace) {
 			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
@@ -1315,7 +1340,7 @@ func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, gr
 	return matchingReferenceGrants
 }
 
-func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, namespace string) bool {
+func referenceGrantMatchesFrom(referenceGrant *gatev1.ReferenceGrant, group, kind, namespace string) bool {
 	for _, from := range referenceGrant.Spec.From {
 		sanitizedGroup := string(from.Group)
 		if sanitizedGroup == "" {
@@ -1329,8 +1354,8 @@ func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group
 	return false
 }
 
-func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, name string) []*gatev1beta1.ReferenceGrant {
-	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
+func filterReferenceGrantsTo(referenceGrants []*gatev1.ReferenceGrant, group, kind, name string) []*gatev1.ReferenceGrant {
+	var matchingReferenceGrants []*gatev1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
 		if referenceGrantMatchesTo(referenceGrant, group, kind, name) {
 			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
@@ -1339,7 +1364,7 @@ func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, grou
 	return matchingReferenceGrants
 }
 
-func referenceGrantMatchesTo(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, name string) bool {
+func referenceGrantMatchesTo(referenceGrant *gatev1.ReferenceGrant, group, kind, name string) bool {
 	for _, to := range referenceGrant.Spec.To {
 		sanitizedGroup := string(to.Group)
 		if sanitizedGroup == "" {

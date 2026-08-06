@@ -11,10 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"k8s.io/utils/ptr"
 )
-
-func pointer[T any](v T) *T { return &v }
 
 func TestDecodeConfiguration(t *testing.T) {
 	labels := map[string]string{
@@ -302,7 +299,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 42},
 						ServersTransport: "foo",
 					},
@@ -314,7 +311,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
 						ServersTransport: "foo",
 					},
@@ -414,7 +411,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "fiibar"},
-								IPv6Subnet:  intPtr(42),
+								IPv6Subnet:  new(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -460,7 +457,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "foobar"},
-								IPv6Subnet:  intPtr(42),
+								IPv6Subnet:  new(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -497,7 +494,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						Attempts:                   42,
 						InitialInterval:            ptypes.Duration(time.Second),
 						Timeout:                    ptypes.Duration(time.Second),
-						MaxRequestBodyBytes:        pointer[int64](42),
+						MaxRequestBodyBytes:        new(int64(42)),
 						Status:                     []string{"foobar", "foobar"},
 						DisableRetryOnNetworkError: true,
 						RetryNonIdempotentMethod:   true,
@@ -509,7 +506,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						ForceSlash: pointer(true),
+						ForceSlash: new(true),
 					},
 				},
 				"Middleware18": {
@@ -585,9 +582,9 @@ func TestDecodeConfiguration(t *testing.T) {
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
-							CAOptional:         pointer(true),
+							CAOptional:         new(true),
 						},
-						TrustForwardHeader: pointer(true),
+						TrustForwardHeader: new(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"fiibar",
@@ -597,9 +594,9 @@ func TestDecodeConfiguration(t *testing.T) {
 							"fiibar",
 						},
 						ForwardBody:           true,
-						MaxBodySize:           pointer(int64(42)),
+						MaxBodySize:           new(int64(42)),
 						PreserveRequestMethod: true,
-						MaxResponseBodySize:   pointer[int64](42),
+						MaxResponseBodySize:   new(int64(42)),
 					},
 				},
 				"Middleware8": {
@@ -633,7 +630,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"X-foobar",
 							"X-fiibar",
 						},
-						AccessControlMaxAge: ptr.To(int64(200)),
+						AccessControlMaxAge: new(int64(200)),
 						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",
@@ -643,15 +640,15 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						SSLRedirect:          pointer(true),
-						SSLTemporaryRedirect: pointer(true),
-						SSLHost:              pointer("foobar"),
+						SSLRedirect:          new(true),
+						SSLTemporaryRedirect: new(true),
+						SSLHost:              new("foobar"),
 						SSLProxyHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
 						},
-						SSLForceHost:                    pointer(true),
-						STSSeconds:                      pointer(int64(42)),
+						SSLForceHost:                    new(true),
+						STSSeconds:                      new(int64(42)),
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
 						ForceSTSHeader:                  true,
@@ -664,7 +661,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						ContentSecurityPolicyReportOnly: "foobar",
 						PublicKey:                       "foobar",
 						ReferrerPolicy:                  "foobar",
-						FeaturePolicy:                   pointer("foobar"),
+						FeaturePolicy:                   new("foobar"),
 						PermissionsPolicy:               "foobar",
 						IsDevelopment:                   true,
 					},
@@ -681,7 +678,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"foobar",
 								"fiibar",
 							},
-							IPv6Subnet: intPtr(42),
+							IPv6Subnet: new(42),
 						},
 					},
 				},
@@ -723,16 +720,16 @@ func TestDecodeConfiguration(t *testing.T) {
 							Status:            401,
 							Port:              42,
 							Interval:          ptypes.Duration(time.Second),
-							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
+							UnhealthyInterval: new(ptypes.Duration(time.Second)),
 							Timeout:           ptypes.Duration(time.Second),
 							Hostname:          "foobar",
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: pointer(true),
+							FollowRedirects: new(true),
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -758,16 +755,16 @@ func TestDecodeConfiguration(t *testing.T) {
 							Status:            401,
 							Port:              42,
 							Interval:          ptypes.Duration(time.Second),
-							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
+							UnhealthyInterval: new(ptypes.Duration(time.Second)),
 							Timeout:           ptypes.Duration(time.Second),
 							Hostname:          "foobar",
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
 							},
-							FollowRedirects: pointer(true),
+							FollowRedirects: new(true),
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -848,7 +845,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						ServersTransport: "foo",
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 					},
 				},
 				"Service1": {
@@ -859,7 +856,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						ServersTransport: "foo",
-						TerminationDelay: pointer(42),
+						TerminationDelay: new(42),
 					},
 				},
 			},
@@ -918,9 +915,9 @@ func TestEncodeConfiguration(t *testing.T) {
 					Priority: 42,
 					TLS:      &dynamic.RouterTLSConfig{},
 					Observability: &dynamic.RouterObservabilityConfig{
-						AccessLogs: pointer(true),
-						Tracing:    pointer(true),
-						Metrics:    pointer(true),
+						AccessLogs: new(true),
+						Tracing:    new(true),
+						Metrics:    new(true),
 					},
 				},
 				"Router1": {
@@ -936,9 +933,9 @@ func TestEncodeConfiguration(t *testing.T) {
 					Rule:     "foobar",
 					Priority: 42,
 					Observability: &dynamic.RouterObservabilityConfig{
-						AccessLogs: pointer(true),
-						Tracing:    pointer(true),
-						Metrics:    pointer(true),
+						AccessLogs: new(true),
+						Tracing:    new(true),
+						Metrics:    new(true),
 					},
 				},
 			},
@@ -967,7 +964,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "fiibar"},
-								IPv6Subnet:  intPtr(42),
+								IPv6Subnet:  new(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -1012,7 +1009,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
 								ExcludedIPs: []string{"foobar", "foobar"},
-								IPv6Subnet:  intPtr(42),
+								IPv6Subnet:  new(42),
 							},
 							RequestHeaderName: "foobar",
 							RequestHost:       true,
@@ -1049,7 +1046,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						Attempts:                   42,
 						InitialInterval:            ptypes.Duration(time.Second),
 						Timeout:                    ptypes.Duration(time.Second),
-						MaxRequestBodyBytes:        pointer[int64](42),
+						MaxRequestBodyBytes:        new(int64(42)),
 						Status:                     []string{"foobar", "foobar"},
 						DisableRetryOnNetworkError: true,
 						RetryNonIdempotentMethod:   true,
@@ -1061,7 +1058,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						ForceSlash: pointer(true),
+						ForceSlash: new(true),
 					},
 				},
 				"Middleware18": {
@@ -1145,9 +1142,9 @@ func TestEncodeConfiguration(t *testing.T) {
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
-							CAOptional:         pointer(true),
+							CAOptional:         new(true),
 						},
-						TrustForwardHeader: pointer(true),
+						TrustForwardHeader: new(true),
 						AuthResponseHeaders: []string{
 							"foobar",
 							"fiibar",
@@ -1157,9 +1154,9 @@ func TestEncodeConfiguration(t *testing.T) {
 							"fiibar",
 						},
 						ForwardBody:           true,
-						MaxBodySize:           pointer(int64(42)),
+						MaxBodySize:           new(int64(42)),
 						PreserveRequestMethod: true,
-						MaxResponseBodySize:   pointer[int64](42),
+						MaxResponseBodySize:   new(int64(42)),
 					},
 				},
 				"Middleware8": {
@@ -1193,7 +1190,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"X-foobar",
 							"X-fiibar",
 						},
-						AccessControlMaxAge: ptr.To(int64(200)),
+						AccessControlMaxAge: new(int64(200)),
 						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",
@@ -1203,15 +1200,15 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
-						SSLRedirect:          pointer(true),
-						SSLTemporaryRedirect: pointer(true),
-						SSLHost:              pointer("foobar"),
+						SSLRedirect:          new(true),
+						SSLTemporaryRedirect: new(true),
+						SSLHost:              new("foobar"),
 						SSLProxyHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
 						},
-						SSLForceHost:                    pointer(true),
-						STSSeconds:                      pointer(int64(42)),
+						SSLForceHost:                    new(true),
+						STSSeconds:                      new(int64(42)),
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
 						ForceSTSHeader:                  true,
@@ -1224,7 +1221,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						ContentSecurityPolicyReportOnly: "foobar",
 						PublicKey:                       "foobar",
 						ReferrerPolicy:                  "foobar",
-						FeaturePolicy:                   pointer("foobar"),
+						FeaturePolicy:                   new("foobar"),
 						PermissionsPolicy:               "foobar",
 						IsDevelopment:                   true,
 					},
@@ -1241,7 +1238,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"foobar",
 								"fiibar",
 							},
-							IPv6Subnet: intPtr(42),
+							IPv6Subnet: new(42),
 						},
 					},
 				},
@@ -1273,7 +1270,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Status:            401,
 							Port:              42,
 							Interval:          ptypes.Duration(time.Second),
-							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
+							UnhealthyInterval: new(ptypes.Duration(time.Second)),
 							Timeout:           ptypes.Duration(time.Second),
 							Hostname:          "foobar",
 							Headers: map[string]string{
@@ -1281,7 +1278,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -1306,7 +1303,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							Status:            401,
 							Port:              42,
 							Interval:          ptypes.Duration(time.Second),
-							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
+							UnhealthyInterval: new(ptypes.Duration(time.Second)),
 							Timeout:           ptypes.Duration(time.Second),
 							Hostname:          "foobar",
 							Headers: map[string]string{
@@ -1314,7 +1311,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								"name1": "foobar",
 							},
 						},
-						PassHostHeader: pointer(true),
+						PassHostHeader: new(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
@@ -1590,8 +1587,4 @@ func TestEncodeConfiguration(t *testing.T) {
 		}
 	}
 	assert.Equal(t, expected, labels)
-}
-
-func intPtr(value int) *int {
-	return &value
 }

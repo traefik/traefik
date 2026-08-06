@@ -172,8 +172,8 @@ type location struct {
 	// AccessLog, if non-nil, overrides the router-level access log setting.
 	AccessLog *bool
 
-	// AppRoot, if non-nil, is the path to redirect bare "/" requests to.
-	AppRoot *string
+	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
+	AppRoot *dynamic.AppRoot
 
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost

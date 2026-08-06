@@ -612,8 +612,8 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if svcPort.Name == *p.Name {
-				port = *p.Port
+			if p.Name != nil && svcPort.Name == *p.Name {
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}
@@ -669,6 +669,13 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 		if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, service.Namespace) {
 			return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
 		}
+	}
+
+	if !c.allowCrossNamespace && strings.HasSuffix(service.Name, providerNamespaceSeparator+ProviderName) {
+		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+		// if the provider namespace kubernetescrd is used,
+		// we don't allow this format to avoid cross namespace references.
+		return "", nil, fmt.Errorf("invalid reference to service %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", service.Name)
 	}
 
 	if !isCrossProviderNamespaceAllowed(c.crossProviderNamespaces, parentNamespace) && strings.Contains(service.Name, providerNamespaceSeparator) {

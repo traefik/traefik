@@ -74,13 +74,11 @@ func Test_Routing(t *testing.T) {
 		for {
 			conn, err := tcpBackendListener.Accept()
 			if err != nil {
-				var opErr *net.OpError
-				if errors.As(err, &opErr) && opErr.Temporary() {
+				if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Temporary() {
 					continue
 				}
 
-				var urlErr *url.Error
-				if errors.As(err, &urlErr) && urlErr.Temporary() {
+				if urlErr, ok := errors.AsType[*url.Error](err); ok && urlErr.Temporary() {
 					continue
 				}
 
@@ -95,11 +93,10 @@ func Test_Routing(t *testing.T) {
 			buf := make([]byte, 100)
 			_, err = conn.Read(buf)
 
-			var opErr *net.OpError
 			if err == nil {
 				_, err = fmt.Fprint(conn, "TCP-CLIENT-FIRST")
 				require.NoError(t, err)
-			} else if errors.As(err, &opErr) && opErr.Timeout() {
+			} else if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Timeout() {
 				_, err = fmt.Fprint(conn, "TCP-SERVER-FIRST")
 				require.NoError(t, err)
 			}

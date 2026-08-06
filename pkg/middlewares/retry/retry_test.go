@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
+	"net/http/httputil"
 	"net/textproto"
+	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,7 +21,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"k8s.io/utils/ptr"
 )
 
 func TestRetry(t *testing.T) {
@@ -261,7 +263,7 @@ func TestRetryOnStatusWhenProxyNotReached(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	})
 
-	config := dynamic.Retry{Attempts: 3, Status: []string{"503"}, MaxRequestBodyBytes: ptr.To[int64](1024)}
+	config := dynamic.Retry{Attempts: 3, Status: []string{"503"}, MaxRequestBodyBytes: new(int64(1024))}
 	retryListener := &countingRetryListener{}
 	retry, err := New(t.Context(), next, config, retryListener, "traefikTest")
 	require.NoError(t, err)
@@ -312,6 +314,20 @@ func TestRetryWebsocket(t *testing.T) {
 			maxRequestAttempts:     3,
 			expectedRetryAttempts:  2,
 			amountFaultyEndpoints:  2,
+			expectedResponseStatus: http.StatusSwitchingProtocols,
+		},
+		{
+			desc:                   "Switching ok on the first attempt is not retried",
+			maxRequestAttempts:     3,
+			expectedRetryAttempts:  0,
+			amountFaultyEndpoints:  0,
+			expectedResponseStatus: http.StatusSwitchingProtocols,
+		},
+		{
+			desc:                   "Switching ok on an intermediate attempt is not retried",
+			maxRequestAttempts:     3,
+			expectedRetryAttempts:  1,
+			amountFaultyEndpoints:  1,
 			expectedResponseStatus: http.StatusSwitchingProtocols,
 		},
 		{
@@ -473,7 +489,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestBody:         "test request body",
@@ -485,7 +501,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            4,
 				Status:              []string{"500-599"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
 			requestBody:         "test request body",
@@ -497,7 +513,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502", "503", "504"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
@@ -509,7 +525,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError},
 			wantRetryAttempts:   0,
@@ -530,7 +546,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
@@ -542,7 +558,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502"},
-				MaxRequestBodyBytes: ptr.To[int64](8),
+				MaxRequestBodyBytes: new(int64(8)),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
@@ -579,7 +595,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
 			amountOfTCPFailures: 1,
@@ -592,7 +608,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: ptr.To[int64](1024),
+				MaxRequestBodyBytes: new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestMethod:       http.MethodPost,
@@ -605,7 +621,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Attempts:                 3,
 				Status:                   []string{"503"},
 				RetryNonIdempotentMethod: true,
-				MaxRequestBodyBytes:      ptr.To[int64](1024),
+				MaxRequestBodyBytes:      new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestMethod:       http.MethodPost,
@@ -619,7 +635,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Attempts:                   3,
 				Status:                     []string{"503"},
 				DisableRetryOnNetworkError: true,
-				MaxRequestBodyBytes:        ptr.To[int64](1024),
+				MaxRequestBodyBytes:        new(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusOK, http.StatusOK},
 			amountOfTCPFailures: 1,
@@ -794,7 +810,7 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 	config := dynamic.Retry{
 		Attempts:            3,
 		Status:              []string{"503"},
-		MaxRequestBodyBytes: ptr.To[int64](100), // Smaller than body
+		MaxRequestBodyBytes: new(int64(100)), // Smaller than body
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -833,7 +849,7 @@ func TestRetryDoesNotBufferBodyForNonIdempotentMethod(t *testing.T) {
 	config := dynamic.Retry{
 		Attempts:            3,
 		Status:              []string{"503"},
-		MaxRequestBodyBytes: ptr.To[int64](1024),
+		MaxRequestBodyBytes: new(int64(1024)),
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -858,4 +874,73 @@ func TestRetryDoesNotBufferBodyForNonIdempotentMethod(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, 0, retryListener.timesCalled)
+}
+
+// TestRetryWebsocketDelayedFlush reproduces https://github.com/traefik/traefik/issues/13513.
+//
+// httputil.ReverseProxy serves a protocol upgrade by hijacking the connection and writing the 101 response directly to
+// it, so WriteHeader is never called on the retry responseWriter and written stays false.
+// When the client goes away, the retry middleware therefore replays the request, this time getting a regular
+// Content-Length response, which makes copyResponse arm the maxLatencyWriter flush timer.
+// The delayed flush then flushes an http.Response whose buffered writer has been released by Hijack.
+//
+// Until the retry middleware stops replaying hijacked requests, this does not report a test failure:
+// it panics in a timer goroutine, which takes the whole test binary down with a SIGSEGV.
+func TestRetryWebsocketDelayedFlush(t *testing.T) {
+	var backendCallCount atomic.Int32
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if backendCallCount.Add(1) == 1 {
+			upgrader := websocket.Upgrader{}
+			conn, err := upgrader.Upgrade(rw, req, nil)
+			require.NoError(t, err)
+
+			defer conn.Close()
+
+			// Hold the stream until the client goes away.
+			_, _, _ = conn.ReadMessage()
+
+			return
+		}
+
+		// The replayed request no longer matches a live stream, and the backend answers with a regular response.
+		// A known Content-Length is what makes ReverseProxy arm the flush timer instead of flushing inline.
+		rw.Header().Set("Content-Length", "10")
+		rw.WriteHeader(http.StatusOK)
+		rw.(http.Flusher).Flush()
+
+		// Give the flush timer time to fire before the body completes the copy.
+		time.Sleep(time.Second)
+
+		_, _ = rw.Write([]byte("0123456789"))
+	}))
+	t.Cleanup(backend.Close)
+
+	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+
+	proxy := &httputil.ReverseProxy{
+		FlushInterval: 100 * time.Millisecond,
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.Out.URL.Host = backendURL.Host
+			pr.Out.URL.Scheme = backendURL.Scheme
+		},
+	}
+
+	handler, err := New(t.Context(), WrapHandler(proxy), dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	require.NoError(t, err)
+
+	retryServer := httptest.NewServer(handler)
+	t.Cleanup(retryServer.Close)
+
+	conn, response, err := websocket.DefaultDialer.Dial(strings.Replace(retryServer.URL, "http", "ws", 1), nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, response.StatusCode)
+
+	// The client goes away: handleUpgradeResponse returns, and the retry middleware replays the request.
+	require.NoError(t, conn.Close())
+
+	// Leave the replayed attempt time to arm and fire the delayed flush.
+	time.Sleep(time.Second)
+
+	assert.Equal(t, int32(1), backendCallCount.Load(), "an upgraded request must not be replayed")
 }
