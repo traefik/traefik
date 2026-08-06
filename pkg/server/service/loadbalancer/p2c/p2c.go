@@ -216,13 +216,13 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 	// In order to not get the same backend twice, we make the second call to s.rand.Intn one fewer
 	// than the length of the slice. We then have to shift over the second index if it is equal or
-	// greater than the first index, wrapping round if needed.
+	// greater than the first index.
 	b.randMu.Lock()
-	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
+	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy)-1)
 	b.randMu.Unlock()
 
-	if n2 == n1 {
-		n2 = (n2 + 1) % len(healthy)
+	if n2 >= n1 {
+		n2 += 1
 	}
 
 	h1, h2 := healthy[n1], healthy[n2]
