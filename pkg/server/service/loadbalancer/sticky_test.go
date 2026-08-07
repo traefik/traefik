@@ -102,7 +102,7 @@ func TestSticky_StickyHandler(t *testing.T) {
 }
 
 func TestSticky_WriteStickyCookie(t *testing.T) {
-	sticky := NewStickyCookie(dynamic.Cookie{
+	cookieConfig := dynamic.Cookie{
 		Name:     "test",
 		Secure:   true,
 		HTTPOnly: true,
@@ -112,7 +112,7 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 		Path:     new("/foo"),
 		Domain:   "foo.com",
 	}
-	sticky := NewSticky(cookieConfig)
+	sticky := NewStickyCookie(cookieConfig)
 
 	// Should return an error if the handler does not exist.
 	res := httptest.NewRecorder()

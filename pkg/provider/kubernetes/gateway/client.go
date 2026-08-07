@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
@@ -44,6 +45,8 @@ type clientWrapper struct {
 	watchedNamespaces []string
 
 	labelSelector string
+
+	experimentalChannel bool
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -766,16 +769,26 @@ func (c *clientWrapper) UpdateXBackendTrafficPolicyStatus(ctx context.Context, p
 		copy(ancestorStatuses, status.Ancestors)
 
 		for _, ancestorStatus := range currentPolicy.Status.Ancestors {
-			if len(ancestorStatuses) >= 16 {
-				break
+			// Keep statuses added by other gateway controllers.
+			if ancestorStatus.ControllerName != controllerName {
+				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
+				continue
 			}
-			ancestorStatuses = append(ancestorStatuses, ancestorStatus)
+
+			// Keep statuses added by Traefik for other ancestors.
+			// An XBackendTrafficPolicy can target services attached to different listeners.
+			if !slices.ContainsFunc(status.Ancestors, func(s gatev1.PolicyAncestorStatus) bool {
+				return reflect.DeepEqual(s.AncestorRef, ancestorStatus.AncestorRef)
+			}) {
+				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
+			}
 		}
 
 		if len(ancestorStatuses) > 16 {
 			return fmt.Errorf("failed to update XBackendTrafficPolicy %s/%s status: PolicyAncestor statuses count exceeds 16", policy.Namespace, policy.Name)
 		}
 
+		// Do not update status when nothing has changed.
 		if policyAncestorStatusesEqual(currentPolicy.Status.Ancestors, ancestorStatuses) {
 			return nil
 		}

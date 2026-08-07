@@ -225,7 +225,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
+		svcName, errCondition := p.loadService(ctx, gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport, routeSticky)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -252,7 +252,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport, routeSticky *dynamic.Sticky) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -335,7 +335,7 @@ func (p *Provider) loadService(gatewayName string, listener gatewayListener, con
 		}
 	}
 
-	lb, st, errCondition := p.loadHTTPServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadHTTPServers(ctx, gatewayName, namespace, route, backendRef, listener, statusReport, routeSticky)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
@@ -468,7 +468,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport, routeSticky *dynamic.Sticky) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -591,7 +591,7 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
-	sticky, policyCondition := p.resolveSessionPersistence(ctx, namespace, backendRef, listener, route, routeSticky)
+	sticky, policyCondition := p.resolveSessionPersistence(ctx, gatewayName, namespace, backendRef, listener, route, routeSticky)
 	if policyCondition != nil {
 		return nil, nil, policyCondition
 	}
@@ -622,8 +622,8 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 	return lb, serversTransport, nil
 }
 
-func (p *Provider) resolveSessionPersistence(ctx context.Context, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute, routeSticky *dynamic.Sticky) (*dynamic.Sticky, *metav1.Condition) {
-	policySticky, policyCondition := p.loadBackendTrafficPolicySticky(ctx, namespace, backendRef, listener, route)
+func (p *Provider) resolveSessionPersistence(ctx context.Context, gatewayName, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute, routeSticky *dynamic.Sticky) (*dynamic.Sticky, *metav1.Condition) {
+	policySticky, policyCondition := p.loadBackendTrafficPolicySticky(ctx, gatewayName, namespace, backendRef, listener, route)
 	if policyCondition != nil {
 		return nil, policyCondition
 	}
@@ -635,7 +635,7 @@ func (p *Provider) resolveSessionPersistence(ctx context.Context, namespace stri
 	return policySticky, nil
 }
 
-func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute) (*dynamic.Sticky, *metav1.Condition) {
+func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayName, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute) (*dynamic.Sticky, *metav1.Condition) {
 	if !p.client.experimentalChannel {
 		return nil, nil
 	}
@@ -668,7 +668,7 @@ func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, namespace
 				Group:       ptr.To(gatev1.Group(groupGateway)),
 				Kind:        ptr.To(gatev1.Kind(kindGateway)),
 				Namespace:   ptr.To(gatev1.Namespace(namespace)),
-				Name:        gatev1.ObjectName(listener.GWName),
+				Name:        gatev1.ObjectName(gatewayName),
 				SectionName: ptr.To(gatev1.SectionName(listener.Name)),
 			},
 			ControllerName: controllerName,
