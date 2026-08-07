@@ -80,6 +80,10 @@ func parseContainer(container containertypes.InspectResponse) dockerData {
 		dData.Labels = container.Config.Labels
 	}
 
+	if container.Config != nil && container.Config.ExposedPorts != nil {
+		dData.ExposedPorts = container.Config.ExposedPorts
+	}
+
 	if container.NetworkSettings != nil {
 		if container.NetworkSettings.Ports != nil {
 			dData.NetworkSettings.Ports = container.NetworkSettings.Ports
@@ -191,6 +195,18 @@ func getPort(container dockerData, serverPort string) string {
 		return serverPort
 	}
 	if len(container.NetworkSettings.Ports) == 0 {
+		// Fall back to ExposedPorts for macvlan and other networks where
+		// Docker does not populate NetworkSettings.Ports.
+		if len(container.ExposedPorts) > 0 {
+			var ports []networktypes.Port
+			for port := range container.ExposedPorts {
+				ports = append(ports, port)
+			}
+			slices.SortFunc(ports, func(a, b networktypes.Port) int {
+				return cmp.Compare(a.Num(), b.Num())
+			})
+			return ports[0].Port()
+		}
 		return ""
 	}
 
