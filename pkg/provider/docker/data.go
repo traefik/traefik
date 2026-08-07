@@ -13,6 +13,7 @@ type dockerData struct {
 	Status          containertypes.ContainerState
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
+	ExposedPorts    map[networktypes.Port]struct{}
 	Health          containertypes.HealthStatus
 	NodeIP          string // Only filled in Swarm mode.
 	ExtraConf       configuration
