@@ -246,6 +246,13 @@ func findConflictingRouters(ep string, routers map[string]*dynamic.Router, stric
 		// so if it is not the default one, it is a conflict.
 		if len(domains) == 0 && router.TLS.ResolvedOptions != traefiktls.DefaultTLSConfigName {
 			conflicting = append(conflicting, name)
+
+			if strictTLSOptions {
+				log.WithoutContext().Errorf("On EntryPoint %q, router %q, with no domains in its rule, is configured with a TLS options different than the default one, the fallback to the default TLS options being disabled, it will be disabled", ep, name)
+				continue
+			}
+
+			log.WithoutContext().Errorf("On EntryPoint %q, router %q, with no domains in its rule, is configured with a TLS options different than the default one, default TLSOptions will be applied for it", ep, name)
 			continue
 		}
 
