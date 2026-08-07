@@ -595,6 +595,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
 
     If that happens, both mappings are discarded, and the host name (`snitest.com` in this case) for these routers gets associated with the default TLS options instead.
 
+    The default TLS options being the fallback of the conflict resolution,
+    they should not be less secure than the options they can replace.
+    The [`core.strictTLSOptions`](../../https/tls.md#conflicting-tls-options) static configuration option
+    disables this fallback, and disables the conflicting routers instead.
+
 #### `certResolver`
 
 If `certResolver` is defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules.

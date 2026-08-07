@@ -150,9 +150,13 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 //
 // A router keeps its original name, and its resolved TLS options, for the entryPoints
 // on which it does not conflict. For each entryPoint on which it conflicts, that
-// entryPoint is removed from the router and a dedicated copy is emitted, with its
-// TLSOptions reset to the default one, named following the "ep-conflicted-name@provider" pattern.
-func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynamic.Router {
+// entryPoint is removed from the router and a dedicated copy is emitted, named
+// following the "ep-conflicted-name@provider" pattern.
+//
+// The conflict on that copy is arbitrated by falling back to the default TLS options,
+// unless strictTLSOptions is enabled, in which case the copy is flagged as conflicting,
+// which disables it.
+func resolveHTTPTLSOptions(routers map[string]*dynamic.Router, strictTLSOptions bool) map[string]*dynamic.Router {
 	if len(routers) == 0 {
 		return routers
 	}
@@ -186,7 +190,7 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 	// Resolve the TLS options independently for each entryPoint.
 	conflictingRouters := make(map[string][]string, len(routersByEntryPoint))
 	for ep, epRouters := range routersByEntryPoint {
-		conflictingRouters[ep] = findConflictingRouters(ep, epRouters)
+		conflictingRouters[ep] = findConflictingRouters(ep, epRouters, strictTLSOptions)
 	}
 
 	for name, router := range routers {
@@ -194,7 +198,11 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 			deleted := slices.Contains(conflictingRouters[ep], name)
 			if deleted {
 				rt := router.DeepCopy()
-				rt.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+				if strictTLSOptions {
+					rt.TLS.ConflictingOptions = true
+				} else {
+					rt.TLS.ResolvedOptions = traefiktls.DefaultTLSConfigName
+				}
 				rt.EntryPoints = []string{ep}
 				// The new name is not collision free but has very small possibility to collide.
 				// TODO: rework this naming whenever we'll introduce a resource reference mechanism not based on a string.
@@ -215,8 +223,8 @@ func resolveHTTPTLSOptions(routers map[string]*dynamic.Router) map[string]*dynam
 // findConflictingRouters returns the names of the routers, among the given
 // single-entryPoint routers, that serve a host (SNI) also served by another router
 // with a different resolved TLS option. Such routers are arbitrated by falling back
-// to the default TLS options.
-func findConflictingRouters(ep string, routers map[string]*dynamic.Router) []string {
+// to the default TLS options, or, when strictTLSOptions is enabled, by disabling them.
+func findConflictingRouters(ep string, routers map[string]*dynamic.Router, strictTLSOptions bool) []string {
 	var conflicting []string
 
 	// For each host (SNI, already lower-cased by the domain parsing), the routers
@@ -238,6 +246,13 @@ func findConflictingRouters(ep string, routers map[string]*dynamic.Router) []str
 		// so if it is not the default one, it is a conflict.
 		if len(domains) == 0 && router.TLS.ResolvedOptions != traefiktls.DefaultTLSConfigName {
 			conflicting = append(conflicting, name)
+
+			if strictTLSOptions {
+				log.WithoutContext().Errorf("On EntryPoint %q, router %q, with no domains in its rule, is configured with a TLS options different than the default one, the fallback to the default TLS options being disabled, it will be disabled", ep, name)
+				continue
+			}
+
+			log.WithoutContext().Errorf("On EntryPoint %q, router %q, with no domains in its rule, is configured with a TLS options different than the default one, default TLSOptions will be applied for it", ep, name)
 			continue
 		}
 
@@ -259,6 +274,11 @@ func findConflictingRouters(ep string, routers map[string]*dynamic.Router) []str
 		for _, names := range routersByOption {
 			conflicting = append(conflicting, names...)
 			routersInConflict = append(routersInConflict, names...)
+		}
+
+		if strictTLSOptions {
+			log.WithoutContext().Errorf("On EntryPoint %q, Host %q is served by multiple routers with different TLS options, the fallback to the default TLS options being disabled, the following routers are disabled: %v", ep, domain, routersInConflict)
+			continue
 		}
 
 		log.WithoutContext().Errorf("On EntryPoint %q, Host %q is served by multiple routers with different TLS options, default TLSOptions will be applied for the following routers: %v", ep, domain, routersInConflict)

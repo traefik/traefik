@@ -102,6 +102,9 @@ Storage to use. (Default: ```acme.json```)
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`--core.stricttlsoptions`:  
+Disables the unsafe fallback to the default TLS options for the routers with conflicting TLS options. (Default: ```false```)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
