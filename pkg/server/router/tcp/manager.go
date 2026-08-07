@@ -168,6 +168,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		// We do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
 		if routerHTTPConfig.TLS.ConflictingOptions {
+			for _, domain := range domains {
+				logger.Debugf("Adding special closing route for %s because of a conflicting TLS options configuration", domain)
+				router.AddHTTPTLSConfig(domain, nil, "")
+				continue
+			}
+
 			continue
 		}
 

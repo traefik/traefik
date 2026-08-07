@@ -585,13 +585,15 @@ By default, such a conflict is arbitrated by falling back to the `default` TLS o
     on the same entry point, reference the same TLS options.
 
 The `core.strictTLSOptions` static configuration option disables this fallback.
-When it is enabled, the routers involved in the conflict are marked in error and are not built at all,
-and the host name is no longer mapped to any TLS options.
+When it is enabled, the routers involved in the conflict are marked in error and are not built,
+and the TLS connections for the host names they serve are rejected.
 
-!!! warning "Disabled routers"
+!!! warning "Rejected connections"
 
-    Enabling `strictTLSOptions` fails closed: a conflict disables all the routers serving the conflicting host name
-    on the concerned entry point, until the conflict is resolved.
+    Enabling `strictTLSOptions` fails closed: a conflict makes all the host names served by the conflicting routers
+    unreachable on the concerned entry point, until the conflict is resolved.
+    This includes the host names on which no other router conflicts,
+    when the rule of a conflicting router holds several of them.
 
 ```yaml tab="File (YAML)"
 ## Static configuration

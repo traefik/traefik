@@ -407,7 +407,7 @@ func TestConflictingTLSOptions(t *testing.T) {
 			expectedTLSConf: true,
 		},
 		{
-			desc:               "conflicting TLS options, no TLS configuration is mounted for the domain",
+			desc:               "conflicting TLS options, the TLS connections for the domain are rejected",
 			conflictingOptions: true,
 		},
 	}
@@ -472,9 +472,12 @@ func TestConflictingTLSOptions(t *testing.T) {
 				return
 			}
 
-			// The router being disabled, its domain is not mapped to any TLS configuration,
-			// and is therefore served with the default TLS options.
-			assert.NotContains(t, handlers["web"].hostHTTPTLSConfig, "bar.foo")
+			// A nil TLS configuration is the signal to insert a handler
+			// that makes the TLS connections for this domain fail.
+			tlsConf, ok := handlers["web"].hostHTTPTLSConfig["bar.foo"]
+			require.True(t, ok, "no TLS configuration for the router domain")
+
+			assert.Nil(t, tlsConf.cfg)
 		})
 	}
 }

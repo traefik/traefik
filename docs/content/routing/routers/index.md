@@ -598,7 +598,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
     The default TLS options being the fallback of the conflict resolution,
     they should not be less secure than the options they can replace.
     The [`core.strictTLSOptions`](../../https/tls.md#conflicting-tls-options) static configuration option
-    disables this fallback, and disables the conflicting routers instead.
+    disables this fallback: the conflicting routers are disabled instead,
+    and the TLS connections for the host names they serve are rejected.
 
 #### `certResolver`
 

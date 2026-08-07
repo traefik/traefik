@@ -1319,6 +1319,123 @@ func (s *HTTPSSuite) TestWithTLSOptionsConflict() {
 	}
 }
 
+// TestWithStrictTLSOptionsConflict checks the conflict resolution when the fallback to the
+// default TLS options is disabled with the core.strictTLSOptions option: the routers involved
+// in a conflict are disabled, and the TLS connections for all their domains are rejected.
+//
+// The effective TLS options are probed through the negotiated TLS version: the "tls12"
+// options cap the version to TLS 1.2, while the "tls13" options require at least TLS 1.3.
+func (s *HTTPSSuite) TestWithStrictTLSOptionsConflict() {
+	backend := startTestServer("9010", http.StatusOK, "server1")
+	defer backend.Close()
+
+	file := s.adaptFile("fixtures/https/https_tls_options_conflict_strict.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`cross.www.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	// The conflicting routers are marked in error.
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second,
+		try.BodyContains("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host"))
+	require.NoError(s.T(), err)
+
+	testCases := []struct {
+		desc       string
+		addr       string // entryPoint address to reach
+		serverName string // SNI
+		minVersion uint16 // 0 means the crypto/tls library default
+		maxVersion uint16 // 0 means the crypto/tls library default
+		// expectConnectionError is set when the connection is expected to be rejected,
+		// whatever the TLS version offered by the client.
+		// Otherwise expectedStatusCode is asserted on the HTTP response.
+		expectConnectionError bool
+		expectedStatusCode    int
+	}{
+		// Same host, same options, same entryPoint: no conflict, the "tls12" options are still applied.
+		{
+			desc:               "same options / same entryPoint: TLS 1.2 client is accepted",
+			addr:               "127.0.0.1:4443",
+			serverName:         "same.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+
+		// Same host, different options, same entryPoint: conflict, the connections are rejected
+		// instead of falling back to the default options, which would accept both versions.
+		{
+			desc:                  "conflicting options / same entryPoint: TLS 1.2 client is rejected",
+			addr:                  "127.0.0.1:4443",
+			serverName:            "conflict.www.snitest.com",
+			maxVersion:            tls.VersionTLS12,
+			expectConnectionError: true,
+		},
+		{
+			desc:                  "conflicting options / same entryPoint: TLS 1.3 client is rejected",
+			addr:                  "127.0.0.1:4443",
+			serverName:            "conflict.www.snitest.com",
+			minVersion:            tls.VersionTLS13,
+			expectConnectionError: true,
+		},
+
+		// Same host, different options, different entryPoints: no conflict, each entryPoint keeps its own options.
+		{
+			desc:               "different entryPoints: websecure keeps tls12, TLS 1.2 client is accepted",
+			addr:               "127.0.0.1:4443",
+			serverName:         "cross.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "different entryPoints: websecure2 keeps tls13, TLS 1.3 client is accepted",
+			addr:               "127.0.0.1:4444",
+			serverName:         "cross.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusOK,
+		},
+
+		// A conflicting router is disabled as a whole: all the domains of its rule are rejected,
+		// even the ones on which no other router conflicts.
+		{
+			desc:                  "conflicting router: the conflicting domain is rejected",
+			addr:                  "127.0.0.1:4443",
+			serverName:            "multi-a.www.snitest.com",
+			maxVersion:            tls.VersionTLS12,
+			expectConnectionError: true,
+		},
+		{
+			desc:                  "conflicting router: its other domain is rejected as well",
+			addr:                  "127.0.0.1:4443",
+			serverName:            "multi-b.www.snitest.com",
+			maxVersion:            tls.VersionTLS12,
+			expectConnectionError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         test.serverName,
+			MinVersion:         test.minVersion,
+			MaxVersion:         test.maxVersion,
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "https://"+test.addr+"/", nil)
+		require.NoError(s.T(), err)
+		req.Host = test.serverName
+
+		if test.expectConnectionError {
+			_, err = (&http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}).Do(req)
+			assert.Error(s.T(), err, "test %q should not be served", test.desc)
+			continue
+		}
+
+		err = try.RequestWithTransport(req, 2*time.Second, &http.Transport{TLSClientConfig: tlsConfig}, try.StatusCodeIs(test.expectedStatusCode))
+		assert.NoError(s.T(), err, "test %q failed with: %v", test.desc, err)
+	}
+}
+
 // TestWithInvalidTLSOption verifies the behavior when using an invalid tlsOption configuration.
 func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 	backend := startTestServer("9010", http.StatusOK, "server1")
