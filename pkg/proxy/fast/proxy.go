@@ -217,6 +217,13 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	outReq.SetBodyStream(req.Body, int(req.ContentLength))
 
+	// If the original request did not have a Content-Type header,
+	// delete it to prevent fasthttp from adding a default one
+	// (e.g., application/octet-stream for non-GET requests without a body).
+	if _, hasContentType := req.Header["Content-Type"]; !hasContentType {
+		outReq.Header.Del("Content-Type")
+	}
+
 	outReq.Header.SetMethod(req.Method)
 
 	if !proxyhttputil.ShouldNotAppendXFF(req.Context()) {
