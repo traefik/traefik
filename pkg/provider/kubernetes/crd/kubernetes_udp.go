@@ -32,8 +32,15 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		}
 
 		for i, route := range ingressRouteUDP.Spec.Routes {
-			key := fmt.Sprintf("%s-%d", ingressName, i)
-			serviceName := makeID(ingressRouteUDP.Namespace, key)
+			routeIndex := strconv.Itoa(i)
+
+			routerName := makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex)
+			serviceName := routerName
+
+			var wrrName string
+			if len(route.Services) > 1 {
+				wrrName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
+			}
 
 			for _, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
@@ -48,11 +55,14 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
+					serviceName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
 					conf.Services[serviceName] = balancerServerUDP
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
+				serviceName = wrrName
+
+				serviceKey := makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, service.Name, service.Port.String())
 				conf.Services[serviceKey] = balancerServerUDP
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}
@@ -67,7 +77,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			conf.Routers[serviceName] = &dynamic.UDPRouter{
+			conf.Routers[routerName] = &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
 				Service:     serviceName,
 			}

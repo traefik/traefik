@@ -46,6 +46,12 @@ const (
 	providerNamespaceSeparator = "@"
 )
 
+// Roles of the services generated for a route.
+const (
+	roleWRR = "wrr"
+	roleLB  = "lb"
+)
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint                  string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -228,7 +234,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	conf.TLS.Certificates = getTLSConfig(tlsConfigs)
 
 	for _, middleware := range client.GetMiddlewares() {
-		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
+		id := makeKey(middleware.Namespace, middleware.Name)
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
@@ -324,7 +330,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
-		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
+		id := makeKey(middlewareTCP.Namespace, middlewareTCP.Name)
 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
@@ -418,7 +424,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
-		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
+		id := makeKey(serversTransport.Namespace, serversTransport.Name)
 		conf.HTTP.ServersTransports[id] = &dynamic.ServersTransport{
 			ServerName:          serversTransport.Spec.ServerName,
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
@@ -926,7 +932,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			clientCAs = append(clientCAs, tls.FileOrContent(cert))
 		}
 
-		id := makeID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
+		id := makeKey(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		// If the name is default, we override the default config.
 		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName {
 			id = tlsOptionsCRD.Name
@@ -978,7 +984,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 	for _, t := range tlsStoreCRD {
 		logger := log.FromContext(log.With(ctx, log.Str("TLSStore", t.Name), log.Str("namespace", t.Namespace)))
 
-		id := makeID(t.Namespace, t.Name)
+		id := makeKey(t.Namespace, t.Name)
 
 		// If the name is default, we override the default config.
 		if t.Name == tls.DefaultTLSStoreName {
@@ -1054,23 +1060,16 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 	return nil
 }
 
-func makeServiceKey(rule, ingressName string) (string, error) {
+func makeKey(components ...string) string {
 	h := sha256.New()
-	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
+
+	for _, component := range components {
+		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
+		// As explained in https://pkg.go.dev/hash#Hash, Write never returns an error.
+		_, _ = fmt.Fprintf(h, "%d:%s", len(component), component)
 	}
 
-	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
-
-	return key, nil
-}
-
-func makeID(namespace, name string) string {
-	if namespace == "" {
-		return name
-	}
-
-	return namespace + "-" + name
+	return fmt.Sprintf("%s-%.10x", provider.Normalize(strings.Join(components, "-")), h.Sum(nil))
 }
 
 func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
@@ -1233,5 +1232,5 @@ func resolveReference(ctx context.Context, parentNs, ns, name string, crossProvi
 		return "", errors.New("allowCrossNamespace is disabled, cross-namespace are disallowed")
 	}
 
-	return provider.Normalize(ns + "-" + name), nil
+	return makeKey(ns, name), nil
 }
