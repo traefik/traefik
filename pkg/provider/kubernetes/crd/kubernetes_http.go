@@ -58,7 +58,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			crossProviderNamespaces:   p.CrossProviderNamespaces,
 		}
 
-		for _, route := range ingressRoute.Spec.Routes {
+		for ri, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
 				logger.Errorf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
 				continue
@@ -69,20 +69,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			serviceKey, err := makeServiceKey(route.Match, ingressName)
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-
 			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
 			if err != nil {
 				logger.Errorf("Failed to create middleware keys: %v", err)
 				continue
 			}
 
-			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
-			serviceName := normalized
+			routerName := makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri))
+			serviceName := routerName
 
 			if len(route.Services) > 1 {
 				spec := traefikv1alpha1.TraefikServiceSpec{
@@ -90,6 +84,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 						Services: route.Services,
 					},
 				}
+
+				serviceName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR)
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
 				if errBuild != nil {
@@ -104,6 +100,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				if serversLB != nil {
+					serviceName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
 					conf.Services[serviceName] = serversLB
 				} else {
 					serviceName = fullName
@@ -138,7 +135,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 			p.applyRouterTransform(ctx, r, ingressRoute)
 
-			conf.Routers[normalized] = r
+			conf.Routers[routerName] = r
 		}
 	}
 
@@ -173,7 +170,7 @@ type configBuilder struct {
 // buildTraefikService creates the configuration for the traefik service defined in tService,
 // and adds it to the given conf map.
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
-	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
+	id := makeKey(tService.Namespace, tService.Name)
 
 	if tService.Spec.Weighted != nil {
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
@@ -308,7 +305,7 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 		return serversTransportName, nil
 	}
 
-	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
+	return makeKey(parentNamespace, serversTransportName), nil
 }
 
 func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
@@ -464,16 +461,16 @@ func splitSvcNameProvider(name string) (string, string) {
 
 func fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
 	if (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "") {
-		return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, &port))
+		return makeKey(service.Namespace, service.Name, port.String())
 	}
 
 	if !strings.Contains(service.Name, providerNamespaceSeparator) {
-		return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, service.Name))
+		return makeKey(service.Namespace, service.Name)
 	}
 
 	name, pName := splitSvcNameProvider(service.Name)
 	if pName == providerName {
-		return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, name))
+		return makeKey(service.Namespace, name)
 	}
 
 	if service.Namespace != "" {
