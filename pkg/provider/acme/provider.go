@@ -18,14 +18,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-acme/lego/v4/certificate"
-	"github.com/go-acme/lego/v4/challenge"
-	"github.com/go-acme/lego/v4/challenge/dns01"
-	"github.com/go-acme/lego/v4/challenge/http01"
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/go-acme/lego/v4/lego"
-	"github.com/go-acme/lego/v4/providers/dns"
-	"github.com/go-acme/lego/v4/registration"
+	"github.com/go-acme/lego/v5/acme"
+	"github.com/go-acme/lego/v5/certificate"
+	"github.com/go-acme/lego/v5/challenge"
+	"github.com/go-acme/lego/v5/challenge/dns01"
+	"github.com/go-acme/lego/v5/challenge/http01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/lego"
+	"github.com/go-acme/lego/v5/providers/dns"
+	"github.com/go-acme/lego/v5/registration"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -55,6 +56,7 @@ type Configuration struct {
 
 	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CertificateTimeout          ptypes.Duration `description:"Timeout for obtaining the certificate during the finalization request." json:"certificateTimeout,omitempty" toml:"certificateTimeout,omitempty" yaml:"certificateTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
 	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
@@ -67,17 +69,19 @@ type Configuration struct {
 
 // SetDefaults sets the default values.
 func (a *Configuration) SetDefaults() {
-	a.CAServer = lego.LEDirectoryProduction
+	a.CAServer = lego.DirectoryURLLetsEncrypt
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
+	a.CertificateTimeout = ptypes.Duration(30 * time.Second)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
 type CertAndStore struct {
 	Certificate
+
 	Store string
 }
 
@@ -127,6 +131,7 @@ type TLSChallenge struct {
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
+
 	ResolverName string
 	Store        Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
 
@@ -280,14 +285,14 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		return p.client, nil
 	}
 
-	account, err := p.initAccount(ctx)
+	account, err := p.initAccount()
 	if err != nil {
 		return nil, err
 	}
 
 	logger.Debug().Msg("Building ACME client...")
 
-	caServer := lego.LEDirectoryProduction
+	caServer := lego.DirectoryURLLetsEncrypt
 	if len(p.CAServer) > 0 {
 		caServer = p.CAServer
 	}
@@ -295,9 +300,8 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	config := lego.NewConfig(account)
 	config.CADirURL = caServer
-	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
-	config.Certificate.DisableCommonName = p.DisableCommonName
+	config.Certificate.Timeout = time.Duration(p.CertificateTimeout)
 
 	config.HTTPClient, err = p.createHTTPClient()
 	if err != nil {
@@ -316,7 +320,10 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			return nil, errR
 		}
 
-		account.Registration = reg
+		account.Registration = &Resource{
+			Body: reg.Account,
+			URI:  reg.Location,
+		}
 	}
 
 	// Save the account once before all the certificates generation/storing
@@ -335,31 +342,30 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
 		logger.Debug().Msgf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
 
+		if len(p.DNSChallenge.Resolvers) > 0 {
+			opts := &dns01.Options{RecursiveNameservers: p.DNSChallenge.Resolvers}
+
+			dns01.SetDefaultClient(dns01.NewClient(opts))
+		}
+
 		var provider challenge.Provider
 		provider, err = dns.NewDNSChallengeProviderByName(p.DNSChallenge.Provider)
 		if err != nil {
 			return nil, err
 		}
 
-		var opts []dns01.ChallengeOption
+		propagation := p.DNSChallenge.Propagation
 
-		if len(p.DNSChallenge.Resolvers) > 0 {
-			opts = append(opts, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers))
-		}
-
-		if p.DNSChallenge.Propagation != nil {
-			if p.DNSChallenge.Propagation.RequireAllRNS {
-				opts = append(opts, dns01.RecursiveNSsPropagationRequirement())
-			}
-
-			if p.DNSChallenge.Propagation.DisableANSChecks {
-				opts = append(opts, dns01.DisableAuthoritativeNssPropagationRequirement())
-			}
-
-			opts = append(opts, dns01.PropagationWait(time.Duration(p.DNSChallenge.Propagation.DelayBeforeChecks), p.DNSChallenge.Propagation.DisableChecks))
-		}
-
-		err = client.Challenge.SetDNS01Provider(provider, opts...)
+		err = client.Challenge.SetDNS01Provider(
+			provider,
+			dns01.LazyCondOption(propagation != nil, func() dns01.ChallengeOption {
+				return dns01.CombineOptions(
+					dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
+					dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
+					dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
+				)
+			}),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -384,6 +390,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	}
 
 	p.client = client
+
 	return p.client, nil
 }
 
@@ -445,24 +452,19 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	}, nil
 }
 
-func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
+func (p *Provider) initAccount() (*Account, error) {
 	if p.account == nil || len(p.account.Email) == 0 {
 		var err error
-		p.account, err = NewAccount(ctx, p.Email, p.KeyType)
+		p.account, err = NewAccount(p.Email)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// Set the KeyType if not already defined in the account
-	if len(p.account.KeyType) == 0 {
-		p.account.KeyType = GetKeyType(ctx, p.KeyType)
-	}
-
 	return p.account, nil
 }
 
-func (p *Provider) register(ctx context.Context, client *lego.Client) (*registration.Resource, error) {
+func (p *Provider) register(ctx context.Context, client *lego.Client) (*acme.ExtendedAccount, error) {
 	logger := log.Ctx(ctx)
 
 	if p.EAB != nil {
@@ -470,12 +472,12 @@ func (p *Provider) register(ctx context.Context, client *lego.Client) (*registra
 
 		eabOptions := registration.RegisterEABOptions{TermsOfServiceAgreed: true, Kid: p.EAB.Kid, HmacEncoded: p.EAB.HmacEncoded}
 
-		return client.Registration.RegisterWithExternalAccountBinding(eabOptions)
+		return client.Registration.RegisterWithExternalAccountBinding(ctx, eabOptions)
 	}
 
 	logger.Info().Msg("Register...")
 
-	return client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+	return client.Registration.Register(ctx, registration.RegisterOptions{TermsOfServiceAgreed: true})
 }
 
 func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStore string) {
@@ -685,14 +687,16 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 	}
 
 	request := certificate.ObtainRequest{
-		Domains:        domains,
-		Bundle:         true,
-		EmailAddresses: p.EmailAddresses,
-		Profile:        p.Profile,
-		PreferredChain: p.PreferredChain,
+		Domains:          domains,
+		Bundle:           true,
+		EmailAddresses:   p.EmailAddresses,
+		Profile:          p.Profile,
+		PreferredChain:   p.PreferredChain,
+		EnableCommonName: !p.DisableCommonName,
+		KeyType:          GetKeyType(ctx, p.KeyType),
 	}
 
-	cert, err := client.Certificate.Obtain(request)
+	cert, err := client.Certificate.Obtain(ctx, request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", domains, err)
 	}
@@ -731,14 +735,16 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 	}
 
 	request := certificate.ObtainRequest{
-		Domains:        domains,
-		Bundle:         true,
-		EmailAddresses: p.EmailAddresses,
-		Profile:        p.Profile,
-		PreferredChain: p.PreferredChain,
+		Domains:          domains,
+		Bundle:           true,
+		EmailAddresses:   p.EmailAddresses,
+		Profile:          p.Profile,
+		PreferredChain:   p.PreferredChain,
+		EnableCommonName: !p.DisableCommonName,
+		KeyType:          GetKeyType(ctx, p.KeyType),
 	}
 
-	cert, err := client.Certificate.Obtain(request)
+	cert, err := client.Certificate.Obtain(ctx, request)
 	if err != nil {
 		return types.Domain{}, nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", uncheckedDomains, err)
 	}
@@ -807,8 +813,8 @@ func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time
 		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
 	case certificatesDuration >= 30*24: // >= 30 days
 		return 10 * 24 * time.Hour, 12 * time.Hour // 10 days, 12 hours
-	case certificatesDuration >= 7*24: // >= 7 days
-		return 24 * time.Hour, time.Hour // 1 days, 1 hour
+	case certificatesDuration >= 6*24: // >= 6 days
+		return 2 * 24 * time.Hour, 2 * time.Hour // 2 days, 2 hours
 	case certificatesDuration >= 24: // >= 1 days
 		return 6 * time.Hour, 10 * time.Minute // 6 hours, 10 minutes
 	default:
@@ -921,26 +927,29 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 	for _, cert := range certificates {
 		client, err := p.getClient()
 		if err != nil {
-			logger.Info().Err(err).Msgf("Error renewing certificate from LE : %+v", cert.Domain)
+			logger.Info().Err(err).Msgf("Error renewing ACME certificate: %+v", cert.Domain)
 			continue
 		}
 
-		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
+		logger.Info().Msgf("Renewing ACME certificate: %+v", cert.Domain)
 
 		res := certificate.Resource{
-			Domain:      cert.Domain.Main,
+			ID:          cert.Domain.Main,
+			Domains:     cert.Domain.ToStrArray(),
 			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
 		}
 
 		opts := &certificate.RenewOptions{
 			Bundle:         true,
+			EmailAddresses: p.EmailAddresses,
+			Profile:        p.Profile,
 			PreferredChain: p.PreferredChain,
 		}
 
-		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
+		renewedCert, err := client.Certificate.Renew(ctx, res, opts)
 		if err != nil {
-			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
+			logger.Error().Err(err).Msgf("Error renewing ACME certificate: %v", cert.Domain)
 			continue
 		}
 
@@ -1083,7 +1092,7 @@ func (p *Provider) certExists(validDomains []string) bool {
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
 	for _, certDomains := range existentDomains {
-		for _, certDomain := range strings.Split(certDomains, ",") {
+		for certDomain := range strings.SplitSeq(certDomains, ",") {
 			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}

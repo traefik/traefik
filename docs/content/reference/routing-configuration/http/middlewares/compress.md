@@ -65,6 +65,7 @@ Responses are compressed when the following criteria are all met:
 
 - The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br`, and/or `zstd` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
 If the `Accept-Encoding` request header is absent, the response won't be encoded.
+When `defaultEncoding` is configured, the response is encoded even when `Accept-Encoding` is absent.
 If it is present, but its value is the empty string, then compression is turned off.
 - The response is not already compressed, that is the `Content-Encoding` response header is not already set.
 - The response`Content-Type` header is not one among the `excludedContentTypes` options, or is one among the `includedContentTypes` options.

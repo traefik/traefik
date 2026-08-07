@@ -12,18 +12,18 @@ func NewInstanaLogger(logger zerolog.Logger) *InstanaLogger {
 	return &InstanaLogger{logger: logger}
 }
 
-func (l InstanaLogger) Debug(args ...interface{}) {
+func (l InstanaLogger) Debug(args ...any) {
 	l.logger.Debug().CallerSkipFrame(1).MsgFunc(msgFunc(args...))
 }
 
-func (l InstanaLogger) Info(args ...interface{}) {
+func (l InstanaLogger) Info(args ...any) {
 	l.logger.Info().CallerSkipFrame(1).MsgFunc(msgFunc(args...))
 }
 
-func (l InstanaLogger) Warn(args ...interface{}) {
+func (l InstanaLogger) Warn(args ...any) {
 	l.logger.Warn().CallerSkipFrame(1).MsgFunc(msgFunc(args...))
 }
 
-func (l InstanaLogger) Error(args ...interface{}) {
+func (l InstanaLogger) Error(args ...any) {
 	l.logger.Error().CallerSkipFrame(1).MsgFunc(msgFunc(args...))
 }

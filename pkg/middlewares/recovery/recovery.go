@@ -56,7 +56,7 @@ func recoverFunc(rw recoveryResponseWriter, req *http.Request) {
 
 // https://github.com/golang/go/blob/a0d6420d8be2ae7164797051ec74fa2a2df466a1/src/net/http/server.go#L1761-L1775
 // https://github.com/golang/go/blob/c33153f7b416c03983324b3e8f869ce1116d84bc/src/net/http/httputil/reverseproxy.go#L284
-func shouldLogPanic(panicValue interface{}) bool {
+func shouldLogPanic(panicValue any) bool {
 	//nolint:errorlint // false-positive because panicValue is an interface.
 	return panicValue != nil && panicValue != http.ErrAbortHandler
 }

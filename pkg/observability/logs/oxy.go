@@ -10,18 +10,18 @@ func NewOxyWrapper(logger zerolog.Logger) *OxyWrapper {
 	return &OxyWrapper{logger: logger}
 }
 
-func (l OxyWrapper) Debug(s string, i ...interface{}) {
+func (l OxyWrapper) Debug(s string, i ...any) {
 	l.logger.Debug().CallerSkipFrame(1).Msgf(s, i...)
 }
 
-func (l OxyWrapper) Info(s string, i ...interface{}) {
+func (l OxyWrapper) Info(s string, i ...any) {
 	l.logger.Info().CallerSkipFrame(1).Msgf(s, i...)
 }
 
-func (l OxyWrapper) Warn(s string, i ...interface{}) {
+func (l OxyWrapper) Warn(s string, i ...any) {
 	l.logger.Warn().CallerSkipFrame(1).Msgf(s, i...)
 }
 
-func (l OxyWrapper) Error(s string, i ...interface{}) {
+func (l OxyWrapper) Error(s string, i ...any) {
 	l.logger.Error().CallerSkipFrame(1).Msgf(s, i...)
 }

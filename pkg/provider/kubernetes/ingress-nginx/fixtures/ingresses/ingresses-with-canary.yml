@@ -1,0 +1,43 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-canary
+  namespace: default
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80

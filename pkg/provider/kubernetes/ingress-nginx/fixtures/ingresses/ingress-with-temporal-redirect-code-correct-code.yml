@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-temporal-redirect
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/temporal-redirect: "https://www.google.com"
+    nginx.ingress.kubernetes.io/temporal-redirect-code: "308"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: temporal-redirect.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

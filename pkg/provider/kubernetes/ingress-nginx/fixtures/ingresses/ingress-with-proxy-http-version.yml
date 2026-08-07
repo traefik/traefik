@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-proxy-http-version
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: proxy-http-version.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

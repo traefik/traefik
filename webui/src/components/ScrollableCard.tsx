@@ -1,4 +1,4 @@
-import { Card, styled } from '@traefiklabs/faency'
+import { Card, styled } from '@traefik-labs/faency'
 
 const ScrollableCard = styled(Card, {
   width: '100%',

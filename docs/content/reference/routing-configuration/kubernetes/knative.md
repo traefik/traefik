@@ -8,7 +8,7 @@ description: "The Knative provider can be used for routing and load balancing in
 When using the Knative provider, Traefik leverages Knative's Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on Knative concepts and resources, refer to the official [documentation](https://knative.dev/docs/).
 
-The Knative provider supports version [v1.19.0](https://github.com/knative/serving/releases/tag/knative-v1.19.0) of the specification.
+The Knative provider supports versions [v1.19.0](https://github.com/knative/serving/releases/tag/knative-v1.19.0) and [v1.20.0](https://github.com/knative/serving/releases/tag/knative-v1.20.0) of the specification.
 
 ## Deploying a Knative Service
 
@@ -93,4 +93,4 @@ Use the default URL to access percentage-based routing:
 
 Check out the Knative documentation for [HTTP/HTTPS configuration](https://knative.dev/docs/serving/encryption/external-domain-tls/#configure-external-domain-encryption).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

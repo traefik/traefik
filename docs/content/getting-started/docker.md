@@ -36,7 +36,7 @@ This configuration:
 # docker-compose.yml
 services:
   traefik:
-    image: traefik:v3.6
+    image: traefik:v3.7
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -84,7 +84,7 @@ docker run -d \
   -p 8080:8080 \
   -v $PWD/traefik.yml:/etc/traefik/traefik.yml \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  traefik:v3.6
+  traefik:v3.7
 ```
 
 ## Expose the Dashboard
@@ -159,4 +159,4 @@ That's it! You've successfully deployed Traefik and configured routing in Docker
 - [Enable Metrics](../reference/install-configuration/observability/metrics.md)
 - [Learn more about Docker provider](../reference/install-configuration/providers/docker.md)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -506,7 +506,7 @@ func (lvs otelLabelNamesValues) With(labelValues ...string) otelLabelNamesValues
 // to the native attribute.KeyValue.
 func (lvs otelLabelNamesValues) ToLabels() []attribute.KeyValue {
 	labels := make([]attribute.KeyValue, len(lvs)/2)
-	for i := 0; i < len(labels); i++ {
+	for i := range labels {
 		labels[i] = attribute.String(lvs[2*i], lvs[2*i+1])
 	}
 	return labels

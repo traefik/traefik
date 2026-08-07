@@ -1,4 +1,4 @@
-import { AccessibleIcon, Button } from '@traefiklabs/faency'
+import { AccessibleIcon, Button } from '@traefik-labs/faency'
 import { FiMoon, FiSun } from 'react-icons/fi'
 
 import { AutoThemeIcon } from 'components/icons/AutoThemeIcon'

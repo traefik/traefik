@@ -36,7 +36,7 @@ labels:
 {
   //...
   "Tags" : [
-    "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"s
+    "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
   ]
 }
 ```

@@ -67,12 +67,11 @@ spec:
 
 ### Passwords format
 
-Passwords must be hashed using MD5, SHA1, or BCrypt.
-Use `htpasswd` to generate the passwords.
+Use `htdigest` to generate the passwords.
 
 ### users & usersFile
 
-- If both `users` and `usersFile` are provided, they are merged. The contents of `usersFile` have precedence over the values in users.
+- If both `users` and `usersFile` are provided, they are merged. The values in `users` have precedence over the contents of `usersFile`.
 - Because referencing a file path isn’t feasible on Kubernetes, the `users` & `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the `secret` field.
 
 ### Kubernetes Secrets
@@ -82,4 +81,4 @@ On Kubernetes, you don’t use the `users` or `usersFile` fields. Instead, you r
 - `kubernetes.io/basic-auth secret`: This secret type contains two keys—`username` and `password`—but is generally suited for a smaller number of users. Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than the other method.
 - Opaque secret with a users field: Here, the secret contains a single string field (often called `users`) where each line represents a user. This approach allows you to store multiple users in one secret.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

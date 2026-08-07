@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"expvar"
 	"fmt"
@@ -147,16 +148,12 @@ func (eps TCPEntryPoints) Stop() {
 	var wg sync.WaitGroup
 
 	for epn, ep := range eps {
-		wg.Add(1)
-
-		go func(entryPointName string, entryPoint *TCPEntryPoint) {
-			defer wg.Done()
-
-			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
-			entryPoint.Shutdown(logger.WithContext(context.Background()))
+		wg.Go(func() {
+			logger := log.With().Str(logs.EntryPointName, epn).Logger()
+			ep.Shutdown(logger.WithContext(context.Background()))
 
 			logger.Debug().Msg("Entrypoint closed")
-		}(epn, ep)
+		})
 	}
 
 	wg.Wait()
@@ -191,7 +188,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("building listener: %w", err)
 	}
 
-	rt, err := tcprouter.NewRouter()
+	rt, err := tcprouter.NewRouter(nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating TCP router: %w", err)
 	}
@@ -250,13 +247,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		if err != nil {
 			logger.Error().Err(err).Send()
 
-			var opErr *net.OpError
-			if errors.As(err, &opErr) && opErr.Temporary() {
+			if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Temporary() {
 				continue
 			}
 
-			var urlErr *url.Error
-			if errors.As(err, &urlErr) && urlErr.Temporary() {
+			if urlErr, ok := errors.AsType[*url.Error](err); ok && urlErr.Temporary() {
 				continue
 			}
 
@@ -313,7 +308,6 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	shutdownServer := func(server stoppable) {
-		defer wg.Done()
 		err := server.Shutdown(ctx)
 		if err == nil {
 			return
@@ -334,24 +328,19 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	}
 
 	if e.httpServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpServer.Server)
+		wg.Go(func() { shutdownServer(e.httpServer.Server) })
 	}
 
 	if e.httpsServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
+		wg.Go(func() { shutdownServer(e.httpsServer.Server) })
 
 		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
+			wg.Go(func() { shutdownServer(e.http3Server) })
 		}
 	}
 
 	if e.tracker != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := e.tracker.Shutdown(ctx)
 			if err == nil {
 				return
@@ -360,7 +349,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -398,6 +387,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 // connection type that was found to satisfy WriteCloser.
 type writeCloserWrapper struct {
 	net.Conn
+
 	writeCloser tcp.WriteCloser
 }
 
@@ -566,23 +556,6 @@ func (c *connectionTracker) RemoveConnection(conn net.Conn) {
 	c.connsMu.Unlock()
 }
 
-// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
-func (c *connectionTracker) syncOpenConnectionGauge() {
-	if c.openConnectionsGauge == nil {
-		return
-	}
-
-	c.connsMu.RLock()
-	c.openConnectionsGauge.Set(float64(len(c.conns)))
-	c.connsMu.RUnlock()
-}
-
-func (c *connectionTracker) isEmpty() bool {
-	c.connsMu.RLock()
-	defer c.connsMu.RUnlock()
-	return len(c.conns) == 0
-}
-
 // Shutdown wait for the connection closing.
 func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -609,6 +582,23 @@ func (c *connectionTracker) Close() {
 		}
 		delete(c.conns, conn)
 	}
+}
+
+// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
+func (c *connectionTracker) syncOpenConnectionGauge() {
+	if c.openConnectionsGauge == nil {
+		return
+	}
+
+	c.connsMu.RLock()
+	c.openConnectionsGauge.Set(float64(len(c.conns)))
+	c.connsMu.RUnlock()
+}
+
+func (c *connectionTracker) isEmpty() bool {
+	c.connsMu.RLock()
+	defer c.connsMu.RUnlock()
+	return len(c.conns) == 0
 }
 
 type stoppable interface {
@@ -651,6 +641,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
 		configuration.ForwardedHeaders.NotAppendXForwardedFor,
+		configuration.ForwardedHeaders.AddXForwardedSchemeHeaders,
 		next)
 	if err != nil {
 		return nil, err
@@ -684,6 +675,57 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = normalizePath(handler)
 
+	handler = denyFragment(handler)
+
+	switch configuration.HTTP.UnderscoreHeadersStrategy {
+	case "", static.UnderscoreHeadersStrategyKeep:
+		// Headers with underscores are forwarded as is.
+	case static.UnderscoreHeadersStrategyDelete:
+		handler = removeHeadersWithUnderscores(handler)
+	case static.UnderscoreHeadersStrategyReject:
+		handler = rejectHeadersWithUnderscores(handler)
+	default:
+		return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
+	}
+
+	var connContext multipleConnContext
+	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = service.AddTransportOnContext(ctx)
+
+		if tlsConn, ok := c.(*tls.Conn); ok {
+			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
+				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+			}
+		}
+
+		return ctx
+	})
+
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
+			cState := &connState{Start: time.Now()}
+			if debugConnection {
+				clientConnectionStatesMu.Lock()
+				clientConnectionStates[getConnKey(c)] = cState
+				clientConnectionStatesMu.Unlock()
+			}
+
+			return context.WithValue(ctx, connStateKey, cState)
+		})
+	}
+
+	var connState func(c net.Conn, state http.ConnState)
+	if debugConnection {
+		connState = func(c net.Conn, state http.ConnState) {
+			clientConnectionStatesMu.Lock()
+			if clientConnectionStates[getConnKey(c)] != nil {
+				clientConnectionStates[getConnKey(c)].State = state.String()
+			}
+			clientConnectionStatesMu.Unlock()
+		}
+	}
+
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
 		Handler:        handler,
@@ -697,37 +739,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
 			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
 		},
-	}
-	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-			cState := &connState{Start: time.Now()}
-			if debugConnection {
-				clientConnectionStatesMu.Lock()
-				clientConnectionStates[getConnKey(c)] = cState
-				clientConnectionStatesMu.Unlock()
-			}
-			return context.WithValue(ctx, connStateKey, cState)
-		}
-
-		if debugConnection {
-			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
-				clientConnectionStatesMu.Lock()
-				if clientConnectionStates[getConnKey(c)] != nil {
-					clientConnectionStates[getConnKey(c)].State = state.String()
-				}
-				clientConnectionStatesMu.Unlock()
-			}
-		}
-	}
-
-	prevConnContext := serverHTTP.ConnContext
-	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
-		if prevConnContext != nil {
-			return prevConnContext(ctx, c)
-		}
-		return ctx
+		ConnContext: connContext.Build(),
+		ConnState:   connState,
 	}
 
 	listener := newHTTPForwarder(ln)
@@ -757,13 +770,59 @@ func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *tra
 }
 
 type trackedConnection struct {
-	tracker *connectionTracker
 	tcp.WriteCloser
+
+	tracker *connectionTracker
 }
 
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// denyFragment rejects the request if the URL path contains a fragment (hash character).
+// When go receives an HTTP request, it assumes the absence of fragment URL.
+// However, it is still possible to send a fragment in the request.
+// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
+// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
+func denyFragment(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if strings.Contains(req.URL.RawPath, "#") {
+			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+func removeHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				delete(req.Header, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
 }
 
 // This function is inspired by http.AllowQuerySemicolons.

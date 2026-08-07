@@ -1,4 +1,4 @@
-import { Box, CSS } from '@traefiklabs/faency'
+import { Box, CSS } from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiLoader } from 'react-icons/fi'
 
@@ -9,6 +9,7 @@ export const iconByStatus: { [key in Resource.Status]: ReactNode } = {
   error: <FiAlertTriangle color="currentColor" size={20} />,
   enabled: <FiCheckCircle color="currentColor" size={20} />,
   disabled: <FiAlertTriangle color="currentColor" size={20} />,
+  expired: <FiAlertTriangle color="currentColor" size={20} />,
   loading: <FiLoader color="currentColor" size={20} />,
 }
 
@@ -20,6 +21,7 @@ export const colorByStatus: { [key in Resource.Status]: string } = {
   error: 'hsl(347, 100%, 60.0%)',
   enabled: '#30A46C',
   disabled: 'hsl(347, 100%, 60.0%)',
+  expired: 'hsl(347, 100%, 60.0%)',
   loading: 'hsla(0, 0%, 100%, 0.51)',
 }
 
@@ -44,6 +46,8 @@ export default function Status({ css = {}, size = 20, status, color = 'white' }:
       case 'enabled':
         return <FiCheckCircle color={color} size={size} />
       case 'disabled':
+        return <FiAlertTriangle color={color} size={size} />
+      case 'expired':
         return <FiAlertTriangle color={color} size={size} />
       default:
         return null

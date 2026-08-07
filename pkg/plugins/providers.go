@@ -25,7 +25,7 @@ type PP interface {
 }
 
 type _PP struct {
-	IValue   interface{}
+	IValue   any
 	WInit    func() error
 	WProvide func(cfgChan chan<- json.Marshaler) error
 	WStop    func() error
@@ -53,7 +53,7 @@ func ppSymbols() map[string]map[string]reflect.Value {
 }
 
 // BuildProvider builds a plugin's provider.
-func (b Builder) BuildProvider(pName string, config map[string]interface{}) (provider.Provider, error) {
+func (b Builder) BuildProvider(pName string, config map[string]any) (provider.Provider, error) {
 	if b.providerBuilders == nil {
 		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
@@ -82,7 +82,7 @@ type Provider struct {
 	pp   PP
 }
 
-func newProvider(builder providerBuilder, config map[string]interface{}, providerName string) (*Provider, error) {
+func newProvider(builder providerBuilder, config map[string]any, providerName string) (*Provider, error) {
 	basePkg := builder.BasePkg
 	if basePkg == "" {
 		basePkg = strings.ReplaceAll(path.Base(builder.Import), "-", "_")

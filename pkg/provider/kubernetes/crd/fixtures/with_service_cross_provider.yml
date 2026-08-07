@@ -1,0 +1,70 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror-cp
+  namespace: foo
+
+spec:
+  mirroring:
+    name: external-main@file
+    kind: TraefikService
+    mirrors:
+      - name: external-mirror@file
+        kind: TraefikService
+        percent: 50
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: weighted-cp
+  namespace: bar
+
+spec:
+  weighted:
+    services:
+      - name: external-a@file
+        kind: TraefikService
+        weight: 1
+      - name: external-b@file
+        kind: TraefikService
+        weight: 1
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ir-mirror
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`mirror.example.com`)
+      kind: Rule
+      services:
+        - name: mirror-cp
+          namespace: foo
+          kind: TraefikService
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ir-weighted
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`weighted.example.com`)
+      kind: Rule
+      services:
+        - name: weighted-cp
+          namespace: bar
+          kind: TraefikService

@@ -2,19 +2,20 @@ package ratelimiter
 
 import (
 	"context"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
 )
 
 type Rediser interface {
-	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd
-	EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd
+	Eval(ctx context.Context, script string, keys []string, args ...any) *redis.Cmd
+	EvalSha(ctx context.Context, sha1 string, keys []string, args ...any) *redis.Cmd
 	ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd
 	ScriptLoad(ctx context.Context, script string) *redis.StringCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 
-	EvalRO(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd
-	EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd
+	EvalRO(ctx context.Context, script string, keys []string, args ...any) *redis.Cmd
+	EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...any) *redis.Cmd
 }
 
 //nolint:dupword
@@ -61,6 +62,10 @@ end
 redis.call('hset', key, 'last', t, 'tokens', tokens)
 redis.call('expire', key, ttl)
 
-return {tostring(true), tostring(wait_duration),tostring(tokens)}`
+return {tostring(true), tostring(wait_duration), tostring(tokens)}`
 
-var AllowTokenBucketScript = redis.NewScript(AllowTokenBucketRaw)
+// LoadTokenBucketScript loads a token bucket script.
+// Exposed so it can be overridden by Traefik Hub.
+var LoadTokenBucketScript = sync.OnceValues(func() (*redis.Script, error) {
+	return redis.NewScript(AllowTokenBucketRaw), nil
+})

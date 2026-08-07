@@ -52,7 +52,7 @@ func ShouldNotAppendXFF(ctx context.Context) bool {
 }
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
-	return &httputil.ReverseProxy{
+	proxy := &httputil.ReverseProxy{
 		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
@@ -60,6 +60,8 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
+
+	return newConnectHandler(proxy)
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
@@ -106,6 +108,12 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1
 		pr.Out.ProtoMinor = 1
+
+		// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
+		// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
+		if pr.Out.Method == http.MethodConnect {
+			pr.Out.Close = true
+		}
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
@@ -201,14 +209,13 @@ func statusText(statusCode int) string {
 // and the client configuration should allow to verify the server certificate.
 func isTLSConfigError(err error) bool {
 	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
-	var recordHeaderErr tls.RecordHeaderError
-	if errors.As(err, &recordHeaderErr) {
+	if _, ok := errors.AsType[tls.RecordHeaderError](err); ok {
 		return true
 	}
 
 	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
-	var certVerificationErr *tls.CertificateVerificationError
-	return errors.As(err, &certVerificationErr)
+	_, ok := errors.AsType[*tls.CertificateVerificationError](err)
+	return ok
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
@@ -219,8 +226,7 @@ func ComputeStatusCode(err error) int {
 	case errors.Is(err, context.Canceled):
 		return StatusClientClosedRequest
 	default:
-		var netErr net.Error
-		if errors.As(err, &netErr) {
+		if netErr, ok := errors.AsType[net.Error](err); ok {
 			if netErr.Timeout() {
 				return http.StatusGatewayTimeout
 			}

@@ -23,6 +23,7 @@ func TestHandler(t *testing.T) {
 		backendCode         int
 		backendErrorHandler http.HandlerFunc
 		validate            func(t *testing.T, recorder *httptest.ResponseRecorder)
+		requestHeaders      map[string]string
 	}{
 		{
 			desc:        "no error",
@@ -154,6 +155,139 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "My 503 page.")
 			},
 		},
+		{
+			desc:      "forward all headers by default",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), "trace-abc")
+				assert.Contains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc:      "forward only allowlisted headers",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{"X-Request-Id"}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), "trace-abc")
+				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc:      "forward no headers",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.NotContains(t, recorder.Body.String(), "trace-abc")
+				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc: "nginx headers: backend status code preserved",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+				NginxHeaders: &http.Header{
+					"X-Namespaces":   {"default"},
+					"X-Ingress-Name": {"my-ingress"},
+					"X-Service-Name": {"my-service"},
+					"X-Service-Port": {"80"},
+				},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Error page backend returns 200 (the default when no WriteHeader is called).
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// In nginx mode, the error page backend's status code (200) is preserved,
+				// NOT overridden to the original error code (500).
+				assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
+		{
+			desc: "nginx headers: X-Code and nginx headers forwarded",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+				NginxHeaders: &http.Header{
+					"X-Namespaces":   {"default"},
+					"X-Ingress-Name": {"my-ingress"},
+					"X-Service-Name": {"my-service"},
+					"X-Service-Port": {"80"},
+				},
+			},
+			backendCode: http.StatusBadGateway,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Verify that nginx-specific headers are set on the request.
+				assert.Equal(t, "502", r.Header.Get("X-Code"))
+				assert.Equal(t, "default", r.Header.Get("X-Namespaces"))
+				assert.Equal(t, "my-ingress", r.Header.Get("X-Ingress-Name"))
+				assert.Equal(t, "my-service", r.Header.Get("X-Service-Name"))
+				assert.Equal(t, "80", r.Header.Get("X-Service-Port"))
+				assert.Equal(t, "/test?foo=bar&baz=buz", r.Header.Get("X-Original-Uri"))
+				// Return a custom status code.
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = fmt.Fprintln(w, "Custom 404 page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// Backend's chosen status code (404) is preserved in nginx mode.
+				assert.Equal(t, http.StatusNotFound, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom 404 page.")
+			},
+		},
+		{
+			desc: "non-nginx: code modifier enforces original error code",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Error page backend returns 200 (the default).
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// Without nginx headers, newCodeModifier enforces the original error code (500),
+				// even though the error page backend returned 200.
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -174,6 +308,9 @@ func TestHandler(t *testing.T) {
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
+			for k, v := range test.requestHeaders {
+				req.Header.Set(k, v)
+			}
 
 			// Client like browser and curl will issue a relative HTTP request, which not have a host and scheme in the URL. But the http.NewRequest will set them automatically.
 			req.URL.Host = ""

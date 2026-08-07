@@ -19,6 +19,7 @@ const (
 type timedAction func(timeout time.Duration, operation DoCondition) error
 
 // Sleep pauses the current goroutine for at least the duration d.
+//
 // Deprecated: Use only when use another Try[...] functions is not possible.
 func Sleep(d time.Duration) {
 	d = applyCIMultiplier(d)
@@ -75,7 +76,7 @@ func Request(req *http.Request, timeout time.Duration, conditions ...ResponseCon
 // the condition on the response.
 // ResponseCondition may be nil, in which case only the request against the URL must
 // succeed.
-func RequestWithTransport(req *http.Request, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) error {
+func RequestWithTransport(req *http.Request, timeout time.Duration, transport http.RoundTripper, conditions ...ResponseCondition) error {
 	resp, err := doTryRequest(req, timeout, transport, conditions...)
 
 	if resp != nil && resp.Body != nil {
@@ -92,10 +93,7 @@ func Do(timeout time.Duration, operation DoCondition) error {
 		panic("timeout must be larger than zero")
 	}
 
-	interval := time.Duration(math.Ceil(float64(timeout) / 15.0))
-	if interval > maxInterval {
-		interval = maxInterval
-	}
+	interval := min(time.Duration(math.Ceil(float64(timeout)/15.0)), maxInterval)
 
 	timeout = applyCIMultiplier(timeout)
 
@@ -142,12 +140,12 @@ func doTryRequest(request *http.Request, timeout time.Duration, transport http.R
 func doRequest(action timedAction, timeout time.Duration, request *http.Request, transport http.RoundTripper, conditions ...ResponseCondition) (*http.Response, error) {
 	var resp *http.Response
 	return resp, action(timeout, func() error {
-		var err error
-		client := http.DefaultClient
+		var client http.Client
 		if transport != nil {
 			client.Transport = transport
 		}
 
+		var err error
 		resp, err = client.Do(request)
 		if err != nil {
 			return err

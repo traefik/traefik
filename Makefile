@@ -58,7 +58,7 @@ generate:
 #? binary: Build the binary
 binary: generate-webui dist
 	@echo SHA: $(VERSION) $(CODENAME) $(DATE)
-	CGO_ENABLED=0 GOGC=${GOGC} GOOS=${GOOS} GOARCH=${GOARCH} go build ${FLAGS[*]} -ldflags "-s -w \
+	CGO_ENABLED=0 GOGC=${GOGC} GOOS=${GOOS} GOARCH=${GOARCH} go build ${FLAGS} -ldflags "-s -w \
     -X github.com/traefik/traefik/v3/pkg/version.Version=$(VERSION) \
     -X github.com/traefik/traefik/v3/pkg/version.Codename=$(CODENAME) \
     -X github.com/traefik/traefik/v3/pkg/version.BuildDate=$(DATE)" \
@@ -103,7 +103,7 @@ test-integration:
 #? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the traefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.6" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.8" $(TESTFLAGS)
 
 .PHONY: test-knative-conformance
 #? test-knative-conformance: Run the Knative conformance tests

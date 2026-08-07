@@ -13,6 +13,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/udp"
 )
 
+// Manager is a route/router manager.
+type Manager struct {
+	serviceManager *udpservice.Manager
+	conf           *runtime.Configuration
+}
+
 // NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager *udpservice.Manager,
@@ -21,20 +27,6 @@ func NewManager(conf *runtime.Configuration,
 		serviceManager: serviceManager,
 		conf:           conf,
 	}
-}
-
-// Manager is a route/router manager.
-type Manager struct {
-	serviceManager *udpservice.Manager
-	conf           *runtime.Configuration
-}
-
-func (m *Manager) getUDPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.UDPRouterInfo {
-	if m.conf != nil {
-		return m.conf.GetUDPRoutersByEntryPoints(ctx, entryPoints)
-	}
-
-	return make(map[string]map[string]*runtime.UDPRouterInfo)
 }
 
 // BuildHandlers builds the handlers for the given entrypoints.
@@ -60,6 +52,14 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		}
 	}
 	return entryPointHandlers
+}
+
+func (m *Manager) getUDPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.UDPRouterInfo {
+	if m.conf != nil {
+		return m.conf.GetUDPRoutersByEntryPoints(ctx, entryPoints)
+	}
+
+	return make(map[string]map[string]*runtime.UDPRouterInfo)
 }
 
 func (m *Manager) buildEntryPointHandlers(ctx context.Context, configs map[string]*runtime.UDPRouterInfo) []udp.Handler {

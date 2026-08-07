@@ -54,12 +54,13 @@ spec:
 
 ## Configuration Options
 
-| Field      | Description     | Default | Required |
-|:-----------|:------------------------------|:--------|:---------|
-| <a id="opt-sourceRange" href="#opt-sourceRange" title="#opt-sourceRange">`sourceRange`</a> | List of allowed IPs (or ranges of allowed IPs by using CIDR notation). |      | Yes      |
-| <a id="opt-ipStrategy-depth" href="#opt-ipStrategy-depth" title="#opt-ipStrategy-depth">`ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br /> If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`ipStrategy](#ipstrategy), and [`depth`](#example-of-depth--x-forwarded-for) below. | 0      | No      |
-| <a id="opt-ipStrategy-excludedIPs" href="#opt-ipStrategy-excludedIPs" title="#opt-ipStrategy-excludedIPs">`ipStrategy.excludedIPs`</a> | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`ipStrategy](#ipstrategy), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
-| <a id="opt-ipStrategy-ipv6Subnet" href="#opt-ipStrategy-ipv6Subnet" title="#opt-ipStrategy-ipv6Subnet">`ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
+| Field      | Description                                                                                                                                                                                                                                                                                                                                                                                                         | Default | Required |
+|:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+| <a id="opt-sourceRange" href="#opt-sourceRange" title="#opt-sourceRange">`sourceRange`</a> | List of allowed IPs (or ranges of allowed IPs by using CIDR notation).                                                                                                                                                                                                                                                                                                                                              |      | Yes      |
+| <a id="opt-ipStrategy-depth" href="#opt-ipStrategy-depth" title="#opt-ipStrategy-depth">`ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br /> If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`ipStrategy`](#ipstrategy), and [`depth`](#example-of-depth-x-forwarded-for) below.      | 0      | No      |
+| <a id="opt-ipStrategy-excludedIPs" href="#opt-ipStrategy-excludedIPs" title="#opt-ipStrategy-excludedIPs">`ipStrategy.excludedIPs`</a> | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#example-of-excludedips-x-forwarded-for) below.                                                                                                                                  |       | No      |
+| <a id="opt-ipStrategy-ipv6Subnet" href="#opt-ipStrategy-ipv6Subnet" title="#opt-ipStrategy-ipv6Subnet">`ipStrategy.ipv6Subnet`</a> | If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips-x-forwarded-for) below.                                                                                                                                    |       | No      |
+| <a id="opt-rejectStatusCode" href="#opt-rejectStatusCode" title="#opt-rejectStatusCode">`rejectStatusCode`</a> | Defines the HTTP status code used for refused requests. | `403`  | No      |
 
 ### ipStrategy
 
@@ -87,7 +88,7 @@ If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed i
 
 This is useful for grouping IPv6 addresses into subnets to prevent bypassing this middleware by obtaining a new IPv6.
 
-- `ipv6Subnet` is ignored if its value is outside 0-128 interval
+- Middleware creation fails if `ipv6Subnet` is ≤ 0 or > 128. Valid range: 1–128.
 
 #### Example of ipv6Subnet
 

@@ -15,10 +15,11 @@ import (
 
 type entryPointRepresentation struct {
 	*static.EntryPoint
+
 	Name string `json:"name,omitempty"`
 }
 
-func (h Handler) getEntryPoints(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getEntryPoints(rw http.ResponseWriter, request *http.Request) {
 	results := make([]entryPointRepresentation, 0, len(h.staticConfig.EntryPoints))
 
 	for name, ep := range h.staticConfig.EntryPoints {
@@ -49,7 +50,7 @@ func (h Handler) getEntryPoints(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getEntryPoint(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getEntryPoint(rw http.ResponseWriter, request *http.Request) {
 	scapedEntryPointID := mux.Vars(request)["entryPointID"]
 
 	entryPointID, err := url.PathUnescape(scapedEntryPointID)

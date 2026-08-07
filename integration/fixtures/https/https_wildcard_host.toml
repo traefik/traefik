@@ -1,0 +1,36 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.websecure]
+    address = ":4443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  # Wildcard router: routes any *.snitest.com subdomain to service1.
+  [http.routers.wildcard]
+    service = "service1"
+    rule = "Host(`*.snitest.com`)"
+    [http.routers.wildcard.tls]
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://127.0.0.1:9040"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/wildcard.snitest.com.cert"
+  keyFile = "fixtures/https/wildcard.snitest.com.key"

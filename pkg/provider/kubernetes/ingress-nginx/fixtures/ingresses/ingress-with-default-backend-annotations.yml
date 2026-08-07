@@ -1,0 +1,30 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-default-backend-annotations
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "MYSTICKYNESS"
+
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: whoami-tls
+      port:
+        number: 443
+
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami-tls
+                port:
+                  number: 443

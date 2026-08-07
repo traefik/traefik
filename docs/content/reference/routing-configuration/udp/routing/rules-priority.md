@@ -4,8 +4,6 @@ description: "In Traefik Proxy, a router is in charge of connecting incoming req
 ---
 
 A router is in charge of connecting incoming requests to the services that can handle them.
-In the process, routers may use pieces of [middleware](../../http/middlewares/overview.md) to update the request,
-or act before forwarding the request to the service.
 
 Similarly to TCP, as UDP is the transport layer, there is no concept of a request,
 so there is no notion of an URL path prefix to match an incoming UDP packet with.
@@ -109,4 +107,4 @@ labels:
     There must be one (and only one) UDP [service](../service.md) referenced per UDP router.
     Services are the target for the router.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

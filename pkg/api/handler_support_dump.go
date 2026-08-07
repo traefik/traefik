@@ -13,7 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
-func (h Handler) getSupportDump(rw http.ResponseWriter, req *http.Request) {
+func (h *Handler) getSupportDump(rw http.ResponseWriter, req *http.Request) {
 	logger := log.Ctx(req.Context())
 
 	staticConfig, err := redactor.Anonymize(h.staticConfig)

@@ -24,6 +24,7 @@ import (
 // Zk test suites.
 type ZookeeperSuite struct {
 	BaseSuite
+
 	kvClient      store.Store
 	zookeeperAddr string
 }

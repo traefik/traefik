@@ -19,6 +19,7 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -28,8 +29,8 @@ import (
 
 const maxUserPriority = math.MaxInt - 1000
 
-type middlewareBuilder interface {
-	BuildChain(ctx context.Context, names []string) *alice.Chain
+type middlewareChainBuilder interface {
+	BuildMiddlewareChain(ctx context.Context, names []string) *alice.Chain
 }
 
 type serviceManager interface {
@@ -39,253 +40,35 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers     map[string]http.Handler
-	serviceManager     serviceManager
-	observabilityMgr   *middleware.ObservabilityMgr
-	middlewaresBuilder middlewareBuilder
-	conf               *runtime.Configuration
-	tlsManager         *tls.Manager
-	parser             httpmuxer.SyntaxParser
+	routerHandlers      map[string]http.Handler
+	serviceManager      serviceManager
+	observabilityMgr    *middleware.ObservabilityMgr
+	middlewaresBuilder  middlewareChainBuilder
+	conf                *runtime.Configuration
+	tlsManager          *tls.Manager
+	parser              httpmuxer.SyntaxParser
+	providersPrecedence []string
 }
 
 // NewManager creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager serviceManager,
-	middlewaresBuilder middlewareBuilder,
+	middlewaresBuilder middlewareChainBuilder,
 	observabilityMgr *middleware.ObservabilityMgr,
 	tlsManager *tls.Manager,
 	parser httpmuxer.SyntaxParser,
+	providersPrecedence []string,
 ) *Manager {
 	return &Manager{
-		routerHandlers:     make(map[string]http.Handler),
-		serviceManager:     serviceManager,
-		observabilityMgr:   observabilityMgr,
-		middlewaresBuilder: middlewaresBuilder,
-		conf:               conf,
-		tlsManager:         tlsManager,
-		parser:             parser,
+		routerHandlers:      make(map[string]http.Handler),
+		serviceManager:      serviceManager,
+		observabilityMgr:    observabilityMgr,
+		middlewaresBuilder:  middlewaresBuilder,
+		conf:                conf,
+		tlsManager:          tlsManager,
+		parser:              parser,
+		providersPrecedence: providersPrecedence,
 	}
-}
-
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
-	}
-
-	return make(map[string]map[string]*runtime.RouterInfo)
-}
-
-// BuildHandlers Builds handler for all entry points.
-func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
-	entryPointHandlers := make(map[string]http.Handler)
-
-	defaultObsConfig := dynamic.RouterObservabilityConfig{}
-	defaultObsConfig.SetDefaults()
-
-	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
-		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
-		ctx := logger.WithContext(rootCtx)
-
-		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration. Maybe we should pass down the static configuration.
-		// When the entry point has no observability configuration no model is produced,
-		// and we need to create the default configuration is this case.
-		epObsConfig := defaultObsConfig
-		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
-			epObsConfig = model.Observability
-		}
-
-		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, epObsConfig)
-		if err != nil {
-			logger.Error().Err(err).Send()
-			continue
-		}
-
-		entryPointHandlers[entryPointName] = handler
-	}
-
-	// Create default handlers.
-	for _, entryPointName := range entryPoints {
-		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
-		ctx := logger.WithContext(rootCtx)
-
-		handler, ok := entryPointHandlers[entryPointName]
-		if ok || handler != nil {
-			continue
-		}
-
-		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration. Maybe we should pass down the static configuration.
-		// When the entry point has no observability configuration no model is produced,
-		// and we need to create the default configuration is this case.
-		epObsConfig := defaultObsConfig
-		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
-			epObsConfig = model.Observability
-		}
-
-		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
-		if err != nil {
-			logger.Error().Err(err).Send()
-			continue
-		}
-		entryPointHandlers[entryPointName] = defaultHandler
-	}
-
-	return entryPointHandlers
-}
-
-func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
-	muxer := httpmuxer.NewMuxer(m.parser)
-
-	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
-	if err != nil {
-		return nil, err
-	}
-
-	muxer.SetDefaultHandler(defaultHandler)
-
-	for routerName, routerConfig := range configs {
-		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
-		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
-
-		if routerConfig.Priority == 0 {
-			routerConfig.Priority = httpmuxer.GetRulePriority(routerConfig.Rule)
-		}
-
-		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
-			err = fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
-			routerConfig.AddError(err, true)
-			logger.Error().Err(err).Send()
-			continue
-		}
-
-		// Only build handlers for root routers (routers without ParentRefs).
-		// Routers with ParentRefs will be built as part of their parent router's muxer.
-		if len(routerConfig.ParentRefs) > 0 {
-			continue
-		}
-
-		handler, err := m.buildRouterHandler(ctxRouter, entryPointName, routerName, routerConfig)
-		if err != nil {
-			routerConfig.AddError(err, true)
-			logger.Error().Err(err).Send()
-			continue
-		}
-
-		if routerConfig.Observability != nil {
-			config = *routerConfig.Observability
-		}
-
-		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config)
-		handler, err = observabilityChain.Then(handler)
-		if err != nil {
-			routerConfig.AddError(err, true)
-			logger.Error().Err(err).Send()
-			continue
-		}
-
-		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
-			routerConfig.AddError(err, true)
-			logger.Error().Err(err).Send()
-			continue
-		}
-	}
-
-	chain := alice.New()
-	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return recovery.New(ctx, next)
-	})
-
-	return chain.Then(muxer)
-}
-
-func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
-	if handler, ok := m.routerHandlers[routerName]; ok {
-		return handler, nil
-	}
-
-	if routerConfig.TLS != nil {
-		// Don't build the router if the TLSOptions configuration is invalid.
-		tlsOptionsName := tls.DefaultTLSConfigName
-		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
-			tlsOptionsName = provider.GetQualifiedName(ctx, routerConfig.TLS.Options)
-		}
-		if _, err := m.tlsManager.Get(tls.DefaultTLSStoreName, tlsOptionsName); err != nil {
-			return nil, fmt.Errorf("building router handler: %w", err)
-		}
-	}
-
-	handler, err := m.buildHTTPHandler(ctx, routerConfig, entryPointName, routerName)
-	if err != nil {
-		return nil, err
-	}
-
-	m.routerHandlers[routerName] = handler
-	return handler, nil
-}
-
-func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, entryPointName, routerName string) (http.Handler, error) {
-	var qualifiedNames []string
-	for _, name := range router.Middlewares {
-		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
-	}
-	router.Middlewares = qualifiedNames
-
-	chain := alice.New()
-
-	if router.DefaultRule {
-		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
-	}
-
-	var (
-		nextHandler http.Handler
-		serviceName string
-		err         error
-	)
-
-	// Check if this router has child routers or a service.
-	switch {
-	case len(router.ChildRefs) > 0:
-		// This router routes to child routers - create a muxer for them
-		nextHandler, err = m.buildChildRoutersMuxer(ctx, entryPointName, router.ChildRefs)
-		if err != nil {
-			return nil, fmt.Errorf("building child routers muxer: %w", err)
-		}
-		serviceName = fmt.Sprintf("%s-muxer", routerName)
-	case router.Service != "":
-		// This router routes to a service
-		qualifiedService := provider.GetQualifiedName(ctx, router.Service)
-		nextHandler, err = m.serviceManager.BuildHTTP(ctx, qualifiedService)
-		if err != nil {
-			return nil, err
-		}
-		serviceName = qualifiedService
-	default:
-		return nil, errors.New("router must have either a service or child routers")
-	}
-
-	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
-	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, serviceName))
-
-	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, serviceName)
-	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
-
-	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return accesslog.NewConcatFieldHandler(next, accesslog.RouterName, routerName), nil
-	})
-
-	// Here we are adding deny handlers for encoded path characters and fragment.
-	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
-	if len(router.ParentRefs) == 0 {
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return denyFragment(next), nil
-		})
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
-		})
-	}
-
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
-
-	return chain.Extend(*mHandler).Then(nextHandler)
 }
 
 // ParseRouterTree sets up router tree and validates router configuration.
@@ -380,6 +163,230 @@ func (m *Manager) ParseRouterTree() {
 	}
 }
 
+// BuildHandlers Builds handler for all entry points.
+func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
+	entryPointHandlers := make(map[string]http.Handler)
+
+	defaultObsConfig := dynamic.RouterObservabilityConfig{}
+	defaultObsConfig.SetDefaults()
+
+	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
+		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
+		ctx := logger.WithContext(rootCtx)
+
+		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration. Maybe we should pass down the static configuration.
+		// When the entry point has no observability configuration no model is produced,
+		// and we need to create the default configuration is this case.
+		epObsConfig := defaultObsConfig
+		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
+			epObsConfig = model.Observability
+		}
+
+		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, epObsConfig)
+		if err != nil {
+			logger.Error().Err(err).Send()
+			continue
+		}
+
+		entryPointHandlers[entryPointName] = handler
+	}
+
+	// Create default handlers.
+	for _, entryPointName := range entryPoints {
+		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
+		ctx := logger.WithContext(rootCtx)
+
+		handler, ok := entryPointHandlers[entryPointName]
+		if ok || handler != nil {
+			continue
+		}
+
+		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration. Maybe we should pass down the static configuration.
+		// When the entry point has no observability configuration no model is produced,
+		// and we need to create the default configuration is this case.
+		epObsConfig := defaultObsConfig
+		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
+			epObsConfig = model.Observability
+		}
+
+		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
+		if err != nil {
+			logger.Error().Err(err).Send()
+			continue
+		}
+		entryPointHandlers[entryPointName] = defaultHandler
+	}
+
+	return entryPointHandlers
+}
+
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
+	if m.conf != nil {
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+	}
+
+	return make(map[string]map[string]*runtime.RouterInfo)
+}
+
+func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
+	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
+
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
+	if err != nil {
+		return nil, err
+	}
+
+	muxer.SetDefaultHandler(defaultHandler)
+
+	for routerName, routerConfig := range configs {
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
+
+		if routerConfig.Priority == 0 {
+			routerConfig.Priority = httpmuxer.GetRulePriority(routerConfig.Rule)
+		}
+
+		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
+			err = fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
+			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
+			continue
+		}
+
+		// Only build handlers for root routers (routers without ParentRefs).
+		// Routers with ParentRefs will be built as part of their parent router's muxer.
+		if len(routerConfig.ParentRefs) > 0 {
+			continue
+		}
+
+		handler, err := m.buildRouterHandler(ctxRouter, entryPointName, routerName, routerConfig)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
+			continue
+		}
+
+		if routerConfig.Observability != nil {
+			config = *routerConfig.Observability
+		}
+
+		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config)
+		handler, err = observabilityChain.Then(handler)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
+			continue
+		}
+
+		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
+			routerConfig.AddError(err, true)
+			logger.Error().Err(err).Send()
+			continue
+		}
+	}
+
+	chain := alice.New()
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return recovery.New(ctx, next)
+	})
+
+	return chain.Then(muxer)
+}
+
+func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
+	if handler, ok := m.routerHandlers[routerName]; ok {
+		return handler, nil
+	}
+
+	if routerConfig.TLS != nil {
+		// Don't build the router if the TLSOptions configuration is invalid.
+		tlsOptionsName := tls.DefaultTLSConfigName
+		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
+			tlsOptionsName = provider.GetQualifiedName(ctx, routerConfig.TLS.Options)
+		}
+		if _, err := m.tlsManager.Get(tls.DefaultTLSStoreName, tlsOptionsName); err != nil {
+			return nil, fmt.Errorf("building router handler: %w", err)
+		}
+	}
+
+	handler, err := m.buildHTTPHandler(ctx, routerConfig, entryPointName, routerName)
+	if err != nil {
+		return nil, err
+	}
+
+	m.routerHandlers[routerName] = handler
+	return handler, nil
+}
+
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, entryPointName, routerName string) (http.Handler, error) {
+	var qualifiedNames []string
+	for _, name := range router.Middlewares {
+		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
+	}
+	router.Middlewares = qualifiedNames
+
+	chain := alice.New()
+
+	if router.DefaultRule {
+		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
+	}
+
+	var (
+		nextHandler http.Handler
+		serviceName string
+		err         error
+	)
+
+	// Check if this router has child routers or a service.
+	switch {
+	case len(router.ChildRefs) > 0:
+		// This router routes to child routers - create a muxer for them
+		nextHandler, err = m.buildChildRoutersMuxer(ctx, entryPointName, router.ChildRefs)
+		if err != nil {
+			return nil, fmt.Errorf("building child routers muxer: %w", err)
+		}
+		serviceName = fmt.Sprintf("%s-muxer", routerName)
+	case router.Service != "":
+		// This router routes to a service
+		qualifiedService := provider.GetQualifiedName(ctx, router.Service)
+		nextHandler, err = m.serviceManager.BuildHTTP(ctx, qualifiedService)
+		if err != nil {
+			return nil, err
+		}
+		serviceName = qualifiedService
+	default:
+		return nil, errors.New("router must have either a service or child routers")
+	}
+
+	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
+	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, serviceName))
+
+	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, serviceName)
+	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
+
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return accesslog.NewConcatFieldHandler(next, accesslog.RouterName, routerName), nil
+	})
+
+	// Here we are adding deny handlers for encoded path characters and fragment.
+	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
+	if len(router.ParentRefs) == 0 && router.DeniedEncodedPathCharacters != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
+		})
+	}
+
+	if router.TLS != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
+		})
+	}
+
+	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)
+
+	return chain.Extend(*mHandler).Then(nextHandler)
+}
+
 // traverse performs a depth-first traversal starting from root routers,
 // detecting cycles and marking visited routers for reachability detection.
 func (m *Manager) traverse(routerName string, visited, currentPath map[string]bool, path []string) {
@@ -459,7 +466,7 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 
 // buildChildRoutersMuxer creates a muxer for child routers.
 func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName string, childRefs []string) (http.Handler, error) {
-	childMuxer := httpmuxer.NewMuxer(m.parser)
+	childMuxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	// Set a default handler for the child muxer (404 Not Found).
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
@@ -493,7 +500,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 		}
 
 		// Add the child router to the muxer.
-		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, childHandler); err != nil {
+		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, providerName(childName), childHandler); err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -508,4 +515,12 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 	}
 
 	return childMuxer, nil
+}
+
+func providerName(routerName string) string {
+	parts := strings.Split(routerName, "@")
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return ""
 }

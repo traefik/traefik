@@ -15,12 +15,12 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		data        map[string]interface{}
+		data        map[string]any
 		expectedLog string
 	}{
 		{
 			name: "DownstreamStatus & DownstreamContentSize are nil",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -41,7 +41,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -62,7 +62,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data with local time",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartLocal:             time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -79,6 +79,27 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				ServiceURL:             "http://10.0.0.2/toto",
 			},
 			expectedLog: `10.0.0.1 - Client [10/Nov/2009:14:00:00 -0900] "GET /foo http" 123 132 "referer" "agent" - "foo" "http://10.0.0.2/toto" 123000ms
+`,
+		},
+		{
+			name: "user-agent with double quote is escaped",
+			data: map[string]any{
+				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Duration:               1 * time.Millisecond,
+				ClientHost:             "10.0.0.1",
+				ClientUsername:         "-",
+				RequestMethod:          http.MethodGet,
+				RequestPath:            "/",
+				RequestProtocol:        "HTTP/1.1",
+				DownstreamStatus:       200,
+				DownstreamContentSize:  0,
+				RequestRefererHeader:   "-",
+				RequestUserAgentHeader: `foo " bar`,
+				RequestCount:           1,
+				RouterName:             "test@file",
+				ServiceURL:             "http://127.0.0.1:8080",
+			},
+			expectedLog: `10.0.0.1 - - [10/Nov/2009:23:00:00 +0000] "GET / HTTP/1.1" 200 0 "-" "foo \" bar" 1 "test@file" "http://127.0.0.1:8080" 1ms
 `,
 		},
 	}
@@ -106,12 +127,12 @@ func TestGenericCLFLogFormatter_Format(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		data        map[string]interface{}
+		data        map[string]any
 		expectedLog string
 	}{
 		{
 			name: "DownstreamStatus & DownstreamContentSize are nil",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -132,7 +153,7 @@ func TestGenericCLFLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -153,7 +174,7 @@ func TestGenericCLFLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data with local time",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartLocal:             time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -199,7 +220,7 @@ func Test_toLog(t *testing.T) {
 		fieldName    string
 		defaultValue string
 		quoted       bool
-		expectedLog  interface{}
+		expectedLog  any
 	}{
 		{
 			desc: "Should return int 1",
@@ -220,6 +241,16 @@ func Test_toLog(t *testing.T) {
 			defaultValue: defaultValue,
 			quoted:       true,
 			expectedLog:  `"foo"`,
+		},
+		{
+			desc: "Should escape double quotes in quoted string",
+			fields: logrus.Fields{
+				"Powpow": `foo " bar`,
+			},
+			fieldName:    "Powpow",
+			defaultValue: defaultValue,
+			quoted:       true,
+			expectedLog:  `"foo \" bar"`,
 		},
 		{
 			desc: "Should return defaultValue if fieldName does not exist",

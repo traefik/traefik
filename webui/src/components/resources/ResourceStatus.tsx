@@ -1,4 +1,4 @@
-import { Box, Flex, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, styled, Text } from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 
 import { colorByStatus, iconByStatus } from 'components/resources/Status'
@@ -50,6 +50,11 @@ export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) 
       color: colorByStatus.disabled,
       icon: iconByStatus.disabled,
       label: 'Error',
+    },
+    expired: {
+      color: colorByStatus.expired,
+      icon: iconByStatus.expired,
+      label: 'Expired',
     },
     loading: {
       color: colorByStatus.loading,

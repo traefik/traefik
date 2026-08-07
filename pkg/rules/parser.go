@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/vulcand/predicate"
@@ -28,7 +29,7 @@ type Tree struct {
 
 // NewParser constructs a parser for the given matchers.
 func NewParser(matchers []string) (predicate.Parser, error) {
-	parserFuncs := make(map[string]interface{})
+	parserFuncs := make(map[string]any)
 
 	for _, matcherName := range matchers {
 		fn := func(value ...string) TreeBuilder {
@@ -104,10 +105,8 @@ func (tree *Tree) ParseMatchers(matchers []string) []string {
 	case and, or:
 		return append(tree.RuleLeft.ParseMatchers(matchers), tree.RuleRight.ParseMatchers(matchers)...)
 	default:
-		for _, matcher := range matchers {
-			if tree.Matcher == matcher {
-				return lower(tree.Value)
-			}
+		if slices.Contains(matchers, tree.Matcher) {
+			return lower(tree.Value)
 		}
 
 		return nil

@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // MiddlewareLister helps list Middlewares.
@@ -38,7 +38,7 @@ import (
 type MiddlewareLister interface {
 	// List lists all Middlewares in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.Middleware, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.Middleware, err error)
 	// Middlewares returns an object that can list and get Middlewares.
 	Middlewares(namespace string) MiddlewareNamespaceLister
 	MiddlewareListerExpansion
@@ -46,25 +46,17 @@ type MiddlewareLister interface {
 
 // middlewareLister implements the MiddlewareLister interface.
 type middlewareLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.Middleware]
 }
 
 // NewMiddlewareLister returns a new MiddlewareLister.
 func NewMiddlewareLister(indexer cache.Indexer) MiddlewareLister {
-	return &middlewareLister{indexer: indexer}
-}
-
-// List lists all Middlewares in the indexer.
-func (s *middlewareLister) List(selector labels.Selector) (ret []*v1alpha1.Middleware, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.Middleware))
-	})
-	return ret, err
+	return &middlewareLister{listers.New[*traefikiov1alpha1.Middleware](indexer, traefikiov1alpha1.Resource("middleware"))}
 }
 
 // Middlewares returns an object that can list and get Middlewares.
 func (s *middlewareLister) Middlewares(namespace string) MiddlewareNamespaceLister {
-	return middlewareNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return middlewareNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.Middleware](s.ResourceIndexer, namespace)}
 }
 
 // MiddlewareNamespaceLister helps list and get Middlewares.
@@ -72,36 +64,15 @@ func (s *middlewareLister) Middlewares(namespace string) MiddlewareNamespaceList
 type MiddlewareNamespaceLister interface {
 	// List lists all Middlewares in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.Middleware, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.Middleware, err error)
 	// Get retrieves the Middleware from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.Middleware, error)
+	Get(name string) (*traefikiov1alpha1.Middleware, error)
 	MiddlewareNamespaceListerExpansion
 }
 
 // middlewareNamespaceLister implements the MiddlewareNamespaceLister
 // interface.
 type middlewareNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Middlewares in the indexer for a given namespace.
-func (s middlewareNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.Middleware, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.Middleware))
-	})
-	return ret, err
-}
-
-// Get retrieves the Middleware from the indexer for a given namespace and name.
-func (s middlewareNamespaceLister) Get(name string) (*v1alpha1.Middleware, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("middleware"), name)
-	}
-	return obj.(*v1alpha1.Middleware), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.Middleware]
 }

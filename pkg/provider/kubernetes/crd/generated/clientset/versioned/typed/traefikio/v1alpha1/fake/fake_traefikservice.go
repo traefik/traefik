@@ -27,111 +27,35 @@ THE SOFTWARE.
 package fake
 
 import (
-	"context"
-
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeTraefikServices implements TraefikServiceInterface
-type FakeTraefikServices struct {
+// fakeTraefikServices implements TraefikServiceInterface
+type fakeTraefikServices struct {
+	*gentype.FakeClientWithListAndApply[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList, *traefikiov1alpha1.TraefikServiceApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
-	ns   string
 }
 
-var traefikservicesResource = v1alpha1.SchemeGroupVersion.WithResource("traefikservices")
-
-var traefikservicesKind = v1alpha1.SchemeGroupVersion.WithKind("TraefikService")
-
-// Get takes name of the traefikService, and returns the corresponding traefikService object, and an error if there is any.
-func (c *FakeTraefikServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(traefikservicesResource, c.ns, name), &v1alpha1.TraefikService{})
-
-	if obj == nil {
-		return nil, err
+func newFakeTraefikServices(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.TraefikServiceInterface {
+	return &fakeTraefikServices{
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.TraefikService, *v1alpha1.TraefikServiceList, *traefikiov1alpha1.TraefikServiceApplyConfiguration](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("traefikservices"),
+			v1alpha1.SchemeGroupVersion.WithKind("TraefikService"),
+			func() *v1alpha1.TraefikService { return &v1alpha1.TraefikService{} },
+			func() *v1alpha1.TraefikServiceList { return &v1alpha1.TraefikServiceList{} },
+			func(dst, src *v1alpha1.TraefikServiceList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.TraefikServiceList) []*v1alpha1.TraefikService {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.TraefikServiceList, items []*v1alpha1.TraefikService) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.TraefikService), err
-}
-
-// List takes label and field selectors, and returns the list of TraefikServices that match those selectors.
-func (c *FakeTraefikServices) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TraefikServiceList, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewListAction(traefikservicesResource, traefikservicesKind, c.ns, opts), &v1alpha1.TraefikServiceList{})
-
-	if obj == nil {
-		return nil, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.TraefikServiceList{ListMeta: obj.(*v1alpha1.TraefikServiceList).ListMeta}
-	for _, item := range obj.(*v1alpha1.TraefikServiceList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested traefikServices.
-func (c *FakeTraefikServices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(traefikservicesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a traefikService and creates it.  Returns the server's representation of the traefikService, and an error, if there is any.
-func (c *FakeTraefikServices) Create(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.CreateOptions) (result *v1alpha1.TraefikService, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(traefikservicesResource, c.ns, traefikService), &v1alpha1.TraefikService{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.TraefikService), err
-}
-
-// Update takes the representation of a traefikService and updates it. Returns the server's representation of the traefikService, and an error, if there is any.
-func (c *FakeTraefikServices) Update(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.UpdateOptions) (result *v1alpha1.TraefikService, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(traefikservicesResource, c.ns, traefikService), &v1alpha1.TraefikService{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.TraefikService), err
-}
-
-// Delete takes name of the traefikService and deletes it. Returns an error if one occurs.
-func (c *FakeTraefikServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(traefikservicesResource, c.ns, name, opts), &v1alpha1.TraefikService{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeTraefikServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(traefikservicesResource, c.ns, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.TraefikServiceList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched traefikService.
-func (c *FakeTraefikServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TraefikService, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(traefikservicesResource, c.ns, name, pt, data, subresources...), &v1alpha1.TraefikService{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.TraefikService), err
 }

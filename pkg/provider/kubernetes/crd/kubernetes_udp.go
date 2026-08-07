@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
@@ -22,7 +23,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
 		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteUDP.Name).Str("namespace", ingressRouteUDP.Namespace).Logger()
 
-		if !shouldProcessIngress(p.IngressClass, ingressRouteUDP.Annotations[annotationKubernetesIngressClass]) {
+		ingressClassName, usingDeprecatedAnnotation := getIngressClassName(ingressRouteUDP.Spec.IngressClassName, ingressRouteUDP.Annotations)
+		if usingDeprecatedAnnotation {
+			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
+		}
+		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue
 		}
 
@@ -180,8 +185,8 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			for _, p := range endpointSlice.Ports {
-				if svcPort.Name == *p.Name {
-					port = *p.Port
+				if p.Name != nil && svcPort.Name == *p.Name {
+					port = ptr.Deref(p.Port, 0)
 					break
 				}
 			}

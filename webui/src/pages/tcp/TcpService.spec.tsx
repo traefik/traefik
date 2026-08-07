@@ -101,9 +101,10 @@ describe('<TcpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('Expect')
     expect(healthCheck.innerHTML).toContain('PONG')
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
+    expect(serversList.innerHTML).toContain('1')
 
     const routersTable = getByTestId('routers-table')
     expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
@@ -113,6 +114,11 @@ describe('<TcpServicePage />', () => {
   it('should render the service servers from the serverStatus property', async () => {
     const mockData = {
       loadBalancer: {
+        servers: [
+          {
+            address: 'http://10.0.1.12:81',
+          },
+        ],
         terminationDelay: 10,
       },
       status: 'enabled',
@@ -154,7 +160,7 @@ describe('<TcpServicePage />', () => {
       { route: '/tcp/services/mock-service', withPage: true },
     )
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 
@@ -183,6 +189,47 @@ describe('<TcpServicePage />', () => {
     expect(() => {
       getByTestId('routers-table')
     }).toThrow('Unable to find an element by: [data-testid="routers-table"]')
+  })
+
+  it('should render the service with server weights', async () => {
+    const mockData = {
+      loadBalancer: {
+        servers: [
+          {
+            address: '10.0.1.12:80',
+            weight: 3,
+          },
+          {
+            address: '10.0.1.13:80',
+            weight: 7,
+          },
+        ],
+        terminationDelay: 10,
+      },
+      serverStatus: {
+        '10.0.1.12:80': 'UP',
+        '10.0.1.13:80': 'UP',
+      },
+      status: 'enabled',
+      usedBy: [],
+      name: 'service-weighted-servers',
+      provider: 'docker',
+      type: 'loadbalancer',
+      routers: [],
+    }
+
+    const { getByTestId } = renderWithProviders(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="tcp" />,
+      { route: '/tcp/services/mock-service', withPage: true },
+    )
+
+    const serversList = getByTestId('tcp-servers-list')
+    expect(serversList.childNodes.length).toBe(2)
+    expect(serversList.innerHTML).toContain('10.0.1.12:80')
+    expect(serversList.innerHTML).toContain('10.0.1.13:80')
+    expect(serversList.innerHTML).toContain('3')
+    expect(serversList.innerHTML).toContain('7')
   })
 
   it('should render weighted services', async () => {

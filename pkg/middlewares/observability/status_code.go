@@ -13,6 +13,7 @@ func newStatusCodeRecorder(rw http.ResponseWriter, status int) *statusCodeRecord
 
 type statusCodeRecorder struct {
 	http.ResponseWriter
+
 	status int
 }
 

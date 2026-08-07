@@ -1,4 +1,4 @@
-import { Box, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
+import { Box, Flex, H1, Skeleton, Text } from '@traefik-labs/faency'
 
 import MirrorServices from './MirrorServices'
 import Servers from './Servers'

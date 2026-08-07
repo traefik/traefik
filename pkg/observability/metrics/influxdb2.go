@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/metrics/influx"
@@ -138,11 +139,16 @@ func newInfluxDB2Client(config *otypes.InfluxDB2) (influxdb2.Client, error) {
 		return nil, errors.New("token, org or bucket property is missing")
 	}
 
+	token, err := config.Token.Read()
+	if err != nil {
+		return nil, err
+	}
+
 	// Disable InfluxDB2 logs.
 	// See https://github.com/influxdata/influxdb-client-go/blob/v2.7.0/options.go#L128
 	influxdb2log.Log = nil
 
-	return influxdb2.NewClient(config.Address, config.Token), nil
+	return influxdb2.NewClient(config.Address, strings.TrimSpace(string(token))), nil
 }
 
 type influxDB2Writer struct {

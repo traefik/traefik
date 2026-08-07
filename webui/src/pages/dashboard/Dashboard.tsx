@@ -1,4 +1,4 @@
-import { Card, CSS, Flex, Grid, H2, Text } from '@traefiklabs/faency'
+import { Card, CSS, Flex, Grid, H2, Text } from '@traefik-labs/faency'
 import { ReactNode, useMemo } from 'react'
 import useSWR from 'swr'
 

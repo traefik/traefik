@@ -37,43 +37,43 @@ type FakeTraefikV1alpha1 struct {
 }
 
 func (c *FakeTraefikV1alpha1) IngressRoutes(namespace string) v1alpha1.IngressRouteInterface {
-	return &FakeIngressRoutes{c, namespace}
+	return newFakeIngressRoutes(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) IngressRouteTCPs(namespace string) v1alpha1.IngressRouteTCPInterface {
-	return &FakeIngressRouteTCPs{c, namespace}
+	return newFakeIngressRouteTCPs(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) IngressRouteUDPs(namespace string) v1alpha1.IngressRouteUDPInterface {
-	return &FakeIngressRouteUDPs{c, namespace}
+	return newFakeIngressRouteUDPs(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) Middlewares(namespace string) v1alpha1.MiddlewareInterface {
-	return &FakeMiddlewares{c, namespace}
+	return newFakeMiddlewares(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) MiddlewareTCPs(namespace string) v1alpha1.MiddlewareTCPInterface {
-	return &FakeMiddlewareTCPs{c, namespace}
+	return newFakeMiddlewareTCPs(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) ServersTransports(namespace string) v1alpha1.ServersTransportInterface {
-	return &FakeServersTransports{c, namespace}
+	return newFakeServersTransports(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) ServersTransportTCPs(namespace string) v1alpha1.ServersTransportTCPInterface {
-	return &FakeServersTransportTCPs{c, namespace}
+	return newFakeServersTransportTCPs(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) TLSOptions(namespace string) v1alpha1.TLSOptionInterface {
-	return &FakeTLSOptions{c, namespace}
+	return newFakeTLSOptions(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) TLSStores(namespace string) v1alpha1.TLSStoreInterface {
-	return &FakeTLSStores{c, namespace}
+	return newFakeTLSStores(c, namespace)
 }
 
 func (c *FakeTraefikV1alpha1) TraefikServices(namespace string) v1alpha1.TraefikServiceInterface {
-	return &FakeTraefikServices{c, namespace}
+	return newFakeTraefikServices(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

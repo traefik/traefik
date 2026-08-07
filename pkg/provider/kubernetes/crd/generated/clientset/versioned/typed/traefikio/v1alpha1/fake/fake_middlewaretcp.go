@@ -27,111 +27,35 @@ THE SOFTWARE.
 package fake
 
 import (
-	"context"
-
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeMiddlewareTCPs implements MiddlewareTCPInterface
-type FakeMiddlewareTCPs struct {
+// fakeMiddlewareTCPs implements MiddlewareTCPInterface
+type fakeMiddlewareTCPs struct {
+	*gentype.FakeClientWithListAndApply[*v1alpha1.MiddlewareTCP, *v1alpha1.MiddlewareTCPList, *traefikiov1alpha1.MiddlewareTCPApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
-	ns   string
 }
 
-var middlewaretcpsResource = v1alpha1.SchemeGroupVersion.WithResource("middlewaretcps")
-
-var middlewaretcpsKind = v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCP")
-
-// Get takes name of the middlewareTCP, and returns the corresponding middlewareTCP object, and an error if there is any.
-func (c *FakeMiddlewareTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MiddlewareTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(middlewaretcpsResource, c.ns, name), &v1alpha1.MiddlewareTCP{})
-
-	if obj == nil {
-		return nil, err
+func newFakeMiddlewareTCPs(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.MiddlewareTCPInterface {
+	return &fakeMiddlewareTCPs{
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.MiddlewareTCP, *v1alpha1.MiddlewareTCPList, *traefikiov1alpha1.MiddlewareTCPApplyConfiguration](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("middlewaretcps"),
+			v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCP"),
+			func() *v1alpha1.MiddlewareTCP { return &v1alpha1.MiddlewareTCP{} },
+			func() *v1alpha1.MiddlewareTCPList { return &v1alpha1.MiddlewareTCPList{} },
+			func(dst, src *v1alpha1.MiddlewareTCPList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.MiddlewareTCPList) []*v1alpha1.MiddlewareTCP {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.MiddlewareTCPList, items []*v1alpha1.MiddlewareTCP) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.MiddlewareTCP), err
-}
-
-// List takes label and field selectors, and returns the list of MiddlewareTCPs that match those selectors.
-func (c *FakeMiddlewareTCPs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MiddlewareTCPList, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewListAction(middlewaretcpsResource, middlewaretcpsKind, c.ns, opts), &v1alpha1.MiddlewareTCPList{})
-
-	if obj == nil {
-		return nil, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.MiddlewareTCPList{ListMeta: obj.(*v1alpha1.MiddlewareTCPList).ListMeta}
-	for _, item := range obj.(*v1alpha1.MiddlewareTCPList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested middlewareTCPs.
-func (c *FakeMiddlewareTCPs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(middlewaretcpsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a middlewareTCP and creates it.  Returns the server's representation of the middlewareTCP, and an error, if there is any.
-func (c *FakeMiddlewareTCPs) Create(ctx context.Context, middlewareTCP *v1alpha1.MiddlewareTCP, opts v1.CreateOptions) (result *v1alpha1.MiddlewareTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(middlewaretcpsResource, c.ns, middlewareTCP), &v1alpha1.MiddlewareTCP{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.MiddlewareTCP), err
-}
-
-// Update takes the representation of a middlewareTCP and updates it. Returns the server's representation of the middlewareTCP, and an error, if there is any.
-func (c *FakeMiddlewareTCPs) Update(ctx context.Context, middlewareTCP *v1alpha1.MiddlewareTCP, opts v1.UpdateOptions) (result *v1alpha1.MiddlewareTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(middlewaretcpsResource, c.ns, middlewareTCP), &v1alpha1.MiddlewareTCP{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.MiddlewareTCP), err
-}
-
-// Delete takes name of the middlewareTCP and deletes it. Returns an error if one occurs.
-func (c *FakeMiddlewareTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(middlewaretcpsResource, c.ns, name, opts), &v1alpha1.MiddlewareTCP{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeMiddlewareTCPs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(middlewaretcpsResource, c.ns, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.MiddlewareTCPList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched middlewareTCP.
-func (c *FakeMiddlewareTCPs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MiddlewareTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(middlewaretcpsResource, c.ns, name, pt, data, subresources...), &v1alpha1.MiddlewareTCP{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.MiddlewareTCP), err
 }

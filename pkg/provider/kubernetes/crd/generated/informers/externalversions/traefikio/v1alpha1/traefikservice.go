@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // TraefikServices.
 type TraefikServiceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TraefikServiceLister
+	Lister() traefikiov1alpha1.TraefikServiceLister
 }
 
 type traefikServiceInformer struct {
@@ -65,21 +65,33 @@ func NewTraefikServiceInformer(client versioned.Interface, namespace string, res
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredTraefikServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.Background(), options)
 			},
-		},
-		&traefikiov1alpha1.TraefikService{},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(ctx, options)
+			},
+		}, client),
+		&crdtraefikiov1alpha1.TraefikService{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +102,9 @@ func (f *traefikServiceInformer) defaultInformer(client versioned.Interface, res
 }
 
 func (f *traefikServiceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.TraefikService{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.TraefikService{}, f.defaultInformer)
 }
 
-func (f *traefikServiceInformer) Lister() v1alpha1.TraefikServiceLister {
-	return v1alpha1.NewTraefikServiceLister(f.Informer().GetIndexer())
+func (f *traefikServiceInformer) Lister() traefikiov1alpha1.TraefikServiceLister {
+	return traefikiov1alpha1.NewTraefikServiceLister(f.Informer().GetIndexer())
 }

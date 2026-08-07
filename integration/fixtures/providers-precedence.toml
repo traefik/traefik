@@ -1,0 +1,48 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers]
+  precedence = {{ .Precedence }}
+
+  [providers.file]
+    filename = "{{ .SelfFilename }}"
+
+  [providers.docker]
+    endpoint = "{{ .DockerHost }}"
+    exposedByDefault = false
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.file-router]
+    rule = "PathPrefix(`/http`)"
+    service = "file-service"
+    entryPoints = ["web"]
+
+[http.services]
+  [http.services.file-service.loadBalancer]
+    [[http.services.file-service.loadBalancer.servers]]
+      url = "http://{{ .FileBackendAddress }}"
+
+[tcp.routers]
+  [tcp.routers.file-router]
+    rule = "HostSNI(`*`)"
+    service = "file-service"
+    entryPoints = ["web"]
+
+[tcp.services]
+  [tcp.services.file-service.loadBalancer]
+    [[tcp.services.file-service.loadBalancer.servers]]
+      address = "{{ .FileBackendAddress }}"

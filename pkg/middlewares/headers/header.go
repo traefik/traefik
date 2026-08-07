@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -64,6 +65,55 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// PostRequestModifyResponseHeaders set or delete response headers.
+// This method is called AFTER the response is generated from the backend
+// and can merge/override headers from the backend response.
+func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
+	// Loop through Custom response headers
+	for header, value := range s.headers.CustomResponseHeaders {
+		if value == "" {
+			res.Header.Del(header)
+		} else {
+			res.Header.Set(header, value)
+		}
+	}
+
+	if res != nil && res.Request != nil {
+		match, ok := s.matchOrigin(res.Request.Header.Get("Origin"))
+		if ok {
+			res.Header.Set("Access-Control-Allow-Origin", match)
+		}
+	}
+
+	if s.headers.AccessControlAllowCredentials {
+		res.Header.Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if len(s.headers.AccessControlExposeHeaders) > 0 {
+		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+		if !(slices.Contains(s.headers.AccessControlExposeHeaders, "*") && s.headers.AccessControlAllowCredentials) {
+			res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+		}
+	}
+
+	if !s.headers.AddVaryHeader {
+		return nil
+	}
+
+	varyHeader := res.Header.Get("Vary")
+	if varyHeader == "Origin" {
+		return nil
+	}
+
+	if varyHeader != "" {
+		varyHeader += ","
+	}
+	varyHeader += "Origin"
+
+	res.Header.Set("Vary", varyHeader)
+	return nil
+}
+
 // modifyCustomRequestHeaders sets or deletes custom request headers.
 func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	// Loop through Custom request headers
@@ -83,55 +133,6 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 			req.Header.Set(header, value)
 		}
 	}
-}
-
-// PostRequestModifyResponseHeaders set or delete response headers.
-// This method is called AFTER the response is generated from the backend
-// and can merge/override headers from the backend response.
-func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
-	// Loop through Custom response headers
-	for header, value := range s.headers.CustomResponseHeaders {
-		if value == "" {
-			res.Header.Del(header)
-		} else {
-			res.Header.Set(header, value)
-		}
-	}
-
-	if res != nil && res.Request != nil {
-		originHeader := res.Request.Header.Get("Origin")
-		allowed, match := s.isOriginAllowed(originHeader)
-
-		if allowed {
-			res.Header.Set("Access-Control-Allow-Origin", match)
-		}
-	}
-
-	if s.headers.AccessControlAllowCredentials {
-		res.Header.Set("Access-Control-Allow-Credentials", "true")
-	}
-
-	if len(s.headers.AccessControlExposeHeaders) > 0 {
-		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
-		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
-	}
-
-	if !s.headers.AddVaryHeader {
-		return nil
-	}
-
-	varyHeader := res.Header.Get("Vary")
-	if varyHeader == "Origin" {
-		return nil
-	}
-
-	if varyHeader != "" {
-		varyHeader += ","
-	}
-	varyHeader += "Origin"
-
-	res.Header.Set("Vary", varyHeader)
-	return nil
 }
 
 // processCorsHeaders processes the incoming request,
@@ -154,39 +155,61 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 		}
 
 		allowHeaders := strings.Join(s.headers.AccessControlAllowHeaders, ",")
-		if allowHeaders != "" {
+		if slices.Contains(s.headers.AccessControlAllowHeaders, "*") && s.headers.AccessControlAllowCredentials {
+			if acrh := req.Header.Get("Access-Control-Request-Headers"); acrh != "" {
+				rw.Header().Set("Access-Control-Allow-Headers", acrh)
+			}
+		} else if allowHeaders != "" {
 			rw.Header().Set("Access-Control-Allow-Headers", allowHeaders)
 		}
 
 		allowMethods := strings.Join(s.headers.AccessControlAllowMethods, ",")
-		if allowMethods != "" {
+		if slices.Contains(s.headers.AccessControlAllowMethods, "*") && s.headers.AccessControlAllowCredentials {
+			rw.Header().Set("Access-Control-Allow-Methods", reqAcMethod)
+		} else if allowMethods != "" {
 			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
 		}
 
-		allowed, match := s.isOriginAllowed(originHeader)
-		if allowed {
+		match, ok := s.matchOrigin(originHeader)
+		if ok {
 			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
 
-		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
+		if s.headers.AccessControlMaxAge != nil {
+			rw.Header().Set("Access-Control-Max-Age", strconv.FormatInt(*s.headers.AccessControlMaxAge, 10))
+		}
+
+		if len(s.headers.AccessControlExposeHeaders) > 0 {
+			exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+			if !(slices.Contains(s.headers.AccessControlExposeHeaders, "*") && s.headers.AccessControlAllowCredentials) {
+				rw.Header().Set("Access-Control-Expose-Headers", exposeHeaders)
+			}
+		}
+
 		return true
 	}
 
 	return false
 }
 
-func (s *Header) isOriginAllowed(origin string) (bool, string) {
+func (s *Header) matchOrigin(origin string) (string, bool) {
 	for _, item := range s.headers.AccessControlAllowOriginList {
-		if item == "*" || item == origin {
-			return true, item
+		switch item {
+		case origin:
+			return item, true
+		case "*":
+			if s.headers.AccessControlAllowCredentials {
+				return origin, true // Can't use wildcard with credentials.
+			}
+			return item, true
 		}
 	}
 
 	for _, regex := range s.allowOriginRegexes {
 		if regex.MatchString(origin) {
-			return true, origin
+			return origin, true
 		}
 	}
 
-	return false, ""
+	return "", false
 }

@@ -27,15 +27,15 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
-	"time"
+	context "context"
 
+	applyconfigurationtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
 	scheme "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // MiddlewareTCPsGetter has a method to return a MiddlewareTCPInterface.
@@ -46,141 +46,33 @@ type MiddlewareTCPsGetter interface {
 
 // MiddlewareTCPInterface has methods to work with MiddlewareTCP resources.
 type MiddlewareTCPInterface interface {
-	Create(ctx context.Context, middlewareTCP *v1alpha1.MiddlewareTCP, opts v1.CreateOptions) (*v1alpha1.MiddlewareTCP, error)
-	Update(ctx context.Context, middlewareTCP *v1alpha1.MiddlewareTCP, opts v1.UpdateOptions) (*v1alpha1.MiddlewareTCP, error)
+	Create(ctx context.Context, middlewareTCP *traefikiov1alpha1.MiddlewareTCP, opts v1.CreateOptions) (*traefikiov1alpha1.MiddlewareTCP, error)
+	Update(ctx context.Context, middlewareTCP *traefikiov1alpha1.MiddlewareTCP, opts v1.UpdateOptions) (*traefikiov1alpha1.MiddlewareTCP, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.MiddlewareTCP, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.MiddlewareTCPList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikiov1alpha1.MiddlewareTCP, error)
+	List(ctx context.Context, opts v1.ListOptions) (*traefikiov1alpha1.MiddlewareTCPList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MiddlewareTCP, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.MiddlewareTCP, err error)
+	Apply(ctx context.Context, middlewareTCP *applyconfigurationtraefikiov1alpha1.MiddlewareTCPApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.MiddlewareTCP, err error)
 	MiddlewareTCPExpansion
 }
 
 // middlewareTCPs implements MiddlewareTCPInterface
 type middlewareTCPs struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithListAndApply[*traefikiov1alpha1.MiddlewareTCP, *traefikiov1alpha1.MiddlewareTCPList, *applyconfigurationtraefikiov1alpha1.MiddlewareTCPApplyConfiguration]
 }
 
 // newMiddlewareTCPs returns a MiddlewareTCPs
 func newMiddlewareTCPs(c *TraefikV1alpha1Client, namespace string) *middlewareTCPs {
 	return &middlewareTCPs{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithListAndApply[*traefikiov1alpha1.MiddlewareTCP, *traefikiov1alpha1.MiddlewareTCPList, *applyconfigurationtraefikiov1alpha1.MiddlewareTCPApplyConfiguration](
+			"middlewaretcps",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *traefikiov1alpha1.MiddlewareTCP { return &traefikiov1alpha1.MiddlewareTCP{} },
+			func() *traefikiov1alpha1.MiddlewareTCPList { return &traefikiov1alpha1.MiddlewareTCPList{} },
+		),
 	}
-}
-
-// Get takes name of the middlewareTCP, and returns the corresponding middlewareTCP object, and an error if there is any.
-func (c *middlewareTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MiddlewareTCP, err error) {
-	result = &v1alpha1.MiddlewareTCP{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of MiddlewareTCPs that match those selectors.
-func (c *middlewareTCPs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MiddlewareTCPList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1alpha1.MiddlewareTCPList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested middlewareTCPs.
-func (c *middlewareTCPs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a middlewareTCP and creates it.  Returns the server's representation of the middlewareTCP, and an error, if there is any.
-func (c *middlewareTCPs) Create(ctx context.Context, middlewareTCP *v1alpha1.MiddlewareTCP, opts v1.CreateOptions) (result *v1alpha1.MiddlewareTCP, err error) {
-	result = &v1alpha1.MiddlewareTCP{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(middlewareTCP).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a middlewareTCP and updates it. Returns the server's representation of the middlewareTCP, and an error, if there is any.
-func (c *middlewareTCPs) Update(ctx context.Context, middlewareTCP *v1alpha1.MiddlewareTCP, opts v1.UpdateOptions) (result *v1alpha1.MiddlewareTCP, err error) {
-	result = &v1alpha1.MiddlewareTCP{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		Name(middlewareTCP.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(middlewareTCP).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the middlewareTCP and deletes it. Returns an error if one occurs.
-func (c *middlewareTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *middlewareTCPs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched middlewareTCP.
-func (c *middlewareTCPs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MiddlewareTCP, err error) {
-	result = &v1alpha1.MiddlewareTCP{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("middlewaretcps").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

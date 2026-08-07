@@ -4,13 +4,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
-
-func pointer[T any](v T) *T { return &v }
 
 func TestSticky_StickyHandler(t *testing.T) {
 	testCases := []struct {
@@ -109,9 +108,11 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 		HTTPOnly: true,
 		SameSite: "none",
 		MaxAge:   42,
-		Path:     pointer("/foo"),
+		Expires:  10,
+		Path:     new("/foo"),
 		Domain:   "foo.com",
-	})
+	}
+	sticky := NewSticky(cookieConfig)
 
 	// Should return an error if the handler does not exist.
 	res := httptest.NewRecorder()
@@ -133,6 +134,7 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 	assert.Equal(t, 42, cookie.MaxAge)
+	assert.WithinDuration(t, time.Now(), cookie.Expires, time.Duration(cookieConfig.Expires)*time.Second)
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
@@ -336,4 +338,28 @@ func TestSticky_WriteStickyResponse(t *testing.T) {
 		// Should not write a cookie.
 		assert.Empty(t, res.Result().Cookies())
 	})
+}
+
+func TestConvertSameSite_CaseInsensitive(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected http.SameSite
+	}{
+		{"none", http.SameSiteNoneMode},
+		{"None", http.SameSiteNoneMode},
+		{"NONE", http.SameSiteNoneMode},
+		{"lax", http.SameSiteLaxMode},
+		{"Lax", http.SameSiteLaxMode},
+		{"LAX", http.SameSiteLaxMode},
+		{"strict", http.SameSiteStrictMode},
+		{"Strict", http.SameSiteStrictMode},
+		{"STRICT", http.SameSiteStrictMode},
+		{"", http.SameSiteDefaultMode},
+		{"invalid", http.SameSiteDefaultMode},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, convertSameSite(tt.input))
+		})
+	}
 }

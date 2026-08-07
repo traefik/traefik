@@ -9,6 +9,7 @@
 		],
 		"name": "test@myprovider",
 		"provider": "myprovider",
+		"priorityStr": "0",
 		"rule": "Host(`foo.bar.other`)",
 		"service": "foo-service@myprovider",
 		"status": "enabled",

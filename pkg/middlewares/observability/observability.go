@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -19,6 +20,7 @@ type Observability struct {
 	SemConvMetricsEnabled  bool
 	TracingEnabled         bool
 	DetailedTracingEnabled bool
+	Metadata               *dynamic.ObservabilityMetadata
 }
 
 // WithObservabilityHandler sets the observability state in the context for the next handler.
@@ -64,8 +66,17 @@ func DetailedTracingEnabled(ctx context.Context) bool {
 	return ok && obs.DetailedTracingEnabled
 }
 
+// GetObservabilityMetadata returns the observability metadata.
+func GetObservabilityMetadata(ctx context.Context) *dynamic.ObservabilityMetadata {
+	obs, ok := ctx.Value(observabilityKey).(Observability)
+	if ok {
+		return obs.Metadata
+	}
+	return nil
+}
+
 // SetStatusErrorf flags the span as in error and log an event.
-func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
+func SetStatusErrorf(ctx context.Context, format string, args ...any) {
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
 	}

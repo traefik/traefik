@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // ServersTransportTCPs.
 type ServersTransportTCPInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.ServersTransportTCPLister
+	Lister() traefikiov1alpha1.ServersTransportTCPLister
 }
 
 type serversTransportTCPInformer struct {
@@ -65,21 +65,33 @@ func NewServersTransportTCPInformer(client versioned.Interface, namespace string
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredServersTransportTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().ServersTransportTCPs(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().ServersTransportTCPs(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().ServersTransportTCPs(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().ServersTransportTCPs(namespace).Watch(context.Background(), options)
 			},
-		},
-		&traefikiov1alpha1.ServersTransportTCP{},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().ServersTransportTCPs(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().ServersTransportTCPs(namespace).Watch(ctx, options)
+			},
+		}, client),
+		&crdtraefikiov1alpha1.ServersTransportTCP{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +102,9 @@ func (f *serversTransportTCPInformer) defaultInformer(client versioned.Interface
 }
 
 func (f *serversTransportTCPInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.ServersTransportTCP{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.ServersTransportTCP{}, f.defaultInformer)
 }
 
-func (f *serversTransportTCPInformer) Lister() v1alpha1.ServersTransportTCPLister {
-	return v1alpha1.NewServersTransportTCPLister(f.Informer().GetIndexer())
+func (f *serversTransportTCPInformer) Lister() traefikiov1alpha1.ServersTransportTCPLister {
+	return traefikiov1alpha1.NewServersTransportTCPLister(f.Informer().GetIndexer())
 }

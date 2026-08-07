@@ -107,4 +107,4 @@ spec:
     - Using a cookie ([Options `session`](../reference/routing-configuration/http/middlewares/oidc.md#configuration-options) (default behavior))
     - Using a [Redis store](../reference/routing-configuration/http/middlewares/oidc.md#sessionstore).  
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -44,6 +45,11 @@ var (
 		`X25519`:         tls.X25519,
 		`x25519mlkem768`: tls.X25519MLKEM768,
 		`X25519MLKEM768`: tls.X25519MLKEM768,
+		// Post-quantum hybrid key exchanges enabled by default since Go 1.26.
+		`secp256r1mlkem768`:  tls.SecP256r1MLKEM768,
+		`SecP256r1MLKEM768`:  tls.SecP256r1MLKEM768,
+		`secp384r1mlkem1024`: tls.SecP384r1MLKEM1024,
+		`SecP384r1MLKEM1024`: tls.SecP384r1MLKEM1024,
 	}
 )
 
@@ -145,52 +151,50 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// VerifyPeerCertificate verifies the chain certificates and their URI.
-func VerifyPeerCertificate(uri string, cfg *tls.Config, rawCerts [][]byte) error {
-	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
-	cert, err := verifyChain(cfg.RootCAs, rawCerts)
-	if err != nil {
-		return err
-	}
+// SANType is the type of the Subject Alternative Name.
+type SANType string
 
-	if len(uri) > 0 {
-		return verifyServerCertMatchesURI(uri, cert)
-	}
+const (
+	// SANDNSNameType specifies hostname-based SAN.
+	SANDNSNameType SANType = "DNSName"
 
-	return nil
+	// SANURIType specifies URI-based SAN, e.g. SPIFFE id.
+	SANURIType SANType = "URI"
+)
+
+// +k8s:deepcopy-gen=true
+
+// SAN represents a Subject Alternative Name.
+type SAN struct {
+	Type  SANType `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty"`
+	Value string  `json:"value,omitempty" toml:"value,omitempty" yaml:"value,omitempty"`
 }
 
-// verifyServerCertMatchesURI is used on tls connections dialed to a server
-// to ensure that the certificate it presented has the correct URI.
-func verifyServerCertMatchesURI(uri string, cert *x509.Certificate) error {
-	if cert == nil {
-		return errors.New("peer certificate mismatch: no peer certificate presented")
-	}
-
-	// Our certs will only ever have a single URI for now so only check that
-	if len(cert.URIs) < 1 {
-		return errors.New("peer certificate mismatch: peer certificate invalid")
-	}
-
-	gotURI := cert.URIs[0]
-
-	// Override the hostname since we rely on x509 constraints to limit ability to spoof the trust domain if needed
-	// (i.e. because a root is shared with other PKI or Consul clusters).
-	// This allows for seamless migrations between trust domains.
-
-	expectURI := &url.URL{}
-	id, err := url.Parse(uri)
+// VerifyPeerCertificate verifies the chain certificates and their URI.
+func VerifyPeerCertificate(sans []SAN, rootCAs *x509.CertPool, rawCerts [][]byte) error {
+	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
+	cert, err := verifyChain(rootCAs, rawCerts)
 	if err != nil {
-		return fmt.Errorf("%q is not a valid URI", uri)
-	}
-	*expectURI = *id
-	expectURI.Host = gotURI.Host
-
-	if strings.EqualFold(gotURI.String(), expectURI.String()) {
-		return nil
+		return fmt.Errorf("verifying chain: %w", err)
 	}
 
-	return fmt.Errorf("peer certificate mismatch got %s, want %s", gotURI, uri)
+	for _, san := range sans {
+		switch san.Type {
+		case SANURIType:
+			if slices.ContainsFunc(cert.URIs, func(uri *url.URL) bool {
+				return strings.EqualFold(san.Value, uri.String())
+			}) {
+				return nil
+			}
+
+		case SANDNSNameType:
+			if err := cert.VerifyHostname(san.Value); err == nil {
+				return nil
+			}
+		}
+	}
+
+	return errors.New("no matching SAN in peer certificate")
 }
 
 // verifyChain performs standard TLS verification without enforcing remote hostname matching.

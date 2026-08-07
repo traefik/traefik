@@ -5,7 +5,14 @@ description: "There are several available middleware in Traefik Proxy used to mo
 
 # HTTP Middleware Overview
 
-Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your service (or before the answer from the services are sent to the clients).
+Attached to [routers](../routing/router.md) or [services](../load-balancing/service.md), pieces of middleware are a means of tweaking the requests before they are sent to your backend servers (or before the answer is sent to the clients).
+
+Middlewares can be attached at two levels:
+
+- **Router-level:** Applied to all requests matching the router's rule, before forwarding to the service.
+- **Service-level:** Applied to all requests handled by the service, regardless of which router forwards the request. See [service middlewares](../load-balancing/service.md#middlewares).
+
+When both are configured, router middlewares execute first, followed by service middlewares.
 
 There are several available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
@@ -18,8 +25,8 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 ## Available HTTP Middlewares
 
-| Middleware                                | Purpose                                           | Area                        |
-|-------------------------------------------|---------------------------------------------------|-----------------------------|
+| Middleware                                                                                                                               | Purpose                                           | Area                        |
+|------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------------------|
 | <a id="opt-AddPrefix" href="#opt-AddPrefix" title="#opt-AddPrefix">[AddPrefix](addprefix.md)</a> | Adds a Path Prefix                                | Path Modifier               |
 | <a id="opt-BasicAuth" href="#opt-BasicAuth" title="#opt-BasicAuth">[BasicAuth](basicauth.md)</a> | Adds Basic Authentication                         | Security, Authentication    |
 | <a id="opt-Buffering" href="#opt-Buffering" title="#opt-Buffering">[Buffering](buffering.md)</a> | Buffers the request/response                      | Request Lifecycle           |
@@ -28,6 +35,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 | <a id="opt-Compress" href="#opt-Compress" title="#opt-Compress">[Compress](compress.md)</a> | Compresses the response                           | Content Modifier            |
 | <a id="opt-ContentType" href="#opt-ContentType" title="#opt-ContentType">[ContentType](contenttype.md)</a> | Handles Content-Type auto-detection               | Misc                        |
 | <a id="opt-DigestAuth" href="#opt-DigestAuth" title="#opt-DigestAuth">[DigestAuth](digestauth.md)</a> | Adds Digest Authentication                        | Security, Authentication    |
+| <a id="opt-EncodedCharacters" href="#opt-EncodedCharacters" title="#opt-EncodedCharacters">[EncodedCharacters](encodedcharacters.md)</a> | Defines allowed reserved encoded characters in the request path | Security, Request Lifecycle           |
 | <a id="opt-Errors" href="#opt-Errors" title="#opt-Errors">[Errors](errorpages.md)</a> | Defines custom error pages                        | Request Lifecycle           |
 | <a id="opt-ForwardAuth" href="#opt-ForwardAuth" title="#opt-ForwardAuth">[ForwardAuth](forwardauth.md)</a> | Delegates Authentication                          | Security, Authentication    |
 | <a id="opt-GrpcWeb" href="#opt-GrpcWeb" title="#opt-GrpcWeb">[GrpcWeb](grpcweb.md)</a> | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Request                   |
@@ -48,4 +56,4 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 Please take a look at the community-contributed plugins in the [plugin catalog](https://plugins.traefik.io/plugins).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

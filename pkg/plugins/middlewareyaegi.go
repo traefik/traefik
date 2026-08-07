@@ -46,7 +46,7 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 	}, nil
 }
 
-func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
+func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error) {
 	vConfig, err := b.createConfig(config)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 	return handler, nil
 }
 
-func (b yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+func (b yaegiMiddlewareBuilder) createConfig(config map[string]any) (reflect.Value, error) {
 	results := b.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))

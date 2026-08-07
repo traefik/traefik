@@ -123,7 +123,7 @@ ports:
     exposedPort: 443
 
 additionalArguments:
-  - "--providers.kubernetescrd.ingressClass"
+  - "--providers.kubernetescrd.ingressClass=traefik"
   - "--log.level=INFO"
 ```
 

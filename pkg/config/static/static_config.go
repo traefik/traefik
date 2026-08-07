@@ -3,15 +3,16 @@ package static
 import (
 	"errors"
 	"fmt"
-	"path"
+	"log/slog"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
-	legolog "github.com/go-acme/lego/v4/log"
-	"github.com/rs/zerolog"
+	legolog "github.com/go-acme/lego/v5/log"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -56,6 +57,30 @@ const (
 	// before releasing all resources related to that session.
 	DefaultUDPTimeout = 3 * time.Second
 )
+
+// providerNames is the ordered list of the Traefik provider names.
+var providerNames = []string{
+	gateway.ProviderName,
+	crd.ProviderName,
+	ingress.ProviderName,
+	ingressnginx.ProviderName,
+	docker.SwarmName,
+	docker.DockerName,
+	file.ProviderName,
+	redis.ProviderName,
+	knative.ProviderName,
+	consul.ProviderName,
+	consulcatalog.ProviderName,
+	nomad.ProviderName,
+	etcd.ProviderName,
+	ecs.ProviderName,
+	http.ProviderName,
+	zk.ProviderName,
+	rest.ProviderName,
+}
+
+// Allowed characters in URL following RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986#section-2)
+var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.:~-]*$`)
 
 // Configuration is the static configuration.
 type Configuration struct {
@@ -235,6 +260,7 @@ func (t *Tracing) SetDefaults() {
 // Providers contains providers configuration.
 type Providers struct {
 	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
+	Precedence                []string        `description:"Defines the routing precedence between providers." json:"precedence,omitempty" toml:"precedence,omitempty" yaml:"precedence,omitempty" export:"true"`
 
 	Docker                 *docker.Provider               `description:"Enables Docker provider." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Swarm                  *docker.SwarmProvider          `description:"Enables Docker Swarm provider." json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -255,6 +281,11 @@ type Providers struct {
 	HTTP                   *http.Provider                 `description:"Enables HTTP provider." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Plugin map[string]PluginConf `description:"Plugins configuration." json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (p *Providers) SetDefaults() {
+	p.Precedence = providerNames
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -287,6 +318,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
 	}
 
+	for i, providerName := range c.Providers.Precedence {
+		c.Providers.Precedence[i] = strings.ToLower(providerName)
+	}
+
 	if c.Providers.Docker != nil {
 		if c.Providers.Docker.HTTPClientTimeout < 0 {
 			c.Providers.Docker.HTTPClientTimeout = 0
@@ -315,6 +350,18 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
+	}
+
+	// Configure Ingress NGINX provider.
+	if c.Providers.KubernetesIngressNGINX != nil {
+		var nonTLSEntryPoints []string
+		for epName, entryPoint := range c.EntryPoints {
+			if entryPoint.HTTP.TLS == nil {
+				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
+			}
+		}
+
+		c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nonTLSEntryPoints
 	}
 
 	// Defines the default rule syntax for the Kubernetes Ingress Provider.
@@ -384,21 +431,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	c.initACMEProvider()
 }
 
-func (c *Configuration) hasUserDefinedEntrypoint() bool {
-	return len(c.EntryPoints) != 0
-}
-
-func (c *Configuration) initACMEProvider() {
-	for _, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
-		}
-	}
-
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
-}
-
 // ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
 	for name, resolver := range c.CertificatesResolvers {
@@ -423,6 +455,14 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	if c.Providers != nil {
+		for _, providerName := range c.Providers.Precedence {
+			if !slices.Contains(providerNames, providerName) {
+				return fmt.Errorf("provider %q is not a valid provider name", providerName)
+			}
 		}
 	}
 
@@ -470,8 +510,8 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
-	if c.API != nil && !path.IsAbs(c.API.BasePath) {
-		return errors.New("API basePath must be a valid absolute path")
+	if c.API != nil && !validBasePath.MatchString(c.API.BasePath) {
+		return errors.New("API basePath must be a valid absolute URL path")
 	}
 
 	if c.OCSP != nil {
@@ -483,6 +523,26 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+func (c *Configuration) hasUserDefinedEntrypoint() bool {
+	return len(c.EntryPoints) != 0
+}
+
+func (c *Configuration) initACMEProvider() {
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
+		}
+	}
+
+	legolog.SetDefault(
+		slog.New(
+			slogzerolog.Option{Logger: &log.Logger}.
+				NewZerologHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

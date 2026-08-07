@@ -1,4 +1,4 @@
-import { Flex, Text } from '@traefiklabs/faency'
+import { Flex, Text } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { FiGlobe } from 'react-icons/fi'
 
@@ -16,29 +16,18 @@ type ServersProps = {
 type Server = {
   url?: string
   address?: string
+  weight?: number
 }
 
-type ServerStatus = {
-  [server: string]: string
-}
-
-function getServerStatusList(data: Service.Details): ServerStatus {
-  const serversList: ServerStatus = {}
-
-  data.loadBalancer?.servers?.forEach((server: Server) => {
-    const serverKey = server.address || server.url
-    if (serverKey) {
-      serversList[serverKey] = 'DOWN'
-    }
-  })
-
-  if (data.serverStatus) {
-    Object.entries(data.serverStatus).forEach(([server, status]) => {
-      serversList[server] = status
-    })
+function getServerStatusList(data: Service.Details) {
+  if (!data?.loadBalancer?.servers) {
+    return []
   }
-
-  return serversList
+  return data.loadBalancer?.servers?.map((server: Server) => ({
+    url: server.address || server.url,
+    status: data.serverStatus?.[server.address || server.url || '-'] || 'DOWN',
+    weight: server.weight ?? 1,
+  }))
 }
 
 export const getProviderFromName = (serviceName: string, defaultProvider: string): string => {
@@ -47,7 +36,7 @@ export const getProviderFromName = (serviceName: string, defaultProvider: string
 }
 
 const Servers = ({ data, protocol }: ServersProps) => {
-  const serversList = getServerStatusList(data)
+  const serversList = useMemo(() => getServerStatusList(data), [data])
 
   const isTcp = useMemo(() => protocol === 'tcp', [protocol])
   const isUdp = useMemo(() => protocol === 'udp', [protocol])
@@ -57,35 +46,39 @@ const Servers = ({ data, protocol }: ServersProps) => {
   return (
     <Flex direction="column" gap={2}>
       <SectionTitle icon={<FiGlobe size={20} />} title="Servers" />
-      <PaginatedTable
-        data={Object.entries(serversList).map(([server, status]) => ({
-          server,
-          status,
-        }))}
-        columns={[
-          ...(isUdp ? [] : [{ key: 'status' as const, header: 'Status' }]),
-          { key: 'server' as const, header: isTcp ? 'Address' : 'URL' },
-        ]}
-        testId="servers-list"
-        renderCell={(key, value) => {
-          if (key === 'status') {
-            return (
-              <Flex align="center" gap={2}>
-                <ResourceStatus status={value === 'UP' ? 'enabled' : 'disabled'} />
-                <Text css={{ color: value === 'UP' ? colorByStatus.success : colorByStatus.disabled }}>{value}</Text>
-              </Flex>
-            )
-          }
-          if (key === 'server') {
-            return (
-              <Tooltip label={value} action="copy">
-                <Text>{value}</Text>
-              </Tooltip>
-            )
-          }
-          return <Text>{value}</Text>
-        }}
-      />
+      {serversList?.length > 0 && (
+        <PaginatedTable
+          data={serversList?.map(({ url, status, weight }) => ({
+            server: url,
+            status,
+            weight,
+          }))}
+          columns={[
+            ...(isUdp ? [] : [{ key: 'status' as const, header: 'Status' }]),
+            { key: 'server' as const, header: isTcp ? 'Address' : 'URL' },
+            ...(isUdp ? [] : [{ key: 'weight' as const, header: 'Weight' }]),
+          ]}
+          testId={`${protocol}-servers-list`}
+          renderCell={(key, value) => {
+            if (key === 'status') {
+              return (
+                <Flex align="center" gap={2}>
+                  <ResourceStatus status={value === 'UP' ? 'enabled' : 'disabled'} />
+                  <Text css={{ color: value === 'UP' ? colorByStatus.success : colorByStatus.disabled }}>{value}</Text>
+                </Flex>
+              )
+            }
+            if (key === 'server') {
+              return (
+                <Tooltip label={value as string} action="copy">
+                  <Text>{value}</Text>
+                </Tooltip>
+              )
+            }
+            return <Text>{value}</Text>
+          }}
+        />
+      )}
     </Flex>
   )
 }

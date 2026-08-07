@@ -235,7 +235,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 			require.NoError(t, err)
 
 			if *updateExpected {
-				var results interface{}
+				var results any
 				err := json.Unmarshal(contents, &results)
 				require.NoError(t, err)
 

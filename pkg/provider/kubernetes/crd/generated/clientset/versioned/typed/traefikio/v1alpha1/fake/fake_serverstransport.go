@@ -27,111 +27,35 @@ THE SOFTWARE.
 package fake
 
 import (
-	"context"
-
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeServersTransports implements ServersTransportInterface
-type FakeServersTransports struct {
+// fakeServersTransports implements ServersTransportInterface
+type fakeServersTransports struct {
+	*gentype.FakeClientWithListAndApply[*v1alpha1.ServersTransport, *v1alpha1.ServersTransportList, *traefikiov1alpha1.ServersTransportApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
-	ns   string
 }
 
-var serverstransportsResource = v1alpha1.SchemeGroupVersion.WithResource("serverstransports")
-
-var serverstransportsKind = v1alpha1.SchemeGroupVersion.WithKind("ServersTransport")
-
-// Get takes name of the serversTransport, and returns the corresponding serversTransport object, and an error if there is any.
-func (c *FakeServersTransports) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServersTransport, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(serverstransportsResource, c.ns, name), &v1alpha1.ServersTransport{})
-
-	if obj == nil {
-		return nil, err
+func newFakeServersTransports(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.ServersTransportInterface {
+	return &fakeServersTransports{
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.ServersTransport, *v1alpha1.ServersTransportList, *traefikiov1alpha1.ServersTransportApplyConfiguration](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("serverstransports"),
+			v1alpha1.SchemeGroupVersion.WithKind("ServersTransport"),
+			func() *v1alpha1.ServersTransport { return &v1alpha1.ServersTransport{} },
+			func() *v1alpha1.ServersTransportList { return &v1alpha1.ServersTransportList{} },
+			func(dst, src *v1alpha1.ServersTransportList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.ServersTransportList) []*v1alpha1.ServersTransport {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.ServersTransportList, items []*v1alpha1.ServersTransport) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.ServersTransport), err
-}
-
-// List takes label and field selectors, and returns the list of ServersTransports that match those selectors.
-func (c *FakeServersTransports) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ServersTransportList, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewListAction(serverstransportsResource, serverstransportsKind, c.ns, opts), &v1alpha1.ServersTransportList{})
-
-	if obj == nil {
-		return nil, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.ServersTransportList{ListMeta: obj.(*v1alpha1.ServersTransportList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ServersTransportList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested serversTransports.
-func (c *FakeServersTransports) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(serverstransportsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a serversTransport and creates it.  Returns the server's representation of the serversTransport, and an error, if there is any.
-func (c *FakeServersTransports) Create(ctx context.Context, serversTransport *v1alpha1.ServersTransport, opts v1.CreateOptions) (result *v1alpha1.ServersTransport, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(serverstransportsResource, c.ns, serversTransport), &v1alpha1.ServersTransport{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.ServersTransport), err
-}
-
-// Update takes the representation of a serversTransport and updates it. Returns the server's representation of the serversTransport, and an error, if there is any.
-func (c *FakeServersTransports) Update(ctx context.Context, serversTransport *v1alpha1.ServersTransport, opts v1.UpdateOptions) (result *v1alpha1.ServersTransport, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(serverstransportsResource, c.ns, serversTransport), &v1alpha1.ServersTransport{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.ServersTransport), err
-}
-
-// Delete takes name of the serversTransport and deletes it. Returns an error if one occurs.
-func (c *FakeServersTransports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(serverstransportsResource, c.ns, name, opts), &v1alpha1.ServersTransport{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeServersTransports) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(serverstransportsResource, c.ns, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.ServersTransportList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched serversTransport.
-func (c *FakeServersTransports) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServersTransport, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(serverstransportsResource, c.ns, name, pt, data, subresources...), &v1alpha1.ServersTransport{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.ServersTransport), err
 }
