@@ -55,6 +55,7 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 
 	tests := []struct {
 		desc        string
+		api         *API
 		entryPoints map[string]*EntryPoint
 		wantWarning bool
 	}{
@@ -145,11 +146,23 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 			},
 			wantWarning: true,
 		},
+		{
+			desc: "insecure API adds an internal TCP entryPoint without encoded characters configuration",
+			api:  &API{Insecure: true},
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			wantWarning: false,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := &Configuration{
+				API:         test.api,
 				EntryPoints: test.entryPoints,
 				Providers:   &Providers{},
 			}
@@ -157,6 +170,9 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 
 			if test.entryPoints == nil {
 				assert.Contains(t, cfg.EntryPoints, "http")
+			}
+			if test.api != nil && test.api.Insecure {
+				assert.Contains(t, cfg.EntryPoints, DefaultInternalEntryPointName)
 			}
 			assert.Equal(t, test.wantWarning, cfg.ShouldWarnAboutEncodedCharacters())
 		})
