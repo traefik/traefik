@@ -22,7 +22,6 @@ import (
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"golang.org/x/net/http2"
-	"k8s.io/utils/ptr"
 )
 
 func TestShutdownHijacked(t *testing.T) {
@@ -946,7 +945,7 @@ func TestPathOperationsMergeSlashesDisabled(t *testing.T) {
 
 	configuration := &static.EntryPoint{}
 	configuration.SetDefaults()
-	configuration.HTTP.MergeSlashes = ptr.To(false)
+	configuration.HTTP.MergeSlashes = new(false)
 
 	configuration.HTTP.EncodedCharacters = &static.EncodedCharacters{
 		AllowEncodedSlash:   true,
@@ -1078,8 +1077,8 @@ func TestSanitizePathConfigMatrix(t *testing.T) {
 
 			configuration := &static.EntryPoint{}
 			configuration.SetDefaults()
-			configuration.HTTP.SanitizePath = ptr.To(test.sanitize)
-			configuration.HTTP.MergeSlashes = ptr.To(test.merge)
+			configuration.HTTP.SanitizePath = new(test.sanitize)
+			configuration.HTTP.MergeSlashes = new(test.merge)
 
 			server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
 			require.NoError(t, err)
