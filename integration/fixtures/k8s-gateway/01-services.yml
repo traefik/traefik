@@ -1,3 +1,4 @@
+---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -82,57 +83,3 @@ spec:
   selector:
     app: traefiklabs
     task: whoamitcp
-
----
-kind: Deployment
-apiVersion: apps/v1
-metadata:
-  name: whoamiudp
-  namespace: default
-  labels:
-    app: traefiklabs
-    name: whoamiudp
-
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: traefiklabs
-      task: whoamiudp
-  template:
-    metadata:
-      labels:
-        app: traefiklabs
-        task: whoamiudp
-    spec:
-      containers:
-        - name: whoamiudp
-          image: traefik/whoamiudp:latest
-          ports:
-            - containerPort: 8090
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: whoamiudp
-  namespace: default
-
-spec:
-  ports:
-    - protocol: UDP
-      name: fooudp
-      port: 8090
-  selector:
-    app: traefiklabs
-    task: whoamiudp
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: externalname-svc
-  namespace: default
-spec:
-  externalName: domain.com
-  type: ExternalName

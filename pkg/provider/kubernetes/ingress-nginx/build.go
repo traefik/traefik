@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -343,7 +344,14 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		var tlsOptionName string
 		var tlsOption *tls.Options
 		if ing.config.AuthTLSSecret != nil {
-			optName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + *ing.config.AuthTLSSecret)
+			// The option name must be a pure function of what determines the TLSOption's content, so that multiple Ingresses
+			// sharing one mTLS policy on the same host resolve to the same TLS option.
+			// Prefixed by the secretName length so the key unambiguously encodes the secret name and namespace pair
+			// to avoid distinct pairs colliding.
+			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
+			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
+			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
+			optName := provider.Normalize(secretNamespace + "-" + strconv.Itoa(len(secretName)) + "-" + secretName + "-" + clientAuthTypeKey)
 			if cached, exists := tlsOptionCache[optName]; exists {
 				tlsOptionName = optName
 				tlsOption = cached

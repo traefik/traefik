@@ -21,7 +21,6 @@ import (
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -81,7 +80,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.5.1.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.1.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -170,30 +169,44 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
 	require.NoError(s.T(), err)
 
+	// Traefik reconciles a resource in a couple of seconds or less.
+	// They are shortened for a status Traefik will never report to fail before
+	// the test binary timeout, which would discard the whole run and its report.
+	timeoutConfig := config.DefaultTimeoutConfig()
+	timeoutConfig.GatewayMustHaveAddress = 30 * time.Second
+	timeoutConfig.GatewayMustHaveCondition = 30 * time.Second
+	timeoutConfig.GWCMustBeAccepted = 30 * time.Second
+	timeoutConfig.ListenerSetMustHaveCondition = 30 * time.Second
+	timeoutConfig.NamespacesMustBeReady = 60 * time.Second
+
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
-		Client:                     s.kubeClient,
-		Clientset:                  s.clientSet,
-		GatewayClassName:           "traefik",
-		Debug:                      true,
-		CleanupBaseResources:       true,
-		RestConfig:                 s.restConfig,
-		TimeoutConfig:              config.DefaultTimeoutConfig(),
-		ManifestFS:                 []fs.FS{&conformance.Manifests},
-		EnableAllSupportedFeatures: false,
-		RunTest:                    *gatewayAPIConformanceRunTest,
-		Implementation: v1.Implementation{
-			Organization: "traefik",
-			Project:      "traefik",
-			URL:          "https://traefik.io/",
-			Version:      *traefikVersion,
-			Contact:      []string{"@traefik/maintainers"},
+		Client:     s.kubeClient,
+		Clientset:  s.clientSet,
+		RestConfig: s.restConfig,
+		ManifestFS: []fs.FS{&conformance.Manifests},
+		ConfigurableOptions: ksuite.ConfigurableOptions{
+			GatewayClassName:           "traefik",
+			Debug:                      true,
+			CleanupBaseResources:       true,
+			CleanupTestResources:       true,
+			TimeoutConfig:              timeoutConfig,
+			EnableAllSupportedFeatures: false,
+			RunTest:                    *gatewayAPIConformanceRunTest,
+			Implementation: v1.Implementation{
+				Organization: "traefik",
+				Project:      "traefik",
+				URL:          "https://traefik.io/",
+				Version:      *traefikVersion,
+				Contact:      []string{"@traefik/maintainers"},
+			},
+			ConformanceProfiles: []ksuite.ConformanceProfileName{
+				ksuite.GatewayHTTPConformanceProfileName,
+				ksuite.GatewayGRPCConformanceProfileName,
+				ksuite.GatewayTLSConformanceProfileName,
+			},
+			SupportedFeatures: gateway.SupportedFeatures(),
+			SkipTests:         []string{tests.HTTPRouteMultipleGateways.ShortName},
 		},
-		ConformanceProfiles: sets.New(
-			ksuite.GatewayHTTPConformanceProfileName,
-			ksuite.GatewayGRPCConformanceProfileName,
-			ksuite.GatewayTLSConformanceProfileName,
-		),
-		SupportedFeatures: sets.New(gateway.SupportedFeatures()...),
 	})
 	require.NoError(s.T(), err)
 
@@ -204,11 +217,6 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 
 	report, err := cSuite.Report()
 	require.NoError(s.T(), err, "failed generating conformance report")
-
-	// Ignore report date to avoid diff with CI job.
-	// However, we can track the date of the report thanks to the commit.
-	// TODO: to publish this report automatically, we have to figure out how to handle the date diff.
-	report.Date = "-"
 
 	// Ordering profile reports for the serialized report to be comparable.
 	slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {

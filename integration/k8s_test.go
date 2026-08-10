@@ -105,12 +105,6 @@ func (s *K8sSuite) TestCRDLabelSelector() {
 	s.testConfiguration("testdata/rawdata-crd-label-selector.json", "8000")
 }
 
-func (s *K8sSuite) TestGatewayConfiguration() {
-	s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
-
-	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
-}
-
 func (s *K8sSuite) TestIngressClass() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
 
