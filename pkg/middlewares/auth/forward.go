@@ -227,13 +227,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
-
 		statusCode := http.StatusInternalServerError
 		if errors.Is(forwardErr, context.Canceled) {
 			statusCode = httputil.StatusClientClosedRequest
 			logger.Debug().Err(forwardErr).Int("statusCode", statusCode).Msgf("Error calling %s", fa.address)
 		} else {
+			observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 			logger.Error().Err(forwardErr).Int("statusCode", statusCode).Msgf("Error calling %s", fa.address)
 		}
 
