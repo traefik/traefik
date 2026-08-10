@@ -482,15 +482,28 @@ func (c *Configuration) ValidateConfiguration() error {
 	return nil
 }
 
-// ShouldWarnAboutEncodedCharacters reports whether TCP entrypoints are configured and none disallow an encoded character in the request path.
-func (c *Configuration) ShouldWarnAboutEncodedCharacters() bool {
-	hasTCPEntryPoint := false
+// HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
+// and therefore can serve HTTP requests.
+func (c *Configuration) HasTCPEntryPoint() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err == nil && protocol == "tcp" {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasDeniedEncodedCharacters reports whether an entryPoint serving HTTP requests
+// disallows at least one encoded character in the request path.
+// UDP entryPoints are left out because they never parse a request path.
+func (c *Configuration) HasDeniedEncodedCharacters() bool {
 	for _, ep := range c.EntryPoints {
 		protocol, err := ep.GetProtocol()
 		if err != nil || protocol != "tcp" {
 			continue
 		}
-		hasTCPEntryPoint = true
 
 		encodedCharacters := ep.HTTP.EncodedCharacters
 		if encodedCharacters == nil {
@@ -504,11 +517,11 @@ func (c *Configuration) ShouldWarnAboutEncodedCharacters() bool {
 			!encodedCharacters.AllowEncodedPercent ||
 			!encodedCharacters.AllowEncodedQuestionMark ||
 			!encodedCharacters.AllowEncodedHash {
-			return false
+			return true
 		}
 	}
 
-	return hasTCPEntryPoint
+	return false
 }
 
 func (c *Configuration) hasUserDefinedEntrypoint() bool {

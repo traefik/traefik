@@ -41,7 +41,56 @@ func TestHasEntrypoint(t *testing.T) {
 	}
 }
 
-func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
+func TestHasTCPEntryPoint(t *testing.T) {
+	tests := []struct {
+		desc        string
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint",
+			want: true,
+		},
+		{
+			desc: "entryPoint without an explicit protocol",
+			entryPoints: map[string]*EntryPoint{
+				"web": {Address: ":80"},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP-only entryPoint",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+			},
+			want: false,
+		},
+		{
+			desc: "UDP and TCP entryPoints",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+				"web": {Address: ":80/tcp"},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			assert.Equal(t, test.want, cfg.HasTCPEntryPoint())
+		})
+	}
+}
+
+func TestHasDeniedEncodedCharacters(t *testing.T) {
 	allowAll := &EncodedCharacters{}
 	allowAll.SetDefaults()
 
@@ -57,11 +106,11 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 		desc        string
 		api         *API
 		entryPoints map[string]*EntryPoint
-		wantWarning bool
+		want        bool
 	}{
 		{
-			desc:        "empty configuration creates default TCP entryPoint",
-			wantWarning: true,
+			desc: "empty configuration creates a default TCP entryPoint without encoded characters configuration",
+			want: false,
 		},
 		{
 			desc: "TCP entryPoint allowing all encoded characters",
@@ -71,7 +120,7 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
 				},
 			},
-			wantWarning: true,
+			want: false,
 		},
 		{
 			desc: "TCP entryPoint disallowing an encoded character",
@@ -81,7 +130,7 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
 				},
 			},
-			wantWarning: false,
+			want: true,
 		},
 		{
 			desc: "one TCP entryPoint among others disallowing an encoded character",
@@ -95,42 +144,7 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
 				},
 			},
-			wantWarning: false,
-		},
-		{
-			desc: "UDP-only entryPoint",
-			entryPoints: map[string]*EntryPoint{
-				"dns": {
-					Address: ":53/udp",
-				},
-			},
-			wantWarning: false,
-		},
-		{
-			desc: "UDP and TCP entryPoints allowing all encoded characters",
-			entryPoints: map[string]*EntryPoint{
-				"dns": {
-					Address: ":53/udp",
-				},
-				"web": {
-					Address: ":80/tcp",
-					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
-				},
-			},
-			wantWarning: true,
-		},
-		{
-			desc: "UDP and TCP entryPoints disallowing an encoded character",
-			entryPoints: map[string]*EntryPoint{
-				"dns": {
-					Address: ":53/udp",
-				},
-				"web": {
-					Address: ":80/tcp",
-					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
-				},
-			},
-			wantWarning: false,
+			want: true,
 		},
 		{
 			desc: "UDP entryPoint disallowing an encoded character",
@@ -144,7 +158,7 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
 				},
 			},
-			wantWarning: true,
+			want: false,
 		},
 		{
 			desc: "insecure API adds an internal TCP entryPoint without encoded characters configuration",
@@ -155,12 +169,14 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
 				},
 			},
-			wantWarning: false,
+			want: true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			cfg := &Configuration{
 				API:         test.api,
 				EntryPoints: test.entryPoints,
@@ -168,13 +184,10 @@ func TestShouldWarnAboutEncodedCharacters(t *testing.T) {
 			}
 			cfg.SetEffectiveConfiguration()
 
-			if test.entryPoints == nil {
-				assert.Contains(t, cfg.EntryPoints, "http")
-			}
 			if test.api != nil && test.api.Insecure {
 				assert.Contains(t, cfg.EntryPoints, DefaultInternalEntryPointName)
 			}
-			assert.Equal(t, test.wantWarning, cfg.ShouldWarnAboutEncodedCharacters())
+			assert.Equal(t, test.want, cfg.HasDeniedEncodedCharacters())
 		})
 	}
 }

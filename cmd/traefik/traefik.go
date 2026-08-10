@@ -100,7 +100,10 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	staticConfiguration.SetEffectiveConfiguration()
-	if staticConfiguration.ShouldWarnAboutEncodedCharacters() {
+
+	// Warn only when no entryPoint disallows an encoded character:
+	// a single denial means the operator already knows about these options.
+	if staticConfiguration.HasTCPEntryPoint() && !staticConfiguration.HasDeniedEncodedCharacters() {
 		log.Warn().Msg("Traefik can reject some encoded characters in the request path. " +
 			"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986), " +
 			"it is recommended to set these options to `false` to avoid split-view situation. " +
