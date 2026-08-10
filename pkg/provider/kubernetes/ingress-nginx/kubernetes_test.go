@@ -5991,7 +5991,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-backend",
 							Middlewares: []string{"default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-ingress-with-default-backend-no-rules-auth-tls-default-ca-secret",
+								Options: "default-9-ca-secret-require-and-verify-client-cert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -6057,7 +6057,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-ingress-with-default-backend-no-rules-auth-tls-default-ca-secret": {
+						"default-9-ca-secret-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
