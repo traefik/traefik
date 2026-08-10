@@ -150,6 +150,7 @@
     ingressClass = "foobar"
     throttleDuration = "42s"
     allowEmptyServices = true
+    defaultTLSResourcesNamespace = "foobar"
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

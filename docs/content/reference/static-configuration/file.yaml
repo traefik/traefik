@@ -165,6 +165,7 @@ providers:
     ingressClass: foobar
     throttleDuration: 42s
     allowEmptyServices: true
+    defaultTLSResourcesNamespace: foobar
   kubernetesGateway:
     endpoint: foobar
     token: foobar

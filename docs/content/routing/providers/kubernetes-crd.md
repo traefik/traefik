@@ -1610,6 +1610,12 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 Register the `TLSOption` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TLSOption` objects
 or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
+!!! important "'default' TLSOption"
+
+    A `TLSOption` named `default` applies to every router that does not reference a TLSOption explicitly, whatever the namespace it is defined in.
+    The [`defaultTLSResourcesNamespace`](../../providers/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide default can be defined in.
+
 !!! info "TLSOption Attributes"
    
     ```yaml tab="TLSOption"
@@ -1741,6 +1747,8 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     This _default_ `TLSStore` should be in a namespace discoverable by Traefik. Since it is used by default on [`IngressRoute`](#kind-ingressroute) and [`IngressRouteTCP`](#kind-ingressroutetcp) objects, there never is a need to actually reference it.
     This means that you cannot have two stores that are named default in different Kubernetes namespaces.
     As a consequence, with respect to TLS stores, the only change that makes sense (and only if needed) is to configure the default TLSStore.
+    The [`defaultTLSResourcesNamespace`](../../providers/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide store can be defined in.
 
 !!! info "TLSStore Attributes"
     ```yaml tab="TLSStore"
