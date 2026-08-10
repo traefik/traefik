@@ -54,17 +54,18 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint                  string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                     string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath          string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces                []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	AllowCrossNamespace       bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
-	AllowExternalNameServices bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
-	CrossProviderNamespaces   []string        `description:"List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
-	LabelSelector             string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass              string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
-	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	AllowEmptyServices        bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	Endpoint                     string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                        string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath             string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces                   []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	AllowCrossNamespace          bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
+	AllowExternalNameServices    bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	CrossProviderNamespaces      []string        `description:"List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+	LabelSelector                string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass                 string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	ThrottleDuration             ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	AllowEmptyServices           bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	DefaultTLSResourcesNamespace string          `description:"Namespace allowed to define the default TLSOption and TLSStore resources. When empty, they can be defined in any namespace." json:"defaultTLSResourcesNamespace,omitempty" toml:"defaultTLSResourcesNamespace,omitempty" yaml:"defaultTLSResourcesNamespace,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -214,7 +215,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 }
 
 func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
-	stores, tlsConfigs := buildTLSStores(ctx, client)
+	stores, tlsConfigs := p.buildTLSStores(ctx, client)
 	if tlsConfigs == nil {
 		tlsConfigs = make(map[string]*tls.CertAndStores)
 	}
@@ -225,7 +226,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
 		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
 		TLS: &dynamic.TLSConfiguration{
-			Options: buildTLSOptions(ctx, client),
+			Options: p.buildTLSOptions(ctx, client),
 			Stores:  stores,
 		},
 	}
@@ -897,7 +898,7 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
-func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
+func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
 	tlsOptionsCRDs := client.GetTLSOptions()
 	var tlsOptions map[string]tls.Options
 
@@ -909,6 +910,14 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 
 	for _, tlsOptionsCRD := range tlsOptionsCRDs {
 		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOptionsCRD.Name), log.Str("namespace", tlsOptionsCRD.Namespace)))
+
+		// When a namespace is explicitly configured, the default TLS options can only be defined in this namespace.
+		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName &&
+			p.DefaultTLSResourcesNamespace != "" && tlsOptionsCRD.Namespace != p.DefaultTLSResourcesNamespace {
+			logger.Errorf("Ignoring default TLS options: they can only be defined in the %q namespace", p.DefaultTLSResourcesNamespace)
+			continue
+		}
+
 		var clientCAs []tls.FileOrContent
 
 		for _, secretName := range tlsOptionsCRD.Spec.ClientAuth.SecretNames {
@@ -971,7 +980,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
+func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
 	tlsStoreCRD := client.GetTLSStores()
 	if len(tlsStoreCRD) == 0 {
 		return nil, nil
@@ -983,6 +992,13 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 
 	for _, t := range tlsStoreCRD {
 		logger := log.FromContext(log.With(ctx, log.Str("TLSStore", t.Name), log.Str("namespace", t.Namespace)))
+
+		// When a namespace is explicitly configured, the default TLS store can only be defined in this namespace.
+		if t.Name == tls.DefaultTLSStoreName &&
+			p.DefaultTLSResourcesNamespace != "" && t.Namespace != p.DefaultTLSResourcesNamespace {
+			logger.Errorf("Ignoring default TLS store: it can only be defined in the %q namespace", p.DefaultTLSResourcesNamespace)
+			continue
+		}
 
 		id := makeKey(t.Namespace, t.Name)
 

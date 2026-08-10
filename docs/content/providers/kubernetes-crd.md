@@ -373,6 +373,46 @@ providers:
 --providers.kubernetescrd.crossProviderNamespaces=ns-a,ns-b
 ```
 
+### `defaultTLSResourcesNamespace`
+
+_Optional, Default: ""_
+
+`defaultTLSResourcesNamespace` restricts the namespace in which the default [TLSOption](../https/tls.md#tls-options)
+and the default [TLSStore](../https/tls.md#certificates-stores) can be defined.
+
+The TLSOption and the TLSStore named `default` are cluster-wide, whatever the namespace they are defined in:
+the former holds the TLS enforcement policy of every router that does not reference a TLSOption explicitly,
+the latter holds the default certificate served by every entry point.
+This option allows the cluster operator to reserve their definition to a namespace they control.
+
+| Value    | Behavior                                                                                                                         |
+|----------|------------------------------------------------------------------------------------------------------------------------------------|
+| not set  | A TLSOption or a TLSStore named `default` is taken into account whatever its namespace (default, backward compatible).            |
+| `"ns-a"` | Only the resources named `default` in the `ns-a` namespace are taken into account, the others are ignored.                        |
+
+!!! warning "Ignored resources"
+
+    A TLSOption or a TLSStore named `default` defined outside of the configured namespace is ignored,
+    and cannot be referenced under its namespaced name either.
+    For a TLSStore, this also applies to the certificates it defines.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    defaultTLSResourcesNamespace: traefik
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  defaultTLSResourcesNamespace = "traefik"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.defaultTLSResourcesNamespace=traefik
+```
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

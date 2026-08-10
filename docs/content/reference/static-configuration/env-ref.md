@@ -714,6 +714,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CROSSPROVIDERNAMESPACES`:  
 List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references.
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_DEFAULTTLSRESOURCESNAMESPACE`:  
+Namespace allowed to define the default TLSOption and TLSStore resources. When empty, they can be defined in any namespace.
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 

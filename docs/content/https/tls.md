@@ -107,6 +107,13 @@ tls:
 
     The `stores` list will actually be ignored and automatically set to `["default"]`.
 
+!!! important "TLSStore in Kubernetes"
+
+    With the [TLSStore resource](../routing/providers/kubernetes-crd.md#kind-tlsstore), the store named `default` applies to every entry point,
+    whatever the namespace it is defined in.
+    The [`defaultTLSResourcesNamespace`](../providers/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide store can be defined in.
+
 ### Default Certificate
 
 Traefik can use a default certificate for connections without a SNI, or without a matching domain.
@@ -249,6 +256,10 @@ The TLS options allow one to configure some parameters of the TLS connection.
     To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
     you'll have to add an annotation to the Ingress in the following form:
     `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
+
+    This `default` TLSOption carries the TLS enforcement policy (client authentication, TLS versions, cipher suites, SNI strictness)
+    of every router that does not reference a TLSOption explicitly.
+    The [`defaultTLSResourcesNamespace`](../providers/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option restricts the namespace it can be defined in.
 
 ### Minimum TLS Version
 
