@@ -230,8 +230,9 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
 
-		// End the operation as soon as the client received something.
-		if retryResponseWriter.written {
+		// End the operation as soon as the client received something
+		// or when the request is hijacked.
+		if retryResponseWriter.written || retryResponseWriter.hijacked {
 			return nil
 		}
 
@@ -298,6 +299,7 @@ type responseWriter struct {
 
 	proxyReached   atomic.Bool
 	wroteRequest   atomic.Bool
+	hijacked       bool
 	written        bool
 	shouldNotWrite bool
 }
@@ -371,6 +373,11 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
 	}
+
+	// When the connection is Hijacked when using Websockets, we don't want to retry anymore,
+	// so we set the hijacked flag to true.
+	r.hijacked = true
+
 	return hijacker.Hijack()
 }
 

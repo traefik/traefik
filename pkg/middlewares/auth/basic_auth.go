@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
@@ -118,7 +119,9 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (b *basicAuth) checkPassword(user, password string) bool {
 	secret := b.auth.Secrets(user, b.auth.Realm)
 
-	key := password + secret
+	// Prefix the password length so the key unambiguously encodes the
+	// (password, secret) pair and distinct pairs cannot collide.
+	key := strconv.Itoa(len(password)) + ":" + password + secret
 	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
 		if secret == "" {
 			_ = b.checkSecret(password, b.notFoundSecret)

@@ -52,8 +52,34 @@ spec:
             - --entrypoints.web8090.address=:8090
             - --entrypoints.tls8443.address=:8443
             - --entrypoints.tls8883.address=:8883
+            - --entrypoints.web5300.address=:5300
+            # A TCP entryPoint peeks at the first bytes to detect TLS as long as no
+            # TCPRoute is programmed on it. The conformance TCP backend speaks first,
+            # so without this timeout the connection blocks until the route shows up.
+            - --entrypoints.tcp9300.address=:9300
+            - --entrypoints.tcp9300.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9301.address=:9301
+            - --entrypoints.tcp9301.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9302.address=:9302
+            - --entrypoints.tcp9302.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9310.address=:9310
+            - --entrypoints.tcp9310.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9311.address=:9311
+            - --entrypoints.tcp9311.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9312.address=:9312
+            - --entrypoints.tcp9312.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9313.address=:9313
+            - --entrypoints.tcp9313.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9320.address=:9320
+            - --entrypoints.tcp9320.transport.respondingTimeouts.readTimeout=1s
+            - --entrypoints.tcp9321.address=:9321
+            - --entrypoints.tcp9321.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.traefik.address=:9000
-            - --providers.kubernetesgateway.experimentalChannel
+            # Route statuses are written as soon as the configuration is built, while
+            # the configuration itself waits out the throttling interval before reaching
+            # the routers. Conformance tests probe the data plane right after seeing the
+            # Accepted status, so the default 2s interval loses the race.
+            - --providers.providersThrottleDuration=0s
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
             - --providers.kubernetesgateway.statusaddress.service.name=traefik
           ports:
@@ -69,6 +95,26 @@ spec:
               containerPort: 8443
             - name: tls8883
               containerPort: 8883
+            - name: web5300
+              containerPort: 5300
+            - name: tcp9300
+              containerPort: 9300
+            - name: tcp9301
+              containerPort: 9301
+            - name: tcp9302
+              containerPort: 9302
+            - name: tcp9310
+              containerPort: 9310
+            - name: tcp9311
+              containerPort: 9311
+            - name: tcp9312
+              containerPort: 9312
+            - name: tcp9313
+              containerPort: 9313
+            - name: tcp9320
+              containerPort: 9320
+            - name: tcp9321
+              containerPort: 9321
             - name: traefik
               containerPort: 9000
 
@@ -101,6 +147,36 @@ spec:
     - port: 8883
       name: tls8883
       targetPort: tls8883
+    - port: 5300
+      name: web5300
+      targetPort: web5300
+    - port: 9300
+      name: tcp9300
+      targetPort: tcp9300
+    - port: 9301
+      name: tcp9301
+      targetPort: tcp9301
+    - port: 9302
+      name: tcp9302
+      targetPort: tcp9302
+    - port: 9310
+      name: tcp9310
+      targetPort: tcp9310
+    - port: 9311
+      name: tcp9311
+      targetPort: tcp9311
+    - port: 9312
+      name: tcp9312
+      targetPort: tcp9312
+    - port: 9313
+      name: tcp9313
+      targetPort: tcp9313
+    - port: 9320
+      name: tcp9320
+      targetPort: tcp9320
+    - port: 9321
+      name: tcp9321
+      targetPort: tcp9321
     - port: 9000
       name: traefik
       targetPort: traefik

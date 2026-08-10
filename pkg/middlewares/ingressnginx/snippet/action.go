@@ -795,6 +795,18 @@ func createRewriteAction(d config.IDirective) (action, error) {
 			// Otherwise, keep the original query string.
 		}
 
+		// Here we are sanitizing the URL when the path is not empty,
+		// as the JoinPath method is adding a leading slash if the path is empty.
+		rewrittenPath := req.URL.Path
+		if rewrittenPath != "" {
+			req.URL = req.URL.JoinPath()
+		}
+		// Stop here if the normalization of the path produces a different path.
+		if rewrittenPath != req.URL.Path {
+			ctx.statusCode = http.StatusBadRequest
+			return true, nil
+		}
+
 		req.RequestURI = req.URL.RequestURI()
 
 		// In NGINX, last restarts location matching while break stays in the
