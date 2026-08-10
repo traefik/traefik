@@ -8000,6 +8000,127 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Permanent Redirect with Use Regex",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-redirect-use-regex.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-redirect-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("redirect-regex.localhost") && PathRegexp("(?i)^/(example)(/.*)")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-redirect-use-regex-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-redirect-use-regex",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-redirect-use-regex-rule-0-path-0-redirect", "default-ingress-with-redirect-use-regex-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-redirect-use-regex-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("redirect-regex.localhost") && PathRegexp("(?i)^/(example)(/.*)")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-redirect-use-regex-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-redirect-use-regex",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							Middlewares: []string{"default-ingress-with-redirect-use-regex-rule-0-path-0-tls-redirect", "default-ingress-with-redirect-use-regex-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-redirect-use-regex-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       `^https?://[^/]+/(example)(/.*)`,
+								Replacement: "https://redirect.example.com/$1$2",
+								StatusCode:  new(http.StatusMovedPermanently),
+							},
+						},
+						"default-ingress-with-redirect-use-regex-rule-0-path-0-tls-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       `^https?://[^/]+/(example)(/.*)`,
+								Replacement: "https://redirect.example.com/$1$2",
+								StatusCode:  new(http.StatusMovedPermanently),
+							},
+						},
+						"default-ingress-with-redirect-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-redirect-use-regex-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-redirect-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-redirect-use-regex",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-redirect-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Proxy connect timeout",
 			paths: []string{
 				"services.yml",

@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 // statusReport collects the status writes produced by a single rebuild so they
@@ -68,7 +67,7 @@ func (r *statusReport) Flush(ctx context.Context, client *clientWrapper) {
 	}
 
 	for name, routeStatus := range r.tcpRoutes {
-		status := gatev1alpha2.TCPRouteStatus{RouteStatus: routeStatus}
+		status := gatev1.TCPRouteStatus{RouteStatus: routeStatus}
 		if err := client.UpdateTCPRouteStatus(ctx, name, r.gatewayListeners, status); err != nil {
 			logger.Warn().Err(err).Str("tcp_route", name.Name).Str("namespace", name.Namespace).Msg("Unable to update TCPRoute status")
 		}
