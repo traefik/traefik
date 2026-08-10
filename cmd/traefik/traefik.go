@@ -103,6 +103,8 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	// Warn only when no entryPoint disallows an encoded character:
 	// a single denial means the operator already knows about these options.
+	// Keep this after SetEffectiveConfiguration: it creates the default entryPoint,
+	// without which a bare configuration would never warn.
 	if staticConfiguration.HasTCPEntryPoint() && !staticConfiguration.HasDeniedEncodedCharacters() {
 		log.Warn().Msg("Traefik can reject some encoded characters in the request path. " +
 			"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986), " +
