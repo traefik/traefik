@@ -482,11 +482,15 @@ func (c *Configuration) ValidateConfiguration() error {
 	return nil
 }
 
+// protocolTCP is the protocol of the entryPoints that can serve HTTP requests.
+const protocolTCP = "tcp"
+
 // HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
 // and therefore can serve HTTP requests.
 func (c *Configuration) HasTCPEntryPoint() bool {
 	for _, ep := range c.EntryPoints {
-		if ep.isTCP() {
+		protocol, err := ep.GetProtocol()
+		if err == nil && protocol == protocolTCP {
 			return true
 		}
 	}
@@ -499,7 +503,8 @@ func (c *Configuration) HasTCPEntryPoint() bool {
 // UDP entryPoints are left out because they never parse a request path.
 func (c *Configuration) HasDeniedEncodedCharacters() bool {
 	for _, ep := range c.EntryPoints {
-		if !ep.isTCP() {
+		protocol, err := ep.GetProtocol()
+		if err != nil || protocol != protocolTCP {
 			continue
 		}
 
