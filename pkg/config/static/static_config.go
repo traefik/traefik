@@ -482,7 +482,6 @@ func (c *Configuration) ValidateConfiguration() error {
 	return nil
 }
 
-// protocolTCP is the protocol of the entryPoints that can serve HTTP requests.
 const protocolTCP = "tcp"
 
 // HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
