@@ -9,6 +9,7 @@ description: "Learn how to use IPAllowList in HTTP middleware for limiting clien
 
 ```yaml tab="Structured (YAML)"
 # Accepts request from defined IP
+# and rejects other requests with a 404 rather than a 403
 http:
   middlewares:
     test-ipallowlist:
@@ -16,26 +17,33 @@ http:
         sourceRange:
           - "127.0.0.1/32"
           - "192.168.1.7"
+        rejectStatusCode: 404
 ```
 
 ```toml tab="Structured (TOML)"
 # Accepts request from defined IP
+# and rejects other requests with a 404 rather than a 403
 [http.middlewares]
   [http.middlewares.test-ipallowlist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+    rejectStatusCode = 404
 ```
 
 ```yaml tab="Labels"
 # Accepts request from defined IP
+# and rejects other requests with a 404 rather than a 403
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
 ```
 
 ```json tab="Tags"
 // Accepts request from defined IP
+// and rejects other requests with a 404 rather than a 403
 {
   "Tags" : [
-    "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+    "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
+    "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
   ]
 }
 ```
@@ -50,6 +58,7 @@ spec:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7
+    rejectStatusCode: 404
 ```
 
 ## Configuration Options
