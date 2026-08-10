@@ -29,55 +29,33 @@ func TestGatewayAPISuite(t *testing.T) {
 }
 
 func (s *GatewayAPISuite) TestGatewayConfiguration() {
-	testCases := []struct {
-		crdVersion  string
-		crdManifest string
-		tcpRoute    string
-	}{
-		{
-			crdVersion:  "v1.5.1",
-			crdManifest: "./fixtures/k8s-gateway/00-experimental-v1.5.1.yml",
-			tcpRoute:    "./fixtures/k8s-gateway/03-tcproute-v1alpha2.yml",
-		},
-		{
-			crdVersion:  "v1.6.1",
-			crdManifest: "./fixtures/k8s-gateway/00-experimental-v1.6.1.yml",
-			tcpRoute:    "./fixtures/k8s-gateway/03-tcproute-v1.yml",
-		},
-	}
+	ctx := s.T().Context()
 
-	for _, test := range testCases {
-		s.Run(test.crdVersion, func() {
-			ctx := s.T().Context()
+	k3sContainer, err := k3s.Run(ctx, k3sImage,
+		k3s.WithManifest("./fixtures/k8s-gateway/00-experimental-v1.6.1.yml"),
+		k3s.WithManifest("./fixtures/k8s-gateway/01-services.yml"),
+		k3s.WithManifest("./fixtures/k8s-gateway/02-gateway.yml"),
+		k3s.WithManifest("./fixtures/k8s-gateway/03-tcproute.yml"),
+	)
+	require.NoError(s.T(), err)
 
-			k3sContainer, err := k3s.Run(ctx, k3sImage,
-				k3s.WithManifest(test.crdManifest),
-				k3s.WithManifest("./fixtures/k8s-gateway/01-services.yml"),
-				k3s.WithManifest("./fixtures/k8s-gateway/02-gateway.yml"),
-				k3s.WithManifest(test.tcpRoute),
-			)
-			require.NoError(s.T(), err)
+	s.T().Cleanup(func() {
+		// The test context is already canceled at cleanup time.
+		if err := k3sContainer.Terminate(context.Background()); err != nil {
+			log.Warn().Err(err).Send()
+		}
+	})
 
-			s.T().Cleanup(func() {
-				// The test context is already canceled at cleanup time.
-				if err := k3sContainer.Terminate(context.Background()); err != nil {
-					log.Warn().Err(err).Send()
-				}
-			})
+	kubeConfigYaml, err := k3sContainer.GetKubeConfig(ctx)
+	require.NoError(s.T(), err)
 
-			kubeConfigYaml, err := k3sContainer.GetKubeConfig(ctx)
-			require.NoError(s.T(), err)
+	kubeconfigPath := filepath.Join(s.T().TempDir(), "kubeconfig.yaml")
+	require.NoError(s.T(), os.WriteFile(kubeconfigPath, kubeConfigYaml, 0o644))
+	s.T().Setenv("KUBECONFIG", kubeconfigPath)
 
-			kubeconfigPath := filepath.Join(s.T().TempDir(), "kubeconfig.yaml")
-			require.NoError(s.T(), os.WriteFile(kubeconfigPath, kubeConfigYaml, 0o644))
-			s.T().Setenv("KUBECONFIG", kubeconfigPath)
+	s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
 
-			s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
-
-			// The same dynamic configuration is expected for both CRD versions.
-			s.testConfiguration("testdata/rawdata-gateway.json", "8080")
-		})
-	}
+	s.testConfiguration("testdata/rawdata-gateway.json", "8080")
 }
 
 func (s *GatewayAPISuite) testConfiguration(path, apiPort string) {

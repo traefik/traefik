@@ -320,6 +320,17 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
+!!! info "Supported Filter Types"
+
+    Traefik supports the following route-level filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
 !!! info "ExtensionRef Filters"
 
     To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
@@ -442,6 +453,7 @@ This allows request modifications to be applied to specific backends, enabling t
     - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"
@@ -685,21 +697,16 @@ Once everything is deployed, sending a GRPC request to the HTTP endpoint should 
 
 ### TCP
 
-!!! info "Experimental Channel"
-
-    The `TCPRoute` resource described below is currently available only in the Experimental channel of the Gateway API specification. 
-    To use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) configuration option must be enabled in the Traefik deployment.
-
 The `TCPRoute` is a resource in the Gateway API specification designed to define how TCP traffic should be routed within a Kubernetes cluster. 
 
-For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TCPRoute).
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.TCPRoute).
 
 For example, the following manifests configure a whoami backend and its corresponding `TCPRoute`, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3000` address.
 
 ```yaml tab="TCPRoute"
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: whoami-tcp
@@ -773,14 +780,14 @@ Once everything is deployed, sending the WHO command should return the following
 The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.
 
-For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute).
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.TLSRoute).
 
 For example, the following manifests configure a whoami backend and its corresponding `TLSRoute`, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3443` address via a secure connection with the `whoami.localhost` SNI.
 
 ```yaml tab="TLSRoute"
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TLSRoute
 metadata:
   name: whoami-tls

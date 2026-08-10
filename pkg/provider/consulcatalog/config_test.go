@@ -460,7 +460,12 @@ func Test_buildConfiguration(t *testing.T) {
 									KeyFile:  "key",
 								},
 							},
-							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
+							PeerCertSANs: []tls.SAN{
+								{
+									Type:  tls.SANURIType,
+									Value: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
+								},
+							},
 						},
 					},
 				},
@@ -555,7 +560,12 @@ func Test_buildConfiguration(t *testing.T) {
 									KeyFile:  "key",
 								},
 							},
-							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
+							PeerCertSANs: []tls.SAN{
+								{
+									Type:  tls.SANURIType,
+									Value: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
+								},
+							},
 						},
 					},
 				},
@@ -2624,7 +2634,12 @@ func Test_buildConfiguration(t *testing.T) {
 										KeyFile:  "key",
 									},
 								},
-								PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/Test",
+								PeerCertSANs: []tls.SAN{
+									{
+										Type:  tls.SANURIType,
+										Value: "spiffe:///ns/ns/dc/dc1/svc/Test",
+									},
+								},
 							},
 						},
 					},
@@ -3277,7 +3292,12 @@ func Test_buildConfiguration(t *testing.T) {
 									KeyFile:  "key",
 								},
 							},
-							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/Test",
+							PeerCertSANs: []tls.SAN{
+								{
+									Type:  tls.SANURIType,
+									Value: "spiffe:///ns/ns/dc/dc1/svc/Test",
+								},
+							},
 						},
 					},
 				},

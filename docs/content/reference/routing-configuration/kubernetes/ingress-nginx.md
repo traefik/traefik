@@ -41,6 +41,7 @@ creating the corresponding routers, services, middlewares, and other components 
     Important differences in default behaviors:
     
     - **Request buffering**: NGINX enables `proxy-request-buffering` by default, while Traefik requires explicit opt-in via the provider's `proxyRequestBuffering` option.
+    - **Legacy scheme headers**: If your applications depend on `X-Forwarded-Scheme` or `X-Scheme`, enable `entryPoints.<name>.forwardedHeaders.addXForwardedSchemeHeaders=true` on the relevant entrypoints.
 
     To ensure consistent behavior during migration,
     review and configure Traefik's provider-level options to match your current NGINX ConfigMap settings.

@@ -24,8 +24,6 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
@@ -45,8 +43,7 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
-	labelSelector       string
-	experimentalChannel bool
+	labelSelector string
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -148,20 +145,20 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		options.LabelSelector = c.labelSelector
 	}
 
-	c.factoryNamespace = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
 	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions))
+	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions), gateinformers.WithTransform(k8s.StripManagedFields))
 	_, err = c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, ns := range namespaces {
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -175,7 +172,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns))
+		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryGateway.Gateway().V1().Gateways().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -188,7 +185,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1beta1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
+		_, err = factoryGateway.Gateway().V1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -206,14 +203,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		if c.experimentalChannel {
-			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
-			if err != nil {
-				return nil, err
-			}
+		_, err = factoryGateway.Gateway().V1().TCPRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -313,10 +308,10 @@ func (c *clientWrapper) ListGRPCRoutes() ([]*gatev1.GRPCRoute, error) {
 	return grpcRoutes, nil
 }
 
-func (c *clientWrapper) ListTCPRoutes() ([]*gatev1alpha2.TCPRoute, error) {
-	var tcpRoutes []*gatev1alpha2.TCPRoute
+func (c *clientWrapper) ListTCPRoutes() ([]*gatev1.TCPRoute, error) {
+	var tcpRoutes []*gatev1.TCPRoute
 	for _, namespace := range c.watchedNamespaces {
-		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(namespace).List(labels.Everything())
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().TCPRoutes().Lister().TCPRoutes(namespace).List(labels.Everything())
 		if err != nil {
 			return nil, fmt.Errorf("listing TCP routes in namespace %s", namespace)
 		}
@@ -341,12 +336,12 @@ func (c *clientWrapper) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
 	return tlsRoutes, nil
 }
 
-func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
+func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1.ReferenceGrant, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get ReferenceGrants: namespace %s is not within watched namespaces", namespace)
 	}
 
-	referenceGrants, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1beta1().ReferenceGrants().Lister().ReferenceGrants(namespace).List(labels.Everything())
+	referenceGrants, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().ReferenceGrants().Lister().ReferenceGrants(namespace).List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}
@@ -586,13 +581,13 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1alpha2.TCPRouteStatus) error {
+func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TCPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
 		if err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
@@ -607,13 +602,13 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 		}
 
 		currentRoute = currentRoute.DeepCopy()
-		currentRoute.Status = gatev1alpha2.TCPRouteStatus{
+		currentRoute.Status = gatev1.TCPRouteStatus{
 			RouteStatus: gatev1.RouteStatus{
 				Parents: parentStatuses,
 			},
 		}
 
-		if _, err = c.csGateway.GatewayV1alpha2().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+		if _, err = c.csGateway.GatewayV1().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
 			return err
@@ -691,14 +686,6 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 			if ancestorStatus.ControllerName != controllerName {
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 				continue
-			}
-
-			// Keep statuses added by Traefik for other ancestors.
-			// A BackendTLSPolicy can target services attached to different listeners.
-			if !slices.ContainsFunc(status.Ancestors, func(s gatev1.PolicyAncestorStatus) bool {
-				return reflect.DeepEqual(s.AncestorRef, ancestorStatus.AncestorRef)
-			}) {
-				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 			}
 		}
 

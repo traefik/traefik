@@ -141,6 +141,11 @@ spec:
   maxIdleConnsPerHost: 42
   disableHTTP2: true
   peerCertURI: foo://bar
+  peerCertSANs:
+    - type: DNSName
+      value: foo.com
+    - type: URI
+      value: foo://bar
   rootCAsSecrets:
     - root-ca0
     - root-ca1

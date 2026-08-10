@@ -50,6 +50,7 @@
       insecure = true
       trustedIPs = ["foobar", "foobar"]
       connection = ["foobar", "foobar"]
+      addXForwardedSchemeHeaders = true
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true

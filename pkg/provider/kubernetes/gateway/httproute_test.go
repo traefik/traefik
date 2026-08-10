@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -199,6 +200,126 @@ func Test_buildMatchRule(t *testing.T) {
 			rule, priority := buildMatchRule(test.hostnames, test.match)
 			assert.Equal(t, test.expectedRule, rule)
 			assert.Equal(t, test.expectedPriority, priority)
+		})
+	}
+}
+
+func Test_createCORS(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		filter   *gatev1.HTTPCORSFilter
+		expected *dynamic.Middleware
+	}{
+		{
+			desc:   "Empty filter",
+			filter: &gatev1.HTTPCORSFilter{},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlMaxAge: new(int64(0)),
+				},
+			},
+		},
+		{
+			desc: "Plain origins",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowOrigins: []gatev1.CORSOrigin{"https://foo.example.com", "https://bar.example.com"},
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowOriginList: []string{"https://foo.example.com", "https://bar.example.com"},
+					AccessControlMaxAge:          new(int64(0)),
+				},
+			},
+		},
+		{
+			desc: "Wildcard origin becomes catch-all regex",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowOrigins: []gatev1.CORSOrigin{"*"},
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowOriginListRegex: []string{`.*`},
+					AccessControlMaxAge:               new(int64(0)),
+				},
+			},
+		},
+		{
+			desc: "Origin with bare wildcard host",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowOrigins: []gatev1.CORSOrigin{"https://*"},
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowOriginListRegex: []string{`^https://.*$`},
+					AccessControlMaxAge:               new(int64(0)),
+				},
+			},
+		},
+		{
+			desc: "Origin with wildcard subdomain becomes regex",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowOrigins: []gatev1.CORSOrigin{"https://*.example.com"},
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowOriginListRegex: []string{`^https://.*\.example\.com$`},
+					AccessControlMaxAge:               new(int64(0)),
+				},
+			},
+		},
+		{
+			desc: "Mixed plain and wildcard origins",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowOrigins: []gatev1.CORSOrigin{"https://foo.example.com", "https://*.example.com"},
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowOriginList:      []string{"https://foo.example.com"},
+					AccessControlAllowOriginListRegex: []string{`^https://.*\.example\.com$`},
+					AccessControlMaxAge:               new(int64(0)),
+				},
+			},
+		},
+		{
+			desc: "All fields set",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowOrigins:     []gatev1.CORSOrigin{"https://foo.example.com"},
+				AllowCredentials: new(true),
+				AllowMethods:     []gatev1.HTTPMethodWithWildcard{"GET", "POST"},
+				AllowHeaders:     []gatev1.HTTPHeaderName{"X-Foo", "X-Bar"},
+				ExposeHeaders:    []gatev1.HTTPHeaderName{"X-Baz"},
+				MaxAge:           600,
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowCredentials: true,
+					AccessControlAllowOriginList:  []string{"https://foo.example.com"},
+					AccessControlAllowMethods:     []string{"GET", "POST"},
+					AccessControlAllowHeaders:     []string{"X-Foo", "X-Bar"},
+					AccessControlExposeHeaders:    []string{"X-Baz"},
+					AccessControlMaxAge:           new(int64(600)),
+				},
+			},
+		},
+		{
+			desc: "AllowCredentials explicitly false",
+			filter: &gatev1.HTTPCORSFilter{
+				AllowCredentials: new(false),
+			},
+			expected: &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					AccessControlAllowCredentials: false,
+					AccessControlMaxAge:           new(int64(0)),
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, createCORS(test.filter))
 		})
 	}
 }
