@@ -74,6 +74,14 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.HTTP2.SetDefaults()
 }
 
+// isTCP reports whether the entry point carries TCP traffic, and therefore can serve HTTP requests.
+// An entry point with an invalid protocol is not one: Traefik does not start with such an entry point.
+func (ep *EntryPoint) isTCP() bool {
+	protocol, err := ep.GetProtocol()
+
+	return err == nil && protocol == "tcp"
+}
+
 // HTTPConfig is the HTTP configuration of an entry point.
 type HTTPConfig struct {
 	Redirections              *Redirections      `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
