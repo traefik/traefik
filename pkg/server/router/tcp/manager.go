@@ -168,6 +168,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			}
 		}
 
+		// We do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
+		if routerHTTPConfig.TLS.ConflictingOptions {
+			continue
+		}
+
 		if len(domains) > 0 && routerHTTPConfig.TLS.ResolvedOptions != tlsOptionsName {
 			routerHTTPConfig.AddError(errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"), false)
 		}

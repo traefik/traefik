@@ -11,7 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -45,13 +44,11 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			ingressName = ingressRouteTCP.GenerateName
 		}
 
-		for _, route := range ingressRouteTCP.Spec.Routes {
+		for ri, route := range ingressRouteTCP.Spec.Routes {
 			if len(route.Match) == 0 {
 				logger.Error().Msg("Empty match rule")
 				continue
 			}
-
-			key := makeServiceKey(route.Match, ingressName)
 
 			mds, err := p.makeMiddlewareTCPKeys(ctx, ingressRouteTCP.Namespace, route.Middlewares)
 			if err != nil {
@@ -59,7 +56,15 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
-			serviceName := makeID(ingressRouteTCP.Namespace, key)
+			routeIndex := strconv.Itoa(ri)
+
+			routerName := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex)
+			serviceName := routerName
+
+			var wrrName string
+			if len(route.Services) > 1 {
+				wrrName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
+			}
 
 			for _, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
@@ -75,11 +80,14 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
+					serviceName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
 					conf.Services[serviceName] = balancerServerTCP
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
+				serviceName = wrrName
+
+				serviceKey := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, service.Name, service.Port.String())
 				conf.Services[serviceKey] = balancerServerTCP
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}
@@ -122,7 +130,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				}
 			}
 
-			conf.Routers[serviceName] = r
+			conf.Routers[routerName] = r
 		}
 	}
 
@@ -323,7 +331,7 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 		return serversTransportName, nil
 	}
 
-	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
+	return makeKey(parentNamespace, serversTransportName), nil
 }
 
 // getTLSTCP mutates tlsConfigs.

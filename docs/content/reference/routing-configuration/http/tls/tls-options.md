@@ -85,6 +85,35 @@ the same host name on the same entry point.
     The surest way to avoid this is to have all the routers serving the same host name,
     on the same entry point, reference the same TLS options.
 
+#### Strict TLS Options
+
+The [`core.strictTLSOptions`](../../../install-configuration/configuration-options.md#opt-core-stricttlsoptions)
+install configuration option disables the fallback to the `default` TLS options.
+When it is enabled, the routers involved in the conflict are marked in error and are not built at all,
+and the host name is no longer mapped to any TLS options.
+
+!!! warning "Disabled routers"
+
+    Enabling `strictTLSOptions` fails closed: a conflict disables all the routers serving the conflicting host name
+    on the concerned entry point, until the conflict is resolved.
+
+```yaml tab="File (YAML)"
+## Install configuration
+core:
+  strictTLSOptions: true
+```
+
+```toml tab="File (TOML)"
+## Install configuration
+[core]
+  strictTLSOptions = true
+```
+
+```bash tab="CLI"
+## Install configuration
+--core.strictTLSOptions=true
+```
+
 ### Minimum TLS Version
 
 ```yaml tab="Structured (YAML)"

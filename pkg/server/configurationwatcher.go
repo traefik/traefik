@@ -21,6 +21,8 @@ type ConfigurationWatcher struct {
 
 	defaultEntryPoints []string
 
+	strictTLSOptions bool
+
 	allProvidersConfigs chan dynamic.Message
 
 	newConfigs chan dynamic.Configurations
@@ -37,6 +39,7 @@ func NewConfigurationWatcher(
 	pvd provider.Provider,
 	defaultEntryPoints []string,
 	requiredProvider string,
+	strictTLSOptions bool,
 ) *ConfigurationWatcher {
 	return &ConfigurationWatcher{
 		providerAggregator:  pvd,
@@ -45,6 +48,7 @@ func NewConfigurationWatcher(
 		routinesPool:        routinesPool,
 		defaultEntryPoints:  defaultEntryPoints,
 		requiredProvider:    requiredProvider,
+		strictTLSOptions:    strictTLSOptions,
 	}
 }
 
@@ -168,7 +172,7 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 			conf := mergeConfiguration(newConfigs.DeepCopy(), c.defaultEntryPoints)
 			conf = applyModel(conf)
 			if conf.HTTP != nil {
-				conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers)
+				conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers, c.strictTLSOptions)
 			}
 
 			for _, listener := range c.configurationListeners {
