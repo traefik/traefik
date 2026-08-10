@@ -258,7 +258,7 @@ func getMethod(r *http.Request) string {
 	case "HEAD", "GET", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", // https://datatracker.ietf.org/doc/html/rfc7231#section-4
 		"PATCH", // https://datatracker.ietf.org/doc/html/rfc5789#section-2
 		"PRI",   // https://datatracker.ietf.org/doc/html/rfc7540#section-11.6
-		"QUERY": // https://www.rfc-editor.org/rfc/rfc10008.html
+		"QUERY": // https://datatracker.ietf.org/doc/html/rfc10008
 		return r.Method
 	default:
 		return "EXTENSION_METHOD"
