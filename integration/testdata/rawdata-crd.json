@@ -147,20 +147,56 @@
 		},
 		"default-mirror1-27e0059f29381e4e4b93@kubernetescrd": {
 			"mirroring": {
-				"service": "default-whoami-80-b08b5838443b99387085",
+				"service": "default-mirror1-mirroring-default-whoami-80-9e60fabc3a9a24183614",
 				"mirrors": [
 					{
-						"name": "default-whoami-80-b08b5838443b99387085"
+						"name": "default-mirror1-mirror-0-default-whoami-80-411a87d27d86a5cbf6b9"
 					}
 				]
 			},
 			"status": "enabled"
 		},
+		"default-mirror1-mirror-0-default-whoami-80-411a87d27d86a5cbf6b9@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.5:80"
+					},
+					{
+						"url": "http://10.42.0.6:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.5:80": "UP",
+				"http://10.42.0.6:80": "UP"
+			}
+		},
+		"default-mirror1-mirroring-default-whoami-80-9e60fabc3a9a24183614@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.5:80"
+					},
+					{
+						"url": "http://10.42.0.6:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.5:80": "UP",
+				"http://10.42.0.6:80": "UP"
+			}
+		},
 		"default-test-route-0-lb-611f3105c4cbbc8cca31@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
 						"url": "http://10.42.0.6:80"
@@ -173,7 +209,7 @@
 				"default-test-route-0-bfddf9467dc588639f54@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.6:80": "UP"
 			}
 		},
@@ -181,7 +217,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
 						"url": "http://10.42.0.6:80"
@@ -194,7 +230,7 @@
 				"default-test-route-containous-0-0a6afb27c83051616e01@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.6:80": "UP"
 			}
 		},
@@ -202,7 +238,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
 						"url": "http://10.42.0.6:80"
@@ -215,7 +251,7 @@
 				"default-test2-route-0-f5a7fc3c74a43f56b526@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.6:80": "UP"
 			}
 		},
@@ -223,7 +259,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
 						"url": "http://10.42.0.6:80"
@@ -237,25 +273,7 @@
 				"default-testst-route-0-36ca7d11de368ec75e2d@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.6:80": "UP"
-			}
-		},
-		"default-whoami-80-b08b5838443b99387085@kubernetescrd": {
-			"loadBalancer": {
-				"servers": [
-					{
-						"url": "http://10.42.0.4:80"
-					},
-					{
-						"url": "http://10.42.0.6:80"
-					}
-				],
-				"passHostHeader": true
-			},
-			"status": "enabled",
-			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.6:80": "UP"
 			}
 		},
@@ -267,7 +285,7 @@
 						"weight": 1
 					},
 					{
-						"name": "default-whoami-80-b08b5838443b99387085",
+						"name": "default-wrr1-wrr-1-default-whoami-80-a9e95654da2bd86ee12d",
 						"weight": 1
 					}
 				]
@@ -277,14 +295,46 @@
 				"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd"
 			]
 		},
+		"default-wrr1-wrr-1-default-whoami-80-a9e95654da2bd86ee12d@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.5:80"
+					},
+					{
+						"url": "http://10.42.0.6:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.5:80": "UP",
+				"http://10.42.0.6:80": "UP"
+			}
+		},
 		"default-wrr2-504732714158b42ee5b2@kubernetescrd": {
 			"weighted": {
 				"services": [
 					{
-						"name": "default-whoami-80-b08b5838443b99387085",
+						"name": "default-wrr2-wrr-0-default-whoami-80-01dc26443dea25d30cb7",
 						"weight": 1
 					}
 				]
+			},
+			"status": "enabled"
+		},
+		"default-wrr2-wrr-0-default-whoami-80-01dc26443dea25d30cb7@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.5:80"
+					},
+					{
+						"url": "http://10.42.0.6:80"
+					}
+				],
+				"passHostHeader": true
 			},
 			"status": "enabled"
 		},
@@ -325,15 +375,40 @@
 		}
 	},
 	"tcpServices": {
+		"default-test3-route-0-wrr-0-default-whoamitcp-8080-ce0661e4f6db0662ce63@kubernetescrd": {
+			"loadBalancer": {
+				"terminationDelay": 100,
+				"servers": [
+					{
+						"address": "10.42.0.10:8080"
+					},
+					{
+						"address": "10.42.0.7:8080"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d@kubernetescrd": {
+			"loadBalancer": {
+				"terminationDelay": 100,
+				"servers": [
+					{
+						"address": "domain.com:9090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
 		"default-test3-route-0-wrr-e039d7109875d2b08ae7@kubernetescrd": {
 			"weighted": {
 				"services": [
 					{
-						"name": "default-test3-route-0-wrr-whoamitcp-8080-58d2a883827f6c85cd9c",
+						"name": "default-test3-route-0-wrr-0-default-whoamitcp-8080-ce0661e4f6db0662ce63",
 						"weight": 1
 					},
 					{
-						"name": "default-test3-route-0-wrr-externalname-svc-9090-7281b3e98d335d865c32",
+						"name": "default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d",
 						"weight": 1
 					}
 				]
@@ -343,26 +418,26 @@
 				"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd"
 			]
 		},
-		"default-test3-route-0-wrr-externalname-svc-9090-7281b3e98d335d865c32@kubernetescrd": {
+		"default-test3-route-containous-0-wrr-0-default-whoamitcp-8080-2f8d2ff5012a998974d3@kubernetescrd": {
 			"loadBalancer": {
 				"terminationDelay": 100,
 				"servers": [
 					{
-						"address": "domain.com:9090"
+						"address": "10.42.0.10:8080"
+					},
+					{
+						"address": "10.42.0.7:8080"
 					}
 				]
 			},
 			"status": "enabled"
 		},
-		"default-test3-route-0-wrr-whoamitcp-8080-58d2a883827f6c85cd9c@kubernetescrd": {
+		"default-test3-route-containous-0-wrr-1-default-externalname-svc-9090-985e97bb7fb2cac0cd88@kubernetescrd": {
 			"loadBalancer": {
 				"terminationDelay": 100,
 				"servers": [
 					{
-						"address": "10.42.0.2:8080"
-					},
-					{
-						"address": "10.42.0.3:8080"
+						"address": "domain.com:9090"
 					}
 				]
 			},
@@ -372,11 +447,11 @@
 			"weighted": {
 				"services": [
 					{
-						"name": "default-test3-route-containous-0-wrr-whoamitcp-8080-9b4ddaeabf642c25e032",
+						"name": "default-test3-route-containous-0-wrr-0-default-whoamitcp-8080-2f8d2ff5012a998974d3",
 						"weight": 1
 					},
 					{
-						"name": "default-test3-route-containous-0-wrr-externalname-svc-9090-5318d506e6bc09c5f5f4",
+						"name": "default-test3-route-containous-0-wrr-1-default-externalname-svc-9090-985e97bb7fb2cac0cd88",
 						"weight": 1
 					}
 				]
@@ -385,31 +460,6 @@
 			"usedBy": [
 				"default-test3-route-containous-0-17f0049c48ef14df906b@kubernetescrd"
 			]
-		},
-		"default-test3-route-containous-0-wrr-externalname-svc-9090-5318d506e6bc09c5f5f4@kubernetescrd": {
-			"loadBalancer": {
-				"terminationDelay": 100,
-				"servers": [
-					{
-						"address": "domain.com:9090"
-					}
-				]
-			},
-			"status": "enabled"
-		},
-		"default-test3-route-containous-0-wrr-whoamitcp-8080-9b4ddaeabf642c25e032@kubernetescrd": {
-			"loadBalancer": {
-				"terminationDelay": 100,
-				"servers": [
-					{
-						"address": "10.42.0.2:8080"
-					},
-					{
-						"address": "10.42.0.3:8080"
-					}
-				]
-			},
-			"status": "enabled"
 		}
 	},
 	"udpRouters": {
@@ -435,15 +485,38 @@
 		}
 	},
 	"udpServices": {
+		"default-test3-route-0-wrr-0-default-whoamiudp-8090-1ef3d51ea64d066e3c62@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"address": "10.42.0.3:8090"
+					},
+					{
+						"address": "10.42.0.4:8090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"address": "domain.com:9090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
 		"default-test3-route-0-wrr-e039d7109875d2b08ae7@kubernetescrd": {
 			"weighted": {
 				"services": [
 					{
-						"name": "default-test3-route-0-wrr-whoamiudp-8090-abe1fd8b29fd55999f3c",
+						"name": "default-test3-route-0-wrr-0-default-whoamiudp-8090-1ef3d51ea64d066e3c62",
 						"weight": 1
 					},
 					{
-						"name": "default-test3-route-0-wrr-externalname-svc-9090-7281b3e98d335d865c32",
+						"name": "default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d",
 						"weight": 1
 					}
 				]
@@ -453,24 +526,24 @@
 				"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd"
 			]
 		},
-		"default-test3-route-0-wrr-externalname-svc-9090-7281b3e98d335d865c32@kubernetescrd": {
+		"default-test3-route-containous-0-wrr-0-default-whoamiudp-8090-0e24d9308731a1045ada@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "domain.com:9090"
+						"address": "10.42.0.3:8090"
+					},
+					{
+						"address": "10.42.0.4:8090"
 					}
 				]
 			},
 			"status": "enabled"
 		},
-		"default-test3-route-0-wrr-whoamiudp-8090-abe1fd8b29fd55999f3c@kubernetescrd": {
+		"default-test3-route-containous-0-wrr-1-default-externalname-svc-9090-985e97bb7fb2cac0cd88@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.5:8090"
-					},
-					{
-						"address": "10.42.0.7:8090"
+						"address": "domain.com:9090"
 					}
 				]
 			},
@@ -480,11 +553,11 @@
 			"weighted": {
 				"services": [
 					{
-						"name": "default-test3-route-containous-0-wrr-whoamiudp-8090-82d74e624bbe17db682d",
+						"name": "default-test3-route-containous-0-wrr-0-default-whoamiudp-8090-0e24d9308731a1045ada",
 						"weight": 1
 					},
 					{
-						"name": "default-test3-route-containous-0-wrr-externalname-svc-9090-5318d506e6bc09c5f5f4",
+						"name": "default-test3-route-containous-0-wrr-1-default-externalname-svc-9090-985e97bb7fb2cac0cd88",
 						"weight": 1
 					}
 				]
@@ -493,29 +566,6 @@
 			"usedBy": [
 				"default-test3-route-containous-0-17f0049c48ef14df906b@kubernetescrd"
 			]
-		},
-		"default-test3-route-containous-0-wrr-externalname-svc-9090-5318d506e6bc09c5f5f4@kubernetescrd": {
-			"loadBalancer": {
-				"servers": [
-					{
-						"address": "domain.com:9090"
-					}
-				]
-			},
-			"status": "enabled"
-		},
-		"default-test3-route-containous-0-wrr-whoamiudp-8090-82d74e624bbe17db682d@kubernetescrd": {
-			"loadBalancer": {
-				"servers": [
-					{
-						"address": "10.42.0.5:8090"
-					},
-					{
-						"address": "10.42.0.7:8090"
-					}
-				]
-			},
-			"status": "enabled"
 		}
 	}
 }

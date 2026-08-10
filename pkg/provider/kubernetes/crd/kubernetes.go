@@ -48,8 +48,10 @@ const (
 
 // Roles of the services generated for a route.
 const (
-	roleWRR = "wrr"
-	roleLB  = "lb"
+	roleWRR       = "wrr"
+	roleLB        = "lb"
+	roleMirroring = "mirroring"
+	roleMirror    = "mirror"
 )
 
 // Provider holds configurations of the provider.
@@ -256,19 +258,17 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
+		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, id+"-errorpage-service", middleware.Spec.Errors)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
 			continue
 		}
 
 		if errorPage != nil {
+			errorPage.Service = errorPageName
+
 			if errorPageService != nil {
-				serviceName := id + "-errorpage-service"
-				errorPage.Service = serviceName
-				conf.HTTP.Services[serviceName] = errorPageService
-			} else {
-				errorPage.Service = errorPageName
+				conf.HTTP.Services[errorPageName] = errorPageService
 			}
 		}
 
@@ -441,7 +441,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace, serviceKey string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return "", nil, nil, nil
 	}
@@ -454,7 +454,7 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		crossProviderNamespaces:   p.CrossProviderNamespaces,
 	}
 
-	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec)
+	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec, serviceKey)
 	if err != nil {
 		return "", nil, nil, err
 	}

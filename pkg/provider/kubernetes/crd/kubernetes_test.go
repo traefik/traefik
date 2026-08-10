@@ -390,17 +390,17 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test-route-0-wrr-whoamitcp-8000-4987436aa9bf251cc2e1",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test-route-0-wrr-whoamitcp2-8080-80d7a6e501859a4d4f62",
+										Name:   "default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e",
 										Weight: new(3),
 									},
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamitcp-8000-4987436aa9bf251cc2e1": {
+						"default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -412,7 +412,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamitcp2-8080-80d7a6e501859a4d4f62": {
+						"default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -457,21 +457,21 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test-route-0-wrr-whoamitcp-8000-4987436aa9bf251cc2e1",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test-route-0-wrr-whoamitcp2-8080-80d7a6e501859a4d4f62",
+										Name:   "default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e",
 										Weight: new(3),
 									},
 									{
-										Name:   "default-test-route-0-wrr-whoamitcp3-8083-ce7ce8106b0d356747a1",
+										Name:   "default-test-route-0-wrr-2-ns3-whoamitcp3-8083-9d12f33f04765888e6b5",
 										Weight: new(4),
 									},
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamitcp-8000-4987436aa9bf251cc2e1": {
+						"default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -483,7 +483,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamitcp2-8080-80d7a6e501859a4d4f62": {
+						"default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -495,7 +495,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamitcp3-8083-ce7ce8106b0d356747a1": {
+						"default-test-route-0-wrr-2-ns3-whoamitcp3-8083-9d12f33f04765888e6b5": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1278,17 +1278,17 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test-route-0-wrr-whoamitcp-ipv6-8080-6b332c5cb5a60aff780e",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-ipv6-8080-b2b0b74255e3be36bc93",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-test-route-0-wrr-external-service-with-ipv6-8080-24bdf291749302824f85",
+										Name:   "default-test-route-0-wrr-1-default-external-service-with-ipv6-8080-43fbcebb03cafd31e512",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamitcp-ipv6-8080-6b332c5cb5a60aff780e": {
+						"default-test-route-0-wrr-0-default-whoamitcp-ipv6-8080-b2b0b74255e3be36bc93": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1300,7 +1300,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-external-service-with-ipv6-8080-24bdf291749302824f85": {
+						"default-test-route-0-wrr-1-default-external-service-with-ipv6-8080-43fbcebb03cafd31e512": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1321,7 +1321,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-ipv6-8080-b9d3955a0d99f192038b": {
+						"default-test-route-0-wrr-0-default-whoami-ipv6-8080-eed7adeccb0c37670f58": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -1331,7 +1331,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-external-svc-with-ipv6-8080-92969401a95b06835aa0": {
+						"default-test-route-0-wrr-1-default-external-svc-with-ipv6-8080-fff50966e3b8a3ca929e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -1345,11 +1345,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-ipv6-8080-b9d3955a0d99f192038b",
+										Name:   "default-test-route-0-wrr-0-default-whoami-ipv6-8080-eed7adeccb0c37670f58",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-external-svc-with-ipv6-8080-92969401a95b06835aa0",
+										Name:   "default-test-route-0-wrr-1-default-external-svc-with-ipv6-8080-fff50966e3b8a3ca929e",
 										Weight: new(1),
 									},
 								},
@@ -1830,17 +1830,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80-b08b5838443b99387085",
+										Name:   "default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami2-8080-0b62ec73429bbf0049ac",
+										Name:   "default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80-b08b5838443b99387085": {
+						"default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -1853,7 +1853,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami2-8080-0b62ec73429bbf0049ac": {
+						"default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -1900,13 +1900,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -1946,13 +1946,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2013,17 +2013,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami4-80-57836cd12fe622b48cbc",
+										Name:   "default-wrr1-wrr-0-default-whoami4-80-32dc0859b9e1b4b7b655",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami4-80-57836cd12fe622b48cbc": {
+						"default-wrr1-wrr-0-default-whoami4-80-32dc0859b9e1b4b7b655": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2036,7 +2036,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2053,17 +2053,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami6-80-ec19f7af9040d4774735",
+										Name:   "default-wrr2-wrr-0-default-whoami6-80-cdd2715cdae85ce74320",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami7-8080-e22feebc9a2cb11bcbe6",
+										Name:   "default-wrr2-wrr-1-default-whoami7-8080-ae9735706c5b0eff5fe5",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami6-80-ec19f7af9040d4774735": {
+						"default-wrr2-wrr-0-default-whoami6-80-cdd2715cdae85ce74320": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2076,7 +2076,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami7-8080-e22feebc9a2cb11bcbe6": {
+						"default-wrr2-wrr-1-default-whoami7-8080-ae9735706c5b0eff5fe5": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2127,7 +2127,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4",
 										Weight: new(1),
 									},
 								},
@@ -2137,13 +2137,26 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2194,7 +2207,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4",
 										Weight: new(1),
 									},
 									{
@@ -2208,7 +2221,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
@@ -2216,13 +2229,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-mirror1-27e0059f29381e4e4b93": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami5-8080-e336dbc96b59b3100172",
+								Service: "default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-whoami4-8080-7dc7f6765e3843670364", Percent: 50},
+									{Name: "default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32", Percent: 50},
 								},
 							},
 						},
-						"default-whoami4-8080-7dc7f6765e3843670364": {
+						"default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2235,7 +2248,33 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2283,7 +2322,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "baz-whoami6-8080-531e566e1ce14cd3ac91",
+										Name:   "default-test-route-0-wrr-0-baz-whoami6-8080-5f688feace15393f0cf4",
 										Weight: new(1),
 									},
 									{
@@ -2305,7 +2344,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"baz-whoami6-8080-531e566e1ce14cd3ac91": {
+						"default-test-route-0-wrr-0-baz-whoami6-8080-5f688feace15393f0cf4": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2322,11 +2361,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "foo-whoami4-8080-bedb6203517cc982698b",
+										Name:   "foo-wrr1-wrr-0-foo-whoami4-8080-bf09457480a5cceee6c1",
 										Weight: new(1),
 									},
 									{
-										Name:   "baz-whoami6-8080-531e566e1ce14cd3ac91",
+										Name:   "foo-wrr1-wrr-1-baz-whoami6-8080-f5fc0957839b0bd25184",
 										Weight: new(1),
 									},
 									{
@@ -2340,7 +2379,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"foo-whoami4-8080-bedb6203517cc982698b": {
+						"foo-wrr1-wrr-0-foo-whoami4-8080-bf09457480a5cceee6c1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2353,17 +2392,30 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
+						"foo-wrr1-wrr-1-baz-whoami6-8080-f5fc0957839b0bd25184": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
 						"foo-mirror1-cbfee77b7fea5a43b4ef": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "foo-whoami5-8080-5a253922f39b73f2d908",
+								Service: "foo-mirror1-mirroring-foo-whoami5-8080-d3c09cf2a7b706675cee",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080-bedb6203517cc982698b"},
-									{Name: "baz-whoami6-8080-531e566e1ce14cd3ac91"},
+									{Name: "foo-mirror1-mirror-0-foo-whoami4-8080-8db3166770ed85651a2a"},
+									{Name: "foo-mirror1-mirror-1-baz-whoami6-8080-17ccb90611e6695cdf21"},
 									{Name: "bar-mirrored-653b67a4c37564aca28d"},
 								},
 							},
 						},
-						"foo-whoami5-8080-5a253922f39b73f2d908": {
+						"foo-mirror1-mirroring-foo-whoami5-8080-d3c09cf2a7b706675cee": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2376,55 +2428,211 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
+						"foo-mirror1-mirror-0-foo-whoami4-8080-8db3166770ed85651a2a": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"foo-mirror1-mirror-1-baz-whoami6-8080-17ccb90611e6695cdf21": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
 						"bar-mirrored-653b67a4c37564aca28d": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "baz-whoami6-8080-531e566e1ce14cd3ac91",
+								Service: "bar-mirrored-mirroring-baz-whoami6-8080-2f84f10f112b1e086d0c",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080-bedb6203517cc982698b", Percent: 50},
+									{Name: "bar-mirrored-mirror-0-foo-whoami4-8080-c63b3e22b331440db79c", Percent: 50},
 								},
+							},
+						},
+						"bar-mirrored-mirroring-baz-whoami6-8080-2f84f10f112b1e086d0c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"bar-mirrored-mirror-0-foo-whoami4-8080-c63b3e22b331440db79c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
 							},
 						},
 						"foo-mirror2-5ad6655aa920162e663f": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "foo-whoami5-8080-5a253922f39b73f2d908",
+								Service: "foo-mirror2-mirroring-foo-whoami5-8080-ff83c253b23c208af503",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080-bedb6203517cc982698b"},
-									{Name: "baz-whoami6-8080-531e566e1ce14cd3ac91"},
+									{Name: "foo-mirror2-mirror-0-foo-whoami4-8080-b9801c68744a6ff21506"},
+									{Name: "foo-mirror2-mirror-1-baz-whoami6-8080-37b125df0691ccdcf51d"},
 									{Name: "bar-mirrored-653b67a4c37564aca28d"},
 									{Name: "foo-wrr1-3f46e81fadb0e6d5865d"},
 								},
+							},
+						},
+						"foo-mirror2-mirroring-foo-whoami5-8080-ff83c253b23c208af503": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"foo-mirror2-mirror-0-foo-whoami4-8080-b9801c68744a6ff21506": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"foo-mirror2-mirror-1-baz-whoami6-8080-37b125df0691ccdcf51d": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
 							},
 						},
 						"foo-mirror3-2954533fbd26f06c9da8": {
 							Mirroring: &dynamic.Mirroring{
 								Service: "foo-wrr1-3f46e81fadb0e6d5865d",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080-bedb6203517cc982698b"},
-									{Name: "baz-whoami6-8080-531e566e1ce14cd3ac91"},
+									{Name: "foo-mirror3-mirror-0-foo-whoami4-8080-66a698402622fd1730e7"},
+									{Name: "foo-mirror3-mirror-1-baz-whoami6-8080-565564a0fe7869555a55"},
 									{Name: "bar-mirrored-653b67a4c37564aca28d"},
 									{Name: "foo-wrr1-3f46e81fadb0e6d5865d"},
 								},
+							},
+						},
+						"foo-mirror3-mirror-0-foo-whoami4-8080-66a698402622fd1730e7": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"foo-mirror3-mirror-1-baz-whoami6-8080-565564a0fe7869555a55": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
 							},
 						},
 						"bar-wrr2-05f3b853d4318465ac66": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "foo-whoami5-8080-5a253922f39b73f2d908",
+										Name:   "bar-wrr2-wrr-0-foo-whoami5-8080-c694d181753f5106b49a",
 										Weight: new(1),
 									},
 								},
+							},
+						},
+						"bar-wrr2-wrr-0-foo-whoami5-8080-c694d181753f5106b49a": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
 							},
 						},
 						"foo-mirror4-4a1eee1c5f7cb88b0a7d": {
 							Mirroring: &dynamic.Mirroring{
 								Service: "foo-wrr1-3f46e81fadb0e6d5865d",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080-bedb6203517cc982698b"},
-									{Name: "baz-whoami6-8080-531e566e1ce14cd3ac91"},
+									{Name: "foo-mirror4-mirror-0-foo-whoami4-8080-2f15ab2094a278db09dd"},
+									{Name: "foo-mirror4-mirror-1-baz-whoami6-8080-6c814d1d71f291a6d79f"},
 									{Name: "bar-mirrored-653b67a4c37564aca28d"},
 									{Name: "foo-wrr1-3f46e81fadb0e6d5865d"},
 								},
+							},
+						},
+						"foo-mirror4-mirror-0-foo-whoami4-8080-2f15ab2094a278db09dd": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"foo-mirror4-mirror-1-baz-whoami6-8080-6c814d1d71f291a6d79f": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
 							},
 						},
 					},
@@ -2459,13 +2667,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-mirror1-27e0059f29381e4e4b93": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami5-8080-e336dbc96b59b3100172",
+								Service: "default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-whoami4-8080-7dc7f6765e3843670364", Percent: 50},
+									{Name: "default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32", Percent: 50},
 								},
 							},
 						},
-						"default-whoami4-8080-7dc7f6765e3843670364": {
+						"default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2478,7 +2686,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2533,7 +2741,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami4-8080-7dc7f6765e3843670364",
+										Name:   "default-wrr1-wrr-0-default-whoami4-8080-45eaa417be0b2799bd43",
 										Weight: new(1),
 									},
 								},
@@ -2543,13 +2751,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080-e336dbc96b59b3100172",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami4-8080-7dc7f6765e3843670364": {
+						"default-wrr1-wrr-0-default-whoami4-8080-45eaa417be0b2799bd43": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2562,7 +2770,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami5-8080-e336dbc96b59b3100172": {
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2609,17 +2817,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80-b08b5838443b99387085",
+										Name:   "default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e",
 										Weight: new(10),
 									},
 									{
-										Name:   "default-whoami2-8080-0b62ec73429bbf0049ac",
+										Name:   "default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6",
 										Weight: new(0),
 									},
 								},
 							},
 						},
-						"default-whoami-80-b08b5838443b99387085": {
+						"default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2632,7 +2840,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-whoami2-8080-0b62ec73429bbf0049ac": {
+						"default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -3836,13 +4044,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80-b08b5838443b99387085",
+										Name:   "default-errorpage-wrr-wrr-0-default-whoami-80-850a48734a03d7fc586d",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80-b08b5838443b99387085": {
+						"default-errorpage-wrr-wrr-0-default-whoami-80-850a48734a03d7fc586d": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -4410,7 +4618,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-external-svc-with-https-443-de2ffc682f4e9ff377b5": {
+						"default-test-route-0-wrr-0-default-external-svc-with-https-443-ea033d96506ad8eeed18": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -4421,7 +4629,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ServersTransport: "default-test-e6d80538b02592c965d8",
 							},
 						},
-						"default-whoamitls-443-516a8130196c6d0c480c": {
+						"default-test-route-0-wrr-1-default-whoamitls-443-883d100359bb28821f1a": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -4439,11 +4647,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-external-svc-with-https-443-de2ffc682f4e9ff377b5",
+										Name:   "default-test-route-0-wrr-0-default-external-svc-with-https-443-ea033d96506ad8eeed18",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoamitls-443-516a8130196c6d0c480c",
+										Name:   "default-test-route-0-wrr-1-default-whoamitls-443-883d100359bb28821f1a",
 										Weight: new(1),
 									},
 								},
@@ -4611,7 +4819,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-without-endpoints-subsets-80-60a5bd422b9b56cc78ef",
+										Name:   "default-test-weighted-wrr-0-default-whoami-without-endpoints-subsets-80-14c06b2e72d903d67fa0",
 										Weight: new(1),
 									},
 								},
@@ -4619,10 +4827,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 						"default-test-mirror-52e846c6f16eac7e8401": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami-without-endpoints-subsets-80-60a5bd422b9b56cc78ef",
+								Service: "default-test-mirror-mirroring-default-whoami-without-endpoints-subsets-80-515bc82a9da603e8c85a",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name: "default-whoami-without-endpoints-subsets-80-60a5bd422b9b56cc78ef",
+										Name: "default-test-mirror-mirror-0-default-whoami-without-endpoints-subsets-80-3280c550036809a30f9e",
 									},
 									{
 										Name: "default-test-weighted-4b1c2d77727f0755b988",
@@ -4630,9 +4838,229 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-without-endpoints-subsets-80-60a5bd422b9b56cc78ef": {
+						"default-test-weighted-wrr-0-default-whoami-without-endpoints-subsets-80-14c06b2e72d903d67fa0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: new(true),
+							},
+						},
+						"default-test-mirror-mirroring-default-whoami-without-endpoints-subsets-80-515bc82a9da603e8c85a": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-mirror-mirror-0-default-whoami-without-endpoints-subsets-80-3280c550036809a30f9e": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: new(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "routes referencing the same Kubernetes Service with different options, namespaces, or twice",
+			paths:               []string{"services.yml", "with_shared_kube_service.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-plain-0-61d05419e42137e08325": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-plain-0-wrr-ef2770a4da49ac554d36",
+							Rule:        "Host(`foo.com`)",
+						},
+						"default-test-route-mtls-0-92af783804e8785c8713": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-mtls-0-wrr-2245a22754736c16aef2",
+							Rule:        "Host(`bar.com`)",
+						},
+						"default-test-route-namespaces-0-ea1d4f64f8c8255ca532": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-namespaces-0-wrr-f3ae47cd9c9e11d10187",
+							Rule:        "Host(`baz.com`)",
+						},
+						"default-test-route-duplicate-0-6898409405858118881e": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-duplicate-0-wrr-322bf05328a17302a3fe",
+							Rule:        "Host(`qux.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-plain-0-wrr-ef2770a4da49ac554d36": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-plain-0-wrr-0-default-whoami-80-80f3f0d96676b5d6aabd",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-plain-0-wrr-1-default-whoami2-8080-21bb23bf82bc2deb07cb",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-test-route-mtls-0-wrr-2245a22754736c16aef2": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-mtls-0-wrr-0-default-whoami-80-3ba88bba361a35456918",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-mtls-0-wrr-1-default-whoami2-8080-29d4d7ae3b46d21abac0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						// The two routes reference the same Kubernetes Service, but only one of them
+						// sets a serversTransport: the generated services must not be merged.
+						"default-test-route-plain-0-wrr-0-default-whoami-80-80f3f0d96676b5d6aabd": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-route-mtls-0-wrr-0-default-whoami-80-3ba88bba361a35456918": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader:   new(true),
+								ServersTransport: "default-mtls-ac0dc9093199ac1d191e",
+							},
+						},
+						"default-test-route-plain-0-wrr-1-default-whoami2-8080-21bb23bf82bc2deb07cb": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-route-mtls-0-wrr-1-default-whoami2-8080-29d4d7ae3b46d21abac0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-route-namespaces-0-wrr-f3ae47cd9c9e11d10187": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-namespaces-0-wrr-0-default-whoami-80-48cbb7d9deef59894ff1",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-namespaces-0-wrr-1-cross-ns-whoami-80-cad2fc128a1f96830ba6",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						// The same Kubernetes Service name and port in two namespaces.
+						"default-test-route-namespaces-0-wrr-0-default-whoami-80-48cbb7d9deef59894ff1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-route-namespaces-0-wrr-1-cross-ns-whoami-80-cad2fc128a1f96830ba6": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.10:80",
+									},
+									{
+										URL: "http://10.10.0.11:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-route-duplicate-0-wrr-322bf05328a17302a3fe": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-duplicate-0-wrr-0-default-whoami-80-622f5a999cc8069e8289",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-duplicate-0-wrr-1-default-whoami-80-1b4ce17e91b1391856ef",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						// The same Kubernetes Service referenced twice by the same parent.
+						"default-test-route-duplicate-0-wrr-0-default-whoami-80-622f5a999cc8069e8289": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-test-route-duplicate-0-wrr-1-default-whoami-80-1b4ce17e91b1391856ef": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(false),
 							},
 						},
 					},
@@ -4808,17 +5236,17 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Weighted: &dynamic.UDPWeightedRoundRobin{
 								Services: []dynamic.UDPWRRService{
 									{
-										Name:   "default-test-route-0-wrr-whoamiudp-8000-238c381c71b733803182",
+										Name:   "default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test-route-0-wrr-whoamiudp2-8080-9d4476593bfbc7db55b0",
+										Name:   "default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c",
 										Weight: new(3),
 									},
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamiudp-8000-238c381c71b733803182": {
+						"default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -4830,7 +5258,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamiudp2-8080-9d4476593bfbc7db55b0": {
+						"default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -4874,21 +5302,21 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Weighted: &dynamic.UDPWeightedRoundRobin{
 								Services: []dynamic.UDPWRRService{
 									{
-										Name:   "default-test-route-0-wrr-whoamiudp-8000-238c381c71b733803182",
+										Name:   "default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test-route-0-wrr-whoamiudp2-8080-9d4476593bfbc7db55b0",
+										Name:   "default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c",
 										Weight: new(3),
 									},
 									{
-										Name:   "default-test-route-0-wrr-whoamiudp3-8083-cec5196fa18b6005f2e2",
+										Name:   "default-test-route-0-wrr-2-ns3-whoamiudp3-8083-723c477c198e302dac8d",
 										Weight: new(4),
 									},
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamiudp-8000-238c381c71b733803182": {
+						"default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -4900,7 +5328,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamiudp2-8080-9d4476593bfbc7db55b0": {
+						"default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -4912,7 +5340,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-0-wrr-whoamiudp3-8083-cec5196fa18b6005f2e2": {
+						"default-test-route-0-wrr-2-ns3-whoamiudp3-8083-723c477c198e302dac8d": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -5728,7 +6156,7 @@ func TestCrossNamespace(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:   "default-cross-ns-route-0-wrr-0-cross-ns-whoami-svc-80-6af2a4511c485b57a8e2",
 										Weight: new(1),
 									},
 									{
@@ -5750,6 +6178,19 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
+						"default-cross-ns-route-0-wrr-0-cross-ns-whoami-svc-80-6af2a4511c485b57a8e2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
 						"default-cross-ns-route-1-lb-8bdc5a04b2a40bf59b5e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
@@ -5764,7 +6205,17 @@ func TestCrossNamespace(t *testing.T) {
 								ServersTransport: "foo-test@kubernetescrd",
 							},
 						},
-						"cross-ns-whoami-svc-80-6a7a2b78fd9b52601354": {
+						"default-tr-svc-wrr1-65f91db84ed92e091532": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-tr-svc-wrr1-wrr-0-cross-ns-whoami-svc-80-8cc813cb7c586442dbf1",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-tr-svc-wrr1-wrr-0-cross-ns-whoami-svc-80-8cc813cb7c586442dbf1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -5777,49 +6228,91 @@ func TestCrossNamespace(t *testing.T) {
 								PassHostHeader: new(true),
 							},
 						},
-						"default-tr-svc-wrr1-65f91db84ed92e091532": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
-										Weight: new(1),
-									},
-								},
-							},
-						},
 						"cross-ns-tr-svc-wrr2-35846c0f6a99ca063e5c": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:   "cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975",
 										Weight: new(1),
 									},
 								},
 							},
 						},
+						"cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
 						"default-tr-svc-mirror1-8130c8b7f004b659eeb3": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami-80-b08b5838443b99387085",
+								Service: "default-tr-svc-mirror1-mirroring-default-whoami-80-1bc91306c38dde55119a",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name:    "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:    "default-tr-svc-mirror1-mirror-0-cross-ns-whoami-svc-80-19dd5305d098a310be0c",
 										Percent: 20,
 									},
 								},
+							},
+						},
+						"default-tr-svc-mirror1-mirroring-default-whoami-80-1bc91306c38dde55119a": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-tr-svc-mirror1-mirror-0-cross-ns-whoami-svc-80-19dd5305d098a310be0c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
 							},
 						},
 						"cross-ns-tr-svc-mirror2-3a1eebdec12b22b77a0f": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+								Service: "cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name:    "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:    "cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32",
 										Percent: 20,
 									},
 								},
 							},
 						},
-						"default-whoami-80-b08b5838443b99387085": {
+						"cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -5859,13 +6352,13 @@ func TestCrossNamespace(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:   "cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-whoami-svc-80-6a7a2b78fd9b52601354": {
+						"cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -5880,16 +6373,42 @@ func TestCrossNamespace(t *testing.T) {
 						},
 						"cross-ns-tr-svc-mirror2-3a1eebdec12b22b77a0f": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+								Service: "cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name:    "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:    "cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32",
 										Percent: 20,
 									},
 								},
 							},
 						},
-						"default-whoami-80-b08b5838443b99387085": {
+						"cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default-tr-svc-mirror1-mirroring-default-whoami-80-1bc91306c38dde55119a": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -6026,13 +6545,13 @@ func TestCrossNamespace(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:   "cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-whoami-svc-80-6a7a2b78fd9b52601354": {
+						"cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -6072,13 +6591,13 @@ func TestCrossNamespace(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80-6a7a2b78fd9b52601354",
+										Name:   "cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-whoami-svc-80-6a7a2b78fd9b52601354": {
+						"cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
