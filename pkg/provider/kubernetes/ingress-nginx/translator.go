@@ -185,6 +185,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			rule := buildRule(srv.Hostname, loc)
+			if loc.IsIngressDefaultBackend && rule == "" {
+				rule = `PathPrefix("/")`
+			}
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -210,6 +213,11 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Options: loc.TLSOptionName,
 				},
 				Observability: obs,
+			}
+
+			if loc.IsIngressDefaultBackend {
+				rt.Priority = math.MinInt32
+				rtTLS.Priority = math.MinInt32
 			}
 
 			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
