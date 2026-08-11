@@ -1,3 +1,32 @@
+## [v3.7.11](https://github.com/traefik/traefik/tree/v3.7.11) (2026-08-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.10...v3.7.11)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Dedupe client-auth TLS options across ingresses sharing a host for ingress-nginx provider ([#13638](https://github.com/traefik/traefik/pull/13638) @gndz07)
+- **[k8s/ingress-nginx]** Apply auth, custom-headers, custom errors and ssl-redirect to ingress default backend ([#13575](https://github.com/traefik/traefik/pull/13575) @rtribotte)
+- **[k8s/ingress-nginx]** Honor asDefault and exclude internal entrypoints from default selection for ingress-nginx provider ([#13629](https://github.com/traefik/traefik/pull/13629) @gndz07)
+- **[k8s/ingress]** Enforce crossProviderNamespace for Kubernetes Ingress service middleware ([#13670](https://github.com/traefik/traefik/pull/13670) @gndz07)
+- **[fastproxy]** Reject out-of-range status codes from backends when using FastProxy ([#13635](https://github.com/traefik/traefik/pull/13635) @gndz07)
+- **[middleware, authentication]** Bump github.com/containous/go-http-auth to b975dcaa8c48 ([#13636](https://github.com/traefik/traefik/pull/13636) @kevinpollet)
+- **[k8s/gatewayapi]** Preserve encoded path segments in Gateway API URLRewrite and RequestRedirect ([#13641](https://github.com/traefik/traefik/pull/13641) @gndz07)
+- **[k8s/gatewayapi]** Fix Gateway API router rules ([#13645](https://github.com/traefik/traefik/pull/13645) @rtribotte)
+- **[tls]** Add an option to disable the fallback to the default TLS options ([#13639](https://github.com/traefik/traefik/pull/13639) @rtribotte)
+- **[k8s/crd]** Prevent generated name collisions in the Kubernetes CRD provider ([#13656](https://github.com/traefik/traefik/pull/13656) @rtribotte)
+- **[k8s/crd]** Add an option to restrict the namespace of the default TLS resources ([#13665](https://github.com/traefik/traefik/pull/13665) @rtribotte)
+- **[k8s/crd]** Scope generated Kubernetes Service names to their parent in the CRD provider ([#13668](https://github.com/traefik/traefik/pull/13668) @rtribotte)
+- **[k8s/crd]** Name failover generated services after the referenced Kubernetes Service ([#13677](https://github.com/traefik/traefik/pull/13677) @rtribotte)
+
+**Documentation:**
+- **[k8s/gatewayapi]** Clarify v3.7.10 migration guide for Gateway API 1.6.1 ([#13628](https://github.com/traefik/traefik/pull/13628) @rtribotte)
+- **[k8s/gatewayapi]** Document the Experimental Channel CRDs requirement of the Kubernetes Gateway provider ([#13634](https://github.com/traefik/traefik/pull/13634) @rtribotte)
+- **[middleware]** Add rejectStatusCode to the ipAllowList middleware configuration example ([#13664](https://github.com/traefik/traefik/pull/13664) @amazon7737)
+- **[accesslogs]** Clarify OriginStatus and DownstreamStatus in access logs documentation ([#13609](https://github.com/traefik/traefik/pull/13609) @rtribotte)
+- **[docker]** Remove :ro from docker.sock ([#12656](https://github.com/traefik/traefik/pull/12656) @bluepuma77)
+- **[tls]** Document the TLS options conflict resolution ([#13640](https://github.com/traefik/traefik/pull/13640) @rtribotte)
+- **[api]** Fix doubled word in API/dashboard reference docs ([#13663](https://github.com/traefik/traefik/pull/13663) @latent-9)
+- Remove retired Go Report Card badge ([#13637](https://github.com/traefik/traefik/pull/13637) @yardenshoham)
+- Update version support policy starting with v3.6 ([#13627](https://github.com/traefik/traefik/pull/13627) @nmengin)
+
 ## [v3.6.26](https://github.com/traefik/traefik/tree/v3.6.26) (2026-08-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.25...v3.6.26)
 
