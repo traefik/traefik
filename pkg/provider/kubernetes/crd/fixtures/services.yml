@@ -234,6 +234,36 @@ subsets:
 apiVersion: v1
 kind: Service
 metadata:
+  name: whoami
+  namespace: cross-ns
+
+spec:
+  ports:
+    - name: web
+      port: 80
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: cross-ns
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.10
+      - ip: 10.10.0.11
+    ports:
+      - name: web
+        port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: whoami-without-endpoints-subsets
   namespace: default
 
