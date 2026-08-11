@@ -1,6 +1,6 @@
 {
 	"routers": {
-		"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd": {
+		"default-api-route-0-3b5cb0444180c95901ba@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
@@ -18,15 +18,15 @@
 				"web"
 			]
 		},
-		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
+		"default-test-route-0-bfddf9467dc588639f54@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-test-route-6b204d94623b3df4370c",
+			"service": "default-test-route-0-lb-611f3105c4cbbc8cca31",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
 			"tls": {
-				"options": "default-mytlsoption"
+				"options": "default-mytlsoption-a1ef27074b0a3c4e1d2f"
 			},
 			"observability": {
 				"accessLogs": true,
@@ -39,14 +39,14 @@
 				"web"
 			]
 		},
-		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
+		"default-test2-route-0-f5a7fc3c74a43f56b526@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
 			"middlewares": [
-				"default-mychain@kubernetescrd"
+				"default-mychain-df66ced28631ed79883b@kubernetescrd"
 			],
-			"service": "default-test2-route-23c7f4c450289ee29016",
+			"service": "default-test2-route-0-lb-1b6127ca68ad95acf267",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
 			"priority": 46,
 			"observability": {
@@ -60,11 +60,11 @@
 				"web"
 			]
 		},
-		"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd": {
+		"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-wrr1",
+			"service": "default-wrr1-3b6294b40828fe78faec",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
 			"priority": 38,
 			"observability": {
@@ -78,11 +78,11 @@
 				"web"
 			]
 		},
-		"default-test4-route-466d8d3a547de55dfe8a@kubernetescrd": {
+		"default-test4-route-0-c8eb02a25b0fc4c94435@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-hrw1",
+			"service": "default-hrw1-4f594398168ee3534bfa",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/hrw1`)",
 			"priority": 38,
 			"observability": {
@@ -96,11 +96,11 @@
 				"web"
 			]
 		},
-		"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
+		"default-testst-route-0-36ca7d11de368ec75e2d@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-testst-route-60ad45fcb5fc1f5f3629",
+			"service": "default-testst-route-0-lb-133554446d6e4f0d6cf5",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/serverstransport`)",
 			"priority": 50,
 			"observability": {
@@ -114,11 +114,11 @@
 				"web"
 			]
 		},
-		"other-ns-test6-route-482e4988e134701d8cc8@kubernetescrd": {
+		"other-ns-test6-route-2-756e1502ef61d89ca6c7@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "other-ns-wrr3",
+			"service": "other-ns-wrr3-36f5c33799830b9406cb",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
 			"priority": 35,
 			"observability": {
@@ -128,7 +128,7 @@
 				"traceVerbosity": "minimal"
 			},
 			"error": [
-				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
+				"the service \"other-ns-wrr3-36f5c33799830b9406cb@kubernetescrd\" does not exist"
 			],
 			"status": "disabled",
 			"using": [
@@ -137,18 +137,18 @@
 		}
 	},
 	"middlewares": {
-		"default-mychain@kubernetescrd": {
+		"default-mychain-df66ced28631ed79883b@kubernetescrd": {
 			"chain": {
 				"middlewares": [
-					"default-stripprefix@kubernetescrd"
+					"default-stripprefix-a1d92c4f7c7ec6eb4634@kubernetescrd"
 				]
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
+				"default-test2-route-0-f5a7fc3c74a43f56b526@kubernetescrd"
 			]
 		},
-		"default-stripprefix2@kubernetescrd": {
+		"default-stripprefix-a1d92c4f7c7ec6eb4634@kubernetescrd": {
 			"stripPrefix": {
 				"prefixes": [
 					"/tobestripped"
@@ -156,7 +156,7 @@
 			},
 			"status": "enabled"
 		},
-		"default-stripprefix@kubernetescrd": {
+		"default-stripprefix2-a22c8233ddda0c9219f6@kubernetescrd": {
 			"stripPrefix": {
 				"prefixes": [
 					"/tobestripped"
@@ -169,49 +169,137 @@
 		"api@internal": {
 			"status": "enabled",
 			"usedBy": [
-				"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd"
+				"default-api-route-0-3b5cb0444180c95901ba@kubernetescrd"
 			]
 		},
 		"dashboard@internal": {
 			"status": "enabled"
 		},
-		"default-hrw1@kubernetescrd": {
+		"default-hrw1-4f594398168ee3534bfa@kubernetescrd": {
 			"highestRandomWeight": {
 				"services": [
 					{
-						"name": "default-whoami-80",
+						"name": "default-hrw1-hrw-0-default-whoami-80-b6a5f627aa01afd92f48",
 						"weight": 10
 					},
 					{
-						"name": "default-whoami-80",
+						"name": "default-hrw1-hrw-1-default-whoami-80-486f1a9da0e5eb5284d7",
 						"weight": 20
 					}
 				]
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test4-route-466d8d3a547de55dfe8a@kubernetescrd"
+				"default-test4-route-0-c8eb02a25b0fc4c94435@kubernetescrd"
 			]
 		},
-		"default-mirror1@kubernetescrd": {
+		"default-hrw1-hrw-0-default-whoami-80-b6a5f627aa01afd92f48@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.10:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
+			}
+		},
+		"default-hrw1-hrw-1-default-whoami-80-486f1a9da0e5eb5284d7@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.10:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
+			}
+		},
+		"default-mirror1-27e0059f29381e4e4b93@kubernetescrd": {
 			"mirroring": {
-				"service": "default-whoami-80",
+				"service": "default-mirror1-mirroring-default-whoami-80-9e60fabc3a9a24183614",
 				"mirrors": [
 					{
-						"name": "default-whoami-80"
+						"name": "default-mirror1-mirror-0-default-whoami-80-411a87d27d86a5cbf6b9"
 					}
 				]
 			},
 			"status": "enabled"
 		},
-		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
+		"default-mirror1-mirror-0-default-whoami-80-411a87d27d86a5cbf6b9@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.10:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
+			}
+		},
+		"default-mirror1-mirroring-default-whoami-80-9e60fabc3a9a24183614@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.10:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
+			}
+		},
+		"default-test-route-0-lb-611f3105c4cbbc8cca31@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.10:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -222,21 +310,21 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
+				"default-test-route-0-bfddf9467dc588639f54@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
 			}
 		},
-		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
+		"default-test2-route-0-lb-1b6127ca68ad95acf267@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.10:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -247,21 +335,21 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
+				"default-test2-route-0-f5a7fc3c74a43f56b526@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
 			}
 		},
-		"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
+		"default-testst-route-0-lb-133554446d6e4f0d6cf5@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.10:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -269,25 +357,43 @@
 				"responseForwarding": {
 					"flushInterval": "100ms"
 				},
-				"serversTransport": "default-mytransport@kubernetescrd"
+				"serversTransport": "default-mytransport-ff8ae7a66b24643e0fce@kubernetescrd"
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd"
+				"default-testst-route-0-36ca7d11de368ec75e2d@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
 			}
 		},
-		"default-whoami-80@kubernetescrd": {
+		"default-wrr1-3b6294b40828fe78faec@kubernetescrd": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-mirror1-27e0059f29381e4e4b93",
+						"weight": 1
+					},
+					{
+						"name": "default-wrr1-wrr-1-default-whoami-80-a9e95654da2bd86ee12d",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd"
+			]
+		},
+		"default-wrr1-wrr-1-default-whoami-80-a9e95654da2bd86ee12d@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.10:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -298,36 +404,36 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.10:80": "UP",
+				"http://10.42.0.4:80": "UP"
 			}
 		},
-		"default-wrr1@kubernetescrd": {
+		"default-wrr2-504732714158b42ee5b2@kubernetescrd": {
 			"weighted": {
 				"services": [
 					{
-						"name": "default-mirror1",
-						"weight": 1
-					},
-					{
-						"name": "default-whoami-80",
+						"name": "default-wrr2-wrr-0-default-whoami-80-01dc26443dea25d30cb7",
 						"weight": 1
 					}
 				]
 			},
-			"status": "enabled",
-			"usedBy": [
-				"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd"
-			]
+			"status": "enabled"
 		},
-		"default-wrr2@kubernetescrd": {
-			"weighted": {
-				"services": [
+		"default-wrr2-wrr-0-default-whoami-80-01dc26443dea25d30cb7@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
 					{
-						"name": "default-whoami-80",
-						"weight": 1
+						"url": "http://10.42.0.10:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
 					}
-				]
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
 			},
 			"status": "enabled"
 		},
@@ -336,16 +442,16 @@
 		}
 	},
 	"tcpRouters": {
-		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
+		"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd": {
 			"entryPoints": [
 				"footcp"
 			],
-			"service": "default-test3.route-673acf455cb2dab0b43a",
+			"service": "default-test3-route-0-wrr-e039d7109875d2b08ae7",
 			"rule": "HostSNI(`*`)",
 			"priority": -1,
 			"tls": {
 				"passthrough": false,
-				"options": "default-mytlsoption"
+				"options": "default-mytlsoption-a1ef27074b0a3c4e1d2f"
 			},
 			"status": "enabled",
 			"using": [
@@ -354,7 +460,24 @@
 		}
 	},
 	"tcpServices": {
-		"default-test3.route-673acf455cb2dab0b43a-externalname-svc-9090@kubernetescrd": {
+		"default-test3-route-0-wrr-0-default-whoamitcp-8080-ce0661e4f6db0662ce63@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"address": "10.42.0.3:8080"
+					},
+					{
+						"address": "10.42.0.6:8080"
+					}
+				]
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"10.42.0.3:8080": "UP",
+				"10.42.0.6:8080": "UP"
+			}
+		},
+		"default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -367,48 +490,31 @@
 				"domain.com:9090": "UP"
 			}
 		},
-		"default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
-			"loadBalancer": {
-				"servers": [
-					{
-						"address": "10.42.0.2:8080"
-					},
-					{
-						"address": "10.42.0.6:8080"
-					}
-				]
-			},
-			"status": "enabled",
-			"serverStatus": {
-				"10.42.0.2:8080": "UP",
-				"10.42.0.6:8080": "UP"
-			}
-		},
-		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
+		"default-test3-route-0-wrr-e039d7109875d2b08ae7@kubernetescrd": {
 			"weighted": {
 				"services": [
 					{
-						"name": "default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080",
+						"name": "default-test3-route-0-wrr-0-default-whoamitcp-8080-ce0661e4f6db0662ce63",
 						"weight": 1
 					},
 					{
-						"name": "default-test3.route-673acf455cb2dab0b43a-externalname-svc-9090",
+						"name": "default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d",
 						"weight": 1
 					}
 				]
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test3.route-673acf455cb2dab0b43a@kubernetescrd"
+				"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd"
 			]
 		}
 	},
 	"udpRouters": {
-		"default-test3.route-0@kubernetescrd": {
+		"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd": {
 			"entryPoints": [
 				"fooudp"
 			],
-			"service": "default-test3.route-0",
+			"service": "default-test3-route-0-wrr-e039d7109875d2b08ae7",
 			"status": "enabled",
 			"using": [
 				"fooudp"
@@ -416,7 +522,20 @@
 		}
 	},
 	"udpServices": {
-		"default-test3.route-0-externalname-svc-9090@kubernetescrd": {
+		"default-test3-route-0-wrr-0-default-whoamiudp-8090-1ef3d51ea64d066e3c62@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"address": "10.42.0.5:8090"
+					},
+					{
+						"address": "10.42.0.7:8090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -426,35 +545,22 @@
 			},
 			"status": "enabled"
 		},
-		"default-test3.route-0-whoamiudp-8090@kubernetescrd": {
-			"loadBalancer": {
-				"servers": [
-					{
-						"address": "10.42.0.4:8090"
-					},
-					{
-						"address": "10.42.0.7:8090"
-					}
-				]
-			},
-			"status": "enabled"
-		},
-		"default-test3.route-0@kubernetescrd": {
+		"default-test3-route-0-wrr-e039d7109875d2b08ae7@kubernetescrd": {
 			"weighted": {
 				"services": [
 					{
-						"name": "default-test3.route-0-whoamiudp-8090",
+						"name": "default-test3-route-0-wrr-0-default-whoamiudp-8090-1ef3d51ea64d066e3c62",
 						"weight": 1
 					},
 					{
-						"name": "default-test3.route-0-externalname-svc-9090",
+						"name": "default-test3-route-0-wrr-1-default-externalname-svc-9090-12457586c7b693e9c69d",
 						"weight": 1
 					}
 				]
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test3.route-0@kubernetescrd"
+				"default-test3-route-0-5ccc1508f25a87ec2dae@kubernetescrd"
 			]
 		}
 	}

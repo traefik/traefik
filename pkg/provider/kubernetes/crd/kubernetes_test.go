@@ -82,15 +82,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -124,15 +124,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -168,27 +168,27 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipallowlist", "foo-ipallowlist"},
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
+							Middlewares: []string{"default-ipallowlist-8054e4c269217e4851c6", "foo-ipallowlist-e7f4cc21f66a9220e0bf"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipallowlist": {
+						"default-ipallowlist-8054e4c269217e4851c6": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"foo-ipallowlist": {
+						"foo-ipallowlist-e7f4cc21f66a9220e0bf": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -222,22 +222,22 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-multiple-hyphens"},
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
+							Middlewares: []string{"default-multiple-hyphens-5c9512a3890cb0f6fbe2"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-multiple-hyphens": {
+						"default-multiple-hyphens-5c9512a3890cb0f6fbe2": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -271,27 +271,27 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipallowlist", "foo-ipallowlist", "ipallowlist@file", "ipallowlist-foo@file"},
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
+							Middlewares: []string{"default-ipallowlist-8054e4c269217e4851c6", "foo-ipallowlist-e7f4cc21f66a9220e0bf", "ipallowlist@file", "ipallowlist-foo@file"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipallowlist": {
+						"default-ipallowlist-8054e4c269217e4851c6": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"foo-ipallowlist": {
+						"foo-ipallowlist-e7f4cc21f66a9220e0bf": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -319,20 +319,20 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
-						"default-test.route-f44ce589164e656d231c": {
+						"default-test-route-1-73e4808ba7263def92b2": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-f44ce589164e656d231c",
+							Service:     "default-test-route-1-lb-1109d6313f2dbb16a8e6",
 							Rule:        "HostSNI(`bar.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -344,7 +344,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-f44ce589164e656d231c": {
+						"default-test-route-1-lb-1109d6313f2dbb16a8e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -378,15 +378,32 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+						"default-test-route-1-73e4808ba7263def92b2": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-1-lb-1109d6313f2dbb16a8e6",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+						"default-test-route-1-lb-1109d6313f2dbb16a8e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -420,29 +437,29 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e",
 										Weight: new(3),
 									},
 								},
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000": {
+						"default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -454,7 +471,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080": {
+						"default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -488,33 +505,33 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e",
 										Weight: new(3),
 									},
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp3-8083",
+										Name:   "default-test-route-0-wrr-2-ns3-whoamitcp3-8083-9d12f33f04765888e6b5",
 										Weight: new(4),
 									},
 								},
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000": {
+						"default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -526,7 +543,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080": {
+						"default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -538,7 +555,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp3-8083": {
+						"default-test-route-0-wrr-2-ns3-whoamitcp3-8083-9d12f33f04765888e6b5": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -629,16 +646,16 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -671,9 +688,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
@@ -682,7 +699,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -716,7 +733,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							CipherSuites: []string{
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -741,18 +758,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -785,7 +802,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"myns-foo": {
+						"myns-foo-d809e81d5ccf461aab60": {
 							MinVersion: "VersionTLS12",
 							CipherSuites: []string{
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -809,18 +826,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
-								Options: "myns-foo",
+								Options: "myns-foo-d809e81d5ccf461aab60",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -853,7 +870,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							CipherSuites: []string{
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -876,18 +893,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -920,7 +937,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							ALPNProtocols: []string{
 								"h2",
@@ -947,18 +964,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
-								Options: "default-unknown",
+								Options: "default-unknown-d612e69053993bc351c4",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -991,7 +1008,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							ALPNProtocols: []string{
 								"h2",
@@ -1018,18 +1035,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
-								Options: "unknown-foo",
+								Options: "unknown-foo-60df693b64851d2ececa",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1062,16 +1079,16 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1106,15 +1123,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								TerminationDelay: new(500),
 								Servers: []dynamic.TCPServer{
@@ -1154,16 +1171,16 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1200,15 +1217,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1239,15 +1256,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1279,9 +1296,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
@@ -1310,15 +1327,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1353,15 +1370,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1396,15 +1413,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1437,13 +1454,13 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -1456,29 +1473,29 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-673acf455cb2dab0b43a": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-673acf455cb2dab0b43a",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "HostSNI(`*`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-673acf455cb2dab0b43a": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test.route-673acf455cb2dab0b43a-whoamitcp-ipv6-8080",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-ipv6-8080-b2b0b74255e3be36bc93",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-test.route-673acf455cb2dab0b43a-external.service.with.ipv6-8080",
+										Name:   "default-test-route-0-wrr-1-default-external-service-with-ipv6-8080-43fbcebb03cafd31e512",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-test.route-673acf455cb2dab0b43a-whoamitcp-ipv6-8080": {
+						"default-test-route-0-wrr-0-default-whoamitcp-ipv6-8080-b2b0b74255e3be36bc93": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1490,7 +1507,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-673acf455cb2dab0b43a-external.service.with.ipv6-8080": {
+						"default-test-route-0-wrr-1-default-external-service-with-ipv6-8080-43fbcebb03cafd31e512": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1504,15 +1521,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-ipv6-8080": {
+						"default-test-route-0-wrr-0-default-whoami-ipv6-8080-eed7adeccb0c37670f58": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1526,7 +1543,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-external-svc-with-ipv6-8080": {
+						"default-test-route-0-wrr-1-default-external-svc-with-ipv6-8080-fff50966e3b8a3ca929e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1540,15 +1557,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-ipv6-8080",
+										Name:   "default-test-route-0-wrr-0-default-whoami-ipv6-8080-eed7adeccb0c37670f58",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-external-svc-with-ipv6-8080",
+										Name:   "default-test-route-0-wrr-1-default-external-svc-with-ipv6-8080-fff50966e3b8a3ca929e",
 										Weight: new(1),
 									},
 								},
@@ -1571,15 +1588,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1614,7 +1631,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
-						"foo-test": {
+						"foo-test-0bbbd89c878c4df00916": {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "test",
 								InsecureSkipVerify: true,
@@ -1637,7 +1654,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							DialKeepAlive:    ptypes.Duration(42 * time.Second),
 							TerminationDelay: ptypes.Duration(42 * time.Second),
 						},
-						"default-test": {
+						"default-test-e6d80538b02592c965d8": {
 							TLS: &dynamic.TLSClientConfig{
 								ServerName: "test",
 							},
@@ -1647,15 +1664,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000": {
+						"default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1665,10 +1682,10 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 										Address: "10.10.0.2:8000",
 									},
 								},
-								ServersTransport: "default-test",
+								ServersTransport: "default-test-e6d80538b02592c965d8",
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080": {
+						"default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -1678,18 +1695,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 										Address: "10.10.0.4:8080",
 									},
 								},
-								ServersTransport: "default-default-test",
+								ServersTransport: "default-default-test-592f4763608d32419a4e",
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
+										Name:   "default-test-route-0-wrr-0-default-whoamitcp-8000-2e12f708facee87e75e6",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoamitcp2-8080-49dbd6d4eaf55546e68e",
 										Weight: new(1),
 									},
 								},
@@ -1716,9 +1733,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
@@ -1746,15 +1763,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 						},
 					},
@@ -1780,15 +1797,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 						},
 					},
@@ -1814,15 +1831,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 						},
 					},
@@ -1925,9 +1942,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -1939,7 +1956,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -1979,16 +1996,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test2-route-23c7f4c450289ee29016": {
+						"default-test2-route-0-f5a7fc3c74a43f56b526": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-23c7f4c450289ee29016",
+							Service:     "default-test2-route-0-lb-1b6127ca68ad95acf267",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
-							Middlewares: []string{"default-stripprefix", "default-ratelimit", "foo-addprefix"},
+							Middlewares: []string{"default-stripprefix-a1d92c4f7c7ec6eb4634", "default-ratelimit-b8e74655f71c8bbfd816", "foo-addprefix-727ab48a4ad9f4b63353"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ratelimit": {
+						"default-ratelimit-b8e74655f71c8bbfd816": {
 							RateLimit: &dynamic.RateLimit{
 								Average: 6,
 								Burst:   12,
@@ -2000,19 +2017,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-stripprefix": {
+						"default-stripprefix-a1d92c4f7c7ec6eb4634": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
 							},
 						},
-						"foo-addprefix": {
+						"foo-addprefix-727ab48a4ad9f4b63353": {
 							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/tobeadded",
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test2-route-23c7f4c450289ee29016": {
+						"default-test2-route-0-lb-1b6127ca68ad95acf267": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2052,16 +2069,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test2-route-3c9bf014491ebdba74f7": {
+						"default-test2-route-0-f5a7fc3c74a43f56b526": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-3c9bf014491ebdba74f7",
+							Service:     "default-test2-route-0-lb-1b6127ca68ad95acf267",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/will-be-limited`)",
 							Priority:    12,
-							Middlewares: []string{"default-ratelimit"},
+							Middlewares: []string{"default-ratelimit-b8e74655f71c8bbfd816"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ratelimit": {
+						"default-ratelimit-b8e74655f71c8bbfd816": {
 							RateLimit: &dynamic.RateLimit{
 								Average: 6,
 								Burst:   12,
@@ -2091,7 +2108,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test2-route-3c9bf014491ebdba74f7": {
+						"default-test2-route-0-lb-1b6127ca68ad95acf267": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2131,23 +2148,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test2-route-23c7f4c450289ee29016": {
+						"default-test2-route-0-f5a7fc3c74a43f56b526": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-23c7f4c450289ee29016",
+							Service:     "default-test2-route-0-lb-1b6127ca68ad95acf267",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
-							Middlewares: []string{"default-multiple-hyphens"},
+							Middlewares: []string{"default-multiple-hyphens-5c9512a3890cb0f6fbe2"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-multiple-hyphens": {
+						"default-multiple-hyphens-5c9512a3890cb0f6fbe2": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test2-route-23c7f4c450289ee29016": {
+						"default-test2-route-0-lb-1b6127ca68ad95acf267": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2189,28 +2206,28 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test2-route-23c7f4c450289ee29016": {
+						"default-test2-route-0-f5a7fc3c74a43f56b526": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-23c7f4c450289ee29016",
+							Service:     "default-test2-route-0-lb-1b6127ca68ad95acf267",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
-							Middlewares: []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
+							Middlewares: []string{"default-stripprefix-a1d92c4f7c7ec6eb4634", "foo-addprefix-727ab48a4ad9f4b63353", "basicauth@file", "redirect@file"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-stripprefix": {
+						"default-stripprefix-a1d92c4f7c7ec6eb4634": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
 							},
 						},
-						"foo-addprefix": {
+						"foo-addprefix-727ab48a4ad9f4b63353": {
 							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/tobeadded",
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test2-route-23c7f4c450289ee29016": {
+						"default-test2-route-0-lb-1b6127ca68ad95acf267": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2248,22 +2265,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-1-73e4808ba7263def92b2": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-1-lb-1109d6313f2dbb16a8e6",
 							Priority:    14,
 						},
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-1-lb-1109d6313f2dbb16a8e6": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2280,7 +2297,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2320,30 +2337,30 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2360,7 +2377,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami2-8080": {
+						"default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2399,26 +2416,26 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-wrr1",
+							Service:     "default-wrr1-3b6294b40828fe78faec",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2459,17 +2476,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-wrr1-wrr-0-default-whoami5-8080-c0ae3d501350255537be": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2508,44 +2525,44 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-wrr1",
+										Name:   "default-wrr1-3b6294b40828fe78faec",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-wrr2",
+										Name:   "default-wrr2-504732714158b42ee5b2",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami4-80",
+										Name:   "default-wrr1-wrr-0-default-whoami4-80-32dc0859b9e1b4b7b655",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami4-80": {
+						"default-wrr1-wrr-0-default-whoami4-80-32dc0859b9e1b4b7b655": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2562,7 +2579,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2579,21 +2596,21 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-wrr2": {
+						"default-wrr2-504732714158b42ee5b2": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami6-80",
+										Name:   "default-wrr2-wrr-0-default-whoami6-80-cdd2715cdae85ce74320",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami7-8080",
+										Name:   "default-wrr2-wrr-1-default-whoami7-8080-ae9735706c5b0eff5fe5",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami6-80": {
+						"default-wrr2-wrr-0-default-whoami6-80-cdd2715cdae85ce74320": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2610,7 +2627,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami7-8080": {
+						"default-wrr2-wrr-1-default-whoami7-8080-ae9735706c5b0eff5fe5": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2649,40 +2666,57 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-wrr1",
+							Service:     "default-wrr1-3b6294b40828fe78faec",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-wrr2",
+										Name:   "default-wrr2-504732714158b42ee5b2",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-wrr2": {
+						"default-wrr2-504732714158b42ee5b2": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2721,52 +2755,52 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-wrr1",
+							Service:     "default-wrr1-3b6294b40828fe78faec",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-wrr2",
+										Name:   "default-wrr2-504732714158b42ee5b2",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-mirror1",
+										Name:   "default-mirror1-27e0059f29381e4e4b93",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-wrr2": {
+						"default-wrr2-504732714158b42ee5b2": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-mirror1": {
+						"default-mirror1-27e0059f29381e4e4b93": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami5-8080",
+								Service: "default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-whoami4-8080", Percent: 50},
+									{Name: "default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32", Percent: 50},
 								},
 							},
 						},
-						"default-whoami4-8080": {
+						"default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2783,7 +2817,41 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-wrr1-wrr-1-default-whoami5-8080-d47feba41bf8c095e5f4": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2821,16 +2889,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2873,30 +2941,30 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-external-svc-443",
+										Name:   "default-test-route-0-wrr-0-default-external-svc-443-0e5045562d61c940929b",
 										Weight: func(i int) *int { return &i }(1),
 									},
 									{
-										Name:   "default-external-svc-with-https-443",
+										Name:   "default-test-route-0-wrr-1-default-external-svc-with-https-443-f6e0eba42dfeb3659998",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-external-svc-443": {
+						"default-test-route-0-wrr-0-default-external-svc-443-0e5045562d61c940929b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2917,7 +2985,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-external-svc-with-https-443": {
+						"default-test-route-0-wrr-1-default-external-svc-with-https-443-f6e0eba42dfeb3659998": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -2962,7 +3030,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-external-svc-443": {
+						"default-test-route-0-wrr-0-default-external-svc-443-0e5045562d61c940929b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3007,42 +3075,42 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "baz-whoami6-8080",
+										Name:   "default-test-route-0-wrr-0-baz-whoami6-8080-5f688feace15393f0cf4",
 										Weight: new(1),
 									},
 									{
-										Name:   "foo-wrr1",
+										Name:   "foo-wrr1-3f46e81fadb0e6d5865d",
 										Weight: new(1),
 									},
 									{
-										Name:   "foo-mirror2",
+										Name:   "foo-mirror2-5ad6655aa920162e663f",
 										Weight: new(1),
 									},
 									{
-										Name:   "foo-mirror3",
+										Name:   "foo-mirror3-2954533fbd26f06c9da8",
 										Weight: new(1),
 									},
 									{
-										Name:   "foo-mirror4",
+										Name:   "foo-mirror4-4a1eee1c5f7cb88b0a7d",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"baz-whoami6-8080": {
+						"bar-mirrored-mirroring-baz-whoami6-8080-2f84f10f112b1e086d0c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3059,29 +3127,131 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"foo-wrr1": {
+						"default-test-route-0-wrr-0-baz-whoami6-8080-5f688feace15393f0cf4": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror1-mirror-1-baz-whoami6-8080-17ccb90611e6695cdf21": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror2-mirror-1-baz-whoami6-8080-37b125df0691ccdcf51d": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror3-mirror-1-baz-whoami6-8080-565564a0fe7869555a55": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror4-mirror-1-baz-whoami6-8080-6c814d1d71f291a6d79f": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-wrr1-wrr-1-baz-whoami6-8080-f5fc0957839b0bd25184": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8080",
+									},
+									{
+										URL: "http://10.10.0.6:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-wrr1-3f46e81fadb0e6d5865d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "foo-whoami4-8080",
+										Name:   "foo-wrr1-wrr-0-foo-whoami4-8080-bf09457480a5cceee6c1",
 										Weight: new(1),
 									},
 									{
-										Name:   "baz-whoami6-8080",
+										Name:   "foo-wrr1-wrr-1-baz-whoami6-8080-f5fc0957839b0bd25184",
 										Weight: new(1),
 									},
 									{
-										Name:   "foo-mirror1",
+										Name:   "foo-mirror1-cbfee77b7fea5a43b4ef",
 										Weight: new(1),
 									},
 									{
-										Name:   "bar-wrr2",
+										Name:   "bar-wrr2-05f3b853d4318465ac66",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"foo-whoami4-8080": {
+						"bar-mirrored-mirror-0-foo-whoami4-8080-c63b3e22b331440db79c": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3098,17 +3268,102 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"foo-mirror1": {
-							Mirroring: &dynamic.Mirroring{
-								Service: "foo-whoami5-8080",
-								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080"},
-									{Name: "baz-whoami6-8080"},
-									{Name: "bar-mirrored"},
+						"foo-mirror1-mirror-0-foo-whoami4-8080-8db3166770ed85651a2a": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
-						"foo-whoami5-8080": {
+						"foo-mirror2-mirror-0-foo-whoami4-8080-b9801c68744a6ff21506": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror3-mirror-0-foo-whoami4-8080-66a698402622fd1730e7": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror4-mirror-0-foo-whoami4-8080-2f15ab2094a278db09dd": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-wrr1-wrr-0-foo-whoami4-8080-bf09457480a5cceee6c1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.10.0.2:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"foo-mirror1-cbfee77b7fea5a43b4ef": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "foo-mirror1-mirroring-foo-whoami5-8080-d3c09cf2a7b706675cee",
+								Mirrors: []dynamic.MirrorService{
+									{Name: "foo-mirror1-mirror-0-foo-whoami4-8080-8db3166770ed85651a2a"},
+									{Name: "foo-mirror1-mirror-1-baz-whoami6-8080-17ccb90611e6695cdf21"},
+									{Name: "bar-mirrored-653b67a4c37564aca28d"},
+								},
+							},
+						},
+						"bar-wrr2-wrr-0-foo-whoami5-8080-c694d181753f5106b49a": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3125,54 +3380,88 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"bar-mirrored": {
-							Mirroring: &dynamic.Mirroring{
-								Service: "baz-whoami6-8080",
-								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080", Percent: 50},
+						"foo-mirror1-mirroring-foo-whoami5-8080-d3c09cf2a7b706675cee": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
-						"foo-mirror2": {
-							Mirroring: &dynamic.Mirroring{
-								Service: "foo-whoami5-8080",
-								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080"},
-									{Name: "baz-whoami6-8080"},
-									{Name: "bar-mirrored"},
-									{Name: "foo-wrr1"},
+						"foo-mirror2-mirroring-foo-whoami5-8080-ff83c253b23c208af503": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
-						"foo-mirror3": {
+						"bar-mirrored-653b67a4c37564aca28d": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "foo-wrr1",
+								Service: "bar-mirrored-mirroring-baz-whoami6-8080-2f84f10f112b1e086d0c",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080"},
-									{Name: "baz-whoami6-8080"},
-									{Name: "bar-mirrored"},
-									{Name: "foo-wrr1"},
+									{Name: "bar-mirrored-mirror-0-foo-whoami4-8080-c63b3e22b331440db79c", Percent: 50},
 								},
 							},
 						},
-						"bar-wrr2": {
+						"foo-mirror2-5ad6655aa920162e663f": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "foo-mirror2-mirroring-foo-whoami5-8080-ff83c253b23c208af503",
+								Mirrors: []dynamic.MirrorService{
+									{Name: "foo-mirror2-mirror-0-foo-whoami4-8080-b9801c68744a6ff21506"},
+									{Name: "foo-mirror2-mirror-1-baz-whoami6-8080-37b125df0691ccdcf51d"},
+									{Name: "bar-mirrored-653b67a4c37564aca28d"},
+									{Name: "foo-wrr1-3f46e81fadb0e6d5865d"},
+								},
+							},
+						},
+						"foo-mirror3-2954533fbd26f06c9da8": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "foo-wrr1-3f46e81fadb0e6d5865d",
+								Mirrors: []dynamic.MirrorService{
+									{Name: "foo-mirror3-mirror-0-foo-whoami4-8080-66a698402622fd1730e7"},
+									{Name: "foo-mirror3-mirror-1-baz-whoami6-8080-565564a0fe7869555a55"},
+									{Name: "bar-mirrored-653b67a4c37564aca28d"},
+									{Name: "foo-wrr1-3f46e81fadb0e6d5865d"},
+								},
+							},
+						},
+						"bar-wrr2-05f3b853d4318465ac66": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "foo-whoami5-8080",
+										Name:   "bar-wrr2-wrr-0-foo-whoami5-8080-c694d181753f5106b49a",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"foo-mirror4": {
+						"foo-mirror4-4a1eee1c5f7cb88b0a7d": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "foo-wrr1",
+								Service: "foo-wrr1-3f46e81fadb0e6d5865d",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080"},
-									{Name: "baz-whoami6-8080"},
-									{Name: "bar-mirrored"},
-									{Name: "foo-wrr1"},
+									{Name: "foo-mirror4-mirror-0-foo-whoami4-8080-2f15ab2094a278db09dd"},
+									{Name: "foo-mirror4-mirror-1-baz-whoami6-8080-6c814d1d71f291a6d79f"},
+									{Name: "bar-mirrored-653b67a4c37564aca28d"},
+									{Name: "foo-wrr1-3f46e81fadb0e6d5865d"},
 								},
 							},
 						},
@@ -3198,24 +3487,24 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-mirror1",
+							Service:     "default-mirror1-27e0059f29381e4e4b93",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-mirror1": {
+						"default-mirror1-27e0059f29381e4e4b93": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami5-8080",
+								Service: "default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-whoami4-8080", Percent: 50},
+									{Name: "default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32", Percent: 50},
 								},
 							},
 						},
-						"default-whoami4-8080": {
+						"default-mirror1-mirror-0-default-whoami4-8080-b4a44e5c4684ecfe3b32": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3232,7 +3521,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-mirror1-mirroring-default-whoami5-8080-39a38a4ab26d269f730e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3271,44 +3560,44 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-mirror1",
+							Service:     "default-mirror1-27e0059f29381e4e4b93",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-mirror1": {
+						"default-mirror1-27e0059f29381e4e4b93": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-wrr1",
+								Service: "default-wrr1-3b6294b40828fe78faec",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-wrr2", Percent: 30},
+									{Name: "default-wrr2-504732714158b42ee5b2", Percent: 30},
 								},
 							},
 						},
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami4-8080",
+										Name:   "default-wrr1-wrr-0-default-whoami4-8080-45eaa417be0b2799bd43",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-wrr2": {
+						"default-wrr2-504732714158b42ee5b2": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami4-8080": {
+						"default-wrr1-wrr-0-default-whoami4-8080-45eaa417be0b2799bd43": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3325,7 +3614,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3364,33 +3653,33 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-weighted",
+							Service:     "default-test-weighted-4b1c2d77727f0755b988",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-stripprefix": {
+						"default-stripprefix-a1d92c4f7c7ec6eb4634": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test-weighted": {
+						"default-test-weighted-4b1c2d77727f0755b988": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-test-weighted-wrr-0-default-whoami-80-8d9d0521976e612ef704",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
-							Middlewares: []string{"default-stripprefix"},
+						"default-test-weighted-wrr-0-default-whoami-80-8d9d0521976e612ef704": {
+							Middlewares: []string{"default-stripprefix-a1d92c4f7c7ec6eb4634"},
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3429,24 +3718,24 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-hrw1",
+							Service:     "default-hrw1-4f594398168ee3534bfa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-hrw1": {
+						"default-hrw1-4f594398168ee3534bfa": {
 							HighestRandomWeight: &dynamic.HighestRandomWeight{
 								Services: []dynamic.HRWService{
-									{Name: "default-whoami1-8080", Weight: new(10)},
-									{Name: "default-whoami2-8080", Weight: new(20)},
+									{Name: "default-hrw1-hrw-0-default-whoami1-8080-36800e91e9cc50817b89", Weight: new(10)},
+									{Name: "default-hrw1-hrw-1-default-whoami2-8080-176f7b5406c3ebbfc595", Weight: new(20)},
 								},
 							},
 						},
-						"default-whoami1-8080": {
+						"default-hrw1-hrw-0-default-whoami1-8080-36800e91e9cc50817b89": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3463,7 +3752,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami2-8080": {
+						"default-hrw1-hrw-1-default-whoami2-8080-176f7b5406c3ebbfc595": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3502,23 +3791,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-failover1",
+							Service:     "default-failover1-bbf02e6b5e14b0c68b06",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-failover1": {
+						"default-failover1-bbf02e6b5e14b0c68b06": {
 							Failover: &dynamic.Failover{
-								Service:  "default-whoami5-8080",
-								Fallback: "default-whoami4-8080",
+								Service:  "default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e",
+								Fallback: "default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31",
 								Errors:   &dynamic.FailoverError{},
 							},
 						},
-						"default-whoami4-8080": {
+						"default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3535,7 +3824,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3574,43 +3863,43 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-failover1",
+							Service:     "default-failover1-bbf02e6b5e14b0c68b06",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-failover1": {
+						"default-failover1-bbf02e6b5e14b0c68b06": {
 							Failover: &dynamic.Failover{
-								Service:  "default-wrr1",
-								Fallback: "default-wrr2",
+								Service:  "default-wrr1-3b6294b40828fe78faec",
+								Fallback: "default-wrr2-504732714158b42ee5b2",
 								Errors:   &dynamic.FailoverError{},
 							},
 						},
-						"default-wrr1": {
+						"default-wrr1-3b6294b40828fe78faec": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami4-8080",
+										Name:   "default-wrr1-wrr-0-default-whoami4-8080-45eaa417be0b2799bd43",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-wrr2": {
+						"default-wrr2-504732714158b42ee5b2": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami5-8080",
+										Name:   "default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami4-8080": {
+						"default-wrr1-wrr-0-default-whoami4-8080-45eaa417be0b2799bd43": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3627,7 +3916,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-wrr2-wrr-0-default-whoami5-8080-0b3643349720777594db": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3666,26 +3955,26 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-failover1",
+							Service:     "default-failover1-bbf02e6b5e14b0c68b06",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-failover1": {
+						"default-failover1-bbf02e6b5e14b0c68b06": {
 							Failover: &dynamic.Failover{
-								Service:  "default-whoami5-8080",
-								Fallback: "default-whoami4-8080",
+								Service:  "default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e",
+								Fallback: "default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31",
 								Errors: &dynamic.FailoverError{
 									Status:              []string{"500-504", "404"},
 									MaxRequestBodyBytes: new(int64(1048576)),
 								},
 							},
 						},
-						"default-whoami4-8080": {
+						"default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3702,7 +3991,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami5-8080": {
+						"default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3741,30 +4030,30 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-77c62dfe9517144aeeaa": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e",
 										Weight: new(10),
 									},
 									{
-										Name:   "default-whoami2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6",
 										Weight: new(0),
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-test-route-0-wrr-0-default-whoami-80-841cdbc191cff57e966e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3781,7 +4070,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami2-8080": {
+						"default-test-route-0-wrr-1-default-whoami2-8080-cc3602540bbe7b16a4f6": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3867,16 +4156,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-02719a68b11e915a4b23": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-02719a68b11e915a4b23",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "/prefix",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-02719a68b11e915a4b23": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3924,9 +4213,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -3934,7 +4223,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3966,7 +4255,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							CipherSuites: []string{
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -3997,19 +4286,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4050,28 +4339,28 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
-						"default-test-route-default-6b204d94623b3df4370c": {
+						"default-test-route-default-0-ec5a13bc121647a6c17c": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-default-6b204d94623b3df4370c",
+							Service:     "default-test-route-default-0-lb-c466dfd42416a88b5425",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4088,7 +4377,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-default-6b204d94623b3df4370c": {
+						"default-test-route-default-0-lb-c466dfd42416a88b5425": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4150,19 +4439,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4195,7 +4484,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"myns-foo": {
+						"myns-foo-d809e81d5ccf461aab60": {
 							MinVersion: "VersionTLS12",
 							CipherSuites: []string{
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -4225,19 +4514,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "myns-foo",
+								Options: "myns-foo-d809e81d5ccf461aab60",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4269,7 +4558,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							CipherSuites: []string{
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -4298,19 +4587,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-foo",
+								Options: "default-foo-ce203de49508e8c70b06",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4342,7 +4631,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							ALPNProtocols: []string{
 								"h2",
@@ -4375,19 +4664,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-unknown",
+								Options: "default-unknown-d612e69053993bc351c4",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4420,7 +4709,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-foo": {
+						"default-foo-ce203de49508e8c70b06": {
 							MinVersion: "VersionTLS12",
 							ALPNProtocols: []string{
 								"h2",
@@ -4453,19 +4742,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "unknown-foo",
+								Options: "unknown-foo-60df693b64851d2ececa",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4504,9 +4793,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -4514,7 +4803,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4553,16 +4842,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4601,16 +4890,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4650,16 +4939,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4699,16 +4988,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4748,16 +5037,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4797,17 +5086,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-basicauth": {
+						"default-basicauth-4fc831a329fbed27112a": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							},
 						},
-						"default-digestauth": {
+						"default-digestauth-b0bf024b07b03f2233b6": {
 							DigestAuth: &dynamic.DigestAuth{
 								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							},
 						},
-						"default-forwardauth": {
+						"default-forwardauth-e693d333fa61d6830f14": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address:     "test.com",
 								MaxBodySize: new(int64(-1)),
@@ -4843,7 +5132,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-test-secret": {
+						"default-test-secret-23fb605c17af75d7b87e": {
 							Plugin: map[string]dynamic.PluginConf{
 								"test-secret": map[string]any{
 									"user":   "admin",
@@ -4875,7 +5164,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-test-secret": {
+						"default-test-secret-23fb605c17af75d7b87e": {
 							Plugin: map[string]dynamic.PluginConf{
 								"test-secret": map[string]any{
 									"secret_0": map[string]any{
@@ -4913,7 +5202,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-test-secret": {
+						"default-test-secret-23fb605c17af75d7b87e": {
 							Plugin: map[string]dynamic.PluginConf{
 								"test-secret": map[string]any{
 									"secret": []any{"secret_data1", "secret_data2"},
@@ -4944,7 +5233,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-test-secret": {
+						"default-test-secret-23fb605c17af75d7b87e": {
 							Plugin: map[string]dynamic.PluginConf{
 								"test-secret": map[string]any{
 									"users": []any{
@@ -5008,20 +5297,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-errorpage": {
+						"default-errorpage-28845717dbca24eb7eb9": {
 							Errors: &dynamic.ErrorPage{
 								Status: []string{"404", "500"},
 								StatusRewrites: map[string]int{
 									"404": 200,
 								},
-								Service:             "default-errorpage-errorpage-service",
+								Service:             "default-errorpage-28845717dbca24eb7eb9-errorpage-service",
 								Query:               "query",
 								ErrorRequestHeaders: []string{"X-Foo-Bar", "X-Bar-Foo"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-errorpage-errorpage-service": {
+						"default-errorpage-28845717dbca24eb7eb9-errorpage-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5061,26 +5350,26 @@ func TestLoadIngressRoutes(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-errorpage": {
+						"default-errorpage-28845717dbca24eb7eb9": {
 							Errors: &dynamic.ErrorPage{
 								Status:  []string{"404", "500"},
-								Service: "default-errorpage-wrr",
+								Service: "default-errorpage-wrr-9e4f6c31dcb0d29bd174",
 								Query:   "query",
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-errorpage-wrr": {
+						"default-errorpage-wrr-9e4f6c31dcb0d29bd174": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-errorpage-wrr-wrr-0-default-whoami-80-850a48734a03d7fc586d",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-errorpage-wrr-wrr-0-default-whoami-80-850a48734a03d7fc586d": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5118,16 +5407,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5174,9 +5463,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -5184,7 +5473,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5236,9 +5525,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -5246,7 +5535,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5287,16 +5576,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
-						"default-test-route-default-6b204d94623b3df4370c": {
+						"default-test-route-default-0-ec5a13bc121647a6c17c": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-default-6b204d94623b3df4370c",
+							Service:     "default-test-route-default-0-lb-c466dfd42416a88b5425",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -5304,7 +5593,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5321,7 +5610,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-test-route-default-6b204d94623b3df4370c": {
+						"default-test-route-default-0-lb-c466dfd42416a88b5425": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5362,15 +5651,15 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5406,15 +5695,15 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5450,15 +5739,15 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5517,7 +5806,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"foo-test": {
+						"foo-test-0bbbd89c878c4df00916": {
 							ServerName:         "test",
 							InsecureSkipVerify: true,
 							RootCAs:            []types.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS", "TESTROOTCASFROMCONFIGMAP", "TESTROOTCAS6"},
@@ -5547,7 +5836,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								TrustDomain: "spiffe://lol",
 							},
 						},
-						"default-test": {
+						"default-test-e6d80538b02592c965d8": {
 							ServerName: "test",
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(30 * time.Second),
@@ -5557,15 +5846,15 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-external-svc-with-https-443": {
+						"default-test-route-0-wrr-0-default-external-svc-with-https-443-ea033d96506ad8eeed18": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5577,10 +5866,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
-								ServersTransport: "default-test",
+								ServersTransport: "default-test-e6d80538b02592c965d8",
 							},
 						},
-						"default-whoamitls-443": {
+						"default-test-route-0-wrr-1-default-whoamitls-443-883d100359bb28821f1a": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5595,18 +5884,18 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
-								ServersTransport: "default-default-test",
+								ServersTransport: "default-default-test-592f4763608d32419a4e",
 							},
 						},
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-external-svc-with-https-443",
+										Name:   "default-test-route-0-wrr-0-default-external-svc-with-https-443-ea033d96506ad8eeed18",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoamitls-443",
+										Name:   "default-test-route-0-wrr-1-default-whoamitls-443-883d100359bb28821f1a",
 										Weight: new(1),
 									},
 								},
@@ -5657,16 +5946,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
 								PassHostHeader: new(true),
@@ -5698,16 +5987,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
 								PassHostHeader: new(true),
@@ -5739,16 +6028,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
 								PassHostHeader: new(true),
@@ -5780,16 +6069,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5837,16 +6126,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -5892,37 +6181,37 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Middlewares: []string{"default-test-errorpage"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Middlewares: []string{"default-test-errorpage-e1e939ab3bb71fe16185"},
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-test-errorpage": {
+						"default-test-errorpage-e1e939ab3bb71fe16185": {
 							Errors: &dynamic.ErrorPage{
-								Service: "default-test-errorpage-errorpage-service",
+								Service: "default-test-errorpage-e1e939ab3bb71fe16185-errorpage-service",
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-test-weighted",
+										Name:   "default-test-weighted-4b1c2d77727f0755b988",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-test-mirror",
+										Name:   "default-test-mirror-52e846c6f16eac7e8401",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-test-errorpage-errorpage-service": {
+						"default-test-errorpage-e1e939ab3bb71fe16185-errorpage-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
 								PassHostHeader: new(true),
@@ -5931,30 +6220,48 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-test-weighted": {
+						"default-test-weighted-4b1c2d77727f0755b988": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-without-endpointslice-endpoints-80",
+										Name:   "default-test-weighted-wrr-0-default-whoami-without-endpointslice-endpoints-80-1ee642fe7f69a60d28ad",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-test-mirror": {
+						"default-test-mirror-52e846c6f16eac7e8401": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami-without-endpointslice-endpoints-80",
+								Service: "default-test-mirror-mirroring-default-whoami-without-endpointslice-endpoints-80-11ddb80f93e043d1e2f8",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name: "default-whoami-without-endpointslice-endpoints-80",
+										Name: "default-test-mirror-mirror-0-default-whoami-without-endpointslice-endpoints-80-a3e214354aa7f5ca572b",
 									},
 									{
-										Name: "default-test-weighted",
+										Name: "default-test-weighted-4b1c2d77727f0755b988",
 									},
 								},
 							},
 						},
-						"default-whoami-without-endpointslice-endpoints-80": {
+						"default-test-weighted-wrr-0-default-whoami-without-endpointslice-endpoints-80-1ee642fe7f69a60d28ad": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-mirror-mirroring-default-whoami-without-endpointslice-endpoints-80-11ddb80f93e043d1e2f8": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-mirror-mirror-0-default-whoami-without-endpointslice-endpoints-80-a3e214354aa7f5ca572b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
 								PassHostHeader: new(true),
@@ -5986,48 +6293,48 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test2-route-840425136fbd5d85a4ad": {
+						"default-test2-route-1-d33442e90133f17a4b21": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-840425136fbd5d85a4ad",
+							Service:     "default-test2-route-1-wrr-ac56d989fd0c2ad035c3",
 							Rule:        "Host(`k8s-service`)",
 						},
-						"default-test2-route-4f06607bbc69f34a4db5": {
+						"default-test2-route-0-f5a7fc3c74a43f56b526": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-4f06607bbc69f34a4db5",
+							Service:     "default-test2-route-0-wrr-a5db881f770ecd0b4aaa",
 							Rule:        "Host(`traefik-service`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test2-route-840425136fbd5d85a4ad": {
+						"default-test2-route-1-wrr-ac56d989fd0c2ad035c3": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-test2-route-1-wrr-0-default-whoami-80-30ae93b7cfa6354042b0",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami2-8080",
+										Name:   "default-test2-route-1-wrr-1-default-whoami2-8080-1b3a9386a117598185d6",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-test2-route-4f06607bbc69f34a4db5": {
+						"default-test2-route-0-wrr-a5db881f770ecd0b4aaa": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-sticky",
+										Name:   "default-sticky-e228713921ed9e895e44",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-sticky-default",
+										Name:   "default-sticky-default-203685fbd3c56f5b3cc7",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-sticky": {
+						"default-sticky-e228713921ed9e895e44": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
@@ -6041,13 +6348,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami3-8443",
+										Name:   "default-sticky-wrr-0-default-whoami3-8443-5819c4ea33505f1a587b",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-sticky-default": {
+						"default-sticky-default-203685fbd3c56f5b3cc7": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
@@ -6061,13 +6368,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami3-8443",
+										Name:   "default-sticky-default-wrr-0-default-whoami3-8443-7542d84f8726b39492e9",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami2-8080": {
+						"default-test2-route-1-wrr-1-default-whoami2-8080-1b3a9386a117598185d6": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Sticky: &dynamic.Sticky{
@@ -6094,7 +6401,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-test2-route-1-wrr-0-default-whoami-80-30ae93b7cfa6354042b0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Sticky: &dynamic.Sticky{
@@ -6121,7 +6428,24 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami3-8443": {
+						"default-sticky-default-wrr-0-default-whoami3-8443-7542d84f8726b39492e9": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:8443",
+									},
+									{
+										URL: "http://10.10.0.8:8443",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-sticky-wrr-0-default-whoami3-8443-5819c4ea33505f1a587b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6160,19 +6484,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-parent-single-3c07cfffe8e5f876a01e": {
+						"default-parent-single-0-4753a8a36e885f2fe210": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`parent.example.com`)",
 						},
-						"default-child-single-2bba0a3de1b50b70a519": {
-							Service:    "default-child-single-2bba0a3de1b50b70a519",
+						"default-child-single-0-1b1d3113bada1db6053b": {
+							Service:    "default-child-single-0-lb-b0bb30b2190e9b07f9af",
 							Rule:       "Path(`/api`)",
-							ParentRefs: []string{"default-parent-single-3c07cfffe8e5f876a01e"},
+							ParentRefs: []string{"default-parent-single-0-4753a8a36e885f2fe210"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-child-single-2bba0a3de1b50b70a519": {
+						"default-child-single-0-lb-b0bb30b2190e9b07f9af": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6211,23 +6535,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-parent-multi-4aac0d541c2b669a2d5d": {
+						"default-parent-multi-0-18540b158e3c5e3841d3": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`api.example.com`) && PathPrefix(`/v1`)",
 						},
-						"default-parent-multi-0af1ca0a94f5b87a125e": {
+						"default-parent-multi-1-a73d2d848da56e75d84a": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`api.example.com`) && PathPrefix(`/v2`)",
 						},
-						"default-child-multi-routes-b0479051e6a353d66211": {
-							Service:    "default-child-multi-routes-b0479051e6a353d66211",
+						"default-child-multi-routes-0-50dd18d0dff916f8b6c7": {
+							Service:    "default-child-multi-routes-0-lb-16b798d34b52de0faee5",
 							Rule:       "Path(`/users`)",
-							ParentRefs: []string{"default-parent-multi-4aac0d541c2b669a2d5d", "default-parent-multi-0af1ca0a94f5b87a125e"},
+							ParentRefs: []string{"default-parent-multi-0-18540b158e3c5e3841d3", "default-parent-multi-1-a73d2d848da56e75d84a"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-child-multi-routes-b0479051e6a353d66211": {
+						"default-child-multi-routes-0-lb-16b798d34b52de0faee5": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6266,23 +6590,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-parent-a-629990b524bf9a1a8d27": {
+						"default-parent-a-0-8a221361b3450f77e26d": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`a.example.com`)",
 						},
-						"default-parent-b-add617f9b95cff009054": {
+						"default-parent-b-0-4081ea04cc4c45a81b05": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`b.example.com`)",
 						},
-						"default-child-multi-parents-8013b5025acddd1761d1": {
-							Service:    "default-child-multi-parents-8013b5025acddd1761d1",
+						"default-child-multi-parents-0-d7fcfffde5a3647b3e88": {
+							Service:    "default-child-multi-parents-0-lb-953363c4a23b0f862045",
 							Rule:       "Path(`/shared`)",
-							ParentRefs: []string{"default-parent-a-629990b524bf9a1a8d27", "default-parent-b-add617f9b95cff009054"},
+							ParentRefs: []string{"default-parent-a-0-8a221361b3450f77e26d", "default-parent-b-0-4081ea04cc4c45a81b05"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-child-multi-parents-8013b5025acddd1761d1": {
+						"default-child-multi-parents-0-lb-953363c4a23b0f862045": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6345,19 +6669,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"ns-a-parent-cross-74575ab54671a3ede28c": {
+						"ns-a-parent-cross-0-5ade07cc379127464652": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`cross.example.com`)",
 						},
-						"ns-b-child-cross-allowed-0bad04de665623bf2362": {
-							Service:    "ns-b-child-cross-allowed-0bad04de665623bf2362",
+						"ns-b-child-cross-allowed-0-002a2c170cff672f4ca8": {
+							Service:    "ns-b-child-cross-allowed-0-lb-fc7c12bfd4b67f97faba",
 							Rule:       "Path(`/cross`)",
-							ParentRefs: []string{"ns-a-parent-cross-74575ab54671a3ede28c"},
+							ParentRefs: []string{"ns-a-parent-cross-0-5ade07cc379127464652"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"ns-b-child-cross-allowed-0bad04de665623bf2362": {
+						"ns-b-child-cross-allowed-0-lb-fc7c12bfd4b67f97faba": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6397,7 +6721,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"ns-a-parent-cross-74575ab54671a3ede28c": {
+						"ns-a-parent-cross-0-5ade07cc379127464652": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`cross.example.com`)",
 						},
@@ -6425,19 +6749,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-parent-default-9b8ab283eeed3eb66561": {
+						"default-parent-default-0-d954bafeda6af6db07e0": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`default.example.com`)",
 						},
-						"default-child-same-9234eba1edcfbd8a7723": {
-							Service:    "default-child-same-9234eba1edcfbd8a7723",
+						"default-child-same-0-c36b00801bf4fea8f2e7": {
+							Service:    "default-child-same-0-lb-63a469cdf710093bb363",
 							Rule:       "Path(`/same`)",
-							ParentRefs: []string{"default-parent-default-9b8ab283eeed3eb66561"},
+							ParentRefs: []string{"default-parent-default-0-d954bafeda6af6db07e0"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-child-same-9234eba1edcfbd8a7723": {
+						"default-child-same-0-lb-63a469cdf710093bb363": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -6476,16 +6800,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-55869f6407935ccfa805": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"web"},
-							Service:     "default-test-route-55869f6407935ccfa805",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/leasttime`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-55869f6407935ccfa805": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyLeastTime,
 								Servers: []dynamic.Server{
@@ -6506,6 +6830,249 @@ func TestLoadIngressRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "routes referencing the same Kubernetes Service with different options, namespaces, or twice",
+			paths:               []string{"services.yml", "with_shared_kube_service.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-plain-0-61d05419e42137e08325": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-plain-0-wrr-ef2770a4da49ac554d36",
+							Rule:        "Host(`foo.com`)",
+						},
+						"default-test-route-mtls-0-92af783804e8785c8713": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-mtls-0-wrr-2245a22754736c16aef2",
+							Rule:        "Host(`bar.com`)",
+						},
+						"default-test-route-namespaces-0-ea1d4f64f8c8255ca532": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-namespaces-0-wrr-f3ae47cd9c9e11d10187",
+							Rule:        "Host(`baz.com`)",
+						},
+						"default-test-route-duplicate-0-6898409405858118881e": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-duplicate-0-wrr-322bf05328a17302a3fe",
+							Rule:        "Host(`qux.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-plain-0-wrr-ef2770a4da49ac554d36": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-plain-0-wrr-0-default-whoami-80-80f3f0d96676b5d6aabd",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-plain-0-wrr-1-default-whoami2-8080-21bb23bf82bc2deb07cb",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-test-route-mtls-0-wrr-2245a22754736c16aef2": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-mtls-0-wrr-0-default-whoami-80-3ba88bba361a35456918",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-mtls-0-wrr-1-default-whoami2-8080-29d4d7ae3b46d21abac0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						// The two routes reference the same Kubernetes Service, but only one of them
+						// sets a serversTransport: the generated services must not be merged.
+						"default-test-route-plain-0-wrr-0-default-whoami-80-80f3f0d96676b5d6aabd": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-mtls-0-wrr-0-default-whoami-80-3ba88bba361a35456918": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								ServersTransport: "default-mtls-ac0dc9093199ac1d191e",
+							},
+						},
+						"default-test-route-plain-0-wrr-1-default-whoami2-8080-21bb23bf82bc2deb07cb": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-mtls-0-wrr-1-default-whoami2-8080-29d4d7ae3b46d21abac0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-namespaces-0-wrr-f3ae47cd9c9e11d10187": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-namespaces-0-wrr-0-default-whoami-80-48cbb7d9deef59894ff1",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-namespaces-0-wrr-1-cross-ns-whoami-80-cad2fc128a1f96830ba6",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						// The same Kubernetes Service name and port in two namespaces.
+						"default-test-route-namespaces-0-wrr-0-default-whoami-80-48cbb7d9deef59894ff1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-namespaces-0-wrr-1-cross-ns-whoami-80-cad2fc128a1f96830ba6": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.10:80",
+									},
+									{
+										URL: "http://10.10.0.11:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-duplicate-0-wrr-322bf05328a17302a3fe": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-route-duplicate-0-wrr-0-default-whoami-80-622f5a999cc8069e8289",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-test-route-duplicate-0-wrr-1-default-whoami-80-1b4ce17e91b1391856ef",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						// The same Kubernetes Service referenced twice by the same parent.
+						"default-test-route-duplicate-0-wrr-0-default-whoami-80-622f5a999cc8069e8289": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-test-route-duplicate-0-wrr-1-default-whoami-80-1b4ce17e91b1391856ef": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(false),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
 			},
 		},
 	}
@@ -6563,16 +7130,16 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 		},
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers: map[string]*dynamic.Router{
-				"default-test-route-6b204d94623b3df4370c": {
+				"default-test-route-0-bfddf9467dc588639f54": {
 					EntryPoints: []string{"foo"},
-					Service:     "default-test-route-6b204d94623b3df4370c",
+					Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 					Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 					Priority:    12,
 				},
 			},
 			Middlewares: map[string]*dynamic.Middleware{},
 			Services: map[string]*dynamic.Service{
-				"default-test-route-6b204d94623b3df4370c": {
+				"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Strategy:       dynamic.BalancerStrategyWRR,
 						PassHostHeader: new(true),
@@ -6621,7 +7188,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	p := Provider{}
 	conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-	service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
+	service, ok := conf.HTTP.Services["default-test-route-0-lb-611f3105c4cbbc8cca31"]
 	require.True(t, ok)
 	require.NotNil(t, service)
 	require.NotNil(t, service.LoadBalancer)
@@ -6667,13 +7234,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6709,13 +7276,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6751,13 +7318,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6793,13 +7360,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6834,17 +7401,17 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
-						"default-test.route-1": {
+						"default-test-route-1-73e4808ba7263def92b2": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-1",
+							Service:     "default-test-route-1-lb-1109d6313f2dbb16a8e6",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6856,7 +7423,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-1": {
+						"default-test-route-1-lb-1109d6313f2dbb16a8e6": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6891,27 +7458,27 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.UDPWeightedRoundRobin{
 								Services: []dynamic.UDPWRRService{
 									{
-										Name:   "default-test.route-0-whoamiudp-8000",
+										Name:   "default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test.route-0-whoamiudp2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c",
 										Weight: new(3),
 									},
 								},
 							},
 						},
-						"default-test.route-0-whoamiudp-8000": {
+						"default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6923,7 +7490,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-0-whoamiudp2-8080": {
+						"default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6958,31 +7525,31 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-wrr-a8d5191cb9281af18d2d",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-wrr-a8d5191cb9281af18d2d": {
 							Weighted: &dynamic.UDPWeightedRoundRobin{
 								Services: []dynamic.UDPWRRService{
 									{
-										Name:   "default-test.route-0-whoamiudp-8000",
+										Name:   "default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568",
 										Weight: new(2),
 									},
 									{
-										Name:   "default-test.route-0-whoamiudp2-8080",
+										Name:   "default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c",
 										Weight: new(3),
 									},
 									{
-										Name:   "default-test.route-0-whoamiudp3-8083",
+										Name:   "default-test-route-0-wrr-2-ns3-whoamiudp3-8083-723c477c198e302dac8d",
 										Weight: new(4),
 									},
 								},
 							},
 						},
-						"default-test.route-0-whoamiudp-8000": {
+						"default-test-route-0-wrr-0-default-whoamiudp-8000-9edd68bfc44e240a3568": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -6994,7 +7561,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-0-whoamiudp2-8080": {
+						"default-test-route-0-wrr-1-default-whoamiudp2-8080-348c1ca838c04e27b11c": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -7006,7 +7573,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-0-whoamiudp3-8083": {
+						"default-test-route-0-wrr-2-ns3-whoamiudp3-8083-723c477c198e302dac8d": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -7041,13 +7608,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -7079,13 +7646,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -7118,9 +7685,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{},
@@ -7171,9 +7738,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{},
@@ -7200,13 +7767,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 						},
 					},
@@ -7233,13 +7800,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 						},
 					},
@@ -7266,13 +7833,13 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 						},
 					},
@@ -7675,33 +8242,33 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+						"default-test-crossnamespace-route-1-262ab643fa6e14e5f5e8": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-crossnamespace-route-9313b71dbe6a649d5049",
+							Service:     "default-test-crossnamespace-route-1-lb-0ce7ef3cc5e5221ad93f",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bir`)",
 							Priority:    12,
-							Middlewares: []string{"default-test-errorpage"},
+							Middlewares: []string{"default-test-errorpage-e1e939ab3bb71fe16185"},
 						},
-						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
+						"default-test-crossnamespace-route-3-777508f24b1bbecc80f3": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-crossnamespace-route-4932ffbbcd99474df323",
+							Service:     "default-test-crossnamespace-route-3-lb-37e219f6ea3be495ffa7",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/chain`)",
 							Priority:    12,
 							Middlewares: []string{
-								"default-test-chain",
-								"default-test-chain-cross-provider",
+								"default-test-chain-88cb3a598b2461561eca",
+								"default-test-chain-cross-provider-1d4a50816120e573b00c",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"cross-ns-stripprefix": {
+						"cross-ns-stripprefix-6977af38b2936444fec6": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/stripit"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+						"default-test-crossnamespace-route-1-lb-0ce7ef3cc5e5221ad93f": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7718,7 +8285,7 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
+						"default-test-crossnamespace-route-3-lb-37e219f6ea3be495ffa7": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7758,66 +8325,66 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-crossnamespace-route-6b204d94623b3df4370c": {
+						"default-test-crossnamespace-route-0-30e803916cecd24023a7": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-crossnamespace-route-6b204d94623b3df4370c",
+							Service:     "default-test-crossnamespace-route-0-lb-7c97e893920902f4c4fb",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							Middlewares: []string{
-								"cross-ns-stripprefix",
+								"cross-ns-stripprefix-6977af38b2936444fec6",
 							},
 						},
-						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+						"default-test-crossnamespace-route-1-262ab643fa6e14e5f5e8": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-crossnamespace-route-9313b71dbe6a649d5049",
+							Service:     "default-test-crossnamespace-route-1-lb-0ce7ef3cc5e5221ad93f",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bir`)",
 							Priority:    12,
-							Middlewares: []string{"default-test-errorpage"},
+							Middlewares: []string{"default-test-errorpage-e1e939ab3bb71fe16185"},
 						},
-						"default-test-crossnamespace-route-a1963878aac7331b7950": {
+						"default-test-crossnamespace-route-2-34212371bf9022fddc6d": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-crossnamespace-route-a1963878aac7331b7950",
+							Service:     "default-test-crossnamespace-route-2-lb-ebbed47881305fcd1030",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bur`)",
 							Priority:    12,
 							Middlewares: []string{"cross-ns-stripprefix@kubernetescrd"},
 						},
-						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
+						"default-test-crossnamespace-route-3-777508f24b1bbecc80f3": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-crossnamespace-route-4932ffbbcd99474df323",
+							Service:     "default-test-crossnamespace-route-3-lb-37e219f6ea3be495ffa7",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/chain`)",
 							Priority:    12,
 							Middlewares: []string{
-								"default-test-chain",
-								"default-test-chain-cross-provider",
+								"default-test-chain-88cb3a598b2461561eca",
+								"default-test-chain-cross-provider-1d4a50816120e573b00c",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"cross-ns-stripprefix": {
+						"cross-ns-stripprefix-6977af38b2936444fec6": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/stripit"},
 							},
 						},
-						"default-test-errorpage": {
+						"default-test-errorpage-e1e939ab3bb71fe16185": {
 							Errors: &dynamic.ErrorPage{
 								Status:  []string{"500-599"},
-								Service: "default-test-errorpage-errorpage-service",
+								Service: "default-test-errorpage-e1e939ab3bb71fe16185-errorpage-service",
 								Query:   "/{status}.html",
 							},
 						},
-						"default-test-chain": {
+						"default-test-chain-88cb3a598b2461561eca": {
 							Chain: &dynamic.Chain{
-								Middlewares: []string{"cross-ns-stripprefix"},
+								Middlewares: []string{"cross-ns-stripprefix-6977af38b2936444fec6"},
 							},
 						},
-						"default-test-chain-cross-provider": {
+						"default-test-chain-cross-provider-1d4a50816120e573b00c": {
 							Chain: &dynamic.Chain{
 								Middlewares: []string{"other-middleware@kubernetescrd"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test-crossnamespace-route-6b204d94623b3df4370c": {
+						"default-test-crossnamespace-route-0-lb-7c97e893920902f4c4fb": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7834,7 +8401,7 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+						"default-test-crossnamespace-route-1-lb-0ce7ef3cc5e5221ad93f": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7851,7 +8418,7 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-test-errorpage-errorpage-service": {
+						"default-test-errorpage-e1e939ab3bb71fe16185-errorpage-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7868,7 +8435,7 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-test-crossnamespace-route-a1963878aac7331b7950": {
+						"default-test-crossnamespace-route-2-lb-ebbed47881305fcd1030": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7885,7 +8452,7 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-test-crossnamespace-route-4932ffbbcd99474df323": {
+						"default-test-crossnamespace-route-3-lb-37e219f6ea3be495ffa7": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7925,47 +8492,47 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-cross-ns-route-6b204d94623b3df4370c": {
+						"default-cross-ns-route-0-43e82ad3b9d755894bb8": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-cross-ns-route-6b204d94623b3df4370c",
+							Service:     "default-cross-ns-route-0-wrr-98f7f5a30f2f29b81fa7",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
-						"default-cross-ns-route-1bc3efa892379bb93c6e": {
+						"default-cross-ns-route-1-0ed85e47bfdaf9c429a2": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-cross-ns-route-1bc3efa892379bb93c6e",
+							Service:     "default-cross-ns-route-1-lb-8bdc5a04b2a40bf59b5e",
 							Rule:        "Host(`bar.com`) && PathPrefix(`/foo`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-cross-ns-route-6b204d94623b3df4370c": {
+						"default-cross-ns-route-0-wrr-98f7f5a30f2f29b81fa7": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80",
+										Name:   "default-cross-ns-route-0-wrr-0-cross-ns-whoami-svc-80-6af2a4511c485b57a8e2",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-tr-svc-wrr1",
+										Name:   "default-tr-svc-wrr1-65f91db84ed92e091532",
 										Weight: new(1),
 									},
 									{
-										Name:   "cross-ns-tr-svc-wrr2",
+										Name:   "cross-ns-tr-svc-wrr2-35846c0f6a99ca063e5c",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-tr-svc-mirror1",
+										Name:   "default-tr-svc-mirror1-8130c8b7f004b659eeb3",
 										Weight: new(1),
 									},
 									{
-										Name:   "cross-ns-tr-svc-mirror2",
+										Name:   "cross-ns-tr-svc-mirror2-3a1eebdec12b22b77a0f",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-cross-ns-route-1bc3efa892379bb93c6e": {
+						"default-cross-ns-route-1-lb-8bdc5a04b2a40bf59b5e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7983,7 +8550,7 @@ func TestCrossNamespace(t *testing.T) {
 								ServersTransport: "foo-test@kubernetescrd",
 							},
 						},
-						"cross-ns-whoami-svc-80": {
+						"cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8000,49 +8567,134 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-tr-svc-wrr1": {
+						"default-cross-ns-route-0-wrr-0-cross-ns-whoami-svc-80-6af2a4511c485b57a8e2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-tr-svc-mirror1-mirror-0-cross-ns-whoami-svc-80-19dd5305d098a310be0c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-tr-svc-wrr1-wrr-0-cross-ns-whoami-svc-80-8cc813cb7c586442dbf1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-tr-svc-wrr1-65f91db84ed92e091532": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80",
+										Name:   "default-tr-svc-wrr1-wrr-0-cross-ns-whoami-svc-80-8cc813cb7c586442dbf1",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-tr-svc-wrr2": {
+						"cross-ns-tr-svc-wrr2-35846c0f6a99ca063e5c": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80",
+										Name:   "cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-tr-svc-mirror1": {
+						"default-tr-svc-mirror1-8130c8b7f004b659eeb3": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "default-whoami-80",
+								Service: "default-tr-svc-mirror1-mirroring-default-whoami-80-1bc91306c38dde55119a",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name:    "cross-ns-whoami-svc-80",
+										Name:    "default-tr-svc-mirror1-mirror-0-cross-ns-whoami-svc-80-19dd5305d098a310be0c",
 										Percent: 20,
 									},
 								},
 							},
 						},
-						"cross-ns-tr-svc-mirror2": {
+						"cross-ns-tr-svc-mirror2-3a1eebdec12b22b77a0f": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "cross-ns-whoami-svc-80",
+								Service: "cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name:    "cross-ns-whoami-svc-80",
+										Name:    "cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32",
 										Percent: 20,
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-tr-svc-mirror1-mirroring-default-whoami-80-1bc91306c38dde55119a": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8083,17 +8735,17 @@ func TestCrossNamespace(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"cross-ns-tr-svc-wrr2": {
+						"cross-ns-tr-svc-wrr2-35846c0f6a99ca063e5c": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80",
+										Name:   "cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-whoami-svc-80": {
+						"cross-ns-tr-svc-wrr2-wrr-0-cross-ns-whoami-svc-80-7dd406c2f895c8366975": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8110,18 +8762,52 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"cross-ns-tr-svc-mirror2": {
+						"cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"cross-ns-tr-svc-mirror2-3a1eebdec12b22b77a0f": {
 							Mirroring: &dynamic.Mirroring{
-								Service: "cross-ns-whoami-svc-80",
+								Service: "cross-ns-tr-svc-mirror2-mirroring-cross-ns-whoami-svc-80-64a4c9b9339d949a7d72",
 								Mirrors: []dynamic.MirrorService{
 									{
-										Name:    "cross-ns-whoami-svc-80",
+										Name:    "cross-ns-tr-svc-mirror2-mirror-0-cross-ns-whoami-svc-80-7efda2788fa67c88ec32",
 										Percent: 20,
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-tr-svc-mirror1-mirroring-default-whoami-80-1bc91306c38dde55119a": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8161,16 +8847,16 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8190,7 +8876,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"cross-ns-st-cross-ns": {
+						"cross-ns-st-cross-ns-77710ecac094a47836bf": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:           30000000000,
 								ResponseHeaderTimeout: 0,
@@ -8224,7 +8910,7 @@ func TestCrossNamespace(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services:    map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"cross-ns-st-cross-ns": {
+						"cross-ns-st-cross-ns-77710ecac094a47836bf": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:           30000000000,
 								ResponseHeaderTimeout: 0,
@@ -8256,26 +8942,26 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "cross-ns-tr-svc",
+							Service:     "cross-ns-tr-svc-ea661fba252322e8fd8e",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"cross-ns-tr-svc": {
+						"cross-ns-tr-svc-b2116afd1555971d704d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80",
+										Name:   "cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-whoami-svc-80": {
+						"cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8316,17 +9002,17 @@ func TestCrossNamespace(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"cross-ns-tr-svc": {
+						"cross-ns-tr-svc-b2116afd1555971d704d": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "cross-ns-whoami-svc-80",
+										Name:   "cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"cross-ns-whoami-svc-80": {
+						"cross-ns-tr-svc-wrr-0-cross-ns-whoami-svc-80-8841556deb972a597a82": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8366,19 +9052,19 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6b204d94623b3df4370c",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cross-ns-tls-options-cn",
+								Options: "cross-ns-tls-options-cn-843f4bfed2e94b4d9396",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8400,7 +9086,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": {
+						"cross-ns-tls-options-cn-843f4bfed2e94b4d9396": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 							CipherSuites: []string{
@@ -8442,7 +9128,7 @@ func TestCrossNamespace(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6b204d94623b3df4370c": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8464,7 +9150,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": {
+						"cross-ns-tls-options-cn-843f4bfed2e94b4d9396": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 							CipherSuites: []string{
@@ -8497,27 +9183,27 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipallowlist"},
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
+							Middlewares: []string{"default-ipallowlist-8054e4c269217e4851c6"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipallowlist": {
+						"default-ipallowlist-8054e4c269217e4851c6": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"cross-ns-ipallowlist": {
+						"cross-ns-ipallowlist-796441bd1f2f6ce6d7ab": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8552,33 +9238,33 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipallowlist"},
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
+							Middlewares: []string{"default-ipallowlist-8054e4c269217e4851c6"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
-						"default-test.route-f44ce589164e656d231c": {
+						"default-test-route-1-73e4808ba7263def92b2": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-f44ce589164e656d231c",
-							Middlewares: []string{"cross-ns-ipallowlist"},
+							Service:     "default-test-route-1-lb-1109d6313f2dbb16a8e6",
+							Middlewares: []string{"cross-ns-ipallowlist-796441bd1f2f6ce6d7ab"},
 							Rule:        "HostSNI(`bar.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipallowlist": {
+						"default-ipallowlist-8054e4c269217e4851c6": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"cross-ns-ipallowlist": {
+						"cross-ns-ipallowlist-796441bd1f2f6ce6d7ab": {
 							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-f44ce589164e656d231c": {
+						"default-test-route-1-lb-1109d6313f2dbb16a8e6": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8590,7 +9276,7 @@ func TestCrossNamespace(t *testing.T) {
 								},
 							},
 						},
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8631,15 +9317,15 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8668,9 +9354,9 @@ func TestCrossNamespace(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
@@ -8698,16 +9384,16 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8722,7 +9408,7 @@ func TestCrossNamespace(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
-						"cross-ns-st-cross-ns": {
+						"cross-ns-st-cross-ns-77710ecac094a47836bf": {
 							DialTimeout:      ptypes.Duration(30 * time.Second),
 							DialKeepAlive:    0,
 							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
@@ -8749,9 +9435,9 @@ func TestCrossNamespace(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 							Rule:        "HostSNI(`foo.com`)",
 							Priority:    12,
 						},
@@ -8759,7 +9445,7 @@ func TestCrossNamespace(t *testing.T) {
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services:    map[string]*dynamic.TCPService{},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
-						"cross-ns-st-cross-ns": {
+						"cross-ns-st-cross-ns-77710ecac094a47836bf": {
 							DialTimeout:      30000000000,
 							DialKeepAlive:    0,
 							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
@@ -8792,18 +9478,18 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
-								Options: "cross-ns-tls-options-cn",
+								Options: "cross-ns-tls-options-cn-843f4bfed2e94b4d9396",
 							},
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8820,7 +9506,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": {
+						"cross-ns-tls-options-cn-843f4bfed2e94b4d9396": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 							CipherSuites: []string{
@@ -8862,7 +9548,7 @@ func TestCrossNamespace(t *testing.T) {
 					Routers:     map[string]*dynamic.TCPRouter{},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -8879,7 +9565,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": {
+						"cross-ns-tls-options-cn-843f4bfed2e94b4d9396": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 							CipherSuites: []string{
@@ -8909,13 +9595,13 @@ func TestCrossNamespace(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -8951,9 +9637,9 @@ func TestCrossNamespace(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{},
@@ -9040,7 +9726,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 		{
 			desc:                    "nil: cross-provider middleware refs are accepted (backward compatible)",
 			crossProviderNamespaces: nil,
-			wantMiddlewares:         []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
+			wantMiddlewares:         []string{"default-stripprefix-a1d92c4f7c7ec6eb4634", "foo-addprefix-727ab48a4ad9f4b63353", "basicauth@file", "redirect@file"},
 		},
 		{
 			desc:                    "empty list: cross-provider middleware refs are rejected, IngressRoute is dropped",
@@ -9050,7 +9736,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 		{
 			desc:                    "namespace allowed: cross-provider middleware refs are accepted",
 			crossProviderNamespaces: []string{"default"},
-			wantMiddlewares:         []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
+			wantMiddlewares:         []string{"default-stripprefix-a1d92c4f7c7ec6eb4634", "foo-addprefix-727ab48a4ad9f4b63353", "basicauth@file", "redirect@file"},
 		},
 		{
 			desc:                    "namespace not allowed: cross-provider middleware refs are rejected, IngressRoute is dropped",
@@ -9087,7 +9773,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-			router, ok := conf.HTTP.Routers["default-test2-route-23c7f4c450289ee29016"]
+			router, ok := conf.HTTP.Routers["default-test2-route-0-f5a7fc3c74a43f56b526"]
 			if test.wantRouterDropped {
 				assert.False(t, ok)
 				return
@@ -9174,8 +9860,8 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-			_, mirrorOK := conf.HTTP.Services["foo-mirror-cp"]
-			_, weightedOK := conf.HTTP.Services["bar-weighted-cp"]
+			_, mirrorOK := conf.HTTP.Services["foo-mirror-cp-b9e97b251f2755ad29b2"]
+			_, weightedOK := conf.HTTP.Services["bar-weighted-cp-e6f8ce202c6b7378f628"]
 
 			assert.Equal(t, test.wantMirrorService, mirrorOK)
 			assert.Equal(t, test.wantWeightedService, weightedOK)
@@ -9239,7 +9925,7 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-			router, ok := conf.HTTP.Routers["default-test-route-6b204d94623b3df4370c"]
+			router, ok := conf.HTTP.Routers["default-test-route-0-bfddf9467dc588639f54"]
 			if test.wantRouterDropped {
 				assert.False(t, ok)
 				return
@@ -9308,7 +9994,7 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-			router, ok := conf.TCP.Routers["default-test.route-fdd3e9338e47a45efefc"]
+			router, ok := conf.TCP.Routers["default-test-route-0-bfddf9467dc588639f54"]
 			if test.wantRouterDropped {
 				assert.False(t, ok)
 				return
@@ -9377,7 +10063,7 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-			service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
+			service, ok := conf.HTTP.Services["default-test-route-0-lb-611f3105c4cbbc8cca31"]
 			if test.wantServiceDropped {
 				assert.False(t, ok)
 				return
@@ -9446,7 +10132,7 @@ func TestCrossProviderNamespaces_TCPServersTransport(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 
-			service, ok := conf.TCP.Services["default-test.route-fdd3e9338e47a45efefc"]
+			service, ok := conf.TCP.Services["default-test-route-0-lb-611f3105c4cbbc8cca31"]
 			if test.wantServiceDropped {
 				assert.False(t, ok)
 				return
@@ -9507,16 +10193,16 @@ func TestExternalNameService(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -9575,15 +10261,15 @@ func TestExternalNameService(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -9610,9 +10296,9 @@ func TestExternalNameService(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
@@ -9636,13 +10322,13 @@ func TestExternalNameService(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -9676,9 +10362,9 @@ func TestExternalNameService(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{},
@@ -9775,16 +10461,16 @@ func TestNativeLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
@@ -9818,15 +10504,15 @@ func TestNativeLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -9847,13 +10533,13 @@ func TestNativeLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -9957,16 +10643,16 @@ func TestNodePortLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
@@ -10000,15 +10686,15 @@ func TestNodePortLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -10029,13 +10715,13 @@ func TestNodePortLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -10099,9 +10785,9 @@ func TestNodePortLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
@@ -10124,9 +10810,9 @@ func TestNodePortLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-bfddf9467dc588639f54",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{},
@@ -10280,7 +10966,7 @@ func TestFillExtensionBuilderRegistry(t *testing.T) {
 
 			if err == nil {
 				assert.Nil(t, conf)
-				assert.Equal(t, "default-my-middleware@kubernetescrd", name)
+				assert.Equal(t, "default-my-middleware-d81541a12f73cb5dbd86@kubernetescrd", name)
 			}
 
 			backendFunc, ok := r.groupKindBackendFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["TraefikService"]
@@ -10291,7 +10977,7 @@ func TestFillExtensionBuilderRegistry(t *testing.T) {
 
 			if err == nil {
 				assert.Nil(t, svc)
-				assert.Equal(t, "default-my-service@kubernetescrd", name)
+				assert.Equal(t, "default-my-service-5734ab168fd0d22edb04@kubernetescrd", name)
 			}
 		})
 	}
@@ -10401,16 +11087,16 @@ func TestGlobalNativeLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 					Routers: map[string]*dynamic.Router{
-						"default-global-native-lb-6f97418635c7e18853da": {
+						"default-global-native-lb-0-c7017dbf869e86fd74df": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-global-native-lb-6f97418635c7e18853da",
+							Service:     "default-global-native-lb-0-lb-f96ce723008c72404a3b",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-global-native-lb-6f97418635c7e18853da": {
+						"default-global-native-lb-0-lb-f96ce723008c72404a3b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
@@ -10445,15 +11131,15 @@ func TestGlobalNativeLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-native-disabled-6f97418635c7e18853da": {
-							Service:  "default-test-route-native-disabled-6f97418635c7e18853da",
+						"default-test-route-native-disabled-0-d6af44a15afcb6558d38": {
+							Service:  "default-test-route-native-disabled-0-lb-7bbd9079b6681868969b",
 							Rule:     "Host(`foo.com`)",
 							Priority: 0,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-native-disabled-6f97418635c7e18853da": {
+						"default-test-route-native-disabled-0-lb-7bbd9079b6681868969b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
@@ -10490,16 +11176,16 @@ func TestGlobalNativeLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 					Routers: map[string]*dynamic.Router{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test-route-6f97418635c7e18853da",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "Host(`foo.com`)",
 							Priority:    0,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-test-route-6f97418635c7e18853da": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
@@ -10534,15 +11220,15 @@ func TestGlobalNativeLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-global-native-lb-fdd3e9338e47a45efefc": {
+						"default-global-native-lb-0-c7017dbf869e86fd74df": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-global-native-lb-fdd3e9338e47a45efefc",
+							Service:     "default-global-native-lb-0-lb-f96ce723008c72404a3b",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-global-native-lb-fdd3e9338e47a45efefc": {
+						"default-global-native-lb-0-lb-f96ce723008c72404a3b": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -10575,14 +11261,14 @@ func TestGlobalNativeLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-tcp.route.native-disabled-fdd3e9338e47a45efefc": {
-							Service: "default-tcp.route.native-disabled-fdd3e9338e47a45efefc",
+						"default-tcp-route-native-disabled-0-2b41ebbf5fe24604f9ac": {
+							Service: "default-tcp-route-native-disabled-0-lb-5b12f849c5795a51b7e4",
 							Rule:    "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-tcp.route.native-disabled-fdd3e9338e47a45efefc": {
+						"default-tcp-route-native-disabled-0-lb-5b12f849c5795a51b7e4": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -10618,15 +11304,15 @@ func TestGlobalNativeLB(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-test.route-fdd3e9338e47a45efefc": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -10647,13 +11333,13 @@ func TestGlobalNativeLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-test.route-0": {
+						"default-test-route-0-bfddf9467dc588639f54": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-test.route-0",
+							Service:     "default-test-route-0-lb-611f3105c4cbbc8cca31",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-test.route-0": {
+						"default-test-route-0-lb-611f3105c4cbbc8cca31": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -10687,13 +11373,13 @@ func TestGlobalNativeLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-global-native-lb-0": {
+						"default-global-native-lb-0-c7017dbf869e86fd74df": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-global-native-lb-0",
+							Service:     "default-global-native-lb-0-lb-f96ce723008c72404a3b",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-global-native-lb-0": {
+						"default-global-native-lb-0-lb-f96ce723008c72404a3b": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
@@ -10727,12 +11413,12 @@ func TestGlobalNativeLB(t *testing.T) {
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"default-udp.route.native-disabled-0": {
-							Service: "default-udp.route.native-disabled-0",
+						"default-udp-route-native-disabled-0-74ffa6894d902ac9a2d7": {
+							Service: "default-udp-route-native-disabled-0-lb-a91f9683f8d7d811914f",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"default-udp.route.native-disabled-0": {
+						"default-udp-route-native-disabled-0-lb-a91f9683f8d7d811914f": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
