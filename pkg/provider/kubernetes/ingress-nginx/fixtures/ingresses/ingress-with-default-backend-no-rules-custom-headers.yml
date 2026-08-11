@@ -1,0 +1,25 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-default-backend-no-rules-custom-headers
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/custom-headers: default/custom-headers-configmap
+
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: whoami
+      port:
+        number: 80
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: custom-headers-configmap
+  namespace: default
+data:
+  X-Custom-Header: "some-random-string"
