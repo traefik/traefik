@@ -3802,12 +3802,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-failover1-bbf02e6b5e14b0c68b06": {
 							Failover: &dynamic.Failover{
-								Service:  "default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e",
-								Fallback: "default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31",
+								Service:  "default-failover1-failover-default-whoami5-8080-9e266d321dae55ebf59b",
+								Fallback: "default-failover1-fallback-default-whoami4-8080-5d4b7fb24da2448cfbd0",
 								Errors:   &dynamic.FailoverError{},
 							},
 						},
-						"default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31": {
+						"default-failover1-fallback-default-whoami4-8080-5d4b7fb24da2448cfbd0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3824,7 +3824,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e": {
+						"default-failover1-failover-default-whoami5-8080-9e266d321dae55ebf59b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3966,15 +3966,15 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-failover1-bbf02e6b5e14b0c68b06": {
 							Failover: &dynamic.Failover{
-								Service:  "default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e",
-								Fallback: "default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31",
+								Service:  "default-failover1-failover-default-whoami5-8080-9e266d321dae55ebf59b",
+								Fallback: "default-failover1-fallback-default-whoami4-8080-5d4b7fb24da2448cfbd0",
 								Errors: &dynamic.FailoverError{
 									Status:              []string{"500-504", "404"},
 									MaxRequestBodyBytes: new(int64(1048576)),
 								},
 							},
 						},
-						"default-failover1-fallback-default-failover1-8080-5445add638efd47b7c31": {
+						"default-failover1-fallback-default-whoami4-8080-5d4b7fb24da2448cfbd0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3991,7 +3991,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-failover1-failover-default-failover1-8080-166801fcdb8a48fc850e": {
+						"default-failover1-failover-default-whoami5-8080-9e266d321dae55ebf59b": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
