@@ -164,7 +164,11 @@ func (p *Provider) buildRedirect(loc *location) {
 
 	regex := ".*"
 	if loc.UseRegex {
-		regex = `^https?://[^/]+` + loc.Path
+		path := loc.Path
+		if keep, _, ok := splitNegativeLookahead(path); ok {
+			path = keep
+		}
+		regex = `^https?://[^/]+` + path
 	}
 
 	loc.Redirect = &dynamic.RedirectRegex{
@@ -310,6 +314,12 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 	regex := loc.Path
 	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
 		regex = makeTrailingGroupOptional(loc.Path)
+	}
+
+	if loc.UseRegex {
+		if keep, _, ok := splitNegativeLookahead(regex); ok {
+			regex = keep
+		}
 	}
 
 	xfp := ""
