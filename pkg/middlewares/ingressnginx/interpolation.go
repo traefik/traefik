@@ -90,6 +90,16 @@ func variableValue(rawVariable, variable string, req *http.Request, responseHead
 
 	switch variable {
 	case host:
+		// If the upstream-vhost middleware saved the original request host to the
+		// context before overwriting req.Host, use that instead. This ensures that
+		// $host in auth-signin resolves to the original client-facing hostname and
+		// not the upstream-vhost target.
+		if originalHost, ok := OriginalHost(req.Context()); ok {
+			if hostOnly, _, err := net.SplitHostPort(originalHost); err == nil {
+				return strings.ToLower(hostOnly), nil
+			}
+			return strings.ToLower(originalHost), nil
+		}
 		// NGINX's $host returns the hostname without port, lowercased.
 		if hostOnly, _, err := net.SplitHostPort(req.Host); err == nil {
 			return strings.ToLower(hostOnly), nil
@@ -97,6 +107,10 @@ func variableValue(rawVariable, variable string, req *http.Request, responseHead
 		return strings.ToLower(req.Host), nil
 
 	case bestHTTPHost:
+		// Prefer the original request host from context when available.
+		if originalHost, ok := OriginalHost(req.Context()); ok {
+			return originalHost, nil
+		}
 		// ingress-nginx's $best_http_host preserves the port.
 		return req.Host, nil
 
@@ -139,6 +153,13 @@ func variableValue(rawVariable, variable string, req *http.Request, responseHead
 		return req.URL.Path, nil
 
 	case serverName:
+		// Prefer the original request host from context when available.
+		if originalHost, ok := OriginalHost(req.Context()); ok {
+			if hostOnly, _, err := net.SplitHostPort(originalHost); err == nil {
+				return hostOnly, nil
+			}
+			return originalHost, nil
+		}
 		if hostOnly, _, err := net.SplitHostPort(req.Host); err == nil {
 			return hostOnly, nil
 		}
