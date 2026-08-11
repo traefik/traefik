@@ -1,3 +1,14 @@
+## [v2.11.55](https://github.com/traefik/traefik/tree/v2.11.55) (2026-08-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.54...v2.11.55)
+
+**Bug fixes:**
+- **[middleware, authentication]** Bump github.com/containous/go-http-auth to b975dcaa8c48 ([#13636](https://github.com/traefik/traefik/pull/13636) @kevinpollet)
+- **[k8s/gatewayapi]** Fix Gateway API router rules ([#13645](https://github.com/traefik/traefik/pull/13645) @rtribotte)
+- **[tls]** Add an option to disable the fallback to the default TLS options ([#13639](https://github.com/traefik/traefik/pull/13639) @rtribotte)
+- **[k8s/crd]** Prevent generated name collisions in the Kubernetes CRD provider ([#13656](https://github.com/traefik/traefik/pull/13656) @rtribotte)
+- **[k8s/crd]** Add an option to restrict the namespace of the default TLS resources ([#13665](https://github.com/traefik/traefik/pull/13665) @rtribotte)
+- **[k8s/crd]** Scope generated Kubernetes Service names to their parent in the CRD provider ([#13668](https://github.com/traefik/traefik/pull/13668) @rtribotte)
+
 ## [v2.11.54](https://github.com/traefik/traefik/tree/v2.11.54) (2026-07-31)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.53...v2.11.54)
 
