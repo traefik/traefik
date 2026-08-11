@@ -15,10 +15,10 @@ including automatic certificate generation, custom TLS options, and explicit dom
 
 !!! warning "Router TLS replaces entrypoint TLS"
 
-    Entrypoint `http.tls` settings apply only when a router does **not** define its own `tls` configuration.
-    If a router sets **any** `tls` field (for example `certResolver`, `options`, or `domains`), Traefik does **not**
-    merge that configuration with the entrypoint defaults for that router. The router TLS configuration replaces the
-    entrypoint TLS configuration entirely.
+    Entrypoint `http.tls` settings apply only when a router does **not** define its own `tls` section.
+    Defining a router `tls` section — even empty, or with any field such as `certResolver`, `options`, or `domains` —
+    means Traefik does **not** merge that configuration with the entrypoint defaults for that router. The router TLS
+    configuration replaces the entrypoint TLS configuration entirely.
 
     For example, with entrypoint TLS options configured:
 
