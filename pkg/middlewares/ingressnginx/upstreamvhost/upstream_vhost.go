@@ -41,6 +41,11 @@ func (u *upstreamVHost) GetTracingInformation() (string, string) {
 }
 
 func (u *upstreamVHost) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	// Preserve the original client-facing request host before overwriting
+	// req.Host with the upstream target. This allows downstream middlewares
+	// (e.g. the snippet/forward-auth middleware) to keep resolving $host, $best_http_host
+	// and $server_name to the original hostname instead of the upstream-vhost.
+	req = req.WithContext(ingressnginx.WithOriginalHost(req.Context(), req.Host))
 	req.Host = ingressnginx.ReplaceVariables(u.vHost, req, nil, u.vars)
 	u.next.ServeHTTP(rw, req)
 }
