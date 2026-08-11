@@ -18,6 +18,13 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
     TLS options are not supported by label or tag-based providers. However, you can define them when using a [KV provider](../../other-providers/kv.md).
 
+!!! important "TLSOption in Kubernetes"
+
+    With the [TLSOption resource](../../kubernetes/crd/tls/tlsoption.md), the option named `default` applies to every router
+    that does not reference a TLSOption explicitly, whatever the namespace it is defined in.
+    The [`defaultTLSResourcesNamespace`](../../../install-configuration/providers/kubernetes/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide default can be defined in.
+
 ### Server Name Association
 
 The TLS options are configured on a router, but they are applied during the TLS handshake,

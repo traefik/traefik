@@ -202,6 +202,7 @@ providers:
     allowEmptyServices: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
+    defaultTLSResourcesNamespace: foobar
   kubernetesGateway:
     endpoint: foobar
     token: foobar

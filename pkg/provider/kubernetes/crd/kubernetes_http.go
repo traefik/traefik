@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -96,26 +97,28 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					},
 				}
 
-				serviceName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR)
+				wrrKey := []string{ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR}
+				serviceName = makeKey(wrrKey...)
 
-				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
+				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, wrrKey, conf.Services)
 				if errBuild != nil {
 					logger.Error().Err(errBuild).Send()
 					continue
 				}
 			case len(route.Services) == 1:
-				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
+				serviceKey := makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
+
+				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec, serviceKey)
 				if err != nil {
 					logger.Error().Err(err).Send()
 					continue
 				}
 
 				if serversLB != nil {
-					serviceName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
-					conf.Services[serviceName] = serversLB
-				} else {
-					serviceName = fullName
+					conf.Services[fullName] = serversLB
 				}
+
+				serviceName = fullName
 			default:
 				// Routes without services leave serviceName empty.
 				serviceName = ""
@@ -240,7 +243,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 
 	switch {
 	case tService.Spec.Weighted != nil:
-		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
+		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, []string{tService.Namespace, tService.Name, roleWRR}, conf)
 	case tService.Spec.Mirroring != nil:
 		return c.buildMirroring(ctx, tService, id, conf)
 	case tService.Spec.HighestRandomWeight != nil:
@@ -252,12 +255,15 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 }
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
+// The Kubernetes Services it references are named after parentKey, to keep them scoped to their parent.
 // It adds it to the given conf map.
-func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, parentKey []string, conf map[string]*dynamic.Service) error {
 	var wrrServices []dynamic.WRRService
 
-	for _, service := range tService.Weighted.Services {
-		fullName, k8sService, err := c.nameAndService(ctx, namespace, service.LoadBalancerSpec)
+	for si, service := range tService.Weighted.Services {
+		serviceKey := makeKey(append(slices.Clone(parentKey), strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, namespace), service.Name, service.Port.String())...)
+
+		fullName, k8sService, err := c.nameAndService(ctx, namespace, service.LoadBalancerSpec, serviceKey)
 		if err != nil {
 			return err
 		}
@@ -308,7 +314,10 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 // buildMirroring creates the configuration for the mirroring service named id, and defined by tService.
 // It adds it to the given conf map.
 func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
-	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Mirroring.LoadBalancerSpec)
+	mirroring := tService.Spec.Mirroring
+	mainKey := makeKey(tService.Namespace, tService.Name, roleMirroring, namespaceOrParentNamespace(mirroring.Namespace, tService.Namespace), mirroring.Name, mirroring.Port.String())
+
+	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirroring.LoadBalancerSpec, mainKey)
 	if err != nil {
 		return err
 	}
@@ -318,8 +327,10 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 	}
 
 	var mirrorServices []dynamic.MirrorService
-	for _, mirror := range tService.Spec.Mirroring.Mirrors {
-		mirroredName, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirror.LoadBalancerSpec)
+	for mi, mirror := range mirroring.Mirrors {
+		mirrorKey := makeKey(tService.Namespace, tService.Name, roleMirror, strconv.Itoa(mi), namespaceOrParentNamespace(mirror.Namespace, tService.Namespace), mirror.Name, mirror.Port.String())
+
+		mirroredName, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirror.LoadBalancerSpec, mirrorKey)
 		if err != nil {
 			return err
 		}
@@ -338,8 +349,8 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		Mirroring: &dynamic.Mirroring{
 			Service:     fullNameMain,
 			Mirrors:     mirrorServices,
-			MirrorBody:  tService.Spec.Mirroring.MirrorBody,
-			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
+			MirrorBody:  mirroring.MirrorBody,
+			MaxBodySize: mirroring.MaxBodySize,
 		},
 	}
 
@@ -641,7 +652,10 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 // In addition, if the service is a Kubernetes one,
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
-func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
+// A Kubernetes Service is named after serviceKey, which identifies the parent declaring the reference:
+// the generated service carries the options of the reference (serversTransport, scheme, sticky, ...),
+// so two references to the same Kubernetes Service must not share a name.
+func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec, serviceKey string) (string, *dynamic.Service, error) {
 	svcCtx := log.Ctx(ctx).With().Str(logs.ServiceName, service.Name).Logger().WithContext(ctx)
 
 	if !strings.Contains(service.Name, providerNamespaceSeparator) {
@@ -671,9 +685,7 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 			return "", nil, err
 		}
 
-		fullName := fullServiceName(svcCtx, service, service.Port)
-
-		return fullName, serversLB, nil
+		return serviceKey, serversLB, nil
 
 	case "TraefikService":
 		return fullServiceName(svcCtx, service, intstr.FromInt(0)), nil, nil
@@ -685,8 +697,10 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 
 func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
 	var hrwServices []dynamic.HRWService
-	for _, hrwService := range tService.Spec.HighestRandomWeight.Services {
-		hrwServiceName, k8sService, err := c.nameAndService(ctx, tService.Namespace, hrwService.LoadBalancerSpec)
+	for si, hrwService := range tService.Spec.HighestRandomWeight.Services {
+		serviceKey := makeKey(tService.Namespace, tService.Name, roleHRW, strconv.Itoa(si), namespaceOrParentNamespace(hrwService.Namespace, tService.Namespace), hrwService.Name, hrwService.Port.String())
+
+		hrwServiceName, k8sService, err := c.nameAndService(ctx, tService.Namespace, hrwService.LoadBalancerSpec, serviceKey)
 		if err != nil {
 			return err
 		}

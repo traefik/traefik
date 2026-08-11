@@ -43,7 +43,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				wrrName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
-			for _, service := range route.Services {
+			for si, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
 					logger.Error().
@@ -64,7 +64,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 
 				serviceName = wrrName
 
-				serviceKey := makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, service.Name, service.Port.String())
+				serviceKey := makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
 				conf.Services[serviceKey] = balancerServerUDP
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}

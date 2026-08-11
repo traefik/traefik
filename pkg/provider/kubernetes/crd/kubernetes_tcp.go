@@ -66,7 +66,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				wrrName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
-			for _, service := range route.Services {
+			for si, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
 					logger.Error().
@@ -87,7 +87,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 				serviceName = wrrName
 
-				serviceKey := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, service.Name, service.Port.String())
+				serviceKey := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
 				conf.Services[serviceKey] = balancerServerTCP
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}

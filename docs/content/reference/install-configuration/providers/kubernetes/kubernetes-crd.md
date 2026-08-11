@@ -68,6 +68,7 @@ providers:
 | <a id="opt-providers-kubernetesCRD-crossProviderNamespaces" href="#opt-providers-kubernetesCRD-crossProviderNamespaces" title="#opt-providers-kubernetesCRD-crossProviderNamespaces">`providers.kubernetesCRD.crossProviderNamespaces`</a> | List of namespaces from which `IngressRoute`, `IngressRouteTCP`, `IngressRouteUDP`, and `TraefikService` are allowed to declare cross-provider references (e.g. `myservice@file`).<br />When unset, all namespaces are allowed. When set to `[]`, every cross-provider reference is rejected. | []      | No |
 | <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can be overridden in the [`Service`](../../../../reference/routing-configuration/kubernetes/crd/http/service.md#opt-nativeLB). | false   | No |
 | <a id="opt-providers-kubernetesCRD-disableClusterScopeResources" href="#opt-providers-kubernetesCRD-disableClusterScopeResources" title="#opt-providers-kubernetesCRD-disableClusterScopeResources">`providers.kubernetesCRD.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No |
+| <a id="opt-providers-kubernetesCRD-defaultTLSResourcesNamespace" href="#opt-providers-kubernetesCRD-defaultTLSResourcesNamespace" title="#opt-providers-kubernetesCRD-defaultTLSResourcesNamespace">`providers.kubernetesCRD.defaultTLSResourcesNamespace`</a> | Restricts the namespace in which the `TLSOption` and the `TLSStore` named `default` can be defined.<br />More information [here](#defaulttlsresourcesnamespace). | ""      | No |
 
 ### endpoint
 
@@ -99,6 +100,40 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesCRD.endpoint=http://localhost:8080
+```
+
+### defaultTLSResourcesNamespace
+
+The `TLSOption` and the `TLSStore` named `default` are cluster-wide, whatever the namespace they are defined in:
+the former holds the TLS enforcement policy of every router that does not reference a TLSOption explicitly,
+the latter holds the default certificate served by every entry point.
+This option allows the cluster operator to reserve their definition to a namespace they control.
+
+When the option is not set, a `TLSOption` or a `TLSStore` named `default` is taken into account whatever its namespace,
+which is the default and backward compatible behavior.
+When it is set to a namespace, only the resources named `default` in this namespace are taken into account.
+
+!!! warning "Ignored resources"
+
+    A `TLSOption` or a `TLSStore` named `default` defined outside of the configured namespace is ignored,
+    and cannot be referenced under its namespaced name either.
+    For a `TLSStore`, this also applies to the certificates it defines.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    defaultTLSResourcesNamespace: traefik
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  defaultTLSResourcesNamespace = "traefik"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesCRD.defaultTLSResourcesNamespace=traefik
 ```
 
 ## Routing Configuration
