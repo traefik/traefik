@@ -284,6 +284,78 @@ func Test_ReplaceVariables(t *testing.T) {
 			}(),
 			expected: "val=203.0.113.50, 70.41.3.18, 10.0.0.1",
 		},
+		// Test cases for the upstream-vhost context fix: when upstream-vhost
+		// overwrites req.Host but the original host is saved in the context,
+		// $host, $best_http_host, and $server_name should resolve to the
+		// original client-facing hostname.
+		{
+			desc: "$host from context when req.Host is overwritten by upstream-vhost",
+			src:  "val=$host",
+			req: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "http://dashboard.example.internal/foo", http.NoBody)
+				// Simulate upstream-vhost middleware: overwrite req.Host with internal target
+				req.Host = "web.application.svc.cluster.local:8084"
+				// The upstream-vhost middleware should have saved the original host to context
+				req = req.WithContext(WithOriginalHost(req.Context(), "dashboard.example.internal"))
+				return req
+			}(),
+			expected: "val=dashboard.example.internal",
+		},
+		{
+			desc: "$host from context strips port",
+			src:  "val=$host",
+			req: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "http://dashboard.example.internal:443/foo", http.NoBody)
+				req.Host = "web.application.svc.cluster.local:8084"
+				req = req.WithContext(WithOriginalHost(req.Context(), "dashboard.example.internal:443"))
+				return req
+			}(),
+			expected: "val=dashboard.example.internal",
+		},
+		{
+			desc: "$host from context lowercased",
+			src:  "val=$host",
+			req: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "http://DASHBOARD.EXAMPLE.INTERNAL/foo", http.NoBody)
+				req.Host = "web.application.svc.cluster.local:8084"
+				req = req.WithContext(WithOriginalHost(req.Context(), "DASHBOARD.EXAMPLE.INTERNAL"))
+				return req
+			}(),
+			expected: "val=dashboard.example.internal",
+		},
+		{
+			desc: "$best_http_host from context preserves port",
+			src:  "val=$best_http_host",
+			req: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "http://dashboard.example.internal:443/foo", http.NoBody)
+				req.Host = "web.application.svc.cluster.local:8084"
+				req = req.WithContext(WithOriginalHost(req.Context(), "dashboard.example.internal:443"))
+				return req
+			}(),
+			expected: "val=dashboard.example.internal:443",
+		},
+		{
+			desc: "$server_name from context when req.Host is overwritten",
+			src:  "val=$server_name",
+			req: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "http://dashboard.example.internal/foo", http.NoBody)
+				req.Host = "web.application.svc.cluster.local:8084"
+				req = req.WithContext(WithOriginalHost(req.Context(), "dashboard.example.internal"))
+				return req
+			}(),
+			expected: "val=dashboard.example.internal",
+		},
+		{
+			desc: "$host falls back to req.Host when no context",
+			src:  "val=$host",
+			req: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "http://dashboard.example.internal/foo", http.NoBody)
+				req.Host = "web.application.svc.cluster.local:8084"
+				// No context set — should fall back to req.Host (existing behavior)
+				return req
+			}(),
+			expected: "val=web.application.svc.cluster.local",
+		},
 	}
 
 	for _, testCase := range testCases {
