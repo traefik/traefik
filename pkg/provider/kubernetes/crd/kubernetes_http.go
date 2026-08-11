@@ -753,13 +753,13 @@ func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.T
 }
 
 func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
-	failoverKey := makeKey(tService.Namespace, tService.Name, roleFailover, namespaceOrParentNamespace(tService.Spec.Failover.Service.Namespace, tService.Namespace), tService.Name, tService.Spec.Failover.Service.Port.String())
+	failoverKey := makeKey(tService.Namespace, tService.Name, roleFailover, namespaceOrParentNamespace(tService.Spec.Failover.Service.Namespace, tService.Namespace), tService.Spec.Failover.Service.Name, tService.Spec.Failover.Service.Port.String())
 	failoverName, failoverService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Service, failoverKey)
 	if err != nil {
 		return fmt.Errorf("getting service: %w", err)
 	}
 
-	fallbackKey := makeKey(tService.Namespace, tService.Name, roleFallback, namespaceOrParentNamespace(tService.Spec.Failover.Fallback.Namespace, tService.Namespace), tService.Name, tService.Spec.Failover.Fallback.Port.String())
+	fallbackKey := makeKey(tService.Namespace, tService.Name, roleFallback, namespaceOrParentNamespace(tService.Spec.Failover.Fallback.Namespace, tService.Namespace), tService.Spec.Failover.Fallback.Name, tService.Spec.Failover.Fallback.Port.String())
 	fallbackName, fallback, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Fallback, fallbackKey)
 	if err != nil {
 		return fmt.Errorf("getting fallback service: %w", err)
