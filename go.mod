@@ -26,7 +26,7 @@ require (
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
-	github.com/google/go-github/v28 v28.1.1
+	github.com/google/go-github/v90 v90.0.0
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // No tag on the repo.
 	github.com/hashicorp/consul/api v1.26.1

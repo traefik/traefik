@@ -3,10 +3,9 @@ package version
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"time"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v90/github"
 	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -64,14 +63,13 @@ func CheckNewVersion() {
 
 	logger := log.WithoutContext()
 
-	client := github.NewClient(nil)
+	updateURL := "https://update.traefik.io/"
 
-	updateURL, err := url.Parse("https://update.traefik.io/")
+	client, err := github.NewClient(github.WithURLs(&updateURL, nil))
 	if err != nil {
 		logger.Warnf("Error checking new version: %s", err)
 		return
 	}
-	client.BaseURL = updateURL
 
 	releases, resp, err := client.Repositories.ListReleases(context.Background(), "traefik", "traefik", nil)
 	if err != nil {
@@ -91,7 +89,7 @@ func CheckNewVersion() {
 	}
 
 	for _, release := range releases {
-		releaseVersion, err := goversion.NewVersion(*release.TagName)
+		releaseVersion, err := goversion.NewVersion(release.TagName)
 		if err != nil {
 			logger.Warnf("Error checking new version: %s", err)
 			return
