@@ -29,6 +29,15 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
     ```
 
+    !!! warning "`experimentalChannel` requires the Experimental channel CRDs"
+
+        The `experimentalChannel` option makes Traefik watch `XBackendTrafficPolicy` resources,
+        which the Standard channel CRDs do not provide.
+        Enabling it without installing the Experimental channel CRDs
+        (`experimental-install.yaml`) prevents the Kubernetes Gateway provider from starting:
+        no Gateway API resource is served at all, not only `XBackendTrafficPolicy`.
+        Traefik keeps running and the other providers are unaffected.
+
 2. If you are not using the Helm Chart, install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml) for Gateway API.
 
     ```bash

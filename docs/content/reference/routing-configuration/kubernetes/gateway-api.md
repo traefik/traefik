@@ -543,18 +543,18 @@ For more information on service-level middlewares, see [service middlewares](../
 
 #### Session Persistence (Sticky Sessions)
 
-Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` rules, enabling sticky sessions without requiring Traefik-specific CRDs.
+Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` and [`GRPCRoute`](#grpc) rules, enabling sticky sessions without requiring Traefik-specific CRDs.
 
-!!! note "TraefikService backends"
-    `sessionPersistence` is applied only when the `HTTPRoute` backend is a Kubernetes `Service`.
-    If the backend is a `TraefikService`, stickiness is controlled by the `TraefikService` configuration instead
-    (including multi-level stickiness), and the `HTTPRoute` `sessionPersistence` is ignored.
+`sessionPersistence` pins a client to whichever `backendRef` it was routed to, taking precedence over the `backendRefs` weights, regardless of the backend kind (`Service` or `TraefikService`).
+
+!!! note "CRD channel requirement"
+    `sessionPersistence` requires the Experimental channel CRDs, see the [requirements](../../install-configuration/providers/kubernetes/kubernetes-gateway.md#requirements).
 
 !!! note "BackendLBPolicy (XBackendTrafficPolicy)"
     Traefik also supports service-level session persistence via the experimental
     `XBackendTrafficPolicy` resource (`gateway.networking.x-k8s.io/v1alpha1`), which supersedes `BackendLBPolicy`.
-    When both `HTTPRoute` `sessionPersistence` and `XBackendTrafficPolicy` `sessionPersistence` target the same Service,
-    `HTTPRoute` takes precedence. This requires `experimentalChannel` to be enabled.
+    When both a route rule's `sessionPersistence` and an `XBackendTrafficPolicy` `sessionPersistence` target the same Service,
+    the route rule takes precedence. This requires Traefik's `experimentalChannel` to be enabled.
 
 Session persistence ensures that requests from the same client are consistently routed to the same backend server. Traefik supports both cookie-based and header-based session persistence:
 
@@ -643,6 +643,8 @@ spec:
 
 The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 
 It allows the specification of routing rules that direct GRPC requests to the appropriate Kubernetes backend services. 
+
+`GRPCRoute` rules support the same `sessionPersistence` field as `HTTPRoute` rules, see [Session Persistence](#session-persistence-sticky-sessions).
 
 For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/grpcroute/).
 
@@ -791,6 +793,35 @@ Once everything is deployed, sending a GRPC request to the HTTP endpoint should 
         }
       }
     }
+    ```
+
+??? example "Using Session Persistence on a GRPCRoute"
+
+    ```yaml tab="GRPCRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: GRPCRoute
+    metadata:
+      name: echo
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - echo.localhost
+
+      rules:
+        - sessionPersistence:
+            sessionName: grpc-session-cookie
+            type: Cookie
+
+          backendRefs:
+            - name: echo
+              namespace: default
+              port: 3000
     ```
 
 ### TCP

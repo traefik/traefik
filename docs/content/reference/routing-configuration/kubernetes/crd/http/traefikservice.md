@@ -168,10 +168,10 @@ Which means the client needs to send a cookie with as many key/value pairs as th
 
 Sticky sessions, for stickiness to work all the way, must be specified at each load-balancing level.
 
-!!! note "Gateway API HTTPRoute"
-    When an `HTTPRoute` uses a `TraefikService` backend, any `sessionPersistence` configured on the `HTTPRoute`
-    is not applied. Stickiness is controlled solely by the `TraefikService` configuration, including multi-level
-    stickiness on WRR and Kubernetes Services.
+!!! note "Gateway API HTTPRoute and GRPCRoute"
+    When a route rule's `backendRefs` include a `TraefikService`, the rule's `sessionPersistence` only pins the
+    client to that backendRef. It does not propagate into the `TraefikService`'s own load-balancing tree, which
+    must configure its stickiness independently, as described above.
 
 For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
 and there is a second level because each whoami service is a `replicaset` and is thus handled as a load-balancer of servers.
