@@ -156,7 +156,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	if p.info != nil {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
-			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates)
+			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates[0])
 			req.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
 		} else {
 			logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
@@ -166,56 +166,54 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	p.next.ServeHTTP(rw, req)
 }
 
-// getCertInfo Build a string with the wanted client certificates information
-// - the `,` is used to separate certificates
+// getCertInfo builds a string with the wanted information from the client leaf certificate.
+// Only the leaf certificate is described: the rest of the chain the client may send
+// (intermediate CAs) is not the client identity, and rendering it under the same field
+// labels would be ambiguous with the leaf's own fields. The full chain is available
+// through the pem option.
 // - the `;` is used to separate root fields
 // - the value of root fields is always wrapped by double quote
 // - if a field is empty, the field is ignored.
-func (p *passTLSClientCert) getCertInfo(ctx context.Context, certs []*x509.Certificate) string {
-	var headerValues []string
-
-	for _, peerCert := range certs {
-		var values []string
-
-		if p.info != nil {
-			subject := getSubjectDNInfo(ctx, p.info.subject, &peerCert.Subject)
-			if subject != "" {
-				values = append(values, fmt.Sprintf(`Subject="%s"`, strings.TrimSuffix(subject, subFieldSeparator)))
-			}
-
-			issuer := getIssuerDNInfo(ctx, p.info.issuer, &peerCert.Issuer)
-			if issuer != "" {
-				values = append(values, fmt.Sprintf(`Issuer="%s"`, strings.TrimSuffix(issuer, subFieldSeparator)))
-			}
-
-			if p.info.serialNumber && peerCert.SerialNumber != nil {
-				sn := peerCert.SerialNumber.String()
-				if sn != "" {
-					values = append(values, fmt.Sprintf(`SerialNumber="%s"`, strings.TrimSuffix(sn, subFieldSeparator)))
-				}
-			}
-
-			if p.info.notBefore {
-				values = append(values, fmt.Sprintf(`NB="%d"`, uint64(peerCert.NotBefore.Unix())))
-			}
-
-			if p.info.notAfter {
-				values = append(values, fmt.Sprintf(`NA="%d"`, uint64(peerCert.NotAfter.Unix())))
-			}
-
-			if p.info.sans {
-				sans := getSANs(peerCert)
-				if len(sans) > 0 {
-					values = append(values, fmt.Sprintf(`SAN="%s"`, strings.Join(sans, subFieldSeparator)))
-				}
-			}
-		}
-
-		value := strings.Join(values, fieldSeparator)
-		headerValues = append(headerValues, value)
+func (p *passTLSClientCert) getCertInfo(ctx context.Context, cert *x509.Certificate) string {
+	if p.info == nil {
+		return ""
 	}
 
-	return strings.Join(headerValues, certSeparator)
+	var values []string
+
+	subject := getSubjectDNInfo(ctx, p.info.subject, &cert.Subject)
+	if subject != "" {
+		values = append(values, fmt.Sprintf(`Subject="%s"`, strings.TrimSuffix(subject, subFieldSeparator)))
+	}
+
+	issuer := getIssuerDNInfo(ctx, p.info.issuer, &cert.Issuer)
+	if issuer != "" {
+		values = append(values, fmt.Sprintf(`Issuer="%s"`, strings.TrimSuffix(issuer, subFieldSeparator)))
+	}
+
+	if p.info.serialNumber && cert.SerialNumber != nil {
+		sn := cert.SerialNumber.String()
+		if sn != "" {
+			values = append(values, fmt.Sprintf(`SerialNumber="%s"`, strings.TrimSuffix(sn, subFieldSeparator)))
+		}
+	}
+
+	if p.info.notBefore {
+		values = append(values, fmt.Sprintf(`NB="%d"`, uint64(cert.NotBefore.Unix())))
+	}
+
+	if p.info.notAfter {
+		values = append(values, fmt.Sprintf(`NA="%d"`, uint64(cert.NotAfter.Unix())))
+	}
+
+	if p.info.sans {
+		sans := getSANs(cert)
+		if len(sans) > 0 {
+			values = append(values, fmt.Sprintf(`SAN="%s"`, strings.Join(sans, subFieldSeparator)))
+		}
+	}
+
+	return strings.Join(values, fieldSeparator)
 }
 
 func getIssuerDNInfo(ctx context.Context, options *IssuerDistinguishedNameOptions, cs *pkix.Name) string {

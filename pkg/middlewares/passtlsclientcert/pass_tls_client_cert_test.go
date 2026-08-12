@@ -497,7 +497,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			expectedHeader: completeCertAllInfo,
 		},
 		{
-			desc:         "TLS with 2 certificates, with all info",
+			desc:         "TLS with 2 certificates, only the leaf certificate information is used",
 			certContents: []string{minimalCheeseCrt, completeCheeseCrt},
 			config: dynamic.PassTLSClientCert{
 				Info: &dynamic.TLSClientCertificateInfo{
@@ -526,7 +526,26 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, certSeparator),
+			expectedHeader: minimalCheeseCertAllInfo,
+		},
+		{
+			desc:         "TLS with leaf and intermediate CA certificates, with subject info only",
+			certContents: []string{minimalCheeseCrt, signingCA},
+			config: dynamic.PassTLSClientCert{
+				Info: &dynamic.TLSClientCertificateInfo{
+					Subject: &dynamic.TLSClientCertificateSubjectDNInfo{
+						CommonName:         true,
+						Country:            true,
+						DomainComponent:    true,
+						Locality:           true,
+						Organization:       true,
+						OrganizationalUnit: true,
+						Province:           true,
+						SerialNumber:       true,
+					},
+				},
+			},
+			expectedHeader: `Subject="C=FR,ST=Some-State,O=Cheese"`,
 		},
 	}
 
