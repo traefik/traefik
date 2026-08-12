@@ -75,7 +75,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.Hook) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -105,6 +105,10 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
+	}
+
+	for _, hook := range hooks {
+		logger.Hooks.Add(hook)
 	}
 
 	if config.OTLP != nil {

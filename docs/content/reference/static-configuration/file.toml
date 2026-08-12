@@ -4,6 +4,9 @@
   checkNewVersion = true
   sendAnonymousUsage = true
 
+[core]
+  strictTLSOptions = true
+
 [serversTransport]
   insecureSkipVerify = true
   rootCAs = ["foobar", "foobar"]
@@ -182,6 +185,7 @@
     allowEmptyServices = true
     nativeLBByDefault = true
     disableClusterScopeResources = true
+    defaultTLSResourcesNamespace = "foobar"
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

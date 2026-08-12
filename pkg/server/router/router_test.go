@@ -691,6 +691,37 @@ func TestRuntimeConfiguration(t *testing.T) {
 			},
 			expectedError: 1,
 		},
+		{
+			desc: "Router with conflicting tlsOptions",
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*dynamic.Middleware{},
+			routerConfig: map[string]*dynamic.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					TLS: &dynamic.RouterTLSConfig{
+						Options:            "foo",
+						ResolvedOptions:    "foo",
+						ConflictingOptions: true,
+					},
+				},
+			},
+			tlsOptions: map[string]traefiktls.Options{
+				"foo": {MinVersion: "VersionTLS12"},
+			},
+			expectedError: 1,
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
