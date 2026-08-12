@@ -83,7 +83,6 @@ type Configuration struct {
 
 	Experimental *Experimental `description:"Experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 
-	// Deprecated: Please do not use this field.
 	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
@@ -95,6 +94,8 @@ type Configuration struct {
 type Core struct {
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	DefaultRuleSyntax string `description:"Defines the rule parser default syntax (v2 or v3)" json:"defaultRuleSyntax,omitempty" toml:"defaultRuleSyntax,omitempty" yaml:"defaultRuleSyntax,omitempty"`
+
+	StrictTLSOptions bool `description:"Disables the unsafe fallback to the default TLS options for the routers with conflicting TLS options." json:"strictTLSOptions,omitempty" toml:"strictTLSOptions,omitempty" yaml:"strictTLSOptions,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

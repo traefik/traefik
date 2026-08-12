@@ -130,10 +130,12 @@ func (r *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
 
 // RouterTLSConfig holds the TLS configuration for a router.
 type RouterTLSConfig struct {
-	Options         string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
-	ResolvedOptions string         `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
-	CertResolver    string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
-	Domains         []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
+	Options         string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
+	ResolvedOptions string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	// ConflictingOptions is set when the router conflicts with another router configured with different TLS options for the same host.
+	ConflictingOptions bool           `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	CertResolver       string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
+	Domains            []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
