@@ -166,7 +166,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(gatewayName, listener, conf, routerName, routeRule, route, statusReport)
+				router.Service, serviceCondition = p.loadGRPCService(ctx, gatewayName, listener, conf, routerName, routeRule, route, statusReport)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -179,16 +179,18 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 	return conf, condition
 }
 
-func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadGRPCService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
 	}
 
+	routeSticky := convertSessionPersistence(routeRule.SessionPersistence)
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, listener, conf, routerName, route, bi, backendRef, statusReport)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(ctx, gatewayName, listener, conf, routerName, route, bi, backendRef, statusReport, routeSticky)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -213,14 +215,16 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 		})
 	}
 
-	// Convert Gateway API SessionPersistence to Traefik Sticky configuration.
-	wrr.Sticky = convertSessionPersistence(routeRule.SessionPersistence)
+	// Session persistence configured on the route rule must apply to backendRef selection,
+	// so that a persistent session takes precedence over traffic split weights, see
+	// https://gateway-api.sigs.k8s.io/geps/gep-1619/#api-attachment-points.
+	wrr.Sticky = routeSticky
 
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport, routeSticky *dynamic.Sticky) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -269,7 +273,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListen
 		}
 	}
 
-	lb, st, errCondition := p.loadGRPCServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadGRPCServers(ctx, gatewayName, namespace, route, backendRef, listener, statusReport, routeSticky)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -328,7 +332,7 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadGRPCServers(ctx context.Context, gatewayName, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport, routeSticky *dynamic.Sticky) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -468,6 +472,11 @@ func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
+	sticky, policyCondition := p.resolveSessionPersistence(ctx, gatewayName, namespace, backendRef.Name, route.Generation, listener, routeSticky)
+	if policyCondition != nil {
+		return nil, nil, policyCondition
+	}
+	lb.Sticky = sticky
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{

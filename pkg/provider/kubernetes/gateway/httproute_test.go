@@ -453,16 +453,3 @@ func Test_convertSessionPersistence(t *testing.T) {
 		})
 	}
 }
-
-func Test_applyStickyToServersLoadBalancer(t *testing.T) {
-	t.Parallel()
-
-	lb := &dynamic.ServersLoadBalancer{}
-	sticky := &dynamic.Sticky{
-		Cookie: &dynamic.Cookie{Name: "test-cookie"},
-	}
-
-	applyStickyToServersLoadBalancer(lb, sticky)
-
-	assert.Equal(t, sticky, lb.Sticky)
-}

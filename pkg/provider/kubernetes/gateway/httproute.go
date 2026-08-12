@@ -23,7 +23,6 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 )
 
 func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
@@ -245,6 +244,11 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 			Weight: weight,
 		})
 	}
+
+	// Session persistence configured on the route rule must apply to backendRef selection,
+	// so that a persistent session takes precedence over traffic split weights, see
+	// https://gateway-api.sigs.k8s.io/geps/gep-1619/#api-attachment-points.
+	wrr.Sticky = routeSticky
 
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
@@ -591,11 +595,11 @@ func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace s
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
-	sticky, policyCondition := p.resolveSessionPersistence(ctx, gatewayName, namespace, backendRef, listener, route, routeSticky)
+	sticky, policyCondition := p.resolveSessionPersistence(ctx, gatewayName, namespace, backendRef.Name, route.Generation, listener, routeSticky)
 	if policyCondition != nil {
 		return nil, nil, policyCondition
 	}
-	applyStickyToServersLoadBalancer(lb, sticky)
+	lb.Sticky = sticky
 
 	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
 	// When no ServersTransport is set, we need to determine the protocol based on the service port.
@@ -620,101 +624,6 @@ func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace s
 		})
 	}
 	return lb, serversTransport, nil
-}
-
-func (p *Provider) resolveSessionPersistence(ctx context.Context, gatewayName, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute, routeSticky *dynamic.Sticky) (*dynamic.Sticky, *metav1.Condition) {
-	policySticky, policyCondition := p.loadBackendTrafficPolicySticky(ctx, gatewayName, namespace, backendRef, listener, route)
-	if policyCondition != nil {
-		return nil, policyCondition
-	}
-
-	if routeSticky != nil {
-		return routeSticky, nil
-	}
-
-	return policySticky, nil
-}
-
-func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayName, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute) (*dynamic.Sticky, *metav1.Condition) {
-	if !p.client.experimentalChannel {
-		return nil, nil
-	}
-
-	policies, err := p.client.ListXBackendTrafficPoliciesForService(namespace, string(backendRef.Name))
-	if err != nil {
-		return nil, &metav1.Condition{
-			Type:               string(gatev1.RouteConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.RouteReasonRefNotPermitted),
-			Message:            fmt.Sprintf("Cannot list XBackendTrafficPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
-		}
-	}
-
-	// Sort XBackendTrafficPolicies by creation timestamp, then by name to match the direct policy attachment requirements.
-	slices.SortStableFunc(policies, func(a, b *apisxv1alpha1.XBackendTrafficPolicy) int {
-		cmpTime := a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
-		if cmpTime == 0 {
-			return strings.Compare(a.Name, b.Name)
-		}
-		return cmpTime
-	})
-
-	var selected *apisxv1alpha1.XBackendTrafficPolicy
-	for _, policy := range policies {
-		policyAncestorStatus := gatev1.PolicyAncestorStatus{
-			AncestorRef: gatev1.ParentReference{
-				Group:       ptr.To(gatev1.Group(groupGateway)),
-				Kind:        ptr.To(gatev1.Kind(kindGateway)),
-				Namespace:   ptr.To(gatev1.Namespace(namespace)),
-				Name:        gatev1.ObjectName(gatewayName),
-				SectionName: ptr.To(gatev1.SectionName(listener.Name)),
-			},
-			ControllerName: controllerName,
-		}
-
-		if selected != nil {
-			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
-				metav1.Condition{
-					Type:               string(gatev1.PolicyConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: policy.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.PolicyReasonConflicted),
-				},
-			)
-
-			status := gatev1.PolicyStatus{Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus}}
-			if err := p.client.UpdateXBackendTrafficPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting XBackendTrafficPolicy status")
-			}
-			continue
-		}
-
-		policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
-			metav1.Condition{
-				Type:               string(gatev1.PolicyConditionAccepted),
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: policy.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.PolicyReasonAccepted),
-			},
-		)
-
-		status := gatev1.PolicyStatus{Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus}}
-		if err := p.client.UpdateXBackendTrafficPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Unable to update XBackendTrafficPolicy status")
-		}
-
-		selected = policy
-	}
-
-	if selected == nil || selected.Spec.SessionPersistence == nil {
-		return nil, nil
-	}
-
-	return convertSessionPersistence(selected.Spec.SessionPersistence), nil
 }
 
 func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.ServersTransport, metav1.Condition) {
@@ -1228,12 +1137,4 @@ func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
 	}
 
 	return &dynamic.Sticky{Cookie: cookie}
-}
-
-func applyStickyToServersLoadBalancer(lb *dynamic.ServersLoadBalancer, sticky *dynamic.Sticky) {
-	if lb == nil {
-		return
-	}
-
-	lb.Sticky = sticky
 }
