@@ -57,7 +57,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
 			crossProviderNamespaces:   p.CrossProviderNamespaces,
-			safeNaming:                p.SafeNaming,
+			safeNaming:                p.safeNaming(),
 		}
 
 		for ri, route := range ingressRoute.Spec.Routes {
@@ -78,7 +78,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			var routerName string
-			if p.SafeNaming {
+			if p.safeNaming() {
 				routerName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri))
 			} else {
 				serviceKey, errKey := makeServiceKey(route.Match, ingressName)
@@ -101,7 +101,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				var wrrKey []string
-				if p.SafeNaming {
+				if p.safeNaming() {
 					wrrKey = []string{ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR}
 					serviceName = makeKey(wrrKey...)
 				}
@@ -113,7 +113,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 			case len(route.Services) == 1:
 				var serviceKey string
-				if p.SafeNaming {
+				if p.safeNaming() {
 					serviceKey = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
 				}
 
@@ -126,14 +126,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				if serversLB != nil {
 					// Legacy naming stores the generated Kubernetes Service under the route's own name
 					// (services are shared by identity, not scoped to their parent).
-					if p.SafeNaming {
-						conf.Services[fullName] = serversLB
+					if p.safeNaming() {
+						addToConfig(logger, "service", fullName, conf.Services, serversLB)
 					} else {
-						conf.Services[serviceName] = serversLB
+						addToConfig(logger, "service", serviceName, conf.Services, serversLB)
 					}
 				}
 
-				if p.SafeNaming || serversLB == nil {
+				if p.safeNaming() || serversLB == nil {
 					serviceName = fullName
 				}
 			}
@@ -156,7 +156,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptions := ingressRoute.Spec.TLS.Options
 					ctxTLSOption := log.With(ctx, log.Str("TLSOption", tlsOptions.Name))
 
-					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
+					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.safeNaming())
 					if err != nil {
 						logger.WithError(err).Errorf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
@@ -166,7 +166,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 			p.applyRouterTransform(ctx, r, ingressRoute)
 
-			conf.Routers[routerName] = r
+			addToConfig(logger, "router", routerName, conf.Routers, r)
 		}
 	}
 
@@ -179,7 +179,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	for _, mi := range middlewares {
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, mi.Name))
 
-		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
+		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.safeNaming())
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -232,7 +232,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		}
 
 		if k8sService != nil {
-			conf[fullName] = k8sService
+			addToConfig(log.FromContext(ctx), "service", fullName, conf, k8sService)
 		}
 
 		weight := service.Weight
@@ -246,12 +246,12 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		})
 	}
 
-	conf[id] = &dynamic.Service{
+	addToConfig(log.FromContext(ctx), "service", id, conf, &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
 			Services: wrrServices,
 			Sticky:   tService.Weighted.Sticky,
 		},
-	}
+	})
 	return nil
 }
 
@@ -267,7 +267,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 	}
 
 	if k8sService != nil {
-		conf[fullNameMain] = k8sService
+		addToConfig(log.FromContext(ctx), "service", fullNameMain, conf, k8sService)
 	}
 
 	var mirrorServices []dynamic.MirrorService
@@ -280,7 +280,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		}
 
 		if k8sService != nil {
-			conf[mirroredName] = k8sService
+			addToConfig(log.FromContext(ctx), "service", mirroredName, conf, k8sService)
 		}
 
 		mirrorServices = append(mirrorServices, dynamic.MirrorService{
@@ -289,13 +289,13 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		})
 	}
 
-	conf[id] = &dynamic.Service{
+	addToConfig(log.FromContext(ctx), "service", id, conf, &dynamic.Service{
 		Mirroring: &dynamic.Mirroring{
 			Service:     fullNameMain,
 			Mirrors:     mirrorServices,
 			MaxBodySize: mirroring.MaxBodySize,
 		},
-	}
+	})
 
 	return nil
 }

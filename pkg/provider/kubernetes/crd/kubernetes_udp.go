@@ -35,7 +35,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			routeIndex := strconv.Itoa(i)
 
 			var routerName string
-			if p.SafeNaming {
+			if p.safeNaming() {
 				routerName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex)
 			} else {
 				key := fmt.Sprintf("%s-%s", ingressName, routeIndex)
@@ -45,7 +45,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			serviceName := routerName
 
 			var wrrName string
-			if p.SafeNaming && len(route.Services) > 1 {
+			if p.safeNaming() && len(route.Services) > 1 {
 				wrrName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
@@ -62,22 +62,22 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
-					if p.SafeNaming {
+					if p.safeNaming() {
 						serviceName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
 					}
-					conf.Services[serviceName] = balancerServerUDP
+					addToConfig(logger, "service", serviceName, conf.Services, balancerServerUDP)
 					break
 				}
 
 				var serviceKey string
-				if p.SafeNaming {
+				if p.safeNaming() {
 					serviceName = wrrName
 					serviceKey = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
 				} else {
 					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				}
 
-				conf.Services[serviceKey] = balancerServerUDP
+				addToConfig(logger, "service", serviceKey, conf.Services, balancerServerUDP)
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}
 				srv.SetDefaults()
@@ -91,10 +91,10 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			conf.Routers[routerName] = &dynamic.UDPRouter{
+			addToConfig(logger, "router", routerName, conf.Routers, &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
 				Service:     serviceName,
-			}
+			})
 		}
 	}
 

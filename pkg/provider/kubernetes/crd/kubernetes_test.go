@@ -4824,7 +4824,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				AllowEmptyServices:           test.allowEmptyServices,
 				CrossProviderNamespaces:      test.crossProviderNamespaces,
 				DefaultTLSResourcesNamespace: test.defaultTLSResourcesNamespace,
-				SafeNaming:                   test.safeNaming,
+				SafeNaming:                   &test.safeNaming,
 			}
 
 			clientMock := newClientMock(test.paths...)

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"reflect"
 	"slices"
 	"sort"
 	"strconv"
@@ -72,7 +73,9 @@ type Provider struct {
 	// generated names are derived from the identity of the object they come from instead of being flattened
 	// and normalized, and Kubernetes Services referenced from several parents (a route with several services,
 	// or a Weighted/Mirroring TraefikService) are scoped to their parent instead of being shared by identity.
-	SafeNaming bool `description:"Enable collision-safe naming for the Kubernetes CRD provider." json:"safeNaming,omitempty" toml:"safeNaming,omitempty" yaml:"safeNaming,omitempty" export:"true"`
+	// It is a pointer so that an unset value (as opposed to an explicit false) can be detected and warned about
+	// on startup, since collision-prone legacy naming would otherwise be enabled silently.
+	SafeNaming *bool `description:"Enable collision-safe naming for the Kubernetes CRD provider." json:"safeNaming,omitempty" toml:"safeNaming,omitempty" yaml:"safeNaming,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -81,6 +84,12 @@ type Provider struct {
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
+}
+
+// safeNaming reports whether collision-safe naming is effectively enabled.
+// SafeNaming defaults to false (legacy naming) when left unset.
+func (p *Provider) safeNaming() bool {
+	return p.SafeNaming != nil && *p.SafeNaming
 }
 
 // Init the provider.
@@ -111,6 +120,13 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	if p.CrossProviderNamespaces != nil {
 		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
+	}
+
+	if p.SafeNaming == nil {
+		logger.Warn("SafeNaming is not explicitly set: generated routers, middlewares and services will use the legacy naming scheme, " +
+			"under which names can collide across namespaces or resources. " +
+			"It is recommended to explicitly set the SafeNaming option, to `true` on new setups, or to `false` to keep the legacy behavior and silence this warning. " +
+			"Refer to the documentation for more details: https://doc.traefik.io/traefik/v2.11/migration/v2/#safe-naming-configuration-default-value")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -243,7 +259,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	for _, middleware := range client.GetMiddlewares() {
 		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
-		if p.SafeNaming {
+		if p.safeNaming() {
 			id = makeKey(middleware.Namespace, middleware.Name)
 		}
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
@@ -278,7 +294,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			if errorPageService != nil {
 				serviceName := id + "-errorpage-service"
 				errorPage.Service = serviceName
-				conf.HTTP.Services[serviceName] = errorPageService
+				addToConfig(log.FromContext(ctxMid), "service", serviceName, conf.HTTP.Services, errorPageService)
 			}
 		}
 
@@ -312,7 +328,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
+		addToConfig(log.FromContext(ctxMid), "middleware", id, conf.HTTP.Middlewares, &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
 			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
@@ -337,20 +353,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			Plugin:            plugin,
-		}
+		})
 	}
 
 	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
 		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
-		if p.SafeNaming {
+		if p.safeNaming() {
 			id = makeKey(middlewareTCP.Namespace, middlewareTCP.Name)
 		}
 
-		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
+		addToConfig(log.FromContext(ctx), "TCP middleware", id, conf.TCP.Middlewares, &dynamic.TCPMiddleware{
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
 			IPWhiteList:  middlewareTCP.Spec.IPWhiteList,
 			IPAllowList:  middlewareTCP.Spec.IPAllowList,
-		}
+		})
 	}
 
 	cb := configBuilder{
@@ -359,7 +375,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
 		crossProviderNamespaces:   p.CrossProviderNamespaces,
-		safeNaming:                p.SafeNaming,
+		safeNaming:                p.safeNaming(),
 	}
 
 	for _, service := range client.GetTraefikServices() {
@@ -440,10 +456,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 
 		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
-		if p.SafeNaming {
+		if p.safeNaming() {
 			id = makeKey(serversTransport.Namespace, serversTransport.Name)
 		}
-		conf.HTTP.ServersTransports[id] = &dynamic.ServersTransport{
+		addToConfig(logger, "servers transport", id, conf.HTTP.ServersTransports, &dynamic.ServersTransport{
 			ServerName:          serversTransport.Spec.ServerName,
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
 			RootCAs:             rootCAs,
@@ -452,7 +468,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
 			PeerCertURI:         serversTransport.Spec.PeerCertURI,
-		}
+		})
 	}
 
 	return conf
@@ -469,7 +485,7 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
 		crossProviderNamespaces:   p.CrossProviderNamespaces,
-		safeNaming:                p.SafeNaming,
+		safeNaming:                p.safeNaming(),
 	}
 
 	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec, serviceKey)
@@ -493,7 +509,7 @@ func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace st
 	for _, mi := range chain.Middlewares {
 		ctxMid := log.With(ctx, log.Str("middlewareRef", mi.Namespace+"/"+mi.Name))
 
-		middlewareRef, err := resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
+		middlewareRef, err := resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.safeNaming())
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -960,7 +976,7 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 		}
 
 		id := makeID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
-		if p.SafeNaming {
+		if p.safeNaming() {
 			id = makeKey(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		}
 		// If the name is default, we override the default config.
@@ -990,7 +1006,7 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 			tlsOption.ALPNProtocols = tlsOptionsCRD.Spec.ALPNProtocols
 		}
 
-		tlsOptions[id] = tlsOption
+		addToConfig(logger, "TLS option", id, tlsOptions, tlsOption)
 	}
 
 	if len(nsDefault) > 1 {
@@ -1022,7 +1038,7 @@ func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[strin
 		}
 
 		id := makeID(t.Namespace, t.Name)
-		if p.SafeNaming {
+		if p.safeNaming() {
 			id = makeKey(t.Namespace, t.Name)
 		}
 
@@ -1071,7 +1087,7 @@ func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[strin
 			continue
 		}
 
-		tlsStores[id] = tlsStore
+		addToConfig(logger, "TLS store", id, tlsStores, tlsStore)
 	}
 
 	if len(nsDefault) > 1 {
@@ -1129,6 +1145,18 @@ func makeServiceKey(rule, ingressName string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil)), nil
+}
+
+// addToConfig assigns obj to objects[name], logging a warning if name is already assigned to a
+// different object: in that case, the existing object is dropped from the configuration, and silently
+// replaced by obj. This is most likely to happen when SafeNaming is disabled, as the legacy naming scheme
+// does not guarantee that generated names are unique.
+func addToConfig[T any](logger log.Logger, kind, name string, objects map[string]T, obj T) {
+	if existing, ok := objects[name]; ok && !reflect.DeepEqual(existing, obj) {
+		logger.Warnf("Name collision: %s %q is defined more than once, %+v will be overridden by %+v", kind, name, existing, obj)
+	}
+
+	objects[name] = obj
 }
 
 func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
