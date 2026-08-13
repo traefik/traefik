@@ -729,6 +729,9 @@ Kubernetes label selector to use.
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_SAFENAMING`:  
+Enable collision-safe naming for the Kubernetes CRD provider. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_THROTTLEDURATION`:  
 Ingress refresh throttle duration (Default: ```0```)
 

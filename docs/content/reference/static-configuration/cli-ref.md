@@ -729,6 +729,9 @@ Kubernetes label selector to use.
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetescrd.safenaming`:  
+Enable collision-safe naming for the Kubernetes CRD provider. (Default: ```false```)
+
 `--providers.kubernetescrd.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
 

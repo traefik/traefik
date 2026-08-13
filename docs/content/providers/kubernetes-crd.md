@@ -413,6 +413,77 @@ providers:
 --providers.kubernetescrd.defaultTLSResourcesNamespace=traefik
 ```
 
+### `safeNaming`
+
+_Optional, Default: false_
+
+By default, the Kubernetes CRD provider generates the names of the routers, middlewares and services it builds by
+joining the namespace and the name of the object they come from, which can produce the same name for two distinct
+objects, one silently replacing the other.
+
+`safeNaming` enables collision-safe naming instead: generated names are derived from the identity of the object
+they come from, and Kubernetes Services referenced from several parents (a route with several services, or a
+Weighted/Mirroring TraefikService) are scoped to their parent instead of being shared by identity.
+
+| Value    | Behavior                                                                                     |
+|----------|-----------------------------------------------------------------------------------------------|
+| not set  | Current naming is used (default, backward compatible), and a warning is logged on startup.    |
+| `true`   | Collision-safe naming is used.                                                                 |
+| `false`  | Current naming is used, and the startup warning is silenced.                                  |
+
+!!! warning "Startup warning"
+
+    When `safeNaming` is left unset, a warning is logged on startup, since the current naming scheme is collision-prone.
+    It is recommended to explicitly set this option, to `true` on new setups, or to `false` to keep the current
+    behavior and silence the warning.
+
+When `safeNaming` is enabled, the generated names are no longer normalized: their components are joined with a
+`|` separator, which cannot appear in a Kubernetes namespace or name, and the ones generated for a route are
+derived from the route index instead of its rule:
+
+```text
+default-whoami-80                          ->    default|whoami-80
+default-test-route-6b204d94623b3df4370c    ->    default|test-route|0
+```
+
+The services generated for the Kubernetes Services referenced by a `TraefikService` (weighted or mirroring),
+or by a route with several services, are named after the parent declaring the reference,
+followed by the index of the reference, and the namespace, the name and the port of the referenced Kubernetes Service:
+
+```text
+default-whoami-80    ->    default|wrr1|wrr|1|default|whoami|80
+```
+
+Each of these references carries its own options (`serversTransport`, `scheme`, `sticky`, `healthCheck`, ...),
+which were not part of the generated name before: two references to the same Kubernetes Service with different
+options were collapsed into a single service, and the last one built silently won. With `safeNaming` enabled,
+they are distinct services, which also means that the servers of a Kubernetes Service referenced from several
+parents are health checked once per reference, instead of once for all of them.
+
+!!! warning "Observability"
+
+    These names are user-visible: they appear in the dashboard and API, in the access logs `RouterName` and `ServiceName` fields,
+    and in the `router` and `service` labels of the metrics.
+    Dashboards, alerting rules, and log queries that match on Kubernetes CRD router, middleware or service names must be updated accordingly
+    when `safeNaming` is enabled.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    safeNaming: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  safeNaming = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.safeNaming=true
+```
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

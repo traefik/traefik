@@ -151,6 +151,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     defaultTLSResourcesNamespace = "foobar"
+    safeNaming = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
