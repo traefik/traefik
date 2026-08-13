@@ -68,6 +68,11 @@ type Provider struct {
 	ThrottleDuration             ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices           bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	DefaultTLSResourcesNamespace string          `description:"Namespace allowed to define the default TLSOption and TLSStore resources. When empty, they can be defined in any namespace." json:"defaultTLSResourcesNamespace,omitempty" toml:"defaultTLSResourcesNamespace,omitempty" yaml:"defaultTLSResourcesNamespace,omitempty" export:"true"`
+	// SafeNaming enables collision-safe naming for generated routers, middlewares and services:
+	// generated names are derived from the identity of the object they come from instead of being flattened
+	// and normalized, and Kubernetes Services referenced from several parents (a route with several services,
+	// or a Weighted/Mirroring TraefikService) are scoped to their parent instead of being shared by identity.
+	SafeNaming bool `description:"Enable collision-safe naming for the Kubernetes CRD provider." json:"safeNaming,omitempty" toml:"safeNaming,omitempty" yaml:"safeNaming,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -237,7 +242,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	conf.TLS.Certificates = getTLSConfig(tlsConfigs)
 
 	for _, middleware := range client.GetMiddlewares() {
-		id := makeKey(middleware.Namespace, middleware.Name)
+		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
+		if p.SafeNaming {
+			id = makeKey(middleware.Namespace, middleware.Name)
+		}
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
@@ -268,7 +276,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			errorPage.Service = errorPageName
 
 			if errorPageService != nil {
-				conf.HTTP.Services[errorPageName] = errorPageService
+				serviceName := id + "-errorpage-service"
+				errorPage.Service = serviceName
+				conf.HTTP.Services[serviceName] = errorPageService
 			}
 		}
 
@@ -331,7 +341,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
-		id := makeKey(middlewareTCP.Namespace, middlewareTCP.Name)
+		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
+		if p.SafeNaming {
+			id = makeKey(middlewareTCP.Namespace, middlewareTCP.Name)
+		}
 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
@@ -346,6 +359,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
 		crossProviderNamespaces:   p.CrossProviderNamespaces,
+		safeNaming:                p.SafeNaming,
 	}
 
 	for _, service := range client.GetTraefikServices() {
@@ -425,7 +439,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
-		id := makeKey(serversTransport.Namespace, serversTransport.Name)
+		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
+		if p.SafeNaming {
+			id = makeKey(serversTransport.Namespace, serversTransport.Name)
+		}
 		conf.HTTP.ServersTransports[id] = &dynamic.ServersTransport{
 			ServerName:          serversTransport.Spec.ServerName,
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
@@ -452,6 +469,7 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
 		crossProviderNamespaces:   p.CrossProviderNamespaces,
+		safeNaming:                p.SafeNaming,
 	}
 
 	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec, serviceKey)
@@ -475,7 +493,7 @@ func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace st
 	for _, mi := range chain.Middlewares {
 		ctxMid := log.With(ctx, log.Str("middlewareRef", mi.Namespace+"/"+mi.Name))
 
-		middlewareRef, err := resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+		middlewareRef, err := resolveReference(ctxMid, parentNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -941,7 +959,10 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 			clientCAs = append(clientCAs, tls.FileOrContent(cert))
 		}
 
-		id := makeKey(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
+		id := makeID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
+		if p.SafeNaming {
+			id = makeKey(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
+		}
 		// If the name is default, we override the default config.
 		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName {
 			id = tlsOptionsCRD.Name
@@ -1000,7 +1021,10 @@ func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[strin
 			continue
 		}
 
-		id := makeKey(t.Namespace, t.Name)
+		id := makeID(t.Namespace, t.Name)
+		if p.SafeNaming {
+			id = makeKey(t.Namespace, t.Name)
+		}
 
 		// If the name is default, we override the default config.
 		if t.Name == tls.DefaultTLSStoreName {
@@ -1076,16 +1100,35 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 	return nil
 }
 
-func makeKey(components ...string) string {
-	h := sha256.New()
+// nameSeparator joins the components of a SafeNaming generated name.
+// It is guaranteed to never appear inside a Kubernetes namespace or name (both are restricted to
+// lowercase alphanumeric characters, '-' and '.'), so joining components with it is unambiguous.
+const nameSeparator = "|"
 
-	for _, component := range components {
-		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
-		// As explained in https://pkg.go.dev/hash#Hash, Write never returns an error.
-		_, _ = fmt.Fprintf(h, "%d:%s", len(component), component)
+// makeKey builds a collision-safe name for the given components, used when SafeNaming is enabled.
+func makeKey(components ...string) string {
+	return strings.Join(components, nameSeparator)
+}
+
+// makeID builds the legacy (pre-v2.11.55) generated name for a namespace and a name, used when SafeNaming
+// is disabled.
+func makeID(namespace, name string) string {
+	if namespace == "" {
+		return name
 	}
 
-	return fmt.Sprintf("%s-%.10x", provider.Normalize(strings.Join(components, "-")), h.Sum(nil))
+	return namespace + "-" + name
+}
+
+// makeServiceKey builds the legacy (pre-v2.11.55) generated key for a route, derived from its rule, used when
+// SafeNaming is disabled.
+func makeServiceKey(rule, ingressName string) (string, error) {
+	h := sha256.New()
+	if _, err := h.Write([]byte(rule)); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil)), nil
 }
 
 func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
@@ -1225,7 +1268,7 @@ func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool 
 	return slices.Contains(allowList, namespace)
 }
 
-func resolveReference(ctx context.Context, parentNs, ns, name string, crossProviderNamespaces []string, allowCrossNamespace bool) (string, error) {
+func resolveReference(ctx context.Context, parentNs, ns, name string, crossProviderNamespaces []string, allowCrossNamespace, safeNaming bool) (string, error) {
 	if strings.Contains(name, providerNamespaceSeparator) {
 		if !allowCrossNamespace && strings.HasSuffix(name, providerNamespaceSeparator+providerName) {
 			return "", errors.New("when allowCrossNamespace is disabled, @kubernetescrd references are disallowed")
@@ -1248,5 +1291,9 @@ func resolveReference(ctx context.Context, parentNs, ns, name string, crossProvi
 		return "", errors.New("allowCrossNamespace is disabled, cross-namespace are disallowed")
 	}
 
-	return makeKey(ns, name), nil
+	if safeNaming {
+		return makeKey(ns, name), nil
+	}
+
+	return provider.Normalize(ns + "-" + name), nil
 }

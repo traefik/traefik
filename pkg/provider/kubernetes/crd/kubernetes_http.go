@@ -57,6 +57,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
 			crossProviderNamespaces:   p.CrossProviderNamespaces,
+			safeNaming:                p.SafeNaming,
 		}
 
 		for ri, route := range ingressRoute.Spec.Routes {
@@ -76,26 +77,45 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			routerName := makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri))
+			var routerName string
+			if p.SafeNaming {
+				routerName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri))
+			} else {
+				serviceKey, errKey := makeServiceKey(route.Match, ingressName)
+				if errKey != nil {
+					logger.Error(errKey)
+					continue
+				}
+
+				routerName = provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
+			}
+
 			serviceName := routerName
 
-			if len(route.Services) > 1 {
+			switch {
+			case len(route.Services) > 1:
 				spec := traefikv1alpha1.TraefikServiceSpec{
 					Weighted: &traefikv1alpha1.WeightedRoundRobin{
 						Services: route.Services,
 					},
 				}
 
-				wrrKey := []string{ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR}
-				serviceName = makeKey(wrrKey...)
+				var wrrKey []string
+				if p.SafeNaming {
+					wrrKey = []string{ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR}
+					serviceName = makeKey(wrrKey...)
+				}
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, wrrKey, conf.Services)
 				if errBuild != nil {
 					logger.Error(errBuild)
 					continue
 				}
-			} else if len(route.Services) == 1 {
-				serviceKey := makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
+			case len(route.Services) == 1:
+				var serviceKey string
+				if p.SafeNaming {
+					serviceKey = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
+				}
 
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec, serviceKey)
 				if err != nil {
@@ -104,10 +124,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				if serversLB != nil {
-					conf.Services[fullName] = serversLB
+					// Legacy naming stores the generated Kubernetes Service under the route's own name
+					// (services are shared by identity, not scoped to their parent).
+					if p.SafeNaming {
+						conf.Services[fullName] = serversLB
+					} else {
+						conf.Services[serviceName] = serversLB
+					}
 				}
 
-				serviceName = fullName
+				if p.SafeNaming || serversLB == nil {
+					serviceName = fullName
+				}
 			}
 
 			r := &dynamic.Router{
@@ -128,7 +156,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptions := ingressRoute.Spec.TLS.Options
 					ctxTLSOption := log.With(ctx, log.Str("TLSOption", tlsOptions.Name))
 
-					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
 					if err != nil {
 						logger.WithError(err).Errorf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
@@ -151,7 +179,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	for _, mi := range middlewares {
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, mi.Name))
 
-		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -168,12 +196,16 @@ type configBuilder struct {
 	allowExternalNameServices bool
 	allowEmptyServices        bool
 	crossProviderNamespaces   []string
+	safeNaming                bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
 // and adds it to the given conf map.
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
-	id := makeKey(tService.Namespace, tService.Name)
+	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
+	if c.safeNaming {
+		id = makeKey(tService.Namespace, tService.Name)
+	}
 
 	if tService.Spec.Weighted != nil {
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, []string{tService.Namespace, tService.Name, roleWRR}, conf)
@@ -185,7 +217,8 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 }
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
-// The Kubernetes Services it references are named after parentKey, to keep them scoped to their parent.
+// When SafeNaming is enabled, the Kubernetes Services it references are named after parentKey, to keep them scoped
+// to their parent. Otherwise, they are named after their own identity.
 // It adds it to the given conf map.
 func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, parentKey []string, conf map[string]*dynamic.Service) error {
 	var wrrServices []dynamic.WRRService
@@ -316,6 +349,10 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 		return serversTransportName, nil
 	}
 
+	if !c.safeNaming {
+		return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
+	}
+
 	return makeKey(parentNamespace, serversTransportName), nil
 }
 
@@ -419,9 +456,10 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 // In addition, if the service is a Kubernetes one,
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
-// A Kubernetes Service is named after serviceKey, which identifies the parent declaring the reference:
-// the generated service carries the options of the reference (serversTransport, scheme, sticky, ...),
-// so two references to the same Kubernetes Service must not share a name.
+// When SafeNaming is enabled, a Kubernetes Service is named after serviceKey, which identifies the parent
+// declaring the reference: the generated service carries the options of the reference (serversTransport,
+// scheme, sticky, ...), so two references to the same Kubernetes Service must not share a name.
+// Otherwise, it is named after its own identity: two references to the same Kubernetes Service are collapsed into a single one.
 func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service traefikv1alpha1.LoadBalancerSpec, serviceKey string) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
@@ -452,10 +490,14 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 			return "", nil, err
 		}
 
+		if !c.safeNaming {
+			return c.fullServiceName(svcCtx, service, service.Port), serversLB, nil
+		}
+
 		return serviceKey, serversLB, nil
 
 	case "TraefikService":
-		return fullServiceName(svcCtx, service, intstr.FromInt(0)), nil, nil
+		return c.fullServiceName(svcCtx, service, intstr.FromInt(0)), nil, nil
 
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
@@ -471,8 +513,33 @@ func splitSvcNameProvider(name string) (string, string) {
 	return svc, pvd
 }
 
-func fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
-	if (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "") {
+// fullServiceName returns the identity-based name for a Kubernetes Service or TraefikService reference:
+// the same reference always produces the same name, regardless of the parent declaring it.
+func (c configBuilder) fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
+	hasPort := (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "")
+
+	if !c.safeNaming {
+		if hasPort {
+			return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, &port))
+		}
+
+		if !strings.Contains(service.Name, providerNamespaceSeparator) {
+			return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, service.Name))
+		}
+
+		name, pName := splitSvcNameProvider(service.Name)
+		if pName == providerName {
+			return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, name))
+		}
+
+		if service.Namespace != "" {
+			log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", service.Namespace)
+		}
+
+		return provider.Normalize(name) + providerNamespaceSeparator + pName
+	}
+
+	if hasPort {
 		return makeKey(service.Namespace, service.Name, port.String())
 	}
 

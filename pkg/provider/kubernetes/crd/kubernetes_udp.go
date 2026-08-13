@@ -34,11 +34,18 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		for i, route := range ingressRouteUDP.Spec.Routes {
 			routeIndex := strconv.Itoa(i)
 
-			routerName := makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex)
+			var routerName string
+			if p.SafeNaming {
+				routerName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex)
+			} else {
+				key := fmt.Sprintf("%s-%s", ingressName, routeIndex)
+				routerName = makeID(ingressRouteUDP.Namespace, key)
+			}
+
 			serviceName := routerName
 
 			var wrrName string
-			if len(route.Services) > 1 {
+			if p.SafeNaming && len(route.Services) > 1 {
 				wrrName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
@@ -55,14 +62,21 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
-					serviceName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
+					if p.SafeNaming {
+						serviceName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
+					}
 					conf.Services[serviceName] = balancerServerUDP
 					break
 				}
 
-				serviceName = wrrName
+				var serviceKey string
+				if p.SafeNaming {
+					serviceName = wrrName
+					serviceKey = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
+				} else {
+					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
+				}
 
-				serviceKey := makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
 				conf.Services[serviceKey] = balancerServerUDP
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}

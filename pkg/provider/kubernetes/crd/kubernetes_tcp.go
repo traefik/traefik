@@ -54,11 +54,23 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			routeIndex := strconv.Itoa(ri)
 
-			routerName := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex)
+			var routerName string
+			if p.SafeNaming {
+				routerName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex)
+			} else {
+				key, errKey := makeServiceKey(route.Match, ingressName)
+				if errKey != nil {
+					logger.Error(errKey)
+					continue
+				}
+
+				routerName = makeID(ingressRouteTCP.Namespace, key)
+			}
+
 			serviceName := routerName
 
 			var wrrName string
-			if len(route.Services) > 1 {
+			if p.SafeNaming && len(route.Services) > 1 {
 				wrrName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
@@ -75,14 +87,21 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
-					serviceName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
+					if p.SafeNaming {
+						serviceName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
+					}
 					conf.Services[serviceName] = balancerServerTCP
 					break
 				}
 
-				serviceName = wrrName
+				var serviceKey string
+				if p.SafeNaming {
+					serviceName = wrrName
+					serviceKey = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
+				} else {
+					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
+				}
 
-				serviceKey := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
 				conf.Services[serviceKey] = balancerServerTCP
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}
@@ -116,7 +135,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					tlsOptions := ingressRouteTCP.Spec.TLS.Options
 					ctxTLSOption := log.With(ctx, log.Str("TLSOption", tlsOptions.Name))
 
-					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRouteTCP.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRouteTCP.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
 					if err != nil {
 						logger.WithError(err).Errorf("Invalid reference to TLSOption %q", ingressRouteTCP.Spec.TLS.Options.Name)
 						continue
@@ -137,7 +156,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 	for _, mi := range middlewares {
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, mi.Name))
 
-		middlewareRef, err := resolveReference(ctxMid, ingRouteTCPNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+		middlewareRef, err := resolveReference(ctxMid, ingRouteTCPNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.SafeNaming)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
