@@ -34,19 +34,13 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		for i, route := range ingressRouteUDP.Spec.Routes {
 			routeIndex := strconv.Itoa(i)
 
-			var routerName string
-			if p.safeNaming() {
-				routerName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex)
-			} else {
-				key := fmt.Sprintf("%s-%s", ingressName, routeIndex)
-				routerName = makeID(ingressRouteUDP.Namespace, key)
-			}
+			routerName := p.nameBuilder().udpRouter(ingressRouteUDP.Namespace, ingressName, i)
 
 			serviceName := routerName
 
 			var wrrName string
 			if p.safeNaming() && len(route.Services) > 1 {
-				wrrName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
+				wrrName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
 			for si, service := range route.Services {
@@ -63,7 +57,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
 					if p.safeNaming() {
-						serviceName = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
+						serviceName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
 					}
 					addToConfig(logger, "service", serviceName, conf.Services, balancerServerUDP)
 					break
@@ -72,7 +66,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				var serviceKey string
 				if p.safeNaming() {
 					serviceName = wrrName
-					serviceKey = makeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
+					serviceKey = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
 				} else {
 					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				}

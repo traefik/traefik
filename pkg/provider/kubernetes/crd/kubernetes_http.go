@@ -57,7 +57,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
 			crossProviderNamespaces:   p.CrossProviderNamespaces,
-			safeNaming:                p.safeNaming(),
+			nameBuilder:               p.nameBuilder(),
 		}
 
 		for ri, route := range ingressRoute.Spec.Routes {
@@ -77,17 +77,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			var routerName string
-			if p.safeNaming() {
-				routerName = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri))
-			} else {
-				serviceKey, errKey := makeServiceKey(route.Match, ingressName)
-				if errKey != nil {
-					logger.Error(errKey)
-					continue
-				}
-
-				routerName = provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
+			routerName, err := p.nameBuilder().httpRouter(ingressRoute.Namespace, ingressName, ri, route.Match)
+			if err != nil {
+				logger.Error(err)
+				continue
 			}
 
 			serviceName := routerName
@@ -103,7 +96,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				var wrrKey []string
 				if p.safeNaming() {
 					wrrKey = []string{ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR}
-					serviceName = makeKey(wrrKey...)
+					serviceName = makeSafeKey(wrrKey...)
 				}
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, wrrKey, conf.Services)
@@ -114,7 +107,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			case len(route.Services) == 1:
 				var serviceKey string
 				if p.safeNaming() {
-					serviceKey = makeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
+					serviceKey = makeSafeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
 				}
 
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec, serviceKey)
@@ -196,16 +189,13 @@ type configBuilder struct {
 	allowExternalNameServices bool
 	allowEmptyServices        bool
 	crossProviderNamespaces   []string
-	safeNaming                bool
+	nameBuilder               nameBuilder
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
 // and adds it to the given conf map.
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
-	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
-	if c.safeNaming {
-		id = makeKey(tService.Namespace, tService.Name)
-	}
+	id := c.nameBuilder.makeID(tService.Namespace, tService.Name)
 
 	if tService.Spec.Weighted != nil {
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, []string{tService.Namespace, tService.Name, roleWRR}, conf)
@@ -224,7 +214,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 	var wrrServices []dynamic.WRRService
 
 	for si, service := range tService.Weighted.Services {
-		serviceKey := makeKey(append(slices.Clone(parentKey), strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, namespace), service.Name, service.Port.String())...)
+		serviceKey := makeSafeKey(append(slices.Clone(parentKey), strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, namespace), service.Name, service.Port.String())...)
 
 		fullName, k8sService, err := c.nameAndService(ctx, namespace, service.LoadBalancerSpec, serviceKey)
 		if err != nil {
@@ -259,7 +249,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 // It adds it to the given conf map.
 func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
 	mirroring := tService.Spec.Mirroring
-	mainKey := makeKey(tService.Namespace, tService.Name, roleMirroring, namespaceOrParentNamespace(mirroring.Namespace, tService.Namespace), mirroring.Name, mirroring.Port.String())
+	mainKey := makeSafeKey(tService.Namespace, tService.Name, roleMirroring, namespaceOrParentNamespace(mirroring.Namespace, tService.Namespace), mirroring.Name, mirroring.Port.String())
 
 	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirroring.LoadBalancerSpec, mainKey)
 	if err != nil {
@@ -272,7 +262,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 
 	var mirrorServices []dynamic.MirrorService
 	for mi, mirror := range mirroring.Mirrors {
-		mirrorKey := makeKey(tService.Namespace, tService.Name, roleMirror, strconv.Itoa(mi), namespaceOrParentNamespace(mirror.Namespace, tService.Namespace), mirror.Name, mirror.Port.String())
+		mirrorKey := makeSafeKey(tService.Namespace, tService.Name, roleMirror, strconv.Itoa(mi), namespaceOrParentNamespace(mirror.Namespace, tService.Namespace), mirror.Name, mirror.Port.String())
 
 		mirroredName, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirror.LoadBalancerSpec, mirrorKey)
 		if err != nil {
@@ -349,11 +339,7 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 		return serversTransportName, nil
 	}
 
-	if !c.safeNaming {
-		return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
-	}
-
-	return makeKey(parentNamespace, serversTransportName), nil
+	return c.nameBuilder.makeID(parentNamespace, serversTransportName), nil
 }
 
 func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
@@ -490,7 +476,7 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 			return "", nil, err
 		}
 
-		if !c.safeNaming {
+		if !c.nameBuilder.safe {
 			return c.fullServiceName(svcCtx, service, service.Port), serversLB, nil
 		}
 
@@ -518,7 +504,7 @@ func splitSvcNameProvider(name string) (string, string) {
 func (c configBuilder) fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
 	hasPort := (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "")
 
-	if !c.safeNaming {
+	if !c.nameBuilder.safe {
 		if hasPort {
 			return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, &port))
 		}
@@ -540,16 +526,16 @@ func (c configBuilder) fullServiceName(ctx context.Context, service traefikv1alp
 	}
 
 	if hasPort {
-		return makeKey(service.Namespace, service.Name, port.String())
+		return makeSafeKey(service.Namespace, service.Name, port.String())
 	}
 
 	if !strings.Contains(service.Name, providerNamespaceSeparator) {
-		return makeKey(service.Namespace, service.Name)
+		return makeSafeKey(service.Namespace, service.Name)
 	}
 
 	name, pName := splitSvcNameProvider(service.Name)
 	if pName == providerName {
-		return makeKey(service.Namespace, name)
+		return makeSafeKey(service.Namespace, name)
 	}
 
 	if service.Namespace != "" {

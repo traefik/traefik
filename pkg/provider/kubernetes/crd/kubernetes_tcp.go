@@ -54,24 +54,17 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			routeIndex := strconv.Itoa(ri)
 
-			var routerName string
-			if p.safeNaming() {
-				routerName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex)
-			} else {
-				key, errKey := makeServiceKey(route.Match, ingressName)
-				if errKey != nil {
-					logger.Error(errKey)
-					continue
-				}
-
-				routerName = makeID(ingressRouteTCP.Namespace, key)
+			routerName, err := p.nameBuilder().tcpRouter(ingressRouteTCP.Namespace, ingressName, ri, route.Match)
+			if err != nil {
+				logger.Error(err)
+				continue
 			}
 
 			serviceName := routerName
 
 			var wrrName string
 			if p.safeNaming() && len(route.Services) > 1 {
-				wrrName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
+				wrrName = makeSafeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
 			for si, service := range route.Services {
@@ -88,7 +81,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
 					if p.safeNaming() {
-						serviceName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
+						serviceName = makeSafeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
 					}
 					addToConfig(logger, "service", serviceName, conf.Services, balancerServerTCP)
 					break
@@ -97,7 +90,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				var serviceKey string
 				if p.safeNaming() {
 					serviceName = wrrName
-					serviceKey = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
+					serviceKey = makeSafeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
 				} else {
 					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				}
