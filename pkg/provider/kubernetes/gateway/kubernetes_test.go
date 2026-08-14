@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
@@ -772,7 +771,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -788,7 +787,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -837,7 +836,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 							},
@@ -853,7 +852,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -900,13 +899,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
 										Name: "route-cookie",
-										Path: ptr.To("/"),
+										Path: new("/"),
 									},
 								},
 							},
@@ -922,7 +921,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -968,17 +967,17 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
-										Weight: ptr.To(70),
+										Weight: new(70),
 									},
 									{
 										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1",
-										Weight: ptr.To(30),
+										Weight: new(30),
 									},
 								},
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
 										Name: "route-cookie",
-										Path: ptr.To("/"),
+										Path: new("/"),
 									},
 								},
 							},
@@ -994,7 +993,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1011,7 +1010,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: ptr.To(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -3483,7 +3482,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Sticky: &dynamic.Sticky{
 								Cookie: &dynamic.Cookie{
 									Name: "ts-cookie",
-									Path: ptr.To("/"),
+									Path: new("/"),
 								},
 							},
 						},
@@ -3521,7 +3520,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "whoami",
-										Weight: ptr.To(1),
+										Weight: new(1),
 									},
 								},
 								Sticky: &dynamic.Sticky{
@@ -3538,7 +3537,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
 										Name: "ts-cookie",
-										Path: ptr.To("/"),
+										Path: new("/"),
 									},
 								},
 							},
@@ -4732,7 +4731,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
 										Name: "route-cookie",
-										Path: ptr.To("/"),
+										Path: new("/"),
 									},
 								},
 							},

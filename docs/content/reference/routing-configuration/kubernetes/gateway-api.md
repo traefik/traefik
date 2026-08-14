@@ -625,10 +625,10 @@ spec:
 
 | Field | Description |
 |-------|-------------|
-| `sessionName` | Name of the cookie or header used for session persistence |
-| `type` | `Cookie` (default) or `Header` |
-| `absoluteTimeout` | Maximum lifetime of the session (only applies to cookies with `lifetimeType: Permanent`) |
-| `cookieConfig.lifetimeType` | `Session` (browser session) or `Permanent` (uses `absoluteTimeout`) |
+| <a id="opt-sessionName" href="#opt-sessionName" title="#opt-sessionName">`sessionName`</a> | Name of the cookie or header used for session persistence |
+| <a id="opt-type" href="#opt-type" title="#opt-type">`type`</a> | `Cookie` (default) or `Header` |
+| <a id="opt-absoluteTimeout" href="#opt-absoluteTimeout" title="#opt-absoluteTimeout">`absoluteTimeout`</a> | Maximum lifetime of the session (only applies to cookies with `lifetimeType: Permanent`) |
+| <a id="opt-cookieConfig-lifetimeType" href="#opt-cookieConfig-lifetimeType" title="#opt-cookieConfig-lifetimeType">`cookieConfig.lifetimeType`</a> | `Session` (browser session) or `Permanent` (uses `absoluteTimeout`) |
 
 !!! info "Header-based Session Persistence"
 

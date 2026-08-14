@@ -899,9 +899,9 @@ func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayNa
 			AncestorRef: gatev1.ParentReference{
 				Group:       ptr.To(gatev1.Group(groupGateway)),
 				Kind:        ptr.To(gatev1.Kind(kindGateway)),
-				Namespace:   ptr.To(gatev1.Namespace(namespace)),
+				Namespace:   new(gatev1.Namespace(namespace)),
 				Name:        gatev1.ObjectName(gatewayName),
-				SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+				SectionName: new(gatev1.SectionName(listener.Name)),
 			},
 			ControllerName: controllerName,
 		}

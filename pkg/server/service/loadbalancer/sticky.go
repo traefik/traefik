@@ -170,46 +170,6 @@ func (s *Sticky) StickyHandler(req *http.Request) (*NamedHandler, bool, error) {
 	}
 }
 
-// stickyHandlerFromCookie returns the handler based on the sticky cookie value.
-func (s *Sticky) stickyHandlerFromCookie(req *http.Request) (*NamedHandler, bool, error) {
-	cookie, err := req.Cookie(s.cookie.name)
-	if err != nil && errors.Is(err, http.ErrNoCookie) {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, fmt.Errorf("reading cookie: %w", err)
-	}
-
-	return s.lookupHandler(cookie.Value)
-}
-
-// stickyHandlerFromHeader returns the handler based on the sticky header value.
-func (s *Sticky) stickyHandlerFromHeader(req *http.Request) (*NamedHandler, bool, error) {
-	value := req.Header.Get(s.header.name)
-	if value == "" {
-		return nil, false, nil
-	}
-
-	return s.lookupHandler(value)
-}
-
-// lookupHandler finds a handler by its sticky value (hash).
-func (s *Sticky) lookupHandler(value string) (*NamedHandler, bool, error) {
-	s.handlersMu.RLock()
-	handler, ok := s.stickyMap[value]
-	s.handlersMu.RUnlock()
-
-	if ok && handler != nil {
-		return handler, false, nil
-	}
-
-	s.handlersMu.RLock()
-	handler, ok = s.compatibilityStickyMap[value]
-	s.handlersMu.RUnlock()
-
-	return handler, ok, nil
-}
-
 // WriteStickyResponse writes the sticky cookie or header to the response.
 func (s *Sticky) WriteStickyResponse(rw http.ResponseWriter, name string) error {
 	switch s.mode {
@@ -256,6 +216,46 @@ func (s *Sticky) WriteStickyHeader(rw http.ResponseWriter, name string) error {
 
 	rw.Header().Set(s.header.name, hash)
 	return nil
+}
+
+// stickyHandlerFromCookie returns the handler based on the sticky cookie value.
+func (s *Sticky) stickyHandlerFromCookie(req *http.Request) (*NamedHandler, bool, error) {
+	cookie, err := req.Cookie(s.cookie.name)
+	if err != nil && errors.Is(err, http.ErrNoCookie) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("reading cookie: %w", err)
+	}
+
+	return s.lookupHandler(cookie.Value)
+}
+
+// stickyHandlerFromHeader returns the handler based on the sticky header value.
+func (s *Sticky) stickyHandlerFromHeader(req *http.Request) (*NamedHandler, bool, error) {
+	value := req.Header.Get(s.header.name)
+	if value == "" {
+		return nil, false, nil
+	}
+
+	return s.lookupHandler(value)
+}
+
+// lookupHandler finds a handler by its sticky value (hash).
+func (s *Sticky) lookupHandler(value string) (*NamedHandler, bool, error) {
+	s.handlersMu.RLock()
+	handler, ok := s.stickyMap[value]
+	s.handlersMu.RUnlock()
+
+	if ok && handler != nil {
+		return handler, false, nil
+	}
+
+	s.handlersMu.RLock()
+	handler, ok = s.compatibilityStickyMap[value]
+	s.handlersMu.RUnlock()
+
+	return handler, ok, nil
 }
 
 func convertSameSite(sameSite string) http.SameSite {

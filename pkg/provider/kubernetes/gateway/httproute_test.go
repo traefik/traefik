@@ -368,7 +368,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 		{
 			desc: "cookie with session name",
 			sessionPersist: &gatev1.SessionPersistence{
-				SessionName: ptr.To("my-session"),
+				SessionName: new("my-session"),
 				Type:        ptr.To(gatev1.CookieBasedSessionPersistence),
 			},
 			wantNil:    false,
@@ -379,7 +379,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 		{
 			desc: "header with session name",
 			sessionPersist: &gatev1.SessionPersistence{
-				SessionName: ptr.To("X-My-Session"),
+				SessionName: new("X-My-Session"),
 				Type:        ptr.To(gatev1.HeaderBasedSessionPersistence),
 			},
 			wantNil:    false,
@@ -390,7 +390,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 		{
 			desc: "cookie with permanent lifetime and timeout",
 			sessionPersist: &gatev1.SessionPersistence{
-				SessionName:     ptr.To("my-cookie"),
+				SessionName:     new("my-cookie"),
 				Type:            ptr.To(gatev1.CookieBasedSessionPersistence),
 				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
 				CookieConfig: &gatev1.CookieConfig{
@@ -406,7 +406,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 		{
 			desc: "cookie with session lifetime ignores timeout",
 			sessionPersist: &gatev1.SessionPersistence{
-				SessionName:     ptr.To("my-cookie"),
+				SessionName:     new("my-cookie"),
 				Type:            ptr.To(gatev1.CookieBasedSessionPersistence),
 				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
 				CookieConfig: &gatev1.CookieConfig{
