@@ -425,6 +425,7 @@ replace github.com/traefik/traefik/dynamic/ext => ./pkg/config/dynamic/ext
 replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20260804094822-b975dcaa8c48
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59
+	nhooyr.io/websocket => github.com/coder/websocket v1.8.7
 )
 
 // ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
