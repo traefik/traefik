@@ -624,7 +624,14 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
-		svc.Middlewares = svcConfig.Service.Middlewares
+
+		if len(svcConfig.Service.Middlewares) > 0 {
+			if p.CrossProviderNamespaces != nil && !slices.Contains(p.CrossProviderNamespaces, namespace) {
+				return nil, fmt.Errorf("cross-provider middleware reference is not allowed from namespace %q", namespace)
+			}
+
+			svc.Middlewares = svcConfig.Service.Middlewares
+		}
 
 		if svcConfig.Service.PassHostHeader != nil {
 			svc.LoadBalancer.PassHostHeader = svcConfig.Service.PassHostHeader
