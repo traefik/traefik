@@ -72,6 +72,11 @@ type Handler struct {
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan handlerParams
 	wg             sync.WaitGroup
+
+	// done is closed by Close to signal shutdown. logHandlerChan itself is never
+	// closed: a hijacked connection can outlive Shutdown, so its handler may still
+	// send after Close has run, and sending on a closed channel panics (#13693).
+	done chan struct{}
 }
 
 // NewHandler creates a new Handler.
@@ -152,6 +157,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 		logger:         logger,
 		file:           file,
 		logHandlerChan: logHandlerChan,
+		done:           make(chan struct{}),
 	}
 
 	if config.Filters != nil {
@@ -164,8 +170,23 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 
 	if config.BufferingSize > 0 {
 		logHandler.wg.Go(func() {
-			for handlerParams := range logHandler.logHandlerChan {
-				logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
+			for {
+				select {
+				case params := <-logHandler.logHandlerChan:
+					logHandler.logTheRoundTrip(params.ctx, params.logDataTable)
+
+				case <-logHandler.done:
+					// Write what is already buffered before giving up, so a shutdown
+					// does not silently discard entries that were accepted.
+					for {
+						select {
+						case params := <-logHandler.logHandlerChan:
+							logHandler.logTheRoundTrip(params.ctx, params.logDataTable)
+						default:
+							return
+						}
+					}
+				}
 			}
 		})
 	}
@@ -291,9 +312,14 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 
 		if h.config.BufferingSize > 0 {
-			h.logHandlerChan <- handlerParams{
+			select {
+			case h.logHandlerChan <- handlerParams{
 				ctx:          req.Context(),
 				logDataTable: logDataTable,
+			}:
+			case <-h.done:
+				// The consumer is gone, so this entry cannot be written. Dropping it
+				// is preferable to blocking a handler that is already unwinding.
 			}
 			return
 		}
@@ -306,7 +332,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (h *Handler) Close() error {
-	close(h.logHandlerChan)
+	close(h.done)
 	h.wg.Wait()
 	return h.file.Close()
 }
