@@ -288,6 +288,48 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "Custom error page.")
 			},
 		},
+		{
+			desc: "statusRewrites without service: code rewritten",
+			errorPage: &dynamic.ErrorPage{
+				StatusRewrites: map[string]int{
+					"403": 404,
+				},
+			},
+			backendCode: http.StatusForbidden,
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusNotFound, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), http.StatusText(http.StatusForbidden))
+			},
+		},
+		{
+			desc: "statusRewrites range without service: code rewritten",
+			errorPage: &dynamic.ErrorPage{
+				StatusRewrites: map[string]int{
+					"500-503": 502,
+				},
+			},
+			backendCode: http.StatusInternalServerError,
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusBadGateway, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), http.StatusText(http.StatusInternalServerError))
+			},
+		},
+		{
+			desc: "statusRewrites without service: unmapped code preserved",
+			errorPage: &dynamic.ErrorPage{
+				StatusRewrites: map[string]int{
+					"403": 404,
+				},
+			},
+			backendCode: http.StatusBadRequest,
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusBadRequest, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), http.StatusText(http.StatusBadRequest))
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -412,4 +454,13 @@ type mockServiceBuilder struct {
 
 func (m *mockServiceBuilder) BuildHTTP(_ context.Context, _ string) (http.Handler, error) {
 	return m.handler, nil
+}
+
+func TestNew_InvalidConfig(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	serviceBuilderMock := &mockServiceBuilder{}
+
+	_, err := New(t.Context(), handler, dynamic.ErrorPage{}, serviceBuilderMock, "test")
+	require.Error(t, err)
+	assert.Equal(t, "error page service or statusRewrites must be configured", err.Error())
 }

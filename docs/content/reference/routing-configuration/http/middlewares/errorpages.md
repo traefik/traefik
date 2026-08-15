@@ -119,6 +119,8 @@ You can map individual status codes or even ranges to a different status code.
 
 The syntax for ranges follows the same rules as the <a href="#opt-status">`status`</a> option.
 
+`statusRewrites` can also be used standalone without specifying an error `service` or `query`. In this case, the response status code will be rewritten directly while keeping the original response body and headers from the backend.
+
 ### query
 
 There are multiple variables that can be placed in the `query` option to insert values in the URL.

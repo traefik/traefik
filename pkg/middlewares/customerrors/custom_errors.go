@@ -3,6 +3,7 @@ package customerrors
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"net"
@@ -23,6 +24,7 @@ import (
 var (
 	_ middlewares.Stateful = &codeModifier{}
 	_ middlewares.Stateful = &codeCatcher{}
+	_ middlewares.Stateful = &statusRewriter{}
 )
 
 const typeName = "CustomError"
@@ -52,14 +54,22 @@ type statusRewrite struct {
 func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, serviceBuilder serviceBuilder, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
+	if config.Service == "" && len(config.StatusRewrites) == 0 {
+		return nil, errors.New("error page service or statusRewrites must be configured")
+	}
+
 	httpCodeRanges, err := types.NewHTTPCodeRanges(config.Status)
 	if err != nil {
 		return nil, err
 	}
 
-	backend, err := serviceBuilder.BuildHTTP(ctx, config.Service)
-	if err != nil {
-		return nil, err
+	var backend http.Handler
+	if config.Service != "" {
+		var err error
+		backend, err = serviceBuilder.BuildHTTP(ctx, config.Service)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Parse StatusRewrites
@@ -96,9 +106,15 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
 
 	if c.backendHandler == nil {
-		logger.Error().Msg("No backend handler.")
-		observability.SetStatusErrorf(req.Context(), "No backend handler.")
-		c.next.ServeHTTP(rw, req)
+		if len(c.statusRewrites) == 0 {
+			logger.Error().Msg("No backend handler.")
+			observability.SetStatusErrorf(req.Context(), "No backend handler.")
+			c.next.ServeHTTP(rw, req)
+			return
+		}
+
+		rewriter := newStatusRewriter(rw, c.statusRewrites)
+		c.next.ServeHTTP(rewriter, req)
 		return
 	}
 
@@ -393,6 +409,70 @@ func (r *codeModifier) Flush() {
 	r.WriteHeader(r.code)
 
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+// statusRewriter wraps http.ResponseWriter to rewrite response HTTP status codes when no custom error service backend is configured.
+type statusRewriter struct {
+	responseWriter http.ResponseWriter
+	statusRewrites []statusRewrite
+	headersSent    bool
+}
+
+func newStatusRewriter(rw http.ResponseWriter, statusRewrites []statusRewrite) *statusRewriter {
+	return &statusRewriter{
+		responseWriter: rw,
+		statusRewrites: statusRewrites,
+	}
+}
+
+func (sr *statusRewriter) Header() http.Header {
+	return sr.responseWriter.Header()
+}
+
+func (sr *statusRewriter) Write(buf []byte) (int, error) {
+	if !sr.headersSent {
+		sr.WriteHeader(http.StatusOK)
+	}
+	return sr.responseWriter.Write(buf)
+}
+
+func (sr *statusRewriter) WriteHeader(code int) {
+	if sr.headersSent {
+		return
+	}
+
+	// Handling informational headers.
+	if code >= 100 && code <= 199 {
+		sr.responseWriter.WriteHeader(code)
+		return
+	}
+
+	for _, rsc := range sr.statusRewrites {
+		if rsc.fromCodes.Contains(code) {
+			code = rsc.toCode
+			break
+		}
+	}
+
+	sr.responseWriter.WriteHeader(code)
+	sr.headersSent = true
+}
+
+func (sr *statusRewriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := sr.responseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", sr.responseWriter)
+	}
+	return hijacker.Hijack()
+}
+
+func (sr *statusRewriter) Flush() {
+	if !sr.headersSent {
+		sr.WriteHeader(http.StatusOK)
+	}
+	if flusher, ok := sr.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
 }
