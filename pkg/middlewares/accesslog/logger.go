@@ -72,6 +72,13 @@ type Handler struct {
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan handlerParams
 	wg             sync.WaitGroup
+
+	// closedMu guards closed, and orders senders on logHandlerChan against
+	// Close. http.Server.Shutdown neither closes nor waits for hijacked
+	// connections, so a proxied WebSocket handler can still unwind after the
+	// channel has been closed and would otherwise send on a closed channel.
+	closedMu sync.RWMutex
+	closed   bool
 }
 
 // NewHandler creates a new Handler.
@@ -291,6 +298,19 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 
 		if h.config.BufferingSize > 0 {
+			// Held for the send: Close cannot take the write lock, and so cannot
+			// close the channel, while a send is in flight. The consumer keeps
+			// draining until the channel is closed, so a send on a full channel
+			// still completes.
+			h.closedMu.RLock()
+			defer h.closedMu.RUnlock()
+
+			if h.closed {
+				// Shutting down: the entry is dropped rather than written, since
+				// the log file is closed right after the drain completes.
+				return
+			}
+
 			h.logHandlerChan <- handlerParams{
 				ctx:          req.Context(),
 				logDataTable: logDataTable,
@@ -306,7 +326,15 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (h *Handler) Close() error {
+	h.closedMu.Lock()
+	if h.closed {
+		h.closedMu.Unlock()
+		return nil
+	}
+	h.closed = true
 	close(h.logHandlerChan)
+	h.closedMu.Unlock()
+
 	h.wg.Wait()
 	return h.file.Close()
 }
