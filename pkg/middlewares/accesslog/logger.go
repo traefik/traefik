@@ -153,6 +153,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 		logger:         logger,
 		file:           file,
 		logHandlerChan: logHandlerChan,
+		done:           make(chan struct{}),
 	}
 
 	if config.Filters != nil {
