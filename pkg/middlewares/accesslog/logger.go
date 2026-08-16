@@ -72,6 +72,7 @@ type Handler struct {
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan handlerParams
 	wg             sync.WaitGroup
+	done           chan struct{}
 }
 
 // NewHandler creates a new Handler.
@@ -291,9 +292,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 
 		if h.config.BufferingSize > 0 {
-			h.logHandlerChan <- handlerParams{
+			select {
+			case h.logHandlerChan <- handlerParams{
 				ctx:          req.Context(),
 				logDataTable: logDataTable,
+			}:
+			case <-h.done:
 			}
 			return
 		}
@@ -306,6 +310,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (h *Handler) Close() error {
+	close(h.done)
 	close(h.logHandlerChan)
 	h.wg.Wait()
 	return h.file.Close()
