@@ -1847,8 +1847,8 @@ github.com/samber/slog-common v0.21.0 h1:Wo2hTly1Br5RjYqX/BTWJJeDnTE85oWk/7vqlpZ
 github.com/samber/slog-common v0.21.0/go.mod h1:d/6OaSlzdkl9PFpfRLgn8FwY1OW6EFmPtBpsHX4MrU0=
 github.com/samber/slog-zerolog/v2 v2.9.2 h1:DIFzfzDTxHeRyGlfg/D7b2by7VVzcsBTybRPrzjWF4c=
 github.com/samber/slog-zerolog/v2 v2.9.2/go.mod h1:2q6cYK2OcN6YfQE/WyCnUtigc+yYf3ozqGsGmRwZR6I=
-github.com/samyfodil/wazy v0.1.3 h1:rIVE9I4kSzW42mJUQ5p9u1hLq8UeoRuv8w3eJoQV6z8=
-github.com/samyfodil/wazy v0.1.3/go.mod h1:jpXcoooWi9CQPnN1fzwt/A0w3AMRn/s6PQDunF55SIM=
+github.com/samyfodil/wazy v0.1.4 h1:P9X6YhW4Ec0QWbsux45X5yasO33fU2OR4YVdjrJuNjI=
+github.com/samyfodil/wazy v0.1.4/go.mod h1:jpXcoooWi9CQPnN1fzwt/A0w3AMRn/s6PQDunF55SIM=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 h1:ObX9hZmK+VmijreZO/8x9pQ8/P/ToHD/bdSb4Eg4tUo=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36/go.mod h1:LEsDu4BubxK7/cWhtlQWfuxwL4rf/2UEpxXz1o1EMtM=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=

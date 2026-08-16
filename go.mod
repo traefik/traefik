@@ -338,7 +338,7 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/samber/lo v1.53.0 // indirect
 	github.com/samber/slog-common v0.21.0 // indirect
-	github.com/samyfodil/wazy v0.1.3
+	github.com/samyfodil/wazy v0.1.4
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/selectel/domains-go v1.1.0 // indirect
