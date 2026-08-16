@@ -11,30 +11,30 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/http-wasm/http-wasm-host-go/handler"
-	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
-	"github.com/tetratelabs/wazero"
+	"github.com/samyfodil/wazy"
+	"github.com/samyfodil/wazy/imports/http_handler"
+	wasm "github.com/samyfodil/wazy/imports/http_handler/nethttp"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 type wasmMiddlewareBuilder struct {
 	path     string
-	cache    wazero.CompilationCache
+	cache    wazy.CompilationCache
 	settings Settings
 }
 
 func newWasmMiddlewareBuilder(goPath, moduleName, wasmPath string, settings Settings) (*wasmMiddlewareBuilder, error) {
 	ctx := context.Background()
 	path := filepath.Join(goPath, "src", moduleName, wasmPath)
-	cache := wazero.NewCompilationCache()
+	cache := wazy.NewCompilationCache()
 
 	code, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("loading Wasm binary: %w", err)
 	}
 
-	rt := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(cache))
+	rt := wazy.NewRuntimeWithConfig(ctx, wazy.NewRuntimeConfig().WithCompilationCache(cache))
 	if _, err = rt.CompileModule(ctx, code); err != nil {
 		return nil, fmt.Errorf("compiling guest module: %w", err)
 	}
@@ -67,7 +67,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return nil, nil, fmt.Errorf("loading binary: %w", err)
 	}
 
-	rt := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().WithCompilationCache(b.cache))
+	rt := wazy.NewRuntimeWithConfig(ctx, wazy.NewRuntimeConfig().WithCompilationCache(b.cache))
 
 	guestModule, err := rt.CompileModule(ctx, code)
 	if err != nil {
@@ -81,13 +81,13 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 
-	config := wazero.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
+	config := wazy.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
 	for _, env := range b.settings.Envs {
 		config = config.WithEnv(env, os.Getenv(env))
 	}
 
 	if len(b.settings.Mounts) > 0 {
-		fsConfig := wazero.NewFSConfig()
+		fsConfig := wazy.NewFSConfig()
 		for _, mount := range b.settings.Mounts {
 			withDir := fsConfig.WithDirMount
 			prefix, readOnly := strings.CutSuffix(mount, ":ro")
@@ -107,9 +107,9 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		config = config.WithFSConfig(fsConfig)
 	}
 
-	opts := []handler.Option{
-		handler.ModuleConfig(config),
-		handler.Logger(logs.NewWasmLogger(logger)),
+	opts := []http_handler.Option{
+		http_handler.WithModuleConfig(config),
+		http_handler.WithLogger(logs.NewWasmLogger(logger)),
 	}
 
 	i := cfg.Interface()
@@ -124,10 +124,10 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 			return nil, nil, fmt.Errorf("marshaling config: %w", err)
 		}
 
-		opts = append(opts, handler.GuestConfig(data))
+		opts = append(opts, http_handler.WithGuestConfig(data))
 	}
 
-	opts = append(opts, handler.Runtime(func(ctx context.Context) (wazero.Runtime, error) {
+	opts = append(opts, http_handler.WithRuntime(func(ctx context.Context) (wazy.Runtime, error) {
 		return rt, nil
 	}))
 

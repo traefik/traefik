@@ -12,11 +12,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tetratelabs/wazero"
+	"github.com/samyfodil/wazy"
 )
 
 func TestSettingsWithoutSocket(t *testing.T) {
-	cache := wazero.NewCompilationCache()
+	cache := wazy.NewCompilationCache()
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
