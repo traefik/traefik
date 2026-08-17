@@ -3222,6 +3222,353 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:                "routes referencing the same Kubernetes Service with different options, namespaces, or twice",
+			paths:               []string{"services.yml", "with_shared_kube_service.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-plain-6f97418635c7e18853da": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-plain-6f97418635c7e18853da",
+							Rule:        "Host(`foo.com`)",
+						},
+						"default-test-route-mtls-1f773b7f0ac1aad6d729": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-mtls-1f773b7f0ac1aad6d729",
+							Rule:        "Host(`bar.com`)",
+						},
+						"default-test-route-namespaces-b539448199544049f6d7": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-namespaces-b539448199544049f6d7",
+							Rule:        "Host(`baz.com`)",
+						},
+						"default-test-route-duplicate-ce4a3976e8b9cf98a2c5": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-duplicate-ce4a3976e8b9cf98a2c5",
+							Rule:        "Host(`qux.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-plain-6f97418635c7e18853da": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-whoami2-8080",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-test-route-mtls-1f773b7f0ac1aad6d729": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-whoami2-8080",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-test-route-namespaces-b539448199544049f6d7": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: new(1),
+									},
+									{
+										Name:   "cross-ns-whoami-80",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-test-route-duplicate-ce4a3976e8b9cf98a2c5": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default-whoami-80",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(false),
+							},
+						},
+						"default-whoami2-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"cross-ns-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.10:80",
+									},
+									{
+										URL: "http://10.10.0.11:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "routes referencing the same Kubernetes Service with different options, namespaces, or twice, safe naming",
+			paths:               []string{"services.yml", "with_shared_kube_service.yml"},
+			allowCrossNamespace: true,
+			safeNaming:          true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default_test.route.plain_0": {
+							EntryPoints: []string{"web"},
+							Service:     "default_test.route.plain_0_wrr",
+							Rule:        "Host(`foo.com`)",
+						},
+						"default_test.route.mtls_0": {
+							EntryPoints: []string{"web"},
+							Service:     "default_test.route.mtls_0_wrr",
+							Rule:        "Host(`bar.com`)",
+						},
+						"default_test.route.namespaces_0": {
+							EntryPoints: []string{"web"},
+							Service:     "default_test.route.namespaces_0_wrr",
+							Rule:        "Host(`baz.com`)",
+						},
+						"default_test.route.duplicate_0": {
+							EntryPoints: []string{"web"},
+							Service:     "default_test.route.duplicate_0_wrr",
+							Rule:        "Host(`qux.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default_test.route.plain_0_wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default_test.route.plain_0_wrr_0_default_whoami_80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default_test.route.plain_0_wrr_1_default_whoami2_8080",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default_test.route.plain_0_wrr_0_default_whoami_80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default_test.route.plain_0_wrr_1_default_whoami2_8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default_test.route.mtls_0_wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default_test.route.mtls_0_wrr_0_default_whoami_80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default_test.route.mtls_0_wrr_1_default_whoami2_8080",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default_test.route.mtls_0_wrr_0_default_whoami_80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader:   new(true),
+								ServersTransport: "default_mtls",
+							},
+						},
+						"default_test.route.mtls_0_wrr_1_default_whoami2_8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default_test.route.namespaces_0_wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default_test.route.namespaces_0_wrr_0_default_whoami_80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default_test.route.namespaces_0_wrr_1_cross-ns_whoami_80",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default_test.route.namespaces_0_wrr_0_default_whoami_80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default_test.route.namespaces_0_wrr_1_cross-ns_whoami_80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.10:80",
+									},
+									{
+										URL: "http://10.10.0.11:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default_test.route.duplicate_0_wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default_test.route.duplicate_0_wrr_0_default_whoami_80",
+										Weight: new(1),
+									},
+									{
+										Name:   "default_test.route.duplicate_0_wrr_1_default_whoami_80",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default_test.route.duplicate_0_wrr_0_default_whoami_80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+							},
+						},
+						"default_test.route.duplicate_0_wrr_1_default_whoami_80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(false),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:         "Ingress class",
 			paths:        []string{"services.yml", "simple.yml"},
 			ingressClass: "tchouk",

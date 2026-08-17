@@ -1111,7 +1111,7 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 // does not guarantee that generated names are unique.
 func addToConfig[T any](logger log.Logger, kind, name string, objects map[string]T, obj T) {
 	if existing, ok := objects[name]; ok && !reflect.DeepEqual(existing, obj) {
-		logger.Warnf("Name collision: %s %q is defined more than once, %+v will be overridden by %+v", kind, name, existing, obj)
+		logger.Warnf("Name collision: %s %q is defined more than once, the previous definition will be overridden", kind, name)
 	}
 
 	objects[name] = obj
