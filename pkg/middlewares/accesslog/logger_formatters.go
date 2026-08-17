@@ -12,7 +12,11 @@ import (
 // default format for time presentation.
 const (
 	commonLogTimeFormat = "02/Jan/2006:15:04:05 -0700"
-	defaultValue        = "-"
+	// jsonLogTimeFormat keeps the millisecond digits at a fixed width instead of
+	// letting Go trim trailing zeros, so every JSON log line has a timestamp of
+	// the same length and consecutive requests remain distinguishable.
+	jsonLogTimeFormat = "2006-01-02T15:04:05.000Z07:00"
+	defaultValue      = "-"
 )
 
 // CommonLogFormatter provides formatting in the Traefik common log format.
