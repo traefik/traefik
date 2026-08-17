@@ -27,7 +27,7 @@ func TestMakeSafeKey(t *testing.T) {
 		{
 			desc:       "several components",
 			components: []string{"default", "test.route", "0", "lb"},
-			expected:   "default|test.route|0|lb",
+			expected:   "default_test.route_0_lb",
 		},
 	}
 
@@ -142,7 +142,7 @@ func TestNameBuilder_makeID(t *testing.T) {
 			safe:      true,
 			namespace: "default",
 			name:      "test.route",
-			expected:  "default|test.route",
+			expected:  "default_test.route",
 		},
 	}
 
@@ -183,7 +183,7 @@ func TestNameBuilder_makeRawID(t *testing.T) {
 			safe:      true,
 			namespace: "default",
 			name:      "test.route",
-			expected:  "default|test.route",
+			expected:  "default_test.route",
 		},
 	}
 
@@ -223,7 +223,7 @@ func TestNameBuilder_httpRouter(t *testing.T) {
 			ingressName: "test.route",
 			routeIndex:  0,
 			rule:        "Host(`foo.com`)",
-			expected:    "default|test.route|0",
+			expected:    "default_test.route_0",
 		},
 		{
 			desc:        "safe naming ignores the rule entirely",
@@ -232,7 +232,7 @@ func TestNameBuilder_httpRouter(t *testing.T) {
 			ingressName: "test.route",
 			routeIndex:  0,
 			rule:        "Host(`bar.com`)",
-			expected:    "default|test.route|0",
+			expected:    "default_test.route_0",
 		},
 	}
 
@@ -274,7 +274,7 @@ func TestNameBuilder_tcpRouter(t *testing.T) {
 			ingressName: "test.route",
 			routeIndex:  0,
 			rule:        "HostSNI(`foo.com`)",
-			expected:    "default|test.route|0",
+			expected:    "default_test.route_0",
 		},
 	}
 
@@ -313,7 +313,7 @@ func TestNameBuilder_udpRouter(t *testing.T) {
 			namespace:   "default",
 			ingressName: "test.route",
 			routeIndex:  0,
-			expected:    "default|test.route|0",
+			expected:    "default_test.route_0",
 		},
 	}
 

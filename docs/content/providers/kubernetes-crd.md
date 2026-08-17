@@ -438,12 +438,12 @@ Weighted/Mirroring TraefikService) are scoped to their parent instead of being s
     behavior and silence the warning.
 
 When `safeNaming` is enabled, the generated names are no longer normalized: their components are joined with a
-`|` separator, which cannot appear in a Kubernetes namespace or name, and the ones generated for a route are
+`_` separator, which cannot appear in a Kubernetes namespace or name, and the ones generated for a route are
 derived from the route index instead of its rule:
 
 ```text
-default-whoami-80                          ->    default|whoami-80
-default-test-route-6b204d94623b3df4370c    ->    default|test-route|0
+default-whoami-80                          ->    default_whoami-80
+default-test-route-6b204d94623b3df4370c    ->    default_test-route_0
 ```
 
 The services generated for the Kubernetes Services referenced by a `TraefikService` (weighted or mirroring),
@@ -451,7 +451,7 @@ or by a route with several services, are named after the parent declaring the re
 followed by the index of the reference, and the namespace, the name and the port of the referenced Kubernetes Service:
 
 ```text
-default-whoami-80    ->    default|wrr1|wrr|1|default|whoami|80
+default-whoami-80    ->    default_wrr1_wrr_1_default_whoami_80
 ```
 
 Each of these references carries its own options (`serversTransport`, `scheme`, `sticky`, `healthCheck`, ...),

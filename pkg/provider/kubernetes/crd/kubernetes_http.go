@@ -476,11 +476,11 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 			return "", nil, err
 		}
 
-		if !c.nameBuilder.safe {
-			return c.fullServiceName(svcCtx, service, service.Port), serversLB, nil
+		if c.nameBuilder.safe {
+			return serviceKey, serversLB, nil
 		}
 
-		return serviceKey, serversLB, nil
+		return c.fullServiceName(svcCtx, service, service.Port), serversLB, nil
 
 	case "TraefikService":
 		return c.fullServiceName(svcCtx, service, intstr.FromInt(0)), nil, nil
