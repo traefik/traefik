@@ -1747,6 +1747,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 				SafeNaming:                &test.safeNaming,
 			}
+			require.NoError(t, p.Init())
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -5863,6 +5864,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				DefaultTLSResourcesNamespace: test.defaultTLSResourcesNamespace,
 				SafeNaming:                   &test.safeNaming,
 			}
+			require.NoError(t, p.Init())
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -6453,6 +6455,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 				SafeNaming:                &test.safeNaming,
 			}
+			require.NoError(t, p.Init())
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -8139,6 +8142,7 @@ func TestCrossNamespace(t *testing.T) {
 				AllowCrossNamespace: test.allowCrossNamespace,
 				SafeNaming:          &test.safeNaming,
 			}
+			require.NoError(t, p.Init())
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
@@ -8216,6 +8220,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 					CrossProviderNamespaces: test.crossProviderNamespaces,
 					SafeNaming:              &safeNaming,
 				}
+				require.NoError(t, p.Init())
 
 				clientMock := newClientMock("services.yml", "with_middleware_cross_provider.yml")
 				conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -8304,6 +8309,7 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 					CrossProviderNamespaces: test.crossProviderNamespaces,
 					SafeNaming:              &safeNaming,
 				}
+				require.NoError(t, p.Init())
 
 				clientMock := newClientMock("services.yml", "with_service_cross_provider.yml")
 				conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -8359,6 +8365,7 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 				AllowCrossNamespace:     true,
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
+			require.NoError(t, p.Init())
 
 			clientMock := newClientMock("services.yml", "with_tls_option_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -8412,6 +8419,7 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 				AllowCrossNamespace:     true,
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
+			require.NoError(t, p.Init())
 
 			clientMock := newClientMock("tcp/services.yml", "tcp/with_tls_options_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -8465,6 +8473,7 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 				AllowCrossNamespace:     true,
 				CrossProviderNamespaces: test.crossProviderNamespaces,
 			}
+			require.NoError(t, p.Init())
 
 			clientMock := newClientMock("services.yml", "with_servers_transport_cross_provider.yml")
 			conf := p.loadConfigurationFromCRD(t.Context(), clientMock)
@@ -8764,6 +8773,7 @@ func TestExternalNameService(t *testing.T) {
 			}
 
 			p := Provider{AllowExternalNameServices: test.allowExternalNameService}
+			require.NoError(t, p.Init())
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
@@ -8970,6 +8980,7 @@ func TestNativeLB(t *testing.T) {
 			}
 
 			p := Provider{}
+			require.NoError(t, p.Init())
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)

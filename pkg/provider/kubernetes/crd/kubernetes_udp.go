@@ -34,12 +34,12 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		for i, route := range ingressRouteUDP.Spec.Routes {
 			routeIndex := strconv.Itoa(i)
 
-			routerName := p.nameBuilder().udpRouter(ingressRouteUDP.Namespace, ingressName, i)
+			routerName := p.nameBuilder.udpRouter(ingressRouteUDP.Namespace, ingressName, i)
 
 			serviceName := routerName
 
 			var wrrName string
-			if p.safeNaming() && len(route.Services) > 1 {
+			if p.nameBuilder.safe && len(route.Services) > 1 {
 				wrrName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
@@ -56,7 +56,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
-					if p.safeNaming() {
+					if p.nameBuilder.safe {
 						serviceName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
 					}
 					addToConfig(logger, "service", serviceName, conf.Services, balancerServerUDP)
@@ -64,11 +64,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				}
 
 				var serviceKey string
-				if p.safeNaming() {
+				if p.nameBuilder.safe {
 					serviceName = wrrName
 					serviceKey = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
 				} else {
-					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
+					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, service.Port.String())
 				}
 
 				addToConfig(logger, "service", serviceKey, conf.Services, balancerServerUDP)

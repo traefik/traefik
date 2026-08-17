@@ -57,7 +57,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			allowExternalNameServices: p.AllowExternalNameServices,
 			allowEmptyServices:        p.AllowEmptyServices,
 			crossProviderNamespaces:   p.CrossProviderNamespaces,
-			nameBuilder:               p.nameBuilder(),
+			nameBuilder:               p.nameBuilder,
 		}
 
 		for ri, route := range ingressRoute.Spec.Routes {
@@ -77,7 +77,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			routerName, err := p.nameBuilder().httpRouter(ingressRoute.Namespace, ingressName, ri, route.Match)
+			routerName, err := p.nameBuilder.httpRouter(ingressRoute.Namespace, ingressName, ri, route.Match)
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -94,7 +94,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				var wrrKey []string
-				if p.safeNaming() {
+				if p.nameBuilder.safe {
 					wrrKey = []string{ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleWRR}
 					serviceName = makeSafeKey(wrrKey...)
 				}
@@ -106,7 +106,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 			case len(route.Services) == 1:
 				var serviceKey string
-				if p.safeNaming() {
+				if p.nameBuilder.safe {
 					serviceKey = makeSafeKey(ingressRoute.Namespace, ingressName, strconv.Itoa(ri), roleLB)
 				}
 
@@ -119,14 +119,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				if serversLB != nil {
 					// Legacy naming stores the generated Kubernetes Service under the route's own name
 					// (services are shared by identity, not scoped to their parent).
-					if p.safeNaming() {
+					if p.nameBuilder.safe {
 						addToConfig(logger, "service", fullName, conf.Services, serversLB)
 					} else {
 						addToConfig(logger, "service", serviceName, conf.Services, serversLB)
 					}
 				}
 
-				if p.safeNaming() || serversLB == nil {
+				if p.nameBuilder.safe || serversLB == nil {
 					serviceName = fullName
 				}
 			}
@@ -149,7 +149,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptions := ingressRoute.Spec.TLS.Options
 					ctxTLSOption := log.With(ctx, log.Str("TLSOption", tlsOptions.Name))
 
-					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.safeNaming())
+					r.TLS.Options, err = p.resolveReference(ctxTLSOption, ingressRoute.Namespace, tlsOptions.Namespace, tlsOptions.Name)
 					if err != nil {
 						logger.WithError(err).Errorf("Invalid reference to TLSOption %q", ingressRoute.Spec.TLS.Options.Name)
 						continue
@@ -172,7 +172,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	for _, mi := range middlewares {
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, mi.Name))
 
-		middlewareRef, err := resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace, p.safeNaming())
+		middlewareRef, err := p.resolveReference(ctxMid, ingRouteNamespace, mi.Namespace, mi.Name)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -506,7 +506,7 @@ func (c configBuilder) fullServiceName(ctx context.Context, service traefikv1alp
 
 	if !c.nameBuilder.safe {
 		if hasPort {
-			return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, &port))
+			return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, port.String()))
 		}
 
 		if !strings.Contains(service.Name, providerNamespaceSeparator) {

@@ -439,11 +439,12 @@ Weighted/Mirroring TraefikService) are scoped to their parent instead of being s
 
 When `safeNaming` is enabled, the generated names are no longer normalized: their components are joined with a
 `_` separator, which cannot appear in a Kubernetes namespace or name, and the ones generated for a route are
-derived from the route index instead of its rule:
+derived from the route index instead of its rule. For example, for a Kubernetes Service named `whoami` and an
+IngressRoute named `test.route`, both in the `default` namespace:
 
 ```text
-default-whoami-80                          ->    default_whoami-80
-default-test-route-6b204d94623b3df4370c    ->    default_test-route_0
+default-whoami-80                          ->    default_whoami_80
+default-test-route-6b204d94623b3df4370c    ->    default_test.route_0
 ```
 
 The services generated for the Kubernetes Services referenced by a `TraefikService` (weighted or mirroring),
