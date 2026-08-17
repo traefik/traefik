@@ -67,12 +67,7 @@ type Provider struct {
 	ThrottleDuration             ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices           bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	DefaultTLSResourcesNamespace string          `description:"Namespace allowed to define the default TLSOption and TLSStore resources. When empty, they can be defined in any namespace." json:"defaultTLSResourcesNamespace,omitempty" toml:"defaultTLSResourcesNamespace,omitempty" yaml:"defaultTLSResourcesNamespace,omitempty" export:"true"`
-	// SafeNaming enables collision-safe naming for generated routers, middlewares and services:
-	// generated names are derived from the identity of the object they come from instead of being flattened
-	// and normalized, and Kubernetes Services referenced from several parents (a route with several services,
-	// or a Weighted/Mirroring TraefikService) are scoped to their parent instead of being shared by identity.
-	// It is a pointer so that an unset value (as opposed to an explicit false) can be detected and warned about
-	// on startup, since collision-prone legacy naming would otherwise be enabled silently.
+	// SafeNaming enables collision-safe naming for generated routers, middlewares and services.
 	SafeNaming *bool `description:"Enable collision-safe naming for the Kubernetes CRD provider." json:"safeNaming,omitempty" toml:"safeNaming,omitempty" yaml:"safeNaming,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
