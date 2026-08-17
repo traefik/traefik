@@ -108,6 +108,63 @@ func TestMap_capacityEvictsClosestToExpiry(t *testing.T) {
 	_ = now
 }
 
+func TestMap_setReclaimsExpiredEntries(t *testing.T) {
+	m, now := withClock[string](t, 100)
+
+	for i := range 10 {
+		require.NoError(t, m.Set(strconv.Itoa(i), "value", 10))
+	}
+	require.Equal(t, 10, m.Len())
+
+	// Every entry has expired, but none has been looked up again and the map is
+	// nowhere near capacity, so nothing would reclaim them on its own.
+	*now = now.Add(11 * time.Second)
+
+	require.NoError(t, m.Set("fresh", "value", 10))
+
+	assert.Equal(t, 1, m.Len())
+}
+
+func TestMap_sweepIsBounded(t *testing.T) {
+	m, now := withClock[string](t, 100)
+
+	total := sweepBudget + 5
+	for i := range total {
+		require.NoError(t, m.Set(strconv.Itoa(i), "value", 10))
+	}
+	require.Equal(t, total, m.Len())
+
+	*now = now.Add(11 * time.Second)
+
+	// A single Set reclaims at most sweepBudget entries, so the remainder
+	// survives this call.
+	require.NoError(t, m.Set("fresh-1", "value", 10))
+	assert.Equal(t, total-sweepBudget+1, m.Len())
+
+	// The next Set picks up the rest, leaving only the two live entries.
+	require.NoError(t, m.Set("fresh-2", "value", 10))
+	assert.Equal(t, 2, m.Len())
+}
+
+func TestMap_sweepKeepsLiveEntries(t *testing.T) {
+	m, now := withClock[string](t, 100)
+
+	require.NoError(t, m.Set("short", "value", 10))
+	require.NoError(t, m.Set("long", "value", 60))
+
+	// Only "short" has expired.
+	*now = now.Add(11 * time.Second)
+	require.NoError(t, m.Set("fresh", "value", 10))
+
+	_, ok := m.Get("short")
+	assert.False(t, ok)
+
+	_, ok = m.Get("long")
+	assert.True(t, ok)
+
+	assert.Equal(t, 2, m.Len())
+}
+
 func TestMap_concurrentAccess(t *testing.T) {
 	m, err := New[int](100)
 	require.NoError(t, err)
