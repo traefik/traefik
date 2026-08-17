@@ -7,8 +7,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
-	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -899,7 +897,7 @@ func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error)
 }
 
 func TestConnectionTimeouts(t *testing.T) {
-	testcases := []struct {
+	testCases := []struct {
 		desc                      string
 		readTimeout               ptypes.Duration
 		writeTimeout              ptypes.Duration
@@ -939,10 +937,12 @@ func TestConnectionTimeouts(t *testing.T) {
 		},
 	}
 
-	for _, test := range testcases {
+	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			// net.Pipe has no OS buffering: reads and writes block until the other side is ready,
-			// which allow us to have read and write deadlines.
+			// which allows the read and write deadlines to be exercised deterministically.
 			client, server := net.Pipe()
 			defer client.Close()
 			defer server.Close()
@@ -958,10 +958,6 @@ func TestConnectionTimeouts(t *testing.T) {
 				if test.serverReads {
 					buf := make([]byte, 5)
 					_, _ = server.Read(buf)
-				} else if test.writeTimeout > 0 {
-					// Don't read; block until client closes after write timeout fires.
-					buf := make([]byte, 1)
-					_, _ = server.Read(buf)
 				}
 			}()
 
@@ -976,27 +972,27 @@ func TestConnectionTimeouts(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, "HELLO1", string(buf))
 
-			_, readErr := conn.Read(buf)
+			_, err = conn.Read(buf)
 			if test.expectedReadTimeoutError {
-				require.Error(t, readErr)
 				var netErr net.Error
-				require.ErrorAs(t, readErr, &netErr)
-				require.True(t, netErr.Timeout(), "expected timeout error from Read, got: %v", readErr)
+				require.ErrorAs(t, err, &netErr)
+				require.True(t, netErr.Timeout())
 				client.Close()
 				<-serverDone
 				return
 			}
-			require.True(t, readErr == nil || errors.Is(readErr, io.EOF), "unexpected read error: %v", readErr)
+			require.NoError(t, err)
+			require.Equal(t, "HELLO2", string(buf))
 
-			if test.writeTimeout > 0 || test.serverReads {
-				_, writeErr := conn.Write([]byte("HELLO"))
+			// Without a reader on the server side, the write only returns once the write deadline fires.
+			if test.serverReads || test.expectedWriteTimeoutError {
+				_, err = conn.Write([]byte("HELLO"))
 				if test.expectedWriteTimeoutError {
-					require.Error(t, writeErr)
 					var netErr net.Error
-					require.ErrorAs(t, writeErr, &netErr)
-					require.True(t, netErr.Timeout(), "expected timeout error from Write, got: %v", writeErr)
+					require.ErrorAs(t, err, &netErr)
+					require.True(t, netErr.Timeout())
 				} else {
-					require.NoError(t, writeErr)
+					require.NoError(t, err)
 				}
 			}
 
@@ -1007,42 +1003,37 @@ func TestConnectionTimeouts(t *testing.T) {
 }
 
 func TestConnectionTimeoutsAreDefined(t *testing.T) {
-	testcases := []struct {
-		desc                  string
-		readTimeout           ptypes.Duration
-		writeTimeout          ptypes.Duration
-		expectConnWithTimeout bool
-		expectedReadTimeout   time.Duration
-		expectedWriteTimeout  time.Duration
+	testCases := []struct {
+		desc            string
+		readTimeout     ptypes.Duration
+		writeTimeout    ptypes.Duration
+		expectedWrapped bool
 	}{
 		{
-			desc:                  "read timeout set - should wrap connection with read timeout",
-			readTimeout:           ptypes.Duration(50 * time.Millisecond),
-			expectConnWithTimeout: true,
-			expectedReadTimeout:   50 * time.Millisecond,
+			desc:            "read timeout set - should wrap connection with read timeout",
+			readTimeout:     ptypes.Duration(50 * time.Millisecond),
+			expectedWrapped: true,
 		},
 		{
-			desc:                  "write timeout set - should wrap connection with write timeout",
-			writeTimeout:          ptypes.Duration(100 * time.Millisecond),
-			expectConnWithTimeout: true,
-			expectedWriteTimeout:  100 * time.Millisecond,
+			desc:            "write timeout set - should wrap connection with write timeout",
+			writeTimeout:    ptypes.Duration(100 * time.Millisecond),
+			expectedWrapped: true,
 		},
 		{
-			desc:                  "both timeouts set - should wrap connection with both timeouts",
-			readTimeout:           ptypes.Duration(30 * time.Millisecond),
-			writeTimeout:          ptypes.Duration(60 * time.Millisecond),
-			expectConnWithTimeout: true,
-			expectedReadTimeout:   30 * time.Millisecond,
-			expectedWriteTimeout:  60 * time.Millisecond,
+			desc:            "both timeouts set - should wrap connection with both timeouts",
+			readTimeout:     ptypes.Duration(30 * time.Millisecond),
+			writeTimeout:    ptypes.Duration(60 * time.Millisecond),
+			expectedWrapped: true,
 		},
 		{
-			desc:                  "no timeouts set - should return raw connection",
-			expectConnWithTimeout: false,
+			desc: "no timeouts set - should return raw connection",
 		},
 	}
 
-	for _, test := range testcases {
+	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			ln, err := net.Listen("tcp", "127.0.0.1:0")
 			require.NoError(t, err)
 			defer ln.Close()
@@ -1064,35 +1055,23 @@ func TestConnectionTimeoutsAreDefined(t *testing.T) {
 				WriteTimeout: test.writeTimeout,
 			}
 
-			dialFn := customDialContext(dialer, cfg)
-
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 			defer cancel()
 
-			conn, err := dialFn(ctx, "tcp", ln.Addr().String())
-			require.NoError(t, err, "dial should succeed")
+			conn, err := customDialContext(dialer, cfg)(ctx, "tcp", ln.Addr().String())
+			require.NoError(t, err)
 			require.NotNil(t, conn)
 			defer conn.Close()
 
-			if test.expectConnWithTimeout {
-				wrapped, ok := conn.(*connWithTimeouts)
-				require.True(t, ok, "expected *connWithTimeouts, got %T", conn)
-
-				if test.expectedReadTimeout > 0 {
-					require.Equal(t, test.expectedReadTimeout, wrapped.readTimeout,
-						"read timeout should match configured value")
-				}
-				if test.expectedWriteTimeout > 0 {
-					require.Equal(t, test.expectedWriteTimeout, wrapped.writeTimeout,
-						"write timeout should match configured value")
-				}
-
-				_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-				_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-			} else {
-				_, ok := conn.(*connWithTimeouts)
-				require.False(t, ok, "should not wrap connection when no timeouts set")
+			if !test.expectedWrapped {
+				require.IsType(t, &net.TCPConn{}, conn)
+				return
 			}
+
+			require.IsType(t, &connWithTimeouts{}, conn)
+			wrapped := conn.(*connWithTimeouts)
+			assert.Equal(t, time.Duration(test.readTimeout), wrapped.readTimeout)
+			assert.Equal(t, time.Duration(test.writeTimeout), wrapped.writeTimeout)
 		})
 	}
 }
