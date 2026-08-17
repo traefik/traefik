@@ -533,7 +533,7 @@ systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypo
 
 !!! warning "EntryPoint Address"
 
-    When a socket activation file descriptor name matches an EntryPoint name its address configuration is ignored. For support UDP routing, address must have /udp suffix (--entrypoints.my-udp-entrypoint.address=/udp)
+    When a socket activation file descriptor name matches an EntryPoint name, its address configuration is ignored. To support UDP routing, the address must have the `/udp` suffix (`--entrypoints.my-udp-entrypoint.address=/udp`).
 
 !!! warning "Docker Support"
 
