@@ -48,11 +48,13 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		},
 	}
 
+	handler := httpsServer.Server.(*http.Server).Handler
+	if readTimeout := time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout); readTimeout != 0 {
+		handler = withHTTP3ReadTimeout(ctx, handler, readTimeout)
+	}
+
 	h3.Server = &http3.Server{
-		Addr:      configuration.GetAddress(),
-		Port:      configuration.HTTP3.AdvertisedPort,
-		Handler:   httpsServer.Server.(*http.Server).Handler,
-		TLSConfig: &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
+		Handler:        handler,
 		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},
@@ -77,6 +79,18 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	})
 
 	return h3, nil
+}
+
+func withHTTP3ReadTimeout(ctx context.Context, next http.Handler, timeout time.Duration) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.ContentLength != 0 {
+			deadline := time.Now().Add(timeout)
+			if err := http.NewResponseController(rw).SetReadDeadline(deadline); err != nil {
+				log.FromContext(ctx).Errorf("Failed to set HTTP3 read timeout: %v", err)
+			}
+		}
+		next.ServeHTTP(rw, req)
+	})
 }
 
 func (e *http3server) Start() error {

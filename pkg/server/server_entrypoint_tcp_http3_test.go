@@ -2,15 +2,20 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
@@ -214,6 +219,99 @@ func TestHTTP30RTT(t *testing.T) {
 	// 0RTT need to be false.
 	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
 }
+
+func TestHTTP3ReadTimeout(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(300 * time.Millisecond)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+		Address:          "127.0.0.1:8091",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	bodyReadErr := make(chan error, 1)
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := io.ReadAll(req.Body)
+		bodyReadErr <- err
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	transport := &http3.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:    certPool,
+			ServerName: "example.com",
+		},
+		// Force the dial to our local test server regardless of the request URL's host.
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return quic.DialAddr(ctx, "127.0.0.1:8091", tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = transport.Close() })
+
+	// A body that trickles one byte every 100ms — 2s total, well past the 300ms readTimeout above.
+	pr, pw := io.Pipe()
+	go func() {
+		for range 20 {
+			if _, err := pw.Write([]byte("x")); err != nil {
+				return
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		_ = pw.Close()
+	}()
+
+	req, err := http.NewRequest(http.MethodPost, "https://example.com:8091/", pr)
+	require.NoError(t, err)
+	req.ContentLength = -1
+
+	start := time.Now()
+	_, roundTripErr := transport.RoundTrip(req)
+	elapsed := time.Since(start)
+
+	t.Logf("RoundTrip returned after %s, err=%v", elapsed, roundTripErr)
+
+	assert.Less(t, elapsed, time.Second)
+
+	select {
+	case err := <-bodyReadErr:
+		t.Logf("server body read returned: %v", err)
+		assert.ErrorIs(t, err, os.ErrDeadlineExceeded)
+	case <-time.After(time.Second):
+		t.Fatal("server handler never observed the body read being cut off")
+	}
+}
+
 
 type clientSessionCache struct {
 	cache tls.ClientSessionCache
