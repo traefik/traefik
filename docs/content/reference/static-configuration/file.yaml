@@ -166,6 +166,7 @@ providers:
     throttleDuration: 42s
     allowEmptyServices: true
     defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar
