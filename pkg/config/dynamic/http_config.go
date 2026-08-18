@@ -572,6 +572,4 @@ func (f *ForwardingTimeouts) SetDefaults() {
 	f.DialTimeout = ptypes.Duration(30 * time.Second)
 	f.IdleConnTimeout = ptypes.Duration(90 * time.Second)
 	f.PingTimeout = ptypes.Duration(15 * time.Second)
-	f.ReadTimeout = ptypes.Duration(30 * time.Second)
-	f.WriteTimeout = ptypes.Duration(30 * time.Second)
 }
