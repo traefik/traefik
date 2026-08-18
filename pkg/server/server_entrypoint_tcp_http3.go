@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
@@ -54,7 +55,12 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	}
 
 	h3.Server = &http3.Server{
+		Addr:           configuration.GetAddress(),
+		Port:           configuration.HTTP3.AdvertisedPort,
 		Handler:        handler,
+		TLSConfig:      &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
+		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},

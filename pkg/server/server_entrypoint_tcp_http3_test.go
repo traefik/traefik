@@ -312,6 +312,53 @@ func TestHTTP3ReadTimeout(t *testing.T) {
 	}
 }
 
+func TestNewHTTP3ServerTimeouts(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.IdleTimeout = ptypes.Duration(42 * time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP:             static.HTTPConfig{MaxHeaderBytes: 12345},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("*", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	assert.Equal(t, 42*time.Second, entryPoint.http3Server.Server.IdleTimeout)
+	assert.Equal(t, 12345, entryPoint.http3Server.Server.MaxHeaderBytes)
+	assert.NotNil(t, entryPoint.http3Server.Server.Handler)
+}
 
 type clientSessionCache struct {
 	cache tls.ClientSessionCache
