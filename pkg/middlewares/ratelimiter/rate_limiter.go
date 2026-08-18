@@ -22,7 +22,10 @@ const (
 	maxSources = 65536
 )
 
-type limiter interface {
+// Limiter is the token bucket backend of a rate limiter middleware.
+// A single Limiter can be shared by the middleware instances built for
+// every router that references the same middleware.
+type Limiter interface {
 	Allow(ctx context.Context, token string) (*time.Duration, error)
 }
 
@@ -38,13 +41,32 @@ type rateLimiter struct {
 	next          http.Handler
 	logger        *zerolog.Logger
 
-	limiter limiter
+	limiter Limiter
 }
 
 // New returns a rate limiter middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
+
+	sharedLimiter, err := NewLimiter(ctx, config, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWithLimiter(ctx, next, config, name, sharedLimiter)
+}
+
+// NewWithLimiter returns a rate limiter middleware that uses the given Limiter
+// as its token bucket backend. When the same Limiter is shared between several
+// middleware instances (e.g. one per router referencing the same middleware),
+// all of them enforce a single set of token buckets.
+func NewWithLimiter(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string, sharedLimiter Limiter) (http.Handler, error) {
+	logger := middlewares.GetLogger(ctx, name, typeName)
+
+	if sharedLimiter == nil {
+		return nil, fmt.Errorf("rate limiter backend must not be nil")
+	}
 
 	ctxLog := logger.WithContext(ctx)
 
@@ -61,11 +83,56 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		return nil, fmt.Errorf("getting source extractor: %w", err)
 	}
 
+	rtl, _, maxDelay, _, err := computeRateParameters(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &rateLimiter{
+		logger:        logger,
+		name:          name,
+		rate:          rtl,
+		maxDelay:      maxDelay,
+		next:          next,
+		sourceMatcher: sourceMatcher,
+		limiter:       sharedLimiter,
+	}, nil
+}
+
+// NewLimiter creates a rate limiter token bucket backend from the given configuration.
+// The returned Limiter can be shared between several rateLimiter middleware instances,
+// so that a single middleware referenced by multiple routers enforces one set of
+// token buckets instead of one per router.
+func NewLimiter(ctx context.Context, config dynamic.RateLimit, name string) (Limiter, error) {
+	logger := middlewares.GetLogger(ctx, name, typeName)
+
+	rtl, burst, maxDelay, ttl, err := computeRateParameters(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Redis != nil {
+		l, err := newRedisLimiter(ctx, rtl, burst, maxDelay, ttl, config, logger)
+		if err != nil {
+			return nil, fmt.Errorf("creating redis limiter: %w", err)
+		}
+		return l, nil
+	}
+
+	l, err := newInMemoryRateLimiter(rtl, burst, maxDelay, ttl, logger)
+	if err != nil {
+		return nil, fmt.Errorf("creating in-memory limiter: %w", err)
+	}
+	return l, nil
+}
+
+// computeRateParameters derives the token bucket parameters from the configuration.
+func computeRateParameters(config dynamic.RateLimit) (rate.Limit, int64, time.Duration, int, error) {
 	burst := max(config.Burst, 1)
 
 	period := time.Duration(config.Period)
 	if period < 0 {
-		return nil, fmt.Errorf("negative value not valid for period: %v", period)
+		return 0, 0, 0, 0, fmt.Errorf("negative value not valid for period: %v", period)
 	}
 	if period == 0 {
 		period = time.Second
@@ -99,28 +166,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
-	var limiter limiter
-	if config.Redis != nil {
-		limiter, err = newRedisLimiter(ctx, rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
-		if err != nil {
-			return nil, fmt.Errorf("creating redis limiter: %w", err)
-		}
-	} else {
-		limiter, err = newInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
-		if err != nil {
-			return nil, fmt.Errorf("creating in-memory limiter: %w", err)
-		}
-	}
 
-	return &rateLimiter{
-		logger:        logger,
-		name:          name,
-		rate:          rate.Limit(rtl),
-		maxDelay:      maxDelay,
-		next:          next,
-		sourceMatcher: sourceMatcher,
-		limiter:       limiter,
-	}, nil
+	return rate.Limit(rtl), burst, maxDelay, ttl, nil
 }
 
 func (rl *rateLimiter) GetTracingInformation() (string, string) {

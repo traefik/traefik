@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sync"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/auth"
@@ -50,6 +52,11 @@ type Builder struct {
 	configs        map[string]*runtime.MiddlewareInfo
 	pluginBuilder  PluginsBuilder
 	serviceBuilder serviceBuilder
+
+	// rateLimiters caches one rate limiter backend per middleware name,
+	// so that all routers referencing the same middleware share a single
+	// set of token buckets (matching the Redis backend behaviour).
+	rateLimiters sync.Map
 }
 
 type serviceBuilder interface {
@@ -95,6 +102,25 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 		})
 	}
 	return &chain
+}
+
+// buildRateLimiter returns a rate limiter middleware. All routers that reference
+// the same middleware name share one limiter backend, so the effective rate limit
+// does not depend on the number of referencing routers.
+func (b *Builder) buildRateLimiter(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string) (http.Handler, error) {
+	// Fast path: a limiter already exists for this middleware name.
+	if existing, ok := b.rateLimiters.Load(name); ok {
+		return ratelimiter.NewWithLimiter(ctx, next, config, name, existing.(ratelimiter.Limiter))
+	}
+
+	// Create the shared limiter and publish it.
+	shared, err := ratelimiter.NewLimiter(ctx, config, name)
+	if err != nil {
+		return nil, err
+	}
+
+	actual, _ := b.rateLimiters.LoadOrStore(name, shared)
+	return ratelimiter.NewWithLimiter(ctx, next, config, name, actual.(ratelimiter.Limiter))
 }
 
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
@@ -299,7 +325,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
+			return b.buildRateLimiter(ctx, next, *config.RateLimit, middlewareName)
 		}
 	}
 
