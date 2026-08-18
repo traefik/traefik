@@ -3,6 +3,8 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+core:
+  strictTLSOptions: true
 serversTransport:
   insecureSkipVerify: true
   rootCAs:
@@ -201,6 +203,8 @@ providers:
     allowEmptyServices: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
+    defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar

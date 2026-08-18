@@ -58,7 +58,7 @@ spec:
 # References both our Gateway and the foreign one: only our parent must be managed,
 # and the listener must count this route only once.
 kind: TCPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: tcp-app-1
   namespace: default
@@ -81,7 +81,7 @@ spec:
 ---
 # References only the foreign Gateway: Traefik must not write any status for it.
 kind: TCPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: tcp-app-2
   namespace: default

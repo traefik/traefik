@@ -30,7 +30,6 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
@@ -73,7 +72,7 @@ type Provider struct {
 	Namespaces              []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	LabelSelector           string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	ThrottleDuration        ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	ExperimentalChannel     bool                  `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	ExperimentalChannel     bool                  `description:"Toggles Experimental Channel resources support. Requires the Experimental Channel CRDs." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress           *StatusAddress        `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
 	NativeLBByDefault       bool                  `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 	CrossProviderNamespaces []string              `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
@@ -300,7 +299,6 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
-	client.experimentalChannel = p.ExperimentalChannel
 
 	return client, nil
 }
@@ -399,9 +397,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
 
-	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
-	}
+	p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
 
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
@@ -459,7 +455,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		// The listener protocol is validated first, so that an unsupported protocol
 		// is reported as such instead of being masked by the entryPoint lookup,
 		// which cannot succeed for a protocol Traefik does not know about.
-		supportedKinds, conditions := supportedRouteKinds(gateway.Generation, listener.Protocol, p.ExperimentalChannel)
+		supportedKinds, conditions := supportedRouteKinds(gateway.Generation, listener.Protocol)
 		if len(conditions) > 0 {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
 			continue
@@ -1011,23 +1007,12 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	return backendServers, *svcPort, nil
 }
 
-func supportedRouteKinds(gatewayGeneration int64, protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(gatewayGeneration int64, protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
 	case gatev1.TCPProtocolType:
-		if experimentalChannel {
-			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
-		}
-
-		return nil, []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: gatewayGeneration,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonProtocolConflict),
-			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
-		}}
+		return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
 
 	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
 		return []gatev1.RouteGroupKind{
@@ -1345,8 +1330,8 @@ func makeListenerKey(l gatev1.Listener) string {
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
 }
 
-func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
-	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
+func filterReferenceGrantsFrom(referenceGrants []*gatev1.ReferenceGrant, group, kind, namespace string) []*gatev1.ReferenceGrant {
+	var matchingReferenceGrants []*gatev1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
 		if referenceGrantMatchesFrom(referenceGrant, group, kind, namespace) {
 			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
@@ -1355,7 +1340,7 @@ func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, gr
 	return matchingReferenceGrants
 }
 
-func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, namespace string) bool {
+func referenceGrantMatchesFrom(referenceGrant *gatev1.ReferenceGrant, group, kind, namespace string) bool {
 	for _, from := range referenceGrant.Spec.From {
 		sanitizedGroup := string(from.Group)
 		if sanitizedGroup == "" {
@@ -1369,8 +1354,8 @@ func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group
 	return false
 }
 
-func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, name string) []*gatev1beta1.ReferenceGrant {
-	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
+func filterReferenceGrantsTo(referenceGrants []*gatev1.ReferenceGrant, group, kind, name string) []*gatev1.ReferenceGrant {
+	var matchingReferenceGrants []*gatev1.ReferenceGrant
 	for _, referenceGrant := range referenceGrants {
 		if referenceGrantMatchesTo(referenceGrant, group, kind, name) {
 			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
@@ -1379,7 +1364,7 @@ func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, grou
 	return matchingReferenceGrants
 }
 
-func referenceGrantMatchesTo(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, name string) bool {
+func referenceGrantMatchesTo(referenceGrant *gatev1.ReferenceGrant, group, kind, name string) bool {
 	for _, to := range referenceGrant.Spec.To {
 		sanitizedGroup := string(to.Group)
 		if sanitizedGroup == "" {
