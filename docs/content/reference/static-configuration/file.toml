@@ -186,6 +186,7 @@
     nativeLBByDefault = true
     disableClusterScopeResources = true
     defaultTLSResourcesNamespace = "foobar"
+    safeNaming = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
