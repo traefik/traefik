@@ -354,18 +354,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			return nil, err
 		}
 
-		propagation := p.DNSChallenge.Propagation
-
-		err = client.Challenge.SetDNS01Provider(
-			provider,
-			dns01.LazyCondOption(propagation != nil, func() dns01.ChallengeOption {
-				return dns01.CombineOptions(
-					dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
-					dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
-					dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
-				)
-			}),
-		)
+		err = client.Challenge.SetDNS01Provider(provider, dnsChallengeOptions(p.DNSChallenge.Propagation)...)
 		if err != nil {
 			return nil, err
 		}
@@ -392,6 +381,24 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	p.client = client
 
 	return p.client, nil
+}
+
+// dnsChallengeOptions builds the lego DNS-01 propagation options from the
+// Propagation configuration. A nil configuration must still yield the field
+// defaults (notably RequireAllRNS=false): otherwise lego v5's built-in default
+// of requiring recursive nameserver propagation leaks through and breaks setups
+// whose recursive resolver cannot serve the challenge record, such as Docker's
+// embedded resolver 127.0.0.11.
+func dnsChallengeOptions(propagation *Propagation) []dns01.ChallengeOption {
+	if propagation == nil {
+		propagation = &Propagation{}
+	}
+
+	return []dns01.ChallengeOption{
+		dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
+		dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
+		dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
+	}
 }
 
 func (p *Provider) createHTTPClient() (*http.Client, error) {
