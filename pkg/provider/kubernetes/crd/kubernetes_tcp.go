@@ -58,12 +58,17 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			routeIndex := strconv.Itoa(ri)
 
-			routerName := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex)
+			routerName, err := p.nameBuilder.tcpRouter(ingressRouteTCP.Namespace, ingressName, ri, route.Match)
+			if err != nil {
+				logger.Error().Err(err).Send()
+				continue
+			}
+
 			serviceName := routerName
 
 			var wrrName string
-			if len(route.Services) > 1 {
-				wrrName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
+			if p.nameBuilder.safe && len(route.Services) > 1 {
+				wrrName = makeSafeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
 			for si, service := range route.Services {
@@ -80,15 +85,22 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
-					serviceName = makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
-					conf.Services[serviceName] = balancerServerTCP
+					if p.nameBuilder.safe {
+						serviceName = makeSafeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleLB)
+					}
+					addToConfig(&logger, "service", serviceName, conf.Services, balancerServerTCP)
 					break
 				}
 
-				serviceName = wrrName
+				var serviceKey string
+				if p.nameBuilder.safe {
+					serviceName = wrrName
+					serviceKey = makeSafeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
+				} else {
+					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, service.Port.String())
+				}
 
-				serviceKey := makeKey(ingressRouteTCP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteTCP.Namespace), service.Name, service.Port.String())
-				conf.Services[serviceKey] = balancerServerTCP
+				addToConfig(&logger, "service", serviceKey, conf.Services, balancerServerTCP)
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}
 				srv.SetDefaults()
@@ -122,7 +134,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					tlsOptions := ingressRouteTCP.Spec.TLS.Options
 					ctxTLSOption := log.Ctx(ctx).With().Str("TLSOption", tlsOptions.Name).Logger().WithContext(ctx)
 
-					r.TLS.Options, err = resolveReference(ctxTLSOption, ingressRouteTCP.Namespace, tlsOptions.Namespace, tlsOptions.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+					r.TLS.Options, err = p.resolveReference(ctxTLSOption, ingressRouteTCP.Namespace, tlsOptions.Namespace, tlsOptions.Name)
 					if err != nil {
 						logger.Error().Err(err).Msgf("Invalid reference to TLSOption %q", ingressRouteTCP.Spec.TLS.Options.Name)
 						continue
@@ -130,7 +142,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				}
 			}
 
-			conf.Routers[routerName] = r
+			addToConfig(&logger, "router", routerName, conf.Routers, r)
 		}
 	}
 
@@ -143,7 +155,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 	for _, mi := range middlewares {
 		ctxMid := log.Ctx(ctx).With().Str(logs.MiddlewareName, mi.Name).Logger().WithContext(ctx)
 
-		middlewareRef, err := resolveReference(ctxMid, ingRouteTCPNamespace, mi.Namespace, mi.Name, p.CrossProviderNamespaces, p.AllowCrossNamespace)
+		middlewareRef, err := p.resolveReference(ctxMid, ingRouteTCPNamespace, mi.Namespace, mi.Name)
 		if err != nil {
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", mi.Name, err)
 		}
@@ -331,7 +343,7 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 		return serversTransportName, nil
 	}
 
-	return makeKey(parentNamespace, serversTransportName), nil
+	return p.nameBuilder.makeID(parentNamespace, serversTransportName), nil
 }
 
 // getTLSTCP mutates tlsConfigs.
