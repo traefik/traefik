@@ -203,6 +203,7 @@ providers:
     nativeLBByDefault: true
     disableClusterScopeResources: true
     defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar
