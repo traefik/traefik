@@ -564,7 +564,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	mwName := routerKey + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[mwName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+			Regex:       `(https?)://[^/]*?(:[0-9]+)?/(.*)`,
 			Replacement: fmt.Sprintf("$1://%s$2/$3", f.TargetHostname),
 			StatusCode:  new(http.StatusPermanentRedirect),
 		},
