@@ -613,8 +613,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
-	underscoreHeadersStrategy := configuration.HTTP.UnderscoreHeadersStrategy
-	if underscoreHeadersStrategy != "" {
+	if configuration.HTTP.UnderscoreHeadersStrategy != "" {
 		log.FromContext(ctx).Warn("The underscoreHeadersStrategy option is deprecated, please use the aliasHeadersStrategy option instead. " +
 			"The underscoreHeadersStrategy option only handles the header names containing an underscore character, " +
 			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
@@ -624,7 +623,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	// hence the aliasHeadersStrategy option, handling a superset of the underscore names, is enough.
 	if configuration.HTTP.AliasHeadersStrategy == "" || configuration.HTTP.AliasHeadersStrategy == static.AliasHeadersStrategyKeep {
 		//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
-		switch underscoreHeadersStrategy {
+		switch configuration.HTTP.UnderscoreHeadersStrategy {
 		case "", static.UnderscoreHeadersStrategyKeep:
 			log.FromContext(ctx).Warn("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
 				"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
@@ -635,7 +634,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		case static.UnderscoreHeadersStrategyReject:
 			handler = rejectHeadersWithUnderscores(handler)
 		default:
-			return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", underscoreHeadersStrategy)
+			return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
 		}
 	}
 
