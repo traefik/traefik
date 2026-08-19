@@ -46,6 +46,8 @@ func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		currentPath = req.URL.EscapedPath()
 	}
 
+	// Note: the header names aliasing the ReplacedPathHeader (e.g. X_Replaced_Path) are not handled here,
+	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 	req.Header.Add(ReplacedPathHeader, currentPath)
 	req.URL.RawPath = r.path
 

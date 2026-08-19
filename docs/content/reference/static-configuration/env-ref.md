@@ -135,6 +135,9 @@ HTTP/3 configuration. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ALIASHEADERSSTRATEGY`:  
+Defines the strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject).
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDBACKSLASH`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```true```)
 
@@ -199,7 +202,7 @@ Subject alternative names.
 Default TLS options for the routers linked to the entry point.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_UNDERSCOREHEADERSSTRATEGY`:  
-Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Default: ```keep```)
+Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Deprecated: please use aliasHeadersStrategy instead)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)

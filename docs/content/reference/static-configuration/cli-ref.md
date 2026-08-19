@@ -126,6 +126,9 @@ Trust only forwarded headers from selected IPs.
 `--entrypoints.<name>.http`:  
 HTTP configuration.
 
+`--entrypoints.<name>.http.aliasheadersstrategy`:  
+Defines the strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject).
+
 `--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```true```)
 
@@ -190,7 +193,7 @@ Subject alternative names.
 Default TLS options for the routers linked to the entry point.
 
 `--entrypoints.<name>.http.underscoreheadersstrategy`:  
-Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Default: ```keep```)
+Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Deprecated: please use aliasHeadersStrategy instead)
 
 `--entrypoints.<name>.http2.maxconcurrentstreams`:  
 Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)

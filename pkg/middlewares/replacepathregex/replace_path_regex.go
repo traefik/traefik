@@ -56,6 +56,8 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	if rp.regexp != nil && rp.regexp.MatchString(currentPath) {
+		// Note: the header names aliasing the ReplacedPathHeader (e.g. X_Replaced_Path) are not handled here,
+		// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 		req.Header.Add(replacepath.ReplacedPathHeader, currentPath)
 		req.URL.RawPath = rp.regexp.ReplaceAllString(currentPath, rp.replacement)
 

@@ -601,15 +601,42 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
-	switch configuration.HTTP.UnderscoreHeadersStrategy {
-	case "", static.UnderscoreHeadersStrategyKeep:
-		// Headers with underscores are forwarded as is.
-	case static.UnderscoreHeadersStrategyDelete:
-		handler = removeHeadersWithUnderscores(handler)
-	case static.UnderscoreHeadersStrategyReject:
-		handler = rejectHeadersWithUnderscores(handler)
+	switch configuration.HTTP.AliasHeadersStrategy {
+	case "", static.AliasHeadersStrategyKeep:
+		// Headers whose name aliases another header name are forwarded as is.
+	case static.AliasHeadersStrategyDelete:
+		handler = removeAliasingHeaders(handler)
+	case static.AliasHeadersStrategyReject:
+		handler = rejectAliasingHeaders(handler)
 	default:
-		return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
+		return nil, fmt.Errorf("invalid aliasHeadersStrategy value %q", configuration.HTTP.AliasHeadersStrategy)
+	}
+
+	//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
+	underscoreHeadersStrategy := configuration.HTTP.UnderscoreHeadersStrategy
+	if underscoreHeadersStrategy != "" {
+		log.FromContext(ctx).Warn("The underscoreHeadersStrategy option is deprecated, please use the aliasHeadersStrategy option instead. " +
+			"The underscoreHeadersStrategy option only handles the header names containing an underscore character, " +
+			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
+	}
+
+	// The configuration validation guarantees that both options cannot have different values,
+	// hence the aliasHeadersStrategy option, handling a superset of the underscore names, is enough.
+	if configuration.HTTP.AliasHeadersStrategy == "" || configuration.HTTP.AliasHeadersStrategy == static.AliasHeadersStrategyKeep {
+		//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
+		switch underscoreHeadersStrategy {
+		case "", static.UnderscoreHeadersStrategyKeep:
+			log.FromContext(ctx).Warn("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
+				"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
+				"names (CGI, WSGI, PHP, NGINX, ...) read them as the header they alias, which allows a client to spoof the headers Traefik manages. " +
+				"Please set it to delete or reject on the entry points fronting such backends.")
+		case static.UnderscoreHeadersStrategyDelete:
+			handler = removeHeadersWithUnderscores(handler)
+		case static.UnderscoreHeadersStrategyReject:
+			handler = rejectHeadersWithUnderscores(handler)
+		default:
+			return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", underscoreHeadersStrategy)
+		}
 	}
 
 	var connContext multipleConnContext
@@ -720,6 +747,23 @@ func denyFragment(h http.Handler) http.Handler {
 	})
 }
 
+// isAliasingHeaderName reports whether the given header name contains a character which is neither a letter,
+// a digit, nor a dash, hence making it alias another header name.
+// Go canonicalizes header names on dashes only, whereas the backends deriving variable names from them
+// (CGI, WSGI, PHP, NGINX, ...) read X-Auth-User, X_Auth_User and X.Auth.User as the same HTTP_X_AUTH_USER variable.
+func isAliasingHeaderName(name string) bool {
+	for i := range len(name) {
+		switch c := name[i]; {
+		case 'a' <= c && c <= 'z', 'A' <= c && c <= 'Z', '0' <= c && c <= '9', c == '-':
+			continue
+		default:
+			return true
+		}
+	}
+
+	return false
+}
+
 // removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
 func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -738,6 +782,35 @@ func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
 			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// removeAliasingHeaders removes any request header and trailer whose name contains a character
+// which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
+func removeAliasingHeaders(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if isAliasingHeaderName(key) {
+				delete(req.Header, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header or trailer whose name
+// contains a character which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
+func rejectAliasingHeaders(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if isAliasingHeaderName(key) {
 				http.Error(rw, "Bad Request", http.StatusBadRequest)
 				return
 			}

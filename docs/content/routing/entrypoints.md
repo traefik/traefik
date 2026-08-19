@@ -1347,24 +1347,82 @@ entryPoints:
 --entryPoints.websecure.http.maxHeaderBytes=524288
 ```
 
-### UnderscoreHeadersStrategy
+### AliasHeadersStrategy
 
 _Optional, Default=keep_
+
+The `aliasHeadersStrategy` option defines how the request headers whose name aliases another header name are handled before routing:
+
+- `keep`: request headers with an aliasing name are forwarded as is (default).
+- `delete`: any request header whose name contains a character which is neither a letter, a digit, nor a dash is silently removed from the request.
+- `reject`: any request carrying a header whose name contains a character which is neither a letter, a digit, nor a dash is rejected with a `400 Bad Request` response.
+
+Go canonicalizes header names on dashes only, so it handles `X-Auth-User`, `X_Auth_User` and `X.Auth.User` as three
+distinct headers, while the backends deriving their variable names from the header names (CGI, WSGI, PHP, NGINX, ...)
+read them all as the same `HTTP_X_AUTH_USER` variable.
+
+Underscores and dots are not the only characters concerned: every character HTTP allows in a header name except the
+letters, the digits and the dash builds such an alias, that is `!`, `#`, `$`, `%`, `&`, `'`, `*`, `+`, `.`, `^`, `_`,
+`` ` ``, `|` and `~`. See the [Headers with Aliasing Names](../security/header-aliases.md) security documentation
+for more details.
+
+The middlewares managing request headers (e.g. the ForwardAuth `authResponseHeaders` option) only manage the canonical
+form of the headers they set, and rely on this option to not be spoofed with an aliasing name.
+Traefik logs a warning at startup for every entry point left without this option configured.
+
+!!! warning "Security"
+
+    Backends normalizing the header names can be spoofed with an aliasing name of a header they trust.
+    Setting the `aliasHeadersStrategy` option to `delete` or `reject` is recommended when such backends are exposed.
+
+    The `delete` and `reject` strategies apply to every request header: a legitimate header whose name contains
+    such a character (e.g. `X_Request_Id`) is dropped or rejected as well.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      aliasHeadersStrategy: delete
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    aliasHeadersStrategy = "delete"
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.aliasHeadersStrategy=delete
+```
+
+#### Examples
+
+| AliasHeadersStrategy | Request Headers                                                         | Result                                                                          |
+|----------------------|-------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| keep                 | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` reach the backend |
+| delete               | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` | Only `X-Auth-User: legit` reaches the backend                                   |
+| reject               | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` | Request rejected with `400 Bad Request`                                         |
+
+### UnderscoreHeadersStrategy
+
+_Optional, Default=keep, Deprecated_
+
+!!! warning "Deprecation"
+
+    The `underscoreHeadersStrategy` option is deprecated in favor of the [`aliasHeadersStrategy`](#aliasheadersstrategy) option.
+    Underscores are only one of the characters making a header name alias another one:
+    `underscoreHeadersStrategy` leaves the other forms (e.g. `X.Auth.User`) untouched, whereas `aliasHeadersStrategy`
+    handles them all. An entry point cannot configure both options with different values.
 
 The `underscoreHeadersStrategy` option defines how request headers with underscores in their names are handled before routing:
 
 - `keep`: request headers with underscores are forwarded as is (default).
 - `delete`: any request header whose name contains an underscore character is silently removed from the request.
 - `reject`: any request carrying a header whose name contains an underscore character is rejected with a `400 Bad Request` response.
-
-Underscores are valid characters in HTTP header names, but Go canonicalizes header names only on dashes, so a middleware 
-managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `authResponseHeaders` option) cannot see or remove an underscore variant (e.g. `X_Auth_User`).
-
-!!! warning "Security"
-
-    Backends mapping both forms to the same variable (CGI, WSGI, PHP, ...) can be spoofed with the underscore variant of a managed header.
-    Setting the `underscoreHeadersStrategy` option to `delete` or `reject` is recommended when such backends are exposed.
-    See the [Headers with Underscores](../security/header-underscores.md) security documentation for more details.
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -1389,11 +1447,11 @@ entryPoints:
 
 #### Examples
 
-| UnderscoreHeadersStrategy | Request Headers                                | Result                                                 |
-|---------------------------|------------------------------------------------|--------------------------------------------------------|
+| UnderscoreHeadersStrategy | Request Headers                                | Result                                                           |
+|---------------------------|------------------------------------------------|------------------------------------------------------------------|
 | keep                      | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | `X-Auth-User: legit` <br> `X_Auth_User: spoof` reach the backend |
-| delete                    | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Only `X-Auth-User: legit` reaches the backend          |
-| reject                    | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Request rejected with `400 Bad Request`                |
+| delete                    | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Only `X-Auth-User: legit` reaches the backend                    |
+| reject                    | `X-Auth-User: legit` <br> `X_Auth_User: spoof` | Request rejected with `400 Bad Request`                          |
 
 ### Middlewares
 

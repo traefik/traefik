@@ -320,6 +320,12 @@ func (c *Configuration) ValidateConfiguration() error {
 		acmeEmail = resolver.ACME.Email
 	}
 
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
+		}
+	}
+
 	if c.Providers.ConsulCatalog != nil && c.Providers.ConsulCatalog.Namespace != "" && len(c.Providers.ConsulCatalog.Namespaces) > 0 {
 		return errors.New("Consul Catalog provider cannot have both namespace and namespaces options configured")
 	}
