@@ -18,7 +18,7 @@ For them, the three names above are the same `HTTP_X_AUTH_USER` variable.
 Underscores and dots are not the only characters concerned. On top of the letters, the digits and the dash,
 HTTP allows the following characters in a header name:
 
-```
+```text
 !  #  $  %  &  '  *  +  .  ^  _  `  |  ~
 ```
 
