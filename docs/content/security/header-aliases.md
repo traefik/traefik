@@ -83,7 +83,7 @@ entryPoints:
 
 !!! info "Deprecated option"
 
-    The [`underscoreHeadersStrategy`](../routing/entrypoints.md#underscoreheadersstrategy) option is deprecated in favor
-    of `aliasHeadersStrategy`. Its behavior is unchanged: it only handles the header names containing an underscore
-    character, and leaves the other aliasing forms (e.g. `X.Auth.User`) untouched.
-    An entry point cannot configure both options with different values.
+    The `underscoreHeadersStrategy` option is deprecated in favor of `aliasHeadersStrategy`, which handles every
+    aliasing character instead of the underscore only.
+    See the [feature deprecation notices](../deprecation/features.md#entry-point-underscoreheadersstrategy-option)
+    for more details.

@@ -10,6 +10,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 | [Nomad Namespace](#nomad-namespace)                                                                         | 2.10       | N/A            | 3.0     |
 | [Kubernetes CRDs API Group `traefik.containo.us`](#kubernetes-crd-provider-api-group-traefikcontainous)     | 2.10       | N/A            | 3.0     |
 | [Kubernetes CRDs API Version `traefik.io/v1alpha1`](#kubernetes-crd-provider-api-version-traefikiov1alpha1) | 3.0        | N/A            | 4.0     |
+| [Entry point `underscoreHeadersStrategy` option](#entry-point-underscoreheadersstrategy-option)             | 2.11.56    | N/A            | N/A     |
 
 ## Impact
 
@@ -42,3 +43,10 @@ In v2.10, the Kubernetes CRD provider API Group `traefik.containo.us` is depreca
 ### Kubernetes CRD Provider API Version `traefik.io/v1alpha1`
 
 The Kubernetes CRD provider API Version `traefik.io/v1alpha1` will subsequently be deprecated in Traefik v3. The next version will be `traefik.io/v1`.
+
+### Entry Point `underscoreHeadersStrategy` Option
+
+Starting on 2.11.56 the `underscoreHeadersStrategy` entry point option is deprecated,
+please use the [`aliasHeadersStrategy`](../routing/entrypoints.md#aliasheadersstrategy) option instead.
+Underscores are only one of the characters making a header name alias another one, and `aliasHeadersStrategy` handles them all.
+An entry point cannot configure both options with different values.
