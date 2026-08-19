@@ -51,7 +51,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 
 	handler := httpsServer.Server.(*http.Server).Handler
 	if readTimeout := time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout); readTimeout != 0 {
-		handler = withHTTP3ReadTimeout(ctx, handler, readTimeout)
+		handler = withReadTimeout(ctx, handler, readTimeout)
 	}
 
 	h3.Server = &http3.Server{
@@ -87,8 +87,12 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	return h3, nil
 }
 
-func withHTTP3ReadTimeout(ctx context.Context, next http.Handler, timeout time.Duration) http.Handler {
+func withReadTimeout(ctx context.Context, next http.Handler, timeout time.Duration) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// quic-go never leaves req.Body nil or equal to http.NoBody, so neither can be used to detect
+		// an absent body. ContentLength is 0 only when the client declared no body, and -1 when the
+		// length is unknown (no Content-Length header), both of which may still carry a body that
+		// needs bounding.
 		if req.ContentLength != 0 {
 			deadline := time.Now().Add(timeout)
 			if err := http.NewResponseController(rw).SetReadDeadline(deadline); err != nil {
