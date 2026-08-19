@@ -55,6 +55,14 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 		{
 			desc:       "only the deprecated option configured",
 			underscore: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured, set to keep",
+			underscore: AliasHeadersStrategyKeep,
+		},
+		{
+			desc:       "both options configured with the same value",
+			underscore: AliasHeadersStrategyDelete,
 			alias:      AliasHeadersStrategyDelete,
 		},
 		{

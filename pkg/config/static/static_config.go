@@ -321,7 +321,8 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	for epName, ep := range c.EntryPoints {
-		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
 			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
 		}
 	}

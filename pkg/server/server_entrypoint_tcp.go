@@ -601,17 +601,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
-	switch configuration.HTTP.AliasHeadersStrategy {
-	case "", static.AliasHeadersStrategyKeep:
-		// Headers whose name aliases another header name are forwarded as is.
-	case static.AliasHeadersStrategyDelete:
-		handler = removeAliasingHeaders(handler)
-	case static.AliasHeadersStrategyReject:
-		handler = rejectAliasingHeaders(handler)
-	default:
-		return nil, fmt.Errorf("invalid aliasHeadersStrategy value %q", configuration.HTTP.AliasHeadersStrategy)
-	}
-
 	//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
 	if configuration.HTTP.UnderscoreHeadersStrategy != "" {
 		log.FromContext(ctx).Warn("The underscoreHeadersStrategy option is deprecated, please use the aliasHeadersStrategy option instead. " +
@@ -619,9 +608,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
 	}
 
-	// The configuration validation guarantees that both options cannot have different values,
-	// hence the aliasHeadersStrategy option, handling a superset of the underscore names, is enough.
-	if configuration.HTTP.AliasHeadersStrategy == "" || configuration.HTTP.AliasHeadersStrategy == static.AliasHeadersStrategyKeep {
+	switch configuration.HTTP.AliasHeadersStrategy {
+	case "", static.AliasHeadersStrategyKeep:
+		// The aliasHeadersStrategy option filters nothing, fall back on the deprecated underscoreHeadersStrategy option,
+		// which handles a subset of the aliasing names. The configuration validation guarantees that both options
+		// cannot be configured with different values.
 		//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
 		switch configuration.HTTP.UnderscoreHeadersStrategy {
 		case "", static.UnderscoreHeadersStrategyKeep:
@@ -636,6 +627,12 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		default:
 			return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
 		}
+	case static.AliasHeadersStrategyDelete:
+		handler = removeAliasingHeaders(handler)
+	case static.AliasHeadersStrategyReject:
+		handler = rejectAliasingHeaders(handler)
+	default:
+		return nil, fmt.Errorf("invalid aliasHeadersStrategy value %q", configuration.HTTP.AliasHeadersStrategy)
 	}
 
 	var connContext multipleConnContext
