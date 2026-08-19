@@ -1238,9 +1238,13 @@ func TestHeaderNamesStrategiesWarnings(t *testing.T) {
 			wantSpoofing: true,
 		},
 		{
-			desc:         "alias strategy explicitly set to keep",
-			config:       static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyKeep},
-			wantSpoofing: true,
+			desc:   "alias strategy explicitly set to keep",
+			config: static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyKeep},
+		},
+		{
+			desc:            "alias strategy explicitly set to keep, with the deprecated one",
+			config:          static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyKeep, UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyKeep},
+			wantDeprecation: true,
 		},
 		{
 			desc:   "alias strategy set to delete",

@@ -609,10 +609,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	switch configuration.HTTP.AliasHeadersStrategy {
-	case "", static.AliasHeadersStrategyKeep:
-		// The aliasHeadersStrategy option filters nothing, fall back on the deprecated underscoreHeadersStrategy option,
-		// which handles a subset of the aliasing names. The configuration validation guarantees that both options
-		// cannot be configured with different values.
+	case "":
+		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option,
+		// which handles a subset of the aliasing names.
 		//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
 		switch configuration.HTTP.UnderscoreHeadersStrategy {
 		case "", static.UnderscoreHeadersStrategyKeep:
@@ -627,6 +626,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		default:
 			return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
 		}
+	case static.AliasHeadersStrategyKeep:
+		// Headers whose name aliases another header name are forwarded as is.
+		// The deprecated underscoreHeadersStrategy option is ignored, as the configuration validation
+		// guarantees it cannot be configured with a conflicting value.
 	case static.AliasHeadersStrategyDelete:
 		handler = removeAliasingHeaders(handler)
 	case static.AliasHeadersStrategyReject:
