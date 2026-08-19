@@ -1,11 +1,13 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"math/big"
 	"net"
 	"net/http"
@@ -892,4 +894,90 @@ type roundTripperFn func(req *http.Request) (*http.Response, error)
 
 func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error) {
 	return r(request)
+}
+
+type fakeConn struct {
+	net.Conn
+}
+
+func TestPreferIPv6DialContext(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		network     string
+		address     string
+		ipv6Fails   bool
+		ctxCanceled bool
+		expDials    []string
+		expErr      bool
+	}{
+		{
+			desc:     "hostname is dialed over IPv6 first",
+			network:  "tcp",
+			address:  "example.com:80",
+			expDials: []string{"tcp6"},
+		},
+		{
+			desc:      "hostname falls back to IPv4 when IPv6 is unreachable",
+			network:   "tcp",
+			address:   "example.com:80",
+			ipv6Fails: true,
+			expDials:  []string{"tcp6", "tcp4"},
+		},
+		{
+			desc:        "no IPv4 fallback when the context is done",
+			network:     "tcp",
+			address:     "example.com:80",
+			ipv6Fails:   true,
+			ctxCanceled: true,
+			expDials:    []string{"tcp6"},
+			expErr:      true,
+		},
+		{
+			desc:     "literal IPv4 address is dialed as-is",
+			network:  "tcp",
+			address:  "127.0.0.1:80",
+			expDials: []string{"tcp"},
+		},
+		{
+			desc:     "literal IPv6 address is dialed as-is",
+			network:  "tcp",
+			address:  "[::1]:80",
+			expDials: []string{"tcp"},
+		},
+		{
+			desc:     "explicit address family is preserved",
+			network:  "tcp4",
+			address:  "example.com:80",
+			expDials: []string{"tcp4"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var dials []string
+			base := func(_ context.Context, network, _ string) (net.Conn, error) {
+				dials = append(dials, network)
+				if network == "tcp6" && test.ipv6Fails {
+					return nil, errors.New("no route to host")
+				}
+				return fakeConn{}, nil
+			}
+
+			ctx := context.Background()
+			if test.ctxCanceled {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithCancel(ctx)
+				cancel()
+			}
+
+			_, err := preferIPv6DialContext(base)(ctx, test.network, test.address)
+
+			assert.Equal(t, test.expDials, dials)
+			if test.expErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

@@ -2522,6 +2522,10 @@ spec:
 
                   Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
                 type: string
+              preferIPv6:
+                description: PreferIPv6 prefers IPv6 over IPv4 when resolving backend
+                  server hostnames, falling back to IPv4 when no IPv6 address is reachable.
+                type: boolean
               rootCAs:
                 description: RootCAs defines a list of CA certificate Secrets or ConfigMaps
                   used to validate server certificates.

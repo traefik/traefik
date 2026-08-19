@@ -23,6 +23,7 @@ http:
         - "/path/to/rootca2.pem"
       maxIdleConnsPerHost: 100
       disableHTTP2: true
+      preferIPv6: true
       peerCertSANs:
         - type: DNSName
           value: foo.com
@@ -54,6 +55,7 @@ http:
   rootCAs = ["/path/to/rootca1.pem", "/path/to/rootca2.pem"]
   maxIdleConnsPerHost = 100
   disableHTTP2 = true
+  preferIPv6 = true
   peerCertSANs = [{type = "DNSName", value = "foo.com"}, {type = "URI", value = "spiffe://example.org/peer"}]
   cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
   minVersion = "VersionTLS12"
@@ -117,6 +119,7 @@ labels:
 | <a id="opt-maxVersion" href="#opt-maxVersion" title="#opt-maxVersion">`maxVersion`</a> | Defines the maximum TLS version to use when contacting backend servers.                                                                  | ""      | No |
 | <a id="opt-maxIdleConnsPerHost" href="#opt-maxIdleConnsPerHost" title="#opt-maxIdleConnsPerHost">`maxIdleConnsPerHost`</a> | Maximum idle (keep-alive) connections to keep per-host. If zero, `DefaultMaxIdleConnsPerHost` (2) is used.                               | 0       | No       |
 | <a id="opt-disableHTTP2" href="#opt-disableHTTP2" title="#opt-disableHTTP2">`disableHTTP2`</a> | Disables HTTP/2 for connections with servers.                                                                                            | false   | No       |
+| <a id="opt-preferIPv6" href="#opt-preferIPv6" title="#opt-preferIPv6">`preferIPv6`</a> | Prefers IPv6 over IPv4 when resolving server hostnames, falling back to IPv4 when no IPv6 address is reachable.                           | false   | No       |
 | <a id="opt-peerCertSANs" href="#opt-peerCertSANs" title="#opt-peerCertSANs">`peerCertSANs`</a> | Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification.                        | []      | No       |
 | <a id="opt-peerCertSANs-type" href="#opt-peerCertSANs-type" title="#opt-peerCertSANs-type">`peerCertSANs[].type`</a> | Defines the SAN type (`URI` or `DNSName`) to match against the peer certificate's Subject Alternative Names.                                                                    | ""      | No       |
 | <a id="opt-peerCertSANs-value" href="#opt-peerCertSANs-value" title="#opt-peerCertSANs-value">`peerCertSANs[].value`</a> | Defines the SAN value to match against the peer certificate's Subject Alternative Names.                  | ""      | No       |
