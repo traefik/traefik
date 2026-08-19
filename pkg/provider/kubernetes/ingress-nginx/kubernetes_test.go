@@ -5991,7 +5991,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-backend",
 							Middlewares: []string{"default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -6057,7 +6057,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"7-default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -9744,7 +9744,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0": {
@@ -9838,7 +9838,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"7-default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -9901,7 +9901,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "1-a-3-1-b-require-and-verify-client-cert",
+								Options: "a-1-1-b-3-require-and-verify-client-cert",
 							},
 						},
 						"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0": {
@@ -9938,7 +9938,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "3-a-3-1-b-require-and-verify-client-cert",
+								Options: "a-3-3-b-1-require-and-verify-client-cert",
 							},
 						},
 						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0": {
@@ -10035,7 +10035,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"1-a-3-1-b-require-and-verify-client-cert": {
+						"a-1-1-b-3-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----VICTIM-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -10057,7 +10057,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 						},
-						"3-a-3-1-b-require-and-verify-client-cert": {
+						"a-3-3-b-1-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----ATTACKER-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -10115,7 +10115,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-verify-client-cert-if-given",
+								Options: "default-7-ca-secret-9-verify-client-cert-if-given",
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0": {
@@ -10209,7 +10209,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"7-default-9-ca-secret-verify-client-cert-if-given": {
+						"default-7-ca-secret-9-verify-client-cert-if-given": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
@@ -10267,7 +10267,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-protected-ingress-rule-0-path-0": {
@@ -10307,7 +10307,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-same-host-second-ingress-rule-0-path-0": {
@@ -10445,7 +10445,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"7-default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -13160,7 +13160,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0": {
@@ -13261,7 +13261,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"7-default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -18514,7 +18514,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "7-default-9-ca-secret-request-client-cert",
+								Options: "default-7-ca-secret-9-request-client-cert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -18600,7 +18600,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"7-default-9-ca-secret-request-client-cert": {
+						"default-7-ca-secret-9-request-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequestClientCert,
