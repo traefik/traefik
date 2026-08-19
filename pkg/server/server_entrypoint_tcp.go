@@ -608,6 +608,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
 	}
 
+	//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
+	if configuration.HTTP.AliasHeadersStrategy == "" &&
+		(configuration.HTTP.UnderscoreHeadersStrategy == "" || configuration.HTTP.UnderscoreHeadersStrategy == static.UnderscoreHeadersStrategyKeep) {
+		log.FromContext(ctx).Warn("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
+			"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
+			"names (CGI, WSGI, PHP, NGINX, ...) read them as the header they alias, which allows a client to spoof the headers Traefik manages. " +
+			"Please set it to delete or reject on the entry points fronting such backends.")
+	}
+
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
 		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option,
@@ -615,10 +624,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
 		switch configuration.HTTP.UnderscoreHeadersStrategy {
 		case "", static.UnderscoreHeadersStrategyKeep:
-			log.FromContext(ctx).Warn("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
-				"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
-				"names (CGI, WSGI, PHP, NGINX, ...) read them as the header they alias, which allows a client to spoof the headers Traefik manages. " +
-				"Please set it to delete or reject on the entry points fronting such backends.")
+			// Headers with underscores are forwarded as is.
 		case static.UnderscoreHeadersStrategyDelete:
 			handler = removeHeadersWithUnderscores(handler)
 		case static.UnderscoreHeadersStrategyReject:
