@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
@@ -1627,6 +1628,74 @@ func (s *mockSpan) AddEvent(_ string, _ ...trace.EventOption)   {}
 func (s *mockSpan) AddLink(_ trace.Link)                        {}
 
 func (s *mockSpan) SetName(_ string) {}
+
+func TestClientHostResolvesFromTrustedChain(t *testing.T) {
+	logFilePath := filepath.Join(t.TempDir(), "test_xff.log")
+	config := &otypes.AccessLog{FilePath: logFilePath, Format: JSONFormat}
+	logger, err := NewHandler(t.Context(), config)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = logger.Close()
+	})
+
+	checker, err := ip.NewChecker([]string{"104.21.0.0/16"})
+	require.NoError(t, err)
+
+	req := &http.Request{
+		Header: map[string][]string{
+			"User-Agent":       {testUserAgent},
+			"Referer":          {testReferer},
+			"X-Forwarded-For":  {"1.2.3.4, 203.0.113.5, 104.21.1.1"},
+		},
+		Proto:      testProto,
+		Host:       testHostname,
+		Method:     testMethod,
+		RemoteAddr: "104.21.1.1:12345",
+		URL: &url.URL{
+			User:       url.UserPassword(testUsername, ""),
+			Path:       testPath,
+			RawQuery:   testQueryParams,
+			ForceQuery: true,
+		},
+		Body: io.NopCloser(bytes.NewReader([]byte("bar"))),
+	}
+
+	chain := alice.New()
+	chain = chain.Append(capture.Wrap)
+
+	// Inject the observability context so that access logs are enabled.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		obs := observability.Observability{AccessLogsEnabled: true}
+		return observability.WithObservabilityHandler(next, obs), nil
+	})
+
+	// Inject the trusted-proxy IP checker.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(WithForwardedHeadersChecker(r.Context(), checker))
+			next.ServeHTTP(rw, r)
+		})
+	})
+
+	chain = chain.Append(logger.AliceConstructor())
+	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
+	require.NoError(t, err)
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	logData, err := os.ReadFile(logFilePath)
+	require.NoError(t, err)
+
+	var result map[string]any
+	err = json.Unmarshal(logData, &result)
+	require.NoError(t, err)
+
+	// X-Forwarded-For: 1.2.3.4, 203.0.113.5, 104.21.1.1
+	// trusted IPs: 104.21.0.0/16
+	// PoolStrategy resolves from right to left, skipping 104.21.1.1 (trusted),
+	// returning 203.0.113.5 (the real client).
+	assert.Equal(t, "203.0.113.5", result[ClientHost], "ClientHost should be the real client IP from the XFF chain")
+}
 
 func (s *mockSpan) TracerProvider() trace.TracerProvider {
 	return nil

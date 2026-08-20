@@ -23,11 +23,29 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	"github.com/traefik/traefik/v3/pkg/ip"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
 	"go.opentelemetry.io/otel/trace"
 )
+
+type forwardedHeadersCheckerKey struct{}
+
+// WithForwardedHeadersChecker stores the trusted-proxy IP checker in the request context
+// so that the access log can resolve the real client IP from the X-Forwarded-For chain.
+func WithForwardedHeadersChecker(ctx context.Context, checker *ip.Checker) context.Context {
+	return context.WithValue(ctx, forwardedHeadersCheckerKey{}, checker)
+}
+
+// ForwardedHeadersCheckerFromContext returns the trusted-proxy IP checker from the
+// request context, if any.
+func ForwardedHeadersCheckerFromContext(ctx context.Context) *ip.Checker {
+	if checker, ok := ctx.Value(forwardedHeadersCheckerKey{}).(*ip.Checker); ok {
+		return checker
+	}
+	return nil
+}
 
 type key string
 
@@ -267,7 +285,16 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 
 	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
-		core[ClientHost] = forwardedFor
+		// Only trust the X-Forwarded-For header when the peer is a trusted proxy,
+		// and resolve the *real* client IP from the forwarded chain instead of
+		// taking the raw (spoofable) header value verbatim.
+		if checker := ForwardedHeadersCheckerFromContext(req.Context()); checker != nil {
+			if clientIP := (ip.PoolStrategy{Checker: checker}).GetIP(req); clientIP != "" {
+				core[ClientHost] = clientIP
+			}
+		} else {
+			core[ClientHost] = forwardedFor
+		}
 	}
 
 	ctx := req.Context()

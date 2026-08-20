@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	"github.com/traefik/traefik/v3/pkg/ip"
 )
 
 // ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.
@@ -53,6 +54,20 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 	// This injection must be the first step in order for other observability middlewares to rely on it.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return o.observabilityContextHandler(next, internal, config), nil
+	})
+
+	// Inject the trusted-proxy IP checker into the request context so that the
+	// access log middleware can resolve the real client IP from the X-Forwarded-For
+	// chain, respecting the entrypoint trusted proxy configuration.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if ep, ok := o.config.EntryPoints[entryPointName]; ok && ep.ForwardedHeaders != nil {
+				if checker, err := ip.NewChecker(ep.ForwardedHeaders.TrustedIPs); err == nil {
+					req = req.WithContext(accesslog.WithForwardedHeadersChecker(req.Context(), checker))
+				}
+			}
+			next.ServeHTTP(rw, req)
+		})
 	})
 
 	// Capture middleware for accessLogs or metrics.
