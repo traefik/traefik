@@ -20,6 +20,7 @@ linters:
     - err113 # Too strict
     - exhaustive # Not relevant
     - exhaustruct # Not relevant
+    - exhaustruct_v5 # Not relevant
     - forcetypeassert # Too strict
     - gochecknoglobals
     - gochecknoinits
