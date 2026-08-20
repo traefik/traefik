@@ -39,8 +39,10 @@ or on one backend's own re-interpretation of a character the standard permits:
 - The escape works only with `allowEncodedSlash` or encoded-character handling left permissive. That
   default is a deliberate, documented compatibility decision, revisited only at a major version.
 - The vector is a character [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) permits in a path
-  segment, such as a literal `;` or a backslash, and the escape exists only because one particular
-  backend re-interprets it. We do not extend CVE treatment to every literal-byte sibling of a published
+  segment, such as a literal `;` or a backslash, and the escape exists only because a given backend
+  re-interprets it. That re-interpretation varies by backend and is the backend's to define: path
+  parameters introduced by `;` are standard behaviour across the Java servlet family, not one
+  implementation's quirk. We do not extend CVE treatment to every literal-byte sibling of a published
   encoded-separator issue.
 
 Confirm the bypass against a normalizing backend with stock entrypoint configuration before submitting.
@@ -272,5 +274,14 @@ explicitly: that is the part that determines the answer.
 ## Non-GA Code
 
 Vulnerabilities affecting only release candidates, betas, or development branches are fixed without a
-CVE, as stated in the [CVE policy](./submitting-security-issues.md#cve). Confirm your finding against a
-GA release before submitting.
+CVE, as stated in the [CVE policy](./submitting-security-issues.md#cve).
+
+**Open a normal issue for these, not a security advisory.** Once you have confirmed the defect is absent
+from every GA release, there is no released version to protect, so there is nothing to keep private, and
+an issue reaches the maintainers faster than the advisory queue. Reporting during a release candidate is
+also the most useful moment to reach us: the fix costs a single commit, rather than an advisory, a
+backport across every maintained branch, and exposure for everyone who already upgraded.
+
+If the same defect is **also** reachable in a GA release, it is not a non-GA finding, and it belongs in a
+[security advisory](https://github.com/traefik/traefik/security/advisories). Check the released branches
+before concluding that a finding is release-candidate only, and tell us which ones you checked.
