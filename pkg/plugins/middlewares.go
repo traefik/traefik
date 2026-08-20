@@ -64,7 +64,7 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	if len(results) > 1 && results[1].Interface() != nil {
 		err, ok := reflect.TypeAssert[error](results[1])
 		if !ok {
-			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
+			return nil, fmt.Errorf("invalid error type: %T", results[1].Interface())
 		}
 		return nil, err
 	}
