@@ -30,10 +30,11 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 26
+      Passed: 27
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayPort8080
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
@@ -59,7 +60,6 @@ profiles:
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
@@ -84,6 +84,7 @@ profiles:
       Passed: 4
       Skipped: 0
     supportedFeatures:
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayPort8080
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
@@ -93,7 +94,6 @@ profiles:
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - ListenerSet

@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-07-30T11:47:27+02:00"
+date: "2026-08-19T17:34:14+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -32,10 +32,12 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 26
+      Passed: 28
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayPort8080
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
@@ -60,8 +62,6 @@ profiles:
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
@@ -89,6 +89,8 @@ profiles:
       Passed: 4
       Skipped: 0
     supportedFeatures:
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayPort8080
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
@@ -97,8 +99,6 @@ profiles:
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - ListenerSet
