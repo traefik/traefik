@@ -185,7 +185,8 @@ func (p *Provider) loadGRPCService(ctx context.Context, gatewayName string, list
 		return name, nil
 	}
 
-	routeSticky := convertSessionPersistence(routeRule.SessionPersistence)
+	// GRPCRoute rules have no HTTPPathMatch equivalent, so the cookie Path attribute keeps its "/" default.
+	routeSticky := convertSessionPersistence(routeRule.SessionPersistence, nil, true)
 
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition

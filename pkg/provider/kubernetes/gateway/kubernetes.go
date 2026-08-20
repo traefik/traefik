@@ -848,23 +848,37 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-// resolveSessionPersistence returns the dynamic.Sticky configuration to apply to a backendRef's ServersLoadBalancer.
-// Session persistence configured on a route rule is applied at the WeightedRoundRobin level.
+// resolveSessionPersistence returns the dynamic.Sticky to apply to a backendRef's ServersLoadBalancer.
 func (p *Provider) resolveSessionPersistence(ctx context.Context, gatewayName, namespace string, backendRefName gatev1.ObjectName, routeGeneration int64, listener gatewayListener, routeSticky *dynamic.Sticky) (*dynamic.Sticky, *metav1.Condition) {
 	policySticky, policyCondition := p.loadBackendTrafficPolicySticky(ctx, gatewayName, namespace, backendRefName, routeGeneration, listener)
 	if policyCondition != nil {
 		return nil, policyCondition
 	}
 
-	if routeSticky != nil {
-		if policySticky != nil {
-			log.Ctx(ctx).Warn().
-				Msgf("Route sessionPersistence overrides XBackendTrafficPolicy sessionPersistence for backendRef %s/%s", namespace, backendRefName)
-		}
-		return nil, nil
+	if routeSticky == nil {
+		return policySticky, nil
 	}
 
-	return policySticky, nil
+	if policySticky != nil {
+		log.Ctx(ctx).Warn().
+			Msgf("Route sessionPersistence overrides XBackendTrafficPolicy sessionPersistence for backendRef %s/%s", namespace, backendRefName)
+	}
+
+	// Renamed so it doesn't collide with the same-named cookie/header set at the WeightedRoundRobin level.
+	sticky := *routeSticky
+	// An empty cookie name is left untouched: it gets a name auto-generated from the (already
+	// unique) service name at runtime, so it can't collide with the WeightedRoundRobin-level cookie.
+	if sticky.Cookie != nil && sticky.Cookie.Name != "" {
+		cookie := *sticky.Cookie
+		cookie.Name += "-server"
+		sticky.Cookie = &cookie
+	}
+	if sticky.Header != nil {
+		header := *sticky.Header
+		header.Name += "-server"
+		sticky.Header = &header
+	}
+	return &sticky, nil
 }
 
 func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayName, namespace string, backendRefName gatev1.ObjectName, routeGeneration int64, listener gatewayListener) (*dynamic.Sticky, *metav1.Condition) {
@@ -946,7 +960,9 @@ func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayNa
 		return nil, nil
 	}
 
-	return convertSessionPersistence(selected.Spec.SessionPersistence), nil
+	// XBackendTrafficPolicy is attached to a Service, not a route rule, so the cookie Path attribute
+	// must be left unset.
+	return convertSessionPersistence(selected.Spec.SessionPersistence, nil, false), nil
 }
 
 func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {

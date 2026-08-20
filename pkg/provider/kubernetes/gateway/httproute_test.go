@@ -329,11 +329,14 @@ func Test_convertSessionPersistence(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		sessionPersist *gatev1.SessionPersistence
+		pathMatch      *gatev1.HTTPPathMatch
+		scopeToRoute   bool
 		wantNil        bool
 		wantCookie     bool
 		wantHeader     bool
 		wantName       string
 		wantMaxAge     int
+		wantPath       *string
 	}{
 		{
 			desc:           "nil session persistence",
@@ -343,27 +346,32 @@ func Test_convertSessionPersistence(t *testing.T) {
 		{
 			desc:           "default cookie type (nil Type)",
 			sessionPersist: &gatev1.SessionPersistence{},
+			scopeToRoute:   true,
 			wantNil:        false,
 			wantCookie:     true,
 			wantHeader:     false,
+			wantPath:       new("/"),
 		},
 		{
 			desc: "explicit cookie type",
 			sessionPersist: &gatev1.SessionPersistence{
 				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
 			},
-			wantNil:    false,
-			wantCookie: true,
-			wantHeader: false,
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     new("/"),
 		},
 		{
 			desc: "header type",
 			sessionPersist: &gatev1.SessionPersistence{
 				Type: ptr.To(gatev1.HeaderBasedSessionPersistence),
 			},
-			wantNil:    false,
-			wantCookie: false,
-			wantHeader: true,
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   false,
+			wantHeader:   true,
 		},
 		{
 			desc: "cookie with session name",
@@ -371,10 +379,12 @@ func Test_convertSessionPersistence(t *testing.T) {
 				SessionName: new("my-session"),
 				Type:        ptr.To(gatev1.CookieBasedSessionPersistence),
 			},
-			wantNil:    false,
-			wantCookie: true,
-			wantHeader: false,
-			wantName:   "my-session",
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantName:     "my-session",
+			wantPath:     new("/"),
 		},
 		{
 			desc: "header with session name",
@@ -382,10 +392,11 @@ func Test_convertSessionPersistence(t *testing.T) {
 				SessionName: new("X-My-Session"),
 				Type:        ptr.To(gatev1.HeaderBasedSessionPersistence),
 			},
-			wantNil:    false,
-			wantCookie: false,
-			wantHeader: true,
-			wantName:   "X-My-Session",
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   false,
+			wantHeader:   true,
+			wantName:     "X-My-Session",
 		},
 		{
 			desc: "cookie with permanent lifetime and timeout",
@@ -397,11 +408,13 @@ func Test_convertSessionPersistence(t *testing.T) {
 					LifetimeType: ptr.To(gatev1.PermanentCookieLifetimeType),
 				},
 			},
-			wantNil:    false,
-			wantCookie: true,
-			wantHeader: false,
-			wantName:   "my-cookie",
-			wantMaxAge: 3600,
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantName:     "my-cookie",
+			wantMaxAge:   3600,
+			wantPath:     new("/"),
 		},
 		{
 			desc: "cookie with session lifetime ignores timeout",
@@ -413,11 +426,58 @@ func Test_convertSessionPersistence(t *testing.T) {
 					LifetimeType: ptr.To(gatev1.SessionCookieLifetimeType),
 				},
 			},
-			wantNil:    false,
-			wantCookie: true,
-			wantHeader: false,
-			wantName:   "my-cookie",
-			wantMaxAge: 0, // Session cookie has no MaxAge
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantName:     "my-cookie",
+			wantMaxAge:   0, // Session cookie has no MaxAge
+			wantPath:     new("/"),
+		},
+		{
+			desc: "cookie scoped to an exact matched path",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			pathMatch: &gatev1.HTTPPathMatch{
+				Type:  ptr.To(gatev1.PathMatchExact),
+				Value: new("/bar"),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     new("/bar"),
+		},
+		{
+			desc: "cookie scoped to a regular expression matched path uses the longest non-regex prefix",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			pathMatch: &gatev1.HTTPPathMatch{
+				Type:  ptr.To(gatev1.PathMatchRegularExpression),
+				Value: new("/p1/p2/.*/p3"),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     new("/p1/p2"),
+		},
+		{
+			desc: "cookie attached to a backend policy leaves Path unset",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			pathMatch: &gatev1.HTTPPathMatch{
+				Type:  ptr.To(gatev1.PathMatchExact),
+				Value: new("/bar"),
+			},
+			scopeToRoute: false,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     nil,
 		},
 	}
 
@@ -425,7 +485,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := convertSessionPersistence(test.sessionPersist)
+			result := convertSessionPersistence(test.sessionPersist, test.pathMatch, test.scopeToRoute)
 
 			if test.wantNil {
 				assert.Nil(t, result)
@@ -441,6 +501,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 					assert.Equal(t, test.wantName, result.Cookie.Name)
 				}
 				assert.Equal(t, test.wantMaxAge, result.Cookie.MaxAge)
+				assert.Equal(t, test.wantPath, result.Cookie.Path)
 			}
 
 			if test.wantHeader {

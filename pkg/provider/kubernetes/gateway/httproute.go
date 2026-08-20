@@ -217,7 +217,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 		return name, nil
 	}
 
-	routeSticky := convertSessionPersistence(routeRule.SessionPersistence)
+	routeSticky := convertSessionPersistence(routeRule.SessionPersistence, pathMatch, true)
 
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
@@ -1099,7 +1099,8 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 }
 
 // convertSessionPersistence converts a Gateway API SessionPersistence to a Traefik Sticky configuration.
-func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
+// scopeToRoute must be true only for a route rule's own sessionPersistence, not for an XBackendTrafficPolicy's.
+func convertSessionPersistence(sp *gatev1.SessionPersistence, pathMatch *gatev1.HTTPPathMatch, scopeToRoute bool) *dynamic.Sticky {
 	if sp == nil {
 		return nil
 	}
@@ -1126,6 +1127,13 @@ func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
 		cookie.Name = *sp.SessionName
 	}
 
+	cookie.Path = nil
+	// Path must stay unset for a backend-attached policy, since multiple routes can target the same backend.
+	if scopeToRoute {
+		path := cookiePathFromMatch(pathMatch)
+		cookie.Path = &path
+	}
+
 	// AbsoluteTimeout maps to Cookie.MaxAge when lifetimeType is Permanent.
 	// When lifetimeType is Session (default), the cookie is a session cookie (MaxAge = 0).
 	if sp.AbsoluteTimeout != nil && sp.CookieConfig != nil &&
@@ -1137,4 +1145,30 @@ func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
 	}
 
 	return &dynamic.Sticky{Cookie: cookie}
+}
+
+// cookiePathFromMatch derives the sticky cookie Path attribute from the HTTPRoute rule's matched path,
+// as described by https://gateway-api.sigs.k8s.io/geps/gep-1619/#path.
+func cookiePathFromMatch(pathMatch *gatev1.HTTPPathMatch) string {
+	// A route matching all paths (no match, or PathPrefix "/") yields "/".
+	if pathMatch == nil || pathMatch.Value == nil || *pathMatch.Value == "" {
+		return "/"
+	}
+
+	pathValue := *pathMatch.Value
+
+	// A route matching a regular expression yields the longest non-regex prefix of the pattern.
+	if ptr.Deref(pathMatch.Type, gatev1.PathMatchPathPrefix) == gatev1.PathMatchRegularExpression {
+		if idx := strings.IndexAny(pathValue, `\.*+?()[]{}|^$`); idx >= 0 {
+			pathValue = pathValue[:idx]
+		}
+		if idx := strings.LastIndex(pathValue, "/"); idx > 0 {
+			pathValue = pathValue[:idx]
+		} else {
+			return "/"
+		}
+	}
+
+	// A route matching a specific path yields that path.
+	return pathValue
 }
