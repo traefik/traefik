@@ -1643,9 +1643,9 @@ func TestClientHostResolvesFromTrustedChain(t *testing.T) {
 
 	req := &http.Request{
 		Header: map[string][]string{
-			"User-Agent":       {testUserAgent},
-			"Referer":          {testReferer},
-			"X-Forwarded-For":  {"1.2.3.4, 203.0.113.5, 104.21.1.1"},
+			"User-Agent":      {testUserAgent},
+			"Referer":         {testReferer},
+			"X-Forwarded-For": {"1.2.3.4, 203.0.113.5, 104.21.1.1"},
 		},
 		Proto:      testProto,
 		Host:       testHostname,
