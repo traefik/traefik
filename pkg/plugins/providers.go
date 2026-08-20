@@ -141,7 +141,7 @@ func NewWrapper(ctx context.Context, config *` + basePkg + `.Config, name string
 		return nil, results[1].Interface().(error)
 	}
 
-	prov, ok := results[0].Interface().(PP)
+	prov, ok := reflect.TypeAssert[PP](results[0])
 	if !ok {
 		return nil, fmt.Errorf("invalid provider type: %T", results[0].Interface())
 	}
