@@ -49,6 +49,7 @@ Attaching tags to services:
 | <a id="opt-providers-consulCatalog-endpoint-address" href="#opt-providers-consulCatalog-endpoint-address" title="#opt-providers-consulCatalog-endpoint-address">`providers.consulCatalog.endpoint.address`</a> | Defines the address of the Consul server. |  127.0.0.1:8500    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-scheme" href="#opt-providers-consulCatalog-endpoint-scheme" title="#opt-providers-consulCatalog-endpoint-scheme">`providers.consulCatalog.endpoint.scheme`</a> | Defines the URI scheme for the Consul server. |  ""   | no   |
 | <a id="opt-providers-consulCatalog-endpoint-datacenter" href="#opt-providers-consulCatalog-endpoint-datacenter" title="#opt-providers-consulCatalog-endpoint-datacenter">`providers.consulCatalog.endpoint.datacenter`</a> | Defines the datacenter to use. If not provided in Traefik, Consul uses the default agent datacenter. |  ""   | no   |
+| <a id="opt-providers-consulCatalog-endpoint-datacenters" href="#opt-providers-consulCatalog-endpoint-datacenters" title="#opt-providers-consulCatalog-endpoint-datacenters">`providers.consulCatalog.endpoint.datacenters`</a> | Defines the datacenters to use. This option and `datacenter` are mutually exclusive. |  []   | no   |
 | <a id="opt-providers-consulCatalog-endpoint-token" href="#opt-providers-consulCatalog-endpoint-token" title="#opt-providers-consulCatalog-endpoint-token">`providers.consulCatalog.endpoint.token`</a> |  Defines a per-request ACL token which overwrites the agent's default token. |  ""    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-endpointWaitTime" href="#opt-providers-consulCatalog-endpoint-endpointWaitTime" title="#opt-providers-consulCatalog-endpoint-endpointWaitTime">`providers.consulCatalog.endpoint.endpointWaitTime`</a> |  Defines a duration for which a `watch` can block. If not provided, the agent default values will be used. |  ""    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-httpAuth" href="#opt-providers-consulCatalog-endpoint-httpAuth" title="#opt-providers-consulCatalog-endpoint-httpAuth">`providers.consulCatalog.endpoint.httpAuth`</a> | Defines authentication settings for the HTTP client using HTTP Basic Authentication. |  N/A    | no   |
@@ -60,6 +61,33 @@ Attaching tags to services:
 | <a id="opt-providers-consulCatalog-endpoint-tls-key" href="#opt-providers-consulCatalog-endpoint-tls-key" title="#opt-providers-consulCatalog-endpoint-tls-key">`providers.consulCatalog.endpoint.tls.key`</a> | Defines the path to the private key used for the secure connection to Consul Catalog. When using this option, setting the `cert` option is required. | ""   | Yes   |
 | <a id="opt-providers-consulCatalog-endpoint-tls-insecureSkipVerify" href="#opt-providers-consulCatalog-endpoint-tls-insecureSkipVerify" title="#opt-providers-consulCatalog-endpoint-tls-insecureSkipVerify">`providers.consulCatalog.endpoint.tls.insecureSkipVerify`</a> | Instructs the provider to accept any certificate presented by Consul Catalog when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 | <a id="opt-providers-consulCatalog-watch" href="#opt-providers-consulCatalog-watch" title="#opt-providers-consulCatalog-watch">`providers.consulCatalog.watch`</a> | When set to `true`, watches for Consul changes ([Consul watches checks](https://www.consul.io/docs/dynamic-app-config/watches#checks)). | false   | No   |
+
+### `datacenters`
+
+The `datacenters` option queries and watches multiple Consul datacenters through the configured Consul endpoint.
+Traefik combines service instances from every datacenter into the same routing configuration.
+
+Each datacenter is refreshed independently.
+After a datacenter has returned a successful response, Traefik keeps its last successful catalog snapshot when that datacenter becomes unavailable.
+The snapshot is replaced after the datacenter recovers and returns a newer successful response.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      datacenters:
+        - dc1
+        - dc2
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint]
+  datacenters = ["dc1", "dc2"]
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.datacenters=dc1,dc2
+```
 
 ### `requireConsistent`
 

@@ -18,16 +18,28 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
-	configurations := make(map[string]*dynamic.Configuration)
+func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfos map[string]*connectCert) *dynamic.Configuration {
+	type itemConfiguration struct {
+		item          itemData
+		name          string
+		configuration *dynamic.Configuration
+	}
+
+	var itemConfigurations []itemConfiguration
 
 	for _, item := range items {
-		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
+		svcName := provider.Normalize(item.Datacenter + "-" + item.Node + "-" + item.Name + "-" + item.ID)
 
 		logger := log.Ctx(ctx).With().Str(logs.ServiceName, svcName).Logger()
 		ctxSvc := logger.WithContext(ctx)
 
 		if !p.keepContainer(ctxSvc, item) {
+			continue
+		}
+
+		certInfo := connectCertForDatacenter(certInfos, item.Datacenter)
+		if item.ExtraConf.ConsulCatalog.Connect && !certInfo.isReady() {
+			logger.Error().Str("datacenter", item.Datacenter).Msg("Connect certificate is not ready")
 			continue
 		}
 
@@ -73,7 +85,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
 			len(confFromLabel.HTTP.Middlewares) == 0 &&
 			len(confFromLabel.HTTP.Services) == 0 {
-			configurations[svcName] = confFromLabel
+			itemConfigurations = append(itemConfigurations, itemConfiguration{item: item, name: svcName, configuration: confFromLabel})
 			continue
 		}
 
@@ -103,10 +115,135 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 
 		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, getName(item), p.defaultRuleTpl, model)
 
-		configurations[svcName] = confFromLabel
+		itemConfigurations = append(itemConfigurations, itemConfiguration{item: item, name: svcName, configuration: confFromLabel})
+	}
+
+	configuredItems := make([]itemData, 0, len(itemConfigurations))
+	for _, itemConfiguration := range itemConfigurations {
+		configuredItems = append(configuredItems, itemConfiguration.item)
+	}
+	connectDatacenters := connectDatacenters(configuredItems)
+
+	configurations := make(map[string]*dynamic.Configuration, len(itemConfigurations))
+	for _, itemConfiguration := range itemConfigurations {
+		item := itemConfiguration.item
+		configuration := itemConfiguration.configuration
+
+		if datacenters := connectDatacenters[connectServiceKey(item)]; item.ExtraConf.ConsulCatalog.Connect && len(datacenters) > 1 {
+			wrapTCPConnectServices(configuration.TCP, item.Datacenter, datacenters)
+			wrapHTTPConnectServices(configuration.HTTP, item.Datacenter, datacenters)
+		}
+
+		configurations[itemConfiguration.name] = configuration
 	}
 
 	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
+}
+
+func connectDatacenters(items []itemData) map[string][]string {
+	datacenters := make(map[string][]string)
+	seen := make(map[string]map[string]struct{})
+
+	for _, item := range items {
+		if !item.ExtraConf.ConsulCatalog.Connect {
+			continue
+		}
+
+		key := connectServiceKey(item)
+		if seen[key] == nil {
+			seen[key] = make(map[string]struct{})
+		}
+		if _, ok := seen[key][item.Datacenter]; ok {
+			continue
+		}
+
+		seen[key][item.Datacenter] = struct{}{}
+		datacenters[key] = append(datacenters[key], item.Datacenter)
+	}
+
+	return datacenters
+}
+
+func connectServiceKey(item itemData) string {
+	return item.Namespace + "\x00" + getName(item)
+}
+
+func wrapHTTPConnectServices(configuration *dynamic.HTTPConfiguration, datacenter string, datacenters []string) {
+	serviceNames := make([]string, 0, len(configuration.Services))
+	for name := range configuration.Services {
+		serviceNames = append(serviceNames, name)
+	}
+
+	for _, name := range serviceNames {
+		service := configuration.Services[name]
+		if service.LoadBalancer == nil {
+			continue
+		}
+
+		weighted := &dynamic.WeightedRoundRobin{
+			Services: make([]dynamic.WRRService, 0, len(datacenters)),
+		}
+		if service.LoadBalancer.HealthCheck != nil {
+			weighted.HealthCheck = &dynamic.HealthCheck{}
+		}
+
+		for _, currentDatacenter := range datacenters {
+			child := dynamic.WRRService{Name: connectChildServiceName(name, currentDatacenter)}
+			child.SetDefaults()
+			weighted.Services = append(weighted.Services, child)
+		}
+
+		configuration.Services[connectChildServiceName(name, datacenter)] = service
+		configuration.Services[name] = &dynamic.Service{Weighted: weighted}
+	}
+}
+
+func wrapTCPConnectServices(configuration *dynamic.TCPConfiguration, datacenter string, datacenters []string) {
+	serviceNames := make([]string, 0, len(configuration.Services))
+	for name := range configuration.Services {
+		serviceNames = append(serviceNames, name)
+	}
+
+	for _, name := range serviceNames {
+		service := configuration.Services[name]
+		if service.LoadBalancer == nil {
+			continue
+		}
+
+		weighted := &dynamic.TCPWeightedRoundRobin{
+			Services: make([]dynamic.TCPWRRService, 0, len(datacenters)),
+		}
+		if service.LoadBalancer.HealthCheck != nil {
+			weighted.HealthCheck = &dynamic.HealthCheck{}
+		}
+
+		for _, currentDatacenter := range datacenters {
+			child := dynamic.TCPWRRService{Name: connectChildServiceName(name, currentDatacenter)}
+			child.SetDefaults()
+			weighted.Services = append(weighted.Services, child)
+		}
+
+		configuration.Services[connectChildServiceName(name, datacenter)] = service
+		configuration.Services[name] = &dynamic.TCPService{Weighted: weighted}
+	}
+}
+
+func connectChildServiceName(name, datacenter string) string {
+	return provider.Normalize(name + "-" + datacenter)
+}
+
+func connectCertForDatacenter(certInfos map[string]*connectCert, datacenter string) *connectCert {
+	if certInfo, ok := certInfos[datacenter]; ok {
+		return certInfo
+	}
+
+	if len(certInfos) == 1 {
+		for _, certInfo := range certInfos {
+			return certInfo
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {

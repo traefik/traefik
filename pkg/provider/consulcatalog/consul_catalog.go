@@ -2,6 +2,7 @@ package consulcatalog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -107,12 +108,19 @@ func (c *Configuration) SetDefaults() {
 type Provider struct {
 	Configuration
 
-	name              string
-	namespace         string
-	client            *api.Client
-	defaultRuleTpl    *template.Template
-	certChan          chan *connectCert
-	watchServicesChan chan struct{}
+	name           string
+	namespace      string
+	defaultRuleTpl *template.Template
+}
+
+type catalogSnapshot struct {
+	data     []itemData
+	certInfo *connectCert
+}
+
+type catalogUpdate struct {
+	datacenter string
+	snapshot   catalogSnapshot
 }
 
 // EndpointConfig holds configurations of the endpoint.
@@ -120,6 +128,7 @@ type EndpointConfig struct {
 	Address          string                  `description:"The address of the Consul server" json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	Scheme           string                  `description:"The URI scheme for the Consul server" json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty"`
 	DataCenter       string                  `description:"Data center to use. If not provided, the default agent data center is used" json:"datacenter,omitempty" toml:"datacenter,omitempty" yaml:"datacenter,omitempty"`
+	DataCenters      []string                `description:"Data centers to use. If not provided, the default agent data center is used" json:"datacenters,omitempty" toml:"datacenters,omitempty" yaml:"datacenters,omitempty"`
 	Token            string                  `description:"Token is used to provide a per-request ACL token which overrides the agent's default token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	TLS              *types.ClientTLS        `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	HTTPAuth         *EndpointHTTPAuthConfig `description:"Auth info to use for http access" json:"httpAuth,omitempty" toml:"httpAuth,omitempty" yaml:"httpAuth,omitempty" export:"true"`
@@ -134,14 +143,27 @@ type EndpointHTTPAuthConfig struct {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	if p.Endpoint.DataCenter != "" && len(p.Endpoint.DataCenters) > 0 {
+		return errors.New("datacenter and datacenters are mutually exclusive")
+	}
+
+	seen := make(map[string]struct{}, len(p.Endpoint.DataCenters))
+	for _, datacenter := range p.Endpoint.DataCenters {
+		if datacenter == "" {
+			return errors.New("datacenters cannot contain an empty value")
+		}
+		if _, ok := seen[datacenter]; ok {
+			return fmt.Errorf("datacenters contains duplicate value %q", datacenter)
+		}
+		seen[datacenter] = struct{}{}
+	}
+
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
 		return fmt.Errorf("error while parsing default rule: %w", err)
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
-	p.certChan = make(chan *connectCert, 1)
-	p.watchServicesChan = make(chan struct{}, 1)
 
 	// In case they didn't initialize Provider with BuildProviders.
 	if p.name == "" {
@@ -153,97 +175,26 @@ func (p *Provider) Init() error {
 
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	var err error
-	p.client, err = createClient(p.namespace, p.Endpoint)
-	if err != nil {
-		return fmt.Errorf("failed to create consul client: %w", err)
+	datacenters := p.datacenters()
+	clients := make(map[string]*api.Client, len(datacenters))
+	for _, datacenter := range datacenters {
+		client, err := createClient(p.namespace, p.Endpoint, datacenter)
+		if err != nil {
+			return fmt.Errorf("failed to create consul client for datacenter %q: %w", datacenter, err)
+		}
+		clients[datacenter] = client
 	}
 
-	pool.GoCtx(func(routineCtx context.Context) {
-		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, p.name).Logger()
-		ctxLog := logger.WithContext(routineCtx)
-
-		operation := func() error {
-			ctx, cancel := context.WithCancel(ctxLog)
-
-			// When the operation terminates, we want to clean up the
-			// goroutines in watchConnectTLS and watchServices.
-			defer cancel()
-
-			errChan := make(chan error, 2)
-
-			if p.ConnectAware {
-				go func() {
-					if err := p.watchConnectTLS(ctx); err != nil {
-						errChan <- fmt.Errorf("failed to watch connect certificates: %w", err)
-					}
-				}()
-			}
-
-			var certInfo *connectCert
-
-			// If we are running in connect aware mode then we need to
-			// make sure that we obtain the certificates before starting
-			// the service watcher, otherwise a connect enabled service
-			// that gets resolved before the certificates are available
-			// will cause an error condition.
-			if p.ConnectAware && !certInfo.isReady() {
-				logger.Info().Msg("Waiting for Connect certificate before building first configuration")
-				select {
-				case <-ctx.Done():
-					return nil
-
-				case err = <-errChan:
-					return err
-
-				case certInfo = <-p.certChan:
-				}
-			}
-
-			// get configuration at the provider's startup.
-			if err = p.loadConfiguration(ctx, certInfo, configurationChan); err != nil {
-				return fmt.Errorf("failed to get consul catalog data: %w", err)
-			}
-
-			go func() {
-				// Periodic refreshes.
-				if !p.Watch {
-					repeatSend(ctx, time.Duration(p.RefreshInterval), p.watchServicesChan)
-					return
-				}
-
-				if err := p.watchServices(ctx); err != nil {
-					errChan <- fmt.Errorf("failed to watch services: %w", err)
-				}
-			}()
-
-			for {
-				select {
-				case <-ctx.Done():
-					return nil
-
-				case err = <-errChan:
-					return err
-
-				case certInfo = <-p.certChan:
-				case <-p.watchServicesChan:
-				}
-
-				if err = p.loadConfiguration(ctx, certInfo, configurationChan); err != nil {
-					return fmt.Errorf("failed to refresh consul catalog data: %w", err)
-				}
-			}
-		}
-
-		notify := func(err error, time time.Duration) {
-			logger.Error().Err(err).Msgf("Provider error, retrying in %s", time)
-		}
-
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
-		if err != nil {
-			logger.Error().Err(err).Msg("Cannot retrieve data")
-		}
+	updates := make(chan catalogUpdate)
+	pool.GoCtx(func(ctx context.Context) {
+		p.aggregateCatalogUpdates(ctx, datacenters, updates, configurationChan)
 	})
+
+	for _, datacenter := range datacenters {
+		pool.GoCtx(func(ctx context.Context) {
+			p.provideDatacenter(ctx, datacenter, clients[datacenter], updates)
+		})
+	}
 
 	return nil
 }
@@ -253,27 +204,190 @@ func (p *Provider) Namespace() string {
 	return p.namespace
 }
 
-func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert, configurationChan chan<- dynamic.Message) error {
-	data, err := p.getConsulServicesData(ctx)
-	if err != nil {
-		return err
+func (p *Provider) datacenters() []string {
+	if len(p.Endpoint.DataCenters) > 0 {
+		return p.Endpoint.DataCenters
 	}
-
-	configurationChan <- dynamic.Message{
-		ProviderName:  p.name,
-		Configuration: p.buildConfiguration(ctx, data, certInfo),
-	}
-
-	return nil
+	return []string{p.Endpoint.DataCenter}
 }
 
-func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
+func (p *Provider) aggregateCatalogUpdates(ctx context.Context, datacenters []string, updates <-chan catalogUpdate, configurationChan chan<- dynamic.Message) {
+	snapshots := make(map[string]catalogSnapshot, len(datacenters))
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case update, ok := <-updates:
+			if !ok {
+				return
+			}
+			snapshots[update.datacenter] = update.snapshot
+
+			data, certInfos := collectCatalogSnapshots(datacenters, snapshots)
+			message := dynamic.Message{
+				ProviderName:  p.name,
+				Configuration: p.buildConfiguration(ctx, data, certInfos),
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case configurationChan <- message:
+			}
+		}
+	}
+}
+
+func collectCatalogSnapshots(datacenters []string, snapshots map[string]catalogSnapshot) ([]itemData, map[string]*connectCert) {
+	var data []itemData
+	certInfos := make(map[string]*connectCert, len(snapshots))
+
+	for _, datacenter := range datacenters {
+		snapshot, ok := snapshots[datacenter]
+		if !ok {
+			continue
+		}
+
+		data = append(data, snapshot.data...)
+		if snapshot.certInfo != nil {
+			certInfos[datacenter] = snapshot.certInfo
+		}
+	}
+
+	return data, certInfos
+}
+
+func (p *Provider) provideDatacenter(ctx context.Context, datacenter string, client *api.Client, updates chan<- catalogUpdate) {
+	logger := log.Ctx(ctx).With().
+		Str(logs.ProviderName, p.name).
+		Str("datacenter", datacenterLogValue(datacenter)).
+		Logger()
+	ctxLog := logger.WithContext(ctx)
+
+	operation := func() error {
+		return p.provideDatacenterOnce(ctxLog, datacenter, client, updates)
+	}
+	notify := func(err error, delay time.Duration) {
+		logger.Error().Err(err).Msgf("Provider error, retrying in %s", delay)
+	}
+
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
+	if err != nil {
+		logger.Error().Err(err).Msg("Cannot retrieve data")
+	}
+}
+
+func (p *Provider) provideDatacenterOnce(ctx context.Context, datacenter string, client *api.Client, updates chan<- catalogUpdate) error {
+	operationCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	errChan := make(chan error, 2)
+	certChan := make(chan *connectCert, 1)
+	watchServicesChan := make(chan struct{}, 1)
+
+	if p.ConnectAware {
+		go func() {
+			if err := p.watchConnectTLS(operationCtx, client, certChan); err != nil {
+				sendError(operationCtx, errChan, fmt.Errorf("failed to watch connect certificates: %w", err))
+			}
+		}()
+	}
+
+	var certInfo *connectCert
+	if p.ConnectAware {
+		log.Ctx(ctx).Info().Msg("Waiting for Connect certificate before building first configuration")
+		select {
+		case <-operationCtx.Done():
+			return nil
+		case err := <-errChan:
+			return err
+		case certInfo = <-certChan:
+		}
+	}
+
+	data, err := p.getConsulServicesData(operationCtx, client)
+	if err != nil {
+		return fmt.Errorf("failed to get consul catalog data: %w", err)
+	}
+
+	if !sendCatalogUpdate(operationCtx, updates, datacenter, data, certInfo) {
+		return nil
+	}
+
+	go func() {
+		if !p.Watch {
+			repeatSend(operationCtx, time.Duration(p.RefreshInterval), watchServicesChan)
+			return
+		}
+
+		if err := p.watchServices(operationCtx, client, watchServicesChan); err != nil {
+			sendError(operationCtx, errChan, fmt.Errorf("failed to watch services: %w", err))
+		}
+	}()
+
+	for {
+		select {
+		case <-operationCtx.Done():
+			return nil
+
+		case err := <-errChan:
+			return err
+
+		case certInfo = <-certChan:
+			if !sendCatalogUpdate(operationCtx, updates, datacenter, data, certInfo) {
+				return nil
+			}
+
+		case <-watchServicesChan:
+			data, err = p.getConsulServicesData(operationCtx, client)
+			if err != nil {
+				return fmt.Errorf("failed to refresh consul catalog data: %w", err)
+			}
+			if !sendCatalogUpdate(operationCtx, updates, datacenter, data, certInfo) {
+				return nil
+			}
+		}
+	}
+}
+
+func sendCatalogUpdate(ctx context.Context, updates chan<- catalogUpdate, datacenter string, data []itemData, certInfo *connectCert) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case updates <- catalogUpdate{
+		datacenter: datacenter,
+		snapshot: catalogSnapshot{
+			data:     data,
+			certInfo: certInfo,
+		},
+	}:
+		return true
+	}
+}
+
+func sendError(ctx context.Context, errChan chan<- error, err error) {
+	select {
+	case <-ctx.Done():
+	case errChan <- err:
+	}
+}
+
+func datacenterLogValue(datacenter string) string {
+	if datacenter == "" {
+		return "default"
+	}
+	return datacenter
+}
+
+func (p *Provider) getConsulServicesData(ctx context.Context, client *api.Client) ([]itemData, error) {
 	// The query option "Filter" is not supported by /catalog/services.
 	// https://www.consul.io/api/catalog.html#list-services
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	opts = opts.WithContext(ctx)
 
-	serviceNames, _, err := p.client.Catalog().Services(opts)
+	serviceNames, _, err := client.Catalog().Services(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +423,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			continue
 		}
 
-		consulServices, statuses, err := p.fetchService(ctx, name, extraConf.ConsulCatalog.Connect)
+		consulServices, statuses, err := p.fetchService(ctx, client, name, extraConf.ConsulCatalog.Connect)
 		if err != nil {
 			return nil, err
 		}
@@ -357,7 +471,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	return data, nil
 }
 
-func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled bool) ([]*api.ServiceEntry, map[string]string, error) {
+func (p *Provider) fetchService(ctx context.Context, client *api.Client, name string, connectEnabled bool) ([]*api.ServiceEntry, map[string]string, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = p.Prefix + ".enable=true"
@@ -366,9 +480,9 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	opts = opts.WithContext(ctx)
 
-	healthFunc := p.client.Health().Service
+	healthFunc := client.Health().Service
 	if connectEnabled {
-		healthFunc = p.client.Health().Connect
+		healthFunc = client.Health().Connect
 	}
 
 	consulServices, _, err := healthFunc(name, tagFilter, false, opts)
@@ -390,9 +504,8 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 	return consulServices, statuses, err
 }
 
-// watchServices watches for update events of the services list and statuses,
-// and transmits them to the caller through the p.watchServicesChan.
-func (p *Provider) watchServices(ctx context.Context) error {
+// watchServices watches for update events of the services list and statuses.
+func (p *Provider) watchServices(ctx context.Context, client *api.Client, watchServicesChan chan<- struct{}) error {
 	servicesWatcher, err := watch.Parse(map[string]any{"type": "services"})
 	if err != nil {
 		return fmt.Errorf("failed to create services watcher plan: %w", err)
@@ -401,7 +514,7 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ any) {
 		select {
 		case <-ctx.Done():
-		case p.watchServicesChan <- struct{}{}:
+		case watchServicesChan <- struct{}{}:
 		default:
 			// Event chan is full, discard event.
 		}
@@ -415,7 +528,7 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ any) {
 		select {
 		case <-ctx.Done():
-		case p.watchServicesChan <- struct{}{}:
+		case watchServicesChan <- struct{}{}:
 		default:
 			// Event chan is full, discard event.
 		}
@@ -436,11 +549,11 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	}()
 
 	go func() {
-		errChan <- servicesWatcher.RunWithClientAndHclog(p.client, logger)
+		errChan <- servicesWatcher.RunWithClientAndHclog(client, logger)
 	}()
 
 	go func() {
-		errChan <- checksWatcher.RunWithClientAndHclog(p.client, logger)
+		errChan <- checksWatcher.RunWithClientAndHclog(client, logger)
 	}()
 
 	select {
@@ -452,9 +565,8 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	}
 }
 
-// watchConnectTLS watches for updates of the root certificate or the leaf
-// certificate, and transmits them to the caller via p.certChan.
-func (p *Provider) watchConnectTLS(ctx context.Context) error {
+// watchConnectTLS watches for updates of the root certificate or the leaf certificate.
+func (p *Provider) watchConnectTLS(ctx context.Context, client *api.Client, certChan chan<- *connectCert) error {
 	leafChan := make(chan keyPair)
 	leafWatcher, err := watch.Parse(map[string]any{
 		"type":    "connect_leaf",
@@ -489,11 +601,11 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 	}()
 
 	go func() {
-		errChan <- leafWatcher.RunWithClientAndHclog(p.client, hclogger)
+		errChan <- leafWatcher.RunWithClientAndHclog(client, hclogger)
 	}()
 
 	go func() {
-		errChan <- rootsWatcher.RunWithClientAndHclog(p.client, hclogger)
+		errChan <- rootsWatcher.RunWithClientAndHclog(client, hclogger)
 	}()
 
 	var (
@@ -526,7 +638,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 
 			select {
 			case <-ctx.Done():
-			case p.certChan <- newCertInfo:
+			case certChan <- newCertInfo:
 			}
 		}
 	}
@@ -607,11 +719,11 @@ func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.Blo
 	}
 }
 
-func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
+func createClient(namespace string, endpoint *EndpointConfig, datacenter string) (*api.Client, error) {
 	config := api.Config{
 		Address:    endpoint.Address,
 		Scheme:     endpoint.Scheme,
-		Datacenter: endpoint.DataCenter,
+		Datacenter: datacenter,
 		WaitTime:   time.Duration(endpoint.EndpointWaitTime),
 		Token:      endpoint.Token,
 		Namespace:  namespace,
