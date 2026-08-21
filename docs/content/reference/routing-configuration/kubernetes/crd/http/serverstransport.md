@@ -79,5 +79,14 @@ spec:
 | <a id="opt-serverstransport-minVersion" href="#opt-serverstransport-minVersion" title="#opt-serverstransport-minVersion">`serverstransport.`<br />`minVersion`</a> | Defines the minimum TLS version to use when contacting backend servers. | ""      | No |
 | <a id="opt-serverstransport-maxVersion" href="#opt-serverstransport-maxVersion" title="#opt-serverstransport-maxVersion">`serverstransport.`<br />`maxVersion`</a> | Defines the maximum TLS version to use when contacting backend servers. | ""      | No |
 
+!!! warning "readTimeout & writeTimeout"
+    These timeouts are enforced per network connection, not per request.
+
+    On an HTTP/2 (including gRPC and h2c) connection, an expired `readTimeout` closes the whole connection and every request it carries.
+    When using `readTimeout` with HTTP/2 backends, consider also setting `readIdleTimeout` (e.g. to half the `readTimeout`) so that the HTTP/2 ping health check keeps healthy idle connections alive.
+
+    With the standard proxy, the read deadline also applies while the connection is idle in the connection pool or upgraded (e.g. WebSocket): an idle or upgraded connection with no traffic for `readTimeout` is closed.
+    With [FastProxy](../../../../install-configuration/experimental/fastproxy.md), the timeouts only apply while a request is being written or a response is being read, and do not apply to upgraded connections.
+
 !!! note "CA Secret"
     The CA secret must contain a base64 encoded certificate under either a tls.ca or a ca.crt key.

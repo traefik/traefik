@@ -914,7 +914,7 @@ func TestConnectionTimeouts(t *testing.T) {
 		},
 		{
 			desc:             "read succeeds with sufficient timeout",
-			readTimeout:      ptypes.Duration(500 * time.Millisecond),
+			readTimeout:      ptypes.Duration(3 * time.Second),
 			serverWriteDelay: 100 * time.Millisecond,
 		},
 		{
@@ -928,7 +928,7 @@ func TestConnectionTimeouts(t *testing.T) {
 		},
 		{
 			desc:         "write succeeds within timeout",
-			writeTimeout: ptypes.Duration(500 * time.Millisecond),
+			writeTimeout: ptypes.Duration(3 * time.Second),
 			serverReads:  true,
 		},
 		{
@@ -1074,4 +1074,38 @@ func TestConnectionTimeoutsAreDefined(t *testing.T) {
 			assert.Equal(t, time.Duration(test.writeTimeout), wrapped.writeTimeout)
 		})
 	}
+}
+
+func TestReadTimeout_http2QuietConnection(t *testing.T) {
+	backend := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Stay quiet for longer than the read timeout before responding,
+		// as a server-streaming gRPC backend would.
+		time.Sleep(3 * time.Second)
+		rw.WriteHeader(http.StatusOK)
+	}))
+	backend.EnableHTTP2 = true
+	backend.StartTLS()
+	t.Cleanup(backend.Close)
+
+	transportManager := NewTransportManager(nil)
+
+	rt, err := transportManager.createRoundTripper(&dynamic.ServersTransport{
+		InsecureSkipVerify: true,
+		ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+			ReadTimeout:     ptypes.Duration(time.Second),
+			ReadIdleTimeout: ptypes.Duration(500 * time.Millisecond),
+		},
+	}, &tls.Config{InsecureSkipVerify: true})
+	require.NoError(t, err)
+
+	client := http.Client{Transport: rt}
+
+	// The ping health check keeps frames flowing on the quiet HTTP/2 connection,
+	// which must survive the read deadline.
+	res, err := client.Get(backend.URL)
+	require.NoError(t, err)
+	defer res.Body.Close()
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, 2, res.ProtoMajor)
 }

@@ -253,48 +253,38 @@ type connWithTimeouts struct {
 
 func (c connWithTimeouts) Read(b []byte) (n int, err error) {
 	if c.readTimeout > 0 {
-		// Reset deadline before after each successive read.
 		_ = c.Conn.SetReadDeadline(time.Now().Add(c.readTimeout))
 		defer c.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
 	}
 
-	n, err = c.Conn.Read(b)
-	if err != nil {
-		return n, err
-	}
-
-	return n, nil
+	return c.Conn.Read(b)
 }
 
 func (c connWithTimeouts) Write(b []byte) (n int, err error) {
 	if c.writeTimeout > 0 {
-		// Reset deadline before after each successive write.
 		_ = c.Conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
 		defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
 	}
 
-	n, err = c.Conn.Write(b)
-	if err != nil {
-		return n, err
-	}
-
-	return n, nil
+	return c.Conn.Write(b)
 }
 
 func customDialContext(d *net.Dialer, cfg *dynamic.ForwardingTimeouts) func(ctx context.Context, network string, address string) (net.Conn, error) {
 	return func(ctx context.Context, network, address string) (net.Conn, error) {
 		conn, err := d.DialContext(ctx, network, address)
-
-		if cfg.ReadTimeout <= 0 && cfg.WriteTimeout <= 0 {
-			return conn, err
+		if err != nil {
+			return nil, err
 		}
 
-		custom := &connWithTimeouts{
+		if cfg.ReadTimeout <= 0 && cfg.WriteTimeout <= 0 {
+			return conn, nil
+		}
+
+		return &connWithTimeouts{
 			Conn:         conn,
 			readTimeout:  time.Duration(cfg.ReadTimeout),
 			writeTimeout: time.Duration(cfg.WriteTimeout),
-		}
-		return custom, err
+		}, nil
 	}
 }
 

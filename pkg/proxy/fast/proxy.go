@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -292,11 +293,25 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		}
 	}
 
+	// The read timeout clock starts once the request is fully written:
+	// this deadline interrupts the connection pending read if the backend
+	// does not send any response byte in time.
+	if co.readTimeout > 0 {
+		_ = co.Conn.SetReadDeadline(time.Now().Add(co.readTimeout))
+	}
+
 	// Sending the responseWriter unlocks the connection readLoop, to handle the response.
-	co.RWCh <- rwWithUpgrade{
+	select {
+	case co.RWCh <- rwWithUpgrade{
 		ReqMethod: req.Method,
 		RW:        rw,
 		Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
+	}:
+
+	// The readLoop can terminate without receiving the responseWriter:
+	// waiting on the RWCh send alone would hang forever.
+	case <-co.readLoopDone:
+		return fmt.Errorf("awaiting response: %w", co.readLoopErr)
 	}
 
 	if err := <-co.ErrCh; err != nil {

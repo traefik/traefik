@@ -566,7 +566,9 @@ func TestXForwardedFor(t *testing.T) {
 }
 
 type transportManagerMock struct {
-	tlsConfig *tls.Config
+	tlsConfig           *tls.Config
+	forwardingTimeouts  *dynamic.ForwardingTimeouts
+	maxIdleConnsPerHost int
 }
 
 func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
@@ -574,5 +576,8 @@ func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
 }
 
 func (r *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
-	return &dynamic.ServersTransport{}, nil
+	return &dynamic.ServersTransport{
+		MaxIdleConnsPerHost: r.maxIdleConnsPerHost,
+		ForwardingTimeouts:  r.forwardingTimeouts,
+	}, nil
 }

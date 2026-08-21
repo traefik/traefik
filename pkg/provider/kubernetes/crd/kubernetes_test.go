@@ -7319,6 +7319,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 								IdleConnTimeout:       ptypes.Duration(42 * time.Millisecond),
 								ReadIdleTimeout:       ptypes.Duration(42 * time.Second),
 								PingTimeout:           ptypes.Duration(42 * time.Second),
+								ReadTimeout:           ptypes.Duration(42 * time.Second),
+								WriteTimeout:          ptypes.Duration(42 * time.Second),
 							},
 							PeerCertURI: "foo://bar",
 							PeerCertSANs: []tls.SAN{
