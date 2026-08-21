@@ -157,7 +157,7 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 
 // makeItemKey returns an identifier that is unique for a given (node, name, id) triple.
 func makeItemKey(node, name, id string) string {
-	return fmt.Sprintf("%d-%s-%d-%s-%d-%s", len(node), node, len(name), name, len(id), id)
+	return fmt.Sprintf("%s-%s-%s-%d-%d-%d", node, name, id, len(node), len(name), len(id))
 }
 
 // TODO: check whether it is mandatory to filter again.

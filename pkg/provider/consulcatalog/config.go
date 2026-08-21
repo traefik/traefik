@@ -112,7 +112,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 
 // makeItemKey returns an identifier that is unique for a given (node, name, id) triple.
 func makeItemKey(node, name, id string) string {
-	return fmt.Sprintf("%d-%s-%d-%s-%d-%s", len(node), node, len(name), name, len(id), id)
+	return fmt.Sprintf("%s-%s-%s-%d-%d-%d", node, name, id, len(node), len(name), len(id))
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
