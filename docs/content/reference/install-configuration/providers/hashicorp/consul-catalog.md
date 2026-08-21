@@ -71,6 +71,11 @@ Each datacenter is refreshed independently.
 After a datacenter has returned a successful response, Traefik keeps its last successful catalog snapshot when that datacenter becomes unavailable.
 The snapshot is replaced after the datacenter recovers and returns a newer successful response.
 
+!!! warning "Stale Backends During Datacenter Outages"
+
+    When Traefik cannot refresh a datacenter, its backend addresses remain in the load-balancing rotation and requests can fail if those addresses are no longer reachable.
+    Configure [active service health checks](../../../../reference/routing-configuration/http/load-balancing/service.md#health-check) and, where appropriate, the [Retry middleware](../../../../reference/routing-configuration/http/middlewares/retry.md) to reduce the effect of unreachable backends.
+
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:
