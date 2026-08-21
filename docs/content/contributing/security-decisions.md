@@ -76,9 +76,6 @@ that does not repeat a strip is **not automatically** an incomplete fix.
 
 - A path that **reintroduces or reconstructs a trusted value after entrypoint sanitisation**, so the
   entrypoint's decision no longer holds.
-- **Header name handling** that lets an untrusted client reach a header the entrypoint believes it
-  sanitised: underscore variants, alias forms, non-canonical casing, or any normalization difference
-  between Traefik and the backend.
 - A middleware that makes a **pre-authentication decision** on a header the operator declared
   untrusted.
 
@@ -86,16 +83,47 @@ that does not repeat a strip is **not automatically** an incomplete fix.
 primitive, we have published it as one.
 
 **Decided in this class.**
-[GHSA-x677-9fxg-v5c5](https://github.com/traefik/traefik/security/advisories/GHSA-x677-9fxg-v5c5) (CVE-2026-54763, an accepted incomplete fix, the
-`headerField` underscore variant across two earlier cohorts),
-[GHSA-5m6w-wvh7-57vm](https://github.com/traefik/traefik/security/advisories/GHSA-5m6w-wvh7-57vm) (CVE-2026-39858, Forwarded alias spoofing),
-[GHSA-qr99-7898-vr7c](https://github.com/traefik/traefik/security/advisories/GHSA-qr99-7898-vr7c) (CVE-2026-33433, non-canonical `headerField`),
 [GHSA-6384-m2mw-rf54](https://github.com/traefik/traefik/security/advisories/GHSA-6384-m2mw-rf54) (CVE-2026-35051, `trustForwardHeader=false` still honouring a spoofed prefix),
 [GHSA-3q9r-p662-5j8m](https://github.com/traefik/traefik/security/advisories/GHSA-3q9r-p662-5j8m) (CVE-2026-54764, ForwardAuth trusting a spoofed port),
-[GHSA-92mv-8f8w-wq52](https://github.com/traefik/traefik/security/advisories/GHSA-92mv-8f8w-wq52) (CVE-2026-29054, case-sensitive Connection header) and
+[GHSA-92mv-8f8w-wq52](https://github.com/traefik/traefik/security/advisories/GHSA-92mv-8f8w-wq52) (CVE-2026-29054, case-sensitive Connection header),
 [GHSA-62c8-mh53-4cqv](https://github.com/traefik/traefik/security/advisories/GHSA-62c8-mh53-4cqv) (CVE-2024-45410, Connection header abused to strip
 `X-Forwarded-*`), [GHSA-h924-8g65-j9wg](https://github.com/traefik/traefik/security/advisories/GHSA-h924-8g65-j9wg) (CVE-2024-52003, open redirect via prefix) and
 [GHSA-6qq8-5wq3-86rp](https://github.com/traefik/traefik/security/advisories/GHSA-6qq8-5wq3-86rp) (CVE-2020-15129, prefix header not validated).
+
+## Headers Traefik Sets for the Backend
+
+**What is usually reported.** A client pre-sets, or sets an alternative spelling of, a header that Traefik
+writes for the backend's benefit: the authenticated user an auth middleware puts in its configured
+`headerField`, client certificate information from `PassTLSClientCert`, `X-Forwarded-Prefix` from a prefix
+middleware, `X-Replaced-Path`, or a custom request header. The backend trusts the value because Traefik
+set it, so forging it is the attack.
+
+**Our position.** The same architecture as forwarded headers, for the same reason: **request header
+sanitisation is an entrypoint concern, not a per-middleware one.** A middleware removes the canonical
+spelling of the header it is about to set. Alternative spellings that a backend folds onto that same name
+are handled once, before routing, through the entrypoint's `underscoreHeadersStrategy`.
+
+The underlying mismatch is worth stating, because it is what makes the class non-obvious: Go canonicalises
+header names on `-` only, while backends that derive variable names from header names (CGI, WSGI, PHP,
+nginx, Tomcat) fold other characters to `_`. Two spellings that Traefik sees as different headers can
+therefore arrive at the backend as one. That is a property of the whole request rather than of any one
+middleware, which is precisely why it is resolved at the entrypoint.
+
+**Where the line is.** A report showing that **one middleware, taken in isolation, does not sanitise a
+header it sets** is declined. The entrypoint owns that sanitisation, and re-deciding it inside each
+middleware is the design we are avoiding, not an omission. In scope:
+
+- a spelling that survives the entrypoint sanitisation and still reaches the backend as the trusted name;
+- a middleware that reconstructs or reintroduces the value **after** the entrypoint has sanitised it.
+
+**Decided in this class.**
+[GHSA-qr99-7898-vr7c](https://github.com/traefik/traefik/security/advisories/GHSA-qr99-7898-vr7c)
+(CVE-2026-33433, identity spoofing through a non-canonical `headerField`),
+[GHSA-x677-9fxg-v5c5](https://github.com/traefik/traefik/security/advisories/GHSA-x677-9fxg-v5c5)
+(CVE-2026-54763, an accepted incomplete fix: an aliased spelling survived the strip added for the case
+above) and
+[GHSA-5m6w-wvh7-57vm](https://github.com/traefik/traefik/security/advisories/GHSA-5m6w-wvh7-57vm)
+(CVE-2026-39858, alias spoofing ahead of a pre-authentication decision).
 
 ## TLS and mTLS Enforcement
 
