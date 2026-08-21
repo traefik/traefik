@@ -23,6 +23,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 
 	for _, item := range items {
 		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
+		itemKey := makeItemKey(item.Node, item.Name, item.ID)
 
 		logger := log.Ctx(ctx).With().Str(logs.ServiceName, svcName).Logger()
 		ctxSvc := logger.WithContext(ctx)
@@ -73,7 +74,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
 			len(confFromLabel.HTTP.Middlewares) == 0 &&
 			len(confFromLabel.HTTP.Services) == 0 {
-			configurations[svcName] = confFromLabel
+			configurations[itemKey] = confFromLabel
 			continue
 		}
 
@@ -103,10 +104,15 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 
 		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, getName(item), p.defaultRuleTpl, model)
 
-		configurations[svcName] = confFromLabel
+		configurations[itemKey] = confFromLabel
 	}
 
 	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
+}
+
+// makeItemKey returns an identifier that is unique for a given (node, name, id) triple.
+func makeItemKey(node, name, id string) string {
+	return fmt.Sprintf("%d-%s-%d-%s-%d-%s", len(node), node, len(name), name, len(id), id)
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
