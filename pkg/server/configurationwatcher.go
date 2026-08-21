@@ -141,14 +141,15 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
 
-				transformedConfigurations := newConfigurations
+				// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
+				transformedConfigurations := newConfigurations.DeepCopy()
 				for _, transform := range c.configurationTransformers {
+					// Each transformer gets its own copy because a transformer could keep a reference to the one it received.
 					transformedConfigurations = transform(logger.WithContext(ctx), transformedConfigurations.DeepCopy())
 				}
 
 				output = c.newConfigs
-				// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
-				pending = transformedConfigurations.DeepCopy()
+				pending = transformedConfigurations
 
 			case output <- pending:
 				output = nil
