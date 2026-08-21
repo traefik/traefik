@@ -92,10 +92,19 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 				}
 			}
 
-			parentStatusConditions := []metav1.Condition{acceptedCondition}
-			if resolvedRefCondition != nil {
-				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			if resolvedRefCondition == nil {
+				// The ResolvedRefs condition must be reported for every parentRef, even
+				// when it resolves to no listener; references were not found invalid.
+				resolvedRefCondition = &metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteConditionResolvedRefs),
+				}
 			}
+
+			parentStatusConditions := []metav1.Condition{acceptedCondition, *resolvedRefCondition}
 
 			statusReport.RecordHTTPRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gatev1.RouteParentStatus{
 				ParentRef:      match.parentRef,
@@ -512,13 +521,7 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 			}
 
 			policyAncestorStatus := gatev1.PolicyAncestorStatus{
-				AncestorRef: gatev1.ParentReference{
-					Group:       new(gatev1.Group(groupGateway)),
-					Kind:        new(gatev1.Kind(kindGateway)),
-					Namespace:   new(gatev1.Namespace(namespace)),
-					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: new(gatev1.SectionName(listener.Name)),
-				},
+				AncestorRef: listener.policyAncestorRef(gatewayName, namespace),
 				ControllerName: controllerName,
 			}
 

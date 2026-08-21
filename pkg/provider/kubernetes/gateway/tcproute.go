@@ -95,10 +95,19 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 				}
 			}
 
-			parentStatusConditions := []metav1.Condition{acceptedCondition}
-			if resolvedRefCondition != nil {
-				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			if resolvedRefCondition == nil {
+				// The ResolvedRefs condition must be reported for every parentRef, even
+				// when it resolves to no listener; references were not found invalid.
+				resolvedRefCondition = &metav1.Condition{
+					Type:               string(gatev1.RouteConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.RouteConditionResolvedRefs),
+				}
 			}
+
+			parentStatusConditions := []metav1.Condition{acceptedCondition, *resolvedRefCondition}
 
 			statusReport.RecordTCPRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gatev1.RouteParentStatus{
 				ParentRef:      match.parentRef,

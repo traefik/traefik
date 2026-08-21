@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ktypes "k8s.io/apimachinery/pkg/types"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -8779,7 +8780,6 @@ func Test_matchingGatewayListener(t *testing.T) {
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
-				gatewayNamespace: "default",
 				listeners:        []gatewayListener{{}},
 			}},
 		},
@@ -8803,7 +8803,6 @@ func Test_matchingGatewayListener(t *testing.T) {
 					Kind:  new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
-				gatewayNamespace: "default",
 				listeners:        []gatewayListener{{}},
 			}},
 		},
@@ -8839,7 +8838,6 @@ func Test_matchingGatewayListener(t *testing.T) {
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
-				gatewayNamespace: "default",
 				listeners:        []gatewayListener{{}},
 			}},
 		},
@@ -8867,7 +8865,6 @@ func Test_matchingGatewayListener(t *testing.T) {
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway",
-				gatewayNamespace: "default",
 				listeners: []gatewayListener{
 					{Name: "web"},
 					{Name: "websecure"},
@@ -8904,7 +8901,6 @@ func Test_matchingGatewayListener(t *testing.T) {
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
 				gatewayName:      "gateway-a",
-				gatewayNamespace: "default",
 				listeners:        []gatewayListener{{Name: "web"}},
 			}},
 		},
@@ -8934,7 +8930,6 @@ func Test_matchingGatewayListener(t *testing.T) {
 					Port:      new(gatev1.PortNumber(8080)),
 				},
 				gatewayName:      "gateway",
-				gatewayNamespace: "default",
 				listeners:        []gatewayListener{{Name: "web", Port: 80}},
 			}},
 		},
@@ -9081,6 +9076,7 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 			SourceName:      "my-listenerset",
 			SourceNamespace: "default",
 		}},
+		listenerSets: []ktypes.NamespacedName{{Namespace: "default", Name: "my-listenerset"}},
 	}}
 
 	otherController := gatev1.RouteParentStatus{
@@ -10218,7 +10214,7 @@ func Test_matchingGatewayListeners_ListenerSet(t *testing.T) {
 				{
 					GWName:      "my-gw",
 					GWNamespace: "default",
-					Source:      "", // empty = Gateway for backward compat
+					Source:      "", // Empty means Gateway, for backward compatibility.
 				},
 			},
 			parentRefs: []gatev1.ParentReference{{
@@ -10241,7 +10237,7 @@ func Test_matchingGatewayListeners_ListenerSet(t *testing.T) {
 			routeNamespace: "default",
 			parentRefs: []gatev1.ParentReference{{
 				Name: "my-gw",
-				// Kind defaults to Gateway when nil
+				// Kind defaults to Gateway when nil.
 			}},
 			wantLen: 1,
 		},
@@ -10264,6 +10260,87 @@ func Test_matchingGatewayListeners_ListenerSet(t *testing.T) {
 				count += len(match.listeners)
 			}
 			assert.Equal(t, test.wantLen, count)
+		})
+	}
+}
+
+func Test_matchingGatewayListenersForParentRef_emptyListenerSet(t *testing.T) {
+	gateways := []gatewayWithListeners{{
+		Name:         "my-gw",
+		Namespace:    "default",
+		listenerSets: []ktypes.NamespacedName{{Namespace: "default", Name: "my-ls"}},
+	}}
+
+	parentRefs := []gatev1.ParentReference{
+		{
+			Name: "my-ls",
+			Kind: new(gatev1.Kind(kindListenerSet)),
+		},
+		{
+			Name: "unknown-ls",
+			Kind: new(gatev1.Kind(kindListenerSet)),
+		},
+	}
+
+	matches := matchingGatewayListenersForParentRef(gateways, "default", parentRefs)
+
+	// The managed ListenerSet is reported even though it exposes no listener,
+	// while the unknown one is ignored.
+	require.Len(t, matches, 1)
+	assert.Equal(t, "my-gw", matches[0].gatewayName)
+	assert.Empty(t, matches[0].listeners)
+}
+
+func Test_isGatewayAccepted(t *testing.T) {
+	acceptedListener := gatewayListener{Status: &gatev1.ListenerStatus{}}
+	invalidListener := gatewayListener{Status: &gatev1.ListenerStatus{
+		Conditions: []metav1.Condition{{Type: string(gatev1.ListenerConditionAccepted), Status: metav1.ConditionFalse}},
+	}}
+
+	testCases := []struct {
+		desc      string
+		gateway   *gatev1.Gateway
+		listeners []gatewayListener
+		want      bool
+	}{
+		{
+			desc:    "no listener",
+			gateway: &gatev1.Gateway{},
+			want:    true,
+		},
+		{
+			desc:      "valid listener",
+			gateway:   &gatev1.Gateway{},
+			listeners: []gatewayListener{acceptedListener},
+			want:      true,
+		},
+		{
+			desc:      "one valid listener among invalid ones",
+			gateway:   &gatev1.Gateway{},
+			listeners: []gatewayListener{acceptedListener, invalidListener},
+			want:      true,
+		},
+		{
+			desc:      "no valid listener",
+			gateway:   &gatev1.Gateway{},
+			listeners: []gatewayListener{invalidListener},
+			want:      false,
+		},
+		{
+			desc: "infrastructure parametersRef",
+			gateway: &gatev1.Gateway{Spec: gatev1.GatewaySpec{
+				Infrastructure: &gatev1.GatewayInfrastructure{ParametersRef: &gatev1.LocalParametersReference{}},
+			}},
+			listeners: []gatewayListener{acceptedListener},
+			want:      false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.want, isGatewayAccepted(test.gateway, test.listeners))
 		})
 	}
 }
@@ -10621,7 +10698,7 @@ func Test_isListenerSetAllowed(t *testing.T) {
 
 			p := Provider{client: client}
 
-			assert.Equal(t, test.expected, p.isListenerSetAllowed(test.gw, test.ls))
+			assert.Equal(t, test.expected, p.isListenerSetAllowed(t.Context(), test.gw, test.ls))
 		})
 	}
 }
@@ -10631,7 +10708,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		desc                   string
 		info                   *listenerSetInfo
 		allListeners           []gatewayListener
-		gwStatus               gatev1.GatewayStatus
+		parentAccepted         bool
+		wantAccepted           bool
 		wantAcceptedStatus     metav1.ConditionStatus
 		wantAcceptedReason     string
 		wantProgrammedStatus   metav1.ConditionStatus
@@ -10648,7 +10726,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 						Generation: 1,
 					},
 				},
-				accepted: true,
+				allowed: true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -10659,15 +10737,12 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					Status: &gatev1.ListenerStatus{
 						Name:           "http",
 						SupportedKinds: []gatev1.RouteGroupKind{{Kind: "HTTPRoute", Group: new(gatev1.Group(gatev1.GroupName))}},
-						Conditions:     []metav1.Condition{}, // no errors
+						Conditions:     []metav1.Condition{}, // No errors.
 					},
 				},
 			},
-			gwStatus: gatev1.GatewayStatus{
-				Conditions: []metav1.Condition{
-					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
-				},
-			},
+			parentAccepted:         true,
+			wantAccepted:           true,
 			wantAcceptedStatus:     metav1.ConditionTrue,
 			wantAcceptedReason:     string(gatev1.ListenerSetReasonAccepted),
 			wantProgrammedStatus:   metav1.ConditionTrue,
@@ -10684,7 +10759,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 						Generation: 1,
 					},
 				},
-				accepted: true,
+				allowed: true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -10698,15 +10773,11 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					},
 				},
 			},
-			gwStatus: gatev1.GatewayStatus{
-				Conditions: []metav1.Condition{
-					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionFalse},
-				},
-			},
+			parentAccepted:         false,
 			wantAcceptedStatus:     metav1.ConditionFalse,
 			wantAcceptedReason:     string(gatev1.ListenerSetReasonParentNotAccepted),
 			wantProgrammedStatus:   metav1.ConditionFalse,
-			wantProgrammedReason:   string(gatev1.ListenerSetReasonInvalid),
+			wantProgrammedReason:   "ParentNotProgrammed",
 			wantListenerEntryCount: 1,
 		},
 		{
@@ -10719,7 +10790,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 						Generation: 1,
 					},
 				},
-				accepted: true,
+				allowed: true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -10739,11 +10810,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					},
 				},
 			},
-			gwStatus: gatev1.GatewayStatus{
-				Conditions: []metav1.Condition{
-					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
-				},
-			},
+			parentAccepted:         true,
 			wantAcceptedStatus:     metav1.ConditionFalse,
 			wantAcceptedReason:     string(gatev1.ListenerSetReasonListenersNotValid),
 			wantProgrammedStatus:   metav1.ConditionFalse,
@@ -10760,7 +10827,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 						Generation: 1,
 					},
 				},
-				accepted: true,
+				allowed: true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -10790,11 +10857,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					},
 				},
 			},
-			gwStatus: gatev1.GatewayStatus{
-				Conditions: []metav1.Condition{
-					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
-				},
-			},
+			parentAccepted:         true,
+			wantAccepted:           true,
 			wantAcceptedStatus:     metav1.ConditionTrue,
 			wantAcceptedReason:     string(gatev1.ListenerSetReasonListenersNotValid),
 			wantProgrammedStatus:   metav1.ConditionTrue,
@@ -10811,7 +10875,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 						Generation: 1,
 					},
 				},
-				accepted: true,
+				allowed: true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -10835,16 +10899,13 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					},
 				},
 			},
-			gwStatus: gatev1.GatewayStatus{
-				Conditions: []metav1.Condition{
-					{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue},
-				},
-			},
+			parentAccepted:         true,
+			wantAccepted:           true,
 			wantAcceptedStatus:     metav1.ConditionTrue,
 			wantAcceptedReason:     string(gatev1.ListenerSetReasonAccepted),
 			wantProgrammedStatus:   metav1.ConditionTrue,
 			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
-			wantListenerEntryCount: 0, // no listeners belong to this LS
+			wantListenerEntryCount: 0, // No listeners belong to this ListenerSet.
 		},
 		{
 			desc: "ListenerSet not allowed by Gateway",
@@ -10856,10 +10917,9 @@ func Test_makeListenerSetStatus(t *testing.T) {
 						Generation: 2,
 					},
 				},
-				accepted: false,
+				allowed: false,
 			},
 			allListeners:           nil,
-			gwStatus:               gatev1.GatewayStatus{},
 			wantAcceptedStatus:     metav1.ConditionFalse,
 			wantAcceptedReason:     string(gatev1.ListenerSetReasonNotAllowed),
 			wantProgrammedStatus:   metav1.ConditionFalse,
@@ -10872,8 +10932,9 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			status := makeListenerSetStatus(test.info, test.allListeners, test.gwStatus)
+			status, accepted := makeListenerSetStatus(test.info, test.allListeners, test.parentAccepted)
 
+			assert.Equal(t, test.wantAccepted, accepted)
 			assert.Len(t, status.Listeners, test.wantListenerEntryCount)
 
 			var acceptedCond, programmedCond *metav1.Condition
@@ -10886,11 +10947,11 @@ func Test_makeListenerSetStatus(t *testing.T) {
 				}
 			}
 
-			require.NotNil(t, acceptedCond, "Accepted condition should be set")
+			require.NotNil(t, acceptedCond)
 			assert.Equal(t, test.wantAcceptedStatus, acceptedCond.Status)
 			assert.Equal(t, test.wantAcceptedReason, acceptedCond.Reason)
 
-			require.NotNil(t, programmedCond, "Programmed condition should be set")
+			require.NotNil(t, programmedCond)
 			assert.Equal(t, test.wantProgrammedStatus, programmedCond.Status)
 			assert.Equal(t, test.wantProgrammedReason, programmedCond.Reason)
 		})

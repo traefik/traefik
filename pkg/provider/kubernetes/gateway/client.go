@@ -811,19 +811,17 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
 		// Also, keep statuses from gateways managed by other Traefik instances.
 		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
-		// A ListenerSet parentRef is managed when one of the managed gateways carries a listener sourced from that ListenerSet.
+		// A ListenerSet parentRef is managed when the ListenerSet references one of the managed gateways,
+		// even when none of its listeners is currently loaded, so that a stale status is always refreshed.
 		// SectionName or Port is not used.
 		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
 
 		var isManaged bool
 		switch string(ptr.Deref(currentParent.ParentRef.Kind, kindGateway)) {
 		case kindListenerSet:
+			lsNSN := ktypes.NamespacedName{Namespace: parentNamespace, Name: string(currentParent.ParentRef.Name)}
 			isManaged = slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
-				return slices.ContainsFunc(gw.listeners, func(l gatewayListener) bool {
-					return l.Source == kindListenerSet &&
-						l.SourceNamespace == parentNamespace &&
-						l.SourceName == string(currentParent.ParentRef.Name)
-				})
+				return slices.Contains(gw.listenerSets, lsNSN)
 			})
 		default:
 			isManaged = slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
