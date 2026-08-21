@@ -161,7 +161,7 @@ func TestUpgradedConnNotReadByReadLoop(t *testing.T) {
 	var detector atomic.Pointer[concurrentReadDetector]
 
 	u := testhelpers.MustParseURL(backend.URL)
-	pool := newConnPool(200, 0, 0, func() (net.Conn, error) {
+	pool := newConnPool(200, 0, 0, 0, 0, func() (net.Conn, error) {
 		c, err := net.Dial("tcp", u.Host)
 		require.NoError(t, err)
 
