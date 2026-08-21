@@ -10,7 +10,9 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync"
 	"syscall"
 	"text/template"
 
@@ -36,6 +38,13 @@ type Provider struct {
 	Watch                     bool   `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 	Filename                  string `description:"Load dynamic configuration from a file." json:"filename,omitempty" toml:"filename,omitempty" yaml:"filename,omitempty" export:"true"`
 	DebugLogGeneratedTemplate bool   `description:"Enable debug logging of generated configuration template." json:"debugLogGeneratedTemplate,omitempty" toml:"debugLogGeneratedTemplate,omitempty" yaml:"debugLogGeneratedTemplate,omitempty" export:"true"`
+
+	watcherMu sync.RWMutex
+	// watcher is nil when Watch is false.
+	watcher *fsnotify.Watcher
+	// externalDirs is the set of directories currently watched because they contain an
+	// externally referenced file (certificate, key, or CA bundle).
+	externalDirs map[string]struct{}
 }
 
 // SetDefaults sets the default values.
@@ -179,6 +188,10 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 		}
 	}
 
+	p.watcherMu.Lock()
+	p.watcher = watcher
+	p.watcherMu.Unlock()
+
 	// Process events
 	pool.GoCtx(func(ctx context.Context) {
 		logger := log.With().Str(logs.ProviderName, providerName).Logger()
@@ -188,20 +201,12 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 			case <-ctx.Done():
 				return
 			case evt := <-watcher.Events:
-				if p.Directory == "" {
-					_, evtFileName := filepath.Split(evt.Name)
-					_, confFileName := filepath.Split(p.Filename)
-					if evtFileName == confFileName {
-						err := callback(configurationChan)
-						if err != nil {
-							logger.Error().Err(err).Msg("Error occurred during watcher callback")
-						}
-					}
-				} else {
-					err := callback(configurationChan)
-					if err != nil {
-						logger.Error().Err(err).Msg("Error occurred during watcher callback")
-					}
+				if !p.isRelevantEvent(evt.Name) {
+					continue
+				}
+
+				if err := callback(configurationChan); err != nil {
+					logger.Error().Err(err).Msg("Error occurred during watcher callback")
 				}
 			case err := <-watcher.Errors:
 				logger.Error().Err(err).Msg("Watcher event error")
@@ -211,20 +216,110 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 	return nil
 }
 
+// isBaseDir reports whether dir is the directory permanently watched as part of the
+// provider's own Directory/Filename item, i.e. one that syncExternalFileWatches must
+// never Add or Remove: an externally referenced file happening to live alongside the
+// dynamic config file(s) must not cause that permanent watch to be torn down once the
+// file stops being referenced.
+func (p *Provider) isBaseDir(dir string) bool {
+	if p.Directory != "" && dir == p.Directory {
+		return true
+	}
+	return p.Filename != "" && dir == filepath.Dir(p.Filename)
+}
+
+// isRelevantEvent reports whether an fsnotify event for filename should trigger a
+// configuration reload: any event under the watched Directory, a change to the watched
+// Filename itself, or a change under a directory currently tracked because it contains an
+// externally referenced file (see externalDirs).
+func (p *Provider) isRelevantEvent(filename string) bool {
+	if p.Directory != "" && (filename == p.Directory || strings.HasPrefix(filename, p.Directory+string(filepath.Separator))) {
+		return true
+	}
+
+	if p.Directory == "" {
+		_, evtFileName := filepath.Split(filename)
+		_, confFileName := filepath.Split(p.Filename)
+		if evtFileName == confFileName {
+			return true
+		}
+	}
+
+	p.watcherMu.RLock()
+	defer p.watcherMu.RUnlock()
+
+	_, ok := p.externalDirs[filepath.Dir(filename)]
+	return ok
+}
+
+// syncExternalFileWatches updates the fsnotify watcher so that it watches the parent
+// directories of exactly the external files (certificates, keys, CA bundles) currently
+// referenced by the dynamic configuration.
+func (p *Provider) syncExternalFileWatches(refFiles []string) {
+	p.watcherMu.Lock()
+	defer p.watcherMu.Unlock()
+
+	if p.watcher == nil {
+		// Watch is disabled.
+		return
+	}
+
+	wantedDirs := make(map[string]struct{}, len(refFiles))
+	for _, f := range refFiles {
+		dir := filepath.Dir(f)
+		if p.isBaseDir(dir) {
+			// Already permanently watched; nothing to add or, later, to remove.
+			continue
+		}
+		wantedDirs[dir] = struct{}{}
+	}
+
+	for dir := range wantedDirs {
+		if _, ok := p.externalDirs[dir]; ok {
+			continue
+		}
+
+		if err := p.watcher.Add(dir); err != nil {
+			log.Error().Err(err).Str("directory", dir).Msg("Error adding watcher for externally referenced file")
+			continue
+		}
+
+		log.Debug().Msgf("add watcher on: %s", dir)
+	}
+
+	for dir := range p.externalDirs {
+		if _, ok := wantedDirs[dir]; ok {
+			continue
+		}
+
+		if err := p.watcher.Remove(dir); err != nil {
+			log.Debug().Err(err).Str("directory", dir).Msg("Error removing watcher for externally referenced file")
+			continue
+		}
+
+		log.Debug().Msgf("remove watcher on: %s", dir)
+	}
+
+	p.externalDirs = wantedDirs
+}
+
 // applyConfiguration builds the configuration and sends it to the given configurationChan.
 func (p *Provider) applyConfiguration(configurationChan chan<- dynamic.Message) error {
-	configuration, err := p.buildConfiguration()
+	configuration, refFiles, err := p.buildConfiguration()
 	if err != nil {
 		return err
 	}
+
+	p.syncExternalFileWatches(refFiles)
 
 	sendConfigToChannel(configurationChan, configuration)
 	return nil
 }
 
-// buildConfiguration loads configuration either from file or a directory
-// specified by 'Filename'/'Directory' and returns a 'Configuration' object.
-func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
+// buildConfiguration loads configuration either from file or a directory specified by
+// 'Filename'/'Directory' and returns a 'Configuration' object, along with the paths of
+// every external file (certificates, keys, CA bundles) it referenced.
+func (p *Provider) buildConfiguration() (*dynamic.Configuration, []string, error) {
 	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
 
 	if len(p.Directory) > 0 {
@@ -232,23 +327,24 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 	}
 
 	if len(p.Filename) > 0 {
-		return p.loadFileConfig(ctx, p.Filename, true)
+		return p.loadFileConfig(ctx, p.Filename)
 	}
 
-	return nil, errors.New("error using file configuration provider, neither filename nor directory is defined")
+	return nil, nil, errors.New("error using file configuration provider, neither filename nor directory is defined")
 }
 
-func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTemplate bool) (*dynamic.Configuration, error) {
-	var err error
-	var configuration *dynamic.Configuration
-	if parseTemplate {
-		configuration, err = p.CreateConfiguration(ctx, filename, template.FuncMap{}, false)
-	} else {
-		configuration, err = p.DecodeConfiguration(filename)
-	}
+// loadFileConfig loads and decodes the configuration in filename, and returns the paths of
+// every external file (certificates, keys, CA bundles) it referenced, so that the caller can
+// keep watching them for changes (e.g. certificate renewal).
+func (p *Provider) loadFileConfig(ctx context.Context, filename string) (*dynamic.Configuration, []string, error) {
+	configuration, err := p.CreateConfiguration(ctx, filename, template.FuncMap{}, false)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	// Collect every referenced external file path before any of the fields below get
+	// overwritten with the file's content.
+	refFiles := collectExternalFiles(configuration)
 
 	if configuration.TLS != nil {
 		configuration.TLS.Certificates = flattenCertificates(ctx, configuration.TLS)
@@ -380,13 +476,16 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 		}
 	}
 
-	return configuration, nil
+	return configuration, refFiles, nil
 }
 
-func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *dynamic.Configuration) (*dynamic.Configuration, error) {
+// loadFileConfigFromDirectory recursively loads and merges configuration from every supported
+// file in directory, and returns the paths of every external file (certificates, keys, CA
+// bundles) referenced anywhere within it, so the caller can keep watching them for changes.
+func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *dynamic.Configuration) (*dynamic.Configuration, []string, error) {
 	fileList, err := os.ReadDir(directory)
 	if err != nil {
-		return configuration, fmt.Errorf("unable to read directory %s: %w", directory, err)
+		return configuration, nil, fmt.Errorf("unable to read directory %s: %w", directory, err)
 	}
 
 	if configuration == nil {
@@ -415,15 +514,18 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	}
 
 	configTLSMaps := make(map[*tls.CertAndStores]struct{})
+	var refFiles []string
 
 	for _, item := range fileList {
 		logger := log.Ctx(ctx).With().Str("filename", item.Name()).Logger()
 
 		if item.IsDir() {
-			configuration, err = p.loadFileConfigFromDirectory(logger.WithContext(ctx), filepath.Join(directory, item.Name()), configuration)
+			var subRefFiles []string
+			configuration, subRefFiles, err = p.loadFileConfigFromDirectory(logger.WithContext(ctx), filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
-				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
+				return configuration, refFiles, fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
 			}
+			refFiles = append(refFiles, subRefFiles...)
 			continue
 		}
 
@@ -433,10 +535,12 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		}
 
 		var c *dynamic.Configuration
-		c, err = p.loadFileConfig(logger.WithContext(ctx), filepath.Join(directory, item.Name()), true)
+		var cRefFiles []string
+		c, cRefFiles, err = p.loadFileConfig(logger.WithContext(ctx), filepath.Join(directory, item.Name()))
 		if err != nil {
-			return configuration, fmt.Errorf("%s: %w", filepath.Join(directory, item.Name()), err)
+			return configuration, refFiles, fmt.Errorf("%s: %w", filepath.Join(directory, item.Name()), err)
 		}
+		refFiles = append(refFiles, cRefFiles...)
 
 		for name, conf := range c.HTTP.Routers {
 			if _, exists := configuration.HTTP.Routers[name]; exists {
@@ -557,7 +661,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		configuration.TLS.Certificates = append(configuration.TLS.Certificates, conf)
 	}
 
-	return configuration, nil
+	return configuration, refFiles, nil
 }
 
 func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {
@@ -597,6 +701,67 @@ func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration
 		ProviderName:  "file",
 		Configuration: configuration,
 	}
+}
+
+var fileOrContentType = reflect.TypeFor[types.FileOrContent]()
+
+// collectExternalFiles walks configuration and returns the path of every types.FileOrContent
+// field that refers to a file path, so the caller can keep watching those files (and, when they
+// are deleted or renamed, their containing directories) for external changes such as certificate
+// renewal. It is called before any of those fields get overwritten with the file's content.
+func collectExternalFiles(configuration *dynamic.Configuration) []string {
+	var paths []string
+	walkFileOrContent(reflect.ValueOf(configuration), &paths)
+	return paths
+}
+
+func walkFileOrContent(v reflect.Value, paths *[]string) {
+	if !v.IsValid() {
+		return
+	}
+
+	if v.Type() == fileOrContentType {
+		if f, ok := v.Interface().(types.FileOrContent); ok && (f.IsPath() || looksLikeFilePath(f.String())) {
+			*paths = append(*paths, f.String())
+		}
+		return
+	}
+
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface:
+		if v.IsNil() {
+			return
+		}
+		walkFileOrContent(v.Elem(), paths)
+	case reflect.Struct:
+		for i := range v.NumField() {
+			if v.Type().Field(i).PkgPath != "" {
+				continue // unexported field.
+			}
+			walkFileOrContent(v.Field(i), paths)
+		}
+	case reflect.Slice, reflect.Array:
+		for i := range v.Len() {
+			walkFileOrContent(v.Index(i), paths)
+		}
+	case reflect.Map:
+		for _, k := range v.MapKeys() {
+			walkFileOrContent(v.MapIndex(k), paths)
+		}
+	}
+}
+
+// looksLikeFilePath reports whether value looks like it was meant to be a file path, as opposed
+// to inline certificate/CA content, regardless of whether that file currently exists on disk.
+// Inline PEM content always spans multiple lines and starts with a "-----BEGIN" header; a real
+// path never does. This lets us keep watching a certificate's directory when the file has been
+// deleted mid-renewal, or has not been written yet by an external process (e.g. an ACME client
+// that has not finished issuing it), instead of losing track of it the moment os.Stat fails.
+func looksLikeFilePath(value string) bool {
+	if value == "" {
+		return false
+	}
+	return !strings.Contains(value, "\n") && !strings.HasPrefix(strings.TrimSpace(value), "-----BEGIN")
 }
 
 func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguration) []*tls.CertAndStores {
