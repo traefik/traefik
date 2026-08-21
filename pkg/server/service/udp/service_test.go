@@ -11,6 +11,8 @@ import (
 )
 
 func TestManager_BuildUDP(t *testing.T) {
+	negativeWeight := -2
+
 	testCases := []struct {
 		desc          string
 		serviceName   string
@@ -169,6 +171,22 @@ func TestManager_BuildUDP(t *testing.T) {
 				},
 			},
 			providerName: "provider-1",
+		},
+		{
+			desc:        "negative weight in a weighted service",
+			serviceName: "test",
+			configs: map[string]*runtime.UDPServiceInfo{
+				"test": {
+					UDPService: &dynamic.UDPService{
+						Weighted: &dynamic.UDPWeightedRoundRobin{
+							Services: []dynamic.UDPWRRService{
+								{Name: "child", Weight: &negativeWeight},
+							},
+						},
+					},
+				},
+			},
+			expectedError: `invalid negative weight -2 for udp service "child"`,
 		},
 	}
 

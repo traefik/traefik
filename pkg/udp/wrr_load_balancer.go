@@ -100,9 +100,11 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	// what interleaves servers and allows us not to build an iterator every time we readjust weights.
 
 	// Maximum weight across all enabled servers
+	// Weights are validated when the service is built, negative values are rejected.
+	// This guard is kept so that an unexpected non-positive maximum cannot make the loop below unbounded.
 	maximum := b.maxWeight()
-	if maximum == 0 {
-		return nil, errors.New("all servers have 0 weight")
+	if maximum <= 0 {
+		return nil, errors.New("no server with a positive weight")
 	}
 
 	// GCD across all enabled servers

@@ -70,6 +70,13 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 		loadBalancer := udp.NewWRRLoadBalancer()
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
+			if service.Weight != nil && *service.Weight < 0 {
+				err := fmt.Errorf("invalid negative weight %d for udp service %q", *service.Weight, service.Name)
+				conf.AddError(err, true)
+				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
+				return nil, err
+			}
+
 			handler, err := m.BuildUDP(rootCtx, service.Name)
 			if err != nil {
 				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
