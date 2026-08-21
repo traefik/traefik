@@ -11,8 +11,6 @@ import (
 )
 
 func TestManager_BuildTCP(t *testing.T) {
-	negativeWeight := -2
-
 	testCases := []struct {
 		desc          string
 		serviceName   string
@@ -180,7 +178,7 @@ func TestManager_BuildTCP(t *testing.T) {
 					TCPService: &dynamic.TCPService{
 						Weighted: &dynamic.TCPWeightedRoundRobin{
 							Services: []dynamic.TCPWRRService{
-								{Name: "child", Weight: &negativeWeight},
+								{Name: "child", Weight: new(-2)},
 							},
 						},
 					},

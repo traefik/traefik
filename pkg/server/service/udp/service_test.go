@@ -11,8 +11,6 @@ import (
 )
 
 func TestManager_BuildUDP(t *testing.T) {
-	negativeWeight := -2
-
 	testCases := []struct {
 		desc          string
 		serviceName   string
@@ -180,7 +178,7 @@ func TestManager_BuildUDP(t *testing.T) {
 					UDPService: &dynamic.UDPService{
 						Weighted: &dynamic.UDPWeightedRoundRobin{
 							Services: []dynamic.UDPWRRService{
-								{Name: "child", Weight: &negativeWeight},
+								{Name: "child", Weight: new(-2)},
 							},
 						},
 					},
