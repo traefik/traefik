@@ -47,7 +47,8 @@ type stickyCookie struct {
 
 // stickyHeader represents a sticky header configuration.
 type stickyHeader struct {
-	name string
+	name            string
+	absoluteTimeout time.Duration
 }
 
 // Sticky ensures that client consistently interacts with the same HTTP handler
@@ -126,7 +127,8 @@ func NewStickyHeader(headerConfig dynamic.Header) *Sticky {
 	return &Sticky{
 		mode: StickyModeHeader,
 		header: &stickyHeader{
-			name: name,
+			name:            name,
+			absoluteTimeout: time.Duration(headerConfig.AbsoluteTimeout) * time.Second,
 		},
 		hashMap:                make(map[string]string),
 		stickyMap:              make(map[string]*NamedHandler),
@@ -215,7 +217,16 @@ func (s *Sticky) WriteStickyHeader(rw http.ResponseWriter, name string) error {
 		return fmt.Errorf("no hash found for handler named %s", name)
 	}
 
-	rw.Header().Set(s.header.name, hash)
+	// Unlike cookies, headers carry no client-side expiry attribute, so Header.AbsoluteTimeout is
+	// enforced by the gateway itself: the expiry is embedded in the header value it writes, and
+	// re-checked on each request.
+	value := hash
+	if s.header.absoluteTimeout > 0 {
+		expiresAt := time.Now().Add(s.header.absoluteTimeout).Unix()
+		value = hash + "-" + strconv.FormatInt(expiresAt, 10)
+	}
+
+	rw.Header().Set(s.header.name, value)
 	return nil
 }
 
@@ -239,7 +250,33 @@ func (s *Sticky) stickyHandlerFromHeader(req *http.Request) (*NamedHandler, bool
 		return nil, false, nil
 	}
 
+	if s.header.absoluteTimeout > 0 {
+		hash, ok := decodeWithExpiry(value)
+		if !ok {
+			// No embedded expiry, or a malformed/expired one: treat as unpinned rather than permanently sticky.
+			return nil, false, nil
+		}
+
+		value = hash
+	}
+
 	return s.lookupHandler(value)
+}
+
+// decodeWithExpiry splits a sticky value written with an embedded absolute expiry back into its hash,
+// returning ok=false when there is no embedded expiry, or it is malformed or in the past.
+func decodeWithExpiry(value string) (hash string, ok bool) {
+	hash, expiresAt, found := strings.Cut(value, "-")
+	if !found {
+		return "", false
+	}
+
+	expiry, err := strconv.ParseInt(expiresAt, 10, 64)
+	if err != nil {
+		return "", false
+	}
+
+	return hash, !time.Now().After(time.Unix(expiry, 0))
 }
 
 // lookupHandler finds a handler by its sticky value (hash).

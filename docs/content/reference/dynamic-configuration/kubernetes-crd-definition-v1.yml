@@ -375,6 +375,11 @@ spec:
                               header:
                                 description: Header defines the sticky header configuration.
                                 properties:
+                                  absoluteTimeout:
+                                    description: |-
+                                      AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                      When set to zero, the pinning never expires.
+                                    type: integer
                                   name:
                                     description: |-
                                       Name defines the header name used for sticky sessions.
@@ -1423,6 +1428,11 @@ spec:
                           header:
                             description: Header defines the sticky header configuration.
                             properties:
+                              absoluteTimeout:
+                                description: |-
+                                  AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                  When set to zero, the pinning never expires.
+                                type: integer
                               name:
                                 description: |-
                                   Name defines the header name used for sticky sessions.
@@ -3281,6 +3291,11 @@ spec:
                           header:
                             description: Header defines the sticky header configuration.
                             properties:
+                              absoluteTimeout:
+                                description: |-
+                                  AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                  When set to zero, the pinning never expires.
+                                type: integer
                               name:
                                 description: |-
                                   Name defines the header name used for sticky sessions.
@@ -3540,6 +3555,11 @@ spec:
                           header:
                             description: Header defines the sticky header configuration.
                             properties:
+                              absoluteTimeout:
+                                description: |-
+                                  AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                  When set to zero, the pinning never expires.
+                                type: integer
                               name:
                                 description: |-
                                   Name defines the header name used for sticky sessions.
@@ -3812,6 +3832,11 @@ spec:
                             header:
                               description: Header defines the sticky header configuration.
                               properties:
+                                absoluteTimeout:
+                                  description: |-
+                                    AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                    When set to zero, the pinning never expires.
+                                  type: integer
                                 name:
                                   description: |-
                                     Name defines the header name used for sticky sessions.
@@ -4190,6 +4215,11 @@ spec:
                             header:
                               description: Header defines the sticky header configuration.
                               properties:
+                                absoluteTimeout:
+                                  description: |-
+                                    AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                    When set to zero, the pinning never expires.
+                                  type: integer
                                 name:
                                   description: |-
                                     Name defines the header name used for sticky sessions.
@@ -4350,6 +4380,11 @@ spec:
                       header:
                         description: Header defines the sticky header configuration.
                         properties:
+                          absoluteTimeout:
+                            description: |-
+                              AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                              When set to zero, the pinning never expires.
+                            type: integer
                           name:
                             description: |-
                               Name defines the header name used for sticky sessions.
@@ -4616,6 +4651,11 @@ spec:
                             header:
                               description: Header defines the sticky header configuration.
                               properties:
+                                absoluteTimeout:
+                                  description: |-
+                                    AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                    When set to zero, the pinning never expires.
+                                  type: integer
                                 name:
                                   description: |-
                                     Name defines the header name used for sticky sessions.
@@ -4697,6 +4737,11 @@ spec:
                       header:
                         description: Header defines the sticky header configuration.
                         properties:
+                          absoluteTimeout:
+                            description: |-
+                              AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                              When set to zero, the pinning never expires.
+                            type: integer
                           name:
                             description: |-
                               Name defines the header name used for sticky sessions.

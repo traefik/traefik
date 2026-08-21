@@ -375,6 +375,9 @@ type Header struct {
 	// Name defines the header name used for sticky sessions.
 	// The client must include this header in requests and the server will set it in responses.
 	Name string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	// AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+	// When set to zero, the pinning never expires.
+	AbsoluteTimeout int `json:"absoluteTimeout,omitempty" toml:"absoluteTimeout,omitempty" yaml:"absoluteTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for a Header.

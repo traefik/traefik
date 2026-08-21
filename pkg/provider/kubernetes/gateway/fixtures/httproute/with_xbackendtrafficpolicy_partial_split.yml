@@ -1,0 +1,71 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "foo.com"
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /bar
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 70
+          kind: Service
+          group: ""
+        - name: whoami2
+          port: 8080
+          weight: 30
+          kind: Service
+          group: ""
+
+---
+kind: XBackendTrafficPolicy
+apiVersion: gateway.networking.x-k8s.io/v1alpha1
+metadata:
+  name: whoami-policy
+  namespace: default
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: whoami
+  sessionPersistence:
+    type: Cookie
+    sessionName: whoami-cookie

@@ -3,6 +3,7 @@ package loadbalancer
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -141,12 +142,13 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 
 func TestStickyHeader_StickyHandler(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		handlers    []string
-		headerName  string
-		headerValue string
-		wantHandler string
-		wantRewrite bool
+		desc            string
+		handlers        []string
+		absoluteTimeout int
+		headerName      string
+		headerValue     string
+		wantHandler     string
+		wantRewrite     bool
 	}{
 		{
 			desc:        "No previous header",
@@ -188,13 +190,49 @@ func TestStickyHeader_StickyHandler(t *testing.T) {
 			wantHandler: "first",
 			wantRewrite: true,
 		},
+		{
+			desc:            "AbsoluteTimeout: valid, not yet expired",
+			handlers:        []string{"first"},
+			absoluteTimeout: 3600,
+			headerName:      "X-Sticky-Session",
+			headerValue:     sha256Hash("first") + "-" + strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10),
+			wantHandler:     "first",
+			wantRewrite:     false,
+		},
+		{
+			desc:            "AbsoluteTimeout: expired",
+			handlers:        []string{"first"},
+			absoluteTimeout: 3600,
+			headerName:      "X-Sticky-Session",
+			headerValue:     sha256Hash("first") + "-" + strconv.FormatInt(time.Now().Add(-time.Hour).Unix(), 10),
+			wantHandler:     "",
+			wantRewrite:     false,
+		},
+		{
+			desc:            "AbsoluteTimeout: no embedded expiry",
+			handlers:        []string{"first"},
+			absoluteTimeout: 3600,
+			headerName:      "X-Sticky-Session",
+			headerValue:     sha256Hash("first"),
+			wantHandler:     "",
+			wantRewrite:     false,
+		},
+		{
+			desc:            "AbsoluteTimeout: malformed expiry",
+			handlers:        []string{"first"},
+			absoluteTimeout: 3600,
+			headerName:      "X-Sticky-Session",
+			headerValue:     sha256Hash("first") + "-not-a-timestamp",
+			wantHandler:     "",
+			wantRewrite:     false,
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			sticky := NewStickyHeader(dynamic.Header{Name: "X-Sticky-Session"})
+			sticky := NewStickyHeader(dynamic.Header{Name: "X-Sticky-Session", AbsoluteTimeout: test.absoluteTimeout})
 
 			for _, handler := range test.handlers {
 				sticky.AddHandler(handler, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
@@ -233,6 +271,15 @@ func TestStickyHeader_WriteStickyHeader(t *testing.T) {
 	require.NoError(t, sticky.WriteStickyHeader(res, "first"))
 
 	assert.Equal(t, sha256Hash("first"), res.Header().Get("X-Sticky-Session"))
+
+	// When AbsoluteTimeout is set, the written value should embed an expiry, not the bare hash.
+	stickyWithTimeout := NewStickyHeader(dynamic.Header{Name: "X-Sticky-Session", AbsoluteTimeout: 3600})
+	stickyWithTimeout.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+	res = httptest.NewRecorder()
+	require.NoError(t, stickyWithTimeout.WriteStickyHeader(res, "first"))
+
+	assert.NotEqual(t, sha256Hash("first"), res.Header().Get("X-Sticky-Session"))
 }
 
 func TestStickyHeader_DefaultName(t *testing.T) {

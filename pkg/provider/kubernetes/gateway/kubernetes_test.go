@@ -940,6 +940,161 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "XBackendTrafficPolicy on only one of several weighted backendRefs does not make the split sticky",
+			paths: []string{"services.yml", "httproute/with_xbackendtrafficpolicy_partial_split.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(70),
+									},
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1",
+										Weight: new(30),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{Name: "whoami-cookie"},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Older XBackendTrafficPolicy wins when two target the same Service",
+			paths: []string{"services.yml", "httproute/with_conflicting_xbackendtrafficpolicies.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								// The older policy (whoami-policy-older) is established per GEP-713's "None"
+								// merge strategy tie-break; the newer one (whoami-policy-newer) conflicts.
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Older-Policy-Session"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "HTTPRoute session persistence applied to the ServersLoadBalancer with a single backendRef",
 			paths: []string{"services.yml", "httproute/with_route_and_xbackendtrafficpolicy.yml"},
 			entryPoints: map[string]Entrypoint{"web": {

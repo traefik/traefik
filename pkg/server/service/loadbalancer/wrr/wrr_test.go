@@ -4,7 +4,10 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -279,6 +282,77 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, http.SameSiteNoneMode, recorder.cookies["test"].SameSite)
 	assert.Equal(t, 42, recorder.cookies["test"].MaxAge)
 	assert.Equal(t, "/foo", recorder.cookies["test"].Path)
+}
+
+func TestSticky_Header(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Header: &dynamic.Header{Name: "X-Sticky-Session"},
+	}, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), new(1), false)
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), new(2), false)
+
+	recorder := &responseRecorder{
+		ResponseRecorder: httptest.NewRecorder(),
+		save:             map[string]int{},
+		cookies:          make(map[string]*http.Cookie),
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	for range 3 {
+		if value := recorder.Header().Get("X-Sticky-Session"); value != "" {
+			req.Header.Set("X-Sticky-Session", value)
+		}
+		recorder.ResponseRecorder = httptest.NewRecorder()
+
+		balancer.ServeHTTP(recorder, req)
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 3, recorder.save["second"])
+}
+
+// TestSticky_HeaderAbsoluteTimeout checks that a still-valid pinned header value is honored without
+// being rewritten, while an expired one is treated as unpinned and triggers a fresh pick and rewrite.
+func TestSticky_HeaderAbsoluteTimeout(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Header: &dynamic.Header{Name: "X-Sticky-Session", AbsoluteTimeout: 3600},
+	}, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), new(1), false)
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), new(1), false)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, req)
+	pinnedValue := recorder.Header().Get("X-Sticky-Session")
+	assert.NotEmpty(t, pinnedValue)
+
+	req.Header.Set("X-Sticky-Session", pinnedValue)
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, req)
+	assert.Empty(t, recorder.Header().Get("X-Sticky-Session"), "a valid pinned value should not be rewritten")
+
+	expired := strings.SplitN(pinnedValue, "-", 2)[0] + "-" + strconv.FormatInt(time.Now().Add(-time.Hour).Unix(), 10)
+	req.Header.Set("X-Sticky-Session", expired)
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, req)
+	newValue := recorder.Header().Get("X-Sticky-Session")
+	assert.NotEmpty(t, newValue, "an expired pinned value should trigger a fresh pick")
+	assert.NotEqual(t, expired, newValue)
 }
 
 func TestSticky_Fallback(t *testing.T) {

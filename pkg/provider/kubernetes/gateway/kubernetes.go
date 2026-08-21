@@ -860,7 +860,8 @@ func (p *Provider) resolveSessionPersistence(ctx context.Context, gatewayName, n
 	}
 
 	if policySticky != nil {
-		log.Ctx(ctx).Warn().
+		// Debug rather than Warn: this fires on every reconcile for a valid, documented precedence rule, not an anomaly.
+		log.Ctx(ctx).Debug().
 			Msgf("Route sessionPersistence overrides XBackendTrafficPolicy sessionPersistence for backendRef %s/%s", namespace, backendRefName)
 	}
 
@@ -962,7 +963,7 @@ func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayNa
 
 	// XBackendTrafficPolicy is attached to a Service, not a route rule, so the cookie Path attribute
 	// must be left unset.
-	return convertSessionPersistence(selected.Spec.SessionPersistence, nil, false), nil
+	return convertSessionPersistence(ctx, selected.Spec.SessionPersistence, nil, false), nil
 }
 
 func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {

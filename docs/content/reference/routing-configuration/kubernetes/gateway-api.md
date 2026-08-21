@@ -543,25 +543,14 @@ For more information on service-level middlewares, see [service middlewares](../
 
 #### Session Persistence (Sticky Sessions)
 
-Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` and [`GRPCRoute`](#grpc) rules, enabling sticky sessions without requiring Traefik-specific CRDs.
+Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` and [`GRPCRoute`](#grpc) rules, enabling sticky sessions without requiring Traefik-specific CRDs. Session persistence ensures that requests from the same client are consistently routed to the same backend server, taking precedence over the `backendRefs` weights.
 
-`sessionPersistence` pins a client to whichever `backendRef` it was routed to, taking precedence over the `backendRefs` weights, regardless of the backend kind (`Service` or `TraefikService`).
-
-!!! note "TraefikService backends"
-    When a route rule's `backendRefs` include a `TraefikService`, the rule's `sessionPersistence` only pins the
-    client to that backendRef. It does not propagate into the `TraefikService`'s own load-balancing tree, which
-    must configure its stickiness independently (see [TraefikService](crd/http/traefikservice.md#stickiness-on-multiple-levels)).
-
-!!! note "CRD channel requirement"
+!!! note "Requirements"
     `sessionPersistence` requires the Experimental channel CRDs, see the [requirements](../../install-configuration/providers/kubernetes/kubernetes-gateway.md#requirements).
 
-!!! note "BackendLBPolicy (XBackendTrafficPolicy)"
-    Traefik also supports service-level session persistence via the experimental
-    `XBackendTrafficPolicy` resource (`gateway.networking.x-k8s.io/v1alpha1`), which supersedes `BackendLBPolicy`.
-    When both a route rule's `sessionPersistence` and an `XBackendTrafficPolicy` `sessionPersistence` target the same Service,
-    the route rule takes precedence. This requires Traefik's `experimentalChannel` to be enabled.
+##### Usage
 
-Session persistence ensures that requests from the same client are consistently routed to the same backend server. Traefik supports both cookie-based and header-based session persistence:
+Traefik supports both cookie-based and header-based session persistence:
 
 ```yaml tab="Cookie-based (default)"
 ---
@@ -628,21 +617,27 @@ spec:
         type: Header
 ```
 
+With header-based session persistence, the client must read the session header from the response and include its value in all subsequent requests. This is ideal for API clients, gRPC, or service mesh scenarios where setting a cookie isn't practical.
+
 | Field | Description |
 |-------|-------------|
 | <a id="opt-sessionName" href="#opt-sessionName" title="#opt-sessionName">`sessionName`</a> | Name of the cookie or header used for session persistence |
 | <a id="opt-type" href="#opt-type" title="#opt-type">`type`</a> | `Cookie` (default) or `Header` |
-| <a id="opt-absoluteTimeout" href="#opt-absoluteTimeout" title="#opt-absoluteTimeout">`absoluteTimeout`</a> | Maximum lifetime of the session (only applies to cookies with `lifetimeType: Permanent`) |
-| <a id="opt-cookieConfig-lifetimeType" href="#opt-cookieConfig-lifetimeType" title="#opt-cookieConfig-lifetimeType">`cookieConfig.lifetimeType`</a> | `Session` (browser session) or `Permanent` (uses `absoluteTimeout`) |
+| <a id="opt-absoluteTimeout" href="#opt-absoluteTimeout" title="#opt-absoluteTimeout">`absoluteTimeout`</a> | Maximum lifetime of the session. For cookies, only enforced when `cookieConfig.lifetimeType` is `Permanent` (maps to the cookie's `MaxAge`, enforced by the browser); under the default `Session` lifetime the cookie carries no `MaxAge`/`Expires` and Traefik does not otherwise track or enforce it. For headers, always enforced by Traefik itself. |
+| <a id="opt-cookieConfig-lifetimeType" href="#opt-cookieConfig-lifetimeType" title="#opt-cookieConfig-lifetimeType">`cookieConfig.lifetimeType`</a> | `Session` (browser session, default) or `Permanent` (uses `absoluteTimeout`) |
 
-!!! info "Header-based Session Persistence"
+##### Precedence and Scope
 
-    When using header-based session persistence, the client must:
+Session persistence can be configured at two levels: inline on a route rule, or service-wide through an `XBackendTrafficPolicy`. When both apply, the route rule always wins:
 
-    1. Read the session header from the response
-    2. Include the header value in all subsequent requests
+1. **Route rule `sessionPersistence`** (highest precedence) pins a client to whichever `backendRef` it was routed to, regardless of the backend kind (`Service` or `TraefikService`).
+2. **`XBackendTrafficPolicy` `sessionPersistence`** (experimental) applies session persistence at the Service level, without needing a route-level field. Traefik supports the experimental `XBackendTrafficPolicy` resource (`gateway.networking.x-k8s.io/v1alpha1`), which supersedes `BackendLBPolicy`; it requires Traefik's `experimentalChannel` to be enabled in addition to the Experimental channel CRDs. When a route rule's `sessionPersistence` and an `XBackendTrafficPolicy` both target the same Service, the route rule takes precedence.
 
-    This is ideal for API clients, gRPC, or service mesh scenarios.
+Two scoping details follow directly from where each of these attaches:
+
+- **`TraefikService` backends:** when a route rule's `backendRefs` include a `TraefikService`, the rule's `sessionPersistence` only pins the client to that backendRef — it does not propagate into the `TraefikService`'s own load-balancing tree, which must configure its stickiness independently (see [TraefikService](crd/http/traefikservice.md#stickiness-on-multiple-levels)).
+
+- **`XBackendTrafficPolicy` on a multi-backendRef rule:** because `XBackendTrafficPolicy` attaches to a Service rather than a route rule, it cannot make the *split* between `backendRefs` sticky — only a route rule's own `sessionPersistence` can do that. For example, given a rule that splits traffic 70/30 between `serviceA` and `serviceB` with no route-level `sessionPersistence`, attaching an `XBackendTrafficPolicy` to `serviceA` alone does not stop the 70/30 split from being applied on every request. Only requests that land on `serviceA` benefit from being consistently routed to the same `serviceA` endpoint; the choice between `serviceA` and `serviceB` itself stays weight-based.
 
 ### GRPC
 

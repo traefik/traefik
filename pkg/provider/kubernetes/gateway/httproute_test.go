@@ -327,16 +327,17 @@ func Test_createCORS(t *testing.T) {
 
 func Test_convertSessionPersistence(t *testing.T) {
 	testCases := []struct {
-		desc           string
-		sessionPersist *gatev1.SessionPersistence
-		pathMatch      *gatev1.HTTPPathMatch
-		scopeToRoute   bool
-		wantNil        bool
-		wantCookie     bool
-		wantHeader     bool
-		wantName       string
-		wantMaxAge     int
-		wantPath       *string
+		desc                string
+		sessionPersist      *gatev1.SessionPersistence
+		pathMatch           *gatev1.HTTPPathMatch
+		scopeToRoute        bool
+		wantNil             bool
+		wantCookie          bool
+		wantHeader          bool
+		wantName            string
+		wantMaxAge          int
+		wantPath            *string
+		wantAbsoluteTimeout int
 	}{
 		{
 			desc:           "nil session persistence",
@@ -397,6 +398,20 @@ func Test_convertSessionPersistence(t *testing.T) {
 			wantCookie:   false,
 			wantHeader:   true,
 			wantName:     "X-My-Session",
+		},
+		{
+			desc: "header with absolute timeout",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName:     new("X-My-Session"),
+				Type:            ptr.To(gatev1.HeaderBasedSessionPersistence),
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+			},
+			scopeToRoute:        true,
+			wantNil:             false,
+			wantCookie:          false,
+			wantHeader:          true,
+			wantName:            "X-My-Session",
+			wantAbsoluteTimeout: 3600,
 		},
 		{
 			desc: "cookie with permanent lifetime and timeout",
@@ -485,7 +500,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := convertSessionPersistence(test.sessionPersist, test.pathMatch, test.scopeToRoute)
+			result := convertSessionPersistence(t.Context(), test.sessionPersist, test.pathMatch, test.scopeToRoute)
 
 			if test.wantNil {
 				assert.Nil(t, result)
@@ -510,6 +525,7 @@ func Test_convertSessionPersistence(t *testing.T) {
 				if test.wantName != "" {
 					assert.Equal(t, test.wantName, result.Header.Name)
 				}
+				assert.Equal(t, test.wantAbsoluteTimeout, result.Header.AbsoluteTimeout)
 			}
 		})
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/net/http/httpguts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -217,7 +218,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 		return name, nil
 	}
 
-	routeSticky := convertSessionPersistence(routeRule.SessionPersistence, pathMatch, true)
+	routeSticky := convertSessionPersistence(ctx, routeRule.SessionPersistence, pathMatch, true)
 
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
@@ -1100,7 +1101,7 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 
 // convertSessionPersistence converts a Gateway API SessionPersistence to a Traefik Sticky configuration.
 // scopeToRoute must be true only for a route rule's own sessionPersistence, not for an XBackendTrafficPolicy's.
-func convertSessionPersistence(sp *gatev1.SessionPersistence, pathMatch *gatev1.HTTPPathMatch, scopeToRoute bool) *dynamic.Sticky {
+func convertSessionPersistence(ctx context.Context, sp *gatev1.SessionPersistence, pathMatch *gatev1.HTTPPathMatch, scopeToRoute bool) *dynamic.Sticky {
 	if sp == nil {
 		return nil
 	}
@@ -1110,9 +1111,24 @@ func convertSessionPersistence(sp *gatev1.SessionPersistence, pathMatch *gatev1.
 		header := &dynamic.Header{}
 		header.SetDefaults()
 
-		// SessionName maps to Header.Name
+		// SessionName maps to Header.Name. A SessionName that isn't a valid HTTP header field name would
+		// otherwise be silently dropped by the response writer, so fall back to the default instead.
 		if sp.SessionName != nil {
-			header.Name = *sp.SessionName
+			if httpguts.ValidHeaderFieldName(*sp.SessionName) {
+				header.Name = *sp.SessionName
+			} else {
+				log.Ctx(ctx).Warn().Str("sessionName", *sp.SessionName).
+					Msg("Ignoring invalid sessionPersistence SessionName: not a valid HTTP header field name")
+			}
+		}
+
+		if sp.AbsoluteTimeout != nil {
+			duration, err := time.ParseDuration(string(*sp.AbsoluteTimeout))
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Ignoring invalid sessionPersistence AbsoluteTimeout")
+			} else {
+				header.AbsoluteTimeout = int(duration.Seconds())
+			}
 		}
 
 		return &dynamic.Sticky{Header: header}
@@ -1134,12 +1150,15 @@ func convertSessionPersistence(sp *gatev1.SessionPersistence, pathMatch *gatev1.
 		cookie.Path = &path
 	}
 
-	// AbsoluteTimeout maps to Cookie.MaxAge when lifetimeType is Permanent.
-	// When lifetimeType is Session (default), the cookie is a session cookie (MaxAge = 0).
+	// AbsoluteTimeout maps to Cookie.MaxAge when lifetimeType is Permanent, so the browser enforces it.
+	// When lifetimeType is Session (default), the cookie carries no MaxAge/Expires (as required by the
+	// spec) and AbsoluteTimeout is not otherwise enforced.
 	if sp.AbsoluteTimeout != nil && sp.CookieConfig != nil &&
 		sp.CookieConfig.LifetimeType != nil && *sp.CookieConfig.LifetimeType == gatev1.PermanentCookieLifetimeType {
 		duration, err := time.ParseDuration(string(*sp.AbsoluteTimeout))
-		if err == nil {
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Ignoring invalid sessionPersistence AbsoluteTimeout")
+		} else {
 			cookie.MaxAge = int(duration.Seconds())
 		}
 	}
