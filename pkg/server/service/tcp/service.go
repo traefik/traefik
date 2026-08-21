@@ -85,6 +85,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 			handler, err := m.BuildTCP(rootCtx, service.Name)
 			if err != nil {
+				conf.AddError(err, true)
 				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 				return nil, err
 			}

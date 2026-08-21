@@ -215,3 +215,26 @@ func TestManager_BuildTCP(t *testing.T) {
 		})
 	}
 }
+
+func TestManager_BuildTCP_WeightedChildErrorIsReportedOnParent(t *testing.T) {
+	conf := &runtime.TCPServiceInfo{
+		TCPService: &dynamic.TCPService{
+			Weighted: &dynamic.TCPWeightedRoundRobin{
+				Services: []dynamic.TCPWRRService{
+					{Name: "child"},
+				},
+			},
+		},
+	}
+
+	manager := NewManager(&runtime.Configuration{
+		TCPServices: map[string]*runtime.TCPServiceInfo{"parent": conf},
+	})
+
+	handler, err := manager.BuildTCP(t.Context(), "parent")
+	require.Error(t, err)
+	require.Nil(t, handler)
+
+	assert.Equal(t, runtime.StatusDisabled, conf.Status)
+	assert.Equal(t, []string{`the service "child" does not exist`}, conf.Err)
+}

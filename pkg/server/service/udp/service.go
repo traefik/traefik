@@ -79,6 +79,7 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 
 			handler, err := m.BuildUDP(rootCtx, service.Name)
 			if err != nil {
+				conf.AddError(err, true)
 				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
 				return nil, err
 			}

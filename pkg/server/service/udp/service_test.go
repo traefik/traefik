@@ -215,3 +215,26 @@ func TestManager_BuildUDP(t *testing.T) {
 		})
 	}
 }
+
+func TestManager_BuildUDP_WeightedChildErrorIsReportedOnParent(t *testing.T) {
+	conf := &runtime.UDPServiceInfo{
+		UDPService: &dynamic.UDPService{
+			Weighted: &dynamic.UDPWeightedRoundRobin{
+				Services: []dynamic.UDPWRRService{
+					{Name: "child"},
+				},
+			},
+		},
+	}
+
+	manager := NewManager(&runtime.Configuration{
+		UDPServices: map[string]*runtime.UDPServiceInfo{"parent": conf},
+	})
+
+	handler, err := manager.BuildUDP(t.Context(), "parent")
+	require.Error(t, err)
+	require.Nil(t, handler)
+
+	assert.Equal(t, runtime.StatusDisabled, conf.Status)
+	assert.Equal(t, []string{`the udp service "child" does not exist`}, conf.Err)
+}
