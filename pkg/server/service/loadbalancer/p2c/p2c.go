@@ -75,7 +75,9 @@ func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 		wantsHealthCheck: wantsHealthCheck,
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
-	balancer.sticky = loadbalancer.NewSticky(stickyConfig)
+	if stickyConfig != nil && stickyConfig.Cookie != nil {
+		balancer.sticky = loadbalancer.NewStickyCookie(*stickyConfig.Cookie)
+	}
 
 	return balancer
 }
@@ -143,8 +145,8 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			b.handlersMu.RUnlock()
 			if ok {
 				if rewrite {
-					if err := b.sticky.WriteStickyResponse(rw, h.Name); err != nil {
-						log.Error().Err(err).Msg("Writing sticky response")
+					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
+						log.Error().Err(err).Msg("Writing sticky cookie")
 					}
 				}
 
@@ -165,8 +167,8 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.sticky != nil {
-		if err := b.sticky.WriteStickyResponse(rw, server.name); err != nil {
-			log.Error().Err(err).Msg("Error while writing sticky response")
+		if err := b.sticky.WriteStickyCookie(rw, server.name); err != nil {
+			log.Error().Err(err).Msg("Error while writing sticky cookie")
 		}
 	}
 

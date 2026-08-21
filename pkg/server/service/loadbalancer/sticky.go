@@ -21,7 +21,8 @@ type StickyMode string
 const (
 	// StickyModeCookie uses cookies for session persistence.
 	StickyModeCookie StickyMode = "cookie"
-	// StickyModeHeader uses headers for session persistence.
+	// StickyModeHeader uses headers for session persistence. Added to translate the Gateway API
+	// HTTPRoute/GRPCRoute sessionPersistence field, and currently only wired into the WRR balancer.
 	StickyModeHeader StickyMode = "header"
 )
 

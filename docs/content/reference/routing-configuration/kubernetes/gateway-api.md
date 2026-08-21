@@ -547,6 +547,11 @@ Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` and [
 
 `sessionPersistence` pins a client to whichever `backendRef` it was routed to, taking precedence over the `backendRefs` weights, regardless of the backend kind (`Service` or `TraefikService`).
 
+!!! note "TraefikService backends"
+    When a route rule's `backendRefs` include a `TraefikService`, the rule's `sessionPersistence` only pins the
+    client to that backendRef. It does not propagate into the `TraefikService`'s own load-balancing tree, which
+    must configure its stickiness independently (see [TraefikService](crd/http/traefikservice.md#stickiness-on-multiple-levels)).
+
 !!! note "CRD channel requirement"
     `sessionPersistence` requires the Experimental channel CRDs, see the [requirements](../../install-configuration/providers/kubernetes/kubernetes-gateway.md#requirements).
 
