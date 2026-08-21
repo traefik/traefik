@@ -145,7 +145,8 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 				transformedConfigurations := newConfigurations.DeepCopy()
 				for _, transform := range c.configurationTransformers {
 					// Each transformer gets its own copy because a transformer could keep a reference to the one it received.
-					transformedConfigurations = transform(logger.WithContext(ctx), transformedConfigurations.DeepCopy())
+					transformedConfigurations = transform(logger.WithContext(ctx), transformedConfigurations)
+					transformedConfigurations = transformedConfigurations.DeepCopy()
 				}
 
 				output = c.newConfigs
