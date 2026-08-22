@@ -152,7 +152,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// dropped events. This is fine, because we don't treat different
 					// event types differently. But if we do in the future, we'll need to
 					// track more information about the dropped events.
-					conf := p.loadConfiguration(ctxLog)
+					conf := p.loadConfiguration(context.Background())
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
@@ -263,7 +263,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	uniqCerts := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
-		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
+		logger := log.With().
+			Str(logs.ProviderName, providerName).
+			Str("ingress", ingress.Name).
+			Str("namespace", ingress.Namespace).
+			Logger()
 		ctxIngress := logger.WithContext(ctx)
 
 		if !p.shouldProcessIngress(ingress, ingressClasses) {
