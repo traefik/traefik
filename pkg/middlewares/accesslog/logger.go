@@ -77,6 +77,12 @@ type Handler struct {
 	// closed: a hijacked connection can outlive Shutdown, so its handler may still
 	// send after Close has run, and sending on a closed channel panics (#13693).
 	done chan struct{}
+
+	// closeOnce guards done: Close can be called more than once (e.g. Traefik's
+	// own shutdown path plus a caller's own cleanup), and closing a channel
+	// twice panics the same way sending on a closed one does.
+	closeOnce sync.Once
+	closeErr  error
 }
 
 // NewHandler creates a new Handler.
@@ -332,9 +338,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (h *Handler) Close() error {
-	close(h.done)
-	h.wg.Wait()
-	return h.file.Close()
+	h.closeOnce.Do(func() {
+		close(h.done)
+		h.wg.Wait()
+		h.closeErr = h.file.Close()
+	})
+	return h.closeErr
 }
 
 // Rotate closes and reopens the log file to allow for rotation by an external source.
