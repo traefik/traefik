@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
@@ -48,11 +49,18 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		},
 	}
 
+	handler := httpsServer.Server.(*http.Server).Handler
+	if readTimeout := time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout); readTimeout != 0 {
+		handler = withReadTimeout(ctx, handler, readTimeout)
+	}
+
 	h3.Server = &http3.Server{
-		Addr:      configuration.GetAddress(),
-		Port:      configuration.HTTP3.AdvertisedPort,
-		Handler:   httpsServer.Server.(*http.Server).Handler,
-		TLSConfig: &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
+		Addr:           configuration.GetAddress(),
+		Port:           configuration.HTTP3.AdvertisedPort,
+		Handler:        handler,
+		TLSConfig:      &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
+		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		QUICConfig: &quic.Config{
 			Allow0RTT: false,
 		},
@@ -77,6 +85,22 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	})
 
 	return h3, nil
+}
+
+func withReadTimeout(ctx context.Context, next http.Handler, timeout time.Duration) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// quic-go never leaves req.Body nil or equal to http.NoBody, so neither can be used to detect
+		// an absent body. ContentLength is 0 only when the client declared no body, and -1 when the
+		// length is unknown (no Content-Length header), both of which may still carry a body that
+		// needs bounding.
+		if req.ContentLength != 0 {
+			deadline := time.Now().Add(timeout)
+			if err := http.NewResponseController(rw).SetReadDeadline(deadline); err != nil {
+				log.FromContext(ctx).Errorf("Failed to set HTTP3 read timeout: %v", err)
+			}
+		}
+		next.ServeHTTP(rw, req)
+	})
 }
 
 func (e *http3server) Start() error {
