@@ -22,6 +22,8 @@ const (
 	maxECHPublicNameLength = 253
 )
 
+var errUnsupportedMandatoryECHConfigExtension = errors.New("unsupported mandatory ECH configuration extension")
+
 type parsedECHConfig struct {
 	version           uint16
 	kemID             uint16
@@ -66,6 +68,10 @@ func UnmarshalECHKeys(data []byte) ([]tls.EncryptedClientHelloKey, error) {
 	for _, config := range configs {
 		parsed, err := parseECHConfig(config)
 		if err != nil {
+			if errors.Is(err, errUnsupportedMandatoryECHConfigExtension) {
+				continue
+			}
+
 			return nil, err
 		}
 		if parsed.version != echConfigVersion || parsed.kemID != hpkePrivateKey.KEM().ID() || !bytes.Equal(parsed.publicKey, publicKey) {
@@ -331,7 +337,7 @@ func parseECHConfig(config []byte) (parsedECHConfig, error) {
 		}
 		// Clients ignore configurations with unsupported mandatory extensions (RFC 9849, Section 4.2).
 		if extensionType&0x8000 != 0 {
-			return parsedECHConfig{}, fmt.Errorf("unsupported mandatory ECH configuration extension 0x%04x", extensionType)
+			return parsedECHConfig{}, fmt.Errorf("%w 0x%04x", errUnsupportedMandatoryECHConfigExtension, extensionType)
 		}
 		if _, duplicate := seenExtensions[extensionType]; duplicate {
 			return parsedECHConfig{}, fmt.Errorf("duplicate ECH configuration extension 0x%04x", extensionType)
