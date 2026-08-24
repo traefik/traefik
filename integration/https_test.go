@@ -345,6 +345,31 @@ func (s *HTTPSSuite) TestWithECH() {
 	assert.True(s.T(), resp.TLS.ECHAccepted)
 	assert.Equal(s.T(), "snitest.com", resp.TLS.PeerCertificates[0].Subject.CommonName)
 
+	// A protected domain with a dedicated TLS option must be reachable via ECH:
+	// the handshake re-selects the option by the decrypted server name.
+	hiddenTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify:             true,
+			MinVersion:                     tls.VersionTLS13,
+			ServerName:                     "snitest.org",
+			EncryptedClientHelloConfigList: configList,
+		},
+	}
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "snitest.org"
+
+	client = http.Client{Transport: hiddenTransport}
+	resp, err = client.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	assert.Equal(s.T(), http.StatusNoContent, resp.StatusCode)
+	require.NotNil(s.T(), resp.TLS)
+	assert.True(s.T(), resp.TLS.ECHAccepted)
+	assert.Equal(s.T(), "snitest.org", resp.TLS.PeerCertificates[0].Subject.CommonName)
+
 	// Clients without ECH support still connect with regular TLS 1.3.
 	plainTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{
