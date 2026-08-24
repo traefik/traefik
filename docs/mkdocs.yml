@@ -169,7 +169,7 @@ nav:
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
         - 'HTTP/2 Header Memory': 'security/http2-header-memory.md'
-        - 'Headers with Underscores': 'security/header-underscores.md'
+        - 'Headers with Aliasing Names': 'security/header-aliases.md'
         - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'

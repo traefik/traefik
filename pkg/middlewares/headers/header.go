@@ -119,6 +119,8 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 
 // modifyCustomRequestHeaders sets or deletes custom request headers.
 func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
+	// Note: the header names aliasing the custom request headers (e.g. X_Auth_User) are not handled here,
+	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 	// Loop through Custom request headers
 	for header, value := range s.headers.CustomRequestHeaders {
 		switch {

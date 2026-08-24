@@ -37,3 +37,66 @@ func TestHasEntrypoint(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		underscore  string
+		alias       string
+		expectError bool
+	}{
+		{
+			desc: "no strategy configured",
+		},
+		{
+			desc:  "only the new option configured",
+			alias: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured",
+			underscore: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured, set to keep",
+			underscore: AliasHeadersStrategyKeep,
+		},
+		{
+			desc:       "both options configured with the same value",
+			underscore: AliasHeadersStrategyDelete,
+			alias:      AliasHeadersStrategyDelete,
+		},
+		{
+			desc:        "both options configured with different values",
+			underscore:  AliasHeadersStrategyDelete,
+			alias:       AliasHeadersStrategyReject,
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					"web": &EntryPoint{
+						Address: ":80",
+						HTTP: HTTPConfig{
+							AliasHeadersStrategy:      test.alias,
+							UnderscoreHeadersStrategy: test.underscore,
+						},
+					},
+				},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}
