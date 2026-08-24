@@ -614,6 +614,7 @@
       alpnProtocols = ["foobar", "foobar"]
       disableSessionTickets = true
       echKeys = ["foobar", "foobar"]
+      echDecryptOnlyKeys = ["foobar", "foobar"]
       preferServerCipherSuites = true
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
@@ -627,6 +628,7 @@
       alpnProtocols = ["foobar", "foobar"]
       disableSessionTickets = true
       echKeys = ["foobar", "foobar"]
+      echDecryptOnlyKeys = ["foobar", "foobar"]
       preferServerCipherSuites = true
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]

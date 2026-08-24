@@ -11,13 +11,15 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/cryptobyte"
 )
 
 const (
-	echConfigVersion       = 0xfe0d
-	maxECHPublicNameLength = 255
+	echConfigVersion = 0xfe0d
+	// Go clients skip configurations whose public name exceeds the 253-byte DNS limit.
+	maxECHPublicNameLength = 253
 )
 
 type parsedECHConfig struct {
@@ -28,18 +30,8 @@ type parsedECHConfig struct {
 	publicName        []byte
 }
 
-func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
-	keys, err := UnmarshalECHKeys(data)
-	if err != nil {
-		return nil, err
-	}
-	if len(keys) != 1 {
-		return nil, fmt.Errorf("expected one ECH configuration matching the private key, got %d", len(keys))
-	}
-
-	return &keys[0], nil
-}
-
+// UnmarshalECHKeys parses an RFC 9934 PEM-encoded ECH key, returning one key
+// per configuration matching the private key.
 func UnmarshalECHKeys(data []byte) ([]tls.EncryptedClientHelloKey, error) {
 	privateKeyDER, configList, err := decodeECHPEM(data)
 	if err != nil {
@@ -94,12 +86,14 @@ func UnmarshalECHKeys(data []byte) ([]tls.EncryptedClientHelloKey, error) {
 }
 
 func decodeECHPEM(data []byte) ([]byte, []byte, error) {
+	var sawBlock bool
 	var privateKey, configList []byte
 	for {
 		block, rest := pem.Decode(data)
 		if block == nil {
 			break
 		}
+		sawBlock = true
 
 		switch block.Type {
 		case "PRIVATE KEY":
@@ -108,6 +102,7 @@ func decodeECHPEM(data []byte) ([]byte, []byte, error) {
 			}
 			privateKey = block.Bytes
 		case "ECHCONFIG":
+			// Content after the ECHConfigList block is ignored (RFC 9934, Section 3).
 			configList = block.Bytes
 			data = nil
 			continue
@@ -118,13 +113,20 @@ func decodeECHPEM(data []byte) ([]byte, []byte, error) {
 		data = rest
 	}
 
-	if len(privateKey) == 0 || len(configList) == 0 {
-		return nil, nil, errors.New("missing ECH configuration or private key in PEM file")
+	if !sawBlock {
+		return nil, nil, errors.New("no PEM block in ECH key data: a value that is not an existing file path is treated as inline content")
+	}
+	if len(privateKey) == 0 {
+		return nil, nil, errors.New("missing ECH private key in PEM file: the PRIVATE KEY block must precede the ECHCONFIG block")
+	}
+	if len(configList) == 0 {
+		return nil, nil, errors.New("missing ECH configuration in PEM file")
 	}
 
 	return privateKey, configList, nil
 }
 
+// MarshalECHKey encodes an X25519 ECH key in the RFC 9934 PEM format.
 func MarshalECHKey(key *tls.EncryptedClientHelloKey) ([]byte, error) {
 	if key == nil || len(key.Config) == 0 || len(key.PrivateKey) == 0 {
 		return nil, errors.New("missing ECH configuration or private key")
@@ -172,6 +174,8 @@ func MarshalECHKey(key *tls.EncryptedClientHelloKey) ([]byte, error) {
 	return pemData, nil
 }
 
+// NewECHKey generates an X25519 ECH key with a single configuration for the
+// given public name.
 func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 	if len(publicName) == 0 {
 		return nil, errors.New("public name is empty")
@@ -181,6 +185,10 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 	}
 	if !validECHPublicName([]byte(publicName)) {
 		return nil, fmt.Errorf("invalid ECH public name %q", publicName)
+	}
+	// Go clients skip configurations with a single-label public name.
+	if !strings.Contains(publicName, ".") {
+		return nil, fmt.Errorf("public name %q must contain at least two labels", publicName)
 	}
 
 	kem := hpke.DHKEM(ecdh.X25519())
@@ -229,6 +237,7 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 	}, nil
 }
 
+// ECHConfigToConfigList wraps a single ECHConfig into an ECHConfigList.
 func ECHConfigToConfigList(config []byte) ([]byte, error) {
 	if len(config) == 0 {
 		return nil, errors.New("ECH configuration is empty")
@@ -313,12 +322,21 @@ func parseECHConfig(config []byte) (parsedECHConfig, error) {
 		return parsedECHConfig{}, fmt.Errorf("invalid ECH configuration public name %q", publicName)
 	}
 
+	seenExtensions := make(map[uint16]struct{})
 	for !extensions.Empty() {
 		var extensionType uint16
 		var extensionData cryptobyte.String
 		if !extensions.ReadUint16(&extensionType) || !extensions.ReadUint16LengthPrefixed(&extensionData) {
 			return parsedECHConfig{}, errors.New("invalid ECH configuration extensions")
 		}
+		// Clients ignore configurations with unsupported mandatory extensions (RFC 9849, Section 4.2).
+		if extensionType&0x8000 != 0 {
+			return parsedECHConfig{}, fmt.Errorf("unsupported mandatory ECH configuration extension 0x%04x", extensionType)
+		}
+		if _, duplicate := seenExtensions[extensionType]; duplicate {
+			return parsedECHConfig{}, fmt.Errorf("duplicate ECH configuration extension 0x%04x", extensionType)
+		}
+		seenExtensions[extensionType] = struct{}{}
 	}
 
 	parsed.publicKey = publicKey
