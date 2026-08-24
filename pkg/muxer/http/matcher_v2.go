@@ -78,8 +78,8 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 
 func hostV2(tree *matchersTree, hosts ...string) error {
 	for i, host := range hosts {
-		if !IsASCII(host) {
-			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
+		if !hostOrIP.MatchString(host) {
+			return fmt.Errorf("invalid value for \"Host\" matcher, %q is not a valid hostname or IP", host)
 		}
 
 		hosts[i] = strings.ToLower(host)
