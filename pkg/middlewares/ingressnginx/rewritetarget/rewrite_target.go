@@ -17,6 +17,7 @@ import (
 const (
 	typeName         = "RewriteTarget"
 	xForwardedPrefix = "X-Forwarded-Prefix"
+	xForwardedURI    = "X-Forwarded-Uri"
 )
 
 // This regex is used to remove the capture groups when no regex is provided,
@@ -136,6 +137,12 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			prefix = rt.regexp.ReplaceAllString(currentPath, rt.xForwardedPrefix)
 		}
 		req.Header.Set(xForwardedPrefix, prefix)
+	}
+
+	// Keep the client URI available to downstream middleware, such as the
+	// ingress-nginx forward-auth adapter, before rewriting the request path.
+	if req.Header.Get(xForwardedURI) == "" {
+		req.Header.Set(xForwardedURI, req.URL.RequestURI())
 	}
 
 	// As replacement can introduce escaped characters

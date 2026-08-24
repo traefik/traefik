@@ -619,8 +619,7 @@ func writeHeader(req, forwardReq *http.Request) {
 		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
 	}
 
-	forwardReq.Header.Del(xForwardedURI)
-	if req.URL.RequestURI() != "" {
+	if forwardReq.Header.Get(xForwardedURI) == "" && req.URL.RequestURI() != "" {
 		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
 	}
 }

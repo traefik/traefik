@@ -18,6 +18,8 @@ func TestRewriteTarget(t *testing.T) {
 		expectedPath             string
 		expectedRawPath          string
 		expectedXForwardedPrefix string
+		expectedXForwardedURI    string
+		expectedRequestURI       string
 		expectedStatusCode       int
 		expectedRedirectURL      string
 		expectsError             bool
@@ -72,6 +74,17 @@ func TestRewriteTarget(t *testing.T) {
 				Replacement: "/new/$1",
 			},
 			expectedPath: "/new/bar",
+		},
+		{
+			desc: "preserves original URI for downstream middleware",
+			path: "/application/query?tenant=acme",
+			config: dynamic.RewriteTarget{
+				Regex:       `^/application/(.*)`,
+				Replacement: "/$1",
+			},
+			expectedPath:          "/query",
+			expectedXForwardedURI: "/application/query?tenant=acme",
+			expectedRequestURI:    "/query?tenant=acme",
 		},
 		{
 			desc: "regex with multiple capture groups",
@@ -234,11 +247,12 @@ func TestRewriteTarget(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var actualPath, actualRawPath, actualXForwardedPrefix, requestURI string
+			var actualPath, actualRawPath, actualXForwardedPrefix, actualXForwardedURI, requestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
 				actualRawPath = r.URL.RawPath
 				actualXForwardedPrefix = r.Header.Get(xForwardedPrefix)
+				actualXForwardedURI = r.Header.Get(xForwardedURI)
 				requestURI = r.RequestURI
 			})
 
@@ -275,9 +289,16 @@ func TestRewriteTarget(t *testing.T) {
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedXForwardedPrefix, actualXForwardedPrefix, "Unexpected %s header.", xForwardedPrefix)
+			if test.expectedXForwardedURI != "" {
+				assert.Equal(t, test.expectedXForwardedURI, actualXForwardedURI, "Unexpected %s header.", xForwardedURI)
+			}
 
 			if actualRawPath == "" {
-				assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
+				expectedRequestURI := test.expectedRequestURI
+				if expectedRequestURI == "" {
+					expectedRequestURI = actualPath
+				}
+				assert.Equal(t, expectedRequestURI, requestURI, "Unexpected request URI.")
 			} else {
 				assert.Equal(t, actualRawPath, requestURI, "Unexpected request URI.")
 			}

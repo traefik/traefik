@@ -1581,6 +1581,16 @@ proxy_method $request_method;
 			expectNextCalled:   new(true),
 		},
 		{
+			desc: "forward auth preserves original forwarded URI",
+			requestHeaders: map[string]string{
+				"X-Forwarded-Uri": "/application/query?tenant=acme",
+			},
+			expectedAuthRequestHeaders: map[string]string{
+				"X-Forwarded-Uri": "/application/query?tenant=acme",
+			},
+			expectNextCalled: new(true),
+		},
+		{
 			desc: "auth-snippet set directive creates variable for proxy_set_header",
 			authSnippet: `
 set $auth_token "bearer-token-123";
