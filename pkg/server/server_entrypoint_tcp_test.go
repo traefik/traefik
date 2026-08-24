@@ -1229,13 +1229,13 @@ func TestHeaderNamesStrategiesWarnings(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		config          static.HTTPConfig
-		wantDeprecation bool
-		wantSpoofing    bool
+		wantDeprecation int
+		wantSpoofing    int
 	}{
 		{
 			desc:         "no strategy configured",
 			config:       static.HTTPConfig{},
-			wantSpoofing: true,
+			wantSpoofing: 1,
 		},
 		{
 			desc:   "alias strategy explicitly set to keep",
@@ -1244,7 +1244,7 @@ func TestHeaderNamesStrategiesWarnings(t *testing.T) {
 		{
 			desc:            "alias strategy explicitly set to keep, with the deprecated one",
 			config:          static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyKeep, UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyKeep},
-			wantDeprecation: true,
+			wantDeprecation: 1,
 		},
 		{
 			desc:   "alias strategy set to delete",
@@ -1257,13 +1257,13 @@ func TestHeaderNamesStrategiesWarnings(t *testing.T) {
 		{
 			desc:            "deprecated strategy set to delete",
 			config:          static.HTTPConfig{UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyDelete},
-			wantDeprecation: true,
+			wantDeprecation: 1,
 		},
 		{
 			desc:            "deprecated strategy explicitly set to keep",
 			config:          static.HTTPConfig{UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyKeep},
-			wantDeprecation: true,
-			wantSpoofing:    true,
+			wantDeprecation: 1,
+			wantSpoofing:    1,
 		},
 	}
 
@@ -1291,8 +1291,9 @@ func TestHeaderNamesStrategiesWarnings(t *testing.T) {
 			}, nil)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.wantDeprecation, strings.Contains(buf.String(), "underscoreHeadersStrategy option is deprecated"))
-			assert.Equal(t, test.wantSpoofing, strings.Contains(buf.String(), "aliasHeadersStrategy is not configured"))
+			// The counts guard against logging the warnings once per HTTP server instead of once per entry point.
+			assert.Equal(t, test.wantDeprecation, strings.Count(buf.String(), "underscoreHeadersStrategy option is deprecated"))
+			assert.Equal(t, test.wantSpoofing, strings.Count(buf.String(), "aliasHeadersStrategy is not configured"))
 		})
 	}
 }

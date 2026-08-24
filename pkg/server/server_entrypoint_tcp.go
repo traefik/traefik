@@ -176,6 +176,10 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
+	// The header names strategies warnings are logged here, and not in createHTTPServer,
+	// which is called once for the HTTP server and once for the HTTPS server.
+	logHeaderNamesStrategiesWarnings(ctx, configuration)
+
 	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http server: %w", err)
@@ -207,6 +211,26 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		httpsServer:            httpsServer,
 		http3Server:            h3Server,
 	}, nil
+}
+
+// logHeaderNamesStrategiesWarnings warns about the deprecated underscoreHeadersStrategy option,
+// and about the entry points left without the aliasHeadersStrategy option configured.
+//
+//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
+func logHeaderNamesStrategiesWarnings(ctx context.Context, configuration *static.EntryPoint) {
+	if configuration.HTTP.UnderscoreHeadersStrategy != "" {
+		log.FromContext(ctx).Warn("The underscoreHeadersStrategy option is deprecated, please use the aliasHeadersStrategy option instead. " +
+			"The underscoreHeadersStrategy option only handles the header names containing an underscore character, " +
+			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
+	}
+
+	if configuration.HTTP.AliasHeadersStrategy == "" &&
+		(configuration.HTTP.UnderscoreHeadersStrategy == "" || configuration.HTTP.UnderscoreHeadersStrategy == static.UnderscoreHeadersStrategyKeep) {
+		log.FromContext(ctx).Warn("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
+			"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
+			"names (CGI, WSGI, PHP, NGINX, ...) read them as the header they alias, which allows a client to spoof the headers Traefik manages. " +
+			"Please set it to delete or reject on the entry points fronting such backends.")
+	}
 }
 
 // Start starts the TCP server.
@@ -600,22 +624,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	handler = normalizePath(handler)
 
 	handler = denyFragment(handler)
-
-	//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
-	if configuration.HTTP.UnderscoreHeadersStrategy != "" {
-		log.FromContext(ctx).Warn("The underscoreHeadersStrategy option is deprecated, please use the aliasHeadersStrategy option instead. " +
-			"The underscoreHeadersStrategy option only handles the header names containing an underscore character, " +
-			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
-	}
-
-	//nolint:staticcheck // Support of the deprecated underscoreHeadersStrategy option.
-	if configuration.HTTP.AliasHeadersStrategy == "" &&
-		(configuration.HTTP.UnderscoreHeadersStrategy == "" || configuration.HTTP.UnderscoreHeadersStrategy == static.UnderscoreHeadersStrategyKeep) {
-		log.FromContext(ctx).Warn("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
-			"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
-			"names (CGI, WSGI, PHP, NGINX, ...) read them as the header they alias, which allows a client to spoof the headers Traefik manages. " +
-			"Please set it to delete or reject on the entry points fronting such backends.")
-	}
 
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
