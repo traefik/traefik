@@ -11,14 +11,12 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"strings"
 
 	"golang.org/x/crypto/cryptobyte"
 )
 
 const (
-	echConfigVersion = 0xfe0d
-	// Go clients skip configurations whose public name exceeds the 253-byte DNS limit.
+	echConfigVersion       = 0xfe0d
 	maxECHPublicNameLength = 253
 )
 
@@ -186,15 +184,8 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 	if len(publicName) == 0 {
 		return nil, errors.New("public name is empty")
 	}
-	if len(publicName) > maxECHPublicNameLength {
-		return nil, fmt.Errorf("public name exceeds maximum length of %d bytes", maxECHPublicNameLength)
-	}
 	if !validECHPublicName([]byte(publicName)) {
 		return nil, fmt.Errorf("invalid ECH public name %q", publicName)
-	}
-	// Go clients skip configurations with a single-label public name.
-	if !strings.Contains(publicName, ".") {
-		return nil, fmt.Errorf("public name %q must contain at least two labels", publicName)
 	}
 
 	kem := hpke.DHKEM(ecdh.X25519())
@@ -241,6 +232,16 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 		PrivateKey:  privateKeyBytes,
 		SendAsRetry: true,
 	}, nil
+}
+
+// ECHPublicName returns the public name of the ECH key configuration.
+func ECHPublicName(key tls.EncryptedClientHelloKey) (string, bool) {
+	parsed, err := parseECHConfig(key.Config)
+	if err != nil || parsed.version != echConfigVersion {
+		return "", false
+	}
+
+	return string(parsed.publicName), true
 }
 
 // ECHConfigToConfigList wraps a single ECHConfig into an ECHConfigList.
@@ -352,48 +353,31 @@ func parseECHConfig(config []byte) (parsedECHConfig, error) {
 }
 
 func validECHPublicName(name []byte) bool {
+	// Stricter than RFC 9849's 255-byte bound: Go clients skip names above the 253-byte DNS limit or with a single label.
+	if len(name) > maxECHPublicNameLength || !bytes.ContainsRune(name, '.') {
+		return false
+	}
+
 	labels := bytes.Split(name, []byte{'.'})
 	for _, label := range labels {
-		if len(label) == 0 || len(label) > 63 || !isASCIILetterOrDigit(label[0]) || !isASCIILetterOrDigit(label[len(label)-1]) {
+		if len(label) == 0 || len(label) > 63 || label[0] == '-' || label[len(label)-1] == '-' {
 			return false
 		}
-		if len(label) > 1 {
-			for _, character := range label[1 : len(label)-1] {
-				if !isASCIILetterOrDigit(character) && character != '-' {
-					return false
-				}
+		for _, c := range label {
+			if (c < '0' || c > '9') && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && c != '-' {
+				return false
 			}
 		}
 	}
 
+	// Reject IPv4-shaped names: an all-digit final label, or "0x" plus hexadecimal digits (RFC 9849, Section 6.1.7).
 	finalLabel := labels[len(labels)-1]
-	if allASCII(finalLabel, isASCIIDigit) {
+	if len(bytes.Trim(finalLabel, "0123456789")) == 0 {
 		return false
 	}
-	if len(finalLabel) >= 2 && bytes.EqualFold(finalLabel[:2], []byte("0x")) && allASCII(finalLabel[2:], isASCIIHexDigit) {
+	if len(finalLabel) >= 2 && bytes.EqualFold(finalLabel[:2], []byte("0x")) && len(bytes.Trim(finalLabel[2:], "0123456789abcdefABCDEF")) == 0 {
 		return false
 	}
 
 	return true
-}
-
-func allASCII(value []byte, predicate func(byte) bool) bool {
-	for _, character := range value {
-		if !predicate(character) {
-			return false
-		}
-	}
-	return true
-}
-
-func isASCIILetterOrDigit(character byte) bool {
-	return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || isASCIIDigit(character)
-}
-
-func isASCIIDigit(character byte) bool {
-	return character >= '0' && character <= '9'
-}
-
-func isASCIIHexDigit(character byte) bool {
-	return isASCIIDigit(character) || character >= 'a' && character <= 'f' || character >= 'A' && character <= 'F'
 }
