@@ -105,7 +105,7 @@ additionalArguments:
 | <a id="opt-http-encodedCharacters-allowEncodedQuestionMark" href="#opt-http-encodedCharacters-allowEncodedQuestionMark" title="#opt-http-encodedCharacters-allowEncodedQuestionMark">`http.encodedCharacters.`<br />`allowEncodedQuestionMark`</a> | Defines whether requests with encoded question mark characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | true                                                               | No       |
 | <a id="opt-http-encodedCharacters-allowEncodedHash" href="#opt-http-encodedCharacters-allowEncodedHash" title="#opt-http-encodedCharacters-allowEncodedHash">`http.encodedCharacters.`<br />`allowEncodedHash`</a> | Defines whether requests with encoded hash characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | true                                                               | No       |
 | <a id="opt-http-encodeQuerySemicolons" href="#opt-http-encodeQuerySemicolons" title="#opt-http-encodeQuerySemicolons">`http.encodeQuerySemicolons`</a> | Enable query semicolons encoding. <br /> Use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Traefik. <br /> When using this option, the non-encoded semicolons characters in query will be transmitted encoded to the backend.<br /> More information [here](#encodequerysemicolons).                                                                                                                                                                                                                                                                                                                                               | false                                                              | No       |
-| <a id="opt-http-underscoreHeadersStrategy" href="#opt-http-underscoreHeadersStrategy" title="#opt-http-underscoreHeadersStrategy">`http.underscoreHeadersStrategy`</a> | Defines the strategy to handle requests with headers with underscores (keep, delete, and reject).<br /> More information [here](#underscoreheadersstrategy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | keep                                                               | No       |
+| <a id="opt-http-aliasHeadersStrategy" href="#opt-http-aliasHeadersStrategy" title="#opt-http-aliasHeadersStrategy">`http.aliasHeadersStrategy`</a> | Defines the strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject).<br /> More information [here](#aliasheadersstrategy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | keep                                                               | No       |
 | <a id="opt-http-sanitizePath" href="#opt-http-sanitizePath" title="#opt-http-sanitizePath">`http.sanitizePath`</a> | Defines whether to enable the request path sanitization.<br /> More information [here](#sanitizepath).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | true                                                               | No       |
 | <a id="opt-http-maxHeaderBytes" href="#opt-http-maxHeaderBytes" title="#opt-http-maxHeaderBytes">`http.maxHeaderBytes`</a> | Set the maximum size of request headers in bytes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | 1048576                                                            | No       |
 | <a id="opt-http-middlewares" href="#opt-http-middlewares" title="#opt-http-middlewares">`http.middlewares`</a> | Set the list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point. <br />More information [here](#httpmiddlewares).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | -                                                                  | No       |
@@ -248,31 +248,43 @@ Behavior examples:
 | <a id="opt-false-2" href="#opt-false-2" title="#opt-false-2">false</a> | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
 | <a id="opt-true-2" href="#opt-true-2" title="#opt-true-2">true</a> | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
 
-### underscoreHeadersStrategy
+### aliasHeadersStrategy
 
 _Optional, Default=keep_
 
-The `underscoreHeadersStrategy` option defines how request headers with underscores in their names are handled before routing:
+The `aliasHeadersStrategy` option defines how the request headers whose name aliases another header name are handled before routing:
 
-- `keep`: request headers with underscores are forwarded as is (default).
-- `delete`: any request header whose name contains an underscore character is silently removed from the request.
-- `reject`: any request carrying a header whose name contains an underscore character is rejected with a `400 Bad Request` response.
+- `keep`: request headers with an aliasing name are forwarded as is (default).
+- `delete`: any request header whose name contains a character which is neither a letter, a digit, nor a dash is silently removed from the request.
+- `reject`: any request carrying a header whose name contains a character which is neither a letter, a digit, nor a dash is rejected with a `400 Bad Request` response.
 
-Underscores are valid characters in HTTP header names, but Go canonicalizes header names only on dashes, so a middleware
-managing a header in its dash form (e.g. `X-Auth-User` with the ForwardAuth `authResponseHeaders` option) cannot see or remove an underscore variant (e.g. `X_Auth_User`).
+Go canonicalizes header names on dashes only, so it handles `X-Auth-User`, `X_Auth_User` and `X.Auth.User` as three
+distinct headers, while the backends deriving their variable names from the header names (CGI, WSGI, PHP, NGINX, ...)
+read them all as the same `HTTP_X_AUTH_USER` variable.
+
+Underscores and dots are not the only characters concerned: every character HTTP allows in a header name except the
+letters, the digits and the dash builds such an alias, that is `!`, `#`, `$`, `%`, `&`, `'`, `*`, `+`, `.`, `^`, `_`,
+`` ` ``, `|` and `~`. See the [Headers with Aliasing Names](../../security/header-aliases.md) security documentation
+for more details.
+
+The middlewares managing request headers (e.g. the ForwardAuth `authResponseHeaders` option) only manage the canonical
+form of the headers they set, and rely on this option to not be spoofed with an aliasing name.
+Traefik logs a warning at startup for every entry point left without this option configured.
 
 !!! warning "Security"
 
-    Backends mapping both forms to the same variable (CGI, WSGI, PHP, ...) can be spoofed with the underscore variant of a managed header.
-    Setting the `underscoreHeadersStrategy` option to `delete` or `reject` is recommended when such backends are exposed.
-    See the [Headers with Underscores](../../security/header-underscores.md) security documentation for more details.
+    Backends normalizing the header names can be spoofed with an aliasing name of a header they trust.
+    Setting the `aliasHeadersStrategy` option to `delete` or `reject` is recommended when such backends are exposed.
+
+    The `delete` and `reject` strategies apply to every request header: a legitimate header whose name contains
+    such a character (e.g. `X_Request_Id`) is dropped or rejected as well.
 
 ```yaml tab="File (YAML)"
 entryPoints:
   websecure:
     address: ':443'
     http:
-      underscoreHeadersStrategy: delete
+      aliasHeadersStrategy: delete
 ```
 
 ```toml tab="File (TOML)"
@@ -280,13 +292,21 @@ entryPoints:
   address = ":443"
 
   [entryPoints.websecure.http]
-    underscoreHeadersStrategy = "delete"
+    aliasHeadersStrategy = "delete"
 ```
 
 ```bash tab="CLI"
 --entryPoints.websecure.address=:443
---entryPoints.websecure.http.underscoreHeadersStrategy=delete
+--entryPoints.websecure.http.aliasHeadersStrategy=delete
 ```
+
+#### Examples
+
+| AliasHeadersStrategy | Request Headers                                                         | Result                                                                                    |
+|----------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| <a id="opt-keep" href="#opt-keep" title="#opt-keep">keep</a> | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` reach the backend |
+| <a id="opt-delete" href="#opt-delete" title="#opt-delete">delete</a> | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` | Only `X-Auth-User: legit` reaches the backend                                             |
+| <a id="opt-reject" href="#opt-reject" title="#opt-reject">reject</a> | `X-Auth-User: legit` <br> `X.Auth.User: spoof` <br> `X!Auth!User: spoof` | Request rejected with `400 Bad Request`                                                   |
 
 ### sanitizePath
 

@@ -101,7 +101,7 @@ set it, so forging it is the attack.
 **Our position.** The same architecture as forwarded headers, for the same reason: **request header
 sanitisation is an entrypoint concern, not a per-middleware one.** A middleware removes the canonical
 spelling of the header it is about to set. Alternative spellings that a backend folds onto that same name
-are handled once, before routing, through the entrypoint's `underscoreHeadersStrategy`.
+are handled once, before routing, through the entrypoint's `aliasHeadersStrategy`.
 
 The underlying mismatch is worth stating, because it is what makes the class non-obvious: Go canonicalises
 header names on `-` only, while backends that derive variable names from header names (CGI, WSGI, PHP,
