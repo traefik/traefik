@@ -1,5 +1,4 @@
-// Package ech provides utilities for generating and working with
-// Encrypted Client Hello (ECH) keys.
+// Package ech provides utilities for generating Encrypted Client Hello keys.
 package ech
 
 import (
@@ -9,8 +8,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
-// Generate creates a new ECH key for the given public name (SNI) and writes
-// the PEM-encoded result to the provided writer.
+// Generate creates a new ECH key for the given public name and writes it as PEM.
 func Generate(w io.Writer, publicName string) error {
 	key, err := tls.NewECHKey(publicName)
 	if err != nil {
@@ -26,16 +24,5 @@ func Generate(w io.Writer, publicName string) error {
 		return fmt.Errorf("failed to write ECH key for %s: %w", publicName, err)
 	}
 
-	return nil
-}
-
-// GenerateMultiple creates ECH keys for multiple public names and writes
-// all PEM-encoded results to the provided writer.
-func GenerateMultiple(w io.Writer, publicNames []string) error {
-	for _, name := range publicNames {
-		if err := Generate(w, name); err != nil {
-			return err
-		}
-	}
 	return nil
 }

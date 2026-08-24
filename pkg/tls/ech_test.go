@@ -1,87 +1,35 @@
 package tls
 
 import (
+	"crypto/ecdh"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/base64"
+	"encoding/binary"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// ECHRequestConfig is a configuration struct for making ECH-enabled requests.
-// This is only used for testing purposes.
-type ECHRequestConfig[T []byte | string] struct {
-	URL      string
-	Host     string
-	ECH      T
-	Insecure bool
-}
-
-// RequestWithECH sends a GET request to a server using the provided ECH configuration.
-// This is only used for testing purposes.
-func RequestWithECH[T []byte | string](c ECHRequestConfig[T]) (body []byte, err error) {
-	// Decode the ECH configuration from base64 if it's a string, otherwise use it directly.
-	var ech []byte
-	if s, ok := any(c.ECH).(string); ok {
-		ech, err = base64.StdEncoding.DecodeString(s)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		ech = []byte(c.ECH)
-	}
-
-	requestURL, err := url.Parse(c.URL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
-	}
-
-	if c.Host == "" {
-		c.Host = requestURL.Hostname()
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				ServerName:                     c.Host,
-				EncryptedClientHelloConfigList: ech,
-				MinVersion:                     tls.VersionTLS13,
-				InsecureSkipVerify:             c.Insecure,
-			},
-		},
-	}
-
-	req := &http.Request{
-		Method: http.MethodGet,
-		URL:    requestURL,
-		Host:   c.Host,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	return body, nil
-}
+const rfc9934ECHKey = `-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V
+-----END PRIVATE KEY-----
+-----BEGIN ECHCONFIG-----
+AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
+AQALZXhhbXBsZS5jb20AAA==
+-----END ECHCONFIG-----
+`
 
 func TestNewECHKey(t *testing.T) {
 	testCases := []struct {
@@ -90,16 +38,40 @@ func TestNewECHKey(t *testing.T) {
 		expectError bool
 	}{
 		{
-			desc:       "valid short public name",
+			desc:       "valid public name",
 			publicName: "server.local",
 		},
 		{
-			desc:       "valid public name at max length",
-			publicName: "abcdefghijklmnopqrstuvwxyz012345", // 32 chars
+			desc:       "public name longer than maximum name length",
+			publicName: "a-long-public-name-for-ech.example.com",
 		},
 		{
-			desc:        "public name exceeds max length",
-			publicName:  "abcdefghijklmnopqrstuvwxyz0123456", // 33 chars
+			desc:        "empty public name",
+			expectError: true,
+		},
+		{
+			desc:        "public name exceeds encoding limit",
+			publicName:  strings.Repeat("a", maxECHPublicNameLength+1),
+			expectError: true,
+		},
+		{
+			desc:        "public name contains empty label",
+			publicName:  "server..example.com",
+			expectError: true,
+		},
+		{
+			desc:        "public name contains invalid label",
+			publicName:  "server_name.example.com",
+			expectError: true,
+		},
+		{
+			desc:        "public name is IPv4-like",
+			publicName:  "127.0.0.1",
+			expectError: true,
+		},
+		{
+			desc:        "public name ends with hexadecimal IPv4-like label",
+			publicName:  "server.0xdeadbeef",
 			expectError: true,
 		},
 	}
@@ -108,77 +80,93 @@ func TestNewECHKey(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			echKey, err := NewECHKey(test.publicName)
-
+			key, err := NewECHKey(test.publicName)
 			if test.expectError {
 				require.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.NotEmpty(t, echKey.Config)
-			assert.NotEmpty(t, echKey.PrivateKey)
-			assert.True(t, echKey.SendAsRetry)
+			assert.NotEmpty(t, key.Config)
+			assert.Len(t, key.PrivateKey, 32)
+			assert.True(t, key.SendAsRetry)
+
+			parsed, err := parseECHConfig(key.Config)
+			require.NoError(t, err)
+			assert.Zero(t, parsed.maximumNameLength)
+			assert.Equal(t, test.publicName, string(parsed.publicName))
 		})
 	}
 }
 
 func TestMarshalUnmarshalECHKey(t *testing.T) {
-	testCases := []struct {
-		desc       string
-		publicName string
-	}{
-		{
-			desc:       "standard domain",
-			publicName: "server.local",
-		},
-		{
-			desc:       "subdomain",
-			publicName: "api.example.com",
-		},
-	}
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	data, err := MarshalECHKey(key)
+	require.NoError(t, err)
 
-			echKey, err := NewECHKey(test.publicName)
-			require.NoError(t, err)
+	privateKeyBlock, rest := pem.Decode(data)
+	require.NotNil(t, privateKeyBlock)
+	assert.Equal(t, "PRIVATE KEY", privateKeyBlock.Type)
+	parsedPrivateKey, err := x509.ParsePKCS8PrivateKey(privateKeyBlock.Bytes)
+	require.NoError(t, err)
+	assert.IsType(t, &ecdh.PrivateKey{}, parsedPrivateKey)
 
-			echKeyBytes, err := MarshalECHKey(echKey)
-			require.NoError(t, err)
-			assert.NotEmpty(t, echKeyBytes)
+	configBlock, _ := pem.Decode(rest)
+	require.NotNil(t, configBlock)
+	assert.Equal(t, "ECHCONFIG", configBlock.Type)
+	assert.Equal(t, len(configBlock.Bytes)-2, int(binary.BigEndian.Uint16(configBlock.Bytes)))
 
-			newKey, err := UnmarshalECHKey(echKeyBytes)
-			require.NoError(t, err)
-
-			assert.Equal(t, echKey.Config, newKey.Config)
-			assert.Equal(t, echKey.PrivateKey, newKey.PrivateKey)
-			assert.True(t, newKey.SendAsRetry)
-		})
-	}
+	decoded, err := UnmarshalECHKey(data)
+	require.NoError(t, err)
+	assert.Equal(t, key.Config, decoded.Config)
+	assert.Equal(t, key.PrivateKey, decoded.PrivateKey)
+	assert.True(t, decoded.SendAsRetry)
 }
 
-func TestMarshalECHKey_Errors(t *testing.T) {
+func TestUnmarshalECHKeyRFC9934(t *testing.T) {
+	key, err := UnmarshalECHKey([]byte(rfc9934ECHKey))
+	require.NoError(t, err)
+
+	assert.NotEmpty(t, key.Config)
+	assert.Len(t, key.PrivateKey, 32)
+	assert.True(t, key.SendAsRetry)
+}
+
+func TestMarshalECHKeyErrors(t *testing.T) {
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
+	otherKey, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
 	testCases := []struct {
 		desc string
 		key  *tls.EncryptedClientHelloKey
 	}{
 		{
+			desc: "nil key",
+		},
+		{
 			desc: "missing config",
-			key: &tls.EncryptedClientHelloKey{
-				PrivateKey: []byte("some-key"),
-			},
+			key:  &tls.EncryptedClientHelloKey{PrivateKey: key.PrivateKey},
 		},
 		{
 			desc: "missing private key",
-			key: &tls.EncryptedClientHelloKey{
-				Config: []byte("some-config"),
-			},
+			key:  &tls.EncryptedClientHelloKey{Config: key.Config},
 		},
 		{
-			desc: "both missing",
-			key:  &tls.EncryptedClientHelloKey{},
+			desc: "invalid private key",
+			key:  &tls.EncryptedClientHelloKey{Config: key.Config, PrivateKey: []byte("invalid")},
+		},
+		{
+			desc: "invalid config",
+			key:  &tls.EncryptedClientHelloKey{Config: []byte("invalid"), PrivateKey: key.PrivateKey},
+		},
+		{
+			desc: "mismatched key",
+			key:  &tls.EncryptedClientHelloKey{Config: key.Config, PrivateKey: otherKey.PrivateKey},
 		},
 	}
 
@@ -192,44 +180,69 @@ func TestMarshalECHKey_Errors(t *testing.T) {
 	}
 }
 
-func TestUnmarshalECHKey_Errors(t *testing.T) {
+func TestUnmarshalECHKeyErrors(t *testing.T) {
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
+	data, err := MarshalECHKey(key)
+	require.NoError(t, err)
+	privateKeyDER, configList := decodeECHBlocks(t, data)
+
+	otherKey, err := NewECHKey("server.local")
+	require.NoError(t, err)
+	otherConfigList, err := ECHConfigToConfigList(otherKey.Config)
+	require.NoError(t, err)
+	invalidNameConfig := append([]byte(nil), key.Config...)
+	copy(invalidNameConfig[len(invalidNameConfig)-14:len(invalidNameConfig)-2], "server_local")
+	invalidNameConfigList, err := ECHConfigToConfigList(invalidNameConfig)
+	require.NoError(t, err)
+
 	testCases := []struct {
 		desc string
 		data []byte
 	}{
 		{
 			desc: "empty data",
-			data: []byte{},
 		},
 		{
-			desc: "invalid PEM",
-			data: []byte("not a valid PEM"),
-		},
-		{
-			desc: "unknown PEM block type",
+			desc: "unknown PEM block",
 			data: pem.EncodeToMemory(&pem.Block{Type: "UNKNOWN", Bytes: []byte("data")}),
 		},
 		{
 			desc: "missing private key",
-			data: func() []byte {
-				// Create ECHCONFIG block with length prefix
-				configBytes := append([]byte{0, 4}, []byte("test")...)
-				return pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configBytes})
-			}(),
+			data: encodeECHPEM(nil, configList),
 		},
 		{
 			desc: "missing config",
-			data: pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: make([]byte, 32)}),
+			data: encodeECHPEM(privateKeyDER, nil),
 		},
 		{
-			desc: "private key too short",
-			data: func() []byte {
-				var pemData []byte
-				pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: make([]byte, 16)})...)
-				configBytes := append([]byte{0, 4}, []byte("test")...)
-				pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configBytes})...)
-				return pemData
-			}(),
+			desc: "raw private key instead of PKCS8",
+			data: encodeECHPEM(make([]byte, 32), configList),
+		},
+		{
+			desc: "configuration list shorter than length prefix",
+			data: encodeECHPEM(privateKeyDER, []byte{0}),
+		},
+		{
+			desc: "configuration list length mismatch",
+			data: encodeECHPEM(privateKeyDER, append([]byte{0, 1}, key.Config...)),
+		},
+		{
+			desc: "empty configuration list",
+			data: encodeECHPEM(privateKeyDER, []byte{0, 0}),
+		},
+		{
+			desc: "truncated configuration",
+			data: encodeECHPEM(privateKeyDER, []byte{0, 4, 0xfe, 0x0d, 0, 1}),
+		},
+		{
+			desc: "configuration does not match key",
+			data: encodeECHPEM(privateKeyDER, otherConfigList),
+		},
+		{
+			desc: "invalid public name",
+			data: encodeECHPEM(privateKeyDER, invalidNameConfigList),
 		},
 	}
 
@@ -243,199 +256,160 @@ func TestUnmarshalECHKey_Errors(t *testing.T) {
 	}
 }
 
+func TestUnmarshalECHKeys(t *testing.T) {
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
+	data, err := MarshalECHKey(key)
+	require.NoError(t, err)
+	privateKeyDER, _ := decodeECHBlocks(t, data)
+
+	secondConfig := append([]byte(nil), key.Config...)
+	secondConfig[4]++
+	configList := encodeECHConfigList(t, key.Config, secondConfig)
+
+	keys, err := UnmarshalECHKeys(encodeECHPEM(privateKeyDER, configList))
+	require.NoError(t, err)
+	require.Len(t, keys, 2)
+	assert.Equal(t, key.Config, keys[0].Config)
+	assert.Equal(t, secondConfig, keys[1].Config)
+	assert.Equal(t, keys[0].PrivateKey, keys[1].PrivateKey)
+	assert.True(t, keys[0].SendAsRetry)
+	assert.True(t, keys[1].SendAsRetry)
+}
+
 func TestECHConfigToConfigList(t *testing.T) {
-	testCases := []struct {
-		desc   string
-		config []byte
-	}{
-		{
-			desc:   "empty config",
-			config: []byte{},
-		},
-		{
-			desc:   "simple config",
-			config: []byte{0x01, 0x02, 0x03, 0x04},
-		},
-	}
+	config := []byte{0x01, 0x02, 0x03, 0x04}
+	configList, err := ECHConfigToConfigList(config)
+	require.NoError(t, err)
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	assert.Equal(t, []byte{0, 4, 1, 2, 3, 4}, configList)
 
-			configList, err := ECHConfigToConfigList(test.config)
-			require.NoError(t, err)
+	_, err = ECHConfigToConfigList(nil)
+	require.Error(t, err)
 
-			// Config list should have 2-byte length prefix followed by the config
-			expectedLen := 2 + len(test.config)
-			assert.Len(t, configList, expectedLen)
-		})
-	}
+	_, err = ECHConfigToConfigList(make([]byte, 1<<16))
+	require.Error(t, err)
+}
+
+func TestBuildTLSConfigWithECH(t *testing.T) {
+	config, err := buildTLSConfig(Options{
+		MinVersion: "VersionTLS13",
+		ECHKeys:    []types.FileOrContent{rfc9934ECHKey},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, uint16(tls.VersionTLS13), config.MinVersion)
+	require.Len(t, config.EncryptedClientHelloKeys, 1)
+	assert.True(t, config.EncryptedClientHelloKeys[0].SendAsRetry)
 }
 
 func TestRequestWithECH(t *testing.T) {
-	const commonName = "server.local"
+	const publicName = "server.local"
 
-	echKey, err := NewECHKey(commonName)
+	key, err := NewECHKey(publicName)
 	require.NoError(t, err)
 
-	testCert, err := generateTestCert(commonName)
+	certificate, err := generateTestCert(publicName)
 	require.NoError(t, err)
 
-	echConfigList, err := ECHConfigToConfigList(echKey.Config)
+	configList, err := ECHConfigToConfigList(key.Config)
 	require.NoError(t, err)
 
-	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello, ECH-enabled TLS server!")
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		assert.True(t, request.TLS.ECHAccepted)
+		_, _ = fmt.Fprint(w, "ECH accepted")
 	}))
-
 	server.TLS = &tls.Config{
-		Certificates:             []tls.Certificate{testCert},
+		Certificates:             []tls.Certificate{certificate},
 		MinVersion:               tls.VersionTLS13,
-		EncryptedClientHelloKeys: []tls.EncryptedClientHelloKey{*echKey},
+		EncryptedClientHelloKeys: []tls.EncryptedClientHelloKey{*key},
 	}
-
 	server.StartTLS()
 	t.Cleanup(server.Close)
 
-	testCases := []struct {
-		desc         string
-		config       ECHRequestConfig[[]byte]
-		expectedBody string
-		expectError  bool
-	}{
-		{
-			desc: "successful ECH request with bytes",
-			config: ECHRequestConfig[[]byte]{
-				URL:      server.URL + "/",
-				Host:     commonName,
-				ECH:      echConfigList,
-				Insecure: true,
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				ServerName:                     publicName,
+				MinVersion:                     tls.VersionTLS13,
+				EncryptedClientHelloConfigList: configList,
+				InsecureSkipVerify:             true,
 			},
-			expectedBody: "Hello, ECH-enabled TLS server!",
 		},
 	}
+	response, err := client.Get(server.URL)
+	require.NoError(t, err)
+	defer response.Body.Close()
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			response, err := RequestWithECH(test.config)
-
-			if test.expectError {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedBody, string(response))
-		})
-	}
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
 
-func TestRequestWithECH_StringConfig(t *testing.T) {
-	const commonName = "server.local"
+func decodeECHBlocks(t *testing.T, data []byte) ([]byte, []byte) {
+	t.Helper()
 
-	echKey, err := NewECHKey(commonName)
-	require.NoError(t, err)
+	privateKeyBlock, rest := pem.Decode(data)
+	require.NotNil(t, privateKeyBlock)
+	configBlock, _ := pem.Decode(rest)
+	require.NotNil(t, configBlock)
 
-	testCert, err := generateTestCert(commonName)
-	require.NoError(t, err)
-
-	echConfigList, err := ECHConfigToConfigList(echKey.Config)
-	require.NoError(t, err)
-
-	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello from string config!")
-	}))
-
-	server.TLS = &tls.Config{
-		Certificates:             []tls.Certificate{testCert},
-		MinVersion:               tls.VersionTLS13,
-		EncryptedClientHelloKeys: []tls.EncryptedClientHelloKey{*echKey},
-	}
-
-	server.StartTLS()
-	t.Cleanup(server.Close)
-
-	// Test with base64-encoded string config
-	echConfigBase64 := base64.StdEncoding.EncodeToString(echConfigList)
-
-	response, err := RequestWithECH(ECHRequestConfig[string]{
-		URL:      server.URL + "/",
-		Host:     commonName,
-		ECH:      echConfigBase64,
-		Insecure: true,
-	})
-
-	require.NoError(t, err)
-	assert.Equal(t, "Hello from string config!", string(response))
+	return privateKeyBlock.Bytes, configBlock.Bytes
 }
 
-func TestRequestWithECH_Errors(t *testing.T) {
-	testCases := []struct {
-		desc   string
-		config ECHRequestConfig[string]
-	}{
-		{
-			desc: "invalid base64 ECH config",
-			config: ECHRequestConfig[string]{
-				URL: "https://localhost:12345/",
-				ECH: "not-valid-base64!!!",
-			},
-		},
-		{
-			desc: "invalid URL",
-			config: ECHRequestConfig[string]{
-				URL: "://invalid-url",
-				ECH: "dGVzdA==",
-			},
-		},
+func encodeECHPEM(privateKey, configList []byte) []byte {
+	var data []byte
+	if privateKey != nil {
+		data = append(data, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privateKey})...)
+	}
+	if configList != nil {
+		data = append(data, pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configList})...)
 	}
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	return data
+}
 
-			_, err := RequestWithECH(test.config)
-			require.Error(t, err)
-		})
+func encodeECHConfigList(t *testing.T, configs ...[]byte) []byte {
+	t.Helper()
+
+	var contents []byte
+	for _, config := range configs {
+		contents = append(contents, config...)
 	}
+	require.LessOrEqual(t, len(contents), int(^uint16(0)))
+
+	configList := make([]byte, 2+len(contents))
+	binary.BigEndian.PutUint16(configList, uint16(len(contents)))
+	copy(configList[2:], contents)
+
+	return configList
 }
 
 func generateTestCert(commonName string) (tls.Certificate, error) {
-	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("failed to generate RSA key: %w", err)
+		return tls.Certificate{}, fmt.Errorf("generating RSA key: %w", err)
 	}
 
-	keyBytes := x509.MarshalPKCS1PrivateKey(rsaKey)
-	keyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: keyBytes,
-	})
-
 	notBefore := time.Now()
-	notAfter := notBefore.Add(24 * time.Hour)
-
 	template := x509.Certificate{
 		SerialNumber:          big.NewInt(1),
 		Subject:               pkix.Name{CommonName: commonName},
 		DNSNames:              []string{commonName, "localhost"},
 		SignatureAlgorithm:    x509.SHA256WithRSA,
 		NotBefore:             notBefore,
-		NotAfter:              notAfter,
+		NotAfter:              notBefore.Add(24 * time.Hour),
 		BasicConstraintsValid: true,
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &rsaKey.PublicKey, rsaKey)
+	certificateDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("failed to create certificate: %w", err)
+		return tls.Certificate{}, fmt.Errorf("creating certificate: %w", err)
 	}
 
-	certPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: derBytes,
-	})
+	certificatePEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certificateDER})
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
 
-	return tls.X509KeyPair(certPEM, keyPEM)
+	return tls.X509KeyPair(certificatePEM, privateKeyPEM)
 }
