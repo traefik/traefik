@@ -5991,7 +5991,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-backend",
 							Middlewares: []string{"default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -6057,7 +6057,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -9744,7 +9744,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0": {
@@ -9838,9 +9838,228 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			// Regression test for a TLS option name collision: with only the secret name
+			// length-prefixed, ns=a/secret=1-b and ns=a-3/secret=b concatenate to the identical
+			// pre-Normalize string ("a-3-1-b-require-and-verify-client-cert" both ways), so two
+			// unrelated Ingresses in different namespaces would resolve to the same cached TLS
+			// option and silently share one another's CA. Both the namespace and the secret name
+			// must be length-prefixed to keep the two distinct.
+			desc: "Auth TLS secret namespace collision",
+			paths: []string{
+				"secrets-tls-option-namespace-collision.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-namespace-collision.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("tls-option-collision-victim.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0-tls-retry"},
+							Service:     "a-ingress-with-auth-tls-secret-namespace-collision-victim-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "a",
+										IngressName: "ingress-with-auth-tls-secret-namespace-collision-victim",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "a-1-1-b-3-require-and-verify-client-cert",
+							},
+						},
+						"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("tls-option-collision-victim.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0-retry"},
+							Service:     "a-ingress-with-auth-tls-secret-namespace-collision-victim-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "a",
+										IngressName: "ingress-with-auth-tls-secret-namespace-collision-victim",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("tls-option-collision-attacker.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0-tls-retry"},
+							Service:     "a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "a-3",
+										IngressName: "ingress-with-auth-tls-secret-namespace-collision-attacker",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "a-3-3-b-1-require-and-verify-client-cert",
+							},
+						},
+						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("tls-option-collision-attacker.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0-retry"},
+							Service:     "a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "a-3",
+										IngressName: "ingress-with-auth-tls-secret-namespace-collision-attacker",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"a-ingress-with-auth-tls-secret-namespace-collision-victim-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"a-ingress-with-auth-tls-secret-namespace-collision-victim-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"a-ingress-with-auth-tls-secret-namespace-collision-victim": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"a-3-ingress-with-auth-tls-secret-namespace-collision-attacker": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"a-1-1-b-3-require-and-verify-client-cert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----VICTIM-----END CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+						"a-3-3-b-1-require-and-verify-client-cert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----ATTACKER-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
 							},
 							CipherSuites: []string{
@@ -9896,7 +10115,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-verify-client-cert-if-given",
+								Options: "default-7-ca-secret-9-verify-client-cert-if-given",
 							},
 						},
 						"default-ingress-with-auth-tls-verify-client-rule-0-path-0": {
@@ -9990,7 +10209,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-9-ca-secret-verify-client-cert-if-given": {
+						"default-7-ca-secret-9-verify-client-cert-if-given": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
@@ -10048,7 +10267,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-protected-ingress-rule-0-path-0": {
@@ -10088,7 +10307,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-same-host-second-ingress-rule-0-path-0": {
@@ -10226,7 +10445,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -12941,7 +13160,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-require-and-verify-client-cert",
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0": {
@@ -13042,7 +13261,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-9-ca-secret-require-and-verify-client-cert": {
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -18295,7 +18514,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-9-ca-secret-request-client-cert",
+								Options: "default-7-ca-secret-9-request-client-cert",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -18381,7 +18600,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-9-ca-secret-request-client-cert": {
+						"default-7-ca-secret-9-request-client-cert": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequestClientCert,
