@@ -326,7 +326,8 @@ func TestUnmarshalECHKeys(t *testing.T) {
 	secondConfig[4]++
 	unknownVersionConfig := append([]byte(nil), key.Config...)
 	unknownVersionConfig[1]++
-	configList := encodeECHConfigList(t, unknownVersionConfig, key.Config, secondConfig)
+	unsupportedMandatoryConfig := configWithExtensions(t, key.Config, []byte{0x80, 0x01, 0x00, 0x00})
+	configList := encodeECHConfigList(t, unknownVersionConfig, unsupportedMandatoryConfig, key.Config, secondConfig)
 
 	keys, err := UnmarshalECHKeys(encodeECHPEM(privateKeyDER, configList))
 	require.NoError(t, err)
