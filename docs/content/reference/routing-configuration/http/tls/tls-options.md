@@ -381,6 +381,7 @@ It requires at least one key in `echKeys`.
     The `echKeys` option can be set with the [File](../../other-providers/file.md) and [KV](../../other-providers/kv.md) providers,
     and with the Kubernetes [TLSOption](../../kubernetes/crd/tls/tlsoption.md) resource,
     where each entry references a Kubernetes Secret holding the PEM data under the `tls.ech` key.
+    A referenced Secret that cannot be resolved causes the TLS option to be rejected.
 
 From a Traefik source checkout, generate a key file for a public name:
 
@@ -390,13 +391,17 @@ go run ./internal/ech/cmd generate example.com > /etc/traefik/ech.pem
 
 ```text
 -----BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V
+MC4CAQAwBQYDK2VuBCIE...
 -----END PRIVATE KEY-----
 -----BEGIN ECHCONFIG-----
-AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
-AQALZXhhbXBsZS5jb20AAA==
+AD7+DQA65wAgACA...
 -----END ECHCONFIG-----
 ```
+
+!!! warning "Generate your own key"
+
+    An ECH key must be private to the deployment: never copy key material from documentation or RFC examples, as anyone knowing the private key can decrypt the protected server names.
+    The examples on this page are truncated placeholders.
 
 An ECH connection starts with the public name as server name, so Traefik terminates it with the TLS option matching the public name — the `default` option unless a router matches the public name.
 The ECH keys must be configured on that option.
@@ -432,11 +437,10 @@ metadata:
 stringData:
   tls.ech: |
     -----BEGIN PRIVATE KEY-----
-    MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V
+    MC4CAQAwBQYDK2VuBCIE...
     -----END PRIVATE KEY-----
     -----BEGIN ECHCONFIG-----
-    AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
-    AQALZXhhbXBsZS5jb20AAA==
+    AD7+DQA65wAgACA...
     -----END ECHCONFIG-----
 
 ---
@@ -468,7 +472,7 @@ Clients only send ECH once they discover the ECH configuration in the `HTTPS` DN
 The base64 payload of the `ECHCONFIG` block is the `ECHConfigList` value to publish:
 
 ```text
-protected.example.com. 300 IN HTTPS 1 . ech=AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEAAQALZXhhbXBsZS5jb20AAA==
+protected.example.com. 300 IN HTTPS 1 . ech=AD7+DQA65wAgACA...
 ```
 
 When rotating keys, move the previous key file from `echKeys` to `echDecryptOnlyKeys` until DNS caches no longer serve the old configuration: the previous key still decrypts incoming handshakes, while only the current configurations are advertised to clients retrying after an ECH rejection ([RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) requires retry configurations to carry up-to-date keys).
