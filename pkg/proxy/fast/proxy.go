@@ -296,6 +296,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	// The read timeout clock starts once the request is fully written:
 	// this deadline interrupts the connection pending read if the backend
 	// does not send any response byte in time.
+	co.responsePending.Store(true)
 	if co.readTimeout > 0 {
 		_ = co.Conn.SetReadDeadline(time.Now().Add(co.readTimeout))
 	}

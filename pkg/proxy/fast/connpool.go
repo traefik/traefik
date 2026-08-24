@@ -48,6 +48,12 @@ type conn struct {
 	broken           atomic.Bool
 	upgraded         atomic.Bool
 
+	// responsePending gates the read deadline, and cannot be replaced by
+	// expectedResponse: the latter is set before the request is written, and
+	// arming the deadline that early breaks any request taking longer than
+	// readTimeout to be written to the backend.
+	responsePending atomic.Bool
+
 	// readLoopDone signals that the readLoop has terminated and will never
 	// receive from RWCh. readLoopErr holds the error that terminated it.
 	readLoopDone chan struct{}
@@ -79,14 +85,14 @@ func (c *conn) Write(b []byte) (n int, err error) {
 }
 
 // timeoutReader feeds the connection buffered reader, arming the read deadline
-// before each read while a response is expected, and never while the connection
+// before each read while a response is pending, and never while the connection
 // is idle or upgraded.
 type timeoutReader struct {
 	conn *conn
 }
 
 func (r timeoutReader) Read(b []byte) (n int, err error) {
-	if r.conn.readTimeout > 0 && r.conn.expectedResponse.Load() && !r.conn.upgraded.Load() {
+	if r.conn.readTimeout > 0 && r.conn.responsePending.Load() && !r.conn.upgraded.Load() {
 		_ = r.conn.Conn.SetReadDeadline(time.Now().Add(r.conn.readTimeout))
 		defer r.conn.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
 	}
@@ -158,6 +164,7 @@ func (c *conn) readLoop() {
 		}
 
 		c.expectedResponse.Store(false)
+		c.responsePending.Store(false)
 
 		// The deadline armed at request-write time may still be pending when the
 		// response was entirely buffered, and would break the idle connection.

@@ -206,14 +206,16 @@ func TestConnTimeouts(t *testing.T) {
 		readTimeout      time.Duration
 		writeTimeout     time.Duration
 		expectedResponse bool
+		responsePending  bool
 		upgraded         bool
 		reads            bool
 		expectedTimeout  bool
 	}{
 		{
-			desc:             "read deadline armed while a response is expected",
+			desc:             "read deadline armed while a response is pending",
 			readTimeout:      50 * time.Millisecond,
 			expectedResponse: true,
+			responsePending:  true,
 			reads:            true,
 			expectedTimeout:  true,
 		},
@@ -223,9 +225,18 @@ func TestConnTimeouts(t *testing.T) {
 			reads:       true,
 		},
 		{
+			// expectedResponse is set before the request is written: arming the
+			// deadline this early breaks requests slower to write than readTimeout.
+			desc:             "read deadline not armed while the request is being written",
+			readTimeout:      50 * time.Millisecond,
+			expectedResponse: true,
+			reads:            true,
+		},
+		{
 			desc:             "read deadline not armed on upgraded connection",
 			readTimeout:      50 * time.Millisecond,
 			expectedResponse: true,
+			responsePending:  true,
 			upgraded:         true,
 			reads:            true,
 		},
@@ -258,6 +269,7 @@ func TestConnTimeouts(t *testing.T) {
 			}
 			co.br = bufio.NewReaderSize(timeoutReader{conn: co}, bufioSize)
 			co.expectedResponse.Store(test.expectedResponse)
+			co.responsePending.Store(test.responsePending)
 			co.upgraded.Store(test.upgraded)
 
 			// The peer stays silent for much longer than the configured timeouts,
