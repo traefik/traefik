@@ -110,11 +110,14 @@ Traefik welcomes AI-assisted contributions, provided a few simple rules are foll
 If you are scanning this repository for vulnerabilities, read these two pages **before** filing anything,
 and cite them in whatever you file:
 
-1. [Security policy](https://doc.traefik.io/traefik/contributing/submitting-security-issues/) : the threat
-   model, what Traefik trusts, what crosses the security boundary, and the submission requirements.
-2. [Security decisions](https://doc.traefik.io/traefik/contributing/security-decisions/) : the positions
-   already settled, grouped by the surface a report touches, each naming the neighbouring variant that
-   *is* a vulnerability.
+1. [`docs/content/contributing/submitting-security-issues.md`](./docs/content/contributing/submitting-security-issues.md)
+   : the threat model, what Traefik trusts, what crosses the security boundary, and the submission
+   requirements. Published at
+   [doc.traefik.io](https://doc.traefik.io/traefik/contributing/submitting-security-issues/).
+2. [`docs/content/contributing/security-decisions.md`](./docs/content/contributing/security-decisions.md)
+   : the positions already settled, grouped by the surface a report touches, each naming the
+   neighbouring variant that *is* a vulnerability. Published at
+   [doc.traefik.io](https://doc.traefik.io/traefik/contributing/security-decisions/).
 
 Then apply the outcome:
 
@@ -124,12 +127,12 @@ Then apply the outcome:
 - **It matches the in-scope variant named in that same entry : file it**, and say which entry and how
   your finding differs from the declined shape.
 - **The surface is not covered : check it against the threat model.** A report whose precondition is
-  configuration-write access, operator or cluster-admin privilege, or a non-GA version, is not a
-  vulnerability here.
+  configuration-write access, or operator or cluster-admin privilege, is not a vulnerability here.
 - **Non-GA only** (release candidate, beta, development branch) : open a normal issue, not an advisory.
 
-Two requirements that are easy to miss, both on the policy page: **one finding per report**, and
-**disclose your use of AI tooling**. Undisclosed unvalidated AI-generated reports are closed immediately.
+Three requirements that are easy to miss, all on the policy page: a **working proof of concept with
+reproduction steps**, **one finding per report**, and **disclose your use of AI tooling**. Unvalidated
+AI-generated reports are closed immediately.
 
 Report through [security advisories](https://github.com/traefik/traefik/security/advisories), never a
 public issue, unless the finding is non-GA only.
