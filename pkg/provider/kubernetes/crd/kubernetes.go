@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
@@ -46,6 +47,8 @@ const (
 	// ProviderName is the Kubernetes CRD provider name.
 	ProviderName               = "kubernetescrd"
 	providerNamespaceSeparator = "@"
+	// unresolvedECHKey is invalid PEM content used to keep broken secret-backed TLS options fail-closed.
+	unresolvedECHKey types.FileOrContent = ""
 )
 
 // Roles of the services generated for a route.
@@ -1384,18 +1387,8 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 			clientCAs = append(clientCAs, types.FileOrContent(cert))
 		}
 
-		// A configured but unresolvable ECH key list would silently serve the option without ECH (fail-open).
 		echKeys := getECHKeys(&logger, client, tlsOptionsCRD.Namespace, tlsOptionsCRD.Spec.ECHKeys)
-		if len(tlsOptionsCRD.Spec.ECHKeys) > 0 && len(echKeys) == 0 {
-			logger.Error().Msg("Ignoring TLS option: no ECH key could be resolved")
-			continue
-		}
-
 		echDecryptOnlyKeys := getECHKeys(&logger, client, tlsOptionsCRD.Namespace, tlsOptionsCRD.Spec.ECHDecryptOnlyKeys)
-		if len(tlsOptionsCRD.Spec.ECHDecryptOnlyKeys) > 0 && len(echDecryptOnlyKeys) == 0 {
-			logger.Error().Msg("Ignoring TLS option: no decrypt-only ECH key could be resolved")
-			continue
-		}
 
 		id := p.nameBuilder.makeRawID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		// If the name is default, we override the default config.
@@ -1641,30 +1634,50 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	return cert, key, nil
 }
 
+// getECHKeys resolves the ECH key secrets, substituting invalid PEM content
+// for unresolved entries so that the TLS option fails closed.
 func getECHKeys(logger *zerolog.Logger, client Client, namespace string, secretNames []string) []types.FileOrContent {
 	var echKeys []types.FileOrContent
+	var unresolved int
 	for _, secretName := range secretNames {
-		secret, exists, err := client.GetSecret(namespace, secretName)
+		echKey, err := getECHKey(client, namespace, secretName)
 		if err != nil {
-			logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", namespace, secretName)
+			logger.Error().Err(err).Msgf("Failed to resolve ECH key secret %s/%s", namespace, secretName)
+			echKeys = append(echKeys, unresolvedECHKey)
+			unresolved++
 			continue
 		}
 
-		if !exists {
-			logger.Warn().Msgf("Secret %s/%s does not exist", namespace, secretName)
-			continue
-		}
+		echKeys = append(echKeys, echKey)
+	}
 
-		echKey, echKeyExists := secret.Data["tls.ech"]
-		if !echKeyExists {
-			logger.Error().Msgf("Secret %s/%s does not contain a tls.ech entry", namespace, secretName)
-			continue
-		}
-
-		echKeys = append(echKeys, types.FileOrContent(echKey))
+	if unresolved > 0 {
+		logger.Error().Msgf("Rejecting the TLS option: %d of %d ECH key secrets could not be resolved", unresolved, len(secretNames))
 	}
 
 	return echKeys
+}
+
+func getECHKey(client Client, namespace, secretName string) (types.FileOrContent, error) {
+	secret, exists, err := client.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", fmt.Errorf("fetching secret: %w", err)
+	}
+	if !exists {
+		return "", errors.New("secret does not exist")
+	}
+
+	echKey, echKeyExists := secret.Data["tls.ech"]
+	if !echKeyExists || len(echKey) == 0 {
+		return "", errors.New("secret does not contain a tls.ech entry")
+	}
+
+	// Requiring PEM keeps FileOrContent from reading a pod-local file when the secret data matches an existing path.
+	if block, _ := pem.Decode(echKey); block == nil {
+		return "", errors.New("tls.ech entry does not contain PEM data")
+	}
+
+	return types.FileOrContent(echKey), nil
 }
 
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
