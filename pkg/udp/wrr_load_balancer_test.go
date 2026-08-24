@@ -94,6 +94,28 @@ func TestLoadBalancing(t *testing.T) {
 				"h1": 16,
 			},
 		},
+		{
+			desc: "WeighedRoundRobin with a negative weight greater in magnitude than the positive one",
+			serversWeight: map[string]int{
+				"h1": 2,
+				"h2": -3,
+			},
+			totalCall: 16,
+			expectedServe: map[string]int{
+				"h1": 16,
+			},
+		},
+		{
+			desc: "WeighedRoundRobin with a negative weight and a non unit gcd",
+			serversWeight: map[string]int{
+				"h1": 4,
+				"h2": -6,
+			},
+			totalCall: 16,
+			expectedServe: map[string]int{
+				"h1": 16,
+			},
+		},
 	}
 
 	for _, test := range testCases {
