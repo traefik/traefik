@@ -1,3 +1,33 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-ech
+  namespace: default
+
+data:
+  tls.ech: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tClpXTm9MV04xY25KbGJuUT0KLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-ech-wrong-key
+  namespace: default
+
+data:
+  tls.key: ZWNoLWN1cnJlbnQ=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-ech-not-pem
+  namespace: default
+
+data:
+  tls.ech: L2V0Yy90cmFlZmlrL2VjaC5wZW0=
+
+---
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
@@ -7,7 +37,12 @@ metadata:
 spec:
   minVersion: VersionTLS13
   echKeys:
+    - secret-ech
+    - secret-ech-wrong-key
+    - secret-ech-not-pem
     - secret-ech-absent
+  echDecryptOnlyKeys:
+    - secret-ech-retired-absent
 
 ---
 apiVersion: traefik.io/v1alpha1
