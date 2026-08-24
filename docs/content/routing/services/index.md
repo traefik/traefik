@@ -1487,6 +1487,11 @@ This strategy is only available to load balance between [services](./index.md) a
 
     This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
+!!! warning "Weights"
+
+    A weight must be a non-negative integer, and a `0` weight takes the child service out of the rotation.
+    A weighted service declaring a negative weight is disabled, and the routers referencing it are not created.
+
 ```yaml tab="YAML"
 ## Dynamic configuration
 tcp:
@@ -1600,6 +1605,11 @@ The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
 This strategy can only be defined with [File](../../providers/file.md).
+
+!!! warning "Weights"
+
+    A weight must be a non-negative integer, and a `0` weight takes the child service out of the rotation.
+    A weighted service declaring a negative weight is disabled, and the routers referencing it are not created.
 
 ```yaml tab="YAML"
 ## Dynamic configuration

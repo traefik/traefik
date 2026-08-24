@@ -12,11 +12,13 @@ import (
 
 func TestManager_BuildTCP(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		serviceName   string
-		configs       map[string]*runtime.TCPServiceInfo
-		providerName  string
-		expectedError string
+		desc           string
+		serviceName    string
+		configs        map[string]*runtime.TCPServiceInfo
+		providerName   string
+		expectedError  string
+		expectedStatus string
+		expectedErrs   []string
 	}{
 		{
 			desc:          "without configuration",
@@ -184,7 +186,27 @@ func TestManager_BuildTCP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: `invalid negative weight -2 for service "child"`,
+			expectedError:  `invalid negative weight -2 for service "child"`,
+			expectedStatus: runtime.StatusDisabled,
+			expectedErrs:   []string{`invalid negative weight -2 for service "child"`},
+		},
+		{
+			desc:        "child service error is reported on the parent weighted service",
+			serviceName: "test",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"test": {
+					TCPService: &dynamic.TCPService{
+						Weighted: &dynamic.TCPWeightedRoundRobin{
+							Services: []dynamic.TCPWRRService{
+								{Name: "child"},
+							},
+						},
+					},
+				},
+			},
+			expectedError:  `the service "child" does not exist`,
+			expectedStatus: runtime.StatusDisabled,
+			expectedErrs:   []string{`the service "child" does not exist`},
 		},
 	}
 
@@ -210,29 +232,14 @@ func TestManager_BuildTCP(t *testing.T) {
 				assert.NoError(t, err)
 				require.NotNil(t, handler)
 			}
+
+			if test.expectedStatus != "" {
+				serviceInfo := test.configs[provider.GetQualifiedName(ctx, test.serviceName)]
+				require.NotNil(t, serviceInfo)
+
+				assert.Equal(t, test.expectedStatus, serviceInfo.Status)
+				assert.Equal(t, test.expectedErrs, serviceInfo.Err)
+			}
 		})
 	}
-}
-
-func TestManager_BuildTCP_WeightedChildErrorIsReportedOnParent(t *testing.T) {
-	conf := &runtime.TCPServiceInfo{
-		TCPService: &dynamic.TCPService{
-			Weighted: &dynamic.TCPWeightedRoundRobin{
-				Services: []dynamic.TCPWRRService{
-					{Name: "child"},
-				},
-			},
-		},
-	}
-
-	manager := NewManager(&runtime.Configuration{
-		TCPServices: map[string]*runtime.TCPServiceInfo{"parent": conf},
-	})
-
-	handler, err := manager.BuildTCP(t.Context(), "parent")
-	require.Error(t, err)
-	require.Nil(t, handler)
-
-	assert.Equal(t, runtime.StatusDisabled, conf.Status)
-	assert.Equal(t, []string{`the service "child" does not exist`}, conf.Err)
 }
