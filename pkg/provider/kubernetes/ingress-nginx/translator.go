@@ -580,7 +580,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
-		Service:       "noop@internal",
+		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
 	}

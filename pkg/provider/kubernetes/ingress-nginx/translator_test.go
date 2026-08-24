@@ -36,7 +36,7 @@ func TestApplyFromToWwwRedirect(t *testing.T) {
 	router := conf.HTTP.Routers["router-from-to-www-redirect"]
 	require.NotNil(t, router)
 
-	assert.Equal(t, "noop@internal", router.Service)
+	assert.Equal(t, unavailableServiceName, router.Service)
 	assert.Equal(t, []string{"router-from-to-www-redirect"}, router.Middlewares)
 
 	middleware := conf.HTTP.Middlewares["router-from-to-www-redirect"]
@@ -87,6 +87,13 @@ func TestApplyFromToWwwRedirect(t *testing.T) {
 		{
 			desc:         "multiple ports",
 			host:         "www.example.com:8080:90",
+			target:       "/foo",
+			expectedCode: http.StatusPermanentRedirect,
+			expectedLoc:  "http://example.com:8080/foo",
+		},
+		{
+			desc:         "port followed by a delimiter",
+			host:         "www.example.com:8080;x",
 			target:       "/foo",
 			expectedCode: http.StatusPermanentRedirect,
 			expectedLoc:  "http://example.com:8080/foo",

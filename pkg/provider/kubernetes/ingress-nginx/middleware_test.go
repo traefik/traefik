@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/utils/ptr"
 )
 
 func TestBuildFromToWwwRedirect(t *testing.T) {
@@ -67,7 +66,7 @@ func TestBuildFromToWwwRedirect(t *testing.T) {
 
 			loc := &location{Config: IngressConfig{}}
 			if test.enabled {
-				loc.Config.FromToWwwRedirect = ptr.To(true)
+				loc.Config.FromToWwwRedirect = new(true)
 			}
 
 			p := &Provider{}
