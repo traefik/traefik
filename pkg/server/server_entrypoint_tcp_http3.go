@@ -70,10 +70,13 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 	}
 
 	h3.Server = &http3.Server{
-		Addr:           config.GetAddress(),
-		Port:           config.HTTP3.AdvertisedPort,
-		Handler:        handler,
-		TLSConfig:      &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
+		Addr:    config.GetAddress(),
+		Port:    config.HTTP3.AdvertisedPort,
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			GetConfigForClient:          h3.getTLSConfigForClient,
+			GetEncryptedClientHelloKeys: h3.getEncryptedClientHelloKeys,
+		},
 		MaxHeaderBytes: config.HTTP.MaxHeaderBytes,
 		IdleTimeout:    time.Duration(config.Transport.RespondingTimeouts.IdleTimeout),
 		QUICConfig: &quic.Config{
@@ -149,6 +152,18 @@ func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Con
 
 	conf, _, err := e.getter(connData)
 	return conf, err
+}
+
+func (e *http3server) getEncryptedClientHelloKeys(info *tls.ClientHelloInfo) ([]tls.EncryptedClientHelloKey, error) {
+	conf, err := e.getTLSConfigForClient(info)
+	if err != nil {
+		return nil, err
+	}
+	if conf == nil || conf.EncryptedClientHelloKeys == nil {
+		return []tls.EncryptedClientHelloKey{}, nil
+	}
+
+	return conf.EncryptedClientHelloKeys, nil
 }
 
 func (e *http3server) getTLSOptionsName(c *quic.Conn) (string, error) {
