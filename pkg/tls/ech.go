@@ -3,6 +3,7 @@ package tls
 import (
 	"bytes"
 	"crypto/ecdh"
+	"crypto/hpke"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -16,9 +17,6 @@ import (
 
 const (
 	echConfigVersion       = 0xfe0d
-	hpkeKEMX25519          = 0x0020
-	hpkeKDFHKDFSHA256      = 0x0001
-	hpkeAEADAES128GCM      = 0x0001
 	maxECHPublicNameLength = 255
 )
 
@@ -57,26 +55,34 @@ func UnmarshalECHKeys(data []byte) ([]tls.EncryptedClientHelloKey, error) {
 	if !ok || privateKey.Curve() != ecdh.X25519() {
 		return nil, fmt.Errorf("unsupported ECH private key type %T: expected X25519", parsedPrivateKey)
 	}
+	hpkePrivateKey, err := hpke.NewDHKEMPrivateKey(privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("parsing ECH private key as HPKE key: %w", err)
+	}
+	privateKeyBytes, err := hpkePrivateKey.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("serializing ECH private key: %w", err)
+	}
 
 	configs, err := parseECHConfigList(configList)
 	if err != nil {
 		return nil, err
 	}
 
-	publicKey := privateKey.PublicKey().Bytes()
+	publicKey := hpkePrivateKey.PublicKey().Bytes()
 	var keys []tls.EncryptedClientHelloKey
 	for _, config := range configs {
 		parsed, err := parseECHConfig(config)
 		if err != nil {
 			return nil, err
 		}
-		if parsed.version != echConfigVersion || parsed.kemID != hpkeKEMX25519 || !bytes.Equal(parsed.publicKey, publicKey) {
+		if parsed.version != echConfigVersion || parsed.kemID != hpkePrivateKey.KEM().ID() || !bytes.Equal(parsed.publicKey, publicKey) {
 			continue
 		}
 
 		keys = append(keys, tls.EncryptedClientHelloKey{
 			Config:      config,
-			PrivateKey:  privateKey.Bytes(),
+			PrivateKey:  privateKeyBytes,
 			SendAsRetry: true,
 		})
 	}
@@ -124,22 +130,31 @@ func MarshalECHKey(key *tls.EncryptedClientHelloKey) ([]byte, error) {
 		return nil, errors.New("missing ECH configuration or private key")
 	}
 
-	privateKey, err := ecdh.X25519().NewPrivateKey(key.PrivateKey)
+	kem := hpke.DHKEM(ecdh.X25519())
+	hpkePrivateKey, err := kem.NewPrivateKey(key.PrivateKey)
 	if err != nil {
-		return nil, fmt.Errorf("parsing X25519 private key: %w", err)
+		return nil, fmt.Errorf("parsing X25519 HPKE private key: %w", err)
+	}
+	privateKeyBytes, err := hpkePrivateKey.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("serializing X25519 HPKE private key: %w", err)
 	}
 
 	config, err := parseECHConfig(key.Config)
 	if err != nil {
 		return nil, err
 	}
-	if config.version != echConfigVersion || config.kemID != hpkeKEMX25519 {
+	if config.version != echConfigVersion || config.kemID != kem.ID() {
 		return nil, errors.New("ECH configuration does not use X25519")
 	}
-	if !bytes.Equal(config.publicKey, privateKey.PublicKey().Bytes()) {
+	if !bytes.Equal(config.publicKey, hpkePrivateKey.PublicKey().Bytes()) {
 		return nil, errors.New("ECH configuration does not match the private key")
 	}
 
+	privateKey, err := ecdh.X25519().NewPrivateKey(privateKeyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("converting X25519 HPKE private key to PKCS#8: %w", err)
+	}
 	privateKeyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling ECH private key as PKCS#8: %w", err)
@@ -168,9 +183,14 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 		return nil, fmt.Errorf("invalid ECH public name %q", publicName)
 	}
 
-	privateKey, err := ecdh.X25519().GenerateKey(rand.Reader)
+	kem := hpke.DHKEM(ecdh.X25519())
+	privateKey, err := kem.GenerateKey()
 	if err != nil {
-		return nil, fmt.Errorf("generating X25519 key: %w", err)
+		return nil, fmt.Errorf("generating X25519 HPKE key: %w", err)
+	}
+	privateKeyBytes, err := privateKey.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("serializing X25519 HPKE key: %w", err)
 	}
 
 	var configID [1]byte
@@ -182,13 +202,13 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 	builder.AddUint16(echConfigVersion)
 	builder.AddUint16LengthPrefixed(func(builder *cryptobyte.Builder) {
 		builder.AddUint8(configID[0])
-		builder.AddUint16(hpkeKEMX25519)
+		builder.AddUint16(kem.ID())
 		builder.AddUint16LengthPrefixed(func(builder *cryptobyte.Builder) {
 			builder.AddBytes(privateKey.PublicKey().Bytes())
 		})
 		builder.AddUint16LengthPrefixed(func(builder *cryptobyte.Builder) {
-			builder.AddUint16(hpkeKDFHKDFSHA256)
-			builder.AddUint16(hpkeAEADAES128GCM)
+			builder.AddUint16(hpke.HKDFSHA256().ID())
+			builder.AddUint16(hpke.AES128GCM().ID())
 		})
 		// The generator cannot know the longest hidden server name in advance.
 		builder.AddUint8(0)
@@ -204,7 +224,7 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 
 	return &tls.EncryptedClientHelloKey{
 		Config:      config,
-		PrivateKey:  privateKey.Bytes(),
+		PrivateKey:  privateKeyBytes,
 		SendAsRetry: true,
 	}, nil
 }
