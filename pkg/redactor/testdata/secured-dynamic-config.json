@@ -492,7 +492,10 @@
           ],
           "clientAuthType": "RequireAndVerifyClientCert"
         },
-        "sniStrict": true
+        "sniStrict": true,
+        "echKeys": [
+          "xxxx"
+        ]
       }
     },
     "stores": {

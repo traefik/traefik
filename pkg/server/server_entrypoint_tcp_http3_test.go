@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -485,6 +486,48 @@ func TestNewHTTP3ServerTimeouts(t *testing.T) {
 	assert.Equal(t, 42*time.Second, entryPoint.http3Server.Server.IdleTimeout)
 	assert.Equal(t, 12345, entryPoint.http3Server.Server.MaxHeaderBytes)
 	assert.NotNil(t, entryPoint.http3Server.Server.Handler)
+}
+
+func TestHTTP3GetEncryptedClientHelloKeys(t *testing.T) {
+	expected := []tls.EncryptedClientHelloKey{{Config: []byte("config"), PrivateKey: []byte("key")}}
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+	router.AddHTTPTLSConfig("public.example.com", &tls.Config{EncryptedClientHelloKeys: expected}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.NotFoundHandler(), &tls.Config{})
+	router.SetHTTPSForwarder(nil)
+
+	server := &http3server{}
+	server.Switch(router)
+
+	clientConn, serverConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = clientConn.Close()
+		_ = serverConn.Close()
+	})
+
+	keys, err := server.getEncryptedClientHelloKeys(&tls.ClientHelloInfo{
+		ServerName: "public.example.com",
+		Conn:       connWithRemoteAddr{Conn: clientConn},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, expected, keys)
+
+	keys, err = server.getEncryptedClientHelloKeys(&tls.ClientHelloInfo{
+		ServerName: "unknown.example.com",
+		Conn:       connWithRemoteAddr{Conn: clientConn},
+	})
+	require.NoError(t, err)
+	assert.NotNil(t, keys)
+	assert.Empty(t, keys)
+}
+
+type connWithRemoteAddr struct {
+	net.Conn
+}
+
+func (connWithRemoteAddr) RemoteAddr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 443}
 }
 
 type clientSessionCache struct {

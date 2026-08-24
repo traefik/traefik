@@ -454,6 +454,7 @@ func init() {
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
 				SniStrict: true,
+				ECHKeys:   []types.FileOrContent{"ech.pem"},
 			},
 		},
 		Certificates: []*traefiktls.CertAndStores{
