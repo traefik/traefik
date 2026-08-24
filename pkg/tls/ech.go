@@ -1,22 +1,94 @@
 package tls
 
 import (
+	"bytes"
+	"crypto/ecdh"
+	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 
-	"github.com/cloudflare/circl/hpke"
 	"golang.org/x/crypto/cryptobyte"
 )
 
-// sha256PrivateKeyLength is the required private key length for SHA-256 based ECDH.
-const sha256PrivateKeyLength = 32
+const (
+	echConfigVersion       = 0xfe0d
+	hpkeKEMX25519          = 0x0020
+	hpkeKDFHKDFSHA256      = 0x0001
+	hpkeAEADAES128GCM      = 0x0001
+	maxECHPublicNameLength = 255
+)
+
+type parsedECHConfig struct {
+	version           uint16
+	kemID             uint16
+	publicKey         []byte
+	maximumNameLength uint8
+	publicName        []byte
+}
 
 func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
-	var k tls.EncryptedClientHelloKey
+	keys, err := UnmarshalECHKeys(data)
+	if err != nil {
+		return nil, err
+	}
+	if len(keys) != 1 {
+		return nil, fmt.Errorf("expected one ECH configuration matching the private key, got %d", len(keys))
+	}
+
+	return &keys[0], nil
+}
+
+func UnmarshalECHKeys(data []byte) ([]tls.EncryptedClientHelloKey, error) {
+	privateKeyDER, configList, err := decodeECHPEM(data)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedPrivateKey, err := x509.ParsePKCS8PrivateKey(privateKeyDER)
+	if err != nil {
+		return nil, fmt.Errorf("parsing ECH private key as PKCS#8: %w", err)
+	}
+
+	privateKey, ok := parsedPrivateKey.(*ecdh.PrivateKey)
+	if !ok || privateKey.Curve() != ecdh.X25519() {
+		return nil, fmt.Errorf("unsupported ECH private key type %T: expected X25519", parsedPrivateKey)
+	}
+
+	configs, err := parseECHConfigList(configList)
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey := privateKey.PublicKey().Bytes()
+	var keys []tls.EncryptedClientHelloKey
+	for _, config := range configs {
+		parsed, err := parseECHConfig(config)
+		if err != nil {
+			return nil, err
+		}
+		if parsed.version != echConfigVersion || parsed.kemID != hpkeKEMX25519 || !bytes.Equal(parsed.publicKey, publicKey) {
+			continue
+		}
+
+		keys = append(keys, tls.EncryptedClientHelloKey{
+			Config:      config,
+			PrivateKey:  privateKey.Bytes(),
+			SendAsRetry: true,
+		})
+	}
+	if len(keys) == 0 {
+		return nil, errors.New("no ECH configuration matches the private key")
+	}
+
+	return keys, nil
+}
+
+func decodeECHPEM(data []byte) ([]byte, []byte, error) {
+	var privateKey, configList []byte
 	for {
 		block, rest := pem.Decode(data)
 		if block == nil {
@@ -25,141 +97,259 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 
 		switch block.Type {
 		case "PRIVATE KEY":
-			k.PrivateKey = block.Bytes
+			if privateKey != nil {
+				return nil, nil, errors.New("multiple ECH private keys in PEM file")
+			}
+			privateKey = block.Bytes
 		case "ECHCONFIG":
-			k.Config = block.Bytes[2:] // Skip the first two bytes (length prefix)
+			configList = block.Bytes
+			data = nil
+			continue
 		default:
-			return nil, fmt.Errorf("unknown PEM block %s", block.Type)
+			return nil, nil, fmt.Errorf("unknown PEM block %s", block.Type)
 		}
 
 		data = rest
 	}
 
-	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, errors.New("missing ECH configuration or private key in PEM file")
+	if len(privateKey) == 0 || len(configList) == 0 {
+		return nil, nil, errors.New("missing ECH configuration or private key in PEM file")
 	}
 
-	// go ecdh now only supports SHA-256 (32-byte private key)
-	if len(k.PrivateKey) < sha256PrivateKeyLength {
-		return nil, fmt.Errorf("invalid private key length: expected at least %d bytes, got %d bytes", sha256PrivateKeyLength, len(k.PrivateKey))
-	} else if len(k.PrivateKey) > sha256PrivateKeyLength {
-		k.PrivateKey = k.PrivateKey[len(k.PrivateKey)-sha256PrivateKeyLength:]
-	}
-
-	k.SendAsRetry = true
-
-	return &k, nil
+	return privateKey, configList, nil
 }
 
-func MarshalECHKey(k *tls.EncryptedClientHelloKey) ([]byte, error) {
-	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
+func MarshalECHKey(key *tls.EncryptedClientHelloKey) ([]byte, error) {
+	if key == nil || len(key.Config) == 0 || len(key.PrivateKey) == 0 {
 		return nil, errors.New("missing ECH configuration or private key")
 	}
-	configBytes := make([]byte, 2+len(k.Config))
-	binary.BigEndian.PutUint16(configBytes, uint16(len(k.Config)))
-	copy(configBytes[2:], k.Config)
+
+	privateKey, err := ecdh.X25519().NewPrivateKey(key.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("parsing X25519 private key: %w", err)
+	}
+
+	config, err := parseECHConfig(key.Config)
+	if err != nil {
+		return nil, err
+	}
+	if config.version != echConfigVersion || config.kemID != hpkeKEMX25519 {
+		return nil, errors.New("ECH configuration does not use X25519")
+	}
+	if !bytes.Equal(config.publicKey, privateKey.PublicKey().Bytes()) {
+		return nil, errors.New("ECH configuration does not match the private key")
+	}
+
+	privateKeyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling ECH private key as PKCS#8: %w", err)
+	}
+
+	configList, err := ECHConfigToConfigList(key.Config)
+	if err != nil {
+		return nil, err
+	}
+
 	var pemData []byte
-	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: k.PrivateKey})...)
-	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configBytes})...)
+	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privateKeyDER})...)
+	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configList})...)
 
 	return pemData, nil
 }
 
-type echCipher struct {
-	KDFID  uint16
-	AEADID uint16
-}
-
-type echExtension struct {
-	Type uint16
-	Data []byte
-}
-
-type echConfig struct {
-	Version uint16
-	Length  uint16
-
-	ConfigID             uint8
-	KemID                uint16
-	PublicKey            []byte
-	SymmetricCipherSuite []echCipher
-
-	MaxNameLength uint8
-	PublicName    []byte
-	Extensions    []echExtension
-}
-
 func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
-	publicKey, privateKey, err := hpke.KEM_X25519_HKDF_SHA256.Scheme().GenerateKeyPair()
-	if err != nil {
-		return nil, err
+	if len(publicName) == 0 {
+		return nil, errors.New("public name is empty")
 	}
-	publicKeyBytes, err := publicKey.MarshalBinary()
-	if err != nil {
-		return nil, err
+	if len(publicName) > maxECHPublicNameLength {
+		return nil, fmt.Errorf("public name exceeds maximum length of %d bytes", maxECHPublicNameLength)
 	}
-	privateKeyBytes, err := privateKey.MarshalBinary()
-	if err != nil {
-		return nil, err
+	if !validECHPublicName([]byte(publicName)) {
+		return nil, fmt.Errorf("invalid ECH public name %q", publicName)
 	}
 
-	config := echConfig{
-		Version:   0xfe0d, // ECH version 0xfe0d
-		Length:    0x0000,
-		ConfigID:  uint8(rand.Uint()),
-		KemID:     uint16(hpke.KEM_X25519_HKDF_SHA256),
-		PublicKey: publicKeyBytes,
-		SymmetricCipherSuite: []echCipher{
-			{KDFID: uint16(hpke.KDF_HKDF_SHA256), AEADID: uint16(hpke.AEAD_AES256GCM)},
-		},
-		MaxNameLength: 32,
-		PublicName:    []byte(publicName),
-		Extensions:    nil,
-	}
-	if len(config.PublicName) > int(config.MaxNameLength) {
-		return nil, fmt.Errorf("public name exceeds maximum length of %d bytes", config.MaxNameLength)
+	privateKey, err := ecdh.X25519().GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("generating X25519 key: %w", err)
 	}
 
-	var b cryptobyte.Builder
-	b.AddUint16(config.Version) // Version
-	b.AddUint16LengthPrefixed(func(b *cryptobyte.Builder) {
-		b.AddUint8(config.ConfigID)
-		b.AddUint16(config.KemID)
-		b.AddUint16(uint16(len(config.PublicKey)))
-		b.AddBytes(config.PublicKey)
-		b.AddUint16LengthPrefixed(func(c *cryptobyte.Builder) {
-			for _, cipher := range config.SymmetricCipherSuite {
-				c.AddUint16(cipher.KDFID)
-				c.AddUint16(cipher.AEADID)
-			}
+	var configID [1]byte
+	if _, err = rand.Read(configID[:]); err != nil {
+		return nil, fmt.Errorf("generating ECH configuration ID: %w", err)
+	}
+
+	var builder cryptobyte.Builder
+	builder.AddUint16(echConfigVersion)
+	builder.AddUint16LengthPrefixed(func(builder *cryptobyte.Builder) {
+		builder.AddUint8(configID[0])
+		builder.AddUint16(hpkeKEMX25519)
+		builder.AddUint16LengthPrefixed(func(builder *cryptobyte.Builder) {
+			builder.AddBytes(privateKey.PublicKey().Bytes())
 		})
-		b.AddUint8(config.MaxNameLength)
-		b.AddUint8(uint8(len(config.PublicName)))
-		b.AddBytes(config.PublicName)
-		b.AddUint16LengthPrefixed(func(c *cryptobyte.Builder) {
-			for _, ext := range config.Extensions {
-				c.AddUint16(ext.Type)
-				c.AddUint16(uint16(len(ext.Data)))
-				c.AddBytes(ext.Data)
-			}
+		builder.AddUint16LengthPrefixed(func(builder *cryptobyte.Builder) {
+			builder.AddUint16(hpkeKDFHKDFSHA256)
+			builder.AddUint16(hpkeAEADAES128GCM)
 		})
+		// The generator cannot know the longest hidden server name in advance.
+		builder.AddUint8(0)
+		builder.AddUint8LengthPrefixed(func(builder *cryptobyte.Builder) {
+			builder.AddBytes([]byte(publicName))
+		})
+		builder.AddUint16LengthPrefixed(func(*cryptobyte.Builder) {})
 	})
-	configBytes, err := b.Bytes()
+	config, err := builder.Bytes()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshaling ECH configuration: %w", err)
 	}
 
 	return &tls.EncryptedClientHelloKey{
-		Config:      configBytes,
-		PrivateKey:  privateKeyBytes,
+		Config:      config,
+		PrivateKey:  privateKey.Bytes(),
 		SendAsRetry: true,
 	}, nil
 }
 
-func ECHConfigToConfigList(echConfig []byte) ([]byte, error) {
-	var b cryptobyte.Builder
-	b.AddUint16LengthPrefixed(func(child *cryptobyte.Builder) {
-		child.AddBytes(echConfig)
-	})
-	return b.Bytes()
+func ECHConfigToConfigList(config []byte) ([]byte, error) {
+	if len(config) == 0 {
+		return nil, errors.New("ECH configuration is empty")
+	}
+	if len(config) > int(^uint16(0)) {
+		return nil, fmt.Errorf("ECH configuration exceeds maximum length of %d bytes", ^uint16(0))
+	}
+
+	configList := make([]byte, 2+len(config))
+	binary.BigEndian.PutUint16(configList, uint16(len(config)))
+	copy(configList[2:], config)
+
+	return configList, nil
+}
+
+func parseECHConfigList(configList []byte) ([][]byte, error) {
+	if len(configList) < 2 {
+		return nil, errors.New("invalid ECH configuration list: expected at least 2 bytes")
+	}
+
+	declaredLength := int(binary.BigEndian.Uint16(configList))
+	actualLength := len(configList) - 2
+	if declaredLength != actualLength {
+		return nil, fmt.Errorf("invalid ECH configuration list length: declared %d bytes, got %d", declaredLength, actualLength)
+	}
+	if actualLength == 0 {
+		return nil, errors.New("ECH configuration list is empty")
+	}
+
+	var configs [][]byte
+	remaining := configList[2:]
+	for len(remaining) > 0 {
+		if len(remaining) < 4 {
+			return nil, errors.New("invalid ECH configuration: truncated header")
+		}
+
+		configLength := 4 + int(binary.BigEndian.Uint16(remaining[2:]))
+		if configLength > len(remaining) {
+			return nil, errors.New("invalid ECH configuration: truncated contents")
+		}
+
+		configs = append(configs, remaining[:configLength])
+		remaining = remaining[configLength:]
+	}
+
+	return configs, nil
+}
+
+func parseECHConfig(config []byte) (parsedECHConfig, error) {
+	var parsed parsedECHConfig
+	input := cryptobyte.String(config)
+	var contents cryptobyte.String
+	if !input.ReadUint16(&parsed.version) || !input.ReadUint16LengthPrefixed(&contents) || !input.Empty() {
+		return parsedECHConfig{}, errors.New("invalid ECH configuration encoding")
+	}
+	if parsed.version != echConfigVersion {
+		return parsed, nil
+	}
+
+	var configID uint8
+	var publicKey, cipherSuites, publicName, extensions cryptobyte.String
+	if !contents.ReadUint8(&configID) ||
+		!contents.ReadUint16(&parsed.kemID) ||
+		!contents.ReadUint16LengthPrefixed(&publicKey) ||
+		!contents.ReadUint16LengthPrefixed(&cipherSuites) ||
+		!contents.ReadUint8(&parsed.maximumNameLength) ||
+		!contents.ReadUint8LengthPrefixed(&publicName) ||
+		!contents.ReadUint16LengthPrefixed(&extensions) ||
+		!contents.Empty() {
+		return parsedECHConfig{}, errors.New("invalid ECH configuration contents")
+	}
+	if len(publicKey) == 0 {
+		return parsedECHConfig{}, errors.New("ECH configuration public key is empty")
+	}
+	if len(cipherSuites) == 0 || len(cipherSuites)%4 != 0 {
+		return parsedECHConfig{}, errors.New("invalid ECH symmetric cipher suites")
+	}
+	if len(publicName) == 0 {
+		return parsedECHConfig{}, errors.New("ECH configuration public name is empty")
+	}
+	if !validECHPublicName(publicName) {
+		return parsedECHConfig{}, fmt.Errorf("invalid ECH configuration public name %q", publicName)
+	}
+
+	for !extensions.Empty() {
+		var extensionType uint16
+		var extensionData cryptobyte.String
+		if !extensions.ReadUint16(&extensionType) || !extensions.ReadUint16LengthPrefixed(&extensionData) {
+			return parsedECHConfig{}, errors.New("invalid ECH configuration extensions")
+		}
+	}
+
+	parsed.publicKey = publicKey
+	parsed.publicName = publicName
+
+	return parsed, nil
+}
+
+func validECHPublicName(name []byte) bool {
+	labels := bytes.Split(name, []byte{'.'})
+	for _, label := range labels {
+		if len(label) == 0 || len(label) > 63 || !isASCIILetterOrDigit(label[0]) || !isASCIILetterOrDigit(label[len(label)-1]) {
+			return false
+		}
+		if len(label) > 1 {
+			for _, character := range label[1 : len(label)-1] {
+				if !isASCIILetterOrDigit(character) && character != '-' {
+					return false
+				}
+			}
+		}
+	}
+
+	finalLabel := labels[len(labels)-1]
+	if allASCII(finalLabel, isASCIIDigit) {
+		return false
+	}
+	if len(finalLabel) >= 2 && bytes.EqualFold(finalLabel[:2], []byte("0x")) && allASCII(finalLabel[2:], isASCIIHexDigit) {
+		return false
+	}
+
+	return true
+}
+
+func allASCII(value []byte, predicate func(byte) bool) bool {
+	for _, character := range value {
+		if !predicate(character) {
+			return false
+		}
+	}
+	return true
+}
+
+func isASCIILetterOrDigit(character byte) bool {
+	return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || isASCIIDigit(character)
+}
+
+func isASCIIDigit(character byte) bool {
+	return character >= '0' && character <= '9'
+}
+
+func isASCIIHexDigit(character byte) bool {
+	return isASCIIDigit(character) || character >= 'a' && character <= 'f' || character >= 'A' && character <= 'F'
 }

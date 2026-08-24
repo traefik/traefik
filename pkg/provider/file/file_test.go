@@ -41,6 +41,9 @@ func TestTLSCertificateContent(t *testing.T) {
   certFile = "` + fileTLS.Name() + `"
   keyFile = "` + fileTLSKey.Name() + `"
 
+[tls.options.default]
+  echKeys = ["` + fileTLSKey.Name() + `"]
+
 [tls.options.default.clientAuth]
   caFiles = ["` + fileTLS.Name() + `"]
 
@@ -73,6 +76,7 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.Equal(t, "CONTENTKEY", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
 
 	require.Equal(t, "CONTENT", configuration.TLS.Options["default"].ClientAuth.CAFiles[0].String())
+	require.Equal(t, "CONTENTKEY", configuration.TLS.Options["default"].ECHKeys[0].String())
 
 	require.Equal(t, "CONTENT", configuration.TLS.Stores["default"].DefaultCertificate.CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.TLS.Stores["default"].DefaultCertificate.KeyFile.String())
