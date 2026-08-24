@@ -454,6 +454,7 @@ func fullDynamicConfiguration() *dynamic.Configuration {
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
 				SniStrict: true,
+				ECHKeys:   []types.FileOrContent{"ech.pem"},
 			},
 		},
 		Certificates: []*traefiktls.CertAndStores{

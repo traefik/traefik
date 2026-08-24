@@ -525,8 +525,7 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
-	// Set the EncryptedClientHelloKeys if set in the config
-	if tlsOption.ECHKeys != nil {
+	if len(tlsOption.ECHKeys) > 0 {
 		conf.EncryptedClientHelloKeys = make([]tls.EncryptedClientHelloKey, 0, len(tlsOption.ECHKeys))
 		for _, content := range tlsOption.ECHKeys {
 			data, err := content.Read()
@@ -534,12 +533,12 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 				return nil, fmt.Errorf("reading ECH key file failed: %w", err)
 			}
 
-			echKey, err := UnmarshalECHKey(data)
+			echKeys, err := UnmarshalECHKeys(data)
 			if err != nil {
-				return nil, fmt.Errorf("unmarshalling ECH key failed: %w", err)
+				return nil, fmt.Errorf("unmarshalling ECH keys failed: %w", err)
 			}
 
-			conf.EncryptedClientHelloKeys = append(conf.EncryptedClientHelloKeys, *echKey)
+			conf.EncryptedClientHelloKeys = append(conf.EncryptedClientHelloKeys, echKeys...)
 		}
 	}
 
