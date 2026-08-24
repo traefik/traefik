@@ -367,10 +367,19 @@ spec:
 _Optional_
 
 The `echKeys` option enables server-side Encrypted Client Hello (ECH).
-Clients that do not support ECH can still connect normally.
+Each value references a PEM file containing the private key and the ECH configuration list for a DNS public name.
+Configure the keys on the TLS option selected for that public name.
 
-Each configured file must be PEM-encoded and contain both a private key and an ECH configuration block.
-See the [ECH PEM file format draft](https://www.ietf.org/archive/id/draft-farrell-tls-pemesni-09.html).
+The file format follows [RFC 9934](https://www.rfc-editor.org/rfc/rfc9934.html): a PKCS#8 `PRIVATE KEY` block followed by an `ECHCONFIG` block containing an encoded `ECHConfigList`.
+Traefik currently supports X25519 ECH private keys.
+See [RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) for the ECH protocol.
+
+ECH requires TLS 1.3.
+Clients that do not support ECH can still connect with regular TLS 1.3.
+
+!!! warning
+
+    ECH files contain private key material. Restrict file access to the Traefik process.
 
 ```text
 -----BEGIN PRIVATE KEY-----
@@ -388,8 +397,9 @@ AQALZXhhbXBsZS5jb20AAA==
 tls:
   options:
     default:
+      minVersion: VersionTLS13
       echKeys:
-        - example.pem
+        - /etc/traefik/ech.pem
 ```
 
 ```toml tab="Structured (TOML)"
@@ -397,19 +407,8 @@ tls:
 
 [tls.options]
   [tls.options.default]
-    echKeys = ["example.pem"]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: TLSOption
-metadata:
-  name: default
-  namespace: default
-
-spec:
-  echKeys:
-    - example.pem
+    minVersion = "VersionTLS13"
+    echKeys = ["/etc/traefik/ech.pem"]
 ```
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}
