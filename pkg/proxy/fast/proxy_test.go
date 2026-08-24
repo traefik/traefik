@@ -328,6 +328,56 @@ func TestHeadRequest(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestInvalidStatusCode(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		rawStatusLine string
+	}{
+		{
+			desc:          "status code above 999",
+			rawStatusLine: "HTTP/1.1 99999 X",
+		},
+		{
+			desc:          "status code below 100",
+			rawStatusLine: "HTTP/1.1 50 X",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			backendListener, err := net.Listen("tcp", ":0")
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				_ = backendListener.Close()
+			})
+
+			go func() {
+				conn, err := backendListener.Accept()
+				if err != nil {
+					return
+				}
+
+				_, _ = conn.Write([]byte(test.rawStatusLine + "\r\n\r\n"))
+			}()
+
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+			serverURL := "http://" + backendListener.Addr().String()
+
+			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			res := httptest.NewRecorder()
+
+			proxyHandler.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusInternalServerError, res.Code)
+		})
+	}
+}
+
 func TestNoContentLength(t *testing.T) {
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
@@ -405,6 +455,30 @@ func TestTransferEncodingChunked(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "chunk 0\nchunk 1\nchunk 2\n", string(body))
+}
+
+func TestConnectRequest(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	serverURL, err := url.JoinPath(server.URL)
+	require.NoError(t, err)
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodConnect, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 0, callCount)
+	assert.Equal(t, http.StatusNotImplemented, res.Code)
 }
 
 func TestXForwardedFor(t *testing.T) {

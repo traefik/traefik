@@ -12,7 +12,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -122,9 +121,6 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindGRPCRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
-
 		matches := routeRule.Matches
 		if len(matches) == 0 {
 			matches = []gatev1.GRPCRouteMatch{{}}
@@ -145,7 +141,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 			}
 
 			var err error
-			routerName := makeRouterName(rule, routeKey)
+			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 			router.Middlewares, err = p.loadGRPCMiddlewares(conf, route.Namespace, routerName, routeRule.Filters)
 			switch {
 			case err != nil:
@@ -183,8 +179,8 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 	return conf, condition
 }
 
-func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
-	name := routeKey + "-wrr"
+func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
+	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
 	}
@@ -192,7 +188,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, listener, conf, routeKey, route, bi, backendRef, statusReport)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, listener, conf, routerName, route, bi, backendRef, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -221,7 +217,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -234,7 +230,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListen
 		namespace = string(*backendRef.Namespace)
 	}
 
-	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routeKey, namespace, string(backendRef.Name), backendIndex)
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)
 
 	if group != groupCore || kind != kindService {
 		return serviceName, nil, &metav1.Condition{

@@ -4,6 +4,9 @@
   checkNewVersion = true
   sendAnonymousUsage = true
 
+[core]
+  strictTLSOptions = true
+
 [serversTransport]
   insecureSkipVerify = true
   rootCAs = ["foobar", "foobar"]
@@ -12,6 +15,8 @@
     dialTimeout = "42s"
     responseHeaderTimeout = "42s"
     idleConnTimeout = "42s"
+    readTimeout = "42s"
+    writeTimeout = "42s"
   [serversTransport.spiffe]
     ids = ["foobar", "foobar"]
     trustDomain = "foobar"
@@ -182,6 +187,8 @@
     allowEmptyServices = true
     nativeLBByDefault = true
     disableClusterScopeResources = true
+    defaultTLSResourcesNamespace = "foobar"
+    safeNaming = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

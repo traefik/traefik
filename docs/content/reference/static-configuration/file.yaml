@@ -3,6 +3,8 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+core:
+  strictTLSOptions: true
 serversTransport:
   insecureSkipVerify: true
   rootCAs:
@@ -13,6 +15,8 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+    readTimeout: 42s
+    writeTimeout: 42s
   spiffe:
     ids:
       - foobar
@@ -201,6 +205,8 @@ providers:
     allowEmptyServices: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
+    defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar

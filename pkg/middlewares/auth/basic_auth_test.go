@@ -254,6 +254,69 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	assert.Equal(t, 1, hashCount)
 }
 
+// TestBasicAuthConcurrentNoKeyCollision ensures an unconfigured user cannot inherit
+// a configured user's successful authentication through singleflight deduplication
+// (GHSA-6765-c87h-8mrf).
+func TestBasicAuthConcurrentNoKeyCollision(t *testing.T) {
+	var forwardedUser string
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		forwardedUser = r.Header.Get("X-WebAuth-User")
+		fmt.Fprintln(w, "traefik")
+	})
+
+	const hash = "$2a$04$.8sTYfcxbSplCtoxt5TdJOgpBYkarKtZYsYfYxQ1edbYRuO1DNi0e"
+	auth := dynamic.BasicAuth{
+		Users:       []string{"viewer:" + hash},
+		HeaderField: "X-WebAuth-User",
+	}
+
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
+	require.NoError(t, err)
+
+	// Validate only the configured pair, and stay in flight long enough for the
+	// attacker request to join a colliding singleflight call.
+	ba := authMiddleware.(*basicAuth)
+	ba.checkSecret = func(password, secret string) bool {
+		time.Sleep(50 * time.Millisecond)
+		return secret == hash && password == "test"
+	}
+
+	ts := httptest.NewServer(authMiddleware)
+	defer ts.Close()
+
+	// The attacker's crafted request must fail on its own.
+	attackerReq := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	attackerReq.SetBasicAuth("admin", "test"+hash)
+	baseline, err := http.DefaultClient.Do(attackerReq)
+	require.NoError(t, err)
+	baseline.Body.Close()
+	require.Equal(t, http.StatusUnauthorized, baseline.StatusCode)
+
+	// Fire a valid request, then let the attacker join it concurrently.
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+		req.SetBasicAuth("viewer", "test")
+		res, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		res.Body.Close()
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	})
+
+	time.Sleep(10 * time.Millisecond)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.SetBasicAuth("admin", "test"+hash)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	res.Body.Close()
+
+	wg.Wait()
+
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	assert.NotEqual(t, "admin", forwardedUser)
+}
+
 func TestBasicAuthUsersFromFile(t *testing.T) {
 	testCases := []struct {
 		desc            string
