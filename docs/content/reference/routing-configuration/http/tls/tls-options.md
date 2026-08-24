@@ -452,11 +452,12 @@ spec:
     - ech-keys
 ```
 
-!!! warning "Shared TLS option"
+!!! info "TLS option of protected domains"
 
-    On TCP connections, the protected domains inherit the public name's TLS option for the whole connection: a request to a router configured with a different TLS option is rejected with a `421 Misdirected Request`.
-    All domains protected behind a public name must therefore share the public name's TLS option.
-    On HTTP/3 connections, the TLS option is instead selected with the decrypted (protected) server name.
+    The public name's TLS option supplies the ECH keys. Once the ECH extension is decrypted,
+    the handshake re-selects the TLS option matching the protected (decrypted) server name, on both TCP and HTTP/3 connections.
+    On TCP connections, session tickets remain disabled if they are disabled on either the public name's or the protected domain's TLS option.
+    Raw TCP routers (`HostSNI` rules, including passthrough) are still selected using the public name because routing happens before ECH decryption; passthrough routers do not decrypt the connection at all.
 
 A certificate valid for the public name must also be configured: clients validate it whenever ECH is rejected and retried, for example while a key rotation propagates.
 Enabling `sniStrict` without such a certificate breaks this retry mechanism.
