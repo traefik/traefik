@@ -741,8 +741,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		if tlsConn, ok := c.(*tls.Conn); ok {
 			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
 
-			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
-				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(*tcp.TLSConn); ok {
+				return tcp.AddTLSConnInContext(ctx, tlsConnWithOptionsName)
 			}
 		}
 
