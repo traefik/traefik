@@ -48,7 +48,7 @@ func (t *transportManagerMock) GetRoundTripper(name string) (http.RoundTripper, 
 }
 
 func (t *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
-	panic("implement me")
+	return &tls.Config{}, nil
 }
 
 func (t *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
