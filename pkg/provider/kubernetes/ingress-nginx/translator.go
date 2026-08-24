@@ -135,9 +135,15 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
 		}
 
+		// The HTTP part is skipped when the serversTransport could not be built,
+		// the TCP passthrough router above being unaffected by it.
+		if pt.HTTPServiceName == "" {
+			continue
+		}
+
 		// Like ingress-nginx, the host also gets an HTTP router proxying to the backend
 		// (honoring backend-protocol), so plain HTTP requests and requests bypassing the
-		// force-ssl-redirect (e.g. X-Forwarded-Proto: https) behave like nginx instead of
+		// SSL redirect (e.g. X-Forwarded-Proto: https) behave like nginx instead of
 		// hitting an internal service.
 		if pt.ServersTransport != nil && pt.ServersTransportName != "" {
 			if _, exists := conf.HTTP.ServersTransports[pt.ServersTransportName]; !exists {
@@ -153,7 +159,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:     pt.HTTPServiceName,
 		}
 
-		if pt.ForceSSLRedirect {
+		if pt.SSLRedirect {
 			redirectMWName := pt.RouterKey + "-redirect-scheme"
 			conf.HTTP.Middlewares[redirectMWName] = &dynamic.Middleware{
 				RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},

@@ -291,13 +291,16 @@ type sslPassthroughBackend struct {
 	// RouterKey is the unique key used to name the TCP router.
 	RouterKey string
 
-	// ForceSSLRedirect indicates that HTTP requests to this host should be
-	// redirected to HTTPS with a 308 Permanent Redirect.
-	ForceSSLRedirect bool
+	// SSLRedirect indicates that HTTP requests to this host should be redirected
+	// to HTTPS with a 308 Permanent Redirect, following the same semantics as
+	// regular locations (see sslRedirectEnabled).
+	SSLRedirect bool
 
 	// HTTPServiceName is the key for the HTTP service proxying to the backend.
 	// Unlike BackendName it is scoped to the ingress, because per-ingress
 	// annotations (e.g. backend-protocol) shape the service.
+	// It is empty when the serversTransport could not be built: only the TCP
+	// passthrough router is created in that case.
 	HTTPServiceName string
 
 	// ServersTransportName is the unique name of the per-ingress transport.
