@@ -121,6 +121,11 @@ func (in *Options) DeepCopyInto(out *Options) {
 		*out = make([]types.FileOrContent, len(*in))
 		copy(*out, *in)
 	}
+	if in.ECHDecryptOnlyKeys != nil {
+		in, out := &in.ECHDecryptOnlyKeys, &out.ECHDecryptOnlyKeys
+		*out = make([]types.FileOrContent, len(*in))
+		copy(*out, *in)
+	}
 	if in.PreferServerCipherSuites != nil {
 		in, out := &in.PreferServerCipherSuites, &out.PreferServerCipherSuites
 		*out = new(bool)
