@@ -145,7 +145,15 @@ func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Con
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
-	connData, err := tcpmuxer.NewConnData(info.ServerName, info.Conn.RemoteAddr(), info.SupportedProtos)
+	// When crypto/tls invokes GetEncryptedClientHelloKeys it does so beneath
+	// quic-go's wrapping, where no net.Conn exists: info.Conn is nil then, even
+	// for ECH GREASE sent by browsers when no ECH keys are configured.
+	var remoteAddr net.Addr = &net.UDPAddr{}
+	if info.Conn != nil {
+		remoteAddr = info.Conn.RemoteAddr()
+	}
+
+	connData, err := tcpmuxer.NewConnData(info.ServerName, remoteAddr, info.SupportedProtos)
 	if err != nil {
 		return nil, fmt.Errorf("creating ConnData from client hello: %w", err)
 	}
