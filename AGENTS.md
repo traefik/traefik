@@ -92,7 +92,7 @@ User-facing features need matching documentation updates under `docs/content/`. 
 
 ## Contributing etiquette
 
-- **Target the right branch** (the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) is authoritative): enhancements go to `master`; bug fixes and documentation updates go to the current maintenance branches (`v3.6` for v3, `v2.11` for v2, security-fixes only). Forward-ports from the maintenance branches up to `master` are handled by maintainers.
+- **Target the right branch** (the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) is authoritative): enhancements go to `master`; bug fixes and documentation updates go to the current maintenance branches (`v3.7` for v3, `v2.11` for v2, security-fixes only). Forward-ports from the maintenance branches up to `master` are handled by maintainers.
 - Keep pull requests small and focused; one logical change per PR.
 - For anything beyond a bug fix, open an issue first and wait for a maintainer to confirm the direction before investing significant work.
 - Follow the full guide in [`docs/content/contributing/submitting-pull-requests.md`](./docs/content/contributing/submitting-pull-requests.md).
