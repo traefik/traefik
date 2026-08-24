@@ -98,6 +98,7 @@ entryPoints:
         allowEncodedHash: true
       encodeQuerySemicolons: true
       sanitizePath: true
+      mergeSlashes: true
       maxHeaderBytes: 42
       underscoreHeadersStrategy: foobar
     http2:
