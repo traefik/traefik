@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -266,6 +267,8 @@ func (r *Router) SetHTTPForwarder(handler tcp.Handler) {
 // It also sets up each TLS handler (with its TLS config) for each Host(SNI) rule we previously kept track of.
 // It sets up a special handler that closes the connection if a TLS config is nil.
 func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
+	defer r.warnUnroutedECHPublicNames()
+
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		var tcpHandler tcp.Handler
 		if tlsConf.cfg == nil {
@@ -324,6 +327,84 @@ func (r *Router) matchHTTPSTLSConfig(connData tcpmuxer.ConnData) (*tls.Config, s
 	}
 
 	return nil, "", errors.New("matching handler is not a TLSHandler")
+}
+
+// warnUnroutedECHPublicNames reports ECH keys whose public name is terminated
+// by a TLS option not carrying them, breaking ECH for their clients (RFC 9849, Section 6.1.6).
+func (r *Router) warnUnroutedECHPublicNames() {
+	checkedOptions := make(map[string]struct{})
+	check := func(config *tls.Config, optionsName string) {
+		if config == nil || len(config.EncryptedClientHelloKeys) == 0 {
+			return
+		}
+		if _, done := checkedOptions[optionsName]; done {
+			return
+		}
+		checkedOptions[optionsName] = struct{}{}
+
+		warnedNames := make(map[string]struct{})
+		for _, key := range config.EncryptedClientHelloKeys {
+			publicName, ok := traefiktls.ECHPublicName(key)
+			if !ok {
+				continue
+			}
+			if _, done := warnedNames[publicName]; done {
+				continue
+			}
+
+			connData, err := tcpmuxer.NewConnData(publicName, &net.TCPAddr{}, nil)
+			if err != nil {
+				continue
+			}
+
+			matchedConfig, matchedName, ok := r.terminatingTLSConfig(connData)
+			if !ok || matchedName == optionsName {
+				continue
+			}
+			// An option sharing the key still decrypts and re-selects correctly.
+			if slices.ContainsFunc(matchedConfig.EncryptedClientHelloKeys, func(matched tls.EncryptedClientHelloKey) bool {
+				return bytes.Equal(matched.Config, key.Config)
+			}) {
+				continue
+			}
+
+			warnedNames[publicName] = struct{}{}
+			log.Warn().Msgf("ECH public name %q of TLS options %q is terminated by TLS options %q without the key: clients using this ECH configuration cannot negotiate ECH", publicName, optionsName, matchedName)
+		}
+	}
+
+	for _, tlsConf := range r.hostHTTPTLSConfig {
+		check(tlsConf.cfg, tlsConf.optionsName)
+	}
+	check(r.httpsTLSConfig, traefiktls.DefaultTLSConfigName)
+}
+
+// terminatingTLSConfig mirrors the ServeTCP precedence to find the TLS
+// configuration terminating the connections described by connData.
+func (r *Router) terminatingTLSConfig(connData tcpmuxer.ConnData) (*tls.Config, string, bool) {
+	handlerHTTPS, catchAllHTTPS := r.muxerHTTPS.Match(connData)
+	handlerTCPTLS, catchAllTCPTLS := r.muxerTCPTLS.Match(connData)
+
+	var handler tcp.Handler
+	switch {
+	case handlerHTTPS != nil && !catchAllHTTPS:
+		handler = handlerHTTPS
+	case handlerTCPTLS != nil && !catchAllTCPTLS:
+		handler = handlerTCPTLS
+	case handlerHTTPS != nil:
+		handler = handlerHTTPS
+	case handlerTCPTLS != nil:
+		handler = handlerTCPTLS
+	default:
+		return r.httpsTLSConfig, traefiktls.DefaultTLSConfigName, r.httpsTLSConfig != nil
+	}
+
+	if tlsHandler, ok := handler.(*tcp.TLSHandler); ok {
+		return tlsHandler.Config, tlsHandler.TLSOptionsName, true
+	}
+
+	// Passthrough and broken routers do not terminate TLS here.
+	return nil, "", false
 }
 
 // withInnerSNIConfigSelection makes the handshake re-select the TLS
