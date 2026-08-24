@@ -1055,7 +1055,8 @@ func TestLogConfigurationScrubsSecrets(t *testing.T) {
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
 					"default": {
-						ECHKeys: []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nsecret-ech-key\n-----END PRIVATE KEY-----"},
+						ECHKeys:            []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nsecret-ech-key\n-----END PRIVATE KEY-----"},
+						ECHDecryptOnlyKeys: []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nsecret-retired-ech-key\n-----END PRIVATE KEY-----"},
 						ClientAuth: tls.ClientAuth{
 							CAFiles: []types.FileOrContent{"secret-ca-content"},
 						},
@@ -1069,9 +1070,11 @@ func TestLogConfigurationScrubsSecrets(t *testing.T) {
 
 	assert.Contains(t, buf.String(), "Configuration received")
 	assert.NotContains(t, buf.String(), "secret-ech-key")
+	assert.NotContains(t, buf.String(), "secret-retired-ech-key")
 	assert.NotContains(t, buf.String(), "secret-ca-content")
 
 	// The scrub must only affect the logged copy, not the live configuration.
 	assert.NotEmpty(t, message.Configuration.TLS.Options["default"].ECHKeys)
+	assert.NotEmpty(t, message.Configuration.TLS.Options["default"].ECHDecryptOnlyKeys)
 	assert.NotEmpty(t, message.Configuration.TLS.Options["default"].ClientAuth.CAFiles)
 }
