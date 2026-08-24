@@ -37,6 +37,7 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildUpstreamVhost(loc)
 	p.buildRateLimit(loc)
 	p.buildLimitConnections(loc)
+	p.buildLimitAllowlist(loc)
 	p.buildAuthTLSPassCert(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
@@ -319,6 +320,19 @@ func (p *Provider) buildRateLimit(loc *location) {
 			Average: int64(rps),
 			Period:  ptypes.Duration(time.Second),
 			Burst:   int64(rps) * burst,
+		}
+	}
+}
+
+// buildLimitAllowlist collects the client IP ranges exempted from the rate and
+// connection limits. limit-allowlist is the canonical annotation, limit-whitelist
+// its legacy alias.
+func (p *Provider) buildLimitAllowlist(loc *location) {
+	allowlist := ptr.Deref(loc.Config.LimitAllowlist, ptr.Deref(loc.Config.LimitWhitelist, nil))
+
+	for _, cidr := range allowlist {
+		if cidr != "" {
+			loc.LimitAllowlist = append(loc.LimitAllowlist, cidr)
 		}
 	}
 }
