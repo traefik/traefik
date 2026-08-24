@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -291,6 +292,80 @@ func (s *HTTPSSuite) TestWithTLSOptions() {
 	//	with unknown tls option
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("unknown TLS options: unknown@file"))
 	require.NoError(s.T(), err)
+}
+
+func (s *HTTPSSuite) TestWithECH() {
+	echKey, err := traefiktls.NewECHKey("ech.snitest.com")
+	require.NoError(s.T(), err)
+
+	echKeyPEM, err := traefiktls.MarshalECHKey(echKey)
+	require.NoError(s.T(), err)
+
+	echKeyFile := filepath.Join(s.T().TempDir(), "ech.pem")
+	require.NoError(s.T(), os.WriteFile(echKeyFile, echKeyPEM, 0o600))
+
+	file := s.adaptFile("fixtures/https/https_ech.toml", struct {
+		ECHKeyFile string
+	}{ECHKeyFile: echKeyFile})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	backend := startTestServer("9010", http.StatusNoContent, "")
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	configList, err := traefiktls.ECHConfigToConfigList(echKey.Config)
+	require.NoError(s.T(), err)
+
+	echTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify:             true,
+			MinVersion:                     tls.VersionTLS13,
+			ServerName:                     "snitest.com",
+			EncryptedClientHelloConfigList: configList,
+		},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "snitest.com"
+
+	client := http.Client{Transport: echTransport}
+	resp, err := client.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	assert.Equal(s.T(), http.StatusNoContent, resp.StatusCode)
+	require.NotNil(s.T(), resp.TLS)
+	assert.True(s.T(), resp.TLS.ECHAccepted)
+	assert.Equal(s.T(), "snitest.com", resp.TLS.PeerCertificates[0].Subject.CommonName)
+
+	// Clients without ECH support still connect with regular TLS 1.3.
+	plainTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS13,
+			ServerName:         "snitest.com",
+		},
+	}
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "snitest.com"
+
+	client = http.Client{Transport: plainTransport}
+	resp, err = client.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	assert.Equal(s.T(), http.StatusNoContent, resp.StatusCode)
+	require.NotNil(s.T(), resp.TLS)
+	assert.False(s.T(), resp.TLS.ECHAccepted)
 }
 
 func (s *HTTPSSuite) TestWithTLSOptionsAndWildcard() {

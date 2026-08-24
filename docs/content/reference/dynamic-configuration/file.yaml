@@ -684,6 +684,9 @@ tls:
       echKeys:
         - foobar
         - foobar
+      echDecryptOnlyKeys:
+        - foobar
+        - foobar
       preferServerCipherSuites: true
     Options1:
       minVersion: foobar
@@ -705,6 +708,9 @@ tls:
         - foobar
       disableSessionTickets: true
       echKeys:
+        - foobar
+        - foobar
+      echDecryptOnlyKeys:
         - foobar
         - foobar
       preferServerCipherSuites: true

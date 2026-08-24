@@ -49,6 +49,8 @@ type Options struct {
 	ALPNProtocols         []string              `json:"alpnProtocols,omitempty" toml:"alpnProtocols,omitempty" yaml:"alpnProtocols,omitempty" export:"true"`
 	DisableSessionTickets bool                  `json:"disableSessionTickets,omitempty" toml:"disableSessionTickets,omitempty" yaml:"disableSessionTickets,omitempty" export:"true"`
 	ECHKeys               []types.FileOrContent `json:"echKeys,omitempty" toml:"echKeys,omitempty" yaml:"echKeys,omitempty" loggable:"false"`
+	// ECHDecryptOnlyKeys are accepted for decryption but not advertised as retry configurations (RFC 9849, Section 7.1).
+	ECHDecryptOnlyKeys []types.FileOrContent `json:"echDecryptOnlyKeys,omitempty" toml:"echDecryptOnlyKeys,omitempty" yaml:"echDecryptOnlyKeys,omitempty" loggable:"false"`
 
 	// Deprecated: https://github.com/golang/go/issues/45430
 	PreferServerCipherSuites *bool `json:"preferServerCipherSuites,omitempty" toml:"preferServerCipherSuites,omitempty" yaml:"preferServerCipherSuites,omitempty" export:"true"`
