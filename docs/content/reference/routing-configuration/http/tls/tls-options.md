@@ -367,7 +367,7 @@ spec:
 _Optional_
 
 The `echKeys` option enables server-side Encrypted Client Hello (ECH), on both TCP (HTTP/1.1, HTTP/2) and HTTP/3 connections.
-Each value references a PEM file (or holds inline PEM content) containing the private key and the ECH configuration list for a DNS public name.
+Each value provides the private key and the ECH configuration list for a DNS public name: a PEM file path, inline PEM content, or, in Kubernetes, the name of a Secret.
 
 The file format follows [RFC 9934](https://www.rfc-editor.org/rfc/rfc9934.html): a PKCS#8 `PRIVATE KEY` block followed by an `ECHCONFIG` block containing an encoded `ECHConfigList`.
 Traefik currently supports X25519 ECH private keys.
@@ -378,8 +378,9 @@ It requires at least one key in `echKeys`.
 
 !!! info "Provider availability"
 
-    The `echKeys` option can be set with the [File](../../other-providers/file.md) and [KV](../../other-providers/kv.md) providers.
-    The Kubernetes `TLSOption` custom resource does not expose it yet.
+    The `echKeys` option can be set with the [File](../../other-providers/file.md) and [KV](../../other-providers/kv.md) providers,
+    and with the Kubernetes [TLSOption](../../kubernetes/crd/tls/tlsoption.md) resource,
+    where each entry references a Kubernetes Secret holding the PEM data under the `tls.ech` key.
 
 From a Traefik source checkout, generate a key file for a public name:
 
@@ -398,8 +399,8 @@ AQALZXhhbXBsZS5jb20AAA==
 ```
 
 An ECH connection starts with the public name as server name, so Traefik terminates it with the TLS option matching the public name — the `default` option unless a router matches the public name.
-The ECH keys and a `minVersion` set to `VersionTLS13` must be configured on that option: ECH requires TLS 1.3, and the Go TLS stack expects `VersionTLS13` as minimum version when ECH keys are set.
-Clients that do not support ECH can still connect with regular TLS 1.3.
+The ECH keys must be configured on that option.
+If `minVersion` is set, it must be `VersionTLS13`; when it is omitted, ECH connections still use TLS 1.3 while clients without ECH can negotiate any TLS version allowed by the option's default policy.
 
 ```yaml tab="Structured (YAML)"
 # Routing configuration
@@ -419,6 +420,36 @@ tls:
   [tls.options.default]
     minVersion = "VersionTLS13"
     echKeys = ["/etc/traefik/ech.pem"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ech-keys
+  namespace: default
+
+stringData:
+  tls.ech: |
+    -----BEGIN PRIVATE KEY-----
+    MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V
+    -----END PRIVATE KEY-----
+    -----BEGIN ECHCONFIG-----
+    AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
+    AQALZXhhbXBsZS5jb20AAA==
+    -----END ECHCONFIG-----
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  minVersion: VersionTLS13
+  echKeys:
+    - ech-keys
 ```
 
 !!! warning "Shared TLS option"
