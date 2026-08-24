@@ -216,6 +216,13 @@ func TestUnmarshalECHKeyErrors(t *testing.T) {
 	invalidNameConfigList, err := ECHConfigToConfigList(invalidNameConfig)
 	require.NoError(t, err)
 
+	singleLabelConfigList, err := ECHConfigToConfigList(configWithPublicName(t, key.Config, "localhost"))
+	require.NoError(t, err)
+
+	longName := strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 62)
+	longNameConfigList, err := ECHConfigToConfigList(configWithPublicName(t, key.Config, longName))
+	require.NoError(t, err)
+
 	_, ed25519Key, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 	ed25519DER, err := x509.MarshalPKCS8PrivateKey(ed25519Key)
@@ -299,6 +306,14 @@ func TestUnmarshalECHKeyErrors(t *testing.T) {
 			desc: "invalid public name",
 			data: encodeECHPEM(privateKeyDER, invalidNameConfigList),
 		},
+		{
+			desc: "single-label public name",
+			data: encodeECHPEM(privateKeyDER, singleLabelConfigList),
+		},
+		{
+			desc: "public name exceeds DNS length limit",
+			data: encodeECHPEM(privateKeyDER, longNameConfigList),
+		},
 	}
 
 	for _, test := range testCases {
@@ -354,6 +369,23 @@ func TestUnmarshalECHKeysIgnoresTrailingContent(t *testing.T) {
 	assert.Len(t, keys, 1)
 }
 
+func TestECHPublicName(t *testing.T) {
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
+	name, ok := ECHPublicName(*key)
+	require.True(t, ok)
+	assert.Equal(t, "server.local", name)
+
+	unknownVersionConfig := append([]byte(nil), key.Config...)
+	unknownVersionConfig[1]++
+	_, ok = ECHPublicName(tls.EncryptedClientHelloKey{Config: unknownVersionConfig})
+	assert.False(t, ok)
+
+	_, ok = ECHPublicName(tls.EncryptedClientHelloKey{Config: []byte("invalid")})
+	assert.False(t, ok)
+}
+
 func TestParseECHConfigExtensions(t *testing.T) {
 	key, err := NewECHKey("server.local")
 	require.NoError(t, err)
@@ -403,14 +435,16 @@ func TestValidECHPublicName(t *testing.T) {
 		name  string
 		valid bool
 	}{
-		{name: "localhost", valid: true},
 		{name: "example.com", valid: true},
 		{name: "EXAMPLE.COM", valid: true},
 		{name: "a-b.example.com", valid: true},
 		{name: "1.2.3.4.example.com", valid: true},
 		{name: strings.Repeat("a", 63) + ".example.com", valid: true},
+		{name: strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 61), valid: true},
 		{name: "server.0xzz", valid: true},
 		{name: "server.1e5", valid: true},
+		{name: "localhost", valid: false},
+		{name: strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 62), valid: false},
 		{name: "example.com.", valid: false},
 		{name: ".example.com", valid: false},
 		{name: strings.Repeat("a", 64) + ".example.com", valid: false},
@@ -525,6 +559,18 @@ func TestBuildTLSConfigWithECHErrors(t *testing.T) {
 	}
 }
 
+func TestECHIncompatibleOptions(t *testing.T) {
+	echOptions, cappedOptions := echIncompatibleOptions(map[string]Options{
+		"ech":       {ECHKeys: []types.FileOrContent{rfc9934ECHKey}},
+		"capped":    {MaxVersion: "VersionTLS12"},
+		"modern":    {MaxVersion: "VersionTLS13"},
+		"echCapped": {MaxVersion: "VersionTLS12", ECHKeys: []types.FileOrContent{rfc9934ECHKey}},
+	})
+
+	assert.Equal(t, []string{"ech", "echCapped"}, echOptions)
+	assert.Equal(t, []string{"capped"}, cappedOptions)
+}
+
 func TestRequestWithECH(t *testing.T) {
 	const publicName = "server.local"
 
@@ -587,6 +633,24 @@ func encodeECHPEM(privateKey, configList []byte) []byte {
 	}
 
 	return data
+}
+
+// configWithPublicName replaces the public name of an ECHConfig built by NewECHKey.
+func configWithPublicName(t *testing.T, config []byte, name string) []byte {
+	t.Helper()
+
+	// The public name length byte sits at a fixed offset for X25519 configurations.
+	const nameOffset = 48
+	require.Greater(t, len(config), nameOffset)
+	require.LessOrEqual(t, len(name), 255)
+
+	rebuilt := append([]byte(nil), config[:nameOffset]...)
+	rebuilt = append(rebuilt, byte(len(name)))
+	rebuilt = append(rebuilt, name...)
+	rebuilt = append(rebuilt, 0, 0)
+	binary.BigEndian.PutUint16(rebuilt[2:], uint16(len(rebuilt)-4))
+
+	return rebuilt
 }
 
 // configWithExtensions replaces the empty extensions block of an ECHConfig built by NewECHKey.
