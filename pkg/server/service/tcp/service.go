@@ -76,8 +76,16 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
+			if service.Weight != nil && *service.Weight < 0 {
+				err := fmt.Errorf("invalid negative weight %d for service %q", *service.Weight, service.Name)
+				conf.AddError(err, true)
+				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+				return nil, err
+			}
+
 			handler, err := m.BuildTCP(rootCtx, service.Name)
 			if err != nil {
+				conf.AddError(err, true)
 				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 				return nil, err
 			}

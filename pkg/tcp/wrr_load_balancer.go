@@ -78,6 +78,11 @@ func (b *WRRLoadBalancer) maxWeight() int {
 func (b *WRRLoadBalancer) weightGcd() int {
 	divisor := -1
 	for _, s := range b.servers {
+		// Skipped, as they are never selected and would make the divisor negative.
+		if s.weight <= 0 {
+			continue
+		}
+
 		if divisor == -1 {
 			divisor = s.weight
 		} else {
@@ -103,13 +108,14 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
 	// and allows us not to build an iterator every time we readjust weights
 
-	// Maximum weight across all enabled servers
+	// Maximum weight across all enabled servers.
+	// A positive maximum, and the positive divisor it guarantees, are what make the loop below terminate.
 	maximum := b.maxWeight()
-	if maximum == 0 {
-		return nil, errors.New("all servers have 0 weight")
+	if maximum <= 0 {
+		return nil, errors.New("no server with a positive weight")
 	}
 
-	// GCD across all enabled servers
+	// GCD across all enabled servers.
 	gcd := b.weightGcd()
 
 	for {
