@@ -140,13 +140,10 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax:  "default",
-				Rule:        rule,
-				Priority:    priority + len(route.Spec.Rules) - ri,
-				EntryPoints: []string{listener.EPName},
-			}
-			if listener.Protocol == gatev1.HTTPSProtocolType {
-				router.TLS = &dynamic.RouterTLSConfig{}
+				RuleSyntax: "default",
+				Rule:       rule,
+				Priority:   priority + len(route.Spec.Rules) - ri,
+				ParentRefs: listener.RouterNames,
 			}
 
 			var err error

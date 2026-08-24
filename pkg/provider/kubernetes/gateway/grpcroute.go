@@ -143,13 +143,10 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax:  "default",
-				Rule:        rule,
-				Priority:    priority,
-				EntryPoints: []string{listener.EPName},
-			}
-			if listener.Protocol == gatev1.HTTPSProtocolType {
-				router.TLS = &dynamic.RouterTLSConfig{}
+				RuleSyntax: "default",
+				Rule:       rule,
+				Priority:   priority,
+				ParentRefs: listener.RouterNames,
 			}
 
 			var err error
