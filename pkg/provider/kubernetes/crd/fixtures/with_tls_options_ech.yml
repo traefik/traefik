@@ -5,7 +5,7 @@ metadata:
   namespace: default
 
 data:
-  tls.ech: ZWNoLWN1cnJlbnQ=
+  tls.ech: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tClpXTm9MV04xY25KbGJuUT0KLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
 
 ---
 apiVersion: v1
@@ -15,17 +15,7 @@ metadata:
   namespace: default
 
 data:
-  tls.ech: ZWNoLXJldGlyZWQ=
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: secret-ech-wrong-key
-  namespace: default
-
-data:
-  tls.key: ZWNoLWN1cnJlbnQ=
+  tls.ech: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tClpXTm9MWEpsZEdseVpXUT0KLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=
 
 ---
 apiVersion: traefik.io/v1alpha1
@@ -41,8 +31,6 @@ spec:
     - TLS_RSA_WITH_AES_256_GCM_SHA384
   echKeys:
     - secret-ech
-    - secret-ech-wrong-key
-    - secret-ech-absent
   echDecryptOnlyKeys:
     - secret-ech-retired
 

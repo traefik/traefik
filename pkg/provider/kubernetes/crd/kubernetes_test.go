@@ -5001,8 +5001,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ECHKeys:            []types.FileOrContent{"ech-current"},
-							ECHDecryptOnlyKeys: []types.FileOrContent{"ech-retired"},
+							ECHKeys:            []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nZWNoLWN1cnJlbnQ=\n-----END PRIVATE KEY-----\n"},
+							ECHDecryptOnlyKeys: []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nZWNoLXJldGlyZWQ=\n-----END PRIVATE KEY-----\n"},
 							ALPNProtocols: []string{
 								"h2",
 								"http/1.1",
@@ -5062,7 +5062,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
+					Options: map[string]tls.Options{
+						"default-foo": {
+							MinVersion:    "VersionTLS13",
+							CipherSuites:  tls.DefaultTLSOptions.CipherSuites,
+							ALPNProtocols: tls.DefaultTLSOptions.ALPNProtocols,
+							ECHKeys: []types.FileOrContent{
+								"-----BEGIN PRIVATE KEY-----\nZWNoLWN1cnJlbnQ=\n-----END PRIVATE KEY-----\n",
+								unresolvedECHKey,
+								unresolvedECHKey,
+								unresolvedECHKey,
+							},
+							ECHDecryptOnlyKeys: []types.FileOrContent{unresolvedECHKey},
+						},
+					},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
