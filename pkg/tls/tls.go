@@ -48,7 +48,7 @@ type Options struct {
 	SniStrict             bool                  `json:"sniStrict,omitempty" toml:"sniStrict,omitempty" yaml:"sniStrict,omitempty" export:"true"`
 	ALPNProtocols         []string              `json:"alpnProtocols,omitempty" toml:"alpnProtocols,omitempty" yaml:"alpnProtocols,omitempty" export:"true"`
 	DisableSessionTickets bool                  `json:"disableSessionTickets,omitempty" toml:"disableSessionTickets,omitempty" yaml:"disableSessionTickets,omitempty" export:"true"`
-	ECHKeys               []types.FileOrContent `json:"echKeys,omitempty" toml:"echKeys,omitempty" yaml:"echKeys,omitempty" export:"true"`
+	ECHKeys               []types.FileOrContent `json:"echKeys,omitempty" toml:"echKeys,omitempty" yaml:"echKeys,omitempty" loggable:"false"`
 
 	// Deprecated: https://github.com/golang/go/issues/45430
 	PreferServerCipherSuites *bool `json:"preferServerCipherSuites,omitempty" toml:"preferServerCipherSuites,omitempty" yaml:"preferServerCipherSuites,omitempty" export:"true"`
