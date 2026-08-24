@@ -46,6 +46,11 @@ type TLSOptionSpec struct {
 	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
 	// DisableSessionTickets disables TLS session resumption via session tickets.
 	DisableSessionTickets bool `json:"disableSessionTickets,omitempty"`
+	// ECHKeys defines the names of the referenced Kubernetes Secrets storing RFC 9934 PEM-encoded Encrypted Client Hello keys under the tls.ech key.
+	ECHKeys []string `json:"echKeys,omitempty"`
+	// ECHDecryptOnlyKeys defines the names of the referenced Kubernetes Secrets storing rotated-out Encrypted Client Hello keys,
+	// still accepted for decryption but no longer advertised to clients.
+	ECHDecryptOnlyKeys []string `json:"echDecryptOnlyKeys,omitempty"`
 	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
 	// It is enabled automatically when minVersion or maxVersion is set.
 	//

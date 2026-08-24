@@ -1384,6 +1384,19 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 			clientCAs = append(clientCAs, types.FileOrContent(cert))
 		}
 
+		// A configured but unresolvable ECH key list would silently serve the option without ECH (fail-open).
+		echKeys := getECHKeys(&logger, client, tlsOptionsCRD.Namespace, tlsOptionsCRD.Spec.ECHKeys)
+		if len(tlsOptionsCRD.Spec.ECHKeys) > 0 && len(echKeys) == 0 {
+			logger.Error().Msg("Ignoring TLS option: no ECH key could be resolved")
+			continue
+		}
+
+		echDecryptOnlyKeys := getECHKeys(&logger, client, tlsOptionsCRD.Namespace, tlsOptionsCRD.Spec.ECHDecryptOnlyKeys)
+		if len(tlsOptionsCRD.Spec.ECHDecryptOnlyKeys) > 0 && len(echDecryptOnlyKeys) == 0 {
+			logger.Error().Msg("Ignoring TLS option: no decrypt-only ECH key could be resolved")
+			continue
+		}
+
 		id := p.nameBuilder.makeRawID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		// If the name is default, we override the default config.
 		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName {
@@ -1413,6 +1426,8 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 		}
 
 		tlsOption.DisableSessionTickets = tlsOptionsCRD.Spec.DisableSessionTickets
+		tlsOption.ECHKeys = echKeys
+		tlsOption.ECHDecryptOnlyKeys = echDecryptOnlyKeys
 
 		addToConfig(&logger, "TLS option", id, tlsOptions, tlsOption)
 	}
@@ -1624,6 +1639,32 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	}
 
 	return cert, key, nil
+}
+
+func getECHKeys(logger *zerolog.Logger, client Client, namespace string, secretNames []string) []types.FileOrContent {
+	var echKeys []types.FileOrContent
+	for _, secretName := range secretNames {
+		secret, exists, err := client.GetSecret(namespace, secretName)
+		if err != nil {
+			logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", namespace, secretName)
+			continue
+		}
+
+		if !exists {
+			logger.Warn().Msgf("Secret %s/%s does not exist", namespace, secretName)
+			continue
+		}
+
+		echKey, echKeyExists := secret.Data["tls.ech"]
+		if !echKeyExists {
+			logger.Error().Msgf("Secret %s/%s does not contain a tls.ech entry", namespace, secretName)
+			continue
+		}
+
+		echKeys = append(echKeys, types.FileOrContent(echKey))
+	}
+
+	return echKeys
 }
 
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
