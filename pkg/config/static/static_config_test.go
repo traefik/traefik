@@ -344,7 +344,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 	}
 }
 
-func TestSetEffectiveConfiguration_DisableHTTPEntryPoint(t *testing.T) {
+func TestSetEffectiveConfiguration_DisableNonTLSRouters(t *testing.T) {
 	conf := &Configuration{
 		EntryPoints: EntryPoints{
 			"web": {
@@ -361,7 +361,7 @@ func TestSetEffectiveConfiguration_DisableHTTPEntryPoint(t *testing.T) {
 		Providers: &Providers{
 			Precedence: providerNames,
 			KubernetesIngressNGINX: &ingressnginx.Provider{
-				DisableHTTPEntryPoint: true,
+				DisableNonTLSRouters: true,
 			},
 		},
 	}

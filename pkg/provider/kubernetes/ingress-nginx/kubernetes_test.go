@@ -36,7 +36,7 @@ func TestLoadIngresses(t *testing.T) {
 		globalAuthURL                  string
 		strictValidatePathType         *bool
 		proxyRequestBuffering          bool
-		disableHTTPEntryPoint          bool
+		disableNonTLSRouters           bool
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
@@ -18895,14 +18895,14 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Disable HTTP entrypoint",
+			desc: "Disable non-TLS routers",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
 				"ingresses/ingress-disable-http-entrypoint.yml",
 				"secrets.yml",
 			},
-			disableHTTPEntryPoint: true,
+			disableNonTLSRouters: true,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:  map[string]*dynamic.TCPRouter{},
@@ -18972,13 +18972,13 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Disable HTTP entrypoint with canary by header",
+			desc: "Disable non-TLS routers with canary by header",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
 				"ingresses/ingresses-with-canary-by-header.yml",
 			},
-			disableHTTPEntryPoint: true,
+			disableNonTLSRouters: true,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:  map[string]*dynamic.TCPRouter{},
@@ -19113,12 +19113,12 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:                           "Disable HTTP entrypoint with default backend",
-			defaultBackendServiceName:      "whoami",
-			defaultBackendServiceNamespace: "default",
-			disableHTTPEntryPoint:          true,
+			desc:                 "Disable non-TLS routers with default backend",
+			disableNonTLSRouters: true,
 			paths: []string{
 				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-no-rules.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -19132,19 +19132,39 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `PathPrefix("/")`,
 							RuleSyntax:  "default",
 							Priority:    math.MinInt32,
-							TLS:         &dynamic.RouterTLSConfig{},
 							Service:     "default-backend",
+							Middlewares: []string{"default-backend-tls-cors", "default-backend-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
 										Namespace:   "default",
+										IngressName: "ingress-with-default-backend-no-rules",
 										ServiceName: "whoami",
+										ServicePort: "80",
 									},
 								},
 							},
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-backend-tls-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlExposeHeaders:    []string{},
+								AccessControlAllowHeaders:     []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"},
+								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlMaxAge:           new(int64(1728000)),
+							},
+						},
+						"default-backend-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -19158,22 +19178,28 @@ func TestLoadIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:8000",
-									},
-									{
-										URL: "http://10.10.0.2:8000",
-									},
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
 								},
-								Strategy:       "wrr",
-								PassHostHeader: new(true),
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-default-backend-no-rules",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-default-backend-no-rules": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -19434,7 +19460,7 @@ func TestLoadIngresses(t *testing.T) {
 			}
 
 			nonTLSEntryPoints := []string{"http"}
-			if test.disableHTTPEntryPoint {
+			if test.disableNonTLSRouters {
 				nonTLSEntryPoints = []string{}
 			}
 
@@ -19444,7 +19470,7 @@ func TestLoadIngresses(t *testing.T) {
 				defaultBackendServiceNamespace: test.defaultBackendServiceNamespace,
 				AllowSnippetAnnotations:        test.allowSnippetAnnotations,
 				NonTLSEntryPoints:              nonTLSEntryPoints,
-				DisableHTTPEntryPoint:          test.disableHTTPEntryPoint,
+				DisableNonTLSRouters:           test.disableNonTLSRouters,
 				TLSEntryPoints:                 []string{"https"},
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
 				IPAllowListStrategy:            test.ipAllowListStrategy,
@@ -19629,7 +19655,7 @@ func TestProvider_validateConfiguration(t *testing.T) {
 		defaultBackendService           string
 		expectedBackendServiceName      string
 		expectedBackendServiceNamespace string
-		disableHTTPEntryPoint           bool
+		disableNonTLSRouters            bool
 		httpEntryPoint                  string
 		expectError                     bool
 	}{
@@ -19665,14 +19691,14 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			expectError:           true,
 		},
 		{
-			desc:                  "Disable HTTP entrypoint with httpEntryPoint set",
-			disableHTTPEntryPoint: true,
-			httpEntryPoint:        "web",
-			expectError:           true,
+			desc:                 "Disable non-TLS routers with httpEntryPoint set",
+			disableNonTLSRouters: true,
+			httpEntryPoint:       "web",
+			expectError:          true,
 		},
 		{
-			desc:                  "Disable HTTP entrypoint without httpEntryPoint",
-			disableHTTPEntryPoint: true,
+			desc:                 "Disable non-TLS routers without httpEntryPoint",
+			disableNonTLSRouters: true,
 		},
 	}
 
@@ -19683,7 +19709,7 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			provider := &Provider{
 				GlobalAllowedResponseHeaders: test.globalAllowedResponseHeaders,
 				DefaultBackendService:        test.defaultBackendService,
-				DisableHTTPEntryPoint:        test.disableHTTPEntryPoint,
+				DisableNonTLSRouters:         test.disableNonTLSRouters,
 				HTTPEntryPoint:               test.httpEntryPoint,
 			}
 

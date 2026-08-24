@@ -302,9 +302,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 }
 
 // addNonTLSRouter registers a router on the non-TLS entryPoints,
-// unless HTTP routes are disabled.
+// unless non-TLS routers are disabled.
 func (p *Provider) addNonTLSRouter(conf *dynamic.Configuration, key string, rt *dynamic.Router) bool {
-	if p.DisableHTTPEntryPoint {
+	if p.DisableNonTLSRouters {
 		return false
 	}
 	conf.HTTP.Routers[key] = rt
