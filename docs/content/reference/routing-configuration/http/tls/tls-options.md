@@ -373,6 +373,9 @@ The file format follows [RFC 9934](https://www.rfc-editor.org/rfc/rfc9934.html):
 Traefik currently supports X25519 ECH private keys.
 See [RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) for the ECH protocol.
 
+The `echDecryptOnlyKeys` option accepts the same file format for rotated-out keys: they are still used for decryption, but no longer advertised to clients.
+It requires at least one key in `echKeys`.
+
 !!! info "Provider availability"
 
     The `echKeys` option can be set with the [File](../../other-providers/file.md) and [KV](../../other-providers/kv.md) providers.
@@ -436,7 +439,7 @@ The base64 payload of the `ECHCONFIG` block is the `ECHConfigList` value to publ
 protected.example.com. 300 IN HTTPS 1 . ech=AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEAAQALZXhhbXBsZS5jb20AAA==
 ```
 
-When rotating keys, list both the new and the previous key files in `echKeys` until DNS caches no longer serve the old configuration.
+When rotating keys, move the previous key file from `echKeys` to `echDecryptOnlyKeys` until DNS caches no longer serve the old configuration: the previous key still decrypts incoming handshakes, while only the current configurations are advertised to clients retrying after an ECH rejection ([RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) requires retry configurations to carry up-to-date keys).
 
 !!! warning "Private key material"
 

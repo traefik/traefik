@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type ProvideTestCase struct {
@@ -43,6 +44,7 @@ func TestTLSCertificateContent(t *testing.T) {
 
 [tls.options.default]
   echKeys = ["` + fileTLSKey.Name() + `"]
+  echDecryptOnlyKeys = ["` + fileTLSKey.Name() + `"]
 
 [tls.options.default.clientAuth]
   caFiles = ["` + fileTLS.Name() + `"]
@@ -77,6 +79,7 @@ func TestTLSCertificateContent(t *testing.T) {
 
 	require.Equal(t, "CONTENT", configuration.TLS.Options["default"].ClientAuth.CAFiles[0].String())
 	require.Equal(t, "CONTENTKEY", configuration.TLS.Options["default"].ECHKeys[0].String())
+	require.Equal(t, "CONTENTKEY", configuration.TLS.Options["default"].ECHDecryptOnlyKeys[0].String())
 
 	require.Equal(t, "CONTENT", configuration.TLS.Stores["default"].DefaultCertificate.CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.TLS.Stores["default"].DefaultCertificate.KeyFile.String())
@@ -88,6 +91,29 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.Equal(t, "CONTENT", configuration.TCP.ServersTransports["default"].TLS.Certificates[0].CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.TCP.ServersTransports["default"].TLS.Certificates[0].KeyFile.String())
 	require.Equal(t, "CONTENT", configuration.TCP.ServersTransports["default"].TLS.RootCAs[0].String())
+}
+
+func TestReadECHKeyContentsKeepsUnreadableEntries(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("file permissions are not enforced for root")
+	}
+
+	tempDir := t.TempDir()
+
+	readable := filepath.Join(tempDir, "readable.pem")
+	require.NoError(t, os.WriteFile(readable, []byte("CONTENT"), 0o600))
+
+	unreadable := filepath.Join(tempDir, "unreadable.pem")
+	require.NoError(t, os.WriteFile(unreadable, []byte("SECRET"), 0o000))
+
+	contents := readECHKeyContents(t.Context(), []types.FileOrContent{
+		types.FileOrContent(readable),
+		types.FileOrContent(unreadable),
+	})
+
+	require.Len(t, contents, 2)
+	assert.Equal(t, "CONTENT", contents[0].String())
+	assert.Equal(t, unreadable, contents[1].String())
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {

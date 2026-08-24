@@ -487,6 +487,9 @@
         "sniStrict": true,
         "echKeys": [
           "xxxx"
+        ],
+        "echDecryptOnlyKeys": [
+          "xxxx"
         ]
       }
     },

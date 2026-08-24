@@ -213,6 +213,7 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 				option.ClientAuth.CAFiles = []types.FileOrContent{}
 				// ECH key entries carry PEM-encoded private key material.
 				option.ECHKeys = nil
+				option.ECHDecryptOnlyKeys = nil
 				cleanedOptions[name] = option
 			}
 

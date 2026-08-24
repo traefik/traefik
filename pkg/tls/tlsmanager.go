@@ -525,24 +525,56 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
-	if len(tlsOption.ECHKeys) > 0 {
-		conf.EncryptedClientHelloKeys = make([]tls.EncryptedClientHelloKey, 0, len(tlsOption.ECHKeys))
+	if len(tlsOption.ECHKeys) > 0 || len(tlsOption.ECHDecryptOnlyKeys) > 0 {
+		// Rejected ECH clients must receive retry configurations (RFC 9849, Section 7.1).
+		if len(tlsOption.ECHKeys) == 0 {
+			return nil, errors.New("echDecryptOnlyKeys requires at least one echKeys entry")
+		}
+		// ECH requires TLS 1.3 (RFC 9849).
+		if conf.MinVersion != 0 && conf.MinVersion < tls.VersionTLS13 {
+			return nil, fmt.Errorf("minVersion must be VersionTLS13 when ECH keys are configured, got %s", tlsOption.MinVersion)
+		}
+		if conf.MaxVersion != 0 && conf.MaxVersion < tls.VersionTLS13 {
+			return nil, fmt.Errorf("maxVersion must allow TLS 1.3 when ECH keys are configured, got %s", tlsOption.MaxVersion)
+		}
+
 		for _, content := range tlsOption.ECHKeys {
-			data, err := content.Read()
+			echKeys, err := loadECHKeys(content)
 			if err != nil {
-				return nil, fmt.Errorf("reading ECH key file failed: %w", err)
+				return nil, err
 			}
 
-			echKeys, err := UnmarshalECHKeys(data)
+			conf.EncryptedClientHelloKeys = append(conf.EncryptedClientHelloKeys, echKeys...)
+		}
+
+		for _, content := range tlsOption.ECHDecryptOnlyKeys {
+			echKeys, err := loadECHKeys(content)
 			if err != nil {
-				return nil, fmt.Errorf("unmarshalling ECH keys failed: %w", err)
+				return nil, err
 			}
 
+			for i := range echKeys {
+				echKeys[i].SendAsRetry = false
+			}
 			conf.EncryptedClientHelloKeys = append(conf.EncryptedClientHelloKeys, echKeys...)
 		}
 	}
 
 	return conf, nil
+}
+
+func loadECHKeys(content types.FileOrContent) ([]tls.EncryptedClientHelloKey, error) {
+	data, err := content.Read()
+	if err != nil {
+		return nil, fmt.Errorf("reading ECH key file failed: %w", err)
+	}
+
+	echKeys, err := UnmarshalECHKeys(data)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling ECH keys failed: %w", err)
+	}
+
+	return echKeys, nil
 }
 
 func hashRawCert(rawCert []byte) string {
