@@ -207,6 +207,8 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 			cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
 			for name, option := range copyConf.TLS.Options {
 				option.ClientAuth.CAFiles = []types.FileOrContent{}
+				// ECH key entries carry PEM-encoded private key material.
+				option.ECHKeys = nil
 				cleanedOptions[name] = option
 			}
 

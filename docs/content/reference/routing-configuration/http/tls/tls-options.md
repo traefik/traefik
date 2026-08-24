@@ -366,20 +366,23 @@ spec:
 
 _Optional_
 
-The `echKeys` option enables server-side Encrypted Client Hello (ECH).
-Each value references a PEM file containing the private key and the ECH configuration list for a DNS public name.
-Configure the keys on the TLS option selected for that public name.
+The `echKeys` option enables server-side Encrypted Client Hello (ECH), on both TCP (HTTP/1.1, HTTP/2) and HTTP/3 connections.
+Each value references a PEM file (or holds inline PEM content) containing the private key and the ECH configuration list for a DNS public name.
 
 The file format follows [RFC 9934](https://www.rfc-editor.org/rfc/rfc9934.html): a PKCS#8 `PRIVATE KEY` block followed by an `ECHCONFIG` block containing an encoded `ECHConfigList`.
 Traefik currently supports X25519 ECH private keys.
 See [RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) for the ECH protocol.
 
-ECH requires TLS 1.3.
-Clients that do not support ECH can still connect with regular TLS 1.3.
+!!! info "Provider availability"
 
-!!! warning
+    The `echKeys` option can be set with the [File](../../other-providers/file.md) and [KV](../../other-providers/kv.md) providers.
+    The Kubernetes `TLSOption` custom resource does not expose it yet.
 
-    ECH files contain private key material. Restrict file access to the Traefik process.
+From a Traefik source checkout, generate a key file for a public name:
+
+```bash
+go run ./internal/ech/cmd generate example.com > /etc/traefik/ech.pem
+```
 
 ```text
 -----BEGIN PRIVATE KEY-----
@@ -390,6 +393,10 @@ AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
 AQALZXhhbXBsZS5jb20AAA==
 -----END ECHCONFIG-----
 ```
+
+An ECH connection starts with the public name as server name, so Traefik terminates it with the TLS option matching the public name — the `default` option unless a router matches the public name.
+The ECH keys and a `minVersion` set to `VersionTLS13` must be configured on that option: ECH requires TLS 1.3, and the Go TLS stack expects `VersionTLS13` as minimum version when ECH keys are set.
+Clients that do not support ECH can still connect with regular TLS 1.3.
 
 ```yaml tab="Structured (YAML)"
 # Routing configuration
@@ -410,5 +417,29 @@ tls:
     minVersion = "VersionTLS13"
     echKeys = ["/etc/traefik/ech.pem"]
 ```
+
+!!! warning "Shared TLS option"
+
+    On TCP connections, the protected domains inherit the public name's TLS option for the whole connection: a request to a router configured with a different TLS option is rejected with a `421 Misdirected Request`.
+    All domains protected behind a public name must therefore share the public name's TLS option.
+    On HTTP/3 connections, the TLS option is instead selected with the decrypted (protected) server name.
+
+A certificate valid for the public name must also be configured: clients validate it whenever ECH is rejected and retried, for example while a key rotation propagates.
+Enabling `sniStrict` without such a certificate breaks this retry mechanism.
+
+#### DNS record
+
+Clients only send ECH once they discover the ECH configuration in the `HTTPS` DNS record of the protected domain (`ech` parameter, see [RFC 9848](https://www.rfc-editor.org/rfc/rfc9848.html)).
+The base64 payload of the `ECHCONFIG` block is the `ECHConfigList` value to publish:
+
+```text
+protected.example.com. 300 IN HTTPS 1 . ech=AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEAAQALZXhhbXBsZS5jb20AAA==
+```
+
+When rotating keys, list both the new and the previous key files in `echKeys` until DNS caches no longer serve the old configuration.
+
+!!! warning "Private key material"
+
+    ECH files contain private key material. Restrict file access to the Traefik process.
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}
