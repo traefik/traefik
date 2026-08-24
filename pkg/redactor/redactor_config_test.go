@@ -453,8 +453,9 @@ func init() {
 					CAFiles:        []types.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
-				SniStrict: true,
-				ECHKeys:   []types.FileOrContent{"ech.pem"},
+				SniStrict:          true,
+				ECHKeys:            []types.FileOrContent{"ech.pem"},
+				ECHDecryptOnlyKeys: []types.FileOrContent{"retired-ech.pem"},
 			},
 		},
 		Certificates: []*traefiktls.CertAndStores{

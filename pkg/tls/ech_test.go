@@ -2,6 +2,9 @@ package tls
 
 import (
 	"crypto/ecdh"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -46,12 +49,21 @@ func TestNewECHKey(t *testing.T) {
 			publicName: "a-long-public-name-for-ech.example.com",
 		},
 		{
+			desc:       "public name at DNS length limit",
+			publicName: strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 61),
+		},
+		{
 			desc:        "empty public name",
 			expectError: true,
 		},
 		{
-			desc:        "public name exceeds encoding limit",
-			publicName:  strings.Repeat("a", maxECHPublicNameLength+1),
+			desc:        "public name exceeds DNS length limit",
+			publicName:  strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 62),
+			expectError: true,
+		},
+		{
+			desc:        "single-label public name",
+			publicName:  "localhost",
 			expectError: true,
 		},
 		{
@@ -118,20 +130,27 @@ func TestMarshalUnmarshalECHKey(t *testing.T) {
 	assert.Equal(t, "ECHCONFIG", configBlock.Type)
 	assert.Equal(t, len(configBlock.Bytes)-2, int(binary.BigEndian.Uint16(configBlock.Bytes)))
 
-	decoded, err := UnmarshalECHKey(data)
+	decoded, err := UnmarshalECHKeys(data)
 	require.NoError(t, err)
-	assert.Equal(t, key.Config, decoded.Config)
-	assert.Equal(t, key.PrivateKey, decoded.PrivateKey)
-	assert.True(t, decoded.SendAsRetry)
+	require.Len(t, decoded, 1)
+	assert.Equal(t, key.Config, decoded[0].Config)
+	assert.Equal(t, key.PrivateKey, decoded[0].PrivateKey)
+	assert.True(t, decoded[0].SendAsRetry)
 }
 
 func TestUnmarshalECHKeyRFC9934(t *testing.T) {
-	key, err := UnmarshalECHKey([]byte(rfc9934ECHKey))
+	keys, err := UnmarshalECHKeys([]byte(rfc9934ECHKey))
 	require.NoError(t, err)
+	require.Len(t, keys, 1)
 
-	assert.NotEmpty(t, key.Config)
-	assert.Len(t, key.PrivateKey, 32)
-	assert.True(t, key.SendAsRetry)
+	assert.Len(t, keys[0].PrivateKey, 32)
+	assert.True(t, keys[0].SendAsRetry)
+
+	parsed, err := parseECHConfig(keys[0].Config)
+	require.NoError(t, err)
+	assert.Equal(t, uint16(echConfigVersion), parsed.version)
+	assert.Equal(t, uint16(0x0020), parsed.kemID)
+	assert.Equal(t, "example.com", string(parsed.publicName))
 }
 
 func TestMarshalECHKeyErrors(t *testing.T) {
@@ -197,12 +216,48 @@ func TestUnmarshalECHKeyErrors(t *testing.T) {
 	invalidNameConfigList, err := ECHConfigToConfigList(invalidNameConfig)
 	require.NoError(t, err)
 
+	_, ed25519Key, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	ed25519DER, err := x509.MarshalPKCS8PrivateKey(ed25519Key)
+	require.NoError(t, err)
+
+	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	ecdsaDER, err := x509.MarshalPKCS8PrivateKey(ecdsaKey)
+	require.NoError(t, err)
+
 	testCases := []struct {
-		desc string
-		data []byte
+		desc        string
+		data        []byte
+		errContains string
 	}{
 		{
 			desc: "empty data",
+		},
+		{
+			desc:        "not PEM content",
+			data:        []byte("/etc/traefik/missing-ech.pem"),
+			errContains: "no PEM block",
+		},
+		{
+			desc:        "ECHCONFIG block before private key",
+			data:        append(encodeECHPEM(nil, configList), encodeECHPEM(privateKeyDER, nil)...),
+			errContains: "must precede",
+		},
+		{
+			desc:        "duplicate private keys",
+			data:        append(encodeECHPEM(privateKeyDER, nil), encodeECHPEM(privateKeyDER, configList)...),
+			errContains: "multiple ECH private keys",
+		},
+		{
+			desc:        "Ed25519 private key",
+			data:        encodeECHPEM(ed25519DER, configList),
+			errContains: "unsupported ECH private key type",
+		},
+		{
+			desc:        "ECDSA private key",
+			data:        encodeECHPEM(ecdsaDER, configList),
+			errContains: "unsupported ECH private key type",
 		},
 		{
 			desc: "unknown PEM block",
@@ -250,8 +305,11 @@ func TestUnmarshalECHKeyErrors(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := UnmarshalECHKey(test.data)
+			_, err := UnmarshalECHKeys(test.data)
 			require.Error(t, err)
+			if test.errContains != "" {
+				assert.ErrorContains(t, err, test.errContains)
+			}
 		})
 	}
 }
@@ -266,7 +324,9 @@ func TestUnmarshalECHKeys(t *testing.T) {
 
 	secondConfig := append([]byte(nil), key.Config...)
 	secondConfig[4]++
-	configList := encodeECHConfigList(t, key.Config, secondConfig)
+	unknownVersionConfig := append([]byte(nil), key.Config...)
+	unknownVersionConfig[1]++
+	configList := encodeECHConfigList(t, unknownVersionConfig, key.Config, secondConfig)
 
 	keys, err := UnmarshalECHKeys(encodeECHPEM(privateKeyDER, configList))
 	require.NoError(t, err)
@@ -276,6 +336,99 @@ func TestUnmarshalECHKeys(t *testing.T) {
 	assert.Equal(t, keys[0].PrivateKey, keys[1].PrivateKey)
 	assert.True(t, keys[0].SendAsRetry)
 	assert.True(t, keys[1].SendAsRetry)
+}
+
+func TestUnmarshalECHKeysIgnoresTrailingContent(t *testing.T) {
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
+	data, err := MarshalECHKey(key)
+	require.NoError(t, err)
+
+	// Content after the ECHConfigList block is ignored (RFC 9934, Section 3).
+	data = append(data, pem.EncodeToMemory(&pem.Block{Type: "GARBAGE", Bytes: []byte("garbage")})...)
+
+	keys, err := UnmarshalECHKeys(data)
+	require.NoError(t, err)
+	assert.Len(t, keys, 1)
+}
+
+func TestParseECHConfigExtensions(t *testing.T) {
+	key, err := NewECHKey("server.local")
+	require.NoError(t, err)
+
+	testCases := []struct {
+		desc        string
+		extensions  []byte
+		errContains string
+	}{
+		{
+			desc:       "unknown non-mandatory extension",
+			extensions: []byte{0x00, 0x01, 0x00, 0x00},
+		},
+		{
+			desc:        "unknown mandatory extension",
+			extensions:  []byte{0x80, 0x01, 0x00, 0x00},
+			errContains: "mandatory",
+		},
+		{
+			desc:        "duplicate extension",
+			extensions:  []byte{0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00},
+			errContains: "duplicate",
+		},
+		{
+			desc:        "truncated extension",
+			extensions:  []byte{0x00, 0x01},
+			errContains: "invalid ECH configuration extensions",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := parseECHConfig(configWithExtensions(t, key.Config, test.extensions))
+			if test.errContains != "" {
+				require.ErrorContains(t, err, test.errContains)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestValidECHPublicName(t *testing.T) {
+	testCases := []struct {
+		name  string
+		valid bool
+	}{
+		{name: "localhost", valid: true},
+		{name: "example.com", valid: true},
+		{name: "EXAMPLE.COM", valid: true},
+		{name: "a-b.example.com", valid: true},
+		{name: "1.2.3.4.example.com", valid: true},
+		{name: strings.Repeat("a", 63) + ".example.com", valid: true},
+		{name: "server.0xzz", valid: true},
+		{name: "server.1e5", valid: true},
+		{name: "example.com.", valid: false},
+		{name: ".example.com", valid: false},
+		{name: strings.Repeat("a", 64) + ".example.com", valid: false},
+		{name: "-a.example.com", valid: false},
+		{name: "a-.example.com", valid: false},
+		{name: "a_b.example.com", valid: false},
+		{name: "127.0.0.1", valid: false},
+		{name: "example.123", valid: false},
+		{name: "server.0x", valid: false},
+		{name: "server.0xff", valid: false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.valid, validECHPublicName([]byte(test.name)))
+		})
+	}
 }
 
 func TestECHConfigToConfigList(t *testing.T) {
@@ -288,20 +441,87 @@ func TestECHConfigToConfigList(t *testing.T) {
 	_, err = ECHConfigToConfigList(nil)
 	require.Error(t, err)
 
+	maxSizeList, err := ECHConfigToConfigList(make([]byte, 1<<16-1))
+	require.NoError(t, err)
+	assert.Len(t, maxSizeList, 1<<16+1)
+
 	_, err = ECHConfigToConfigList(make([]byte, 1<<16))
 	require.Error(t, err)
 }
 
 func TestBuildTLSConfigWithECH(t *testing.T) {
+	retiredKey, err := NewECHKey("server.local")
+	require.NoError(t, err)
+	retiredKeyPEM, err := MarshalECHKey(retiredKey)
+	require.NoError(t, err)
+
 	config, err := buildTLSConfig(Options{
-		MinVersion: "VersionTLS13",
-		ECHKeys:    []types.FileOrContent{rfc9934ECHKey},
+		MinVersion:         "VersionTLS13",
+		ECHKeys:            []types.FileOrContent{rfc9934ECHKey},
+		ECHDecryptOnlyKeys: []types.FileOrContent{types.FileOrContent(retiredKeyPEM)},
 	})
 	require.NoError(t, err)
 
 	assert.Equal(t, uint16(tls.VersionTLS13), config.MinVersion)
-	require.Len(t, config.EncryptedClientHelloKeys, 1)
+	require.Len(t, config.EncryptedClientHelloKeys, 2)
 	assert.True(t, config.EncryptedClientHelloKeys[0].SendAsRetry)
+	assert.False(t, config.EncryptedClientHelloKeys[1].SendAsRetry)
+}
+
+func TestBuildTLSConfigWithECHErrors(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		options     Options
+		errContains string
+	}{
+		{
+			desc: "minVersion below TLS 1.3",
+			options: Options{
+				MinVersion: "VersionTLS12",
+				ECHKeys:    []types.FileOrContent{rfc9934ECHKey},
+			},
+			errContains: "minVersion",
+		},
+		{
+			desc: "maxVersion below TLS 1.3",
+			options: Options{
+				MaxVersion: "VersionTLS12",
+				ECHKeys:    []types.FileOrContent{rfc9934ECHKey},
+			},
+			errContains: "maxVersion",
+		},
+		{
+			desc: "invalid key content",
+			options: Options{
+				ECHKeys: []types.FileOrContent{"not a PEM"},
+			},
+			errContains: "unmarshalling ECH keys failed",
+		},
+		{
+			desc: "invalid decrypt-only key content",
+			options: Options{
+				ECHKeys:            []types.FileOrContent{rfc9934ECHKey},
+				ECHDecryptOnlyKeys: []types.FileOrContent{"not a PEM"},
+			},
+			errContains: "unmarshalling ECH keys failed",
+		},
+		{
+			desc: "decrypt-only keys without advertised keys",
+			options: Options{
+				ECHDecryptOnlyKeys: []types.FileOrContent{rfc9934ECHKey},
+			},
+			errContains: "at least one echKeys entry",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := buildTLSConfig(test.options)
+			require.ErrorContains(t, err, test.errContains)
+		})
+	}
 }
 
 func TestRequestWithECH(t *testing.T) {
@@ -366,6 +586,19 @@ func encodeECHPEM(privateKey, configList []byte) []byte {
 	}
 
 	return data
+}
+
+// configWithExtensions replaces the empty extensions block of an ECHConfig built by NewECHKey.
+func configWithExtensions(t *testing.T, config, extensions []byte) []byte {
+	t.Helper()
+
+	require.GreaterOrEqual(t, len(config), 6)
+	rebuilt := append([]byte(nil), config[:len(config)-2]...)
+	rebuilt = binary.BigEndian.AppendUint16(rebuilt, uint16(len(extensions)))
+	rebuilt = append(rebuilt, extensions...)
+	binary.BigEndian.PutUint16(rebuilt[2:], uint16(len(rebuilt)-4))
+
+	return rebuilt
 }
 
 func encodeECHConfigList(t *testing.T, configs ...[]byte) []byte {
