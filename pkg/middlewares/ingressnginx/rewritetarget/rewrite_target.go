@@ -11,13 +11,13 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
 
 const (
 	typeName         = "RewriteTarget"
 	xForwardedPrefix = "X-Forwarded-Prefix"
-	xForwardedURI    = "X-Forwarded-Uri"
 )
 
 // This regex is used to remove the capture groups when no regex is provided,
@@ -141,8 +141,8 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Keep the client URI available to downstream middleware, such as the
 	// ingress-nginx forward-auth adapter, before rewriting the request path.
-	if req.Header.Get(xForwardedURI) == "" {
-		req.Header.Set(xForwardedURI, req.URL.RequestURI())
+	if ingressnginx.OriginalURI(req) == "" {
+		req = ingressnginx.WithOriginalURI(req, req.URL.RequestURI())
 	}
 
 	// As replacement can introduce escaped characters

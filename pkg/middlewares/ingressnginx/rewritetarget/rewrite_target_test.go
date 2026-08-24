@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 )
 
 func TestRewriteTarget(t *testing.T) {
@@ -18,8 +19,8 @@ func TestRewriteTarget(t *testing.T) {
 		expectedPath             string
 		expectedRawPath          string
 		expectedXForwardedPrefix string
-		expectedXForwardedURI    string
 		expectedRequestURI       string
+		expectedOriginalURI      string
 		expectedStatusCode       int
 		expectedRedirectURL      string
 		expectsError             bool
@@ -82,9 +83,9 @@ func TestRewriteTarget(t *testing.T) {
 				Regex:       `^/application/(.*)`,
 				Replacement: "/$1",
 			},
-			expectedPath:          "/query",
-			expectedXForwardedURI: "/application/query?tenant=acme",
-			expectedRequestURI:    "/query?tenant=acme",
+			expectedPath:        "/query",
+			expectedRequestURI:  "/query?tenant=acme",
+			expectedOriginalURI: "/application/query?tenant=acme",
 		},
 		{
 			desc: "regex with multiple capture groups",
@@ -247,12 +248,13 @@ func TestRewriteTarget(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var actualPath, actualRawPath, actualXForwardedPrefix, actualXForwardedURI, requestURI string
+			var actualPath, actualRawPath, actualXForwardedPrefix, requestURI string
+			var actualOriginalURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
 				actualRawPath = r.URL.RawPath
 				actualXForwardedPrefix = r.Header.Get(xForwardedPrefix)
-				actualXForwardedURI = r.Header.Get(xForwardedURI)
+				actualOriginalURI = ingressnginx.OriginalURI(r)
 				requestURI = r.RequestURI
 			})
 
@@ -289,8 +291,8 @@ func TestRewriteTarget(t *testing.T) {
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedXForwardedPrefix, actualXForwardedPrefix, "Unexpected %s header.", xForwardedPrefix)
-			if test.expectedXForwardedURI != "" {
-				assert.Equal(t, test.expectedXForwardedURI, actualXForwardedURI, "Unexpected %s header.", xForwardedURI)
+			if test.expectedOriginalURI != "" {
+				assert.Equal(t, test.expectedOriginalURI, actualOriginalURI, "Unexpected original URI.")
 			}
 
 			if actualRawPath == "" {
