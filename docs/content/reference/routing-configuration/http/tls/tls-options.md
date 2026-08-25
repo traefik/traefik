@@ -383,10 +383,10 @@ It requires at least one key in `echKeys`.
     where each entry references a Kubernetes Secret holding the PEM data under the `tls.ech` key.
     A referenced Secret that cannot be resolved causes the TLS option to be rejected.
 
-From a Traefik source checkout, generate a key file for a public name:
+Generate a key file for a public name:
 
 ```bash
-go run ./internal/ech/cmd generate example.com > /etc/traefik/ech.pem
+traefik ech generate example.com > /etc/traefik/ech.pem
 ```
 
 ```text
@@ -397,6 +397,8 @@ MC4CAQAwBQYDK2VuBCIE...
 AD7+DQA65wAgACA...
 -----END ECHCONFIG-----
 ```
+
+The [`openssl ech`](https://docs.openssl.org/master/man1/openssl-ech/) command (OpenSSL 4.0+) produces the same format.
 
 !!! warning "Generate your own key"
 
