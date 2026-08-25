@@ -706,9 +706,9 @@ func TestRoutingPath(t *testing.T) {
 			req, err = withRoutingPath(req)
 			require.NoError(t, err)
 
-			gotRoutingPath := getRoutingPath(req)
-			assert.NotNil(t, gotRoutingPath)
-			assert.Equal(t, test.expectedRoutingPath, *gotRoutingPath)
+			gotRoutingPath, ok := getRoutingPath(req)
+			assert.True(t, ok)
+			assert.Equal(t, test.expectedRoutingPath, gotRoutingPath)
 		})
 	}
 }
