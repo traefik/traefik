@@ -10,7 +10,7 @@ metadata:
     nginx.ingress.kubernetes.io/cors-expose-headers: "X-Forwarded-For, X-Forwarded-Host"
     nginx.ingress.kubernetes.io/cors-allow-headers: "X-Foo"
     nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.com, https://exact.example.org"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.com, https://exact.example.org, https://*evil.com"
     nginx.ingress.kubernetes.io/cors-max-age: "42"
 
 spec:

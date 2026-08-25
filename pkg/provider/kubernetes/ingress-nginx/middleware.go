@@ -250,6 +250,11 @@ func (p *Provider) buildIPAllowList(loc *location) {
 	}
 }
 
+// corsWildcardOriginRegexp is the same cors-allow-origin regexp used in ingress-nginx, with the
+// wildcard group made mandatory, so that it only matches the protocol://*.domain[:port] form:
+// https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/cors/main.go#L48
+var corsWildcardOriginRegexp = regexp.MustCompile(`^[a-z]+://\*\.[A-Za-z0-9\-.]*(:\d+)?$`)
+
 // wildcardOriginRegex converts a single-level wildcard origin (e.g. https://*.example.com)
 // into a regular expression, mirroring ingress-nginx semantics where '*' matches exactly
 // one DNS label.
@@ -265,10 +270,13 @@ func (p *Provider) buildCORS(loc *location) {
 
 	// ingress-nginx supports single-level wildcard origins, which the exact-match origin
 	// list cannot express; route them to the regex matcher to preserve behavior on migration.
+	// Values with a wildcard anywhere else are skipped, as ingress-nginx does.
 	var originList, originRegexList []string
 	for _, origin := range ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}) {
 		if origin != "*" && strings.Contains(origin, "*") {
-			originRegexList = append(originRegexList, wildcardOriginRegex(origin))
+			if corsWildcardOriginRegexp.MatchString(origin) {
+				originRegexList = append(originRegexList, wildcardOriginRegex(origin))
+			}
 			continue
 		}
 		originList = append(originList, origin)
