@@ -965,7 +965,7 @@ spec:
     - port: 80
 ```
 
-The annotation value follows the format `<namespace>-<middleware-name>@kubernetescrd`.
+The annotation value follows the format `<namespace>-<middleware-name>@kubernetescrd`, or `<namespace>_<middleware-name>@kubernetescrd` when [`safeNaming`](../../reference/install-configuration/providers/kubernetes/kubernetes-crd.md#safenaming) is enabled.
 
 ### Test Service Middleware
 

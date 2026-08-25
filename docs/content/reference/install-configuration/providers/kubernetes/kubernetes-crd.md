@@ -183,6 +183,13 @@ options were collapsed into a single service, and the last one built silently wo
 they are distinct services, which also means that the servers of a Kubernetes Service referenced from several
 parents are health checked once per reference, instead of once for all of them.
 
+!!! warning "Cross-provider and cross-namespace references"
+
+    These names are also what the other providers reference. An Ingress annotation such as
+    `traefik.ingress.kubernetes.io/router.middlewares`, or any other `@kubernetescrd` reference, has to use
+    `<namespace>_<name>@kubernetescrd` instead of `<namespace>-<name>@kubernetescrd` once `safeNaming` is enabled.
+    A reference left in the legacy form resolves to nothing, and the routers using it are not created.
+
 !!! warning "Observability"
 
     These names are user-visible: they appear in the dashboard and API, in the access logs `RouterName` and `ServiceName` fields,
