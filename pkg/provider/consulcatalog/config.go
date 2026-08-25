@@ -238,9 +238,7 @@ func connectCertForDatacenter(certInfos map[string]*connectCert, datacenter stri
 	}
 
 	if len(certInfos) == 1 {
-		for _, certInfo := range certInfos {
-			return certInfo
-		}
+		return certInfos[""]
 	}
 
 	return nil

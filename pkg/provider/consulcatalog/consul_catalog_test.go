@@ -80,6 +80,8 @@ func TestProviderInitDatacenters(t *testing.T) {
 }
 
 func TestAggregateCatalogUpdatesRetainsLastSuccessfulDatacenterSnapshot(t *testing.T) {
+	t.Parallel()
+
 	var config Configuration
 	config.SetDefaults()
 

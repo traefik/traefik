@@ -3885,6 +3885,47 @@ func TestBuildConfigurationMultiDatacenterTCPConnect(t *testing.T) {
 	assert.Equal(t, []types.FileOrContent{"root-dc2"}, dynamicConfiguration.TCP.ServersTransports["tls-ns-dc2-Test"].TLS.RootCAs)
 }
 
+func TestConnectCertForDatacenter(t *testing.T) {
+	t.Parallel()
+
+	defaultCert := &connectCert{}
+	dc1Cert := &connectCert{}
+	dc2Cert := &connectCert{}
+
+	testCases := []struct {
+		desc       string
+		certInfos  map[string]*connectCert
+		datacenter string
+		expected   *connectCert
+	}{
+		{
+			desc:       "exact datacenter match",
+			certInfos:  map[string]*connectCert{"dc1": dc1Cert, "dc2": dc2Cert},
+			datacenter: "dc2",
+			expected:   dc2Cert,
+		},
+		{
+			desc:       "default datacenter fallback",
+			certInfos:  map[string]*connectCert{"": defaultCert},
+			datacenter: "dc1",
+			expected:   defaultCert,
+		},
+		{
+			desc:       "no fallback across datacenters",
+			certInfos:  map[string]*connectCert{"dc1": dc1Cert},
+			datacenter: "dc2",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Same(t, test.expected, connectCertForDatacenter(test.certInfos, test.datacenter))
+		})
+	}
+}
+
 func TestNamespaces(t *testing.T) {
 	testCases := []struct {
 		desc               string
