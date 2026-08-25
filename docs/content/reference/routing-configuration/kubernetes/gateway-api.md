@@ -154,10 +154,28 @@ This is useful for delegating TLS certificate management to application teams, b
 
     Please note that `ListenerSet` listener ports must match the configured [EntryPoint ports](../../install-configuration/entrypoints.md) of the Traefik deployment, just like `Gateway` listeners.
 
+!!! info "One protocol per port"
+
+    Traefik binds each port to a single EntryPoint, so a `ListenerSet` listener can only use a port that no other protocol has already claimed —
+    whether by the parent `Gateway` or by a sibling `ListenerSet`.
+    For instance, a `TLS` listener on a port already serving an `HTTPS` listener is rejected with a `Conflicted` status condition and the `ProtocolConflict` reason.
+    Several listeners may still share a port when they use the same protocol and differ by hostname.
+
+    When two listeners compete for the same port, the parent `Gateway` wins, then the oldest `ListenerSet`, then the first in alphabetical `{namespace}/{name}` order.
+
 !!! info "Route Attachment"
 
     Routes that want to attach to a `ListenerSet` listener must use `kind: ListenerSet` in their `parentRefs`.
     Routes using `kind: Gateway` will not match listeners defined in a ListenerSet.
+
+!!! warning "Shared TLS certificate store"
+
+    Traefik keeps all TLS certificates — from `Gateway` listeners and from every `ListenerSet` listener — in a single global certificate store.
+    During the TLS handshake, the certificate is selected by matching the SNI against the SANs of **all** certificates in that store; the selection is **not** scoped to the listener, port, or EntryPoint that received the connection.
+    A certificate attached to a `ListenerSet` listener can therefore be served for a connection destined to another listener, including the parent `Gateway`'s own listeners, when its SANs match the requested SNI.
+
+    Because a `ListenerSet` may reference a `Secret` in its own namespace without a `ReferenceGrant`, any namespace admitted through `allowedListeners` can introduce certificates that compete in SNI selection on all TLS EntryPoints.
+    Treat `allowedListeners` as a trust boundary, and only allow ListenerSets from namespaces you trust with TLS termination for the hostnames served by this Gateway.
 
 The following example shows a `Gateway` that allows ListenerSets from all namespaces, with a ListenerSet adding an HTTPS listener, and an `HTTPRoute` attached to it:
 

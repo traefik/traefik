@@ -78,7 +78,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, listener, route, hostnames, statusReport)
+				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), listener, route, hostnames, statusReport)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -93,15 +93,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 			}
 
 			if resolvedRefCondition == nil {
-				// The ResolvedRefs condition must be reported for every parentRef, even
-				// when it resolves to no listener; references were not found invalid.
-				resolvedRefCondition = &metav1.Condition{
-					Type:               string(gatev1.RouteConditionResolvedRefs),
-					Status:             metav1.ConditionTrue,
-					ObservedGeneration: route.Generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.RouteConditionResolvedRefs),
-				}
+				resolvedRefCondition = new(defaultResolvedRefsCondition(route.Generation))
 			}
 
 			parentStatusConditions := []metav1.Condition{acceptedCondition, *resolvedRefCondition}
@@ -115,7 +107,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 	}
 }
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -185,7 +177,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName string, listen
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, listener, conf, routerName, routeRule, route, match.Path, statusReport)
+				router.Service, serviceCondition = p.loadWRRService(ctx, listener, conf, routerName, routeRule, route, match.Path, statusReport)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -200,7 +192,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName string, listen
 	return conf, condition
 }
 
-func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -230,7 +222,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
+		svcName, errCondition := p.loadService(listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -257,7 +249,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -340,7 +332,7 @@ func (p *Provider) loadService(gatewayName string, listener gatewayListener, con
 		}
 	}
 
-	lb, st, errCondition := p.loadHTTPServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadHTTPServers(namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
@@ -473,7 +465,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -521,7 +513,7 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 			}
 
 			policyAncestorStatus := gatev1.PolicyAncestorStatus{
-				AncestorRef: listener.policyAncestorRef(gatewayName, namespace),
+				AncestorRef:    listener.policyAncestorRef(),
 				ControllerName: controllerName,
 			}
 
