@@ -1,6 +1,7 @@
 package fast
 
 import (
+	"bufio"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -358,6 +359,14 @@ func TestInvalidStatusCode(t *testing.T) {
 					return
 				}
 
+				// Read the request before answering, as a real backend would.
+				// Responding first lets the readLoop peek the response before
+				// the connection has been handed a request, which makes it
+				// discard the connection as carrying an unsolicited response.
+				if _, err := http.ReadRequest(bufio.NewReader(conn)); err != nil {
+					return
+				}
+
 				_, _ = conn.Write([]byte(test.rawStatusLine + "\r\n\r\n"))
 			}()
 
@@ -390,6 +399,10 @@ func TestNoContentLength(t *testing.T) {
 		t.Helper()
 
 		conn, err := backendListener.Accept()
+		require.NoError(t, err)
+
+		// Read the request before answering, as a real backend would.
+		_, err = http.ReadRequest(bufio.NewReader(conn))
 		require.NoError(t, err)
 
 		_, err = conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\nfoo"))
