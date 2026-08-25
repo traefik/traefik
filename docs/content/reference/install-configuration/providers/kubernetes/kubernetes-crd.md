@@ -183,19 +183,20 @@ options were collapsed into a single service, and the last one built silently wo
 they are distinct services, which also means that the servers of a Kubernetes Service referenced from several
 parents are health checked once per reference, instead of once for all of them.
 
-!!! warning "Cross-provider and cross-namespace references"
-
-    These names are also what the other providers reference. An Ingress annotation such as
-    `traefik.ingress.kubernetes.io/router.middlewares`, or any other `@kubernetescrd` reference, has to use
-    `<namespace>_<name>@kubernetescrd` instead of `<namespace>-<name>@kubernetescrd` once `safeNaming` is enabled.
-    A reference left in the legacy form resolves to nothing, and the routers using it are not created.
-
 !!! warning "Observability"
 
     These names are user-visible: they appear in the dashboard and API, in the access logs `RouterName` and `ServiceName` fields,
     and in the `router` and `service` labels of the metrics.
     Dashboards, alerting rules, and log queries that match on Kubernetes CRD router, middleware or service names must be updated accordingly
     when `safeNaming` is enabled.
+
+!!! warning "Cross-provider references"
+
+    The generated names are also the ones the other providers reference. When `safeNaming` is enabled, a namespaced
+    `@kubernetescrd` reference, such as the `traefik.ingress.kubernetes.io/router.middlewares` annotation on an Ingress,
+    must be of form `namespace_name@kubernetescrd` instead of `namespace-name@kubernetescrd`.
+    A reference left in the legacy form is not resolved, and the routers using it are not created.
+    For a TLS options reference, the TLS handshake is refused on the host names served by those routers.
 
 ```yaml tab="File (YAML)"
 providers:
