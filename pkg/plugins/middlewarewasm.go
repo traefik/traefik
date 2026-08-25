@@ -57,11 +57,18 @@ func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler
 	}
 
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		h.ServeHTTP(rw, req.WithContext(applyCtx(req.Context())))
+		reqCtx, cleanup, err := applyCtx(req.Context())
+		if err != nil {
+			http.Error(rw, fmt.Sprintf("wasm: instantiating host module: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer cleanup()
+
+		h.ServeHTTP(rw, req.WithContext(reqCtx))
 	}), nil
 }
 
-func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, func(ctx context.Context) context.Context, error) {
+func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, ContextApplier, error) {
 	code, err := os.ReadFile(b.path)
 	if err != nil {
 		return nil, nil, fmt.Errorf("loading binary: %w", err)
@@ -131,7 +138,13 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 		return rt, nil
 	}))
 
-	mw, err := wasm.NewMiddleware(applyCtx(ctx), code, opts...)
+	setupCtx, cleanup, err := applyCtx(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("instantiating host module: %w", err)
+	}
+	defer cleanup()
+
+	mw, err := wasm.NewMiddleware(setupCtx, code, opts...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating middleware: %w", err)
 	}

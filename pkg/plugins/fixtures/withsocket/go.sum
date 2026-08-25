@@ -1,0 +1,6 @@
+github.com/stealthrocket/net v0.2.1 h1:PehPGAAjuV46zaeHGlNgakFV7QDGUAREMcEQsZQ8NLo=
+github.com/stealthrocket/net v0.2.1/go.mod h1:VvoFod9pYC9mo+bEg2NQB/D+KVOjxfhZjZ5zyvozq7M=
+github.com/traefik/http-wasm-guest-tinygo v0.0.0-20240913140402-af96219ffea5 h1:D/1vHhfpcbJl6igutIruxClrFwNNogF6ejcu67xzZcw=
+github.com/traefik/http-wasm-guest-tinygo v0.0.0-20240913140402-af96219ffea5/go.mod h1:zcKr7h/t5ha2ZWIMwV4iOqhfC/qno/tNPYgybVkn/MQ=
+golang.org/x/net v0.10.0 h1:X2//UzNDwYmtCLn7To6G58Wr6f5ahEAQgKNzv9Y951M=
+golang.org/x/net v0.10.0/go.mod h1:0qNGK6F8kojg2nk9dLZ2mShWaEBan6FAoqfSigmmuDg=
