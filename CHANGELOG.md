@@ -1,3 +1,39 @@
+## [v3.7.12](https://github.com/traefik/traefik/tree/v3.7.12) (2026-08-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.11...v3.7.12)
+
+**Bug fixes:**
+- **[fastproxy]** Bump github.com/valyala/fasthttp to v1.73.0 ([#13769](https://github.com/traefik/traefik/pull/13769) @mmatur)
+- **[file]** Include the filename in file provider configuration errors ([#13527](https://github.com/traefik/traefik/pull/13527) @lazerg)
+- **[http3]** Apply read timeout, idle timeout, and max header bytes for HTTP/3 ([#13717](https://github.com/traefik/traefik/pull/13717) @gndz07)
+- **[k8s]** Fix typos in docs and an OCSP log message ([#13722](https://github.com/traefik/traefik/pull/13722) @MsfPablo)
+- **[k8s, k8s/ingress-nginx]** Fix redirect www host with a non-numeric port ([#13708](https://github.com/traefik/traefik/pull/13708) @mmatur)
+- **[k8s/ingress-nginx]** Fix TLS option name collision across namespaces in the ingress-nginx provider ([#13721](https://github.com/traefik/traefik/pull/13721) @gndz07)
+- **[server]** Add an entry point option to handle request headers with aliasing names ([#13720](https://github.com/traefik/traefik/pull/13720) @rtribotte)
+- **[tcp, udp]** Reject negative weights in TCP and UDP weighted services ([#13749](https://github.com/traefik/traefik/pull/13749) @rtribotte)
+- Bump etcd client modules to v3.5.33 ([#13756](https://github.com/traefik/traefik/pull/13756) @mmatur)
+
+**Documentation:**
+- **[k8s]** Update redirections block reference in basic.md ([#13723](https://github.com/traefik/traefik/pull/13723) @Larzenegger)
+- **[k8s]** Fix formatting in Kubernetes setup guide ([#13742](https://github.com/traefik/traefik/pull/13742) @stefkiourk)
+- **[security]** Document the security threat model and settled security decisions ([#13740](https://github.com/traefik/traefik/pull/13740) @emilevauge)
+- **[service]** Clarify ServersTransport behavior for the errors middleware in Kubernetes ([#13531](https://github.com/traefik/traefik/pull/13531) @lazerg)
+- Fix v3.7.11 migration guide ([#13730](https://github.com/traefik/traefik/pull/13730) @gndz07)
+- Move Jean-Baptiste Doumenjou and Mathieu Lonjaret to past maintainers ([#13736](https://github.com/traefik/traefik/pull/13736) @emilevauge)
+- Reduce SECURITY.md to a pointer to the security documentation ([#13732](https://github.com/traefik/traefik/pull/13732) @emilevauge)
+- Update end of support dates ([#13712](https://github.com/traefik/traefik/pull/13712) @nmengin)
+
+## [v2.11.56](https://github.com/traefik/traefik/tree/v2.11.56) (2026-08-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.55...v2.11.56)
+
+**Bug fixes:**
+- **[http3]** Apply read timeout, idle timeout, and max header bytes for HTTP/3 ([#13717](https://github.com/traefik/traefik/pull/13717) @gndz07)
+- **[server]** Add an entry point option to handle request headers with aliasing names ([#13720](https://github.com/traefik/traefik/pull/13720) @rtribotte)
+- **[tcp, udp]** Reject negative weights in TCP and UDP weighted services ([#13749](https://github.com/traefik/traefik/pull/13749) @rtribotte)
+- Bump etcd client modules to v3.5.33 ([#13756](https://github.com/traefik/traefik/pull/13756) @mmatur)
+
+**Documentation:**
+- Update end of support dates ([#13712](https://github.com/traefik/traefik/pull/13712) @nmengin)
+
 ## [v3.7.11](https://github.com/traefik/traefik/tree/v3.7.11) (2026-08-18)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.10...v3.7.11)
 
