@@ -1,3 +1,15 @@
+## [v2.11.56](https://github.com/traefik/traefik/tree/v2.11.56) (2026-08-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.55...v2.11.56)
+
+**Bug fixes:**
+- **[http3]** Apply read timeout, idle timeout, and max header bytes for HTTP/3 ([#13717](https://github.com/traefik/traefik/pull/13717) @gndz07)
+- **[server]** Add an entry point option to handle request headers with aliasing names ([#13720](https://github.com/traefik/traefik/pull/13720) @rtribotte)
+- **[tcp, udp]** Reject negative weights in TCP and UDP weighted services ([#13749](https://github.com/traefik/traefik/pull/13749) @rtribotte)
+- Bump etcd client modules to v3.5.33 ([#13756](https://github.com/traefik/traefik/pull/13756) @mmatur)
+
+**Documentation:**
+- Update end of support dates ([#13712](https://github.com/traefik/traefik/pull/13712) @nmengin)
+
 ## [v2.11.55](https://github.com/traefik/traefik/tree/v2.11.55) (2026-08-18)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.54...v2.11.55)
 
