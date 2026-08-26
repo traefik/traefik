@@ -97,6 +97,8 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if d.headerField != "" {
+		// Note: the header names aliasing the header field (e.g. X_Auth_User) are not handled here,
+		// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 		// TODO Deprecated we should add the header with canonical key.
 		req.Header.Del(d.headerField)
 		req.Header[d.headerField] = []string{username}

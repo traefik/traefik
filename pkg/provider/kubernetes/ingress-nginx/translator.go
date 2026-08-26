@@ -564,19 +564,23 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	mwName := routerKey + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[mwName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+			// Anchored to prevent ReplaceAllString from rewriting past the leading URL.
+			// The trailing slash is dropped to mirror ingress-nginx ngx_srv_redirect.lua.
+			Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 			Replacement: fmt.Sprintf("$1://%s$2/$3", f.TargetHostname),
 			StatusCode:  new(http.StatusPermanentRedirect),
 		},
 	}
 
+	// The redirect router does not carry the location middlewares (auth included),
+	// so it must never reach the backend.
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
 		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
-		Service:       rt.Service,
+		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
 	}

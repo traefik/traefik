@@ -392,7 +392,7 @@ nav:
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
         - 'HTTP/2 Header Memory': 'security/http2-header-memory.md'
-        - 'Headers with Underscores': 'security/header-underscores.md'
+        - 'Headers with Aliasing Names': 'security/header-aliases.md'
         - 'Multi-Tenant Kubernetes': 'security/multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
@@ -402,6 +402,7 @@ nav:
       - 'Submitting Issues': 'contributing/submitting-issues.md'
       - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
       - 'Security': 'contributing/submitting-security-issues.md'
+      - 'Security Decisions': 'contributing/security-decisions.md'
       - 'Building and Testing': 'contributing/building-testing.md'
       - 'Documentation': 'contributing/documentation.md'
       - 'Data Collection': 'contributing/data-collection.md'

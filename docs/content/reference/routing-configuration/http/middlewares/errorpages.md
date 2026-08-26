@@ -110,6 +110,27 @@ the [`passHostHeader`](../load-balancing/service.md#opt-passHostHeader) option m
 !!!info "Kubernetes"
     When specifying a service in Kubernetes (e.g., in an IngressRoute), you need to reference the `name`, `namespace`, and `port` of your Kubernetes Service resource. For example, `my-service.my-namespace@kubernetescrd` (or `my-service.my-namespace@kubernetescrd:80`) ensures that requests go to the correct service and port.
 
+!!! info "ServersTransport (Kubernetes)"
+
+    To customize how Traefik connects to the error page service (for example, to configure TLS to the backend), set a [`serversTransport`](../../kubernetes/crd/http/serverstransport.md) on the middleware's `service`.
+    The `traefik.ingress.kubernetes.io/service.serverstransport` annotation on the Kubernetes Service is not applied here: it only affects a Service used as an Ingress backend, not one referenced by a middleware.
+
+    ```yaml
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: test-errors
+    spec:
+      errors:
+        status:
+          - "500"
+          - "501"
+        service:
+          name: error-handler-service
+          port: 80
+          serversTransport: mytransport
+    ```
+
 ### statusRewrites
 
 `statusRewrites` is an optional mapping of status codes to be rewritten.
