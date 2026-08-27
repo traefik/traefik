@@ -808,6 +808,7 @@ func buildHostRuleV2(host string) string {
 }
 
 func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+	var errs []error
 	for _, t := range ingress.Spec.TLS {
 		if t.SecretName == "" {
 			log.Ctx(ctx).Debug().Msg("Skipping TLS sub-section: No secret name provided")
@@ -818,15 +819,18 @@ func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Clie
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {
-				return fmt.Errorf("failed to fetch secret %s/%s: %w", ingress.Namespace, t.SecretName, err)
+				errs = append(errs, fmt.Errorf("failed to fetch secret %s/%s: %w", ingress.Namespace, t.SecretName, err))
+				continue
 			}
 			if !exists {
-				return fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
+				errs = append(errs, fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName))
+				continue
 			}
 
 			cert, key, err := getCertificateBlocks(secret, ingress.Namespace, t.SecretName)
 			if err != nil {
-				return err
+				errs = append(errs, err)
+				continue
 			}
 
 			tlsConfigs[configKey] = &tls.CertAndStores{
@@ -838,7 +842,7 @@ func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Clie
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {

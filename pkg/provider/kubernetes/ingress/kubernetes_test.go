@@ -2908,6 +2908,43 @@ func TestGetCertificates(t *testing.T) {
 			client:  clientMock{},
 			result:  map[string]*tls.CertAndStores{},
 		},
+		{
+			desc: "keep processing TLS entries after a missing secret",
+			ingress: buildIngress(
+				iNamespace("testing"),
+				iRules(
+					iRule(iHost("ep1.example.com")),
+					iRule(iHost("ep2.example.com")),
+				),
+				iTLSes(
+					iTLS("missing-secret"),
+					iTLS("test-secret"),
+				),
+			),
+			client: clientMock{
+				secrets: []*corev1.Secret{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+							"tls.key": []byte("tls-key"),
+						},
+					},
+				},
+			},
+			result: map[string]*tls.CertAndStores{
+				"testing-test-secret": {
+					Certificate: tls.Certificate{
+						CertFile: types.FileOrContent("tls-crt"),
+						KeyFile:  types.FileOrContent("tls-key"),
+					},
+				},
+			},
+			errResult: "secret testing/missing-secret does not exist",
+		},
 	}
 
 	for _, test := range testCases {
@@ -2921,6 +2958,9 @@ func TestGetCertificates(t *testing.T) {
 				assert.EqualError(t, err, test.errResult)
 			} else {
 				assert.NoError(t, err)
+			}
+
+			if test.result != nil {
 				assert.Equal(t, test.result, tlsConfigs)
 			}
 		})
