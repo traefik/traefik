@@ -30,13 +30,11 @@ vi.mock('hooks/use-theme', () => ({
 
 describe('HubDashboard demo', () => {
   const mockVerifyScriptSignature = vi.mocked(verifySignature)
-  let mockCreateObjectURL: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
-    globalThis.URL.createObjectURL = mockCreateObjectURL
+    vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:mock-url')
   })
 
   afterEach(() => {

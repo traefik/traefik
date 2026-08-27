@@ -78,8 +78,7 @@
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.38.0",
     "usehooks-ts": "^2.14.0",
-    "vite": "^7.3.6",
-    "vite-tsconfig-paths": "^6.1.1",
+    "vite": "8.2.2",
     "vitest": "^4.1.11",
     "vitest-canvas-mock": "^0.3.3"
   },
