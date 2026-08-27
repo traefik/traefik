@@ -8,7 +8,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: production.localhost
+      http:
         paths:
           - path: /data/
             pathType: Prefix
@@ -38,7 +39,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: production.localhost
+      http:
         paths:
           - path: /data/
             pathType: Prefix

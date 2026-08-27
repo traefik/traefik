@@ -15,7 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -19191,55 +19192,92 @@ func TestLoadIngresses(t *testing.T) {
 }
 
 func TestCanaryRouterPriority(t *testing.T) {
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"ingressclasses.yml",
-		"ingresses/ingresses-with-canary-and-multiple-paths.yml",
-	})
+	t.Parallel()
 
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	client := newClient(kubeClient)
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
-	}
-	p.SetDefaults()
-
-	conf := p.loadConfiguration(t.Context())
-
-	parser, err := traefikhttp.NewSyntaxParser()
-	require.NoError(t, err)
-
-	muxer := traefikhttp.NewMuxer(parser, nil)
-
-	var matched string
-	for name, router := range conf.HTTP.Routers {
-		if router.TLS != nil {
-			continue
-		}
-
-		priority := router.Priority
-		if priority == 0 {
-			priority = traefikhttp.GetRulePriority(router.Rule)
-		}
-
-		err = muxer.AddRoute(router.Rule, router.RuleSyntax, priority, "", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			matched = name
-		}))
-		require.NoError(t, err)
+	testCases := []struct {
+		desc     string
+		path     string
+		cookie   string
+		expected string
+	}{
+		{
+			desc:     "Longest path wins over the canary router of a shorter path",
+			path:     "/data/foo",
+			cookie:   "foo.bar=always",
+			expected: "default-ingress-with-canary-and-multiple-paths-rule-0-path-0",
+		},
+		{
+			desc:     "Canary router wins over the router of its own path",
+			path:     "/foo",
+			cookie:   "foo.bar=always",
+			expected: "default-ingress-with-canary-and-multiple-paths-rule-0-path-1-canary",
+		},
+		{
+			desc:     "Longest path wins without the canary cookie",
+			path:     "/data/foo",
+			expected: "default-ingress-with-canary-and-multiple-paths-rule-0-path-0",
+		},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/data/foo", http.NoBody)
-	req.Header.Set("Cookie", "foo.bar=always")
-	muxer.ServeHTTP(httptest.NewRecorder(), req)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	assert.Equal(t, "default-ingress-with-canary-and-multiple-paths-rule-0-path-0", matched)
+			k8sObjects := readResources(t, []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-and-multiple-paths.yml",
+			})
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			client := newClient(kubeClient)
+
+			eventCh, err := client.WatchAll(t.Context(), "", "")
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				k8sClient:         client,
+				NonTLSEntryPoints: []string{"http"},
+				TLSEntryPoints:    []string{"https"},
+			}
+			p.SetDefaults()
+
+			conf := p.loadConfiguration(t.Context())
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			muxer := httpmuxer.NewMuxer(parser, nil)
+			for name, router := range conf.HTTP.Routers {
+				if router.TLS != nil {
+					continue
+				}
+
+				priority := router.Priority
+				if priority == 0 {
+					priority = httpmuxer.GetRulePriority(router.Rule)
+				}
+
+				handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					rw.Header().Set("X-Router", name)
+				})
+
+				err = muxer.AddRoute(router.Rule, router.RuleSyntax, priority, "", handler)
+				require.NoError(t, err)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "http://production.localhost"+test.path, http.NoBody)
+			if test.cookie != "" {
+				req.Header.Set("Cookie", test.cookie)
+			}
+
+			recorder := httptest.NewRecorder()
+			requestdecorator.New(nil).ServeHTTP(recorder, req, muxer.ServeHTTP)
+
+			assert.Equal(t, test.expected, recorder.Header().Get("X-Router"))
+		})
+	}
 }
 
 func TestNginxSizeToBytes(t *testing.T) {

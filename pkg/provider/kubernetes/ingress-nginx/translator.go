@@ -241,10 +241,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 			}
 
-			// The canary rules extend the location rule, so their default (rule length based)
-			// priority would outrank the routers of any longer path. Pinning them to the location
-			// priority, plus one to still win over the location router, keeps ingress-nginx
-			// behavior where the longest matching path wins.
+			// Canary rules extend the location rule, so their default length-based priority
+			// would outrank the routers of more specific paths. Pinning them to the location
+			// priority plus one preserves the ingress-nginx longest-path-wins behavior.
 			canaryPriority := httpmuxer.GetRulePriority(rule) + 1
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
