@@ -315,6 +315,10 @@ linters:
       - path: (.+)\.go$
         text: 'SA1019: net/http.CloseNotifier has been deprecated' # FIXME must be fixed
       - path: (.+)\.go$
+        text: 'SA1019: \(net.Dialer\).DualStack has been deprecated' # FIXME must be fixed
+      - path: (.+)\.go$
+        text: 'SA1019: \(golang.org/x/net/http2.Transport\).DialTLS is deprecated' # FIXME must be fixed
+      - path: (.+)\.go$
         text: 'SA1019: github.com/traefik/traefik/v2/pkg/config/dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
       - path: (.+)\.go$
         text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1.MiddlewareTCPSpec\).IPWhiteList is deprecated: please use IPAllowList instead.'
@@ -322,6 +326,10 @@ linters:
         text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/config/dynamic.Headers\).(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
       - path: (.+)\.go$
         text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/provider/(consulcatalog|kv/consul|nomad).ProviderBuilder\).Namespace is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/types.ClientTLS\).CAOptional is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/tracing/datadog.Config\).GlobalTag is deprecated'
       - path: (.+)\.go$
         text: 'SA1019: k8s.io/api/core/v1.(Endpoints|EndpointSubset) is deprecated'
       - path: pkg/middlewares/auth/basic_auth_test.go
