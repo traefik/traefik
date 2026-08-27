@@ -13,6 +13,8 @@ import (
 // through into the package-level providerNames slice shared by every
 // Configuration.
 func TestProvidersSetDefaultsDoesNotAliasProviderNames(t *testing.T) {
+	t.Parallel()
+
 	original := slices.Clone(providerNames)
 
 	var providers Providers
@@ -26,6 +28,8 @@ func TestProvidersSetDefaultsDoesNotAliasProviderNames(t *testing.T) {
 }
 
 func TestProvidersSetDefaultsIsIndependentPerConfiguration(t *testing.T) {
+	t.Parallel()
+
 	var first, second Providers
 	first.SetDefaults()
 	second.SetDefaults()
@@ -39,6 +43,8 @@ func TestProvidersSetDefaultsIsIndependentPerConfiguration(t *testing.T) {
 // side: SetEffectiveConfiguration lowercases Precedence, and must not write
 // through into a slice the Configuration does not own.
 func TestSetEffectiveConfigurationDoesNotMutateSharedPrecedence(t *testing.T) {
+	t.Parallel()
+
 	shared := []string{"DOCKER", "File"}
 	original := slices.Clone(shared)
 
