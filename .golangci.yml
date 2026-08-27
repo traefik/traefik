@@ -315,8 +315,6 @@ linters:
       - path: (.+)\.go$
         text: 'SA1019: net/http.CloseNotifier has been deprecated' # FIXME must be fixed
       - path: (.+)\.go$
-        text: 'SA1019: \(net.Dialer\).DualStack has been deprecated' # FIXME must be fixed
-      - path: (.+)\.go$
         text: 'SA1019: \(golang.org/x/net/http2.Transport\).DialTLS is deprecated' # FIXME must be fixed
       - path: (.+)\.go$
         text: 'SA1019: github.com/traefik/traefik/v2/pkg/config/dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
