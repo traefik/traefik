@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react'
+﻿import { waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import { PUBLIC_KEY } from './constants'
@@ -11,8 +11,8 @@ vi.mock('utils/workers/scriptVerification', () => ({
   default: vi.fn(),
 }))
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router')
   return {
     ...actual,
     useParams: vi.fn(() => ({ id: 'test-id' })),

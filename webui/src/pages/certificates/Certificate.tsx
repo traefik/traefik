@@ -1,5 +1,5 @@
-import { Box, Flex, H1, Skeleton, Text } from '@traefik-labs/faency'
-import { useParams } from 'react-router-dom'
+﻿import { Box, Flex, H1, Skeleton, Text } from '@traefik-labs/faency'
+import { useParams } from 'react-router'
 
 import { CertificateDetails } from '../../components/certificates/CertificateDetails'
 import { useCertificate } from '../../hooks/use-certificates'

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+﻿import { useParams } from 'react-router'
 
 import { ServiceDetail } from 'components/services/ServiceDetail'
 import { useResourceDetail } from 'hooks/use-resource-detail'

@@ -1,9 +1,9 @@
-import { Box, Card, Flex, H3, Skeleton, styled, Text } from '@traefik-labs/faency'
+﻿import { Box, Card, Flex, H3, Skeleton, styled, Text } from '@traefik-labs/faency'
 import { Chart as ChartJs, ArcElement, Tooltip } from 'chart.js'
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { FaArrowRightLong } from 'react-icons/fa6'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router'
 
 import Status, { colorByStatus } from './Status'
 

@@ -1,7 +1,7 @@
-import { Flex } from '@traefik-labs/faency'
+﻿import { Flex } from '@traefik-labs/faency'
 import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 
 import { SectionTitle } from './DetailsCard'
 
