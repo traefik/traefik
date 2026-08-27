@@ -12,6 +12,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -240,12 +241,19 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 			}
 
+			// The canary rules extend the location rule, so their default (rule length based)
+			// priority would outrank the routers of any longer path. Pinning them to the location
+			// priority, plus one to still win over the location router, keeps ingress-nginx
+			// behavior where the longest matching path wins.
+			canaryPriority := httpmuxer.GetRulePriority(rule) + 1
+
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
 				canaryKey := routerKey + "-canary"
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
 					Rule:          appendCanaryRule(rule, loc.Canary),
 					RuleSyntax:    rt.RuleSyntax,
+					Priority:      canaryPriority,
 					Service:       canarySvcName,
 					Observability: obs,
 				}
@@ -257,6 +265,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					EntryPoints:   rtTLS.EntryPoints,
 					Rule:          appendCanaryRule(rule, loc.Canary),
 					RuleSyntax:    rtTLS.RuleSyntax,
+					Priority:      canaryPriority,
 					Service:       canarySvcName,
 					TLS:           rtTLS.TLS,
 					Observability: obs,
@@ -271,6 +280,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					EntryPoints:   rt.EntryPoints,
 					Rule:          appendNonCanaryRule(rule, loc.Canary),
 					RuleSyntax:    rt.RuleSyntax,
+					Priority:      canaryPriority,
 					Service:       primarySvcName,
 					Observability: obs,
 				}
@@ -282,6 +292,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					EntryPoints:   rtTLS.EntryPoints,
 					Rule:          appendNonCanaryRule(rule, loc.Canary),
 					RuleSyntax:    rtTLS.RuleSyntax,
+					Priority:      canaryPriority,
 					Service:       primarySvcName,
 					TLS:           rtTLS.TLS,
 					Observability: obs,
