@@ -288,7 +288,7 @@ func (p *Provider) addServers(ctx context.Context, service rancherData, loadBala
 }
 
 func getServicePort(data rancherData) string {
-	rawPort := strings.Split(data.Port, "/")[0]
+	rawPort, _, _ := strings.Cut(data.Port, "/")
 	hostPort := strings.Split(rawPort, ":")
 
 	if len(hostPort) >= 2 {

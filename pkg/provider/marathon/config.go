@@ -429,8 +429,8 @@ func retrieveNamedPort(app marathon.Application, name string) int {
 	}
 
 	// If using IP-per-task using this port definition
-	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*(app.IPAddressPerTask.Discovery.Ports)) > 0 {
-		for _, def := range *(app.IPAddressPerTask.Discovery.Ports) {
+	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*app.IPAddressPerTask.Discovery.Ports) > 0 {
+		for _, def := range *app.IPAddressPerTask.Discovery.Ports {
 			if def.Number > 0 && def.Name == name {
 				return def.Number
 			}
@@ -458,9 +458,9 @@ func retrieveAvailablePorts(app marathon.Application, task marathon.Task) []int 
 	}
 
 	// If using IP-per-task using this port definition
-	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*(app.IPAddressPerTask.Discovery.Ports)) > 0 {
+	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*app.IPAddressPerTask.Discovery.Ports) > 0 {
 		var ports []int
-		for _, def := range *(app.IPAddressPerTask.Discovery.Ports) {
+		for _, def := range *app.IPAddressPerTask.Discovery.Ports {
 			ports = append(ports, def.Number)
 		}
 		return ports
