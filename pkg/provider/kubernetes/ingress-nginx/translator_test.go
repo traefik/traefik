@@ -189,6 +189,5 @@ func TestApplyMiddlewaresUpstreamVhostAfterAuth(t *testing.T) {
 
 	assert.Less(t,
 		slices.Index(rt.Middlewares, "router-snippet"),
-		slices.Index(rt.Middlewares, "router-vhost"),
-		"the auth middleware must run before the upstream vhost rewrite, got %v", rt.Middlewares)
+		slices.Index(rt.Middlewares, "router-vhost"))
 }
