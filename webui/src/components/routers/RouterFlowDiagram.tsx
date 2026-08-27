@@ -2,11 +2,12 @@ import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefik
 import { useMemo } from 'react'
 import { FiArrowRight, FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 
-import CopyableText from 'components/CopyableText'
+import CopyButton from 'components/buttons/CopyButton'
 import ProviderIcon from 'components/icons/providers'
 import { ProviderName } from 'components/resources/DetailItemComponents'
 import DetailsCard, { SectionTitle } from 'components/resources/DetailsCard'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
+import RuleDisplay from 'components/routers/RuleDisplay'
 import ScrollableCard from 'components/ScrollableCard'
 import { useHrefWithReturnTo } from 'hooks/use-href-with-return-to'
 import { useResourceDetail } from 'hooks/use-resource-detail'
@@ -103,7 +104,15 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
           ),
         },
         data.priority && { key: 'Priority', val: data.priority },
-        data.rule && { key: 'Rule', val: <CopyableText css={{ lineHeight: 1.2 }} text={data.rule} /> },
+        data.rule && {
+          key: (
+            <Flex align="center" gap={1}>
+              <Text css={{ fontWeight: 600, fontSize: 'inherit' }}>Rule</Text>
+              <CopyButton text={data.rule} iconOnly />
+            </Flex>
+          ),
+          val: <RuleDisplay rule={data.rule} />,
+        },
       ].filter(Boolean) as { key: string; val: string | React.ReactElement }[],
     [data.priority, data.provider, data.rule, data.status],
   )
