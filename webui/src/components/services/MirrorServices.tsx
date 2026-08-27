@@ -1,7 +1,7 @@
 import { Flex, Text } from '@traefik-labs/faency'
 import { FiGlobe } from 'react-icons/fi'
 
-import { getProviderFromName } from './Servers'
+import { getProviderFromName } from './utils'
 
 import ProviderIcon from 'components/icons/providers'
 import { SectionTitle } from 'components/resources/DetailsCard'
