@@ -33,6 +33,8 @@ func (s *signalConn) Close() error {
 // second Peek. With readLoop returning on upgrade its deferred Close runs; if it
 // loops back to Peek instead, it blocks and the connection is never closed.
 func TestReadLoopReturnsAfterUpgrade(t *testing.T) {
+	t.Parallel()
+
 	proxyEnd, backendEnd := net.Pipe()
 	t.Cleanup(func() { _ = backendEnd.Close() })
 
