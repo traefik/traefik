@@ -13,6 +13,7 @@ import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import Tooltip from 'components/Tooltip'
+import RuleDisplay from 'components/routers/RuleDisplay'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
@@ -34,9 +35,9 @@ export const makeRowRender = (): RenderRowType => {
         )}
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.rule} isTruncated />
+        <RuleDisplay rule={row.rule} compact />
       </AriaTd>
-      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
+      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} limit={2} />}</AriaTd>
       <AriaTd>
         <TooltipText text={row.name} isTruncated />
       </AriaTd>

@@ -1,5 +1,5 @@
 import { Badge, CSS, Flex, styled, Text } from '@traefik-labs/faency'
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { BsToggleOff, BsToggleOn } from 'react-icons/bs'
 
 import { colorByStatus } from './Status'
@@ -40,20 +40,50 @@ type ChipsType = {
   items: string[]
   variant?: 'gray' | 'red' | 'blue' | 'green' | 'neon' | 'orange' | 'purple'
   alignment?: 'center' | 'left'
+  limit?: number
 }
 
-export const Chips = ({ items, variant, alignment = 'left' }: ChipsType) => (
-  <FlexLimited wrap="wrap">
-    {items.map((item, index) => (
-      <Badge key={index} variant={variant} css={{ textAlign: alignment, mr: '$2', mb: '$2' }}>
-        <Flex gap={1} align="center">
-          {item}
-          <CopyButton text={item} iconOnly />
-        </Flex>
-      </Badge>
-    ))}
-  </FlexLimited>
-)
+export const Chips = ({ items, variant, alignment = 'left', limit }: ChipsType) => {
+  const [expanded, setExpanded] = useState(false)
+
+  const hasOverflow = limit !== undefined && items.length > limit
+  const visible = hasOverflow && !expanded ? items.slice(0, limit) : items
+
+  return (
+    <Flex wrap={expanded ? 'wrap' : 'nowrap'} css={{ gap: '$2', maxWidth: '100%', minWidth: 0, overflow: 'hidden' }}>
+      {visible.map((item, index) => (
+        <Badge key={index} variant={variant} css={{ textAlign: alignment, flexShrink: 1, minWidth: '48px', overflow: 'hidden' }}>
+          <Flex gap={1} align="center" css={{ minWidth: 0 }}>
+            <Text css={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'inherit', color: 'inherit', minWidth: 0 }}>
+              {item}
+            </Text>
+            <CopyButton text={item} iconOnly />
+          </Flex>
+        </Badge>
+      ))}
+      {hasOverflow && (
+        <Badge
+          variant="gray"
+          interactive
+          css={{
+            cursor: 'pointer',
+            flexShrink: 0,
+            background: 'transparent',
+            border: '1px dashed $gray8',
+            color: '$gray11',
+          }}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setExpanded((v) => !v)
+          }}
+        >
+          {expanded ? 'show less' : `+${items.length - limit!} more`}
+        </Badge>
+      )}
+    </Flex>
+  )
+}
 
 type ItemBlockType = {
   title: string

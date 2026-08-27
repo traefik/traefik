@@ -22,7 +22,7 @@ export const makeRowRender = (): RenderRowType => {
       <AriaTd>
         <ResourceStatus status={row.status} />
       </AriaTd>
-      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
+      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} limit={2} />}</AriaTd>
       <AriaTd>
         <TooltipText text={row.name} isTruncated />
       </AriaTd>
