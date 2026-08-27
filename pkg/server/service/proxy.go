@@ -73,6 +73,8 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 
 			pr.Out.URL.Path = u.Path
 			pr.Out.URL.RawPath = u.RawPath
+			// URL.RequestURI gives Opaque precedence over the path, an opaque outgoing URL would discard the path set above.
+			pr.Out.URL.Opaque = ""
 			// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 			pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 			pr.Out.RequestURI = "" // Outgoing request should not have RequestURI

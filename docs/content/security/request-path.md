@@ -1,6 +1,6 @@
 ---
 title: "Request Path"
-description: "Learn how Traefik processes and secures request paths through sanitization and encoded character filtering to protect against path traversal and injection attacks."
+description: "Learn how Traefik processes and secures request paths through target validation, sanitization and encoded character filtering to protect against path traversal and injection attacks."
 ---
 
 # Request Path
@@ -9,14 +9,27 @@ Protecting Against Path-Based Attacks Through Sanitization and Filtering
 {: .subtitle }
 
 Traefik implements multiple layers of security when processing incoming request paths.
-This includes path sanitization to normalize potentially dangerous sequences and encoded character filtering to prevent attack vectors that use URL encoding.
+This includes request target validation to reject malformed targets, path sanitization to normalize potentially dangerous sequences,
+and encoded character filtering to prevent attack vectors that use URL encoding.
 Understanding how Traefik handles request paths is crucial for maintaining a secure routing infrastructure.
 
 ## How Traefik Processes Request Paths
 
 When Traefik receives an HTTP request, it processes the request path through several security-focused stages:
 
-### 1. Encoded Character Filtering
+### 1. Request Target Validation
+
+Traefik rejects with a `400 Bad Request` response any request whose target is rootless,
+that is a target made of a scheme followed by something that does not start with a slash, such as `http:example.com/admin`.
+Such a target is none of the four forms allowed by [rfc9112#section-3.2](https://datatracker.ietf.org/doc/html/rfc9112#section-3.2):
+origin-form (`/path`), absolute-form (`http://example.com/path`), authority-form (`example.com:443`, for `CONNECT`) and asterisk-form (`*`).
+
+A rootless target carries no path, hence escaping the stages described below and the routing rules,
+while still designating a resource on the backend.
+
+This validation applies to HTTP/1.1, HTTP/2 and HTTP/3, and cannot be disabled.
+
+### 2. Encoded Character Filtering
 
 Traefik inspects the path for potentially dangerous encoded characters and rejects requests containing them unless explicitly allowed.
 
@@ -32,13 +45,13 @@ Here is the list of the encoded characters that are allowed by default:
 | `%3f` or `%3F`    | `?` (question mark)     |
 | `%23`             | `#` (hash)              |
 
-### 2. Path Normalization
+### 3. Path Normalization
 
 Traefik normalizes the request path by decoding the unreserved percent-encoded characters,
 as they are equivalent to their non-encoded form (according to [rfc3986#section-2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3)),
 and capitalizing the percent-encoded characters (according to [rfc3986#section-6.2.2.1](https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.1)).
 
-### 3. Path Sanitization
+### 4. Path Sanitization
 
 Traefik sanitizes request paths to prevent common attack vectors,
 by removing the `..`, `.` and duplicate slash segments from the URL (according to [rfc3986#section-6.2.2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3)).

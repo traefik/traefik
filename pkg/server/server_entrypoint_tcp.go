@@ -625,6 +625,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
+	// An opaque URL has to be rejected before any handler deriving the path or the request URI from it,
+	// hence the wrapping has to be done after the path handling ones.
+	handler = denyOpaque(handler)
+
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
 		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option.
@@ -737,6 +741,25 @@ type trackedConnection struct {
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// denyOpaque rejects the request if the URL is opaque.
+// Go only populates URL.Opaque for a request target which is none of the four forms allowed by RFC 9112 section 3.2:
+// origin-form and absolute-form both leave a rest starting with a slash after the scheme,
+// and asterisk-form and authority-form are special-cased.
+// Such a target leaves Path, RawPath and Host empty, hence going unnoticed by the path handling and the routing,
+// while URL.RequestURI gives Opaque precedence over the path, which reinstates the target when forwarding to the backend.
+func denyOpaque(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.Opaque != "" {
+			log.WithoutContext().Debugf("Rejecting request because it has an opaque URL: %s", req.URL.Opaque)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
 }
 
 // denyFragment rejects the request if the URL path contains a fragment (hash character).
