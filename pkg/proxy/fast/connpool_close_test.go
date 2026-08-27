@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -14,6 +15,8 @@ import (
 )
 
 func TestConnPoolCloseClosesIdleConns(t *testing.T) {
+	t.Parallel()
+
 	var accepted, closedByPool atomic.Int64
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -73,9 +76,23 @@ func TestConnPoolCloseClosesIdleConns(t *testing.T) {
 }
 
 func TestConnPoolCloseWithoutIdleConnTimeout(t *testing.T) {
+	t.Parallel()
+
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = ln.Close() })
+
+	var mu sync.Mutex
+	var serverConns []net.Conn
+
+	t.Cleanup(func() {
+		mu.Lock()
+		defer mu.Unlock()
+
+		for _, c := range serverConns {
+			_ = c.Close()
+		}
+	})
 
 	go func() {
 		for {
@@ -83,7 +100,10 @@ func TestConnPoolCloseWithoutIdleConnTimeout(t *testing.T) {
 			if err != nil {
 				return
 			}
-			t.Cleanup(func() { _ = c.Close() })
+
+			mu.Lock()
+			serverConns = append(serverConns, c)
+			mu.Unlock()
 		}
 	}()
 
