@@ -1,4 +1,4 @@
-﻿import {
+import {
   Badge,
   Box,
   DialogTitle,

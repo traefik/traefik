@@ -1,4 +1,4 @@
-﻿import { createContext } from 'react'
+import { createContext } from 'react'
 import { RouteObject } from 'react-router'
 
 import { useHubDemo } from './use-hub-demo'

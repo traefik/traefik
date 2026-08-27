@@ -2894,7 +2894,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitejs/plugin-react@npm:^5.2.0":
+"@vitejs/plugin-react@npm:5.2.0":
   version: 5.2.0
   resolution: "@vitejs/plugin-react@npm:5.2.0"
   dependencies:
@@ -2910,7 +2910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/coverage-v8@npm:^4.1.11":
+"@vitest/coverage-v8@npm:4.1.11":
   version: 4.1.11
   resolution: "@vitest/coverage-v8@npm:4.1.11"
   dependencies:
@@ -3016,7 +3016,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/web-worker@npm:^4.1.11":
+"@vitest/web-worker@npm:4.1.11":
   version: 4.1.11
   resolution: "@vitest/web-worker@npm:4.1.11"
   dependencies:
@@ -7987,9 +7987,9 @@ __metadata:
     "@types/node": "npm:^22.15.18"
     "@types/react": "npm:^18.2.0"
     "@types/react-dom": "npm:^18.2.19"
-    "@vitejs/plugin-react": "npm:^5.2.0"
-    "@vitest/coverage-v8": "npm:^4.1.11"
-    "@vitest/web-worker": "npm:^4.1.11"
+    "@vitejs/plugin-react": "npm:5.2.0"
+    "@vitest/coverage-v8": "npm:4.1.11"
+    "@vitest/web-worker": "npm:4.1.11"
     chart.js: "npm:^4.4.1"
     eslint: "npm:^9.32.0"
     eslint-config-prettier: "npm:^10.1.8"
@@ -8021,7 +8021,7 @@ __metadata:
     typescript-eslint: "npm:^8.38.0"
     usehooks-ts: "npm:^2.14.0"
     vite: "npm:8.2.2"
-    vitest: "npm:^4.1.11"
+    vitest: "npm:4.1.11"
     vitest-canvas-mock: "npm:^0.3.3"
   languageName: unknown
   linkType: soft
@@ -8444,7 +8444,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vitest@npm:^4.1.11":
+"vitest@npm:4.1.11":
   version: 4.1.11
   resolution: "vitest@npm:4.1.11"
   dependencies:

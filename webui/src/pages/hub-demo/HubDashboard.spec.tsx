@@ -1,4 +1,4 @@
-﻿import { waitFor } from '@testing-library/react'
+import { waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import { PUBLIC_KEY } from './constants'

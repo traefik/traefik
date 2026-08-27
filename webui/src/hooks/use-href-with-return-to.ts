@@ -1,4 +1,4 @@
-﻿import qs from 'query-string'
+import qs from 'query-string'
 import { useMemo } from 'react'
 import { useHref, useLocation, useSearchParams } from 'react-router'
 

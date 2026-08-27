@@ -1,4 +1,4 @@
-﻿import { useParams } from 'react-router'
+import { useParams } from 'react-router'
 
 import { MiddlewareDetail } from 'components/middlewares/MiddlewareDetail'
 import { useResourceDetail } from 'hooks/use-resource-detail'
