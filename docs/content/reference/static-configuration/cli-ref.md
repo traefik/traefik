@@ -60,6 +60,9 @@ CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`--certificatesresolvers.<name>.acme.certificatetimeout`:  
+Timeout for obtaining the certificate during the finalization request. (Default: ```30```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 

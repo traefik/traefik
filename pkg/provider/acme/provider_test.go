@@ -6,9 +6,18 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
+
+func TestConfiguration_SetDefaults(t *testing.T) {
+	configuration := &Configuration{}
+
+	configuration.SetDefaults()
+
+	assert.Equal(t, ptypes.Duration(30*time.Second), configuration.CertificateTimeout)
+}
 
 func TestGetUncheckedCertificates(t *testing.T) {
 	t.Skip("Needs TLS Manager")

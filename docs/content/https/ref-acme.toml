@@ -30,6 +30,13 @@
   #
   # certificatesDuration=2160
 
+  # Timeout for obtaining the certificate during the finalization request.
+  #
+  # Optional
+  # Default: "30s"
+  #
+  # certificateTimeout = "30s"
+
   # Preferred chain to use.
   #
   # If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name.

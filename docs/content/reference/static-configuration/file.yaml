@@ -487,6 +487,7 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      certificateTimeout: 42s
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s
@@ -508,6 +509,7 @@ certificatesResolvers:
         kid: foobar
         hmacEncoded: foobar
       certificatesDuration: 42
+      certificateTimeout: 42s
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42s

@@ -43,6 +43,8 @@ type Configuration struct {
 	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
+	CertificateTimeout ptypes.Duration `description:"Timeout for obtaining the certificate during the finalization request." json:"certificateTimeout,omitempty" toml:"certificateTimeout,omitempty" yaml:"certificateTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." json:"tlsChallenge,omitempty" toml:"tlsChallenge,omitempty" yaml:"tlsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -54,6 +56,7 @@ func (a *Configuration) SetDefaults() {
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
+	a.CertificateTimeout = ptypes.Duration(30 * time.Second)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -261,6 +264,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config := lego.NewConfig(account)
 	config.CADirURL = caServer
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+	config.Certificate.Timeout = time.Duration(p.CertificateTimeout)
 
 	client, err := lego.NewClient(config)
 	if err != nil {

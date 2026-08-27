@@ -764,6 +764,35 @@ certificatesResolvers:
 # ...
 ```
 
+### `certificateTimeout`
+
+_Optional, Default="30s"_
+
+Timeout for obtaining the certificate during the finalization request.
+Increase this value when the ACME server needs more time to issue a certificate.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      certificateTimeout: 60s
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  certificateTimeout = "60s"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.certificatetimeout=60s
+# ...
+```
+
 ### `preferredChain`
 
 _Optional, Default=""_
