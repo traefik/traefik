@@ -93,6 +93,17 @@ func Test_getCompressionEncoding(t *testing.T) {
 			expected:       gzipName,
 		},
 		{
+			desc:           "wildcard does not select forbidden encoding",
+			acceptEncoding: []string{"gzip;q=0, *;q=1"},
+			expected:       brotliName,
+		},
+		{
+			desc:            "wildcard does not select forbidden default encoding",
+			acceptEncoding:  []string{"gzip;q=0, *;q=1"},
+			defaultEncoding: gzipName,
+			expected:        brotliName,
+		},
+		{
 			desc:               "zstd forbidden, brotli first",
 			acceptEncoding:     []string{"zstd, gzip, br"},
 			supportedEncodings: []string{brotliName, gzipName},
