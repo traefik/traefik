@@ -7,7 +7,9 @@ import (
 )
 
 // h2cUpgradeHandler removes a client-initiated h2c upgrade before the request reaches the reverse proxy.
-// Upgrade is hop-by-hop, and Traefik does not implement the h2c one, so it has no reason to request it from a backend.
+// Since go1.24, unencrypted HTTP/2 is served through http.Server#Protocols, which supports prior knowledge only and
+// not the deprecated "Upgrade: h2c" mechanism (https://go.dev/doc/go1.24#nethttppkgnethttp).
+// Traefik no longer honoring an h2c upgrade, the token has no reason to reach a backend.
 //
 // This is a temporary workaround for httputil.ReverseProxy, which forwards the token, see https://go.dev/issue/80416.
 // It has to be removed once the go directive in go.mod requires a Go release carrying that fix.
