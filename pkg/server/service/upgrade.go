@@ -23,26 +23,15 @@ func newH2CUpgradeHandler(next http.Handler) http.Handler {
 }
 
 func (h *h2cUpgradeHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	isH2C := httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") &&
-		httpguts.HeaderValuesContainsToken([]string{req.Header.Get("Upgrade")}, "h2c")
-
-	_, hasSettings := req.Header["Http2-Settings"]
-
-	if !isH2C && !hasSettings {
-		h.next.ServeHTTP(rw, req)
-		return
-	}
-
-	outReq := req.Clone(req.Context())
-
-	if isH2C {
+	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") &&
+		httpguts.HeaderValuesContainsToken([]string{req.Header.Get("Upgrade")}, "h2c") {
 		// Removing the Upgrade header is enough: the reverse proxy then computes an empty upgrade type, removes
 		// Connection as a hop-by-hop header, and adds neither of them back.
-		outReq.Header.Del("Upgrade")
+		delete(req.Header, "Upgrade")
 	}
 
 	// HTTP2-Settings is connection-specific (RFC 7540 section 3.2.1), so it is not forwarded either.
-	outReq.Header.Del("Http2-Settings")
+	delete(req.Header, "Http2-Settings")
 
-	h.next.ServeHTTP(rw, outReq)
+	h.next.ServeHTTP(rw, req)
 }

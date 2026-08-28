@@ -1,88 +1,104 @@
 package service
 
 import (
-	"bufio"
-	"fmt"
-	"net"
 	"net/http"
-	"strings"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/http/httpguts"
 )
 
+const http2Settings = "AAMAAABkAAQAoAAAAAIAAAAA"
+
 func TestH2CUpgradeNotForwarded(t *testing.T) {
 	testCases := []struct {
 		desc            string
-		requestHeaders  string
+		requestHeaders  http.Header
 		expectedHeaders http.Header
-		expectedStatus  string
 	}{
 		{
-			desc:            "h2c upgrade with HTTP2-Settings listed in Connection",
-			requestHeaders:  "Connection: Upgrade, HTTP2-Settings\r\nUpgrade: h2c\r\nHTTP2-Settings: AAMAAABkAAQAoAAAAAIAAAAA\r\n",
+			desc: "h2c upgrade with HTTP2-Settings listed in Connection",
+			requestHeaders: http.Header{
+				"Connection":     {"Upgrade, HTTP2-Settings"},
+				"Upgrade":        {"h2c"},
+				"Http2-Settings": {http2Settings},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:            "h2c upgrade with HTTP2-Settings smuggled out of Connection",
-			requestHeaders:  "Connection: Upgrade\r\nUpgrade: h2c\r\nHTTP2-Settings: AAMAAABkAAQAoAAAAAIAAAAA\r\n",
+			desc: "h2c upgrade with HTTP2-Settings smuggled out of Connection",
+			requestHeaders: http.Header{
+				"Connection":     {"Upgrade"},
+				"Upgrade":        {"h2c"},
+				"Http2-Settings": {http2Settings},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:            "h2c upgrade without HTTP2-Settings",
-			requestHeaders:  "Connection: Upgrade\r\nUpgrade: h2c\r\n",
+			desc: "h2c upgrade without HTTP2-Settings",
+			requestHeaders: http.Header{
+				"Connection": {"Upgrade"},
+				"Upgrade":    {"h2c"},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:            "h2c upgrade with an uppercase token",
-			requestHeaders:  "Connection: Upgrade\r\nUpgrade: H2C\r\n",
+			desc: "h2c upgrade with an uppercase token",
+			requestHeaders: http.Header{
+				"Connection": {"Upgrade"},
+				"Upgrade":    {"H2C"},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:            "h2c upgrade combined with a websocket upgrade",
-			requestHeaders:  "Connection: Upgrade\r\nUpgrade: websocket, h2c\r\n",
+			desc: "h2c upgrade combined with a websocket upgrade",
+			requestHeaders: http.Header{
+				"Connection": {"Upgrade"},
+				"Upgrade":    {"websocket, h2c"},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:            "HTTP2-Settings without an upgrade",
-			requestHeaders:  "HTTP2-Settings: AAMAAABkAAQAoAAAAAIAAAAA\r\n",
+			desc: "HTTP2-Settings without an upgrade",
+			requestHeaders: http.Header{
+				"Http2-Settings": {http2Settings},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:           "websocket upgrade is preserved",
-			requestHeaders: "Connection: Upgrade\r\nUpgrade: websocket\r\n",
+			desc: "websocket upgrade is preserved",
+			requestHeaders: http.Header{
+				"Connection": {"Upgrade"},
+				"Upgrade":    {"websocket"},
+			},
 			expectedHeaders: http.Header{
 				"Connection": {"Upgrade"},
 				"Upgrade":    {"websocket"},
 			},
-			expectedStatus: "HTTP/1.1 200 OK",
 		},
 		// Only the first Upgrade value is inspected, as the upstream fix does, hence the two outcomes below.
 		// Both are equivalent in the end: the reverse proxy replaces the Upgrade values it forwards with the first
 		// one, so a later h2c value never reaches the backend either.
 		{
-			desc:            "h2c as the first Upgrade value drops every upgrade",
-			requestHeaders:  "Connection: Upgrade\r\nUpgrade: h2c\r\nUpgrade: websocket\r\n",
+			desc: "h2c as the first Upgrade value drops every upgrade",
+			requestHeaders: http.Header{
+				"Connection": {"Upgrade"},
+				"Upgrade":    {"h2c", "websocket"},
+			},
 			expectedHeaders: http.Header{},
-			expectedStatus:  "HTTP/1.1 200 OK",
 		},
 		{
-			desc:           "h2c as a later Upgrade value keeps the first one",
-			requestHeaders: "Connection: Upgrade\r\nUpgrade: websocket\r\nUpgrade: h2c\r\n",
+			desc: "h2c as a later Upgrade value keeps the first one",
+			requestHeaders: http.Header{
+				"Connection": {"Upgrade"},
+				"Upgrade":    {"websocket", "h2c"},
+			},
 			expectedHeaders: http.Header{
 				"Connection": {"Upgrade"},
 				"Upgrade":    {"websocket"},
 			},
-			expectedStatus: "HTTP/1.1 200 OK",
 		},
 	}
 
@@ -90,83 +106,42 @@ func TestH2CUpgradeNotForwarded(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backendAddr, received := startUpgradeBackend(t)
+			backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				forwarded := http.Header{}
+				for _, name := range []string{"Connection", "Upgrade", "Http2-Settings"} {
+					if values := req.Header.Values(name); len(values) > 0 {
+						forwarded[name] = values
+					}
+				}
+				assert.Equal(t, test.expectedHeaders, forwarded)
+
+				// The backend switches to h2c on any Upgrade: h2c, without the validations RFC 7540 section 3.2.1 requires.
+				if !httpguts.HeaderValuesContainsToken([]string{req.Header.Get("Upgrade")}, "h2c") {
+					return
+				}
+
+				rw.Header().Set("Connection", "Upgrade")
+				rw.Header().Set("Upgrade", "h2c")
+				rw.WriteHeader(http.StatusSwitchingProtocols)
+			}))
+			t.Cleanup(backend.Close)
 
 			proxyHandler, err := buildProxy(new(true), nil, http.DefaultTransport, nil)
 			require.NoError(t, err)
 
-			proxy := createProxyWithForwarder(t, proxyHandler, "http://"+backendAddr)
+			proxy := createProxyWithForwarder(t, proxyHandler, backend.URL)
 			t.Cleanup(proxy.Close)
 
-			conn, err := net.Dial("tcp", proxy.Listener.Addr().String())
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = conn.Close() })
-
-			_, err = fmt.Fprintf(conn, "GET /public HTTP/1.1\r\nHost: backend\r\n%s\r\n", test.requestHeaders)
+			req, err := http.NewRequest(http.MethodGet, proxy.URL+"/public", http.NoBody)
 			require.NoError(t, err)
 
-			var backendHeaders http.Header
-			select {
-			case backendHeaders = <-received:
-			case <-time.After(5 * time.Second):
-				t.Fatal("the backend did not receive the request")
-			}
+			req.Header = test.requestHeaders
 
-			forwarded := http.Header{}
-			for _, name := range []string{"Connection", "Upgrade", "HTTP2-Settings"} {
-				if values := backendHeaders.Values(name); len(values) > 0 {
-					forwarded[http.CanonicalHeaderKey(name)] = values
-				}
-			}
-			assert.Equal(t, test.expectedHeaders, forwarded)
-
-			require.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second)))
-
-			statusLine, err := bufio.NewReader(conn).ReadString('\n')
+			resp, err := proxy.Client().Do(req)
 			require.NoError(t, err)
-			assert.Equal(t, test.expectedStatus, strings.TrimSpace(statusLine))
+			t.Cleanup(func() { _ = resp.Body.Close() })
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
-}
-
-// startUpgradeBackend starts a backend switching to h2c on any Upgrade: h2c,
-// without performing the validations required by RFC 7540 section 3.2.1.
-// It reports the headers of the single request it receives.
-func startUpgradeBackend(t *testing.T) (string, <-chan http.Header) {
-	t.Helper()
-
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = listener.Close() })
-
-	received := make(chan http.Header, 1)
-
-	go func() {
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				return
-			}
-
-			go func() {
-				defer conn.Close()
-
-				req, err := http.ReadRequest(bufio.NewReader(conn))
-				if err != nil {
-					return
-				}
-
-				received <- req.Header
-
-				if httpguts.HeaderValuesContainsToken([]string{req.Header.Get("Upgrade")}, "h2c") {
-					_, _ = conn.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: h2c\r\n\r\n"))
-					return
-				}
-
-				_, _ = conn.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"))
-			}()
-		}
-	}()
-
-	return listener.Addr().String(), received
 }
