@@ -190,6 +190,15 @@ parents are health checked once per reference, instead of once for all of them.
     Dashboards, alerting rules, and log queries that match on Kubernetes CRD router, middleware or service names must be updated accordingly
     when `safeNaming` is enabled.
 
+!!! warning "Cross-provider references"
+
+    These names are also the ones to use when referencing an object of this provider from another provider.
+    For example, a middleware declared as a Custom Resource and referenced from the
+    `traefik.ingress.kubernetes.io/router.middlewares` annotation of an Ingress must be referenced as
+    `<middleware-namespace>_<middleware-name>@kubernetescrd` instead of `<middleware-namespace>-<middleware-name>@kubernetescrd`
+    when `safeNaming` is enabled.
+    See the [provider namespace](../overview.md#provider-namespace) documentation for more details.
+
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:

@@ -45,6 +45,10 @@ For the list of the providers names, see the [supported providers](#supported-pr
     On the other hand, if you were to declare a middleware as a Custom Resource in Kubernetes and use the non-CRD Ingress objects,
     you would have to add the Kubernetes Namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
 
+    When the [`safeNaming`](./kubernetes/kubernetes-crd.md#safenaming) option of the Kubernetes CRD provider is enabled,
+    the generated names are joined with a `_` separator instead,
+    and the annotation becomes `<middleware-namespace>_<middleware-name>@kubernetescrd`.
+
 ## Supported Providers
 
 Below is the list of the currently supported providers in Traefik.
