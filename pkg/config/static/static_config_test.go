@@ -344,6 +344,33 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 	}
 }
 
+func TestSetEffectiveConfiguration_DisableNonTLSRouters(t *testing.T) {
+	conf := &Configuration{
+		EntryPoints: EntryPoints{
+			"web": {
+				Address: ":80",
+				HTTP:    HTTPConfig{},
+			},
+			"websecure": {
+				Address: ":443",
+				HTTP: HTTPConfig{
+					TLS: &TLSConfig{},
+				},
+			},
+		},
+		Providers: &Providers{
+			Precedence: providerNames,
+			KubernetesIngressNGINX: &ingressnginx.Provider{
+				DisableNonTLSRouters: true,
+			},
+		},
+	}
+
+	conf.SetEffectiveConfiguration()
+
+	assert.Empty(t, conf.Providers.KubernetesIngressNGINX.NonTLSEntryPoints)
+}
+
 func TestValidateConfiguration_BasePath(t *testing.T) {
 	tests := []struct {
 		desc      string
