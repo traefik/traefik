@@ -82,7 +82,12 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
                 <RenderUnknownProp key={pluginName} name={pluginName} prop={data.plugin?.[pluginName]} />
               ))}
             {filteredProps?.map((propName) => (
-              <RenderUnknownProp key={propName} name={propName} prop={data[propName]} removeTitlePrefix={data.type} />
+              <RenderUnknownProp
+                key={propName}
+                name={propName}
+                prop={(data as unknown as Record<string, unknown>)[propName]}
+                removeTitlePrefix={data.type}
+              />
             ))}
           </Card>
         )}
