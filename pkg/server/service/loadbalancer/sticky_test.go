@@ -116,13 +116,14 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 
 	// Should return an error if the handler does not exist.
 	res := httptest.NewRecorder()
-	require.Error(t, sticky.WriteStickyCookie(res, "first"))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	require.Error(t, sticky.WriteStickyCookie(res, req, "first"))
 
 	// Should write the sticky cookie and use the sha256 hash.
 	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 
 	res = httptest.NewRecorder()
-	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+	require.NoError(t, sticky.WriteStickyCookie(res, req, "first"))
 
 	assert.Len(t, res.Result().Cookies(), 1)
 
@@ -137,6 +138,56 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.WithinDuration(t, time.Now(), cookie.Expires, time.Duration(cookieConfig.Expires)*time.Second)
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
+}
+
+func TestSticky_WriteStickyCookieConditionalSameSiteNone(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		conditionalSameSiteNone bool
+		userAgent               string
+		wantSameSiteNone        bool
+	}{
+		{
+			desc:                    "Compatible Chrome version keeps SameSite None",
+			conditionalSameSiteNone: true,
+			userAgent:               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
+			wantSameSiteNone:        true,
+		},
+		{
+			desc:                    "Incompatible client omits SameSite None",
+			conditionalSameSiteNone: true,
+			userAgent:               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36",
+		},
+		{
+			desc:                    "Disabled conditional SameSite None keeps SameSite None",
+			conditionalSameSiteNone: false,
+			userAgent:               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36",
+			wantSameSiteNone:        true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			sticky := NewSticky(dynamic.Cookie{Name: "test", SameSite: "none", ConditionalSameSiteNone: test.conditionalSameSiteNone})
+			sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set("User-Agent", test.userAgent)
+			res := httptest.NewRecorder()
+
+			require.NoError(t, sticky.WriteStickyCookie(res, req, "first"))
+			require.Len(t, res.Result().Cookies(), 1)
+
+			setCookie := res.Header().Get("Set-Cookie")
+			if test.wantSameSiteNone {
+				assert.Contains(t, setCookie, "SameSite=None")
+			} else {
+				assert.NotContains(t, setCookie, "SameSite")
+			}
+		})
+	}
 }
 
 func TestConvertSameSite_CaseInsensitive(t *testing.T) {

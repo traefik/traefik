@@ -24,14 +24,15 @@ type NamedHandler struct {
 
 // stickyCookie represents a sticky cookie.
 type stickyCookie struct {
-	name     string
-	secure   bool
-	httpOnly bool
-	sameSite http.SameSite
-	maxAge   int
-	expires  time.Time
-	path     string
-	domain   string
+	name                    string
+	secure                  bool
+	httpOnly                bool
+	sameSite                http.SameSite
+	conditionalSameSiteNone bool
+	maxAge                  int
+	expires                 time.Time
+	path                    string
+	domain                  string
 }
 
 // Sticky ensures that client consistently interacts with the same HTTP handler by adding a sticky cookie to the response.
@@ -51,13 +52,14 @@ type Sticky struct {
 // NewSticky creates a new Sticky instance.
 func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 	cookie := &stickyCookie{
-		name:     cookieConfig.Name,
-		secure:   cookieConfig.Secure,
-		httpOnly: cookieConfig.HTTPOnly,
-		sameSite: convertSameSite(cookieConfig.SameSite),
-		maxAge:   cookieConfig.MaxAge,
-		path:     "/",
-		domain:   cookieConfig.Domain,
+		name:                    cookieConfig.Name,
+		secure:                  cookieConfig.Secure,
+		httpOnly:                cookieConfig.HTTPOnly,
+		sameSite:                convertSameSite(cookieConfig.SameSite),
+		conditionalSameSiteNone: cookieConfig.ConditionalSameSiteNone,
+		maxAge:                  cookieConfig.MaxAge,
+		path:                    "/",
+		domain:                  cookieConfig.Domain,
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
@@ -126,12 +128,17 @@ func (s *Sticky) StickyHandler(req *http.Request) (*NamedHandler, bool, error) {
 }
 
 // WriteStickyCookie writes a sticky cookie to the response to stick the client to the given handler name.
-func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
+func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, req *http.Request, name string) error {
 	s.handlersMu.RLock()
 	hash, ok := s.hashMap[name]
 	s.handlersMu.RUnlock()
 	if !ok {
 		return fmt.Errorf("no hash found for handler named %s", name)
+	}
+
+	sameSite := s.cookie.sameSite
+	if s.cookie.conditionalSameSiteNone && sameSite == http.SameSiteNoneMode && req != nil && !shouldSendSameSiteNone(req.UserAgent()) {
+		sameSite = http.SameSiteDefaultMode
 	}
 
 	cookie := &http.Cookie{
@@ -141,7 +148,7 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 		Domain:   s.cookie.domain,
 		HttpOnly: s.cookie.httpOnly,
 		Secure:   s.cookie.secure,
-		SameSite: s.cookie.sameSite,
+		SameSite: sameSite,
 		MaxAge:   s.cookie.maxAge,
 		Expires:  s.cookie.expires,
 	}
