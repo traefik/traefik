@@ -263,6 +263,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// IPAllowGroup
+	if config.IPAllowGroup != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ipallowlist.NewGroup(ctx, next, *config.IPAllowGroup, middlewareName)
+		}
+	}
+
 	// InFlightReq
 	if config.InFlightReq != nil {
 		if middleware != nil {
