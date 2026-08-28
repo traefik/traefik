@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
 
 func TestHasEntrypoint(t *testing.T) {
@@ -69,9 +70,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -118,9 +118,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -178,9 +177,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -242,9 +240,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -273,6 +270,60 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress NGINX provider, no asDefault, all non-TLS non-internal entrypoints included",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80"},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{
+						NonTLSEntryPoints: []string{"admin", "web"},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80"},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Ingress NGINX provider, asDefault set, only marked entrypoint included",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80", AsDefault: true},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{
+						NonTLSEntryPoints: []string{"web"},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80", AsDefault: true},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -280,6 +331,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			t.Parallel()
 
 			test.conf.SetEffectiveConfiguration()
+
+			// NonTLSEntryPoints is built from a map iteration, so its order isn't deterministic.
+			if p := test.conf.Providers.KubernetesIngressNGINX; p != nil {
+				assert.ElementsMatch(t, test.expected.Providers.KubernetesIngressNGINX.NonTLSEntryPoints, p.NonTLSEntryPoints)
+				p.NonTLSEntryPoints = nil
+				test.expected.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nil
+			}
 
 			assert.Equal(t, test.expected, test.conf)
 		})
@@ -430,6 +488,69 @@ func TestProvidersPrecedence(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
 			}
+		})
+	}
+}
+
+func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		underscore  string
+		alias       string
+		expectError bool
+	}{
+		{
+			desc: "no strategy configured",
+		},
+		{
+			desc:  "only the new option configured",
+			alias: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured",
+			underscore: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured, set to keep",
+			underscore: AliasHeadersStrategyKeep,
+		},
+		{
+			desc:       "both options configured with the same value",
+			underscore: AliasHeadersStrategyDelete,
+			alias:      AliasHeadersStrategyDelete,
+		},
+		{
+			desc:        "both options configured with different values",
+			underscore:  AliasHeadersStrategyDelete,
+			alias:       AliasHeadersStrategyReject,
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					"web": &EntryPoint{
+						Address: ":80",
+						HTTP: HTTPConfig{
+							AliasHeadersStrategy:      test.alias,
+							UnderscoreHeadersStrategy: test.underscore,
+						},
+					},
+				},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
 		})
 	}
 }

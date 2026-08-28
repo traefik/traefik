@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -343,7 +344,15 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		var tlsOptionName string
 		var tlsOption *tls.Options
 		if ing.config.AuthTLSSecret != nil {
-			optName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + *ing.config.AuthTLSSecret)
+			// The option name must be a pure function of what determines the TLSOption's content, so that multiple Ingresses
+			// sharing one mTLS policy on the same host resolve to the same TLS option.
+			// The namespace and the secret name are suffixed by their own length so that the key unambiguously
+			// encodes the pair.
+			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
+			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
+			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
+			optName := provider.Normalize(secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey)
+
 			if cached, exists := tlsOptionCache[optName]; exists {
 				tlsOptionName = optName
 				tlsOption = cached
@@ -504,6 +513,28 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 			if len(ing.Spec.Rules) == 0 {
 				if mc.DefaultBackend == nil {
+					loc := &location{
+						BackendName:          defaultBackendName,
+						ServersTransportName: nst.name,
+						ServersTransport:     nst.ServersTransport,
+						Config:               ing.config,
+						TLSOptionName:        tlsOptionName,
+						TLSOption:            tlsOption,
+						HasTLS:               hasTLS,
+						Namespace:            ing.Namespace,
+						IngressName:          ing.Name,
+						ServiceName:          db.Service.Name,
+						ServicePort:          portString(db.Service.Port),
+					}
+
+					// Inherit basic/digest auth and custom headers like the rule
+					// paths do, so the catch-all is not an unauthenticated bypass.
+					if err := p.applyDefaultBackendAuth(ing.Namespace, ing.config, loc); err != nil {
+						logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping ingress")
+						continue
+					}
+					p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
+
 					bk := &backend{
 						Name:        defaultBackendName,
 						Namespace:   ing.Namespace,
@@ -513,16 +544,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					mc.Backends[defaultBackendName] = bk
 					mc.DefaultBackend = bk
 
-					loc := &location{
-						BackendName:          defaultBackendName,
-						ServersTransportName: nst.name,
-						ServersTransport:     nst.ServersTransport,
-						Config:               ing.config,
-						Namespace:            ing.Namespace,
-						IngressName:          ing.Name,
-						ServiceName:          db.Service.Name,
-						ServicePort:          portString(db.Service.Port),
-					}
 					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
 					mc.DefaultBackendLocation = loc
 					markProcessedIngress(ing.Ingress)
@@ -567,6 +588,14 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
 				loc.UseRegex = hostsWithUseRegex[rule.Host]
+
+				// Inherit basic/digest auth and custom headers like the rule paths
+				// do, so the per-host fallback is not an unauthenticated bypass.
+				if err := p.applyDefaultBackendAuth(ing.Namespace, ing.config, loc); err != nil {
+					logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping")
+					continue
+				}
+				p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
 
 				endpointCount := 0
 				if backend, ok := mc.Backends[ingDefaultBackendName]; ok {
@@ -852,6 +881,73 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 		ClientAuthType: clientAuthTypeFromString(cfg.AuthTLSVerifyClient),
 	}
 	return opt, nil
+}
+
+// applyDefaultBackendAuth pre-resolves the access-control annotations that are
+// otherwise attached inline in the rules loop (basic/digest auth and custom
+// response headers) onto a spec.defaultBackend location, so the catch-all
+// inherits them exactly like the rule paths, matching ingress-nginx. It returns
+// an error only when a configured auth secret cannot be resolved; the caller
+// then skips the ingress, as ingress-nginx does.
+func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, loc *location) error {
+	if cfg.AuthType != nil {
+		basic, digest, err := p.resolveBasicAuth(namespace, cfg)
+		if err != nil {
+			return err
+		}
+		loc.BasicAuth = basic
+		loc.DigestAuth = digest
+	}
+
+	if cfg.CustomHeaders != nil {
+		headers, err := p.resolveCustomHeaders(namespace, *cfg.CustomHeaders)
+		if err != nil {
+			loc.Error = true
+		} else {
+			loc.ResolvedCustomHeaders = headers
+		}
+	}
+
+	return nil
+}
+
+// resolveDefaultBackendCustomErrors pre-resolves the custom-http-errors error
+// backend onto a spec.defaultBackend location and registers it in the model,
+// mirroring the inline resolution done for rule paths, so custom error pages
+// behave the same on the catch-all. Best-effort: when no per-ingress error
+// backend applies, buildCustomHTTPErrors falls back to the provider-level one.
+func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string, cfg IngressConfig, loc *location) {
+	if len(ptr.Deref(cfg.CustomHTTPErrors, nil)) == 0 {
+		return
+	}
+
+	errBackendName := p.resolveHTTPErrorBackend(namespace, cfg)
+	if errBackendName == "" {
+		return
+	}
+	loc.ResolvedHTTPErrorBackendName = errBackendName
+
+	if _, exists := mc.Backends[errBackendName]; exists {
+		return
+	}
+
+	defaultSvcName := ptr.Deref(cfg.DefaultBackend, "")
+	if defaultSvcName == "" {
+		return
+	}
+
+	endpoints, err := p.getBackendEndpoints(namespace,
+		netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
+		cfg)
+	if err != nil {
+		return
+	}
+
+	mc.Backends[errBackendName] = &backend{
+		Name:      errBackendName,
+		Namespace: namespace,
+		Endpoints: endpoints,
+	}
 }
 
 func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, error) {

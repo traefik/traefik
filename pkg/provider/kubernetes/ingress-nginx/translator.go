@@ -94,6 +94,18 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
 		// ingress reach its catch-all routers.
 		if loc := mc.DefaultBackendLocation; loc != nil {
+			// Client-auth TLS option (auth-tls-secret) must gate the catch-all TLS
+			// router too, matching ingress-nginx which enforces it server-wide.
+			if loc.TLSOption != nil && loc.TLSOptionName != "" {
+				if conf.TLS.Options == nil {
+					conf.TLS.Options = make(map[string]tls.Options)
+				}
+				if _, exists := conf.TLS.Options[loc.TLSOptionName]; !exists {
+					conf.TLS.Options[loc.TLSOptionName] = *loc.TLSOption
+				}
+				rtTLS.TLS.Options = loc.TLSOptionName
+			}
+
 			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
@@ -552,19 +564,23 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	mwName := routerKey + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[mwName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+			// Anchored to prevent ReplaceAllString from rewriting past the leading URL.
+			// The trailing slash is dropped to mirror ingress-nginx ngx_srv_redirect.lua.
+			Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 			Replacement: fmt.Sprintf("$1://%s$2/$3", f.TargetHostname),
 			StatusCode:  new(http.StatusPermanentRedirect),
 		},
 	}
 
+	// The redirect router does not carry the location middlewares (auth included),
+	// so it must never reach the backend.
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
 		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
-		Service:       rt.Service,
+		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
 	}

@@ -21,15 +21,15 @@ services:
       - 0.0.0.0
 
   whoami1:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     hostname: whoami1
 
   whoami2:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     hostname: whoami2
 
   whoami3:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     hostname: whoami3
 
   whoamitcp:

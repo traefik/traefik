@@ -319,6 +319,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		providerAggregator,
 		getDefaultsEntrypoints(staticConfiguration),
 		"internal",
+		staticConfiguration.Core != nil && staticConfiguration.Core.StrictTLSOptions,
 	)
 
 	// TLS

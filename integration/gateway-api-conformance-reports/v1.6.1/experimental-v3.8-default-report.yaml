@@ -1,14 +1,14 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: '-'
+date: "2026-07-31T16:55:17+02:00"
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.5.1
+gatewayAPIVersion: v1.6.1
 implementation:
   contact:
   - '@traefik/maintainers'
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.7
+  version: v3.8
 kind: ConformanceReport
 mode: default
 profiles:
@@ -16,21 +16,23 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 13
+      Passed: 15
       Skipped: 0
   name: GATEWAY-GRPC
   summary: Core tests succeeded.
 - core:
-    result: success
+    result: partial
+    skippedTests:
+    - HTTPRouteMultipleGateways
     statistics:
       Failed: 0
-      Passed: 33
-      Skipped: 0
+      Passed: 36
+      Skipped: 1
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 29
+      Passed: 28
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -68,14 +70,25 @@ profiles:
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
     - HTTPRouteRequestTimeout
+    - HTTPRouteRetry
+    - HTTPRouteRetryBackendTimeout
+    - HTTPRouteRetryConnectionError
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests succeeded. Extended tests succeeded.
+  summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
 - core:
     result: success
     statistics:
       Failed: 0
-      Passed: 18
+      Passed: 19
+      Skipped: 0
+  name: GATEWAY-TCP
+  summary: Core tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 20
       Skipped: 0
   extended:
     result: success
@@ -105,5 +118,12 @@ succeededProvisionalTests:
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
 - HTTPRouteNamedRule
+- TCPRouteInvalidBackendRefNonexistent
+- TCPRouteInvalidCrossNamespaceBackendRef
+- TCPRouteInvalidNonTCPListener
+- TCPRouteParentRefAttachAll
+- TCPRouteParentRefPortAndSectionName
+- TCPRouteReferenceGrant
+- TCPRouteWeightedRouting
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace
