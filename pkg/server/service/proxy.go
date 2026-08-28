@@ -148,7 +148,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 		},
 	}
 
-	return newConnectHandler(proxy), nil
+	return newConnectHandler(newH2CUpgradeHandler(proxy)), nil
 }
 
 // isTLSError returns true if the error is a TLS error which is related to configuration.
