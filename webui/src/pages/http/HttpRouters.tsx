@@ -13,6 +13,7 @@ import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import Tooltip from 'components/Tooltip'
+import RuleDisplay from 'components/routers/RuleDisplay'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
@@ -36,22 +37,11 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
             )}
           </AriaTd>
           <AriaTd>
-            <TooltipText
-              text={row.rule}
-              css={{
-                display: '-webkit-box',
-                '-webkit-line-clamp': 2,
-                '-webkit-box-orient': 'vertical',
-                overflow: 'hidden',
-                wordBreak: 'break-word',
-                maxWidth: '100%',
-                lineHeight: 1.3,
-              }}
-            />
+            <RuleDisplay rule={row.rule} compact />
           </AriaTd>
         </>
       )}
-      <AriaTd>{row.using && row.using.length > 0 && <Chips items={row.using} />}</AriaTd>
+      <AriaTd>{row.using && row.using.length > 0 && <Chips items={row.using} limit={2} />}</AriaTd>
       <AriaTd>
         <TooltipText text={row.name} isTruncated />
       </AriaTd>

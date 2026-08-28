@@ -26,7 +26,7 @@ export const SectionTitle = ({ icon, title }: { icon?: ReactNode; title: string 
 type DetailsCardProps = {
   css?: CSS
   keyColumns?: number
-  items: { key: string; val: string | React.ReactElement; stackVertical?: boolean; forceNewRow?: boolean }[]
+  items: { key: string | ReactNode; val: string | React.ReactElement; stackVertical?: boolean; forceNewRow?: boolean }[]
   minKeyWidth?: string
   maxKeyWidth?: string
   testidPrefix?: string

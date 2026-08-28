@@ -80,7 +80,7 @@ describe('<HttpRouterPage />', () => {
     expect(routerDetailsSection?.innerHTML).toContain('Error')
     expect(routerDetailsSection?.querySelector('svg[data-testid="file"]')).toBeTruthy()
     expect(routerDetailsSection?.innerHTML).toContain(
-      'Path(`somethingreallyunexpectedbutalsoverylongitgetsoutofthecontainermaybe`)',
+      'Path: somethingreallyunexpectedbutalsoverylongitgetsoutofthecontainermaybe',
     )
 
     expect(routerStructure.innerHTML).toContain('middleware00')
