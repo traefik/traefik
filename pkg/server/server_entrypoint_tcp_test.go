@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -388,6 +389,62 @@ func TestKeepAliveH2c(t *testing.T) {
 	// is distinct and specific, we rely on its consistency, assuming it is stable and unlikely
 	// to change.
 	require.Contains(t, err.Error(), "use of closed network connection")
+}
+
+func Test_denyOpaque(t *testing.T) {
+	tests := []struct {
+		name       string
+		target     string
+		wantStatus int
+	}{
+		{
+			name:       "Rejects opaque URL",
+			target:     "http:admin/secret",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Rejects opaque URL embedding an absolute URL",
+			target:     "http:http://evil/admin/secret",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Rejects opaque URL embedding a fragment",
+			target:     "http:#frag",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Allows origin-form",
+			target:     "/admin/secret",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "Allows absolute-form",
+			target:     "http://example.com/admin/secret",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "Allows scheme followed by a single slash",
+			target:     "http:/admin/secret",
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			handler := denyOpaque(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, test.target, http.NoBody)
+			res := httptest.NewRecorder()
+
+			handler.ServeHTTP(res, req)
+
+			assert.Equal(t, test.wantStatus, res.Code)
+		})
+	}
 }
 
 func Test_denyFragment(t *testing.T) {
@@ -862,6 +919,135 @@ func TestPathOperations(t *testing.T) {
 			assert.Equal(t, test.expectedPath, res.Header.Get("Path"))
 			assert.Equal(t, test.expectedRaw, res.Header.Get("RawPath"))
 			assert.Equal(t, test.expectedRoutingPath, res.Header.Get("RoutingPath"))
+		})
+	}
+}
+
+// TestRequestTargetForms tests the handling of the request target forms through the whole entrypoint handler chain,
+// built with the createHTTPServer func. It goes through raw TCP connections because the standard library client
+// cannot emit the malformed request targets under test.
+func TestRequestTargetForms(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = ln.Close()
+	})
+
+	configuration := &static.EntryPoint{}
+	configuration.SetDefaults()
+
+	server, err := createHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+	require.NoError(t, err)
+
+	server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Request-URI", r.RequestURI)
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	go func() {
+		// server is expected to return an error if the listener is closed.
+		_ = server.Server.Serve(ln)
+	}()
+
+	tests := []struct {
+		desc               string
+		requestLine        string
+		expectedStatus     int
+		expectedRequestURI string
+	}{
+		{
+			desc:           "opaque target",
+			requestLine:    "GET http:admin/secret HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target embedding an absolute URL",
+			requestLine:    "GET http:http://evil/admin/secret HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target embedding an absolute URL with a query",
+			requestLine:    "GET http:http://evil/admin/secret?tok=1 HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target with the https scheme",
+			requestLine:    "GET https:admin HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target embedding a fragment",
+			requestLine:    "GET http:#frag HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:               "origin-form",
+			requestLine:        "GET / HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/",
+		},
+		{
+			desc:               "origin-form with a query",
+			requestLine:        "GET /a/b?q=1 HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a/b?q=1",
+		},
+		{
+			desc:               "origin-form with an encoded slash",
+			requestLine:        "GET /a%2Fb HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a%2Fb",
+		},
+		{
+			desc:               "absolute-form",
+			requestLine:        "GET http://front.example/a HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a",
+		},
+		{
+			desc:               "scheme followed by a single slash",
+			requestLine:        "GET http:/a/b HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a/b",
+		},
+		{
+			// The standard library answers the asterisk-form itself, the entrypoint handler is never reached.
+			desc:           "asterisk-form",
+			requestLine:    "OPTIONS * HTTP/1.1",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:               "authority-form",
+			requestLine:        "CONNECT front.example:443 HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			conn, err := net.Dial("tcp", ln.Addr().String())
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = conn.Close()
+			})
+
+			require.NoError(t, conn.SetDeadline(time.Now().Add(5*time.Second)))
+
+			_, err = fmt.Fprintf(conn, "%s\r\nHost: front.example\r\nConnection: close\r\n\r\n", test.requestLine)
+			require.NoError(t, err)
+
+			// The response is read with GET semantics to avoid the body framing specifics of the methods under test.
+			res, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: http.MethodGet})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = res.Body.Close()
+			})
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+			assert.Equal(t, test.expectedRequestURI, res.Header.Get("Request-URI"))
 		})
 	}
 }
