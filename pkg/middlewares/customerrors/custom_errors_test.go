@@ -450,14 +450,27 @@ func TestHandlerURLPlaceholder(t *testing.T) {
 			forwardedProto: "ftp",
 			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
 		},
+		{
+			desc:           "ignores invalid forwarded scheme for TLS requests",
+			target:         "https://whoami.domain.com/api",
+			forwardedProto: "ftp",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "uses forwarded http scheme for TLS requests",
+			target:         "https://whoami.domain.com/api",
+			forwardedProto: "http",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			var gotRequestURI string
 			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, test.expected, r.RequestURI)
+				gotRequestURI = r.RequestURI
 				w.WriteHeader(http.StatusOK)
 			})}
 
@@ -481,6 +494,8 @@ func TestHandlerURLPlaceholder(t *testing.T) {
 
 			recorder := httptest.NewRecorder()
 			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expected, gotRequestURI)
 		})
 	}
 }

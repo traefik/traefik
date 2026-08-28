@@ -138,7 +138,10 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.TLS != nil {
 		scheme = schemeHTTPS
 	}
+
 	if proto := req.Header.Get(xForwardedProto); proto != "" {
+		// A previous hop may have set ws(s) for connection upgrade requests,
+		// but only http(s) is valid in an HTTP context.
 		switch {
 		case strings.EqualFold(proto, schemeHTTP), strings.EqualFold(proto, "ws"):
 			scheme = schemeHTTP
