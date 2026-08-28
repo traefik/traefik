@@ -956,34 +956,29 @@ func TestRequestTargetForms(t *testing.T) {
 		expectedRequestURI string
 	}{
 		{
-			desc:               "opaque target",
-			requestLine:        "GET http:admin/secret HTTP/1.1",
-			expectedStatus:     http.StatusBadRequest,
-			expectedRequestURI: "",
+			desc:           "opaque target",
+			requestLine:    "GET http:admin/secret HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			desc:               "opaque target embedding an absolute URL",
-			requestLine:        "GET http:http://evil/admin/secret HTTP/1.1",
-			expectedStatus:     http.StatusBadRequest,
-			expectedRequestURI: "",
+			desc:           "opaque target embedding an absolute URL",
+			requestLine:    "GET http:http://evil/admin/secret HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			desc:               "opaque target embedding an absolute URL with a query",
-			requestLine:        "GET http:http://evil/admin/secret?tok=1 HTTP/1.1",
-			expectedStatus:     http.StatusBadRequest,
-			expectedRequestURI: "",
+			desc:           "opaque target embedding an absolute URL with a query",
+			requestLine:    "GET http:http://evil/admin/secret?tok=1 HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			desc:               "opaque target with the https scheme",
-			requestLine:        "GET https:admin HTTP/1.1",
-			expectedStatus:     http.StatusBadRequest,
-			expectedRequestURI: "",
+			desc:           "opaque target with the https scheme",
+			requestLine:    "GET https:admin HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			desc:               "opaque target embedding a fragment",
-			requestLine:        "GET http:#frag HTTP/1.1",
-			expectedStatus:     http.StatusBadRequest,
-			expectedRequestURI: "",
+			desc:           "opaque target embedding a fragment",
+			requestLine:    "GET http:#frag HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			desc:               "origin-form",
@@ -1017,10 +1012,9 @@ func TestRequestTargetForms(t *testing.T) {
 		},
 		{
 			// The standard library answers the asterisk-form itself, the entrypoint handler is never reached.
-			desc:               "asterisk-form",
-			requestLine:        "OPTIONS * HTTP/1.1",
-			expectedStatus:     http.StatusOK,
-			expectedRequestURI: "",
+			desc:           "asterisk-form",
+			requestLine:    "OPTIONS * HTTP/1.1",
+			expectedStatus: http.StatusOK,
 		},
 		{
 			desc:               "authority-form",
