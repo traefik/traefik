@@ -373,6 +373,20 @@ spec:
                                       (i.e. HTTPS).
                                     type: boolean
                                 type: object
+                              header:
+                                description: Header defines the sticky header configuration.
+                                properties:
+                                  absoluteTimeout:
+                                    description: |-
+                                      AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                      When set to zero, the pinning never expires.
+                                    type: integer
+                                  name:
+                                    description: |-
+                                      Name defines the header name used for sticky sessions.
+                                      The client must include this header in requests and the server will set it in responses.
+                                    type: string
+                                type: object
                             type: object
                           strategy:
                             description: |-
@@ -1411,6 +1425,20 @@ spec:
                                   only be transmitted over an encrypted connection
                                   (i.e. HTTPS).
                                 type: boolean
+                            type: object
+                          header:
+                            description: Header defines the sticky header configuration.
+                            properties:
+                              absoluteTimeout:
+                                description: |-
+                                  AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                  When set to zero, the pinning never expires.
+                                type: integer
+                              name:
+                                description: |-
+                                  Name defines the header name used for sticky sessions.
+                                  The client must include this header in requests and the server will set it in responses.
+                                type: string
                             type: object
                         type: object
                       strategy:
@@ -3281,6 +3309,20 @@ spec:
                                   (i.e. HTTPS).
                                 type: boolean
                             type: object
+                          header:
+                            description: Header defines the sticky header configuration.
+                            properties:
+                              absoluteTimeout:
+                                description: |-
+                                  AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                  When set to zero, the pinning never expires.
+                                type: integer
+                              name:
+                                description: |-
+                                  Name defines the header name used for sticky sessions.
+                                  The client must include this header in requests and the server will set it in responses.
+                                type: string
+                            type: object
                         type: object
                       strategy:
                         description: |-
@@ -3530,6 +3572,20 @@ spec:
                                   only be transmitted over an encrypted connection
                                   (i.e. HTTPS).
                                 type: boolean
+                            type: object
+                          header:
+                            description: Header defines the sticky header configuration.
+                            properties:
+                              absoluteTimeout:
+                                description: |-
+                                  AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                  When set to zero, the pinning never expires.
+                                type: integer
+                              name:
+                                description: |-
+                                  Name defines the header name used for sticky sessions.
+                                  The client must include this header in requests and the server will set it in responses.
+                                type: string
                             type: object
                         type: object
                       strategy:
@@ -3793,6 +3849,20 @@ spec:
                                     only be transmitted over an encrypted connection
                                     (i.e. HTTPS).
                                   type: boolean
+                              type: object
+                            header:
+                              description: Header defines the sticky header configuration.
+                              properties:
+                                absoluteTimeout:
+                                  description: |-
+                                    AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                    When set to zero, the pinning never expires.
+                                  type: integer
+                                name:
+                                  description: |-
+                                    Name defines the header name used for sticky sessions.
+                                    The client must include this header in requests and the server will set it in responses.
+                                  type: string
                               type: object
                           type: object
                         strategy:
@@ -4163,6 +4233,20 @@ spec:
                                     (i.e. HTTPS).
                                   type: boolean
                               type: object
+                            header:
+                              description: Header defines the sticky header configuration.
+                              properties:
+                                absoluteTimeout:
+                                  description: |-
+                                    AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                    When set to zero, the pinning never expires.
+                                  type: integer
+                                name:
+                                  description: |-
+                                    Name defines the header name used for sticky sessions.
+                                    The client must include this header in requests and the server will set it in responses.
+                                  type: string
+                              type: object
                           type: object
                         strategy:
                           description: |-
@@ -4313,6 +4397,20 @@ spec:
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
                             type: boolean
+                        type: object
+                      header:
+                        description: Header defines the sticky header configuration.
+                        properties:
+                          absoluteTimeout:
+                            description: |-
+                              AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                              When set to zero, the pinning never expires.
+                            type: integer
+                          name:
+                            description: |-
+                              Name defines the header name used for sticky sessions.
+                              The client must include this header in requests and the server will set it in responses.
+                            type: string
                         type: object
                     type: object
                   strategy:
@@ -4571,6 +4669,20 @@ spec:
                                     (i.e. HTTPS).
                                   type: boolean
                               type: object
+                            header:
+                              description: Header defines the sticky header configuration.
+                              properties:
+                                absoluteTimeout:
+                                  description: |-
+                                    AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                                    When set to zero, the pinning never expires.
+                                  type: integer
+                                name:
+                                  description: |-
+                                    Name defines the header name used for sticky sessions.
+                                    The client must include this header in requests and the server will set it in responses.
+                                  type: string
+                              type: object
                           type: object
                         strategy:
                           description: |-
@@ -4642,6 +4754,20 @@ spec:
                             description: Secure defines whether the cookie can only
                               be transmitted over an encrypted connection (i.e. HTTPS).
                             type: boolean
+                        type: object
+                      header:
+                        description: Header defines the sticky header configuration.
+                        properties:
+                          absoluteTimeout:
+                            description: |-
+                              AbsoluteTimeout defines the number of seconds after which a pinned header value stops being honored.
+                              When set to zero, the pinning never expires.
+                            type: integer
+                          name:
+                            description: |-
+                              Name defines the header name used for sticky sessions.
+                              The client must include this header in requests and the server will set it in responses.
+                            type: string
                         type: object
                     type: object
                 type: object

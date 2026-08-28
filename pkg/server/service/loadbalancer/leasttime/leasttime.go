@@ -123,7 +123,7 @@ func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 		wantsHealthCheck: wantsHealthCheck,
 	}
 	if stickyConfig != nil && stickyConfig.Cookie != nil {
-		balancer.sticky = loadbalancer.NewSticky(*stickyConfig.Cookie)
+		balancer.sticky = loadbalancer.NewStickyCookie(*stickyConfig.Cookie)
 	}
 
 	return balancer

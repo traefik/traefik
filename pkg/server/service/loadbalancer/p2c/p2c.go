@@ -76,7 +76,7 @@ func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	if stickyConfig != nil && stickyConfig.Cookie != nil {
-		balancer.sticky = loadbalancer.NewSticky(*stickyConfig.Cookie)
+		balancer.sticky = loadbalancer.NewStickyCookie(*stickyConfig.Cookie)
 	}
 
 	return balancer

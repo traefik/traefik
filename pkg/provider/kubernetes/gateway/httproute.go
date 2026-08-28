@@ -11,12 +11,14 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/net/http/httpguts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -216,12 +218,14 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 		return name, nil
 	}
 
+	routeSticky := convertSessionPersistence(ctx, routeRule.SessionPersistence, pathMatch, true)
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
+		svcName, errCondition := p.loadService(ctx, gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport, routeSticky)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -242,13 +246,18 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 		})
 	}
 
+	// Session persistence configured on the route rule must apply to backendRef selection,
+	// so that a persistent session takes precedence over traffic split weights, see
+	// https://gateway-api.sigs.k8s.io/geps/gep-1619/#api-attachment-points.
+	wrr.Sticky = routeSticky
+
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
 }
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport, routeSticky *dynamic.Sticky) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -331,7 +340,7 @@ func (p *Provider) loadService(gatewayName string, listener gatewayListener, con
 		}
 	}
 
-	lb, st, errCondition := p.loadHTTPServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadHTTPServers(ctx, gatewayName, namespace, route, backendRef, listener, statusReport, routeSticky)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
@@ -464,7 +473,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport, routeSticky *dynamic.Sticky) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -587,6 +596,11 @@ func (p *Provider) loadHTTPServers(gatewayName, namespace string, route *gatev1.
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
+	sticky, policyCondition := p.resolveSessionPersistence(ctx, gatewayName, namespace, backendRef.Name, route.Generation, listener, routeSticky)
+	if policyCondition != nil {
+		return nil, nil, policyCondition
+	}
+	lb.Sticky = sticky
 
 	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
 	// When no ServersTransport is set, we need to determine the protocol based on the service port.
@@ -1083,4 +1097,97 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
 	}
 	maps.Copy(to.HTTP.ServersTransports, from.HTTP.ServersTransports)
+}
+
+// convertSessionPersistence converts a Gateway API SessionPersistence to a Traefik Sticky configuration.
+// scopeToRoute must be true only for a route rule's own sessionPersistence, not for an XBackendTrafficPolicy's.
+func convertSessionPersistence(ctx context.Context, sp *gatev1.SessionPersistence, pathMatch *gatev1.HTTPPathMatch, scopeToRoute bool) *dynamic.Sticky {
+	if sp == nil {
+		return nil
+	}
+
+	// Header-based session persistence.
+	if sp.Type != nil && *sp.Type == gatev1.HeaderBasedSessionPersistence {
+		header := &dynamic.Header{}
+		header.SetDefaults()
+
+		// SessionName maps to Header.Name. A SessionName that isn't a valid HTTP header field name would
+		// otherwise be silently dropped by the response writer, so fall back to the default instead.
+		if sp.SessionName != nil {
+			if httpguts.ValidHeaderFieldName(*sp.SessionName) {
+				header.Name = *sp.SessionName
+			} else {
+				log.Ctx(ctx).Warn().Str("sessionName", *sp.SessionName).
+					Msg("Ignoring invalid sessionPersistence SessionName: not a valid HTTP header field name")
+			}
+		}
+
+		if sp.AbsoluteTimeout != nil {
+			duration, err := time.ParseDuration(string(*sp.AbsoluteTimeout))
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Ignoring invalid sessionPersistence AbsoluteTimeout")
+			} else {
+				header.AbsoluteTimeout = int(duration.Seconds())
+			}
+		}
+
+		return &dynamic.Sticky{Header: header}
+	}
+
+	// Cookie-based session persistence (default).
+	cookie := &dynamic.Cookie{}
+	cookie.SetDefaults()
+
+	// SessionName maps to Cookie.Name
+	if sp.SessionName != nil {
+		cookie.Name = *sp.SessionName
+	}
+
+	cookie.Path = nil
+	// Path must stay unset for a backend-attached policy, since multiple routes can target the same backend.
+	if scopeToRoute {
+		path := cookiePathFromMatch(pathMatch)
+		cookie.Path = &path
+	}
+
+	// AbsoluteTimeout maps to Cookie.MaxAge when lifetimeType is Permanent, so the browser enforces it.
+	// When lifetimeType is Session (default), the cookie carries no MaxAge/Expires (as required by the
+	// spec) and AbsoluteTimeout is not otherwise enforced.
+	if sp.AbsoluteTimeout != nil && sp.CookieConfig != nil &&
+		sp.CookieConfig.LifetimeType != nil && *sp.CookieConfig.LifetimeType == gatev1.PermanentCookieLifetimeType {
+		duration, err := time.ParseDuration(string(*sp.AbsoluteTimeout))
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Ignoring invalid sessionPersistence AbsoluteTimeout")
+		} else {
+			cookie.MaxAge = int(duration.Seconds())
+		}
+	}
+
+	return &dynamic.Sticky{Cookie: cookie}
+}
+
+// cookiePathFromMatch derives the sticky cookie Path attribute from the HTTPRoute rule's matched path,
+// as described by https://gateway-api.sigs.k8s.io/geps/gep-1619/#path.
+func cookiePathFromMatch(pathMatch *gatev1.HTTPPathMatch) string {
+	// A route matching all paths (no match, or PathPrefix "/") yields "/".
+	if pathMatch == nil || pathMatch.Value == nil || *pathMatch.Value == "" {
+		return "/"
+	}
+
+	pathValue := *pathMatch.Value
+
+	// A route matching a regular expression yields the longest non-regex prefix of the pattern.
+	if ptr.Deref(pathMatch.Type, gatev1.PathMatchPathPrefix) == gatev1.PathMatchRegularExpression {
+		if idx := strings.IndexAny(pathValue, `\.*+?()[]{}|^$`); idx >= 0 {
+			pathValue = pathValue[:idx]
+		}
+		if idx := strings.LastIndex(pathValue, "/"); idx > 0 {
+			pathValue = pathValue[:idx]
+		} else {
+			return "/"
+		}
+	}
+
+	// A route matching a specific path yields that path.
+	return pathValue
 }

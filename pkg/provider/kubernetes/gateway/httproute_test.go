@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -320,6 +321,212 @@ func Test_createCORS(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, test.expected, createCORS(test.filter))
+		})
+	}
+}
+
+func Test_convertSessionPersistence(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		sessionPersist      *gatev1.SessionPersistence
+		pathMatch           *gatev1.HTTPPathMatch
+		scopeToRoute        bool
+		wantNil             bool
+		wantCookie          bool
+		wantHeader          bool
+		wantName            string
+		wantMaxAge          int
+		wantPath            *string
+		wantAbsoluteTimeout int
+	}{
+		{
+			desc:           "nil session persistence",
+			sessionPersist: nil,
+			wantNil:        true,
+		},
+		{
+			desc:           "default cookie type (nil Type)",
+			sessionPersist: &gatev1.SessionPersistence{},
+			scopeToRoute:   true,
+			wantNil:        false,
+			wantCookie:     true,
+			wantHeader:     false,
+			wantPath:       new("/"),
+		},
+		{
+			desc: "explicit cookie type",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     new("/"),
+		},
+		{
+			desc: "header type",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.HeaderBasedSessionPersistence),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   false,
+			wantHeader:   true,
+		},
+		{
+			desc: "cookie with session name",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName: new("my-session"),
+				Type:        ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantName:     "my-session",
+			wantPath:     new("/"),
+		},
+		{
+			desc: "header with session name",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName: new("X-My-Session"),
+				Type:        ptr.To(gatev1.HeaderBasedSessionPersistence),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   false,
+			wantHeader:   true,
+			wantName:     "X-My-Session",
+		},
+		{
+			desc: "header with absolute timeout",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName:     new("X-My-Session"),
+				Type:            ptr.To(gatev1.HeaderBasedSessionPersistence),
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+			},
+			scopeToRoute:        true,
+			wantNil:             false,
+			wantCookie:          false,
+			wantHeader:          true,
+			wantName:            "X-My-Session",
+			wantAbsoluteTimeout: 3600,
+		},
+		{
+			desc: "cookie with permanent lifetime and timeout",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName:     new("my-cookie"),
+				Type:            ptr.To(gatev1.CookieBasedSessionPersistence),
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+				CookieConfig: &gatev1.CookieConfig{
+					LifetimeType: ptr.To(gatev1.PermanentCookieLifetimeType),
+				},
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantName:     "my-cookie",
+			wantMaxAge:   3600,
+			wantPath:     new("/"),
+		},
+		{
+			desc: "cookie with session lifetime ignores timeout",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName:     new("my-cookie"),
+				Type:            ptr.To(gatev1.CookieBasedSessionPersistence),
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+				CookieConfig: &gatev1.CookieConfig{
+					LifetimeType: ptr.To(gatev1.SessionCookieLifetimeType),
+				},
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantName:     "my-cookie",
+			wantMaxAge:   0, // Session cookie has no MaxAge
+			wantPath:     new("/"),
+		},
+		{
+			desc: "cookie scoped to an exact matched path",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			pathMatch: &gatev1.HTTPPathMatch{
+				Type:  ptr.To(gatev1.PathMatchExact),
+				Value: new("/bar"),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     new("/bar"),
+		},
+		{
+			desc: "cookie scoped to a regular expression matched path uses the longest non-regex prefix",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			pathMatch: &gatev1.HTTPPathMatch{
+				Type:  ptr.To(gatev1.PathMatchRegularExpression),
+				Value: new("/p1/p2/.*/p3"),
+			},
+			scopeToRoute: true,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     new("/p1/p2"),
+		},
+		{
+			desc: "cookie attached to a backend policy leaves Path unset",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			pathMatch: &gatev1.HTTPPathMatch{
+				Type:  ptr.To(gatev1.PathMatchExact),
+				Value: new("/bar"),
+			},
+			scopeToRoute: false,
+			wantNil:      false,
+			wantCookie:   true,
+			wantHeader:   false,
+			wantPath:     nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := convertSessionPersistence(t.Context(), test.sessionPersist, test.pathMatch, test.scopeToRoute)
+
+			if test.wantNil {
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.NotNil(t, result)
+
+			if test.wantCookie {
+				assert.NotNil(t, result.Cookie)
+				assert.Nil(t, result.Header)
+				if test.wantName != "" {
+					assert.Equal(t, test.wantName, result.Cookie.Name)
+				}
+				assert.Equal(t, test.wantMaxAge, result.Cookie.MaxAge)
+				assert.Equal(t, test.wantPath, result.Cookie.Path)
+			}
+
+			if test.wantHeader {
+				assert.Nil(t, result.Cookie)
+				assert.NotNil(t, result.Header)
+				if test.wantName != "" {
+					assert.Equal(t, test.wantName, result.Header.Name)
+				}
+				assert.Equal(t, test.wantAbsoluteTimeout, result.Header.AbsoluteTimeout)
+			}
 		})
 	}
 }

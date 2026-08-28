@@ -30,6 +30,7 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 )
 
 const (
@@ -299,6 +300,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
+	client.experimentalChannel = p.ExperimentalChannel
 
 	return client, nil
 }
@@ -844,6 +846,124 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 	}
 
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
+}
+
+// resolveSessionPersistence returns the dynamic.Sticky to apply to a backendRef's ServersLoadBalancer.
+func (p *Provider) resolveSessionPersistence(ctx context.Context, gatewayName, namespace string, backendRefName gatev1.ObjectName, routeGeneration int64, listener gatewayListener, routeSticky *dynamic.Sticky) (*dynamic.Sticky, *metav1.Condition) {
+	policySticky, policyCondition := p.loadBackendTrafficPolicySticky(ctx, gatewayName, namespace, backendRefName, routeGeneration, listener)
+	if policyCondition != nil {
+		return nil, policyCondition
+	}
+
+	if routeSticky == nil {
+		return policySticky, nil
+	}
+
+	if policySticky != nil {
+		// Debug rather than Warn: this fires on every reconcile for a valid, documented precedence rule, not an anomaly.
+		log.Ctx(ctx).Debug().
+			Msgf("Route sessionPersistence overrides XBackendTrafficPolicy sessionPersistence for backendRef %s/%s", namespace, backendRefName)
+	}
+
+	// Renamed so it doesn't collide with the same-named cookie/header set at the WeightedRoundRobin level.
+	sticky := *routeSticky
+	// An empty cookie name is left untouched: it gets a name auto-generated from the (already
+	// unique) service name at runtime, so it can't collide with the WeightedRoundRobin-level cookie.
+	if sticky.Cookie != nil && sticky.Cookie.Name != "" {
+		cookie := *sticky.Cookie
+		cookie.Name += "-server"
+		sticky.Cookie = &cookie
+	}
+	if sticky.Header != nil {
+		header := *sticky.Header
+		header.Name += "-server"
+		sticky.Header = &header
+	}
+	return &sticky, nil
+}
+
+func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, gatewayName, namespace string, backendRefName gatev1.ObjectName, routeGeneration int64, listener gatewayListener) (*dynamic.Sticky, *metav1.Condition) {
+	if !p.client.experimentalChannel {
+		return nil, nil
+	}
+
+	policies, err := p.client.ListXBackendTrafficPoliciesForService(namespace, string(backendRefName))
+	if err != nil {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: routeGeneration,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot list XBackendTrafficPolicies for Service %s/%s: %s", namespace, string(backendRefName), err),
+		}
+	}
+
+	// Sort XBackendTrafficPolicies by creation timestamp, then by name to match the direct policy attachment requirements.
+	slices.SortStableFunc(policies, func(a, b *apisxv1alpha1.XBackendTrafficPolicy) int {
+		cmpTime := a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+		if cmpTime == 0 {
+			return strings.Compare(a.Name, b.Name)
+		}
+		return cmpTime
+	})
+
+	var selected *apisxv1alpha1.XBackendTrafficPolicy
+	for _, policy := range policies {
+		policyAncestorStatus := gatev1.PolicyAncestorStatus{
+			AncestorRef: gatev1.ParentReference{
+				Group:       ptr.To(gatev1.Group(groupGateway)),
+				Kind:        ptr.To(gatev1.Kind(kindGateway)),
+				Namespace:   new(gatev1.Namespace(namespace)),
+				Name:        gatev1.ObjectName(gatewayName),
+				SectionName: new(gatev1.SectionName(listener.Name)),
+			},
+			ControllerName: controllerName,
+		}
+
+		if selected != nil {
+			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+				metav1.Condition{
+					Type:               string(gatev1.PolicyConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.PolicyReasonConflicted),
+				},
+			)
+
+			status := gatev1.PolicyStatus{Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus}}
+			if err := p.client.UpdateXBackendTrafficPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting XBackendTrafficPolicy status")
+			}
+			continue
+		}
+
+		policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.PolicyConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.PolicyReasonAccepted),
+			},
+		)
+
+		status := gatev1.PolicyStatus{Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus}}
+		if err := p.client.UpdateXBackendTrafficPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Unable to update XBackendTrafficPolicy status")
+		}
+
+		selected = policy
+	}
+
+	if selected == nil || selected.Spec.SessionPersistence == nil {
+		return nil, nil
+	}
+
+	// XBackendTrafficPolicy is attached to a Service, not a route rule, so the cookie Path attribute
+	// must be left unset.
+	return convertSessionPersistence(ctx, selected.Spec.SessionPersistence, nil, false), nil
 }
 
 func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {

@@ -45,6 +45,14 @@ rules:
       - list
       - watch
   - apiGroups:
+      - gateway.networking.x-k8s.io
+    resources:
+      - xbackendtrafficpolicies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
       - gateway.networking.k8s.io
     resources:
       - gatewayclasses/status
@@ -55,6 +63,12 @@ rules:
       - tlsroutes/status
       - referencegrants/status
       - backendtlspolicies/status
+    verbs:
+      - update
+  - apiGroups:
+      - gateway.networking.x-k8s.io
+    resources:
+      - xbackendtrafficpolicies/status
     verbs:
       - update
 

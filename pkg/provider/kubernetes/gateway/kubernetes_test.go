@@ -27,6 +27,7 @@ import (
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 )
 
@@ -35,6 +36,9 @@ var _ provider.Provider = (*Provider)(nil)
 func init() {
 	// required by k8s.MustParseYaml
 	if err := gatev1.Install(kscheme.Scheme); err != nil {
+		panic(err)
+	}
+	if err := apisxv1alpha1.AddToScheme(kscheme.Scheme); err != nil {
 		panic(err)
 	}
 }
@@ -104,12 +108,13 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		expected     *dynamic.Configuration
-		entryPoints  map[string]Entrypoint
-		nativeLB     bool
+		desc                string
+		ingressClass        string
+		paths               []string
+		expected            *dynamic.Configuration
+		entryPoints         map[string]Entrypoint
+		nativeLB            bool
+		experimentalChannel bool
 	}{
 		{
 			desc: "Empty",
@@ -721,6 +726,677 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										Name:   "no-backend-refs",
 										Status: new(500),
 										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute with XBackendTrafficPolicy session persistence",
+			paths: []string{"services.yml", "httproute/with_xbackendtrafficpolicy_header.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Policy-Session"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute with XBackendTrafficPolicy ignored when experimental disabled",
+			paths: []string{"services.yml", "httproute/with_xbackendtrafficpolicy_header.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute session persistence takes precedence over XBackendTrafficPolicy",
+			paths: []string{"services.yml", "httproute/with_route_and_xbackendtrafficpolicy.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie",
+										Path: new("/bar"),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie-server",
+										Path: new("/bar"),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "XBackendTrafficPolicy on only one of several weighted backendRefs does not make the split sticky",
+			paths: []string{"services.yml", "httproute/with_xbackendtrafficpolicy_partial_split.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(70),
+									},
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1",
+										Weight: new(30),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{Name: "whoami-cookie"},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Older XBackendTrafficPolicy wins when two target the same Service",
+			paths: []string{"services.yml", "httproute/with_conflicting_xbackendtrafficpolicies.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								// The older policy (whoami-policy-older) is established per GEP-713's "None"
+								// merge strategy tie-break; the newer one (whoami-policy-newer) conflicts.
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Older-Policy-Session"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute session persistence applied to the ServersLoadBalancer with a single backendRef",
+			paths: []string{"services.yml", "httproute/with_route_and_xbackendtrafficpolicy.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie",
+										Path: new("/bar"),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie-server",
+										Path: new("/bar"),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute header-based session persistence applied to the ServersLoadBalancer",
+			paths: []string{"services.yml", "httproute/with_route_session_persistence_header.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Route-Session"},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Route-Session-server"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute session persistence without a sessionName leaves the cookie name empty at both levels",
+			paths: []string{"services.yml", "httproute/with_route_session_persistence_no_name.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{Path: new("/bar")},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								// Left unsuffixed: an empty name gets a per-service hash at runtime, so it
+								// can't collide with the WeightedRoundRobin-level cookie without needing "-server".
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{Path: new("/bar")},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute session persistence honored across multiple weighted backends",
+			paths: []string{"services.yml", "httproute/with_route_session_persistence_multiple_backends.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(70),
+									},
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1",
+										Weight: new(30),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie",
+										Path: new("/bar"),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie-server",
+										Path: new("/bar"),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami2-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie-server",
+										Path: new("/bar"),
 									},
 								},
 							},
@@ -3037,6 +3713,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -3167,6 +3844,86 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{URL: "foobar"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute session persistence applied at WRR level for TraefikService backend",
+			paths: []string{"services.yml", "httproute/with_traefikservice_and_session_persistence.yml"},
+			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
+				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
+					return name, &dynamic.Service{
+						LoadBalancer: &dynamic.ServersLoadBalancer{
+							Strategy: dynamic.BalancerStrategyWRR,
+							Servers: []dynamic.Server{
+								{URL: "foobar"},
+							},
+							Sticky: &dynamic.Sticky{
+								Cookie: &dynamic.Cookie{
+									Name: "ts-cookie",
+									Path: new("/"),
+								},
+							},
+						},
+					}, nil
+				}},
+			},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "whoami",
+										Weight: new(1),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Route-Session"},
+								},
+							},
+						},
+						"whoami": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "foobar"},
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "ts-cookie",
+										Path: new("/"),
+									},
 								},
 							},
 						},
@@ -3864,10 +4621,11 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 func TestLoadGRPCRoutes(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		paths       []string
-		expected    *dynamic.Configuration
-		entryPoints map[string]Entrypoint
+		desc                string
+		paths               []string
+		expected            *dynamic.Configuration
+		entryPoints         map[string]Entrypoint
+		experimentalChannel bool
 	}{
 		{
 			desc:  "Simple GRPCRoute and BackendTLSPolicy with CA certificate",
@@ -4189,6 +4947,209 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "GRPCRoute with XBackendTrafficPolicy session persistence",
+			paths: []string{"services.yml", "grpcroute/with_xbackendtrafficpolicy_header.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							EntryPoints: []string{"web"},
+							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    22,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Header: &dynamic.Header{Name: "X-Policy-Session"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "GRPCRoute with XBackendTrafficPolicy ignored when experimental disabled",
+			paths: []string{"services.yml", "grpcroute/with_xbackendtrafficpolicy_header.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							EntryPoints: []string{"web"},
+							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    22,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "GRPCRoute session persistence takes precedence over XBackendTrafficPolicy",
+			paths: []string{"services.yml", "grpcroute/with_route_and_xbackendtrafficpolicy.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			experimentalChannel: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							EntryPoints: []string{"web"},
+							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    22,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie",
+										Path: new("/"),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name: "route-cookie-server",
+										Path: new("/"),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -4205,6 +5166,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -9984,7 +10946,7 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 		objects := k8s.MustParseYaml(yamlContent)
 		for _, obj := range objects {
 			switch obj.GetObjectKind().GroupVersionKind().Group {
-			case "gateway.networking.k8s.io":
+			case "gateway.networking.k8s.io", "gateway.networking.x-k8s.io":
 				gwObjects = append(gwObjects, obj)
 			default:
 				k8sObjects = append(k8sObjects, obj)

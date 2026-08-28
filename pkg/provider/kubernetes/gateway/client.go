@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
@@ -44,6 +45,8 @@ type clientWrapper struct {
 	watchedNamespaces []string
 
 	labelSelector string
+
+	experimentalChannel bool
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -206,6 +209,13 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		_, err = factoryGateway.Gateway().V1().TCPRoutes().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
+		}
+
+		if c.experimentalChannel {
+			_, err = factoryGateway.Experimental().V1alpha1().XBackendTrafficPolicies().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
@@ -393,6 +403,32 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	}
 
 	var servicePolicies []*gatev1.BackendTLSPolicy
+	for _, policy := range policies {
+		for _, ref := range policy.Spec.TargetRefs {
+			// The policy does not target the service.
+			if (ref.Group != "" && ref.Group != groupCore) || ref.Kind != kindService || string(ref.Name) != serviceName {
+				continue
+			}
+
+			servicePolicies = append(servicePolicies, policy)
+		}
+	}
+
+	return servicePolicies, nil
+}
+
+// ListXBackendTrafficPoliciesForService returns the XBackendTrafficPolicy for the given service name in the given namespace.
+func (c *clientWrapper) ListXBackendTrafficPoliciesForService(namespace, serviceName string) ([]*apisxv1alpha1.XBackendTrafficPolicy, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get XBackendTrafficPolicies for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
+	}
+
+	policies, err := c.factoriesGateway[c.lookupNamespace(namespace)].Experimental().V1alpha1().XBackendTrafficPolicies().Lister().XBackendTrafficPolicies(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, fmt.Errorf("failed to list XBackendTrafficPolicies in namespace %s", namespace)
+	}
+
+	var servicePolicies []*apisxv1alpha1.XBackendTrafficPolicy
 	for _, policy := range policies {
 		for _, ref := range policy.Spec.TargetRefs {
 			// The policy does not target the service.
@@ -713,6 +749,63 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update BackendTLSPolicy %s/%s status: %w", policy.Namespace, policy.Name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateXBackendTrafficPolicyStatus(ctx context.Context, policy ktypes.NamespacedName, status gatev1.PolicyStatus) error {
+	if !c.isWatchedNamespace(policy.Namespace) {
+		return fmt.Errorf("updating XBackendTrafficPolicy status %s/%s: namespace is not within watched namespaces", policy.Namespace, policy.Name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentPolicy, err := c.factoriesGateway[c.lookupNamespace(policy.Namespace)].Experimental().V1alpha1().XBackendTrafficPolicies().Lister().XBackendTrafficPolicies(policy.Namespace).Get(policy.Name)
+		if err != nil {
+			return err
+		}
+
+		ancestorStatuses := make([]gatev1.PolicyAncestorStatus, len(status.Ancestors))
+		copy(ancestorStatuses, status.Ancestors)
+
+		for _, ancestorStatus := range currentPolicy.Status.Ancestors {
+			// Keep statuses added by other gateway controllers.
+			if ancestorStatus.ControllerName != controllerName {
+				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
+				continue
+			}
+
+			// Keep statuses added by Traefik for other ancestors.
+			// An XBackendTrafficPolicy can target services attached to different listeners.
+			if !slices.ContainsFunc(status.Ancestors, func(s gatev1.PolicyAncestorStatus) bool {
+				return reflect.DeepEqual(s.AncestorRef, ancestorStatus.AncestorRef)
+			}) {
+				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
+			}
+		}
+
+		if len(ancestorStatuses) > 16 {
+			return fmt.Errorf("failed to update XBackendTrafficPolicy %s/%s status: PolicyAncestor statuses count exceeds 16", policy.Namespace, policy.Name)
+		}
+
+		// Do not update status when nothing has changed.
+		if policyAncestorStatusesEqual(currentPolicy.Status.Ancestors, ancestorStatuses) {
+			return nil
+		}
+
+		currentPolicy = currentPolicy.DeepCopy()
+		currentPolicy.Status = gatev1.PolicyStatus{
+			Ancestors: ancestorStatuses,
+		}
+
+		if _, err = c.csGateway.ExperimentalV1alpha1().XBackendTrafficPolicies(policy.Namespace).UpdateStatus(ctx, currentPolicy, metav1.UpdateOptions{}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update XBackendTrafficPolicy %s/%s status: %w", policy.Namespace, policy.Name, err)
 	}
 
 	return nil
