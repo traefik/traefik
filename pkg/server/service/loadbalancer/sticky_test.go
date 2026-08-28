@@ -135,6 +135,7 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 	assert.Equal(t, 42, cookie.MaxAge)
+	assert.WithinRange(t, cookie.Expires, time.Now(), time.Now().Add(time.Duration(cookieConfig.Expires)*time.Second))
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
@@ -172,7 +173,9 @@ func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
 		wantExp1 := time.Now().Add(expiration)
 		res1 := httptest.NewRecorder()
 		require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
-		exp1 := res1.Result().Cookies()[0].Expires
+		cookies1 := res1.Result().Cookies()
+		require.Len(t, cookies1, 1)
+		exp1 := cookies1[0].Expires
 		require.Equal(t, wantExp1.Unix(), exp1.Unix())
 
 		// Advance fake time beyond HTTP-date's one-second granularity.
@@ -181,7 +184,9 @@ func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
 		wantExp2 := time.Now().Add(expiration)
 		res2 := httptest.NewRecorder()
 		require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
-		exp2 := res2.Result().Cookies()[0].Expires
+		cookies2 := res2.Result().Cookies()
+		require.Len(t, cookies2, 1)
+		exp2 := cookies2[0].Expires
 		require.Equal(t, wantExp2.Unix(), exp2.Unix())
 
 		require.True(t, exp2.After(exp1))
@@ -195,7 +200,10 @@ func TestSticky_WriteStickyCookie_NoExpiresIsSessionCookie(t *testing.T) {
 	res := httptest.NewRecorder()
 	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
 
+	cookies := res.Result().Cookies()
+	require.Len(t, cookies, 1)
+
 	// Without an expiry configured the cookie stays a session cookie, so the
 	// per-request Expires branch must not add an Expires attribute.
-	assert.True(t, res.Result().Cookies()[0].Expires.IsZero())
+	assert.True(t, cookies[0].Expires.IsZero())
 }
