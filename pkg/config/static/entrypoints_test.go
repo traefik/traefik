@@ -65,3 +65,69 @@ func TestEntryPointProtocol(t *testing.T) {
 		})
 	}
 }
+
+func TestEntryPoints_HasEncodedCharactersRestriction(t *testing.T) {
+	tests := []struct {
+		name        string
+		entryPoints EntryPoints
+		expected    bool
+	}{
+		{
+			name:        "no entry points",
+			entryPoints: EntryPoints{},
+			expected:    false,
+		},
+		{
+			name: "entry point without encoded characters configuration",
+			entryPoints: EntryPoints{
+				"web": {HTTP: HTTPConfig{}},
+			},
+			expected: false,
+		},
+		{
+			name: "entry point with default (permissive) encoded characters configuration",
+			entryPoints: EntryPoints{
+				"web": {HTTP: HTTPConfig{EncodedCharacters: &EncodedCharacters{
+					AllowEncodedSlash:         true,
+					AllowEncodedBackSlash:     true,
+					AllowEncodedNullCharacter: true,
+					AllowEncodedSemicolon:     true,
+					AllowEncodedPercent:       true,
+					AllowEncodedQuestionMark:  true,
+					AllowEncodedHash:          true,
+				}}},
+			},
+			expected: false,
+		},
+		{
+			name: "entry point restricting one encoded character",
+			entryPoints: EntryPoints{
+				"web": {HTTP: HTTPConfig{EncodedCharacters: &EncodedCharacters{
+					AllowEncodedSlash:         false,
+					AllowEncodedBackSlash:     true,
+					AllowEncodedNullCharacter: true,
+					AllowEncodedSemicolon:     true,
+					AllowEncodedPercent:       true,
+					AllowEncodedQuestionMark:  true,
+					AllowEncodedHash:          true,
+				}}},
+			},
+			expected: true,
+		},
+		{
+			name: "only one entry point out of many restricts an encoded character",
+			entryPoints: EntryPoints{
+				"web": {HTTP: HTTPConfig{}},
+				"websecure": {HTTP: HTTPConfig{EncodedCharacters: &EncodedCharacters{
+					AllowEncodedHash: false,
+				}}},
+			},
+			expected: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, tt.entryPoints.HasEncodedCharactersRestriction())
+		})
+	}
+}

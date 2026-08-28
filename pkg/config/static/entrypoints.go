@@ -200,6 +200,24 @@ type ProxyProtocol struct {
 // EntryPoints holds the HTTP entry point list.
 type EntryPoints map[string]*EntryPoint
 
+// HasEncodedCharactersRestriction reports whether at least one entry point disallows
+// at least one encoded character in the request path.
+func (eps EntryPoints) HasEncodedCharactersRestriction() bool {
+	for _, ep := range eps {
+		ec := ep.HTTP.EncodedCharacters
+		if ec == nil {
+			continue
+		}
+
+		if !ec.AllowEncodedSlash || !ec.AllowEncodedBackSlash || !ec.AllowEncodedNullCharacter ||
+			!ec.AllowEncodedSemicolon || !ec.AllowEncodedPercent || !ec.AllowEncodedQuestionMark || !ec.AllowEncodedHash {
+			return true
+		}
+	}
+
+	return false
+}
+
 // EntryPointsTransport configures communication between clients and Traefik.
 type EntryPointsTransport struct {
 	LifeCycle            *LifeCycle          `description:"Timeouts influencing the server life cycle." json:"lifeCycle,omitempty" toml:"lifeCycle,omitempty" yaml:"lifeCycle,omitempty" export:"true"`

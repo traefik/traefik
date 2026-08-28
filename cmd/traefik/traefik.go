@@ -97,16 +97,18 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
-	log.Warn().Msg("Traefik can reject some encoded characters in the request path." +
-		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
-		"it is recommended to set these options to `false` to avoid split-view situation." +
-		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.7/migrate/v3/#encoded-characters-configuration-default-values")
-
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	staticConfiguration.SetEffectiveConfiguration()
 	if err := staticConfiguration.ValidateConfiguration(); err != nil {
 		return err
+	}
+
+	if !staticConfiguration.EntryPoints.HasEncodedCharactersRestriction() {
+		log.Warn().Msg("Traefik can reject some encoded characters in the request path." +
+			"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
+			"it is recommended to set these options to `false` to avoid split-view situation." +
+			"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.7/migrate/v3/#encoded-characters-configuration-default-values")
 	}
 
 	log.Info().Str("version", version.Version).
