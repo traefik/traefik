@@ -625,10 +625,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
-	// An opaque URL has to be rejected before any handler deriving the path or the request URI from it,
-	// hence the wrapping has to be done after the path handling ones.
-	handler = denyOpaque(handler)
-
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
 		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option.
@@ -652,6 +648,10 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	default:
 		return nil, fmt.Errorf("invalid aliasHeadersStrategy value %q", configuration.HTTP.AliasHeadersStrategy)
 	}
+
+	// An opaque URL has to be rejected before any handler deriving the path or the request URI from it,
+	// hence the wrapping has to be done last so that it is the first handler executed.
+	handler = denyOpaque(handler)
 
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
