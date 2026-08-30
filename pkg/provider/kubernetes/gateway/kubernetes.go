@@ -201,9 +201,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
 			var eventsChan <-chan any
-			namespaces, err := k8sClient.aggregateWatchedNamespaces(ctxLog, p.Namespaces, p.NamespaceSelector)
+			namespaces, err := p.client.aggregateWatchedNamespaces(ctxLog, p.Namespaces, p.NamespaceSelector)
 			if err == nil { // we were able to load the namespaces to watch.
-				eventsChan, err = k8sClient.WatchAll(namespaces, ctxPool.Done())
+				eventsChan, err = p.client.WatchAll(namespaces, ctxPool.Done())
 			}
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
@@ -283,8 +283,16 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
 
+	_, err = labels.Parse(p.NamespaceSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid namespace label selector: %q", p.NamespaceSelector)
+	}
+
 	logger := log.Ctx(ctx)
 	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
+	if p.NamespaceSelector != "" {
+		logger.Info().Msgf("Namespace label selector is: %q", p.NamespaceSelector)
+	}
 
 	var client *clientWrapper
 	switch {

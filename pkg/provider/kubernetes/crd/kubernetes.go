@@ -223,6 +223,14 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
 
+	_, err = labels.Parse(p.NamespaceSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid namespace label selector: %q", p.NamespaceSelector)
+	}
+	if p.NamespaceSelector != "" {
+		log.Ctx(ctx).Info().Msgf("namespace label selector is: %q", p.NamespaceSelector)
+	}
+
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)

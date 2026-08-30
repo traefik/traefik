@@ -190,9 +190,17 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
 	}
 
+	_, err = labels.Parse(p.NamespaceSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid namespace label selector: %q", p.NamespaceSelector)
+	}
+
 	logger := log.Ctx(ctx)
 
 	logger.Info().Msgf("ingress label selector is: %q", p.LabelSelector)
+	if p.NamespaceSelector != "" {
+		logger.Info().Msgf("namespace label selector is: %q", p.NamespaceSelector)
+	}
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
