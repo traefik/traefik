@@ -406,6 +406,29 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	return slices.Contains(c.watchedNamespaces, ns)
 }
 
+// aggregateWatchedNamespaces aggregates namespaces from a static slice and/or
+// a label selector. If both are empty an empty slices is returned which means
+// watch all namespaces.
+func (c *clientWrapper) aggregateWatchedNamespaces(ctx context.Context, namespaces []string, namespaceSelector string) ([]string, error) {
+	if namespaceSelector == "" {
+		return namespaces, nil
+	}
+	
+	ns, err := c.clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: namespaceSelector})
+	if err != nil {
+		return nil, fmt.Errorf("error listing namespaces: %w", err)
+	}
+
+	// add namespaces to a new slice to prevent modifying the original slice.
+	watchedNamespaces := make([]string, len(ns.Items)+len(namespaces))
+	copy(watchedNamespaces, namespaces)
+	for _, item := range ns.Items {
+		watchedNamespaces = append(watchedNamespaces, item.Name)
+	}
+
+	return watchedNamespaces, nil
+}
+
 // filterIngressClassByName return a slice containing ingressclasses with the correct name.
 func filterIngressClassByName(ingressClassName string, ics []*netv1.IngressClass) []*netv1.IngressClass {
 	var ingressClasses []*netv1.IngressClass
