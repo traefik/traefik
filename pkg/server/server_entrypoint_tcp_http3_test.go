@@ -388,3 +388,55 @@ func (c *clientSessionCache) Put(sessionKey string, cs *tls.ClientSessionState) 
 	c.cache.Put(sessionKey, cs)
 	c.puts <- sessionKey
 }
+
+func TestHTTP3ListenNetwork(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		address string
+		want    string
+	}{
+		{
+			desc:    "IPv4 literal host",
+			address: "0.0.0.0:8443",
+			want:    "udp4",
+		},
+		{
+			desc:    "IPv4 loopback host",
+			address: "127.0.0.1:8443",
+			want:    "udp4",
+		},
+		{
+			desc:    "unspecified host keeps dual-stack",
+			address: ":8443",
+			want:    "udp",
+		},
+		{
+			desc:    "IPv6 wildcard host keeps dual-stack",
+			address: "[::]:8443",
+			want:    "udp",
+		},
+		{
+			desc:    "IPv6 literal host keeps dual-stack",
+			address: "[::1]:8443",
+			want:    "udp",
+		},
+		{
+			desc:    "hostname keeps dual-stack",
+			address: "example.com:8443",
+			want:    "udp",
+		},
+		{
+			desc:    "address without a port keeps dual-stack",
+			address: "0.0.0.0",
+			want:    "udp",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.want, http3ListenNetwork(test.address))
+		})
+	}
+}

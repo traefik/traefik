@@ -28,6 +28,25 @@ type http3server struct {
 	getter func(data tcpmuxer.ConnData) (*tls.Config, string, error)
 }
 
+// http3ListenNetwork returns the network to use when listening for the HTTP/3 UDP
+// packet conn for the given entry point address. It only narrows down to "udp4"
+// when the address host is a literal IPv4 address, so that every other case
+// (unspecified/wildcard host, IPv6 literal, or hostname) keeps using the plain
+// "udp" network, which is what gives dual-stack (IPv4 and IPv6) support today.
+func http3ListenNetwork(address string) string {
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return "udp"
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil || ip.To4() == nil {
+		return "udp"
+	}
+
+	return "udp4"
+}
+
 func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
 	var conn net.PacketConn
 	var err error
@@ -50,7 +69,7 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 
 	if conn == nil {
 		listenConfig := newListenConfig(config)
-		conn, err = listenConfig.ListenPacket(ctx, "udp", config.GetAddress())
+		conn, err = listenConfig.ListenPacket(ctx, http3ListenNetwork(config.GetAddress()), config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("starting listener: %w", err)
 		}
