@@ -100,6 +100,11 @@ func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHos
 		return
 	}
 
+	// ingress-nginx only flags a server for redirection from an Ingress rule, never for a default backend.
+	if hostname == "" {
+		return
+	}
+
 	wwwType := strings.HasPrefix(hostname, "www.")
 	wildcardType := strings.HasPrefix(hostname, "*.")
 	bypass := (wwwType && allHosts[strings.TrimPrefix(hostname, "www.")]) ||

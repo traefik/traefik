@@ -356,7 +356,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	// Configure Ingress NGINX provider.
-	if c.Providers.KubernetesIngressNGINX != nil {
+	if c.Providers.KubernetesIngressNGINX != nil && !c.Providers.KubernetesIngressNGINX.DisableNonTLSRouters {
 		var hasDefinedDefaults bool
 		for _, entryPoint := range c.EntryPoints {
 			if entryPoint.AsDefault {
@@ -473,6 +473,13 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
 		}
 	}
 

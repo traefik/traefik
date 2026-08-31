@@ -104,6 +104,8 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
+		// Note: the header names aliasing the header field (e.g. X_Auth_User) are not handled here,
+		// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 		// TODO Deprecated we should add the header with canonical key.
 		req.Header.Del(b.headerField)
 		req.Header[b.headerField] = []string{user}
