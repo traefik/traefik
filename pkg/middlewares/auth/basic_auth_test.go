@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -223,10 +224,10 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
-	hashCount := 0
+	var hashCount atomic.Int64
 	ba := authMiddleware.(*basicAuth)
 	ba.checkSecret = func(password, secret string) bool {
-		hashCount++
+		hashCount.Add(1)
 		// delay to ensure the second request arrives
 		time.Sleep(time.Millisecond)
 		return true
@@ -251,7 +252,55 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	}
 
 	wg.Wait()
-	assert.Equal(t, 1, hashCount)
+	assert.Equal(t, int64(1), hashCount.Load())
+}
+
+func TestBasicAuthConcurrentNoUserEnumeration(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	auth := dynamic.BasicAuth{
+		Users: []string{"test:$2a$04$.8sTYfcxbSplCtoxt5TdJOgpBYkarKtZYsYfYxQ1edbYRuO1DNi0e"},
+	}
+
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
+	require.NoError(t, err)
+
+	var hashCount atomic.Int64
+	proceed := make(chan struct{})
+
+	// Hold the computations in flight, to give the other request the opportunity to join the singleflight call.
+	ba := authMiddleware.(*basicAuth)
+	ba.checkSecret = func(password, secret string) bool {
+		hashCount.Add(1)
+		<-proceed
+
+		return false
+	}
+
+	ts := httptest.NewServer(authMiddleware)
+	t.Cleanup(ts.Close)
+
+	var wg sync.WaitGroup
+
+	for _, user := range []string{"unknown1", "unknown2"} {
+		wg.Go(func() {
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			req.SetBasicAuth(user, "test")
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+		})
+	}
+
+	// A deduplicated request never reaches checkSecret, leaving the condition unsatisfied.
+	assert.Eventually(t, func() bool { return hashCount.Load() == 2 }, 5*time.Second, 10*time.Millisecond)
+
+	close(proceed)
+	wg.Wait()
 }
 
 // TestBasicAuthConcurrentNoKeyCollision ensures an unconfigured user cannot inherit
