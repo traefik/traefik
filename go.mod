@@ -56,7 +56,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // No tag on the repo.
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
-	github.com/quic-go/quic-go v0.61.0
+	github.com/quic-go/quic-go v0.62.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/slog-zerolog/v2 v2.9.2
@@ -64,7 +64,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.6.0
 	github.com/stealthrocket/wasi-go v0.8.0
 	github.com/stealthrocket/wazergo v0.19.1
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	github.com/stvp/go-udp-testing v0.0.0-20201019212854-469649b16807 // No tag on the repo.
 	github.com/tailscale/tscert v0.0.0-20230806124524-28a91b69a046 // No tag on the repo.
 	github.com/testcontainers/testcontainers-go v0.42.0
@@ -394,7 +394,7 @@ require (
 	go.uber.org/ratelimit v0.3.1 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
