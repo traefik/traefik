@@ -37,6 +37,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"k8s.io/utils/ptr"
 )
 
 const resolverSuffix = ".acme"
@@ -53,6 +54,8 @@ type Configuration struct {
 	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+
+	ReusePrivateKey *bool `description:"Reuse the private key from the previous certificate generation during the renewal." json:"reusePrivateKey,omitempty" toml:"reusePrivateKey,omitempty" yaml:"reusePrivateKey,omitempty" export:"true"`
 
 	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -76,6 +79,7 @@ func (a *Configuration) SetDefaults() {
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
 	a.CertificateTimeout = ptypes.Duration(30 * time.Second)
+	a.ReusePrivateKey = ptr.To(true)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -936,8 +940,11 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		res := certificate.Resource{
 			ID:          cert.Domain.Main,
 			Domains:     cert.Domain.ToStrArray(),
-			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
+		}
+
+		if ptr.Deref(p.ReusePrivateKey, true) {
+			res.PrivateKey = cert.Key
 		}
 
 		opts := &certificate.RenewOptions{
