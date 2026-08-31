@@ -172,7 +172,17 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if fa.forwardBody {
+	forwardBody := fa.forwardBody
+	// When a CONNECT method has a body with an unknown length we consider the bytes as tunnel data.
+	// Therefore, we do not want to forward them to the auth server.
+	if req.Method == http.MethodConnect && req.ContentLength < 0 {
+		forwardBody = false
+	}
+
+	if forwardBody {
+		forwardReq.ContentLength = req.ContentLength
+		forwardReq.TransferEncoding = req.TransferEncoding
+
 		bodyBytes, err := fa.readBodyBytes(req)
 		if errors.Is(err, errBodyTooLarge) {
 			logger.Debug().Msgf("Request body is too large, maxBodySize: %d", fa.maxBodySize)
@@ -307,6 +317,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// auth-response-headers semantics. By design, Traefik asserts no identity the
 	// operator did not opt into: trusting unlisted client headers downstream is a
 	// backend misconfiguration, not a spoofing flaw here.
+	// Note: the header names aliasing the authResponseHeaders (e.g. X_Auth_User or X.Auth.User) are not handled here,
+	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 	for _, headerName := range fa.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
