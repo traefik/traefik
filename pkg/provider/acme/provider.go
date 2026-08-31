@@ -941,10 +941,11 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		}
 
 		opts := &certificate.RenewOptions{
-			Bundle:         true,
-			EmailAddresses: p.EmailAddresses,
-			Profile:        p.Profile,
-			PreferredChain: p.PreferredChain,
+			Bundle:           true,
+			EmailAddresses:   p.EmailAddresses,
+			Profile:          p.Profile,
+			PreferredChain:   p.PreferredChain,
+			EnableCommonName: !p.DisableCommonName,
 		}
 
 		renewedCert, err := client.Certificate.Renew(ctx, res, opts)
