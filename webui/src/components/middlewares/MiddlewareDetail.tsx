@@ -18,16 +18,9 @@ type MiddlewareDetailProps = {
 }
 
 const filterMiddlewareProps = (middleware: Middleware.Details): string[] => {
-  const filteredProps = [] as string[]
   const propsToRemove = ['name', 'plugin', 'status', 'type', 'provider', 'error', 'usedBy', 'routers']
 
-  Object.keys(middleware).map((propName) => {
-    if (!propsToRemove.includes(propName)) {
-      filteredProps.push(propName)
-    }
-  })
-
-  return filteredProps
+  return Object.keys(middleware).filter((propName) => !propsToRemove.includes(propName))
 }
 
 export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDetailProps) => {
