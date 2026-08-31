@@ -409,9 +409,9 @@ Traefik prefixes each header name according to where it was observed:
 
 | Prefix | Source |
 |--------|--------|
-| `request_` | Incoming client request headers |
-| `origin_` | Upstream (origin) response headers |
-| `downstream_` | Response headers sent back to the client |
+| <a id="opt-request" href="#opt-request" title="#opt-request">`request_`</a> | Incoming client request headers |
+| <a id="opt-origin" href="#opt-origin" title="#opt-origin">`origin_`</a> | Upstream (origin) response headers |
+| <a id="opt-downstream" href="#opt-downstream" title="#opt-downstream">`downstream_`</a> | Response headers sent back to the client |
 
 Examples: `request_User-Agent`, `origin_Content-Type`, `downstream_Content-Type`.
 
