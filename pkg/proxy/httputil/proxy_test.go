@@ -93,6 +93,15 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 			expectedPath:   "/test",
 			expectedQuery:  "param1=value1&param2=value2",
 		},
+		{
+			name:           "Opaque incoming URL",
+			target:         testhelpers.MustParseURL("http://example.com"),
+			passHostHeader: false,
+			preservePath:   false,
+			incomingURL:    "http:evil.example.com/admin",
+			expectedScheme: "http",
+			expectedHost:   "example.com",
+		},
 	}
 
 	for _, test := range tests {
@@ -129,6 +138,7 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 			assert.Equal(t, test.expectedPath, reqOut.URL.Path)
 			assert.Equal(t, test.expectedRawPath, reqOut.URL.RawPath)
 			assert.Equal(t, test.expectedQuery, reqOut.URL.RawQuery)
+			assert.Empty(t, reqOut.URL.Opaque)
 			assert.Empty(t, reqOut.RequestURI)
 			assert.Equal(t, "HTTP/1.1", reqOut.Proto)
 			assert.Equal(t, 1, reqOut.ProtoMajor)
