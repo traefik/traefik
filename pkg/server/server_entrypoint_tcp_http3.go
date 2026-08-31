@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
@@ -65,11 +66,15 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 			Allow0RTT: false,
 		},
 		ConnContext: func(ctx context.Context, c *quic.Conn) context.Context {
+			// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+			ctx = service.AddTransportOnContext(ctx)
+
 			tlsOptionsName, err := h3.getTLSOptionsName(c)
 			if err != nil {
 				log.WithoutContext().Errorf("Error getting TLS options name for client: %v", err)
 				return ctx
 			}
+
 			return tcp.AddTLSOptionsNameInContext(ctx, tlsOptionsName)
 		},
 	}
