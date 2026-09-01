@@ -132,7 +132,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	if !p.includesHealthStatus(item.Status) {
+	if !p.AllowEmptyServices && !p.includesHealthStatus(item.Status) {
 		logger.Debug().Msgf("Status %q is not included in the configured strictChecks of %q", item.Status, strings.Join(p.StrictChecks, ","))
 		return false
 	}
@@ -147,6 +147,10 @@ func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dy
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
 			},
 		}
+	}
+
+	if !p.includesHealthStatus(item.Status) {
+		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -169,6 +173,10 @@ func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dy
 		}
 	}
 
+	if !p.includesHealthStatus(item.Status) {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
 		if err := p.addServerUDP(item, service.LoadBalancer); err != nil {
 			return fmt.Errorf("%s: %w", name, err)
@@ -188,6 +196,10 @@ func (p *Provider) buildServiceConfiguration(item itemData, configuration *dynam
 		configuration.Services[getName(item)] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
+	}
+
+	if !p.includesHealthStatus(item.Status) {
+		return nil
 	}
 
 	for name, service := range configuration.Services {

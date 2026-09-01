@@ -4143,3 +4143,102 @@ func TestFilterHealthStatuses(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildConfigurationAllowEmptyServices(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		labels          map[string]string
+		items           []itemData
+		protocol        string
+		expectedServers int
+		expectedURL     string
+	}{
+		{
+			desc:     "HTTP service without healthy instances",
+			protocol: "http",
+			items: []itemData{
+				{ID: "critical", Node: "node", Name: "Test", Address: "127.0.0.1", Port: "80", Status: api.HealthCritical},
+			},
+		},
+		{
+			desc:     "HTTP service with healthy and unhealthy instances",
+			protocol: "http",
+			items: []itemData{
+				{ID: "passing", Node: "node1", Name: "Test", Address: "127.0.0.1", Port: "80", Status: api.HealthPassing},
+				{ID: "critical", Node: "node2", Name: "Test", Address: "127.0.0.2", Port: "80", Status: api.HealthCritical},
+			},
+			expectedServers: 1,
+			expectedURL:     "http://127.0.0.1:80",
+		},
+		{
+			desc: "TCP service without healthy instances",
+			labels: map[string]string{
+				"traefik.tcp.routers.test.rule": "HostSNI(`example.com`)",
+			},
+			protocol: "tcp",
+			items: []itemData{
+				{ID: "critical", Node: "node", Name: "Test", Address: "127.0.0.1", Port: "80", Status: api.HealthCritical},
+			},
+		},
+		{
+			desc: "UDP service without healthy instances",
+			labels: map[string]string{
+				"traefik.udp.routers.test.entrypoints": "udp",
+			},
+			protocol: "udp",
+			items: []itemData{
+				{ID: "critical", Node: "node", Name: "Test", Address: "127.0.0.1", Port: "80", Status: api.HealthCritical},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var config Configuration
+			config.SetDefaults()
+			config.AllowEmptyServices = true
+
+			p := Provider{Configuration: config}
+			require.NoError(t, p.Init())
+
+			for i := range test.items {
+				test.items[i].Labels = test.labels
+
+				var err error
+				test.items[i].ExtraConf, err = p.getExtraConf(test.items[i].Labels)
+				require.NoError(t, err)
+			}
+
+			configuration := p.buildConfiguration(t.Context(), test.items, nil)
+
+			switch test.protocol {
+			case "http":
+				require.Len(t, configuration.HTTP.Routers, 1)
+				require.Len(t, configuration.HTTP.Services, 1)
+				assert.Len(t, configuration.HTTP.Services["Test"].LoadBalancer.Servers, test.expectedServers)
+				if test.expectedURL != "" {
+					assert.Equal(t, test.expectedURL, configuration.HTTP.Services["Test"].LoadBalancer.Servers[0].URL)
+				}
+			case "tcp":
+				require.Len(t, configuration.TCP.Routers, 1)
+				require.Len(t, configuration.TCP.Services, 1)
+				assert.Len(t, configuration.TCP.Services["Test"].LoadBalancer.Servers, test.expectedServers)
+			case "udp":
+				require.Len(t, configuration.UDP.Routers, 1)
+				require.Len(t, configuration.UDP.Services, 1)
+				assert.Len(t, configuration.UDP.Services["Test"].LoadBalancer.Servers, test.expectedServers)
+			}
+		})
+	}
+}
+
+func TestAllowEmptyServicesDefault(t *testing.T) {
+	t.Parallel()
+
+	var config Configuration
+	config.SetDefaults()
+
+	assert.False(t, config.AllowEmptyServices)
+}
