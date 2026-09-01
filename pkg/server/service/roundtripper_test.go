@@ -324,6 +324,26 @@ func TestKerberosRoundTripper(t *testing.T) {
 			expectedOriginalCount:       1,
 			expectedDedicatedCount:      2,
 		},
+		{
+			desc:                        "with a lowercase negotiate scheme",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase ntlm scheme carrying a challenge",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"ntlm TlRMTVNTUAAB"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a scheme that only starts like NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLMish"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount:       3,
+		},
 	}
 
 	for _, test := range testCases {

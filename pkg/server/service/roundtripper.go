@@ -212,7 +212,10 @@ func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 
 func containsNTLMorNegotiate(h []string) bool {
 	return slices.ContainsFunc(h, func(s string) bool {
-		return strings.HasPrefix(s, "NTLM") || strings.HasPrefix(s, "Negotiate")
+		// RFC 9110 section 11.1 defines the auth-scheme as case-insensitive,
+		// hence a challenge is matched on its scheme token whatever its case.
+		scheme, _, _ := strings.Cut(s, " ")
+		return strings.EqualFold(scheme, "NTLM") || strings.EqualFold(scheme, "Negotiate")
 	})
 }
 

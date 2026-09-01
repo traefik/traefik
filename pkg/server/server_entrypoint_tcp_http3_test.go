@@ -425,12 +425,17 @@ func TestHTTP3StickyBackendTransport(t *testing.T) {
 
 	firstConn := backendConnFor(firstClient)
 	firstStickyConn := backendConnFor(firstClient)
+	firstReusedConn := backendConnFor(firstClient)
 	secondConn := backendConnFor(secondClient)
+	secondStickyConn := backendConnFor(secondClient)
 
 	// The challenge on the first call moves the following ones to a connection dedicated to that client.
 	assert.NotEqual(t, firstConn, firstStickyConn)
+	// That dedicated connection is then reused, which is what a connection-bound authentication relies on.
+	assert.Equal(t, firstStickyConn, firstReusedConn)
 	// A client must never be served by the connection another one is stuck to.
 	assert.NotEqual(t, firstStickyConn, secondConn)
+	assert.NotEqual(t, firstStickyConn, secondStickyConn)
 }
 
 func TestNewHTTP3ServerTimeouts(t *testing.T) {
