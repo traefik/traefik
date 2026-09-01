@@ -112,7 +112,7 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 }
 
 func TestGatewayScoping(t *testing.T) {
-	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
+	k8sObjects, gwObjects := readResources(t, []string{"gateway_scoping.yaml"})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
@@ -130,8 +130,8 @@ func TestGatewayScoping(t *testing.T) {
 		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
 		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
 		// Scope the provider to a single Gateway.
-		Gateway: "default/traefik-internal",
-		client:  client,
+		Gateways: []NamespacedName{{Namespace: "default", Name: "traefik-internal"}},
+		client:   client,
 	}
 
 	_ = p.loadConfigurationFromGateways(t.Context())
@@ -146,115 +146,6 @@ func TestGatewayScoping(t *testing.T) {
 	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Empty(t, gw.Status.Addresses)
-}
-
-func TestDisableGatewayClassStatus(t *testing.T) {
-	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-
-	client := newClientImpl(kubeClient, gwClient)
-
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
-	require.NoError(t, err)
-
-	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
-		<-eventCh
-	}
-
-	p := Provider{
-		EntryPoints:               map[string]Entrypoint{"http": {Address: ":9080"}},
-		StatusAddress:             &StatusAddress{IP: "1.2.3.4"},
-		DisableGatewayClassStatus: true,
-		client:                    client,
-	}
-
-	_ = p.loadConfigurationFromGateways(t.Context())
-
-	// Gateway status is still written (the data plane owns it).
-	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.NotEmpty(t, gw.Status.Conditions)
-	require.Len(t, gw.Status.Addresses, 1)
-	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
-
-	// GatewayClass status is not written (left to the operator).
-	gc, err := gwClient.GatewayV1().GatewayClasses().Get(t.Context(), "traefik-internal", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Empty(t, gc.Status.Conditions)
-}
-
-func TestStaticAddressStatus(t *testing.T) {
-	ip := func(v string) gatev1.GatewaySpecAddress {
-		return gatev1.GatewaySpecAddress{Type: ptr.To(gatev1.IPAddressType), Value: v}
-	}
-	realized := []gatev1.GatewayStatusAddress{{Type: ptr.To(gatev1.IPAddressType), Value: "1.2.3.4"}}
-
-	t.Run("no spec addresses returns realized", func(t *testing.T) {
-		gw := &gatev1.Gateway{}
-		addrs, unmet := staticAddressStatus(gw, realized)
-		require.Nil(t, unmet)
-		assert.Equal(t, realized, addrs)
-	})
-
-	t.Run("unsupported type not accepted", func(t *testing.T) {
-		gw := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Addresses: []gatev1.GatewaySpecAddress{{
-			Type: ptr.To(gatev1.AddressType("test/fake")), Value: "x",
-		}}}}
-		_, unmet := staticAddressStatus(gw, realized)
-		require.NotNil(t, unmet)
-		assert.Equal(t, string(gatev1.GatewayConditionAccepted), unmet.Type)
-		assert.Equal(t, string(gatev1.GatewayReasonUnsupportedAddress), unmet.Reason)
-	})
-
-	t.Run("usable address programmed", func(t *testing.T) {
-		gw := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Addresses: []gatev1.GatewaySpecAddress{ip("1.2.3.4")}}}
-		addrs, unmet := staticAddressStatus(gw, realized)
-		require.Nil(t, unmet)
-		require.Len(t, addrs, 1)
-		assert.Equal(t, "1.2.3.4", addrs[0].Value)
-	})
-
-	t.Run("unusable address not programmed", func(t *testing.T) {
-		gw := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Addresses: []gatev1.GatewaySpecAddress{ip("9.9.9.9"), ip("1.2.3.4")}}}
-		addrs, unmet := staticAddressStatus(gw, realized)
-		require.NotNil(t, unmet)
-		assert.Equal(t, string(gatev1.GatewayConditionProgrammed), unmet.Type)
-		assert.Equal(t, string(gatev1.GatewayReasonAddressNotUsable), unmet.Reason)
-		for _, a := range addrs {
-			assert.NotEqual(t, "9.9.9.9", a.Value)
-		}
-	})
-}
-
-func TestManagesGateway(t *testing.T) {
-	newGW := func(ns, name string) *gatev1.Gateway {
-		return &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
-	}
-
-	testCases := []struct {
-		desc    string
-		gateway string
-		gw      *gatev1.Gateway
-		want    bool
-	}{
-		{desc: "no scoping manages everything", gateway: "", gw: newGW("default", "foo"), want: true},
-		{desc: "matching ref", gateway: "default/foo", gw: newGW("default", "foo"), want: true},
-		{desc: "different name", gateway: "default/foo", gw: newGW("default", "bar"), want: false},
-		{desc: "different namespace", gateway: "default/foo", gw: newGW("other", "foo"), want: false},
-		{desc: "malformed ref", gateway: "foo", gw: newGW("default", "foo"), want: false},
-		{desc: "list matches first", gateway: "default/foo,other/bar", gw: newGW("default", "foo"), want: true},
-		{desc: "list matches second with spaces", gateway: "default/foo, other/bar", gw: newGW("other", "bar"), want: true},
-		{desc: "list matches none", gateway: "default/foo,other/bar", gw: newGW("default", "baz"), want: false},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			p := Provider{Gateway: test.gateway}
-			assert.Equal(t, test.want, p.managesGateway(test.gw))
-		})
-	}
 }
 
 func TestLoadHTTPRoutes(t *testing.T) {
@@ -8764,13 +8655,92 @@ func Test_mergeRouteParentStatuses(t *testing.T) {
 	}
 }
 
-func findCondition(conditions []metav1.Condition, conditionType gatev1.RouteConditionType) *metav1.Condition {
-	for i := range conditions {
-		if conditions[i].Type == string(conditionType) {
-			return &conditions[i]
-		}
+func Test_managesGateway(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		gateways []NamespacedName
+		gw       *gatev1.Gateway
+		want     bool
+	}{
+		{
+			desc: "no scoping manages everything",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "foo",
+				},
+			},
+			want: true,
+		},
+		{
+			desc:     "matching ref",
+			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "foo",
+				},
+			},
+			want: true,
+		},
+		{
+			desc:     "different name",
+			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "bar",
+				},
+			},
+			want: false,
+		},
+		{
+			desc:     "different namespace",
+			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "other",
+					Name:      "foo",
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "list matches first",
+			gateways: []NamespacedName{
+				{Namespace: "default", Name: "foo"},
+				{Namespace: "other", Name: "bar"},
+			},
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "foo",
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "list matches none",
+			gateways: []NamespacedName{
+				{Namespace: "default", Name: "foo"},
+				{Namespace: "other", Name: "bar"},
+			},
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "baz",
+				},
+			},
+			want: false,
+		},
 	}
-	return nil
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := Provider{Gateways: test.gateways}
+			assert.Equal(t, test.want, p.managesGateway(test.gw))
+		})
+	}
 }
 
 func Test_matchListener(t *testing.T) {
@@ -9567,49 +9537,6 @@ func Test_gatewayAddresses(t *testing.T) {
 	}
 }
 
-// We cannot use the gateway-api fake.NewClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
-func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefake.Clientset {
-	t.Helper()
-
-	client := gatefake.NewSimpleClientset(objects...)
-	for _, object := range objects {
-		gateway, ok := object.(*gatev1.Gateway)
-		if !ok {
-			continue
-		}
-
-		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(t.Context(), gateway, metav1.CreateOptions{})
-		require.NoError(t, err)
-	}
-
-	return client
-}
-
-func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
-	t.Helper()
-
-	var k8sObjects []runtime.Object
-	var gwObjects []runtime.Object
-	for _, path := range paths {
-		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
-		if err != nil {
-			panic(err)
-		}
-
-		objects := k8s.MustParseYaml(yamlContent)
-		for _, obj := range objects {
-			switch obj.GetObjectKind().GroupVersionKind().Group {
-			case "gateway.networking.k8s.io":
-				gwObjects = append(gwObjects, obj)
-			default:
-				k8sObjects = append(k8sObjects, obj)
-			}
-		}
-	}
-
-	return k8sObjects, gwObjects
-}
-
 func Test_makeGatewayStatus(t *testing.T) {
 	acceptedListener := func() gatewayListener {
 		return gatewayListener{Status: &gatev1.ListenerStatus{Name: "valid"}}
@@ -9932,4 +9859,56 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 			assert.Equal(t, test.wantError, hasError)
 		})
 	}
+}
+
+func findCondition(conditions []metav1.Condition, conditionType gatev1.RouteConditionType) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == string(conditionType) {
+			return &conditions[i]
+		}
+	}
+	return nil
+}
+
+// We cannot use the gateway-api fake.NewClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
+func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefake.Clientset {
+	t.Helper()
+
+	client := gatefake.NewSimpleClientset(objects...)
+	for _, object := range objects {
+		gateway, ok := object.(*gatev1.Gateway)
+		if !ok {
+			continue
+		}
+
+		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(t.Context(), gateway, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	return client
+}
+
+func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
+	t.Helper()
+
+	var k8sObjects []runtime.Object
+	var gwObjects []runtime.Object
+	for _, path := range paths {
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		if err != nil {
+			panic(err)
+		}
+
+		objects := k8s.MustParseYaml(yamlContent)
+		for _, obj := range objects {
+			switch obj.GetObjectKind().GroupVersionKind().Group {
+			case "gateway.networking.k8s.io":
+				gwObjects = append(gwObjects, obj)
+			default:
+				k8sObjects = append(k8sObjects, obj)
+			}
+		}
+	}
+
+	return k8sObjects, gwObjects
 }

@@ -196,8 +196,6 @@
     throttleDuration = "42s"
     experimentalChannel = true
     nativeLBByDefault = true
-    gateway = "foobar"
-    disableGatewayClassStatus = true
     [providers.kubernetesGateway.statusAddress]
       ip = "foobar"
       hostname = "foobar"

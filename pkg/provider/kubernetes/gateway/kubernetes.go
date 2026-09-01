@@ -62,6 +62,12 @@ const (
 	schemeH2C   = "h2c"
 )
 
+// NamespacedName holds a Kubernetes resource reference with namespace and name.
+type NamespacedName struct {
+	Namespace string `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name      string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+}
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint                string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -71,26 +77,12 @@ type Provider struct {
 	CertAuthFilePath        string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces              []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	LabelSelector           string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	Gateways                []NamespacedName    `description:"Scopes the provider to specific Gateways." json:"gateways,omitempty" toml:"gateways,omitempty" yaml:"gateways,omitempty" export:"true"`
 	ThrottleDuration        ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel     bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...). Requires the Experimental Channel CRDs." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress           *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
 	NativeLBByDefault       bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 	CrossProviderNamespaces []string            `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
-
-	// Gateway scopes the provider to specific Gateways, expressed as a
-	// comma-separated list of "namespace/name". When set, only those Gateways
-	// (and the routes attached to them) are reconciled, instead of every Gateway
-	// of the managed GatewayClasses. This is used to provision a dedicated data
-	// plane per Gateway or per merged group of Gateways, for example by an
-	// operator.
-	Gateway string `description:"Scopes the provider to specific Gateways, expressed as a comma-separated list of namespace/name." json:"gateway,omitempty" toml:"gateway,omitempty" yaml:"gateway,omitempty" export:"true"`
-
-	// DisableGatewayClassStatus stops the provider from writing GatewayClass
-	// status. Gateway, listener and route status are still written. This lets an
-	// external component (an operator) own the GatewayClass status, for example
-	// to publish a supported-features set that spans the operator and the data
-	// plane.
-	DisableGatewayClassStatus bool `description:"Disables writing GatewayClass status, leaving an external component to own it." json:"disableGatewayClassStatus,omitempty" toml:"disableGatewayClassStatus,omitempty" yaml:"disableGatewayClassStatus,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -289,22 +281,19 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 	}
 }
 
-// managesGateway reports whether the provider should reconcile the given
-// Gateway. When the Gateway scoping option is set, only the referenced
-// namespace/name entries are managed.
+// managesGateway reports whether the provider should reconcile the given Gateways.
+// When the Gateways scoping option is set, only the referenced namespace/name entries are managed.
 func (p *Provider) managesGateway(gateway *gatev1.Gateway) bool {
-	if p.Gateway == "" {
+	if len(p.Gateways) == 0 {
 		return true
 	}
-	for ref := range strings.SplitSeq(p.Gateway, ",") {
-		ns, name, ok := strings.Cut(strings.TrimSpace(ref), "/")
-		if !ok {
-			continue
-		}
-		if gateway.Namespace == ns && gateway.Name == name {
+
+	for _, g := range p.Gateways {
+		if gateway.Namespace == g.Namespace && gateway.Name == g.Name {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -313,15 +302,6 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-	}
-
-	// Gateway scoping reference validation.
-	if p.Gateway != "" {
-		for ref := range strings.SplitSeq(p.Gateway, ",") {
-			if _, _, ok := strings.Cut(strings.TrimSpace(ref), "/"); !ok {
-				return nil, fmt.Errorf("invalid gateway reference %q: expected namespace/name", ref)
-			}
-		}
 	}
 
 	logger := log.Ctx(ctx)
@@ -399,10 +379,6 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		}
 
 		gatewayClassNames[gatewayClass.Name] = struct{}{}
-
-		if p.DisableGatewayClassStatus {
-			continue
-		}
 
 		status := gatev1.GatewayClassStatus{
 			Conditions: upsertGatewayClassConditionAccepted(gatewayClass.Status.Conditions, metav1.Condition{
@@ -726,94 +702,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	return gatewayListeners
 }
 
-// supportedAddressType reports whether the provider can honor a Gateway
-// spec.address of the given type.
-func supportedAddressType(t *gatev1.AddressType) bool {
-	if t == nil {
-		// A nil type defaults to IPAddress per the Gateway API.
-		return true
-	}
-	switch *t {
-	case gatev1.IPAddressType, gatev1.HostnameAddressType:
-		return true
-	default:
-		return false
-	}
-}
-
-// staticAddressStatus resolves the requested Gateway spec.addresses against the
-// addresses actually realized by the data plane (the statusAddress.service
-// ingress). It returns the addresses to report and, when the request cannot be
-// satisfied, a non-empty unmet condition that overrides the Gateway Accepted or
-// Programmed status. realized is the set of dynamically discovered addresses.
-func staticAddressStatus(gateway *gatev1.Gateway, realized []gatev1.GatewayStatusAddress) (addrs []gatev1.GatewayStatusAddress, unmet *metav1.Condition) {
-	specAddrs := gateway.Spec.Addresses
-	if len(specAddrs) == 0 {
-		return realized, nil
-	}
-
-	for _, a := range specAddrs {
-		if !supportedAddressType(a.Type) {
-			return nil, &metav1.Condition{
-				Type:               string(gatev1.GatewayConditionAccepted),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.GatewayReasonUnsupportedAddress),
-				Message:            "Gateway requests an unsupported address type",
-			}
-		}
-	}
-
-	realizedSet := map[string]struct{}{}
-	for _, a := range realized {
-		realizedSet[a.Value] = struct{}{}
-	}
-
-	var matched []gatev1.GatewayStatusAddress
-	allUsable := true
-	for _, a := range specAddrs {
-		if _, ok := realizedSet[a.Value]; ok {
-			t := gatev1.IPAddressType
-			if a.Type != nil {
-				t = *a.Type
-			}
-			matched = append(matched, gatev1.GatewayStatusAddress{Type: ptr.To(t), Value: a.Value})
-		} else {
-			allUsable = false
-		}
-	}
-
-	if !allUsable || len(matched) == 0 {
-		return matched, &metav1.Condition{
-			Type:               string(gatev1.GatewayConditionProgrammed),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: gateway.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.GatewayReasonAddressNotUsable),
-			Message:            "One or more requested addresses are not usable",
-		}
-	}
-	return matched, nil
-}
-
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
-	statusAddrs, unmetAddr := staticAddressStatus(gateway, addresses)
-	gatewayStatus := gatev1.GatewayStatus{Addresses: statusAddrs}
-
-	// An unsupported requested address type makes the Gateway not accepted,
-	// regardless of listener validity.
-	if unmetAddr != nil && unmetAddr.Type == string(gatev1.GatewayConditionAccepted) {
-		gatewayStatus.Conditions = append(gatewayStatus.Conditions, *unmetAddr, metav1.Condition{
-			Type:               string(gatev1.GatewayConditionProgrammed),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: gateway.Generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.GatewayReasonInvalid),
-			Message:            "Gateway not accepted",
-		})
-		return gatewayStatus, []metav1.Condition{*unmetAddr}
-	}
+	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
 	var acceptedListeners int
 	var errorConditions []metav1.Condition
@@ -917,16 +807,6 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			Message:            acceptedConditionMessage,
 			LastTransitionTime: metav1.Now(),
 		},
-	)
-
-	// Requested static addresses that are not yet usable keep the Gateway from
-	// being programmed.
-	if unmetAddr != nil {
-		gatewayStatus.Conditions = append(gatewayStatus.Conditions, *unmetAddr)
-		return gatewayStatus, nil
-	}
-
-	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
 		// update "Programmed" status with "Programmed" reason
 		metav1.Condition{
 			Type:               string(gatev1.GatewayConditionProgrammed),
