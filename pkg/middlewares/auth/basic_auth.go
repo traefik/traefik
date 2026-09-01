@@ -134,9 +134,9 @@ func (b *basicAuth) checkPassword(user, password string) bool {
 }
 
 // singleflightKey returns the deduplication key for a credential pair.
-// It must only depend on the submitted credentials, never on the stored secret.
-// Otherwise the deduplication would vary with the server state.
-// The user length prefix keeps the key unambiguous, without relying on the caller to reject a user containing a colon.
+// Keying on the stored secret leaks user existence; dropping the user hands one user's verdict
+// to another (GHSA-6765-c87h-8mrf). The length prefix keeps the key unambiguous without relying
+// on the caller to reject a user containing a colon.
 func singleflightKey(user, password string) string {
 	return strconv.Itoa(len(user)) + ":" + user + ":" + password
 }
