@@ -1,4 +1,4 @@
-import { Box, Text } from '@traefik-labs/faency'
+import { Badge } from '@traefik-labs/faency'
 import { useContext, useMemo } from 'react'
 
 import { VersionContext } from 'contexts/version'
@@ -19,32 +19,14 @@ const InstanceBadge = () => {
   if (!dashboardName) return null
 
   return (
-    <Box
+    <Badge
+      size="small"
       data-testid="instance-badge"
       aria-label={`Instance: ${dashboardName}`}
-      css={{
-        backgroundColor: '$grayBlue4',
-        borderRadius: '4px',
-        px: '$2',
-        py: '1px',
-        ml: '$1',
-        alignSelf: 'center',
-        userSelect: 'none',
-      }}
+      css={{ maxWidth: '100%', userSelect: 'none' }}
     >
-      <Text
-        css={{
-          color: '$primary',
-          fontWeight: '$semiBold',
-          fontSize: '11px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          lineHeight: 1.4,
-        }}
-      >
-        {display}
-      </Text>
-    </Box>
+      {display}
+    </Badge>
   )
 }
 
