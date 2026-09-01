@@ -249,6 +249,7 @@ providers:
     stale: true
     cache: true
     exposedByDefault: true
+    allowEmptyServices: true
     defaultRule: foobar
     connectAware: true
     connectByDefault: true

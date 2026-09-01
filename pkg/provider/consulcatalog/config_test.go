@@ -4143,3 +4143,32 @@ func TestFilterHealthStatuses(t *testing.T) {
 		})
 	}
 }
+
+func TestKeepContainerAllowEmptyServices(t *testing.T) {
+	t.Parallel()
+
+	p := Provider{
+		Configuration: Configuration{
+			AllowEmptyServices: true,
+			StrictChecks:       defaultStrictChecks(),
+		},
+	}
+
+	item := itemData{
+		Status: api.HealthCritical,
+		ExtraConf: configuration{
+			Enable: true,
+		},
+	}
+
+	assert.True(t, p.keepContainer(t.Context(), item))
+}
+
+func TestAllowEmptyServicesDefault(t *testing.T) {
+	t.Parallel()
+
+	var config Configuration
+	config.SetDefaults()
+
+	assert.False(t, config.AllowEmptyServices)
+}

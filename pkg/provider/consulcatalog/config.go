@@ -132,7 +132,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	if !p.includesHealthStatus(item.Status) {
+	if !p.AllowEmptyServices && !p.includesHealthStatus(item.Status) {
 		logger.Debug().Msgf("Status %q is not included in the configured strictChecks of %q", item.Status, strings.Join(p.StrictChecks, ","))
 		return false
 	}
