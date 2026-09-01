@@ -149,6 +149,10 @@ func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dy
 		}
 	}
 
+	if !p.includesHealthStatus(item.Status) {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
 		if err := p.addServerTCP(item, service.LoadBalancer); err != nil {
 			return fmt.Errorf("%s: %w", name, err)
@@ -167,6 +171,10 @@ func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dy
 		configuration.Services[getName(item)] = &dynamic.UDPService{
 			LoadBalancer: lb,
 		}
+	}
+
+	if !p.includesHealthStatus(item.Status) {
+		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -188,6 +196,10 @@ func (p *Provider) buildServiceConfiguration(item itemData, configuration *dynam
 		configuration.Services[getName(item)] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
+	}
+
+	if !p.includesHealthStatus(item.Status) {
+		return nil
 	}
 
 	for name, service := range configuration.Services {
