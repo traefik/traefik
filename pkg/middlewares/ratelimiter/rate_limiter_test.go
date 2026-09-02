@@ -102,6 +102,13 @@ func TestNewRateLimiter(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Default behavior - no health tracker when no resilience params",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -150,6 +157,115 @@ func TestNewRateLimiter(t *testing.T) {
 			if test.expectedRTL != 0 {
 				assert.InDelta(t, float64(test.expectedRTL), float64(rtl.rate), delta)
 			}
+
+			// Test default behavior - no health tracker when no resilience params
+			if test.desc == "Default behavior - no health tracker when no resilience params" {
+				assert.Nil(t, rtl.healthTracker, "Health tracker should be nil when no resilience parameters are provided")
+			}
+		})
+	}
+}
+
+func TestRateLimiterWithResilience(t *testing.T) {
+	testCases := []struct {
+		desc                      string
+		config                    dynamic.RateLimit
+		expectedHealthTracker     bool
+		expectedShutdownThreshold int
+		expectWarning             bool
+	}{
+		{
+			desc: "No health tracker when no resilience parameters provided",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   10,
+			},
+			expectedHealthTracker:     false,
+			expectedShutdownThreshold: 0,
+			expectWarning:             false,
+		},
+		{
+			desc: "No health tracker when only backoff timeout is provided",
+			config: dynamic.RateLimit{
+				Average:                        100,
+				Burst:                          10,
+				UnhealthyLimiterBackoffTimeout: func() *ptypes.Duration { d := ptypes.Duration(30 * time.Second); return &d }(),
+			},
+			expectedHealthTracker:     false,
+			expectedShutdownThreshold: 0,
+			expectWarning:             true,
+		},
+		{
+			desc: "No health tracker when only shutdown period is provided",
+			config: dynamic.RateLimit{
+				Average:                         100,
+				Burst:                           10,
+				UnhealthyLimiterBackoffDuration: func() *ptypes.Duration { d := ptypes.Duration(10 * time.Second); return &d }(),
+			},
+			expectedHealthTracker:     false,
+			expectedShutdownThreshold: 0,
+			expectWarning:             true,
+		},
+		{
+			desc: "No health tracker when only shutdown threshold is provided",
+			config: dynamic.RateLimit{
+				Average:                          100,
+				Burst:                            10,
+				UnhealthyLimiterBackoffThreshold: func() *int { v := 3; return &v }(),
+			},
+			expectedHealthTracker:     false,
+			expectedShutdownThreshold: 0,
+			expectWarning:             true,
+		},
+		{
+			desc: "No health tracker when only two parameters are provided",
+			config: dynamic.RateLimit{
+				Average:                         100,
+				Burst:                           10,
+				UnhealthyLimiterBackoffTimeout:  func() *ptypes.Duration { d := ptypes.Duration(30 * time.Second); return &d }(),
+				UnhealthyLimiterBackoffDuration: func() *ptypes.Duration { d := ptypes.Duration(10 * time.Second); return &d }(),
+			},
+			expectedHealthTracker:     false,
+			expectedShutdownThreshold: 0,
+			expectWarning:             true,
+		},
+		{
+			desc: "Health tracker created when all three parameters are provided",
+			config: dynamic.RateLimit{
+				Average:                          100,
+				Burst:                            10,
+				UnhealthyLimiterBackoffTimeout:   func() *ptypes.Duration { d := ptypes.Duration(60 * time.Second); return &d }(),
+				UnhealthyLimiterBackoffDuration:  func() *ptypes.Duration { d := ptypes.Duration(5 * time.Second); return &d }(),
+				UnhealthyLimiterBackoffThreshold: func() *int { v := 2; return &v }(),
+			},
+			expectedHealthTracker:     true,
+			expectedShutdownThreshold: 2,
+			expectWarning:             false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
+			require.NoError(t, err)
+
+			rtl, _ := h.(*rateLimiter)
+
+			if test.expectedHealthTracker {
+				assert.NotNil(t, rtl.healthTracker, "Health tracker should be created when all resilience parameters are provided")
+				if rtl.healthTracker != nil {
+					// Test that the health tracker has the correct threshold
+					threshold := rtl.healthTracker.getThreshold()
+					assert.Equal(t, test.expectedShutdownThreshold, threshold)
+				}
+			} else {
+				assert.Nil(t, rtl.healthTracker, "Health tracker should not be created when resilience parameters are not properly configured")
+			}
+
+			// Note: Warning testing would require capturing log output, which is complex
+			// For now, we just verify the behavior (health tracker creation/not creation)
 		})
 	}
 }
