@@ -2087,6 +2087,17 @@ spec:
                         pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                         x-kubernetes-int-or-string: true
                     type: object
+                  scope:
+                    description: |-
+                      Scope defines what the token buckets are scoped to, that is, what a source's budget
+                      is shared across.
+                      It defaults to router with the in-memory bucket, and to middleware with Redis,
+                      which is the existing behavior of each backend.
+                      The Redis bucket does not support the router scope, as its keys do not carry the router.
+                    enum:
+                    - router
+                    - middleware
+                    type: string
                   sourceCriterion:
                     description: |-
                       SourceCriterion defines what criterion is used to group requests as originating from a common source.
