@@ -3619,15 +3619,309 @@ func Test_buildConfiguration(t *testing.T) {
 				test.items[i].Tags = tags
 			}
 
-			configuration := p.buildConfiguration(t.Context(), test.items, &connectCert{
-				root: []string{"root"},
-				leaf: keyPair{
-					cert: "cert",
-					key:  "key",
+			configuration := p.buildConfiguration(t.Context(), test.items, map[string]*connectCert{
+				"dc1": {
+					root: []string{"root"},
+					leaf: keyPair{
+						cert: "cert",
+						key:  "key",
+					},
 				},
 			})
 
 			assert.Equal(t, test.expected, configuration)
+		})
+	}
+}
+
+func TestBuildConfigurationMultiDatacenter(t *testing.T) {
+	t.Parallel()
+
+	var config Configuration
+	config.SetDefaults()
+
+	p := Provider{Configuration: config}
+	require.NoError(t, p.Init())
+
+	items := []itemData{
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc1",
+			Name:       "Test",
+			Namespace:  "default",
+			Address:    "127.0.0.1",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			ExtraConf:  configuration{Enable: true},
+		},
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc2",
+			Name:       "Test",
+			Namespace:  "default",
+			Address:    "127.0.0.2",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			ExtraConf:  configuration{Enable: true},
+		},
+	}
+
+	dynamicConfiguration := p.buildConfiguration(t.Context(), items, nil)
+
+	require.Contains(t, dynamicConfiguration.HTTP.Services, "Test")
+	assert.Equal(t, []dynamic.Server{
+		{URL: "http://127.0.0.1:80"},
+		{URL: "http://127.0.0.2:80"},
+	}, dynamicConfiguration.HTTP.Services["Test"].LoadBalancer.Servers)
+}
+
+func TestBuildConfigurationMultiDatacenterConnect(t *testing.T) {
+	t.Parallel()
+
+	var config Configuration
+	config.SetDefaults()
+	config.ConnectAware = true
+
+	p := Provider{Configuration: config}
+	require.NoError(t, p.Init())
+
+	items := []itemData{
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc1",
+			Name:       "Test",
+			Namespace:  "ns",
+			Address:    "127.0.0.1",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			ExtraConf: configuration{
+				Enable:        true,
+				ConsulCatalog: specificConfiguration{Connect: true},
+			},
+		},
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc2",
+			Name:       "Test",
+			Namespace:  "ns",
+			Address:    "127.0.0.2",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			ExtraConf: configuration{
+				Enable:        true,
+				ConsulCatalog: specificConfiguration{Connect: true},
+			},
+		},
+	}
+	certInfos := map[string]*connectCert{
+		"dc1": {
+			trustDomain: "consul-dc1",
+			root:        []string{"root-dc1"},
+			leaf:        keyPair{cert: "cert-dc1", key: "key-dc1"},
+		},
+		"dc2": {
+			trustDomain: "consul-dc2",
+			root:        []string{"root-dc2"},
+			leaf:        keyPair{cert: "cert-dc2", key: "key-dc2"},
+		},
+	}
+
+	dynamicConfiguration := p.buildConfiguration(t.Context(), items, certInfos)
+
+	require.Contains(t, dynamicConfiguration.HTTP.Services, "Test")
+	assert.Equal(t, &dynamic.WeightedRoundRobin{
+		Services: []dynamic.WRRService{
+			{Name: "Test-dc1", Weight: new(1)},
+			{Name: "Test-dc2", Weight: new(1)},
+		},
+	}, dynamicConfiguration.HTTP.Services["Test"].Weighted)
+
+	require.Contains(t, dynamicConfiguration.HTTP.Services, "Test-dc1")
+	assert.Equal(t, "tls-ns-dc1-Test", dynamicConfiguration.HTTP.Services["Test-dc1"].LoadBalancer.ServersTransport)
+	assert.Equal(t, []dynamic.Server{{URL: "https://127.0.0.1:80"}}, dynamicConfiguration.HTTP.Services["Test-dc1"].LoadBalancer.Servers)
+
+	require.Contains(t, dynamicConfiguration.HTTP.Services, "Test-dc2")
+	assert.Equal(t, "tls-ns-dc2-Test", dynamicConfiguration.HTTP.Services["Test-dc2"].LoadBalancer.ServersTransport)
+	assert.Equal(t, []dynamic.Server{{URL: "https://127.0.0.2:80"}}, dynamicConfiguration.HTTP.Services["Test-dc2"].LoadBalancer.Servers)
+
+	assert.Equal(t, []types.FileOrContent{"root-dc1"}, dynamicConfiguration.HTTP.ServersTransports["tls-ns-dc1-Test"].RootCAs)
+	assert.Equal(t, []types.FileOrContent{"root-dc2"}, dynamicConfiguration.HTTP.ServersTransports["tls-ns-dc2-Test"].RootCAs)
+}
+
+func TestBuildConfigurationMultiDatacenterConnectIgnoresInvalidChild(t *testing.T) {
+	t.Parallel()
+
+	var config Configuration
+	config.SetDefaults()
+	config.ConnectAware = true
+
+	p := Provider{Configuration: config}
+	require.NoError(t, p.Init())
+
+	items := []itemData{
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc1",
+			Name:       "Test",
+			Namespace:  "ns",
+			Address:    "127.0.0.1",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			ExtraConf: configuration{
+				Enable:        true,
+				ConsulCatalog: specificConfiguration{Connect: true},
+			},
+		},
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc2",
+			Name:       "Test",
+			Namespace:  "ns",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			ExtraConf: configuration{
+				Enable:        true,
+				ConsulCatalog: specificConfiguration{Connect: true},
+			},
+		},
+	}
+	certInfos := map[string]*connectCert{
+		"dc1": {root: []string{"root-dc1"}, leaf: keyPair{cert: "cert-dc1", key: "key-dc1"}},
+		"dc2": {root: []string{"root-dc2"}, leaf: keyPair{cert: "cert-dc2", key: "key-dc2"}},
+	}
+
+	dynamicConfiguration := p.buildConfiguration(t.Context(), items, certInfos)
+
+	require.Contains(t, dynamicConfiguration.HTTP.Services, "Test")
+	assert.Nil(t, dynamicConfiguration.HTTP.Services["Test"].Weighted)
+	assert.Equal(t, []dynamic.Server{{URL: "https://127.0.0.1:80"}}, dynamicConfiguration.HTTP.Services["Test"].LoadBalancer.Servers)
+	assert.NotContains(t, dynamicConfiguration.HTTP.Services, "Test-dc2")
+}
+
+func TestBuildConfigurationMultiDatacenterTCPConnect(t *testing.T) {
+	t.Parallel()
+
+	var config Configuration
+	config.SetDefaults()
+	config.ConnectAware = true
+
+	p := Provider{Configuration: config}
+	require.NoError(t, p.Init())
+
+	items := []itemData{
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc1",
+			Name:       "Test",
+			Namespace:  "ns",
+			Address:    "127.0.0.1",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			Labels: map[string]string{
+				"traefik.tcp.routers.test.rule": "HostSNI(`example.com`)",
+			},
+			ExtraConf: configuration{
+				Enable:        true,
+				ConsulCatalog: specificConfiguration{Connect: true},
+			},
+		},
+		{
+			ID:         "id",
+			Node:       "node",
+			Datacenter: "dc2",
+			Name:       "Test",
+			Namespace:  "ns",
+			Address:    "127.0.0.2",
+			Port:       "80",
+			Status:     api.HealthPassing,
+			Labels: map[string]string{
+				"traefik.tcp.routers.test.rule": "HostSNI(`example.com`)",
+			},
+			ExtraConf: configuration{
+				Enable:        true,
+				ConsulCatalog: specificConfiguration{Connect: true},
+			},
+		},
+	}
+	certInfos := map[string]*connectCert{
+		"dc1": {
+			trustDomain: "consul-dc1",
+			root:        []string{"root-dc1"},
+			leaf:        keyPair{cert: "cert-dc1", key: "key-dc1"},
+		},
+		"dc2": {
+			trustDomain: "consul-dc2",
+			root:        []string{"root-dc2"},
+			leaf:        keyPair{cert: "cert-dc2", key: "key-dc2"},
+		},
+	}
+
+	dynamicConfiguration := p.buildConfiguration(t.Context(), items, certInfos)
+
+	require.Contains(t, dynamicConfiguration.TCP.Services, "Test")
+	assert.Equal(t, &dynamic.TCPWeightedRoundRobin{
+		Services: []dynamic.TCPWRRService{
+			{Name: "Test-dc1", Weight: new(1)},
+			{Name: "Test-dc2", Weight: new(1)},
+		},
+	}, dynamicConfiguration.TCP.Services["Test"].Weighted)
+
+	require.Contains(t, dynamicConfiguration.TCP.Services, "Test-dc1")
+	assert.Equal(t, "tls-ns-dc1-Test", dynamicConfiguration.TCP.Services["Test-dc1"].LoadBalancer.ServersTransport)
+	assert.Equal(t, []dynamic.TCPServer{{Address: "127.0.0.1:80", TLS: true}}, dynamicConfiguration.TCP.Services["Test-dc1"].LoadBalancer.Servers)
+
+	require.Contains(t, dynamicConfiguration.TCP.Services, "Test-dc2")
+	assert.Equal(t, "tls-ns-dc2-Test", dynamicConfiguration.TCP.Services["Test-dc2"].LoadBalancer.ServersTransport)
+	assert.Equal(t, []dynamic.TCPServer{{Address: "127.0.0.2:80", TLS: true}}, dynamicConfiguration.TCP.Services["Test-dc2"].LoadBalancer.Servers)
+
+	assert.Equal(t, []types.FileOrContent{"root-dc1"}, dynamicConfiguration.TCP.ServersTransports["tls-ns-dc1-Test"].TLS.RootCAs)
+	assert.Equal(t, []types.FileOrContent{"root-dc2"}, dynamicConfiguration.TCP.ServersTransports["tls-ns-dc2-Test"].TLS.RootCAs)
+}
+
+func TestConnectCertForDatacenter(t *testing.T) {
+	t.Parallel()
+
+	defaultCert := &connectCert{}
+	dc1Cert := &connectCert{}
+	dc2Cert := &connectCert{}
+
+	testCases := []struct {
+		desc       string
+		certInfos  map[string]*connectCert
+		datacenter string
+		expected   *connectCert
+	}{
+		{
+			desc:       "exact datacenter match",
+			certInfos:  map[string]*connectCert{"dc1": dc1Cert, "dc2": dc2Cert},
+			datacenter: "dc2",
+			expected:   dc2Cert,
+		},
+		{
+			desc:       "default datacenter fallback",
+			certInfos:  map[string]*connectCert{"": defaultCert},
+			datacenter: "dc1",
+			expected:   defaultCert,
+		},
+		{
+			desc:       "no fallback across datacenters",
+			certInfos:  map[string]*connectCert{"dc1": dc1Cert},
+			datacenter: "dc2",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Same(t, test.expected, connectCertForDatacenter(test.certInfos, test.datacenter))
 		})
 	}
 }
