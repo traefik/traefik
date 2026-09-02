@@ -169,6 +169,9 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
 			"service server is up, described by gauge value of 0 or 1.",
 			"1")
+		reg.serviceInflightRequestsGauge = newOTLPGaugeFrom(meter, serviceInflightRequestsName,
+			"The number of in-flight requests on a service, partitioned by method and protocol. For upgraded connections (WebSocket/SSE) this includes the full session lifetime.",
+			"1")
 		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, serviceReqsBytesTotalName,
 			"The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.")
 		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, serviceRespsBytesTotalName,

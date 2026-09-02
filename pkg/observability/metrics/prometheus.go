@@ -47,14 +47,15 @@ const (
 	routerRespsBytesTotalName = metricRouterPrefix + "responses_bytes_total"
 
 	// service level.
-	metricServicePrefix        = MetricNamePrefix + "service_"
-	serviceReqsTotalName       = metricServicePrefix + "requests_total"
-	serviceReqsTLSTotalName    = metricServicePrefix + "requests_tls_total"
-	serviceReqDurationName     = metricServicePrefix + "request_duration_seconds"
-	serviceRetriesTotalName    = metricServicePrefix + "retries_total"
-	serviceServerUpName        = metricServicePrefix + "server_up"
-	serviceReqsBytesTotalName  = metricServicePrefix + "requests_bytes_total"
-	serviceRespsBytesTotalName = metricServicePrefix + "responses_bytes_total"
+	metricServicePrefix         = MetricNamePrefix + "service_"
+	serviceReqsTotalName        = metricServicePrefix + "requests_total"
+	serviceReqsTLSTotalName     = metricServicePrefix + "requests_tls_total"
+	serviceReqDurationName      = metricServicePrefix + "request_duration_seconds"
+	serviceRetriesTotalName     = metricServicePrefix + "retries_total"
+	serviceServerUpName         = metricServicePrefix + "server_up"
+	serviceInflightRequestsName = metricServicePrefix + "inflight_requests"
+	serviceReqsBytesTotalName   = metricServicePrefix + "requests_bytes_total"
+	serviceRespsBytesTotalName  = metricServicePrefix + "responses_bytes_total"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -239,6 +240,10 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name: serviceServerUpName,
 			Help: "service server is up, described by gauge value of 0 or 1.",
 		}, []string{"service", "url"})
+		serviceInflightRequests := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: serviceInflightRequestsName,
+			Help: "The number of in-flight requests on a service, partitioned by method and protocol. For upgraded connections (WebSocket/SSE) this includes the full session lifetime.",
+		}, []string{"method", "protocol", "service"})
 		serviceReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsBytesTotalName,
 			Help: "The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.",
@@ -254,6 +259,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			serviceReqDurations.hv,
 			serviceRetries.cv,
 			serviceServerUp.gv,
+			serviceInflightRequests.gv,
 			serviceReqsBytesTotal.cv,
 			serviceRespsBytesTotal.cv,
 		)
@@ -263,6 +269,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
 		reg.serviceRetriesCounter = serviceRetries
 		reg.serviceServerUpGauge = serviceServerUp
+		reg.serviceInflightRequestsGauge = serviceInflightRequests
 		reg.serviceReqsBytesCounter = serviceReqsBytesTotal
 		reg.serviceRespsBytesCounter = serviceRespsBytesTotal
 	}
