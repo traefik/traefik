@@ -110,7 +110,7 @@ func TestNewRateLimiter(t *testing.T) {
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			h, err := New(t.Context(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter", nil)
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)
 			} else {
@@ -274,7 +274,7 @@ func TestInMemoryRateLimit(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				reqCount++
 			})
-			h, err := New(t.Context(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter", nil)
 			require.NoError(t, err)
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)
@@ -474,7 +474,7 @@ func TestRedisRateLimit(t *testing.T) {
 			test.config.Redis = &dynamic.Redis{
 				Endpoints: []string{"localhost:6379"},
 			}
-			h, err := New(t.Context(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter", nil)
 			require.NoError(t, err)
 
 			l := h.(*rateLimiter)
@@ -679,4 +679,177 @@ func computeMinCount(wantCount int) int {
 	}
 
 	return wantCount * 95 / 100
+}
+
+func TestRateLimitScope(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		config        dynamic.RateLimit
+		expectedError string
+	}{
+		{
+			desc:   "in-memory defaults to the router scope",
+			config: dynamic.RateLimit{Average: 1, Burst: 1},
+		},
+		{
+			desc:   "in-memory accepts the router scope",
+			config: dynamic.RateLimit{Average: 1, Burst: 1, Scope: dynamic.RateLimitScopeRouter},
+		},
+		{
+			desc:   "in-memory accepts the middleware scope",
+			config: dynamic.RateLimit{Average: 1, Burst: 1, Scope: dynamic.RateLimitScopeMiddleware},
+		},
+		{
+			desc:          "in-memory rejects an unknown scope",
+			config:        dynamic.RateLimit{Average: 1, Burst: 1, Scope: "service"},
+			expectedError: `unsupported rate limit scope "service"`,
+		},
+		{
+			desc: "redis rejects the router scope",
+			config: dynamic.RateLimit{
+				Average: 1,
+				Burst:   1,
+				Scope:   dynamic.RateLimitScopeRouter,
+				Redis:   &dynamic.Redis{Endpoints: []string{"127.0.0.1:6379"}},
+			},
+			expectedError: "rate limit scope router is not supported with the Redis bucket",
+		},
+		{
+			desc: "redis rejects an unknown scope",
+			config: dynamic.RateLimit{
+				Average: 1,
+				Burst:   1,
+				Scope:   "service",
+				Redis:   &dynamic.Redis{Endpoints: []string{"127.0.0.1:6379"}},
+			},
+			expectedError: `unsupported rate limit scope "service"`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+
+			h, err := New(t.Context(), next, test.config, "rate-limiter", NewBucketRegistry())
+			if test.expectedError != "" {
+				require.ErrorContains(t, err, test.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, h)
+		})
+	}
+}
+
+// The middleware scope is what makes a rate limit mean the same thing however many routers
+// reference it. Two handlers built from one registry under one middleware name must draw on
+// a single budget; under the router scope they must each get their own.
+func TestRateLimitScopeSharesBucketsAcrossRouters(t *testing.T) {
+	testCases := []struct {
+		desc  string
+		scope dynamic.RateLimitScope
+		// Each handler gets a burst of 2, so two handlers admit either 2 (shared) or 4 (not).
+		expectedAdmitted int
+	}{
+		{
+			desc:             "the middleware scope shares one budget",
+			scope:            dynamic.RateLimitScopeMiddleware,
+			expectedAdmitted: 2,
+		},
+		{
+			desc:             "the router scope keeps one budget each",
+			scope:            dynamic.RateLimitScopeRouter,
+			expectedAdmitted: 4,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			config := dynamic.RateLimit{
+				// A rate this low means nothing refills over the life of the test,
+				// so the burst is the whole budget and the count is deterministic.
+				Average: 1,
+				Period:  ptypes.Duration(time.Hour),
+				Burst:   2,
+				Scope:   test.scope,
+			}
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			// One registry, as a single configuration generation would have.
+			registry := NewBucketRegistry()
+
+			first, err := New(t.Context(), next, config, "rate-limiter", registry)
+			require.NoError(t, err)
+			second, err := New(t.Context(), next, config, "rate-limiter", registry)
+			require.NoError(t, err)
+
+			var admitted int
+			for _, h := range []http.Handler{first, second} {
+				for range 2 {
+					req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+					req.RemoteAddr = "10.0.0.1:1234"
+
+					rec := httptest.NewRecorder()
+					h.ServeHTTP(rec, req)
+
+					if rec.Code == http.StatusOK {
+						admitted++
+					}
+				}
+			}
+
+			assert.Equal(t, test.expectedAdmitted, admitted)
+		})
+	}
+}
+
+// Distinct middlewares must stay independent even when they share a registry.
+func TestRateLimitScopeKeepsMiddlewaresIndependent(t *testing.T) {
+	t.Parallel()
+
+	registry := NewBucketRegistry()
+
+	created := map[string]limiter{}
+	for _, name := range []string{"first", "second", "first"} {
+		l, err := registry.getOrCreate(name, func() (limiter, error) {
+			return newInMemoryRateLimiter(rate.Limit(1), 1, 0, 1, nil)
+		})
+		require.NoError(t, err)
+
+		if previous, ok := created[name]; ok {
+			assert.Same(t, previous, l)
+			continue
+		}
+		created[name] = l
+	}
+
+	assert.Len(t, created, 2)
+	assert.NotSame(t, created["first"], created["second"])
+}
+
+// A failed construction must not be cached, or the middleware would stay broken for the
+// life of the configuration even once the cause was gone.
+func TestBucketRegistryDoesNotCacheFailures(t *testing.T) {
+	t.Parallel()
+
+	registry := NewBucketRegistry()
+
+	_, err := registry.getOrCreate("rate-limiter", func() (limiter, error) {
+		return nil, errors.New("boom")
+	})
+	require.Error(t, err)
+
+	l, err := registry.getOrCreate("rate-limiter", func() (limiter, error) {
+		return newInMemoryRateLimiter(rate.Limit(1), 1, 0, 1, nil)
+	})
+	require.NoError(t, err)
+	assert.NotNil(t, l)
 }

@@ -604,6 +604,18 @@ type SourceCriterion struct {
 	RequestHost bool `json:"requestHost,omitempty" toml:"requestHost,omitempty" yaml:"requestHost,omitempty" export:"true"`
 }
 
+// RateLimitScope holds what a rate limit's token buckets are scoped to.
+type RateLimitScope string
+
+const (
+	// RateLimitScopeRouter scopes the buckets to each router referencing the middleware,
+	// which gives a source one budget per router.
+	RateLimitScopeRouter RateLimitScope = "router"
+	// RateLimitScopeMiddleware scopes the buckets to the middleware,
+	// which gives a source one budget shared by every router referencing it.
+	RateLimitScopeMiddleware RateLimitScope = "middleware"
+)
+
 // +k8s:deepcopy-gen=true
 
 // RateLimit holds the rate limit configuration.
@@ -631,6 +643,13 @@ type RateLimit struct {
 	// Redis stores the configuration for using Redis as a bucket in the rate-limiting algorithm.
 	// If not specified, Traefik will default to an in-memory bucket for the algorithm.
 	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
+
+	// Scope defines what the token buckets are scoped to, that is, what a source's budget
+	// is shared across. It accepts router and middleware.
+	// It defaults to router with the in-memory bucket, and to middleware with Redis,
+	// which is the existing behavior of each backend.
+	// The Redis bucket does not support the router scope, as its keys do not carry the router.
+	Scope RateLimitScope `json:"scope,omitempty" toml:"scope,omitempty" yaml:"scope,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.

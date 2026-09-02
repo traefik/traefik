@@ -1261,6 +1261,11 @@ func (in *RateLimit) DeepCopyInto(out *RateLimit) {
 		*out = new(Redis)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Scope != nil {
+		in, out := &in.Scope, &out.Scope
+		*out = new(dynamic.RateLimitScope)
+		**out = **in
+	}
 	return
 }
 
