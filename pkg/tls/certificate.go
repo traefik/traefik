@@ -3,8 +3,6 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
@@ -12,21 +10,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/types"
-)
-
-const (
-	// certificatePEMType is the PEM block type of a certificate, as defined by RFC 7468.
-	certificatePEMType = "CERTIFICATE"
-
-	// pemBlockPrefix is the marker opening any PEM block. The trailing space is significant.
-	pemBlockPrefix = "-----BEGIN "
-
-	// maxCertificateNameLen bounds the certificate identifier written to logs and error messages.
-	maxCertificateNameLen = 50
-
-	// inlinedCertificateName replaces an inlined content whose leading PEM block is not a certificate,
-	// because such content may be a bundle carrying the private key.
-	inlinedCertificateName = "<inlined certificate>"
 )
 
 var (
@@ -127,30 +110,19 @@ func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
 	return cert, nil
 }
 
-// GetTruncatedCertificateName returns an identifier for the certificate, safe to log.
-// Providers inline the CertFile content before the configuration reaches the TLS manager, and that content may be a
-// bundle also carrying the private key, so the identifier is derived from the decoded certificate block alone, and
-// any other inlined PEM content is redacted.
+// GetTruncatedCertificateName returns an identifier for the certificate, to be used in logs and error messages.
 func (c *Certificate) GetTruncatedCertificateName() string {
+	certName := c.CertFile.String()
 	if c.CertFile.IsPath() {
-		return c.CertFile.String()
+		return certName
 	}
 
-	certName := strings.TrimSpace(c.CertFile.String())
-
-	// pem.Decode skips leading garbage and reports the type of the first block, so a bundle whose key block comes
-	// first, or a block that fails to decode, never reaches the returned value.
-	if block, _ := pem.Decode([]byte(certName)); block != nil && block.Type == certificatePEMType {
-		certName = base64.StdEncoding.EncodeToString(block.Bytes)
-	} else if strings.Contains(certName, pemBlockPrefix) {
-		return inlinedCertificateName
-	}
-
-	if len(certName) > maxCertificateNameLen {
-		return certName[:maxCertificateNameLen]
-	}
-
-	return certName
+	// Anything else is content of an unknown nature: providers inline the CertFile content before the configuration
+	// reaches the TLS manager, a path that does not exist is indistinguishable from inlined content, and the content
+	// itself may be a bundle carrying the private key, or a key mistakenly configured as the certificate.
+	// There is no identifier to extract from it, so this excerpt is a last resort to print something rather than
+	// nothing, kept too short to be of use to whoever reads the logs.
+	return certName[:min(len(certName)/2, 16)] + "..."
 }
 
 // FileOrContent hold a file path or content.

@@ -75,13 +75,8 @@ func TestCertificate_GetTruncatedCertificateName(t *testing.T) {
 	existingPath := filepath.Join(t.TempDir(), "example.com.crt")
 	require.NoError(t, os.WriteFile(existingPath, []byte("content"), 0o600))
 
-	// Decodable PEM bodies, as the identifier is re-encoded from the decoded block.
-	// The first one is longer than maxCertificateNameLen, so that truncation is observable.
-	body := base64.StdEncoding.EncodeToString([]byte(strings.Repeat("traefik!", 8)))
-	shortBody := base64.StdEncoding.EncodeToString([]byte("short"))
+	certBlock := "-----BEGIN CERTIFICATE-----\n" + base64.StdEncoding.EncodeToString([]byte(strings.Repeat("traefik!", 8))) + "\n-----END CERTIFICATE-----\n"
 	keyBlock := "-----BEGIN PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString([]byte("SUPERSECRETKEY")) + "\n-----END PRIVATE KEY-----\n"
-
-	longMissingPath := "/etc/traefik/certificates/" + strings.Repeat("z", 40) + ".crt"
 
 	testCases := []struct {
 		desc     string
@@ -94,69 +89,39 @@ func TestCertificate_GetTruncatedCertificateName(t *testing.T) {
 			expected: existingPath,
 		},
 		{
-			desc:     "missing file path is returned as-is",
-			certFile: "/ssl/does-not-exist.crt",
-			expected: "/ssl/does-not-exist.crt",
+			desc:     "inlined certificate is truncated to its PEM block type",
+			certFile: certBlock,
+			expected: "-----BEGIN CERTI...",
+		},
+		{
+			desc:     "inlined bundle is truncated before its key block",
+			certFile: certBlock + keyBlock,
+			expected: "-----BEGIN CERTI...",
+		},
+		{
+			desc:     "inlined key configured as the certificate is truncated to its PEM block type",
+			certFile: keyBlock,
+			expected: "-----BEGIN PRIVA...",
+		},
+		{
+			desc:     "unarmored content is truncated",
+			certFile: base64.StdEncoding.EncodeToString([]byte(strings.Repeat("s", 32))),
+			expected: "c3Nzc3Nzc3Nzc3Nz...",
+		},
+		{
+			desc:     "missing file path shorter than the limit is halved",
+			certFile: "/ssl/x.crt",
+			expected: "/ssl/...",
 		},
 		{
 			desc:     "missing file path longer than the limit is truncated",
-			certFile: longMissingPath,
-			expected: longMissingPath[:maxCertificateNameLen],
-		},
-		{
-			desc:     "inlined certificate is truncated",
-			certFile: "-----BEGIN CERTIFICATE-----\n" + body + "\n-----END CERTIFICATE-----\n",
-			expected: body[:maxCertificateNameLen],
-		},
-		{
-			desc:     "inlined certificate with CRLF line endings is truncated",
-			certFile: "-----BEGIN CERTIFICATE-----\r\n" + body + "\r\n-----END CERTIFICATE-----\r\n",
-			expected: body[:maxCertificateNameLen],
-		},
-		{
-			desc:     "inlined certificate shorter than the limit is returned without its armor",
-			certFile: "-----BEGIN CERTIFICATE-----\n" + shortBody + "\n-----END CERTIFICATE-----\n",
-			expected: shortBody,
-		},
-		{
-			desc:     "content preceding the certificate block is ignored",
-			certFile: "Bag Attributes: friendlyName=example.com\n-----BEGIN CERTIFICATE-----\n" + body + "\n-----END CERTIFICATE-----\n",
-			expected: body[:maxCertificateNameLen],
-		},
-		{
-			desc:     "inlined bundle holding the key after the certificate is truncated",
-			certFile: "-----BEGIN CERTIFICATE-----\n" + body + "\n-----END CERTIFICATE-----\n" + keyBlock,
-			expected: body[:maxCertificateNameLen],
-		},
-		{
-			desc:     "inlined bundle starting with the key is not echoed",
-			certFile: keyBlock + "-----BEGIN CERTIFICATE-----\n" + body + "\n-----END CERTIFICATE-----\n",
-			expected: inlinedCertificateName,
-		},
-		{
-			desc:     "inlined PEM block which is not a certificate is not echoed",
-			certFile: keyBlock,
-			expected: inlinedCertificateName,
-		},
-		{
-			desc:     "certificate block too short to decode is not echoed",
-			certFile: "-----BEGIN CERTIFICATE-----\nABC\n-----BEGIN PRIVATE KEY-----\nSECRET\n",
-			expected: inlinedCertificateName,
-		},
-		{
-			desc:     "PEM block without its end marker is not echoed",
-			certFile: "-----BEGIN PRIVATE KEY-----\nSUPERSECRETKEY",
-			expected: inlinedCertificateName,
-		},
-		{
-			desc:     "unarmored content longer than the limit is truncated",
-			certFile: strings.Repeat("u", 80),
-			expected: strings.Repeat("u", maxCertificateNameLen),
+			certFile: "/etc/traefik/certificates/example.com.crt",
+			expected: "/etc/traefik/cer...",
 		},
 		{
 			desc:     "empty certificate",
 			certFile: "",
-			expected: "",
+			expected: "...",
 		},
 	}
 

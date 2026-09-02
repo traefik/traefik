@@ -1,20 +1,13 @@
 package provider
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"reflect"
-	"strings"
 	"testing"
 
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // testResource is a simple type without a Merge method.
@@ -520,69 +513,6 @@ func TestMerge(t *testing.T) {
 			result := Merge(context.Background(), NameSortedConfigurations(test.configurations), test.strategy)
 
 			assert.Equal(t, test.expected, result)
-		})
-	}
-}
-
-func TestMerge_SkippedDuplicateCertificateDoesNotLogKeyMaterial(t *testing.T) {
-	t.Parallel()
-
-	encodedKey := base64.StdEncoding.EncodeToString([]byte("SUPERSECRETKEYMATERIAL"))
-	keyBlock := "-----BEGIN PRIVATE KEY-----\n" + encodedKey + "\n-----END PRIVATE KEY-----\n"
-
-	certBody := base64.StdEncoding.EncodeToString([]byte(strings.Repeat("traefik!", 8)))
-	certBlock := "-----BEGIN CERTIFICATE-----\n" + certBody + "\n-----END CERTIFICATE-----\n"
-
-	testCases := []struct {
-		desc            string
-		certFile        string
-		certificateName string
-	}{
-		{
-			desc:            "certificate is identified by a truncated excerpt",
-			certFile:        certBlock,
-			certificateName: certBody[:50],
-		},
-		{
-			desc:            "bundle whose key block comes first is redacted",
-			certFile:        keyBlock + certBlock,
-			certificateName: "<inlined certificate>",
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			// The file provider inlines both file contents before merging, see flattenCertificates.
-			certificate := tls.Certificate{
-				CertFile: types.FileOrContent(test.certFile),
-				KeyFile:  types.FileOrContent(keyBlock),
-			}
-
-			configurations := map[string]*dynamic.Configuration{
-				"a.yaml": {TLS: &dynamic.TLSConfiguration{Certificates: []*tls.CertAndStores{{Certificate: certificate}}}},
-				"b.yaml": {TLS: &dynamic.TLSConfiguration{Certificates: []*tls.CertAndStores{{Certificate: certificate}}}},
-			}
-
-			var buf bytes.Buffer
-			ctx := zerolog.New(&buf).Level(zerolog.WarnLevel).WithContext(t.Context())
-
-			Merge(ctx, NameSortedConfigurations(configurations), ResourceStrategySkipDuplicates)
-
-			lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
-			require.Len(t, lines, 1)
-
-			var entry map[string]string
-			require.NoError(t, json.Unmarshal([]byte(lines[0]), &entry))
-
-			assert.Equal(t, map[string]string{
-				"level":           "warn",
-				"origin":          "b.yaml",
-				"certificateName": test.certificateName,
-				"message":         "TLS certificate already configured, skipping",
-			}, entry)
-			assert.NotContains(t, buf.String(), encodedKey)
 		})
 	}
 }

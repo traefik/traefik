@@ -30,7 +30,6 @@ var resourceLogFields = map[reflect.Type]resourceMeta{
 	reflect.TypeFor[dynamic.TCPServersTransport](): {logs.ServersTransportName, "TCP servers transport"},
 	reflect.TypeFor[dynamic.UDPRouter]():           {logs.RouterName, "UDP router"},
 	reflect.TypeFor[dynamic.UDPService]():          {logs.ServiceName, "UDP service"},
-	reflect.TypeFor[tls.Certificate]():             {logs.CertificateName, "TLS certificate"},
 }
 
 // ResourceStrategy defines how the merge should handle resources.
@@ -230,7 +229,10 @@ func mergeCertificates(ctx context.Context, certificates []*tls.CertAndStores, n
 				case ResourceStrategyMerge:
 					existingCertificate.Stores = mergeStores(existingCertificate.Stores, certificate.Stores)
 				case ResourceStrategySkipDuplicates:
-					logSkippedDuplicate(ctx, reflect.TypeFor[tls.Certificate](), certificate.Certificate.GetTruncatedCertificateName(), origin)
+					log.Ctx(ctx).Warn().
+						Str("origin", origin).
+						Str("certificate", certificate.Certificate.GetTruncatedCertificateName()).
+						Msg("TLS certificate already configured, skipping")
 				}
 
 				break
