@@ -61,7 +61,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorHandler:  ErrorHandler,
 	}
 
-	return newConnectHandler(proxy)
+	return newConnectHandler(newH2CUpgradeHandler(proxy))
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
@@ -104,6 +104,8 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 		pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
+		// URL.RequestURI gives Opaque precedence over the path, an opaque outgoing URL would discard the path set above.
+		pr.Out.URL.Opaque = ""
 
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1
