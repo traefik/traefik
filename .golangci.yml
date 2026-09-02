@@ -244,6 +244,10 @@ linters:
         text: ' always receives '
         linters:
           - unparam
+      # Ignore goconst for files where it is too noisy
+      - path: (pkg/metrics/prometheus|pkg/provider/consulcatalog/consul_catalog).go
+        linters:
+          - goconst
       - path: pkg/server/service/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: pkg/server/middleware/middlewares.go
