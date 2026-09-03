@@ -100,9 +100,9 @@ type EAB struct {
 
 // DNSChallenge contains DNS challenge configuration.
 type DNSChallenge struct {
-	Provider    string       `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
-	Resolvers   []string     `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	Propagation *Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Provider    string      `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
+	Resolvers   []string    `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	Propagation Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	// Deprecated: please use Propagation.DelayBeforeChecks instead.
 	DelayBeforeCheck ptypes.Duration `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
@@ -354,7 +354,16 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			return nil, err
 		}
 
-		err = client.Challenge.SetDNS01Provider(provider, dnsChallengeOptions(p.DNSChallenge.Propagation)...)
+		propagation := p.DNSChallenge.Propagation
+
+		err = client.Challenge.SetDNS01Provider(
+			provider,
+			dns01.CombineOptions(
+				dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
+				dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
+				dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
+			),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -381,24 +390,6 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	p.client = client
 
 	return p.client, nil
-}
-
-// dnsChallengeOptions builds the lego DNS-01 propagation options from the
-// Propagation configuration. A nil configuration must still yield the field
-// defaults (notably RequireAllRNS=false): otherwise lego v5's built-in default
-// of requiring recursive nameserver propagation leaks through and breaks setups
-// whose recursive resolver cannot serve the challenge record, such as Docker's
-// embedded resolver 127.0.0.11.
-func dnsChallengeOptions(propagation *Propagation) []dns01.ChallengeOption {
-	if propagation == nil {
-		propagation = &Propagation{}
-	}
-
-	return []dns01.ChallengeOption{
-		dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
-		dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
-		dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
-	}
 }
 
 func (p *Provider) createHTTPClient() (*http.Client, error) {

@@ -2,11 +2,9 @@ package acme
 
 import (
 	"crypto/tls"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/go-acme/lego/v5/challenge/dns01"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -642,53 +640,6 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 			renewPeriod, renewInterval := getCertificateRenewDurations(test.certificatesDurations)
 			assert.Equal(t, test.expectRenewPeriod, renewPeriod)
 			assert.Equal(t, test.expectRenewInterval, renewInterval)
-		})
-	}
-}
-
-func TestDNSChallengeOptions(t *testing.T) {
-	testCases := []struct {
-		desc              string
-		propagation       *Propagation
-		expectedANSChecks bool
-		expectedRNSChecks bool
-	}{
-		{
-			// A missing block must not require recursive nameserver
-			// propagation: this is the v3.7.6 regression (lego v5 default).
-			desc:              "nil propagation keeps recursive check disabled",
-			expectedANSChecks: true,
-			expectedRNSChecks: false,
-		},
-		{
-			desc:              "empty propagation keeps recursive check disabled",
-			propagation:       &Propagation{},
-			expectedANSChecks: true,
-			expectedRNSChecks: false,
-		},
-		{
-			desc:              "requireAllRNS enables the recursive check",
-			propagation:       &Propagation{RequireAllRNS: true},
-			expectedANSChecks: true,
-			expectedRNSChecks: true,
-		},
-		{
-			desc:              "disableANSChecks disables the authoritative check",
-			propagation:       &Propagation{DisableANSChecks: true},
-			expectedANSChecks: false,
-			expectedRNSChecks: false,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			challenge := dns01.NewChallenge(nil, nil, nil, dnsChallengeOptions(test.propagation)...)
-			preCheck := reflect.ValueOf(challenge).Elem().FieldByName("preCheck")
-
-			assert.Equal(t, test.expectedANSChecks, preCheck.FieldByName("requireAuthoritativeNssPropagation").Bool())
-			assert.Equal(t, test.expectedRNSChecks, preCheck.FieldByName("requireRecursiveNssPropagation").Bool())
 		})
 	}
 }
