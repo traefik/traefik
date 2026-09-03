@@ -50,6 +50,11 @@ type Builder struct {
 	configs        map[string]*runtime.MiddlewareInfo
 	pluginBuilder  PluginsBuilder
 	serviceBuilder serviceBuilder
+
+	// rateLimitBuckets holds the token buckets shared by the routers referencing the same
+	// rate limit middleware. It is per-Builder on purpose: a Builder is created for each
+	// configuration generation, so a cached limiter cannot outlive its configuration.
+	rateLimitBuckets *ratelimiter.BucketRegistry
 }
 
 type serviceBuilder interface {
@@ -58,7 +63,12 @@ type serviceBuilder interface {
 
 // NewBuilder creates a new Builder.
 func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder, pluginBuilder PluginsBuilder) *Builder {
-	return &Builder{configs: configs, serviceBuilder: serviceBuilder, pluginBuilder: pluginBuilder}
+	return &Builder{
+		configs:          configs,
+		serviceBuilder:   serviceBuilder,
+		pluginBuilder:    pluginBuilder,
+		rateLimitBuckets: ratelimiter.NewBucketRegistry(),
+	}
 }
 
 // BuildMiddlewareChain creates a middleware chain.
@@ -299,7 +309,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
+			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName, b.rateLimitBuckets)
 		}
 	}
 
