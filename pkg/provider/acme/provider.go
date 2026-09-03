@@ -309,6 +309,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		}
 
 		err = client.Challenge.SetDNS01Provider(provider,
+			dns01.DisableRecursiveNSsPropagationRequirement(),
 			dns01.PropagationWait(time.Duration(p.DNSChallenge.DelayBeforeCheck), p.DNSChallenge.DisablePropagationCheck),
 		)
 		if err != nil {
