@@ -358,11 +358,9 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 		err = client.Challenge.SetDNS01Provider(
 			provider,
-			dns01.CombineOptions(
-				dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
-				dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
-				dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
-			),
+			dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
+			dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
+			dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
 		)
 		if err != nil {
 			return nil, err
