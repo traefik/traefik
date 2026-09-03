@@ -174,7 +174,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 
 // EndpointIngress holds the endpoint information for the Kubernetes provider.
 type EndpointIngress struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
+	IP               string `description:"IP used for Kubernetes Ingress endpoints. It can be a single IP address or a comma-separated list of IP addresses." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
 	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
 }
