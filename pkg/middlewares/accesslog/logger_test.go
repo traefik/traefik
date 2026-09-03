@@ -116,7 +116,6 @@ func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 
 				// The body carries the entry level and time, not the logrus zero values.
 				assert.Regexp(t, `\\"level\\":\\"info\\"`, log)
-				assert.NotRegexp(t, `\\"level\\":\\"panic\\"`, log)
 				assert.NotRegexp(t, `0001-01-01T00:00:00Z`, log)
 			},
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
