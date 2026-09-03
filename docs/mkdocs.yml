@@ -163,7 +163,7 @@ plugins:
         # Dynamic Configuration
         'reference/dynamic-configuration/file.md': 'reference/routing-configuration/other-providers/file.md'
         'reference/dynamic-configuration/docker.md': 'reference/routing-configuration/other-providers/docker.md'
-        'reference/dynamic-configuration/kubernetes-crd.md': 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+        'reference/dynamic-configuration/kubernetes-crd.md': 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
         'reference/dynamic-configuration/kubernetes-gateway.md': 'reference/routing-configuration/kubernetes/gateway-api.md'
         'reference/dynamic-configuration/consul-catalog.md': 'reference/routing-configuration/other-providers/consul-catalog.md'
         "reference/dynamic-configuration/nomad.md": 'reference/routing-configuration/other-providers/nomad.md'
