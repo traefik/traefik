@@ -64,8 +64,8 @@ const (
 
 // NamespacedName holds a Kubernetes resource reference with namespace and name.
 type NamespacedName struct {
-	Namespace string `json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Name      string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Namespace string `description:"Defines the resource namespace." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name      string `description:"Defines the resource name." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 }
 
 // Provider holds configurations of the provider.
