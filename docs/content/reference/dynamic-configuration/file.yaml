@@ -214,6 +214,8 @@ http:
     Middleware10:
       forwardAuth:
         address: foobar
+        service: foobar
+        path: foobar
         tls:
           ca: foobar
           cert: foobar

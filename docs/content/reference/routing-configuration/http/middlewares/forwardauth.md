@@ -55,7 +55,9 @@ spec:
 
 | Field                                                                                                                                          | Description                                                                                                                                                                                                                                                                 | Default | Required |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address.                                                                                                                                                                                                                                              | "" | Yes      |
+| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address. <br />Mutually exclusive with the `service` option; one of the two is required.                                                                                                                                                                | "" | Yes      |
+| <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | Name of a Traefik service to use as the authentication server, instead of `address`. <br />Routing the authentication request through a service enables service discovery, load balancing, health checks and sticky sessions for the authentication server. <br />Mutually exclusive with the `address` and `tls` options. <br />More information [here](#service).| "" | No       |
+| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Path (and optional query string) of the authentication request when using the `service` option. <br />Defaults to the root path.                                                                                                                                             | "" | No       |
 | <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers.                                                                                                                                                                                                                                          <br/>The trustForwardHeader option is deprecated and will be removed in the next major version. <br/>More information [here](#trustforwardheader)| - | No      |
 | <a id="opt-authResponseHeaders" href="#opt-authResponseHeaders" title="#opt-authResponseHeaders">`authResponseHeaders`</a> | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.                                                                                                                                   | [] | No      |
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex).                                                     | "" | No      |
@@ -74,6 +76,33 @@ spec:
 | <a id="opt-tls-caSecret" href="#opt-tls-caSecret" title="#opt-tls-caSecret">`tls.caSecret`</a> | Defines the secret that contains the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. **This option is only available for the Kubernetes CRD**.                                                        | | No |
 | <a id="opt-tls-certSecret" href="#opt-tls-certSecret" title="#opt-tls-certSecret">`tls.certSecret`</a> | Defines the secret that contains both the private and public certificates used for the secure connection to the authentication server. **This option is only available for the Kubernetes CRD**.                                                                            |  | No |
 | <a id="opt-tls-insecureSkipVerify" href="#opt-tls-insecureSkipVerify" title="#opt-tls-insecureSkipVerify">`tls.insecureSkipVerify`</a> | During TLS connections, if this option is set to `true`, the authentication server will accept any certificate presented by the server regardless of the host names it covers.                                                                                              | false | No |
+
+### service
+
+When `service` is set, the authentication request is routed through the named Traefik service
+instead of being sent directly to an `address`. This makes the authentication server benefit from
+the same load balancing, service discovery, health checks and sticky sessions as any other service.
+
+The authentication request is sent to the `path` of the service (the root path by default).
+The connection to the authentication server, including its TLS configuration, is handled by the
+service and its `ServersTransport`; for this reason the `service` and `tls` options are mutually
+exclusive.
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        service: auth-service
+        path: "/verify"
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://auth-1:9000"
+          - url: "http://auth-2:9000"
+```
 
 ### authResponseHeadersRegex
 
