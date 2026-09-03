@@ -24,14 +24,15 @@ type NamedHandler struct {
 
 // stickyCookie represents a sticky cookie.
 type stickyCookie struct {
-	name     string
-	secure   bool
-	httpOnly bool
-	sameSite http.SameSite
-	maxAge   int
-	expires  time.Duration
-	path     string
-	domain   string
+	name               string
+	secure             bool
+	httpOnly           bool
+	sameSite           http.SameSite
+	maxAge             int
+	expires            time.Duration
+	path               string
+	domain             string
+	preserveLeadingDot bool
 }
 
 // Sticky ensures that client consistently interacts with the same HTTP handler by adding a sticky cookie to the response.
@@ -51,13 +52,14 @@ type Sticky struct {
 // NewSticky creates a new Sticky instance.
 func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 	cookie := &stickyCookie{
-		name:     cookieConfig.Name,
-		secure:   cookieConfig.Secure,
-		httpOnly: cookieConfig.HTTPOnly,
-		sameSite: convertSameSite(cookieConfig.SameSite),
-		maxAge:   cookieConfig.MaxAge,
-		path:     "/",
-		domain:   cookieConfig.Domain,
+		name:               cookieConfig.Name,
+		secure:             cookieConfig.Secure,
+		httpOnly:           cookieConfig.HTTPOnly,
+		sameSite:           convertSameSite(cookieConfig.SameSite),
+		maxAge:             cookieConfig.MaxAge,
+		path:               "/",
+		domain:             cookieConfig.Domain,
+		preserveLeadingDot: cookieConfig.PreserveLeadingDot,
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
@@ -147,6 +149,17 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 	if s.cookie.expires > 0 {
 		cookie.Expires = time.Now().Add(s.cookie.expires)
 	}
+
+	if s.cookie.preserveLeadingDot && strings.HasPrefix(s.cookie.domain, ".") {
+		// Go stdlib http.SetCookie strips the leading dot from the Domain attribute per RFC 6265.
+		// nginx-ingress-controller preserves it (Domain=.example.com), so we restore it here
+		// to maintain migration compatibility.
+		cookieStr := strings.Replace(cookie.String(), "Domain="+s.cookie.domain[1:], "Domain="+s.cookie.domain, 1)
+		rw.Header().Add("Set-Cookie", cookieStr)
+
+		return nil
+	}
+
 	http.SetCookie(rw, cookie)
 
 	return nil
