@@ -477,7 +477,7 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client, nod
 			return errors.New("publishedService or ip or hostname must be defined")
 		}
 
-		return k8sClient.UpdateIngressStatus(ing, []netv1.IngressLoadBalancerIngress{{IP: p.IngressEndpoint.IP, Hostname: p.IngressEndpoint.Hostname}})
+		return k8sClient.UpdateIngressStatus(ing, ingressEndpointStatus(p.IngressEndpoint))
 	}
 
 	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
@@ -566,6 +566,37 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client, nod
 	}
 
 	return k8sClient.UpdateIngressStatus(ing, ingressStatus)
+}
+
+func ingressEndpointStatus(endpoint *EndpointIngress) []netv1.IngressLoadBalancerIngress {
+	var addresses []string
+	seen := make(map[string]struct{})
+	for address := range strings.SplitSeq(endpoint.IP, ",") {
+		address = strings.TrimSpace(address)
+		if address == "" {
+			continue
+		}
+		if _, ok := seen[address]; ok {
+			continue
+		}
+
+		seen[address] = struct{}{}
+		addresses = append(addresses, address)
+	}
+
+	if len(addresses) == 1 {
+		return []netv1.IngressLoadBalancerIngress{{IP: addresses[0], Hostname: endpoint.Hostname}}
+	}
+
+	status := make([]netv1.IngressLoadBalancerIngress, 0, len(addresses)+1)
+	for _, address := range addresses {
+		status = append(status, netv1.IngressLoadBalancerIngress{IP: address})
+	}
+	if endpoint.Hostname != "" {
+		status = append(status, netv1.IngressLoadBalancerIngress{Hostname: endpoint.Hostname})
+	}
+
+	return status
 }
 
 func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
