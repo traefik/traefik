@@ -168,7 +168,19 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 	for _, c := range containerList.Items {
 		dData := inspectContainers(ctx, dockerClient, c.ID)
 		if len(dData.Name) == 0 {
-			continue
+			if len(c.Labels) == 0 {
+				continue
+			}
+			name := c.ID
+			if len(c.Names) > 0 {
+				name = c.Names[0]
+			}
+			dData = dockerData{
+				ID:          c.ID,
+				ServiceName: name,
+				Name:        name,
+				Labels:      c.Labels,
+			}
 		}
 
 		extraConf, err := p.extractDockerLabels(dData)
