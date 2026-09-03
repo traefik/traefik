@@ -263,7 +263,7 @@ func TestRuleMatch(t *testing.T) {
 			tree := treeBuilder()
 			checkEquivalence(t, &test.tree, tree)
 
-			assert.Equal(t, test.values, tree.ParseMatchers(test.matchers))
+			assert.Equal(t, test.values, tree.ParsePositiveMatchers(test.matchers))
 		})
 	}
 }
