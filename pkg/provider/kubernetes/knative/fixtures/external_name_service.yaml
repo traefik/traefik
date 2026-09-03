@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world
+  namespace: knative-serving
+spec:
+  externalName: hello-world.knative-serving.example.com
+  ports:
+    - appProtocol: kubernetes.io/h2c
+      name: http2
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  sessionAffinity: None
+  type: ExternalName
