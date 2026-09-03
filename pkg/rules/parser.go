@@ -99,13 +99,13 @@ func notFunc(elem TreeBuilder) TreeBuilder {
 	}
 }
 
-// ParseMatchers returns the subset of matchers in the Tree matching the given matchers,
+// ParsePositiveMatchers returns the subset of matchers in the Tree matching the given matchers,
 // skipping the negated ones. A negated matcher excludes its values from what the rule matches,
 // they are therefore not part of the values the rule can match.
-func (tree *Tree) ParseMatchers(matchers []string) []string {
+func (tree *Tree) ParsePositiveMatchers(matchers []string) []string {
 	switch tree.Matcher {
 	case and, or:
-		return append(tree.RuleLeft.ParseMatchers(matchers), tree.RuleRight.ParseMatchers(matchers)...)
+		return append(tree.RuleLeft.ParsePositiveMatchers(matchers), tree.RuleRight.ParsePositiveMatchers(matchers)...)
 	default:
 		// Negation is pushed down to the leaves by invert.
 		if tree.Not {
