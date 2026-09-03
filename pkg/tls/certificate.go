@@ -117,12 +117,13 @@ func (c *Certificate) GetTruncatedCertificateName() string {
 		return certName
 	}
 
-	// Anything else is content of an unknown nature: providers inline the CertFile content before the configuration
-	// reaches the TLS manager, a path that does not exist is indistinguishable from inlined content, and the content
-	// itself may be a bundle carrying the private key, or a key mistakenly configured as the certificate.
-	// There is no identifier to extract from it, so this excerpt is a last resort to print something rather than
-	// nothing, kept too short to be of use to whoever reads the logs.
-	return certName[:min(len(certName)/2, 16)] + "..."
+	// The content is of unknown nature: providers inline the CertFile before it reaches the TLS manager, a missing
+	// path is indistinguishable from inlined content, and the content may be a bundle carrying the private key.
+	// Both ends are excerpted, 16 characters being what it takes to read a PEM block type, and never more than half
+	// of the content, to keep a short one from being printed in full.
+	edge := min(len(certName)/4, 16)
+
+	return certName[:edge] + "[...]" + certName[len(certName)-edge:]
 }
 
 // FileOrContent hold a file path or content.

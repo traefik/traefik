@@ -89,39 +89,64 @@ func TestCertificate_GetTruncatedCertificateName(t *testing.T) {
 			expected: existingPath,
 		},
 		{
-			desc:     "inlined certificate is truncated to its PEM block type",
+			desc:     "inlined certificate keeps both PEM block types",
 			certFile: certBlock,
-			expected: "-----BEGIN CERTI...",
+			expected: "-----BEGIN CERTI[...]ERTIFICATE-----\n",
 		},
 		{
-			desc:     "inlined bundle is truncated before its key block",
+			desc:     "inlined bundle holding the key after the certificate shows the key block",
 			certFile: certBlock + keyBlock,
-			expected: "-----BEGIN CERTI...",
+			expected: "-----BEGIN CERTI[...]RIVATE KEY-----\n",
 		},
 		{
-			desc:     "inlined key configured as the certificate is truncated to its PEM block type",
+			desc:     "inlined bundle holding the key before the certificate shows the key block",
+			certFile: keyBlock + certBlock,
+			expected: "-----BEGIN PRIVA[...]ERTIFICATE-----\n",
+		},
+		{
+			desc:     "inlined key configured as the certificate is recognizable",
 			certFile: keyBlock,
-			expected: "-----BEGIN PRIVA...",
+			expected: "-----BEGIN PRIVA[...]RIVATE KEY-----\n",
 		},
 		{
-			desc:     "unarmored content is truncated",
+			desc:     "unarmored content is excerpted at both ends",
 			certFile: base64.StdEncoding.EncodeToString([]byte(strings.Repeat("s", 32))),
-			expected: "c3Nzc3Nzc3Nzc3Nz...",
+			expected: "c3Nzc3Nzc3N[...]3Nzc3Nzc3M=",
+		},
+		{
+			desc:     "missing file path keeps its directory and its file name",
+			certFile: "/etc/traefik/certificates/example.com.crt",
+			expected: "/etc/traef[...]le.com.crt",
+		},
+		{
+			desc:     "missing file paths sharing a directory stay distinguishable",
+			certFile: "/etc/traefik/certificates/wildcard.example.com.crt",
+			expected: "/etc/traefik[...]mple.com.crt",
 		},
 		{
 			desc:     "missing file path shorter than the limit is halved",
 			certFile: "/ssl/x.crt",
-			expected: "/ssl/...",
+			expected: "/s[...]rt",
 		},
 		{
-			desc:     "missing file path longer than the limit is truncated",
-			certFile: "/etc/traefik/certificates/example.com.crt",
-			expected: "/etc/traefik/cer...",
+			desc:     "content above the excerpt cap",
+			certFile: strings.Repeat("a", 48) + strings.Repeat("z", 48),
+			expected: "aaaaaaaaaaaaaaaa[...]zzzzzzzzzzzzzzzz",
+		},
+		{
+			desc:     "content just above the smallest excerpt",
+			certFile: "abcd",
+			expected: "a[...]d",
+		},
+		{
+			desc:     "content too short to be excerpted",
+			certFile: "abc",
+			expected: "[...]",
 		},
 		{
 			desc:     "empty certificate",
 			certFile: "",
-			expected: "...",
+			expected: "[...]",
 		},
 	}
 
