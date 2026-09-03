@@ -18,7 +18,14 @@ import (
 //
 // This is a deliberate behavior: trailers arrive after the body, once routing and
 // security decisions have already been made, so forwarding them could raise security
-// concerns in Traefik. This test locks the current behavior to catch any regression.
+// concerns in Traefik. Discarding them is allowed by
+// https://www.rfc-editor.org/rfc/rfc9112#section-7.1.2
+//
+// The fast proxy builds its outgoing request from the incoming header section only, and
+// never reads req.Trailer, so it forwards neither the values nor the declared names.
+// Unlike the httputil proxy it does not keep the names as a hint: fasthttp turns a
+// Trailer header into an actual trailer field with an empty value, which a backend
+// merging trailers into its header namespace would act upon.
 func TestRequestTrailersNotForwardedToBackend(t *testing.T) {
 	var backendTrailer http.Header
 
@@ -47,7 +54,13 @@ func TestRequestTrailersNotForwardedToBackend(t *testing.T) {
 	err = lb.UpsertServer(backendURL)
 	require.NoError(t, err)
 
-	proxy := httptest.NewServer(lb)
+	var entryPointTrailer http.Header
+	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		entryPointTrailer = req.Trailer.Clone()
+		lb.ServeHTTP(rw, req)
+	})
+
+	proxy := httptest.NewServer(handler)
 	t.Cleanup(proxy.Close)
 
 	pr, pw := io.Pipe()
@@ -70,5 +83,12 @@ func TestRequestTrailersNotForwardedToBackend(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	assert.Empty(t, backendTrailer.Get("X-Test-Trailer"))
+	// The entry point received the trailer, so the backend not seeing it is the result
+	// of the proxy not forwarding it.
+	require.Contains(t, entryPointTrailer, "X-Test-Trailer")
+
+	// Assert the key is absent, and not merely valueless: Header.Get returns "" both for
+	// an absent key and for a key declared with an empty value, so it cannot tell a
+	// discarded trailer from one whose name was forwarded without its value.
+	assert.NotContains(t, backendTrailer, "X-Test-Trailer")
 }
