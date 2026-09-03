@@ -125,8 +125,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			case errors.Is(err, context.Canceled):
 				statusCode = StatusClientClosedRequest
 			default:
-				var netErr net.Error
-				if errors.As(err, &netErr) {
+				if netErr, ok := errors.AsType[net.Error](err); ok {
 					if netErr.Timeout() {
 						statusCode = http.StatusGatewayTimeout
 					} else {
@@ -159,8 +158,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 // and the client configuration should allow to verify the server certificate.
 func isTLSConfigError(err error) bool {
 	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
-	var recordHeaderErr tls.RecordHeaderError
-	if errors.As(err, &recordHeaderErr) {
+	if _, ok := errors.AsType[tls.RecordHeaderError](err); ok {
 		return true
 	}
 

@@ -20,11 +20,13 @@ linters:
     - err113 # Too strict
     - exhaustive # Not relevant
     - exhaustruct # Not relevant
+    - exhaustruct_v5 # Not relevant
     - forcetypeassert # Too strict
     - gochecknoglobals
     - gochecknoinits
     - gocognit # Too strict
     - gocyclo # FIXME must be fixed
+    - gomodguard # is deprecated (since v2.12.0) due to: new major version. Replaced by gomodguard_v2
     - gosec # Too strict
     - gosmopolitan  # not relevant
     - ireturn # Not relevant
@@ -242,6 +244,10 @@ linters:
         text: ' always receives '
         linters:
           - unparam
+      # Ignore goconst for files where it is too noisy
+      - path: (pkg/metrics/prometheus|pkg/provider/consulcatalog/consul_catalog).go
+        linters:
+          - goconst
       - path: pkg/server/service/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: pkg/server/middleware/middlewares.go
@@ -255,10 +261,8 @@ linters:
         text: printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'
         linters:
           - goprintffuncname
-      - path: pkg/tls/tlsmanager_test.go
-        text: 'SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18'
-      - path: pkg/types/tls_test.go
-        text: 'SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18'
+      - path: pkg/tls/tlsmanager_test.go|pkg/types/tls_test.go
+        text: 'SA1019: \(\*crypto/x509.CertPool\).Subjects has been deprecated since Go 1.18'
       - path: pkg/provider/kubernetes/(crd|gateway)/client.go
         linters:
           - interfacebloat
@@ -314,17 +318,23 @@ linters:
         linters:
           - revive
       - path: (.+)\.go$
-        text: 'SA1019: http.CloseNotifier has been deprecated' # FIXME must be fixed
+        text: 'SA1019: net/http.CloseNotifier has been deprecated' # FIXME must be fixed
       - path: (.+)\.go$
-        text: 'SA1019: dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
+        text: 'SA1019: \(golang.org/x/net/http2.Transport\).DialTLS is deprecated' # FIXME must be fixed
       - path: (.+)\.go$
-        text: 'SA1019: middlewareTCP.Spec.IPWhiteList is deprecated: please use IPAllowList instead.'
+        text: 'SA1019: github.com/traefik/traefik/v2/pkg/config/dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
       - path: (.+)\.go$
-        text: 'SA1019: cfg.(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1.MiddlewareTCPSpec\).IPWhiteList is deprecated: please use IPAllowList instead.'
       - path: (.+)\.go$
-        text: 'SA1019: c.Providers.(ConsulCatalog|Consul|Nomad).Namespace is deprecated'
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/config/dynamic.Headers\).(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
       - path: (.+)\.go$
-        text: 'SA1019: corev1.(Endpoints|EndpointSubset) is deprecated'
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/provider/(consulcatalog|kv/consul|nomad).ProviderBuilder\).Namespace is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/types.ClientTLS\).CAOptional is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/tracing/datadog.Config\).GlobalTag is deprecated'
+      - path: (.+)\.go$
+        text: 'SA1019: k8s.io/api/core/v1.(Endpoints|EndpointSubset) is deprecated'
       - path: pkg/middlewares/auth/basic_auth_test.go
         text: 'SA1008: keys in http.Header are canonicalized, "x-user" is not canonical; fix the constant or use http.CanonicalHeaderKey'
       - path: pkg/middlewares/auth/digest_auth_test.go
