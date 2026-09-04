@@ -198,7 +198,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DelayBeforeChecks: 123,
 								},
 							},
@@ -261,7 +261,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:                "bar",
 								DisablePropagationCheck: true,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DisableChecks: true,
 								},
 							},
@@ -342,6 +342,33 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			assert.Equal(t, test.expected, test.conf)
 		})
 	}
+}
+
+func TestSetEffectiveConfiguration_DisableNonTLSRouters(t *testing.T) {
+	conf := &Configuration{
+		EntryPoints: EntryPoints{
+			"web": {
+				Address: ":80",
+				HTTP:    HTTPConfig{},
+			},
+			"websecure": {
+				Address: ":443",
+				HTTP: HTTPConfig{
+					TLS: &TLSConfig{},
+				},
+			},
+		},
+		Providers: &Providers{
+			Precedence: providerNames,
+			KubernetesIngressNGINX: &ingressnginx.Provider{
+				DisableNonTLSRouters: true,
+			},
+		},
+	}
+
+	conf.SetEffectiveConfiguration()
+
+	assert.Empty(t, conf.Providers.KubernetesIngressNGINX.NonTLSEntryPoints)
 }
 
 func TestValidateConfiguration_BasePath(t *testing.T) {

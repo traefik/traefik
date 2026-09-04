@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -135,7 +136,7 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 	assert.Equal(t, 42, cookie.MaxAge)
-	assert.WithinDuration(t, time.Now(), cookie.Expires, time.Duration(cookieConfig.Expires)*time.Second)
+	assert.WithinRange(t, cookie.Expires, time.Now(), time.Now().Add(time.Duration(cookieConfig.Expires)*time.Second))
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
 }
@@ -190,6 +191,51 @@ func TestSticky_WriteStickyCookieConditionalSameSiteNone(t *testing.T) {
 	}
 }
 
+func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
+	// Go's stdlib http.SetCookie strips the leading dot from the Domain attribute per RFC 6265.
+	// nginx-ingress-controller preserves the leading dot (Domain=.example.com), so Traefik must
+	// also preserve it for migration compatibility, but only when the provider opts in.
+	testCases := []struct {
+		desc               string
+		preserveLeadingDot bool
+		wantSetCookie      string
+	}{
+		{
+			desc:               "leading dot preserved when the provider opts in",
+			preserveLeadingDot: true,
+			wantSetCookie:      "test=" + sha256Hash("first") + "; Path=/foo; Domain=.example.com; Max-Age=42; HttpOnly; Secure; SameSite=None",
+		},
+		{
+			desc:          "leading dot stripped by default",
+			wantSetCookie: "test=" + sha256Hash("first") + "; Path=/foo; Domain=example.com; Max-Age=42; HttpOnly; Secure; SameSite=None",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cookieConfig := dynamic.Cookie{
+				Name:               "test",
+				Secure:             true,
+				HTTPOnly:           true,
+				SameSite:           "none",
+				MaxAge:             42,
+				Path:               new("/foo"),
+				Domain:             ".example.com",
+				PreserveLeadingDot: test.preserveLeadingDot,
+			}
+			sticky := NewSticky(cookieConfig)
+			sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+			res := httptest.NewRecorder()
+			require.NoError(t, sticky.WriteStickyCookie(res, nil, "first"))
+
+			assert.Equal(t, test.wantSetCookie, res.Header().Get("Set-Cookie"))
+		})
+	}
+}
+
 func TestConvertSameSite_CaseInsensitive(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -212,4 +258,48 @@ func TestConvertSameSite_CaseInsensitive(t *testing.T) {
 			assert.Equal(t, tt.expected, convertSameSite(tt.input))
 		})
 	}
+}
+
+func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		expiration := time.Hour
+		sticky := NewSticky(dynamic.Cookie{Name: "test", Expires: int(expiration / time.Second)})
+		sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+		wantExp1 := time.Now().Add(expiration)
+		res1 := httptest.NewRecorder()
+		require.NoError(t, sticky.WriteStickyCookie(res1, nil, "first"))
+		cookies1 := res1.Result().Cookies()
+		require.Len(t, cookies1, 1)
+		exp1 := cookies1[0].Expires
+		require.Equal(t, wantExp1.Unix(), exp1.Unix())
+
+		// Advance fake time beyond HTTP-date's one-second granularity.
+		time.Sleep(2 * time.Second)
+
+		wantExp2 := time.Now().Add(expiration)
+		res2 := httptest.NewRecorder()
+		require.NoError(t, sticky.WriteStickyCookie(res2, nil, "first"))
+		cookies2 := res2.Result().Cookies()
+		require.Len(t, cookies2, 1)
+		exp2 := cookies2[0].Expires
+		require.Equal(t, wantExp2.Unix(), exp2.Unix())
+
+		require.True(t, exp2.After(exp1))
+	})
+}
+
+func TestSticky_WriteStickyCookie_NoExpiresIsSessionCookie(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{Name: "test"})
+	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+	res := httptest.NewRecorder()
+	require.NoError(t, sticky.WriteStickyCookie(res, nil, "first"))
+
+	cookies := res.Result().Cookies()
+	require.Len(t, cookies, 1)
+
+	// Without an expiry configured the cookie stays a session cookie, so the
+	// per-request Expires branch must not add an Expires attribute.
+	assert.True(t, cookies[0].Expires.IsZero())
 }

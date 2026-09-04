@@ -89,6 +89,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Observability: obs,
 		}
 
+		registered := p.addNonTLSRouter(conf, defaultBackendName, rt)
+		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
+
 		// Apply the full middleware stack from the ingress location annotations to
 		// both catch-all routers, so options like enable-cors, custom-headers,
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
@@ -106,12 +109,11 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS.TLS.Options = loc.TLSOptionName
 			}
 
-			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+			if registered {
+				p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+			}
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
-
-		conf.HTTP.Routers[defaultBackendName] = rt
-		conf.HTTP.Routers[defaultBackendTLSName] = rtTLS
 	}
 
 	for _, pt := range mc.PassthroughBackends {
@@ -134,6 +136,40 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:     pt.BackendName,
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
 		}
+
+		// The HTTP part is skipped when the serversTransport could not be built,
+		// the TCP passthrough router above being unaffected by it.
+		if pt.HTTPServiceName == "" {
+			continue
+		}
+
+		// Like ingress-nginx, the host also gets an HTTP router proxying to the backend
+		// (honoring backend-protocol), so plain HTTP requests and requests bypassing the
+		// SSL redirect (e.g. X-Forwarded-Proto: https) behave like nginx instead of
+		// hitting an internal service.
+		if pt.ServersTransport != nil && pt.ServersTransportName != "" {
+			if _, exists := conf.HTTP.ServersTransports[pt.ServersTransportName]; !exists {
+				conf.HTTP.ServersTransports[pt.ServersTransportName] = pt.ServersTransport
+			}
+		}
+		conf.HTTP.Services[pt.HTTPServiceName] = buildServiceWithLocConfig(backend, pt.ServersTransportName, pt.Config)
+
+		rt := &dynamic.Router{
+			EntryPoints: p.NonTLSEntryPoints,
+			Rule:        fmt.Sprintf("Host(%q)", pt.Hostname),
+			RuleSyntax:  "default",
+			Service:     pt.HTTPServiceName,
+		}
+
+		if pt.SSLRedirect {
+			redirectMWName := pt.RouterKey + "-redirect-scheme"
+			conf.HTTP.Middlewares[redirectMWName] = &dynamic.Middleware{
+				RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
+			}
+			rt.Middlewares = []string{redirectMWName}
+		}
+
+		conf.HTTP.Routers[pt.RouterKey+"-http"] = rt
 	}
 
 	for _, srv := range mc.Servers {
@@ -230,13 +266,15 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS.Service = unavailableServiceName
 			}
 
-			conf.HTTP.Routers[routerKey] = rt
+			registered := p.addNonTLSRouter(conf, routerKey, rt)
 			conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
 
 			if !loc.Error {
-				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
+				if registered {
+					p.applyMiddlewares(mc, loc, routerKey, rt, conf)
+					applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
+				}
 				p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
-				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
 				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 			}
 
@@ -249,8 +287,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Service:       canarySvcName,
 					Observability: obs,
 				}
-				conf.HTTP.Routers[canaryKey] = canaryRouter
-				p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
+				if p.addNonTLSRouter(conf, canaryKey, canaryRouter) {
+					p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
+				}
 
 				canaryKeyTLS := canaryKey + "-tls"
 				canaryRouterTLS := &dynamic.Router{
@@ -274,8 +313,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Service:       primarySvcName,
 					Observability: obs,
 				}
-				conf.HTTP.Routers[nonCanaryKey] = nonCanaryRouter
-				p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
+				if p.addNonTLSRouter(conf, nonCanaryKey, nonCanaryRouter) {
+					p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
+				}
 
 				nonCanaryKeyTLS := nonCanaryKey + "-tls"
 				nonCanaryRouterTLS := &dynamic.Router{
@@ -293,6 +333,16 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	}
 
 	return conf
+}
+
+// addNonTLSRouter registers a router on the non-TLS entryPoints,
+// unless non-TLS routers are disabled.
+func (p *Provider) addNonTLSRouter(conf *dynamic.Configuration, key string, rt *dynamic.Router) bool {
+	if p.DisableNonTLSRouters {
+		return false
+	}
+	conf.HTTP.Routers[key] = rt
+	return true
 }
 
 func buildService(backend *backend, serversTransportName string) *dynamic.Service {
@@ -401,6 +451,7 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 			Expires:                 ptr.Deref(cfg.SessionCookieExpires, 0),
 			Path:                    new(ptr.Deref(cfg.SessionCookiePath, "/")),
 			Domain:                  ptr.Deref(cfg.SessionCookieDomain, ""),
+			PreserveLeadingDot:      true,
 		},
 	}
 }

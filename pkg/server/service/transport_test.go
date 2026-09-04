@@ -660,6 +660,26 @@ func TestKerberosRoundTripper(t *testing.T) {
 			expectedOriginalCount:       1,
 			expectedDedicatedCount:      2,
 		},
+		{
+			desc:                        "with a lowercase negotiate scheme",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase ntlm scheme carrying a challenge",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"ntlm TlRMTVNTUAAB"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a scheme that only starts like NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLMish"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount:       3,
+		},
 	}
 
 	for _, test := range testCases {
@@ -778,122 +798,6 @@ func TestPeerCertSANs(t *testing.T) {
 			}
 		})
 	}
-}
-
-// fakeSpiffePKI simulates a SPIFFE aware PKI and allows generating multiple valid SVIDs.
-type fakeSpiffePKI struct {
-	caPrivateKey *rsa.PrivateKey
-
-	bundle *x509bundle.Bundle
-}
-
-func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
-	caPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
-
-	caTemplate := x509.Certificate{
-		SerialNumber: big.NewInt(2000),
-		Subject: pkix.Name{
-			Organization: []string{"spiffe"},
-		},
-		URIs:         []*url.URL{spiffeid.RequireFromPath(trustDomain, "/ca").URL()},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(time.Hour),
-		SubjectKeyId: []byte("ca"),
-		KeyUsage: x509.KeyUsageCertSign |
-			x509.KeyUsageCRLSign,
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-		PublicKey:             caPrivateKey.Public(),
-	}
-
-	caCertDER, err := x509.CreateCertificate(
-		rand.Reader,
-		&caTemplate,
-		&caTemplate,
-		caPrivateKey.Public(),
-		caPrivateKey,
-	)
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
-
-	bundle, err := x509bundle.ParseRaw(
-		trustDomain,
-		caCertDER,
-	)
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
-
-	return fakeSpiffePKI{
-		bundle:       bundle,
-		caPrivateKey: caPrivateKey,
-	}, nil
-}
-
-func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-
-	template := x509.Certificate{
-		SerialNumber: big.NewInt(200001),
-		URIs:         []*url.URL{id.URL()},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(time.Hour),
-		SubjectKeyId: []byte("svid"),
-		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageKeyAgreement |
-			x509.KeyUsageDigitalSignature,
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageServerAuth,
-			x509.ExtKeyUsageClientAuth,
-		},
-		BasicConstraintsValid: true,
-		PublicKey:             privateKey.PublicKey,
-	}
-
-	certDER, err := x509.CreateCertificate(
-		rand.Reader,
-		&template,
-		f.bundle.X509Authorities()[0],
-		privateKey.Public(),
-		f.caPrivateKey,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	keyPKCS8, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return x509svid.ParseRaw(certDER, keyPKCS8)
-}
-
-// fakeSpiffeSource allows retrieving statically an SVID and its associated bundle.
-type fakeSpiffeSource struct {
-	bundle *x509bundle.Bundle
-	svid   *x509svid.SVID
-}
-
-func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(trustDomain spiffeid.TrustDomain) (*x509bundle.Bundle, error) {
-	return s.bundle, nil
-}
-
-func (s *fakeSpiffeSource) GetX509SVID() (*x509svid.SVID, error) {
-	return s.svid, nil
-}
-
-type roundTripperFn func(req *http.Request) (*http.Response, error)
-
-func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error) {
-	return r(request)
 }
 
 func TestConnectionTimeouts(t *testing.T) {
@@ -1074,4 +978,120 @@ func TestConnectionTimeoutsAreDefined(t *testing.T) {
 			assert.Equal(t, time.Duration(test.writeTimeout), wrapped.writeTimeout)
 		})
 	}
+}
+
+// fakeSpiffePKI simulates a SPIFFE aware PKI and allows generating multiple valid SVIDs.
+type fakeSpiffePKI struct {
+	caPrivateKey *rsa.PrivateKey
+
+	bundle *x509bundle.Bundle
+}
+
+func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
+	caPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	caTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(2000),
+		Subject: pkix.Name{
+			Organization: []string{"spiffe"},
+		},
+		URIs:         []*url.URL{spiffeid.RequireFromPath(trustDomain, "/ca").URL()},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		SubjectKeyId: []byte("ca"),
+		KeyUsage: x509.KeyUsageCertSign |
+			x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		PublicKey:             caPrivateKey.Public(),
+	}
+
+	caCertDER, err := x509.CreateCertificate(
+		rand.Reader,
+		&caTemplate,
+		&caTemplate,
+		caPrivateKey.Public(),
+		caPrivateKey,
+	)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	bundle, err := x509bundle.ParseRaw(
+		trustDomain,
+		caCertDER,
+	)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	return fakeSpiffePKI{
+		bundle:       bundle,
+		caPrivateKey: caPrivateKey,
+	}, nil
+}
+
+func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(200001),
+		URIs:         []*url.URL{id.URL()},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		SubjectKeyId: []byte("svid"),
+		KeyUsage: x509.KeyUsageKeyEncipherment |
+			x509.KeyUsageKeyAgreement |
+			x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageServerAuth,
+			x509.ExtKeyUsageClientAuth,
+		},
+		BasicConstraintsValid: true,
+		PublicKey:             privateKey.PublicKey,
+	}
+
+	certDER, err := x509.CreateCertificate(
+		rand.Reader,
+		&template,
+		f.bundle.X509Authorities()[0],
+		privateKey.Public(),
+		f.caPrivateKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	keyPKCS8, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509svid.ParseRaw(certDER, keyPKCS8)
+}
+
+// fakeSpiffeSource allows retrieving statically an SVID and its associated bundle.
+type fakeSpiffeSource struct {
+	bundle *x509bundle.Bundle
+	svid   *x509svid.SVID
+}
+
+func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(trustDomain spiffeid.TrustDomain) (*x509bundle.Bundle, error) {
+	return s.bundle, nil
+}
+
+func (s *fakeSpiffeSource) GetX509SVID() (*x509svid.SVID, error) {
+	return s.svid, nil
+}
+
+type roundTripperFn func(req *http.Request) (*http.Response, error)
+
+func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error) {
+	return r(request)
 }

@@ -13,6 +13,12 @@ it manages access to cluster services by supporting the [Ingress](https://kubern
     Referencing backend service endpoints using [`spec.rules.http.paths.backend.resource`](https://kubernetes.io/docs/reference/kubernetes-api/service-resources/ingress-v1/#IngressBackend) is not supported.
     Use `spec.rules.http.paths.backend.service` instead.
 
+
+??? warning "Ingress API frozen"
+
+    The Kubernetes Ingress API is [frozen](https://kubernetes.io/docs/concepts/services-networking/ingress/) and will not receive further changes or updates.
+    You are encouraged to use the [Kubernetes Gateway provider](./kubernetes-gateway.md) instead.
+
 ## Configuration Example
 
 You can enable the `kubernetesIngress` provider as detailed below:

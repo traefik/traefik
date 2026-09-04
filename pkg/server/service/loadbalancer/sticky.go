@@ -30,9 +30,10 @@ type stickyCookie struct {
 	sameSite                http.SameSite
 	conditionalSameSiteNone bool
 	maxAge                  int
-	expires                 time.Time
+	expires                 time.Duration
 	path                    string
 	domain                  string
+	preserveLeadingDot      bool
 }
 
 // Sticky ensures that client consistently interacts with the same HTTP handler by adding a sticky cookie to the response.
@@ -60,12 +61,13 @@ func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 		maxAge:                  cookieConfig.MaxAge,
 		path:                    "/",
 		domain:                  cookieConfig.Domain,
+		preserveLeadingDot:      cookieConfig.PreserveLeadingDot,
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
 	}
 	if cookieConfig.Expires > 0 {
-		cookie.expires = time.Now().Add(time.Duration(cookieConfig.Expires) * time.Second)
+		cookie.expires = time.Duration(cookieConfig.Expires) * time.Second
 	}
 
 	return &Sticky{
@@ -150,8 +152,21 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, req *http.Request, na
 		Secure:   s.cookie.secure,
 		SameSite: sameSite,
 		MaxAge:   s.cookie.maxAge,
-		Expires:  s.cookie.expires,
 	}
+	if s.cookie.expires > 0 {
+		cookie.Expires = time.Now().Add(s.cookie.expires)
+	}
+
+	if s.cookie.preserveLeadingDot && strings.HasPrefix(s.cookie.domain, ".") {
+		// Go stdlib http.SetCookie strips the leading dot from the Domain attribute per RFC 6265.
+		// nginx-ingress-controller preserves it (Domain=.example.com), so we restore it here
+		// to maintain migration compatibility.
+		cookieStr := strings.Replace(cookie.String(), "Domain="+s.cookie.domain[1:], "Domain="+s.cookie.domain, 1)
+		rw.Header().Add("Set-Cookie", cookieStr)
+
+		return nil
+	}
+
 	http.SetCookie(rw, cookie)
 
 	return nil
