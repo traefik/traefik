@@ -286,7 +286,9 @@ type Providers struct {
 
 // SetDefaults sets the default values.
 func (p *Providers) SetDefaults() {
-	p.Precedence = providerNames
+	// Cloned because SetEffectiveConfiguration lowercases Precedence in place,
+	// which would otherwise write through into the package-level slice.
+	p.Precedence = slices.Clone(providerNames)
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -319,8 +321,15 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
 	}
 
-	for i, providerName := range c.Providers.Precedence {
-		c.Providers.Precedence[i] = strings.ToLower(providerName)
+	// Cloned rather than lowercased in place: the slice can be shared with
+	// another Configuration, or with the package-level provider name list.
+	if len(c.Providers.Precedence) > 0 {
+		precedence := make([]string, len(c.Providers.Precedence))
+		for i, providerName := range c.Providers.Precedence {
+			precedence[i] = strings.ToLower(providerName)
+		}
+
+		c.Providers.Precedence = precedence
 	}
 
 	if c.Providers.Docker != nil {
