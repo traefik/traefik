@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-04T10:57:26+02:00"
+date: "2026-09-04T17:17:13+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -22,13 +22,13 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 1
+      Passed: 2
       Skipped: 0
     supportedFeatures:
+    - GatewayAddressEmpty
     - GatewayInfrastructurePropagation
     - GatewayPort8080
     unsupportedFeatures:
-    - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -48,10 +48,11 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 27
+      Passed: 28
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
+    - GatewayAddressEmpty
     - GatewayInfrastructurePropagation
     - GatewayPort8080
     - HTTPRoute303RedirectStatusCode
@@ -73,7 +74,6 @@ profiles:
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
     - BackendTLSPolicySANValidation
-    - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -102,15 +102,15 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 5
+      Passed: 6
       Skipped: 0
     supportedFeatures:
+    - GatewayAddressEmpty
     - GatewayInfrastructurePropagation
     - GatewayPort8080
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
-    - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -123,6 +123,7 @@ profiles:
 succeededProvisionalTests:
 - GRPCRouteNamedRule
 - GatewayInfrastructure
+- GatewayOptionalAddressValue
 - HTTPRoute303Redirect
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
