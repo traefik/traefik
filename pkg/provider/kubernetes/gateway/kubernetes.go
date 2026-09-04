@@ -62,21 +62,29 @@ const (
 	schemeH2C   = "h2c"
 )
 
+// NamespacedName holds a Kubernetes resource reference with namespace and name.
+type NamespacedName struct {
+	Namespace string `description:"Defines the resource namespace." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name      string `description:"Defines the resource name." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+}
+
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint                string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                   types.FileOrContent   `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	QPS                     int                   `description:"Defines the maximum QPS to the Kubernetes API server. Setting this to a negative value will disable client-side ratelimiting." json:"qps,omitempty" toml:"qps,omitempty" yaml:"qps,omitempty" export:"true"`
-	Burst                   int                   `description:"Defines the maximum burst of requests to the Kubernetes API server." json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty" export:"true"`
-	CertAuthFilePath        string                `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces              []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector           string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ThrottleDuration        ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	ExperimentalChannel     bool                  `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...). Requires the Experimental Channel CRDs." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
-	StatusAddress           *StatusAddress        `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
-	NativeLBByDefault       bool                  `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
-	CrossProviderNamespaces []string              `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
-	EntryPoints             map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	Endpoint                string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                   types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	QPS                     int                 `description:"Defines the maximum QPS to the Kubernetes API server. Setting this to a negative value will disable client-side ratelimiting." json:"qps,omitempty" toml:"qps,omitempty" yaml:"qps,omitempty" export:"true"`
+	Burst                   int                 `description:"Defines the maximum burst of requests to the Kubernetes API server." json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty" export:"true"`
+	CertAuthFilePath        string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces              []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector           string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	Gateways                []NamespacedName    `description:"Scopes the provider to specific Gateways." json:"gateways,omitempty" toml:"gateways,omitempty" yaml:"gateways,omitempty" export:"true"`
+	ThrottleDuration        ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	ExperimentalChannel     bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...). Requires the Experimental Channel CRDs." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	StatusAddress           *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
+	NativeLBByDefault       bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	CrossProviderNamespaces []string            `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+
+	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	// groupKindFilterFuncs is the list of allowed Group and Kinds for the Filter ExtensionRef objects.
 	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
@@ -273,6 +281,22 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 	}
 }
 
+// managesGateway reports whether the provider should reconcile the given Gateways.
+// When the Gateways scoping option is set, only the referenced namespace/name entries are managed.
+func (p *Provider) managesGateway(gateway *gatev1.Gateway) bool {
+	if len(p.Gateways) == 0 {
+		return true
+	}
+
+	for _, g := range p.Gateways {
+		if gateway.Namespace == g.Namespace && gateway.Name == g.Name {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	// Label selector validation
 	_, err := labels.Parse(p.LabelSelector)
@@ -380,6 +404,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	var gateways []*gatev1.Gateway
 	for _, gateway := range p.client.ListGateways() {
 		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
+			continue
+		}
+		if !p.managesGateway(gateway) {
 			continue
 		}
 		gateways = append(gateways, gateway)

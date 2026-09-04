@@ -102,8 +102,13 @@ test-integration:
 .PHONY: test-gateway-api-conformance
 #? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
+	docker pull traefik/gateway-operator:latest
+	# The data plane image carries a fixed tag, and not latest, so that the pods
+	# the operator provisions keep the side loaded image instead of pulling the
+	# released Traefik over it.
+	docker tag traefik/traefik:latest traefik/traefik:conformance
 	# In case of a new Minor/Major version, the traefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.7" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=40m -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.7" $(TESTFLAGS)
 
 .PHONY: test-knative-conformance
 #? test-knative-conformance: Run the Knative conformance tests
