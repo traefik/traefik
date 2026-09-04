@@ -23,7 +23,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v2/pkg/provider/kv"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
