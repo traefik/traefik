@@ -4,8 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 )
 
 func Test_gatewayStatusEquals(t *testing.T) {
@@ -271,6 +275,91 @@ func Test_gatewayStatusEquals(t *testing.T) {
 			result := gatewayStatusEqual(test.statusA, test.statusB)
 
 			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func Test_aggregateWatchedNamespaces(t *testing.T) {
+	nsProd1 := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "prod-1",
+			Labels: map[string]string{
+				"env": "prod",
+			},
+		},
+	}
+	nsProd2 := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "prod-2",
+			Labels: map[string]string{
+				"env": "prod",
+			},
+		},
+	}
+	nsDev := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dev",
+			Labels: map[string]string{
+				"env": "dev",
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc              string
+		namespaces        []string
+		namespaceSelector string
+		expected          []string
+		expectError       bool
+	}{
+		{
+			desc:     "empty selector and nil namespaces",
+			expected: nil,
+		},
+		{
+			desc:       "empty selector with static namespaces",
+			namespaces: []string{"foo", "bar"},
+			expected:   []string{"foo", "bar"},
+		},
+		{
+			desc:              "matching selector with nil namespaces",
+			namespaceSelector: "env=prod",
+			expected:          []string{"prod-1", "prod-2"},
+		},
+		{
+			desc:              "matching selector with static namespaces and deduplication",
+			namespaces:        []string{"default", "prod-1"},
+			namespaceSelector: "env=prod",
+			expected:          []string{"default", "prod-1", "prod-2"},
+		},
+		{
+			desc:              "selector matching no namespaces",
+			namespaceSelector: "env=staging",
+			expected:          nil,
+		},
+		{
+			desc:              "invalid label selector",
+			namespaceSelector: "invalid selector %%%",
+			expectError:       true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			kubeClient := kubefake.NewClientset(nsProd1, nsProd2, nsDev)
+			gateClient := gatefake.NewClientset()
+			client := newClientImpl(kubeClient, gateClient)
+
+			actual, err := client.aggregateWatchedNamespaces(t.Context(), test.namespaces, test.namespaceSelector)
+			if test.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
