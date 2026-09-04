@@ -10,7 +10,7 @@ For detailed information on the Gateway API concepts and resources, refer to the
 
 The Kubernetes Gateway API provider supports version [v1.6.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.1) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
 For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.6.1/traefik-traefik).
 
@@ -140,14 +140,133 @@ spec:
           from: Same
 ```
 
+## Using a ListenerSet
+
+A `ListenerSet` is a Gateway API resource ([GEP-1713](https://gateway-api.sigs.k8s.io/geps/gep-1713/)) that allows attaching additional listeners to an existing `Gateway`.
+This is useful for delegating TLS certificate management to application teams, breaking the 64-listener limit on a single Gateway, and reducing contention on the shared Gateway resource.
+
+!!! info "Gateway Opt-in"
+
+    The parent `Gateway` must explicitly allow ListenerSets through the `spec.allowedListeners` field.
+    By default, no ListenerSets are allowed (`None`).
+
+!!! info "Listener ports"
+
+    Please note that `ListenerSet` listener ports must match the configured [EntryPoint ports](../../install-configuration/entrypoints.md) of the Traefik deployment, just like `Gateway` listeners.
+
+!!! info "One protocol per port"
+
+    Traefik binds each port to a single EntryPoint, so a `ListenerSet` listener can only use a port that no other protocol has already claimed —
+    whether by the parent `Gateway` or by a sibling `ListenerSet`.
+    For instance, a `TLS` listener on a port already serving an `HTTPS` listener is rejected with a `Conflicted` status condition and the `ProtocolConflict` reason.
+    Several listeners may still share a port when they use the same protocol and differ by hostname.
+
+    When two listeners compete for the same port, the parent `Gateway` wins, then the oldest `ListenerSet`, then the first in alphabetical `{namespace}/{name}` order.
+
+!!! info "Route Attachment"
+
+    Routes that want to attach to a `ListenerSet` listener must use `kind: ListenerSet` in their `parentRefs`.
+    Routes using `kind: Gateway` will not match listeners defined in a ListenerSet.
+
+!!! warning "Shared TLS certificate store"
+
+    Traefik keeps all TLS certificates — from `Gateway` listeners and from every `ListenerSet` listener — in a single global certificate store.
+    During the TLS handshake, the certificate is selected by matching the SNI against the SANs of **all** certificates in that store; the selection is **not** scoped to the listener, port, or EntryPoint that received the connection.
+    A certificate attached to a `ListenerSet` listener can therefore be served for a connection destined to another listener, including the parent `Gateway`'s own listeners, when its SANs match the requested SNI.
+
+    Because a `ListenerSet` may reference a `Secret` in its own namespace without a `ReferenceGrant`, any namespace admitted through `allowedListeners` can introduce certificates that compete in SNI selection on all TLS EntryPoints.
+    Treat `allowedListeners` as a trust boundary, and only allow ListenerSets from namespaces you trust with TLS termination for the hostnames served by this Gateway.
+
+The following example shows a `Gateway` that allows ListenerSets from all namespaces, with a ListenerSet adding an HTTPS listener, and an `HTTPRoute` attached to it:
+
+```yaml tab="Gateway"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik
+  namespace: default
+spec:
+  gatewayClassName: traefik
+
+  # Allow ListenerSets from all namespaces.
+  allowedListeners:
+    namespaces:
+      from: All
+
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+```yaml tab="ListenerSet"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: app-listeners
+  namespace: app-team
+spec:
+  parentRef:
+    name: traefik
+    namespace: default
+    kind: Gateway
+    group: gateway.networking.k8s.io
+
+  listeners:
+    - name: https-app
+      protocol: HTTPS
+      port: 443
+      hostname: app.example.com
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: app-tls-cert
+
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+```yaml tab="HTTPRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app-route
+  namespace: app-team
+spec:
+  parentRefs:
+    - name: app-listeners
+      sectionName: https-app
+      kind: ListenerSet
+
+  hostnames:
+    - app.example.com
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - name: app-service
+          port: 80
+```
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
 and/or `TLSRoute` resources must be deployed to forward some traffic to Kubernetes backend [services](https://kubernetes.io/docs/concepts/services-networking/service/).
 
-!!! info "Attaching to Gateways"
+!!! info "Attaching to Gateways and ListenerSets"
 
-    As demonstrated in the following examples, a Route resource must be configured with `ParentRefs` that reference the parent `Gateway` it should be associated with.
+    As demonstrated in the following examples, a Route resource must be configured with `ParentRefs` that reference the parent `Gateway` or `ListenerSet` it should be associated with.
 
 ### HTTP/HTTPS
 

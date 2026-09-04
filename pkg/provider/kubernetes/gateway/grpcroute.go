@@ -74,7 +74,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithLis
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadGRPCRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames, statusReport)
+				routeConf, condition := p.loadGRPCRoute(logger.WithContext(ctx), listener, route, hostnames, statusReport)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -88,10 +88,11 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithLis
 				}
 			}
 
-			parentStatusConditions := []metav1.Condition{acceptedCondition}
-			if resolvedRefCondition != nil {
-				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			if resolvedRefCondition == nil {
+				resolvedRefCondition = new(defaultResolvedRefsCondition(route.Generation))
 			}
+
+			parentStatusConditions := []metav1.Condition{acceptedCondition, *resolvedRefCondition}
 
 			statusReport.RecordGRPCRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gatev1.RouteParentStatus{
 				ParentRef:      match.parentRef,
@@ -102,7 +103,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gateways []gatewayWithLis
 	}
 }
 
-func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname, statusReport *statusReport) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -141,7 +142,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 			}
 
 			var err error
-			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
+			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, listener, ri)
 			router.Middlewares, err = p.loadGRPCMiddlewares(conf, route.Namespace, routerName, routeRule.Filters)
 			switch {
 			case err != nil:
@@ -166,7 +167,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(gatewayName, listener, conf, routerName, routeRule, route, statusReport)
+				router.Service, serviceCondition = p.loadGRPCService(listener, conf, routerName, routeRule, route, statusReport)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -179,7 +180,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gatewayName, gatewayNamesp
 	return conf, condition
 }
 
-func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadGRPCService(listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -188,7 +189,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, listener, conf, routerName, route, bi, backendRef, statusReport)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(listener, conf, routerName, route, bi, backendRef, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -217,7 +218,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -266,7 +267,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListen
 		}
 	}
 
-	lb, st, errCondition := p.loadGRPCServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadGRPCServers(namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -325,7 +326,7 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadGRPCServers(namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -373,13 +374,7 @@ func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.
 			}
 
 			policyAncestorStatus := gatev1.PolicyAncestorStatus{
-				AncestorRef: gatev1.ParentReference{
-					Group:       new(gatev1.Group(groupGateway)),
-					Kind:        new(gatev1.Kind(kindGateway)),
-					Namespace:   new(gatev1.Namespace(namespace)),
-					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: new(gatev1.SectionName(listener.Name)),
-				},
+				AncestorRef:    listener.policyAncestorRef(),
 				ControllerName: controllerName,
 			}
 
