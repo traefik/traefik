@@ -198,7 +198,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DelayBeforeChecks: 123,
 								},
 							},
@@ -261,7 +261,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:                "bar",
 								DisablePropagationCheck: true,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DisableChecks: true,
 								},
 							},
