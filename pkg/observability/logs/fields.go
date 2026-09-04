@@ -13,5 +13,6 @@ const (
 	TracingProviderName  = "tracingProviderName"
 	ServerIndex          = "serverIndex"
 	TLSStoreName         = "tlsStoreName"
+	CertificateName      = "certificateName"
 	ServersTransportName = "serversTransport"
 )

@@ -147,7 +147,6 @@ func TestRuleMatch(t *testing.T) {
 				Value:   []string{"1"},
 			},
 			matchers: []string{"m"},
-			values:   []string{"1"},
 		},
 		{
 			desc: "Two value in rule with and",
@@ -203,7 +202,6 @@ func TestRuleMatch(t *testing.T) {
 				},
 			},
 			matchers: []string{"m"},
-			values:   []string{"1", "2"},
 		},
 		{
 			desc: "Two value in rule with or negated",
@@ -223,7 +221,6 @@ func TestRuleMatch(t *testing.T) {
 				},
 			},
 			matchers: []string{"m"},
-			values:   []string{"1", "2"},
 		},
 		{
 			desc: "No value in rule",
@@ -266,7 +263,7 @@ func TestRuleMatch(t *testing.T) {
 			tree := treeBuilder()
 			checkEquivalence(t, &test.tree, tree)
 
-			assert.Equal(t, test.values, tree.ParseMatchers(test.matchers))
+			assert.Equal(t, test.values, tree.ParsePositiveMatchers(test.matchers))
 		})
 	}
 }

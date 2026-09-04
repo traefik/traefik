@@ -948,6 +948,12 @@ func TestDo_staticConfiguration(t *testing.T) {
 					DelayBeforeCheck:        42,
 					Resolvers:               []string{"resolver1", "resolver2"},
 					DisablePropagationCheck: true,
+					Propagation: acme.Propagation{
+						DisableChecks:     true,
+						DisableANSChecks:  true,
+						RequireAllRNS:     true,
+						DelayBeforeChecks: 42,
+					},
 				},
 				HTTPChallenge: &acme.HTTPChallenge{
 					EntryPoint: "MyEntryPoint",

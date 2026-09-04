@@ -113,6 +113,10 @@ func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 
 				// For JSON format, verify the body contains the JSON formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*DownstreamStatus.*:200.*"}`, log)
+
+				// The body carries the entry level and time, not the logrus zero values.
+				assert.Regexp(t, `\\"level\\":\\"info\\"`, log)
+				assert.NotRegexp(t, `0001-01-01T00:00:00Z`, log)
 			},
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
 				t.Helper()

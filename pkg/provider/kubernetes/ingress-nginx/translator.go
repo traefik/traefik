@@ -136,6 +136,40 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:     pt.BackendName,
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
 		}
+
+		// The HTTP part is skipped when the serversTransport could not be built,
+		// the TCP passthrough router above being unaffected by it.
+		if pt.HTTPServiceName == "" {
+			continue
+		}
+
+		// Like ingress-nginx, the host also gets an HTTP router proxying to the backend
+		// (honoring backend-protocol), so plain HTTP requests and requests bypassing the
+		// SSL redirect (e.g. X-Forwarded-Proto: https) behave like nginx instead of
+		// hitting an internal service.
+		if pt.ServersTransport != nil && pt.ServersTransportName != "" {
+			if _, exists := conf.HTTP.ServersTransports[pt.ServersTransportName]; !exists {
+				conf.HTTP.ServersTransports[pt.ServersTransportName] = pt.ServersTransport
+			}
+		}
+		conf.HTTP.Services[pt.HTTPServiceName] = buildServiceWithLocConfig(backend, pt.ServersTransportName, pt.Config)
+
+		rt := &dynamic.Router{
+			EntryPoints: p.NonTLSEntryPoints,
+			Rule:        fmt.Sprintf("Host(%q)", pt.Hostname),
+			RuleSyntax:  "default",
+			Service:     pt.HTTPServiceName,
+		}
+
+		if pt.SSLRedirect {
+			redirectMWName := pt.RouterKey + "-redirect-scheme"
+			conf.HTTP.Middlewares[redirectMWName] = &dynamic.Middleware{
+				RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
+			}
+			rt.Middlewares = []string{redirectMWName}
+		}
+
+		conf.HTTP.Routers[pt.RouterKey+"-http"] = rt
 	}
 
 	for _, srv := range mc.Servers {
@@ -408,14 +442,15 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 
 	return &dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
-			Name:     name,
-			Secure:   ptr.Deref(cfg.SessionCookieSecure, false),
-			HTTPOnly: true,
-			SameSite: strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
-			MaxAge:   ptr.Deref(cfg.SessionCookieMaxAge, 0),
-			Expires:  ptr.Deref(cfg.SessionCookieExpires, 0),
-			Path:     new(ptr.Deref(cfg.SessionCookiePath, "/")),
-			Domain:   ptr.Deref(cfg.SessionCookieDomain, ""),
+			Name:               name,
+			Secure:             ptr.Deref(cfg.SessionCookieSecure, false),
+			HTTPOnly:           true,
+			SameSite:           strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
+			MaxAge:             ptr.Deref(cfg.SessionCookieMaxAge, 0),
+			Expires:            ptr.Deref(cfg.SessionCookieExpires, 0),
+			Path:               new(ptr.Deref(cfg.SessionCookiePath, "/")),
+			Domain:             ptr.Deref(cfg.SessionCookieDomain, ""),
+			PreserveLeadingDot: true,
 		},
 	}
 }

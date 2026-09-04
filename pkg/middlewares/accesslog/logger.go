@@ -389,6 +389,16 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	if h.config.OTLP != nil {
 		// If the logger is configured to use OpenTelemetry,
 		// we compute the log body with the formatter.
+		// The formatter reads the entry level and time, which logrus only sets when the log method is called.
+		// Setting them here avoids formatting a body with the zero values, and makes logrus reuse
+		// this timestamp, so the OTLP body and the regular output carry the same level and time.
+		entry.Level = logrus.InfoLevel
+
+		entry.Time = time.Now()
+		if t, ok := core[StartUTC].(time.Time); ok {
+			entry.Time = t
+		}
+
 		mBytes, err := h.logger.Formatter.Format(entry)
 		if err != nil {
 			message = fmt.Sprintf("Failed to format access log entry: %v", err)
