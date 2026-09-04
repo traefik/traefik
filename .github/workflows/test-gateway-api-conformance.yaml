@@ -9,7 +9,6 @@ on:
       - 'pkg/provider/kubernetes/gateway/**'
       - 'integration/fixtures/gateway-api-conformance/**'
       - 'integration/gateway_api_conformance_test.go'
-      - 'integration/gateway_api_node_lb_test.go'
       - 'integration/integration_test.go'
 
 env:
@@ -22,8 +21,6 @@ jobs:
 
   test-gateway-api-conformance:
     runs-on: ubuntu-latest
-    # The suite provisions a data plane per Gateway, so every Gateway of the
-    # run carries a Deployment rollout.
     timeout-minutes: 45
 
     steps:
