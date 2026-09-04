@@ -14,18 +14,14 @@ import (
 
 func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "secret",
-		},
+		Namespace: "default",
+		Name:      "secret",
 	}
 	helmSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "helm-secret",
-			Labels: map[string]string{
-				"owner": "helm",
-			},
+		Namespace: "default",
+		Name:      "helm-secret",
+		Labels: map[string]string{
+			"owner": "helm",
 		},
 	}
 

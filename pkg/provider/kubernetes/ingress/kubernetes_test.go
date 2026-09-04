@@ -824,10 +824,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -2135,10 +2133,8 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
+						Name:      "test-secret",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.key": []byte("tls-key"),
 						},
@@ -2153,10 +2149,8 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
+						Name:      "test-secret",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.crt": []byte("tls-crt"),
 						},
@@ -2171,11 +2165,9 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
-						Data: map[string][]byte{},
+						Name:      "test-secret",
+						Namespace: "testing",
+						Data:      map[string][]byte{},
 					},
 				},
 			},
@@ -2198,20 +2190,16 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret2",
-							Namespace: "testing",
-						},
+						Name:      "test-secret2",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.crt": []byte("tls-crt"),
 							"tls.key": []byte("tls-key"),
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
+						Name:      "test-secret",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.crt": []byte("tls-crt"),
 							"tls.key": []byte("tls-key"),
