@@ -3187,6 +3187,135 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "CORS with wildcard origin",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-cors-wildcard-origin.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-cors-wildcard-origin-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("cors-wildcard.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-cors-wildcard-origin-rule-0-path-0-cors", "default-ingress-with-cors-wildcard-origin-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-cors-wildcard-origin-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-cors-wildcard-origin",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("cors-wildcard.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-cors-wildcard-origin-rule-0-path-0-tls-cors", "default-ingress-with-cors-wildcard-origin-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-cors-wildcard-origin-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-cors-wildcard-origin",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials:     true,
+								AccessControlAllowHeaders:         []string{"X-Foo"},
+								AccessControlAllowMethods:         []string{"PUT", "GET", "POST", "OPTIONS"},
+								AccessControlAllowOriginList:      []string{"https://exact.example.org"},
+								AccessControlAllowOriginListRegex: []string{`^(?i)https://[A-Za-z0-9-]+\.example\.com$`},
+								AccessControlExposeHeaders:        []string{"X-Forwarded-For", "X-Forwarded-Host"},
+								AccessControlMaxAge:               new(int64(42)),
+							},
+						},
+						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-tls-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials:     true,
+								AccessControlAllowHeaders:         []string{"X-Foo"},
+								AccessControlAllowMethods:         []string{"PUT", "GET", "POST", "OPTIONS"},
+								AccessControlAllowOriginList:      []string{"https://exact.example.org"},
+								AccessControlAllowOriginListRegex: []string{`^(?i)https://[A-Za-z0-9-]+\.example\.com$`},
+								AccessControlExposeHeaders:        []string{"X-Forwarded-For", "X-Forwarded-Host"},
+								AccessControlMaxAge:               new(int64(42)),
+							},
+						},
+						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-cors-wildcard-origin-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-cors-wildcard-origin",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-cors-wildcard-origin": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Service Upstream",
 			paths: []string{
 				"services.yml",
