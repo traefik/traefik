@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import verifySignature from './scriptVerification'
 
 describe('Script Signature Verification - Integration Tests', () => {
-  let fetchMock: ReturnType<typeof vi.fn>
+  let fetchMock: ReturnType<typeof vi.spyOn>
 
   const SCRIPT_URL = 'https://example.com/script.js'
   const SIGNATURE_URL = 'https://example.com/script.js.sig'
@@ -15,8 +15,7 @@ describe('Script Signature Verification - Integration Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    fetchMock = vi.fn()
-    globalThis.fetch = fetchMock
+    fetchMock = vi.spyOn(globalThis, 'fetch')
   })
 
   it('should verify a valid script with correct signature through real worker', async () => {
