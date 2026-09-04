@@ -351,11 +351,28 @@ func newConnPool(maxIdleConn int, idleConnTimeout, responseHeaderTimeout time.Du
 	return c
 }
 
-// Close closes stop the cleanIdleConn goroutine.
+// Close stops the cleanIdleConn goroutine and closes the pooled connections.
+// The pool is dropped by the ProxyBuilder right after this call, so connections
+// left in idleConns would otherwise stay open (along with their readLoop
+// goroutine) until the backend decides to close them.
 func (c *connPool) Close() {
 	if c.idleConnTimeout > 0 {
 		close(c.doneCh)
 		c.ticker.Stop()
+	}
+
+	for {
+		select {
+		case co := <-c.idleConns:
+			if err := co.Close(); err != nil {
+				log.Debug().
+					Err(err).
+					Msg("Unexpected error while closing the connection")
+			}
+
+		default:
+			return
+		}
 	}
 }
 
