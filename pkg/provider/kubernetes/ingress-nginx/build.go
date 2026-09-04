@@ -1013,10 +1013,13 @@ func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynam
 	}
 
 	realm := ptr.Deref(cfg.AuthRealm, "")
+
+	// The ingress-nginx template clears the Authorization header before proxying to the
+	// upstream whenever basic or digest auth is enabled, and exposes no annotation to opt out.
 	if authType == "digest" {
-		return nil, &dynamic.DigestAuth{Users: dynamic.Users(users), Realm: realm}, nil
+		return nil, &dynamic.DigestAuth{Users: dynamic.Users(users), Realm: realm, RemoveHeader: true}, nil
 	}
-	return &dynamic.BasicAuth{Users: dynamic.Users(users), Realm: realm}, nil, nil
+	return &dynamic.BasicAuth{Users: dynamic.Users(users), Realm: realm, RemoveHeader: true}, nil, nil
 }
 
 func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {
