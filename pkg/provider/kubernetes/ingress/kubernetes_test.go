@@ -3196,6 +3196,111 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	return k8sObjects
 }
 
+func TestIngressEndpointStatus(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		endpoint *EndpointIngress
+		expected []netv1.IngressLoadBalancerIngress
+	}{
+		{
+			desc:     "empty",
+			endpoint: &EndpointIngress{},
+			expected: []netv1.IngressLoadBalancerIngress{},
+		},
+		{
+			desc:     "single IPv4",
+			endpoint: &EndpointIngress{IP: "192.0.2.1"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1"}},
+		},
+		{
+			desc:     "multiple IPv4",
+			endpoint: &EndpointIngress{IP: "192.0.2.1, 192.0.2.2"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1"}, {IP: "192.0.2.2"}},
+		},
+		{
+			desc:     "single IPv6",
+			endpoint: &EndpointIngress{IP: "2001:db8::1"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "2001:db8::1"}},
+		},
+		{
+			desc:     "multiple IPv6",
+			endpoint: &EndpointIngress{IP: "2001:db8::1,2001:db8::2"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "2001:db8::1"}, {IP: "2001:db8::2"}},
+		},
+		{
+			desc:     "mixed IPv4 and IPv6",
+			endpoint: &EndpointIngress{IP: "192.0.2.1,2001:db8::1"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1"}, {IP: "2001:db8::1"}},
+		},
+		{
+			desc:     "duplicate addresses are removed preserving order",
+			endpoint: &EndpointIngress{IP: "192.0.2.1,192.0.2.1,2001:db8::1"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1"}, {IP: "2001:db8::1"}},
+		},
+		{
+			desc:     "hostname only",
+			endpoint: &EndpointIngress{Hostname: "example.com"},
+			expected: []netv1.IngressLoadBalancerIngress{{Hostname: "example.com"}},
+		},
+		{
+			desc:     "single IP and hostname preserve legacy status entry",
+			endpoint: &EndpointIngress{IP: "192.0.2.1", Hostname: "example.com"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1", Hostname: "example.com"}},
+		},
+		{
+			desc:     "multiple IPs and hostname",
+			endpoint: &EndpointIngress{IP: "192.0.2.1,2001:db8::1", Hostname: "example.com"},
+			expected: []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1"}, {IP: "2001:db8::1"}, {Hostname: "example.com"}},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			assert.Equal(t, test.expected, ingressEndpointStatus(test.endpoint))
+		})
+	}
+}
+
+func TestUpdateIngressStatusPriority(t *testing.T) {
+	ingress := &netv1.Ingress{}
+
+	t.Run("empty configuration does not update status", func(t *testing.T) {
+		p := Provider{}
+
+		require.NoError(t, p.updateIngressStatus(ingress, clientMock{}, nil))
+	})
+
+	t.Run("empty ingress endpoint preserves validation error", func(t *testing.T) {
+		p := Provider{IngressEndpoint: &EndpointIngress{}}
+
+		err := p.updateIngressStatus(ingress, clientMock{}, nil)
+		assert.EqualError(t, err, "publishedService or ip or hostname must be defined")
+	})
+
+	t.Run("published service takes precedence over IP and hostname", func(t *testing.T) {
+		p := Provider{
+			IngressEndpoint: &EndpointIngress{
+				IP:               "192.0.2.1,2001:db8::1",
+				Hostname:         "example.com",
+				PublishedService: "invalid",
+			},
+		}
+
+		err := p.updateIngressStatus(ingress, clientMock{}, nil)
+		assert.EqualError(t, err, "invalid publishedService format (expected 'namespace/service' format): invalid")
+	})
+
+	t.Run("node addresses take precedence over ingress endpoint", func(t *testing.T) {
+		expectedErr := errors.New("status update error")
+		p := Provider{
+			IngressEndpoint: &EndpointIngress{PublishedService: "invalid"},
+		}
+
+		err := p.updateIngressStatus(ingress, clientMock{apiIngressStatusError: expectedErr}, []netv1.IngressLoadBalancerIngress{{IP: "192.0.2.1"}})
+		assert.ErrorIs(t, err, expectedErr)
+	})
+}
+
 func TestProviderInit(t *testing.T) {
 	p := Provider{
 		ReportNodeInternalIPs: true,
