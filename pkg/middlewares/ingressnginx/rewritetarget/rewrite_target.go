@@ -11,6 +11,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
 
@@ -136,6 +137,12 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			prefix = rt.regexp.ReplaceAllString(currentPath, rt.xForwardedPrefix)
 		}
 		req.Header.Set(xForwardedPrefix, prefix)
+	}
+
+	// Keep the client URI available to downstream middleware, such as the
+	// ingress-nginx forward-auth adapter, before rewriting the request path.
+	if ingressnginx.OriginalURI(req) == "" {
+		req = ingressnginx.WithOriginalURI(req, req.URL.RequestURI())
 	}
 
 	// As replacement can introduce escaped characters
