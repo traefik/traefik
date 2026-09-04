@@ -12,6 +12,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -230,7 +231,19 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 			}
 
-			rule := buildRule(srv.Hostname, loc)
+			rule, preNegationRule := buildRule(srv.Hostname, loc)
+
+			// Traefik derives router priority from rule length, so the negated arm that
+			// lookahead translation adds would silently promote a translated router over
+			// its neighbors on the same host. Pin each router to the priority its own
+			// rule would have scored before translation. Zero means unset, which leaves
+			// the muxer's own length-based fallback in place where nothing was translated.
+			priorityOf := func(r string) int {
+				if preNegationRule == rule {
+					return 0
+				}
+				return httpmuxer.GetRulePriority(r)
+			}
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -242,6 +255,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			rt := &dynamic.Router{
 				EntryPoints:   p.NonTLSEntryPoints,
 				Rule:          rule,
+				Priority:      priorityOf(preNegationRule),
 				RuleSyntax:    "default",
 				Service:       routerSvcName,
 				Observability: obs,
@@ -250,6 +264,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			rtTLS := &dynamic.Router{
 				EntryPoints: p.TLSEntryPoints,
 				Rule:        rule,
+				Priority:    priorityOf(preNegationRule),
 				RuleSyntax:  "default",
 				Service:     routerSvcName,
 				TLS: &dynamic.RouterTLSConfig{
@@ -279,6 +294,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
 					Rule:          appendCanaryRule(rule, loc.Canary),
+					Priority:      priorityOf(appendCanaryRule(preNegationRule, loc.Canary)),
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       canarySvcName,
 					Observability: obs,
@@ -290,6 +306,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				canaryRouterTLS := &dynamic.Router{
 					EntryPoints:   rtTLS.EntryPoints,
 					Rule:          appendCanaryRule(rule, loc.Canary),
+					Priority:      priorityOf(appendCanaryRule(preNegationRule, loc.Canary)),
 					RuleSyntax:    rtTLS.RuleSyntax,
 					Service:       canarySvcName,
 					TLS:           rtTLS.TLS,
@@ -304,6 +321,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				nonCanaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
 					Rule:          appendNonCanaryRule(rule, loc.Canary),
+					Priority:      priorityOf(appendNonCanaryRule(preNegationRule, loc.Canary)),
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       primarySvcName,
 					Observability: obs,
@@ -315,6 +333,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				nonCanaryRouterTLS := &dynamic.Router{
 					EntryPoints:   rtTLS.EntryPoints,
 					Rule:          appendNonCanaryRule(rule, loc.Canary),
+					Priority:      priorityOf(appendNonCanaryRule(preNegationRule, loc.Canary)),
 					RuleSyntax:    rtTLS.RuleSyntax,
 					Service:       primarySvcName,
 					TLS:           rtTLS.TLS,
@@ -612,7 +631,6 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
-		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
 		Service:       unavailableServiceName,
@@ -621,8 +639,15 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	}
 }
 
-func buildRule(host string, loc *location) string {
-	var rules []string
+// buildRule builds the router rule for loc.
+//
+// preNegation is the same rule as it would read without negative-lookahead
+// translation. Traefik derives router priority from rule length, so the negated
+// arm would otherwise inflate the priority of every translated router; callers
+// pin priority from preNegation instead. It equals rule when nothing was
+// translated.
+func buildRule(host string, loc *location) (rule, preNegation string) {
+	var base []string
 
 	if host != "" {
 		hosts := append([]string{host}, loc.Aliases...)
@@ -631,11 +656,13 @@ func buildRule(host string, loc *location) string {
 			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
 		}
 		if len(hostRules) > 1 {
-			rules = append(rules, "("+strings.Join(hostRules, " || ")+")")
+			base = append(base, "("+strings.Join(hostRules, " || ")+")")
 		} else {
-			rules = append(rules, hostRules[0])
+			base = append(base, hostRules[0])
 		}
 	}
+
+	var pathRules, prePathRules []string
 
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
@@ -645,17 +672,37 @@ func buildRule(host string, loc *location) string {
 
 		switch pathType {
 		case netv1.PathTypeExact:
-			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
+			pathRules = append(pathRules, fmt.Sprintf("Path(%q)", loc.Path))
 		case netv1.PathTypePrefix:
 			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+loc.Path))
+				verbatim := fmt.Sprintf("PathRegexp(%q)", nginxRegexPrefix+loc.Path)
+				if keep, exclude, ok := splitNegativeLookahead(loc.Path); ok {
+					pathRules = []string{
+						fmt.Sprintf("PathRegexp(%q)", nginxRegexPrefix+keep),
+						fmt.Sprintf("!PathRegexp(%q)", nginxRegexPrefix+exclude),
+					}
+					prePathRules = []string{verbatim}
+				} else {
+					pathRules = []string{verbatim}
+				}
 			} else {
-				rules = append(rules, buildPrefixRule(loc.Path))
+				pathRules = append(pathRules, buildPrefixRule(loc.Path))
 			}
 		}
 	}
 
-	return strings.Join(rules, " && ")
+	if prePathRules == nil {
+		prePathRules = pathRules
+	}
+
+	join := func(path []string) string {
+		all := make([]string, 0, len(base)+len(path))
+		all = append(all, base...)
+		all = append(all, path...)
+		return strings.Join(all, " && ")
+	}
+
+	return join(pathRules), join(prePathRules)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.

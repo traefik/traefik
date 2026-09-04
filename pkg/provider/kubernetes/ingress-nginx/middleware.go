@@ -162,7 +162,11 @@ func (p *Provider) buildRedirect(loc *location) {
 
 	regex := ".*"
 	if loc.UseRegex {
-		regex = `^https?://[^/]+` + loc.Path
+		path := loc.Path
+		if keep, _, ok := splitNegativeLookahead(path); ok {
+			path = keep
+		}
+		regex = `^https?://[^/]+` + path
 	}
 
 	loc.Redirect = &dynamic.RedirectRegex{
@@ -278,6 +282,11 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 	}
 
 	regex := loc.Path
+	if loc.UseRegex {
+		if keep, _, ok := splitNegativeLookahead(loc.Path); ok {
+			regex = keep
+		}
+	}
 
 	xfp := ""
 	if loc.Config.XForwardedPrefix != nil && regexPathWithCapture.MatchString(*loc.Config.XForwardedPrefix) {
