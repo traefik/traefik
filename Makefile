@@ -102,20 +102,13 @@ test-integration:
 .PHONY: test-gateway-api-conformance
 #? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
+	docker pull traefik/gateway-operator:latest
+	# The data plane image carries a fixed tag, and not latest, so that the pods
+	# the operator provisions keep the side loaded image instead of pulling the
+	# released Traefik over it.
+	docker tag traefik/traefik:latest traefik/traefik:conformance
 	# In case of a new Minor/Major version, the traefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.7" $(TESTFLAGS)
-
-.PHONY: generate-gateway-api-operator-fixture
-#? generate-gateway-api-operator-fixture: Render the Gateway API operator install fixture from the vendored copy
-generate-gateway-api-operator-fixture:
-	go run ./cmd/internal/gatewayapioperatorfixture
-
-.PHONY: update-gateway-api-operator-fixture
-#? update-gateway-api-operator-fixture: Refresh the vendored operator copy, then render the fixture
-# GATEWAY_API_OPERATOR_FIXTURE_SOURCE is a ref or a path to a checkout of
-# traefik/gateway-operator (defaults to main).
-update-gateway-api-operator-fixture:
-	go run ./cmd/internal/gatewayapioperatorfixture -update $(GATEWAY_API_OPERATOR_FIXTURE_SOURCE)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=40m -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.7" $(TESTFLAGS)
 
 .PHONY: test-knative-conformance
 #? test-knative-conformance: Run the Knative conformance tests
