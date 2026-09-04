@@ -152,11 +152,9 @@ func createMessage(certs map[string]*Certificate) dynamic.Message {
 
 	for _, cert := range certs {
 		certConf := &traefiktls.CertAndStores{
-			Certificate: traefiktls.Certificate{
-				CertFile: traefiktls.FileOrContent(cert.Certificate),
-				KeyFile:  traefiktls.FileOrContent(cert.Key),
-			},
-			Stores: []string{tlsalpn01.ACMETLS1Protocol},
+			CertFile: traefiktls.FileOrContent(cert.Certificate),
+			KeyFile:  traefiktls.FileOrContent(cert.Key),
+			Stores:   []string{tlsalpn01.ACMETLS1Protocol},
 		}
 		conf.Configuration.TLS.Certificates = append(conf.Configuration.TLS.Certificates, certConf)
 	}

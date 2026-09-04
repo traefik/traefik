@@ -134,18 +134,14 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 
 func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "secret",
-		},
+		Namespace: "default",
+		Name:      "secret",
 	}
 	helmSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "helm-secret",
-			Labels: map[string]string{
-				"owner": "helm",
-			},
+		Namespace: "default",
+		Name:      "helm-secret",
+		Labels: map[string]string{
+			"owner": "helm",
 		},
 	}
 
@@ -190,22 +186,18 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 	emptyEndpoint := &corev1.Endpoints{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "empty-endpoint",
-			Namespace:       "test",
-			ResourceVersion: "1244",
-			Annotations: map[string]string{
-				"test-annotation": "_",
-			},
+		Name:            "empty-endpoint",
+		Namespace:       "test",
+		ResourceVersion: "1244",
+		Annotations: map[string]string{
+			"test-annotation": "_",
 		},
 	}
 
 	filledEndpoint := &corev1.Endpoints{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "filled-endpoint",
-			Namespace:       "test",
-			ResourceVersion: "1234",
-		},
+		Name:            "filled-endpoint",
+		Namespace:       "test",
+		ResourceVersion: "1234",
 		Subsets: []corev1.EndpointSubset{{
 			Addresses: []corev1.EndpointAddress{{
 				IP: "10.13.37.1",
@@ -289,17 +281,13 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 
 func TestClientUsesCorrectServerVersion(t *testing.T) {
 	ingressV1Beta := &netv1beta1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "ingress-v1beta",
-		},
+		Namespace: "default",
+		Name:      "ingress-v1beta",
 	}
 
 	ingressV1 := &netv1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "ingress-v1",
-		},
+		Namespace: "default",
+		Name:      "ingress-v1",
 	}
 
 	kubeClient := kubefake.NewClientset(ingressV1Beta, ingressV1)

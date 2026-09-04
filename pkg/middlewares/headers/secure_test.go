@@ -32,10 +32,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			expected: expected{
-				statusCode: http.StatusMovedPermanently,
-				location:   "https://powpow.example.com",
-			},
+			statusCode: http.StatusMovedPermanently,
+			location:   "https://powpow.example.com",
 		},
 		{
 			desc: "http sub domain should return a 301",
@@ -45,10 +43,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			expected: expected{
-				statusCode: http.StatusMovedPermanently,
-				location:   "https://powpow.example.com",
-			},
+			statusCode: http.StatusMovedPermanently,
+			location:   "https://powpow.example.com",
 		},
 		{
 			desc: "https should return a 200",
@@ -58,7 +54,7 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			expected: expected{statusCode: http.StatusOK},
+			statusCode: http.StatusOK,
 		},
 		{
 			desc: "https sub domain should return a 301",
@@ -68,10 +64,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			expected: expected{
-				statusCode: http.StatusMovedPermanently,
-				location:   "https://powpow.example.com",
-			},
+			statusCode: http.StatusMovedPermanently,
+			location:   "https://powpow.example.com",
 		},
 		{
 			desc: "http without force host and sub domain should return a 301",
@@ -81,10 +75,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
 			},
-			expected: expected{
-				statusCode: http.StatusMovedPermanently,
-				location:   "https://powpow.example.com",
-			},
+			statusCode: http.StatusMovedPermanently,
+			location:   "https://powpow.example.com",
 		},
 		{
 			desc: "https without force host and sub domain should return a 301",
@@ -94,7 +86,7 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
 			},
-			expected: expected{statusCode: http.StatusOK},
+			statusCode: http.StatusOK,
 		},
 	}
 
