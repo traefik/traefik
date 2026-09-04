@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -383,4 +384,117 @@ func TestKerberosRoundTripper(t *testing.T) {
 			require.Equal(t, test.expectedDedicatedCount, dedicatedCount)
 		})
 	}
+}
+
+func TestKerberosRoundTripperDoesNotLeakAcrossServersTransports(t *testing.T) {
+	ntlmSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("WWW-Authenticate", "NTLM")
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(ntlmSrv.Close)
+
+	// The httptest certificate is not signed by the root CA pinned below.
+	untrustedSrv := httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(untrustedSrv.Close)
+
+	rtManager := NewRoundTripperManager()
+	rtManager.Update(map[string]*dynamic.ServersTransport{
+		"insecure": {InsecureSkipVerify: true},
+		"pinned": {
+			ServerName: "example.com",
+			RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+		},
+	})
+
+	insecureRT, err := rtManager.Get("insecure")
+	require.NoError(t, err)
+
+	pinnedRT, err := rtManager.Get("pinned")
+	require.NoError(t, err)
+
+	// Every request below carries this context, that is they all belong to the same client connection.
+	ctx := AddTransportOnContext(t.Context())
+
+	var certErr x509.UnknownAuthorityError
+
+	// As long as nothing is stuck on the connection, the pinned ServersTransport enforces its own root CA.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, untrustedSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	_, err = pinnedRT.RoundTrip(req)
+	require.ErrorAs(t, err, &certErr)
+
+	// The NTLM challenge sticks a dedicated round tripper for the insecure ServersTransport on this connection.
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, ntlmSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := insecureRT.RoundTrip(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// The pinned ServersTransport must not be served by the round tripper stuck for the insecure one.
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, untrustedSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	_, err = pinnedRT.RoundTrip(req)
+	assert.ErrorAs(t, err, &certErr)
+}
+
+func TestStickyRoundTrippersStickOnlyOnce(t *testing.T) {
+	var newCalls int
+
+	owner := &KerberosRoundTripper{
+		new: func() http.RoundTripper {
+			newCalls++
+
+			return http.DefaultTransport
+		},
+	}
+
+	connRoundTrippers := &stickyRoundTrippers{}
+	connRoundTrippers.stick(owner)
+	connRoundTrippers.stick(owner)
+
+	assert.Equal(t, 1, newCalls)
+	assert.NotNil(t, connRoundTrippers.get(owner))
+}
+
+func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
+	var newCalls atomic.Int32
+
+	rt := KerberosRoundTripper{
+		new: func() http.RoundTripper {
+			newCalls.Add(1)
+
+			return roundTripperFn(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusOK}, nil
+			})
+		},
+		OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusUnauthorized,
+				Header:     map[string][]string{"Www-Authenticate": {"NTLM"}},
+			}, nil
+		}),
+	}
+
+	ctx := AddTransportOnContext(t.Context())
+
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
+			assert.NoError(t, err)
+
+			_, err = rt.RoundTrip(req)
+			assert.NoError(t, err)
+		})
+	}
+
+	wg.Wait()
+
+	assert.EqualValues(t, 1, newCalls.Load())
 }
