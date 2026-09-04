@@ -276,10 +276,8 @@ func TestDefaultRule(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				Configuration: Configuration{
-					ExposedByDefault: true,
-					DefaultRule:      test.defaultRule,
-				},
+				ExposedByDefault: true,
+				DefaultRule:      test.defaultRule,
 			}
 
 			err := p.Init()
@@ -3160,12 +3158,10 @@ func Test_buildConfiguration(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				Configuration: Configuration{
-					ExposedByDefault: true,
-					DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
-					ConnectAware:     test.ConnectAware,
-					Constraints:      test.constraints,
-				},
+				ExposedByDefault: true,
+				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				ConnectAware:     test.ConnectAware,
+				Constraints:      test.constraints,
 			}
 
 			err := p.Init()

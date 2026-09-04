@@ -149,15 +149,15 @@ func Test_mergeConfiguration_tlsCertificates(t *testing.T) {
 				"tlsalpn.acme": &dynamic.Configuration{
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{{
-							Certificate: tls.Certificate{CertFile: "foo", KeyFile: "bar"},
-							Stores:      []string{tlsalpn01.ACMETLS1Protocol},
+							CertFile: "foo", KeyFile: "bar",
+							Stores: []string{tlsalpn01.ACMETLS1Protocol},
 						}},
 					},
 				},
 			},
 			expected: []*tls.CertAndStores{{
-				Certificate: tls.Certificate{CertFile: "foo", KeyFile: "bar"},
-				Stores:      []string{tlsalpn01.ACMETLS1Protocol},
+				CertFile: "foo", KeyFile: "bar",
+				Stores: []string{tlsalpn01.ACMETLS1Protocol},
 			}},
 		},
 	}
