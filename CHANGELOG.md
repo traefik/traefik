@@ -1,3 +1,12 @@
+## [v2.11.57](https://github.com/traefik/traefik/tree/v2.11.57) (2026-09-04)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.56...v2.11.57)
+
+**Bug fixes:**
+- **[acme]** Disable recursive nss propagation by default for DNS challenge ([#13830](https://github.com/traefik/traefik/pull/13830) @rtribotte)
+- **[http3]** Dedicate a transport per HTTP/3 client connection ([#13812](https://github.com/traefik/traefik/pull/13812) @sdelicata)
+- **[server]** Deny request with an opaque request target ([#13796](https://github.com/traefik/traefik/pull/13796) @sdelicata)
+- **[server]** Do not forward h2c upgrade headers to the backend ([#13797](https://github.com/traefik/traefik/pull/13797) @sdelicata)
+
 ## [v2.11.56](https://github.com/traefik/traefik/tree/v2.11.56) (2026-08-26)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.55...v2.11.56)
 
