@@ -470,10 +470,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -705,10 +703,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -1110,10 +1106,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -1195,10 +1189,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -2003,10 +1995,8 @@ func TestLoadTCPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -2485,10 +2475,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -2694,10 +2682,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -2762,10 +2748,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -3552,10 +3536,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -3726,10 +3708,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -3960,10 +3940,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -4107,10 +4085,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -4235,10 +4211,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -4708,10 +4682,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "No ParentRefs",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4725,10 +4697,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Unsupported Kind",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4750,10 +4720,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Unsupported Group",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4775,10 +4743,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Kind is nil",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4799,10 +4765,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Group is nil",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4823,10 +4787,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "SectionName does not match a listener desc",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4848,10 +4810,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Namespace does not match the Gateway namespace",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4873,10 +4833,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Route namespace does not match the Gateway namespace",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4897,10 +4855,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Unsupported Kind",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4922,10 +4878,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Route namespace matches the Gateway namespace",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4946,10 +4900,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Namespace matches the Gateway namespace",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
@@ -4971,10 +4923,8 @@ func Test_shouldAttach(t *testing.T) {
 		{
 			desc: "Only one ParentRef matches the Gateway",
 			gateway: &gatev1alpha2.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "gateway",
-					Namespace: "default",
-				},
+				Name:      "gateway",
+				Namespace: "default",
 			},
 			listener: gatev1alpha2.Listener{
 				Name: "foo",
