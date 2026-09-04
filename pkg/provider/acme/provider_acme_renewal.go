@@ -135,6 +135,7 @@ func (p *Provider) renewCertificateLegacy(ctx context.Context, client *lego.Clie
 	logger.Info().Msgf("Renewing ACME certificate: %+v", crt.cs.Domain)
 
 	res := certificate.Resource{
+		ID:          crt.cs.Domain.Main,
 		Domains:     crt.cs.Domain.ToStrArray(),
 		PrivateKey:  crt.cs.Key,
 		Certificate: crt.cs.Certificate.Certificate,
@@ -163,7 +164,7 @@ func (p *Provider) getRenewalInformation(ctx context.Context, cs *CertAndStore, 
 	ret := certRenewalInfo{cs: cs}
 	crt, err := getX509Certificate(ctx, &cs.Certificate)
 	if err != nil {
-		log.Warn().Ctx(ctx).Err(err).Msgf("could not parse cert for domain %+v, will renew", cs.Domain)
+		log.Ctx(ctx).Warn().Err(err).Msgf("could not parse cert for domain %+v, will renew", cs.Domain)
 	}
 	ret.x509Cert = crt
 
@@ -171,18 +172,19 @@ func (p *Provider) getRenewalInformation(ctx context.Context, cs *CertAndStore, 
 		shouldRenew, replacesCertID, retryAfter, err := p.checkARIRenewal(ctx, crt, renewInterval)
 		if err != nil {
 			if errors.Is(err, api.ErrNoARI) {
-				log.Warn().Ctx(ctx).Msg("ACME server does not support ARI, falling back to time-based")
+				log.Ctx(ctx).Warn().Msg("ACME server does not support ARI, falling back to time-based")
 			} else {
-				log.Warn().Ctx(ctx).Err(err).Msg("ARI check failed, falling back to time-based")
+				log.Ctx(ctx).Warn().Err(err).Msg("ARI check failed, falling back to time-based")
 			}
 		} else if shouldRenew {
 			ret.shouldRenew = true
 			ret.renewalID = replacesCertID
 			ret.timeToWaitForNextCheck = retryAfter
 			return ret
+		} else {
+			ret.timeToWaitForNextCheck = retryAfter
+			return ret
 		}
-		ret.timeToWaitForNextCheck = retryAfter
-		return ret
 	}
 
 	if crt == nil {
