@@ -43,6 +43,11 @@ type conn struct {
 	broken           atomic.Bool
 	upgraded         atomic.Bool
 
+	// responseStarted is set once the status line has been committed downstream,
+	// after which a forwarding error can no longer be turned into an error status
+	// (see ReverseProxy.ServeHTTP).
+	responseStarted atomic.Bool
+
 	closeMu  sync.Mutex
 	closed   bool
 	closeErr error
@@ -214,6 +219,7 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		r.RW.Header().Add(string(key), string(value))
 	})
 
+	c.responseStarted.Store(true)
 	r.RW.WriteHeader(res.StatusCode())
 
 	if noResponseBodyExpected(r.ReqMethod) {
