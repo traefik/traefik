@@ -1,6 +1,7 @@
 package p2c
 
 import (
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -62,6 +63,29 @@ func TestP2C(t *testing.T) {
 			assert.Equal(t, test.expectedHandler, got.name)
 		})
 	}
+}
+
+// TestP2CSecondChoiceDistribution makes sure that the second candidate is drawn uniformly among
+// the other servers, and does not favor the one following the first candidate.
+func TestP2CSecondChoiceDistribution(t *testing.T) {
+	balancer := New(nil, false)
+	balancer.rand = rand.New(rand.NewSource(12345))
+
+	for _, h := range testHandlers(1, 0, 0) {
+		balancer.handlers = append(balancer.handlers, h)
+		balancer.status[h.name] = struct{}{}
+	}
+
+	selected := map[string]int{}
+	for range 3000 {
+		got, err := balancer.nextServer()
+		require.NoError(t, err)
+
+		selected[got.name]++
+	}
+
+	assert.InDelta(t, 1500, selected["1"], 100)
+	assert.InDelta(t, 1500, selected["2"], 100)
 }
 
 func TestSticky(t *testing.T) {
