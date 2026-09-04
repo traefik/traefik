@@ -60,10 +60,12 @@ require (
 	github.com/prometheus/client_model v0.6.2
 	github.com/quic-go/quic-go v0.59.1
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac // No tag on the repo.
+	github.com/samber/slog-logrus/v2 v2.5.4
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154 // No tag on the repo.
 	github.com/testcontainers/testcontainers-go v0.42.0
+	github.com/testcontainers/testcontainers-go/modules/k3s v0.42.0
 	github.com/traefik/paerser v0.2.2
 	github.com/traefik/yaegi v0.16.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
@@ -89,6 +91,7 @@ require (
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // No tag on the repo.
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/gateway-api v0.4.0
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.0
 )
 
 require (
@@ -330,7 +333,6 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/samber/lo v1.53.0 // indirect
 	github.com/samber/slog-common v0.21.0 // indirect
-	github.com/samber/slog-logrus/v2 v2.5.4
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.10.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
@@ -349,7 +351,6 @@ require (
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.106 // indirect
-	github.com/testcontainers/testcontainers-go/modules/k3s v0.42.0
 	github.com/tinylib/msgp v1.6.3 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
@@ -410,7 +411,6 @@ require (
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.0
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.3 // indirect
 )
