@@ -10,6 +10,7 @@ on:
       - 'integration/fixtures/gateway-api-conformance/**'
       - 'integration/gateway_api_conformance_test.go'
       - 'integration/integration_test.go'
+      - 'cmd/internal/gatewayapioperatorfixture/**'
 
 env:
   CGO_ENABLED: 0

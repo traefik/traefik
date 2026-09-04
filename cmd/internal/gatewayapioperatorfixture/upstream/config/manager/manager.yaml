@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik-gateway-operator-system
+  labels:
+    app.kubernetes.io/managed-by: traefik-gateway-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-gateway-operator
+  namespace: traefik-gateway-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: traefik-gateway-operator-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: manager-role
+subjects:
+- kind: ServiceAccount
+  name: traefik-gateway-operator
+  namespace: traefik-gateway-operator-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-gateway-operator
+  namespace: traefik-gateway-operator-system
+  labels:
+    app.kubernetes.io/name: traefik-gateway-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik-gateway-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traefik-gateway-operator
+    spec:
+      serviceAccountName: traefik-gateway-operator
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: manager
+        image: traefik/gateway-operator:latest
+        args:
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=:8080
+        ports:
+        - name: metrics
+          containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
