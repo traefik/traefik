@@ -1,3 +1,34 @@
+## [v3.7.13](https://github.com/traefik/traefik/tree/v3.7.13) (2026-09-04)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.12...v3.7.13)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 to v5.4.1 ([#13759](https://github.com/traefik/traefik/pull/13759) @ldez)
+- **[acme]** Disable recursive nss propagation by default for DNS challenge ([#13830](https://github.com/traefik/traefik/pull/13830) @rtribotte)
+- **[acme]** Do not require recursive nameservers propagation by default for the DNS-01 challenge ([#13710](https://github.com/traefik/traefik/pull/13710) @amazon7737)
+- **[acme, tls]** Ignore negated matchers when parsing rule domains ([#13725](https://github.com/traefik/traefik/pull/13725) @rtribotte)
+- **[consulcatalog, nomad]** Build a collision-free item key in the Consul Catalog and Nomad providers ([#13741](https://github.com/traefik/traefik/pull/13741) @rtribotte)
+- **[http3]** Dedicate a transport per HTTP/3 client connection ([#13812](https://github.com/traefik/traefik/pull/13812) @sdelicata)
+- **[k8s/ingress-nginx]** Fix sticky cookie expiration per request ([#13496](https://github.com/traefik/traefik/pull/13496) @makaiver)
+- **[k8s/ingress-nginx]** Create HTTP redirect router for ssl-passthrough with force-ssl-redirect ([#13457](https://github.com/traefik/traefik/pull/13457) @mmatur)
+- **[k8s/ingress-nginx]** Preserve leading dot in sticky session cookie Domain attribute ([#13456](https://github.com/traefik/traefik/pull/13456) @mmatur)
+- **[logs, middleware]** Set access log entry level and time before formatting the OTLP body ([#13767](https://github.com/traefik/traefik/pull/13767) @emilevauge)
+- **[logs, tls, k8s/crd]** Downgrade default TLS resources namespace mismatch log to warning ([#13780](https://github.com/traefik/traefik/pull/13780) @lazerg)
+- **[middleware]** Fix {url} placeholder in customErrors middleware now includes correct scheme ([#13320](https://github.com/traefik/traefik/pull/13320) @AnouarMohamed)
+- **[middleware, authentication]** Prevent user enumeration through the basic auth singleflight key ([#13816](https://github.com/traefik/traefik/pull/13816) @sdelicata)
+- **[server]** Build the configuration copy once per change ([#13746](https://github.com/traefik/traefik/pull/13746) @jspdown)
+- **[server]** Do not forward h2c upgrade headers to the backend ([#13797](https://github.com/traefik/traefik/pull/13797) @sdelicata)
+- **[server]** Deny request with an opaque request target ([#13796](https://github.com/traefik/traefik/pull/13796) @sdelicata)
+- **[server]** Do not forward request trailer values to the backend ([#13822](https://github.com/traefik/traefik/pull/13822) @rtribotte)
+- **[server]** Bump github.com/quic-go/quic-go to v0.62.0 ([#13807](https://github.com/traefik/traefik/pull/13807) @Nelwhix)
+- **[tls]** Redact duplicate TLS certificates in provider merge logs ([#13548](https://github.com/traefik/traefik/pull/13548) @xsergos)
+- **[webui]** Fix displayed number on details pages ([#13779](https://github.com/traefik/traefik/pull/13779) @gndz07)
+
+**Documentation:**
+- **[k8s]** Add warning about Ingress API frozen state ([#13783](https://github.com/traefik/traefik/pull/13783) @jnoordsij)
+- **[k8s]** Remove namespace reference for providers.kubernetesGateway.labelSelector ([#13790](https://github.com/traefik/traefik/pull/13790) @jnoordsij)
+- **[k8s/crd]** Fix broken redirect for the Kubernetes CRD reference docs ([#13811](https://github.com/traefik/traefik/pull/13811) @thev1ndu)
+- Tell scanning agents to read the security policy and decisions pages ([#13753](https://github.com/traefik/traefik/pull/13753) @emilevauge)
+
 ## [v2.11.57](https://github.com/traefik/traefik/tree/v2.11.57) (2026-09-04)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.56...v2.11.57)
 
