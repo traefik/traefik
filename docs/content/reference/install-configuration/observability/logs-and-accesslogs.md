@@ -402,6 +402,22 @@ Below the fields displayed with the generic CLF format:
 | <a id="opt-KubernetesServiceName" href="#opt-KubernetesServiceName" title="#opt-KubernetesServiceName">`KubernetesServiceName`</a> | The name of the Kubernetes Service associated with the Ingress the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
 | <a id="opt-KubernetesServicePort" href="#opt-KubernetesServicePort" title="#opt-KubernetesServicePort">`KubernetesServicePort`</a> | The port of the Kubernetes Service associated with the Ingress the router handles. Only available with the Kubernetes Ingress and Kubernetes Ingress Nginx providers. |
 
+#### HTTP headers in JSON access logs
+
+When `accessLog.fields.headers` is configured to keep or redact headers, those headers are emitted as extra JSON fields.
+Traefik prefixes each header name according to where it was observed:
+
+| Prefix | Source |
+|--------|--------|
+| <a id="opt-request" href="#opt-request" title="#opt-request">`request_`</a> | Incoming client request headers |
+| <a id="opt-origin" href="#opt-origin" title="#opt-origin">`origin_`</a> | Upstream (origin) response headers |
+| <a id="opt-downstream" href="#opt-downstream" title="#opt-downstream">`downstream_`</a> | Response headers sent back to the client |
+
+Examples: `request_User-Agent`, `origin_Content-Type`, `downstream_Content-Type`.
+
+Configure headers with the HTTP header name only (for example `User-Agent`), not with the log field prefix.
+Multiple values for the same header are joined with commas in the log field value.
+
 ### Log Rotation
 
 Traefik close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
