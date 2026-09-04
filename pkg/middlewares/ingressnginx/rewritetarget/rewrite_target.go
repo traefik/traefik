@@ -11,6 +11,7 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 )
 
@@ -137,6 +138,10 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		req.Header.Set(xForwardedPrefix, prefix)
 	}
+
+	// Location matching in ingress-nginx happens before rewrite-target changes
+	// the request path. Preserve that path for the snippet middleware.
+	req = req.WithContext(ingressnginx.WithOriginalPath(req.Context(), req.URL.Path))
 
 	// As replacement can introduce escaped characters
 	// Path must remain an unescaped version of RawPath
