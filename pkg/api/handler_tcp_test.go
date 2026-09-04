@@ -24,10 +24,11 @@ func TestHandler_TCP(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc     string
-		path     string
-		conf     runtime.Configuration
-		expected expected
+		desc                     string
+		path                     string
+		conf                     runtime.Configuration
+		hideMiddlewareParameters bool
+		expected                 expected
 	}{
 		{
 			desc: "all TCP routers, but no config",
@@ -930,6 +931,30 @@ func TestHandler_TCP(t *testing.T) {
 				statusCode: http.StatusNotFound,
 			},
 		},
+		{
+			// TCP middlewares currently have no plugin config and no loggable=false
+			// fields, so this only verifies that enabling the flag doesn't break the
+			// response; it doesn't actually exercise redaction.
+			desc: "one middleware by id, hideMiddlewareParameters enabled but nothing to redact",
+			path: "/api/tcp/middlewares/ipallowlist@myprovider",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipallowlist@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPAllowList: &dynamic.TCPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+				},
+			},
+			hideMiddlewareParameters: true,
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/tcpmiddleware-ipallowlist.json",
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -941,7 +966,7 @@ func TestHandler_TCP(t *testing.T) {
 			rtConf.PopulateUsedBy()
 			rtConf.GetTCPRoutersByEntryPoints(t.Context(), []string{"web"})
 
-			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
+			handler := New(static.Configuration{API: &static.API{HideMiddlewareParameters: test.hideMiddlewareParameters}, Global: &static.Global{}}, rtConf)
 			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
