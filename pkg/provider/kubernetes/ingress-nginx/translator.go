@@ -442,15 +442,16 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 
 	return &dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
-			Name:               name,
-			Secure:             ptr.Deref(cfg.SessionCookieSecure, false),
-			HTTPOnly:           true,
-			SameSite:           strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
-			MaxAge:             ptr.Deref(cfg.SessionCookieMaxAge, 0),
-			Expires:            ptr.Deref(cfg.SessionCookieExpires, 0),
-			Path:               new(ptr.Deref(cfg.SessionCookiePath, "/")),
-			Domain:             ptr.Deref(cfg.SessionCookieDomain, ""),
-			PreserveLeadingDot: true,
+			Name:                    name,
+			Secure:                  ptr.Deref(cfg.SessionCookieSecure, false),
+			HTTPOnly:                true,
+			SameSite:                strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
+			ConditionalSameSiteNone: ptr.Deref(cfg.SessionCookieConditionalSameSiteNone, false),
+			MaxAge:                  ptr.Deref(cfg.SessionCookieMaxAge, 0),
+			Expires:                 ptr.Deref(cfg.SessionCookieExpires, 0),
+			Path:                    new(ptr.Deref(cfg.SessionCookiePath, "/")),
+			Domain:                  ptr.Deref(cfg.SessionCookieDomain, ""),
+			PreserveLeadingDot:      true,
 		},
 	}
 }

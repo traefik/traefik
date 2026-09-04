@@ -343,6 +343,9 @@ type Cookie struct {
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	// +kubebuilder:validation:Enum=none;lax;strict;None;Lax;Strict
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
+	// ConditionalSameSiteNone defines whether the SameSite=None attribute should be omitted for incompatible user agents.
+	// This option is exposed only for the Ingress NGINX provider.
+	ConditionalSameSiteNone bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.
 	// When set to zero, the cookie never expires.
