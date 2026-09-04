@@ -272,6 +272,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
 				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
 				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+				applyAppRootRedirect(loc, routerKey, rt, obs, conf)
+				applyAppRootRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
@@ -621,20 +623,46 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	}
 }
 
+// applyAppRootRedirect registers the extra router matching "/" for the app-root
+// middleware. The middleware itself is registered by applyMiddlewares, and its
+// service is never reached because the redirect short-circuits the chain.
+func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, obs *dynamic.RouterObservabilityConfig, conf *dynamic.Configuration) {
+	if loc.AppRoot == nil || loc.AppRootExtraRouterRule == "" {
+		return
+	}
+
+	conf.HTTP.Routers[routerKey+"-app-root-redirect"] = &dynamic.Router{
+		EntryPoints:   rt.EntryPoints,
+		Rule:          loc.AppRootExtraRouterRule,
+		Priority:      rt.Priority,
+		RuleSyntax:    "default",
+		Middlewares:   []string{routerKey + "-app-root"},
+		Service:       rt.Service,
+		TLS:           rt.TLS,
+		Observability: obs,
+	}
+}
+
+// buildHostRule builds the host part of a router rule, covering the hostname and
+// all the server-alias hostnames resolved for the location.
+func buildHostRule(host string, aliases []string) string {
+	hostRules := make([]string, 0, len(aliases)+1)
+	for _, h := range append([]string{host}, aliases...) {
+		hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
+	}
+
+	if len(hostRules) > 1 {
+		return "(" + strings.Join(hostRules, " || ") + ")"
+	}
+
+	return hostRules[0]
+}
+
 func buildRule(host string, loc *location) string {
 	var rules []string
 
 	if host != "" {
-		hosts := append([]string{host}, loc.Aliases...)
-		hostRules := make([]string, 0, len(hosts))
-		for _, h := range hosts {
-			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
-		}
-		if len(hostRules) > 1 {
-			rules = append(rules, "("+strings.Join(hostRules, " || ")+")")
-		} else {
-			rules = append(rules, hostRules[0])
-		}
+		rules = append(rules, buildHostRule(host, loc.Aliases))
 	}
 
 	if len(loc.Path) > 0 {
