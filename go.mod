@@ -125,7 +125,10 @@ require (
 	sigs.k8s.io/yaml v1.6.0
 )
 
-require github.com/go-acme/lego/v4 v4.35.2
+require (
+	github.com/go-acme/lego/v4 v4.35.2
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.69.0
+)
 
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
