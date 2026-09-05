@@ -130,21 +130,7 @@ func buildSupportedEncodings(encodings []string) map[string]int {
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
-
 	if req.Method == http.MethodHead {
-		c.next.ServeHTTP(rw, req)
-		return
-	}
-
-	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
-	if err != nil {
-		logger.Debug().Err(err).Msg("Unable to parse MIME type")
-	}
-
-	// Notably for text/event-stream requests the response should not be compressed.
-	// See https://github.com/traefik/traefik/issues/2576
-	if slices.Contains(c.excludes, mediaType) {
 		c.next.ServeHTTP(rw, req)
 		return
 	}
