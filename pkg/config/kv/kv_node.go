@@ -85,6 +85,10 @@ func filterPairs(pairs []*store.KVPair, filters []string) []*store.KVPair {
 	slicePairs := map[string][]string{}
 
 	for _, pair := range pairs {
+		if strings.HasSuffix(pair.Key, "/") && len(pair.Value) == 0 {
+			continue
+		}
+
 		if len(filters) == 0 {
 			// Slice of simple type
 			if exp.MatchString(pair.Key) {
