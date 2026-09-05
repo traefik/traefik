@@ -17,7 +17,7 @@ import (
 )
 
 // K8sAttributesDetector detects the metadata of the Traefik pod running in a Kubernetes cluster.
-// It reads the pod name from the hostname file and the namespace from the service account namespace file and queries the Kubernetes API to get the pod's UID.
+// It reads the pod name from the POD_NAME env var (fallback to hostname file) and the namespace from the POD_NAMESPACE env var (fallback to service account namespace file) and queries the Kubernetes API to get the pod's UID.
 type K8sAttributesDetector struct{}
 
 func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, error) {
@@ -41,16 +41,15 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 		return nil, fmt.Errorf("creating Kubernetes client: %w", err)
 	}
 
-	podName, err := os.Hostname()
+	podName, err := getPodName()
 	if err != nil {
 		return nil, fmt.Errorf("getting pod name: %w", err)
 	}
 
-	podNamespaceBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	podNamespace, err := getPodNamespace()
 	if err != nil {
 		return nil, fmt.Errorf("getting pod namespace: %w", err)
 	}
-	podNamespace := string(podNamespaceBytes)
 
 	pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil && (kerror.IsForbidden(err) || kerror.IsNotFound(err)) {
@@ -67,4 +66,26 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 		semconv.K8SPodName(pod.Name),
 		semconv.K8SNamespaceName(podNamespace),
 	), nil
+}
+
+func getPodName() (string, error) {
+	if name := os.Getenv("POD_NAME"); name != "" {
+		return name, nil
+	}
+	name, err := os.Hostname()
+	if err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+func getPodNamespace() (string, error) {
+	if namespace := os.Getenv("POD_NAMESPACE"); namespace != "" {
+		return namespace, nil
+	}
+	namespaceBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		return "", err
+	}
+	return string(namespaceBytes), nil
 }
