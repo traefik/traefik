@@ -60,6 +60,11 @@ func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 		req = req.WithContext(tracingCtx)
 
+		// Inject the active span context into the request headers so the
+		// wrapped middleware (notably plugins) can propagate trace context on
+		// outbound requests they make.
+		tracing.InjectContextIntoCarrier(req)
+
 		span.SetAttributes(attribute.String("traefik.middleware.name", w.name))
 	}
 
