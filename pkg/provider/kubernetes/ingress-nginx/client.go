@@ -29,6 +29,8 @@ import (
 const (
 	resyncPeriod   = 10 * time.Minute
 	defaultTimeout = 5 * time.Second
+
+	podNamespacePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 )
 
 type clientWrapper struct {
@@ -38,10 +40,17 @@ type clientWrapper struct {
 	factoriesSecret     map[string]kinformers.SharedInformerFactory
 	factoriesConfigMap  map[string]kinformers.SharedInformerFactory
 	factoriesIngress    map[string]kinformers.SharedInformerFactory
+	factoryPod          kinformers.SharedInformerFactory
 	isNamespaceAll      bool
 	watchedNamespaces   []string
 
 	ignoreIngressClasses bool
+
+	// podNamespace and podSelector identify the controller pods whose node
+	// addresses are published in the Ingress status. They are empty when the
+	// controller pod cannot be discovered, which disables that fallback.
+	podNamespace string
+	podSelector  string
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -152,6 +161,14 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		c.watchedNamespaces = []string{namespace}
 	}
 
+	// The controller pods and the nodes they run on are the last resort source
+	// for the Ingress status, as done by the ingress-nginx controller.
+	// Discovering them requires running in-cluster with the pods and nodes list
+	// permissions: when unavailable, only the publish options can set the status.
+	if err := c.setupPodDiscovery(ctx); err != nil {
+		log.Debug().Err(err).Msg("Skipping controller pods discovery for the Ingress status")
+	}
+
 	notOwnedByHelm := func(opts *metav1.ListOptions) {
 		opts.LabelSelector = "owner!=helm"
 	}
@@ -196,6 +213,25 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		c.factoriesConfigMap[ns] = factoryConfigMap
 	}
 
+	if c.podNamespace != "" {
+		c.factoryPod = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod,
+			kinformers.WithNamespace(c.podNamespace),
+			kinformers.WithTweakListOptions(func(opts *metav1.ListOptions) { opts.LabelSelector = c.podSelector }),
+			kinformers.WithTransform(k8s.StripManagedFields))
+
+		if _, err = c.factoryPod.Core().V1().Pods().Informer().AddEventHandler(eventHandler); err != nil {
+			return nil, err
+		}
+
+		c.factoryPod.Start(stopCh)
+
+		for t, ok := range c.factoryPod.WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), c.podNamespace)
+			}
+		}
+	}
+
 	for _, ns := range c.watchedNamespaces {
 		c.factoriesIngress[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
@@ -233,6 +269,13 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 
 	if !c.ignoreIngressClasses {
 		_, err = c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if c.podNamespace != "" {
+		_, err = c.clusterScopeFactory.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -308,6 +351,103 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []netv
 	return nil
 }
 
+// podIdentity returns the name and namespace of the pod this instance runs in.
+// The downward API environment variables take precedence, as they are the way
+// the ingress-nginx controller is configured, and the in-cluster hostname and
+// service account namespace are used when they are not set.
+func podIdentity() (string, string, error) {
+	name := os.Getenv("POD_NAME")
+	if name == "" {
+		var err error
+		if name, err = os.Hostname(); err != nil {
+			return "", "", fmt.Errorf("getting pod name: %w", err)
+		}
+	}
+
+	if namespace := os.Getenv("POD_NAMESPACE"); namespace != "" {
+		return name, namespace, nil
+	}
+
+	namespace, err := os.ReadFile(podNamespacePath)
+	if err != nil {
+		return "", "", fmt.Errorf("getting pod namespace: %w", err)
+	}
+
+	return name, string(namespace), nil
+}
+
+// GetIngressPodNodeAddresses returns the addresses of the nodes running a ready
+// controller pod. An empty result means the addresses cannot be determined,
+// either because the controller pods are not discoverable or because none is ready.
+func (c *clientWrapper) GetIngressPodNodeAddresses(internalIP bool) ([]string, error) {
+	if c.factoryPod == nil {
+		return nil, nil
+	}
+
+	pods, err := c.factoryPod.Core().V1().Pods().Lister().Pods(c.podNamespace).List(labels.Everything())
+	if err != nil {
+		return nil, fmt.Errorf("listing controller pods: %w", err)
+	}
+
+	nodeLister := c.clusterScopeFactory.Core().V1().Nodes().Lister()
+
+	var nodeNames []string
+	for _, pod := range pods {
+		// A pod being deleted still reports as ready while it terminates, and the
+		// node it drains from must not be published as an Ingress address anymore.
+		if pod.Spec.NodeName == "" || pod.DeletionTimestamp != nil || !isPodReady(pod) {
+			continue
+		}
+
+		if !slices.Contains(nodeNames, pod.Spec.NodeName) {
+			nodeNames = append(nodeNames, pod.Spec.NodeName)
+		}
+	}
+
+	var addresses []string
+	for _, nodeName := range nodeNames {
+		node, err := nodeLister.Get(nodeName)
+		if err != nil {
+			return nil, fmt.Errorf("getting node %s: %w", nodeName, err)
+		}
+
+		var internal, external []string
+		for _, address := range node.Status.Addresses {
+			switch address.Type {
+			case corev1.NodeInternalIP:
+				internal = append(internal, address.Address)
+			case corev1.NodeExternalIP:
+				external = append(external, address.Address)
+			}
+		}
+
+		// The internal addresses are also used as a fallback, as a node without
+		// an external address would otherwise not be reported at all.
+		if internalIP || len(external) == 0 {
+			addresses = append(addresses, internal...)
+			continue
+		}
+
+		addresses = append(addresses, external...)
+	}
+
+	return addresses, nil
+}
+
+func isPodReady(pod *corev1.Pod) bool {
+	if pod.Status.Phase != corev1.PodRunning {
+		return false
+	}
+
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == corev1.PodReady {
+			return condition.Status == corev1.ConditionTrue
+		}
+	}
+
+	return false
+}
+
 // GetService returns the named service from the given namespace.
 func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, error) {
 	if !c.isWatchedNamespace(namespace) {
@@ -372,6 +512,34 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 }
 
 // isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
+// setupPodDiscovery identifies the controller pods, using the pod this instance
+// runs in as the reference: its namespace and labels select the sibling pods.
+func (c *clientWrapper) setupPodDiscovery(ctx context.Context) error {
+	podName, namespace, err := podIdentity()
+	if err != nil {
+		return err
+	}
+
+	pod, err := c.clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("getting pod %s/%s: %w", namespace, podName, err)
+	}
+
+	if len(pod.Labels) == 0 {
+		return fmt.Errorf("pod %s/%s has no label to select the controller pods with", pod.Namespace, pod.Name)
+	}
+
+	// The status addresses are read from the nodes running the controller pods.
+	if _, err = c.clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{Limit: 1}); err != nil {
+		return fmt.Errorf("listing nodes: %w", err)
+	}
+
+	c.podNamespace = pod.Namespace
+	c.podSelector = labels.Set(pod.Labels).String()
+
+	return nil
+}
+
 func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
 		return false
