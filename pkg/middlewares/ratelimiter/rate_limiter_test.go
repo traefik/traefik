@@ -551,6 +551,39 @@ func TestRedisRateLimit(t *testing.T) {
 	}
 }
 
+// An average of 0 means no rate limiting (see the ratelimit reference), so every request
+// must be allowed. The Redis backend must behave like the in-memory one in this case.
+func TestRedisRateLimitAverageZeroDisablesLimiting(t *testing.T) {
+	config := dynamic.RateLimit{
+		Average: 0,
+		Burst:   1,
+		Redis: &dynamic.Redis{
+			Endpoints: []string{"localhost:6379"},
+		},
+	}
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	h, err := New(t.Context(), next, config, "rate-limiter")
+	require.NoError(t, err)
+
+	l := h.(*rateLimiter)
+	rl := l.limiter.(*redisLimiter)
+	rl.client = newMockRedisClient(rl.ttl)
+
+	for range 10 {
+		req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+		req.RemoteAddr = "127.0.0.1:1234"
+
+		rw := httptest.NewRecorder()
+		h.ServeHTTP(rw, req)
+
+		assert.Equal(t, http.StatusOK, rw.Code)
+	}
+}
+
 type mockRedisClient struct {
 	ttl  int
 	keys *ttlmap.Map[[]string]
