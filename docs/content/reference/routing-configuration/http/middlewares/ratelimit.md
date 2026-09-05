@@ -28,8 +28,9 @@ http:
         burst: 200
         redis:
           endpoints:
-            - "redis-primary.example.com:6379"
-            - "redis-replica.example.com:6379"
+            - "sentinel1.example.com:26379"
+            - "sentinel2.example.com:26379"
+            - "sentinel3.example.com:26379"
           username: "ratelimit-user"
           password: "secure-password"
           db: 2
@@ -39,6 +40,9 @@ http:
           readTimeout: 3s
           writeTimeout: 3s
           dialTimeout: 5s
+          masterName: "mymaster"
+          sentinelUsername: "sentinel-user"
+          sentinelPassword: "sentinel-password"
           tls:
             ca: "/etc/ssl/redis-ca.crt"
             cert: "/etc/ssl/redis-client.crt"
@@ -56,7 +60,7 @@ http:
     period = "1s"
     burst = 200
     [http.middlewares.test-ratelimit.rateLimit.redis]
-      endpoints = ["redis-primary.example.com:6379", "redis-replica.example.com:6379"]
+      endpoints = ["sentinel1.example.com:26379", "sentinel2.example.com:26379", "sentinel3.example.com:26379"]
       username = "ratelimit-user"
       password = "secure-password"
       db = 2
@@ -66,6 +70,9 @@ http:
       readTimeout = "3s"
       writeTimeout = "3s"
       dialTimeout = "5s"
+      masterName = "mymaster"
+      sentinelUsername = "sentinel-user"
+      sentinelPassword = "sentinel-password"
       [http.middlewares.test-ratelimit.rateLimit.redis.tls]
         ca = "/etc/ssl/redis-ca.crt"
         cert = "/etc/ssl/redis-client.crt"
@@ -81,7 +88,7 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1s"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=sentinel1.example.com:26379,sentinel2.example.com:26379,sentinel3.example.com:26379"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=2"
@@ -91,6 +98,9 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.masterName=mymaster"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelUsername=sentinel-user"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelPassword=sentinel-password"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key"
@@ -106,7 +116,7 @@ labels:
     "traefik.http.middlewares.test-ratelimit.ratelimit.average=100",
     "traefik.http.middlewares.test-ratelimit.ratelimit.period=1s",
     "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=sentinel1.example.com:26379,sentinel2.example.com:26379,sentinel3.example.com:26379",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=2",
@@ -116,6 +126,9 @@ labels:
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.masterName=mymaster",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelUsername=sentinel-user",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.sentinelPassword=sentinel-password",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key",
@@ -197,7 +210,7 @@ data:
 | <a id="opt-sourceCriterion-ipStrategy-excludedIPs" href="#opt-sourceCriterion-ipStrategy-excludedIPs" title="#opt-sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows scanning the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
 | <a id="opt-sourceCriterion-ipStrategy-ipv6Subnet" href="#opt-sourceCriterion-ipStrategy-ipv6Subnet" title="#opt-sourceCriterion-ipStrategy-ipv6Subnet">`sourceCriterion.ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#sourcecriterionipstrategyipv6subnet) below. |       | No      |
 | <a id="opt-redis" href="#opt-redis" title="#opt-redis">`redis`</a> | The `redis` configuration enables distributed rate limiting by using Redis to store rate limit tokens across multiple Traefik instances. This allows you to enforce consistent rate limits across a cluster of Traefik proxies. <br />When Redis is not configured, Traefik uses in-memory storage for rate limiting, which works only for the individual Traefik instance.|       | No      |
-| <a id="opt-redis-endpoints" href="#opt-redis-endpoints" title="#opt-redis-endpoints">`redis.endpoints`</a> | List of Redis server endpoints for distributed rate limiting. You can specify multiple endpoints for Redis cluster or high availability setups. | "localhost:6379" | No |
+| <a id="opt-redis-endpoints" href="#opt-redis-endpoints" title="#opt-redis-endpoints">`redis.endpoints`</a> | List of Redis server endpoints for distributed rate limiting. You can specify multiple endpoints for Redis Cluster or Redis Sentinel setups. When using Sentinel, these are the Sentinel addresses. | "localhost:6379" | No |
 | <a id="opt-redis-username" href="#opt-redis-username" title="#opt-redis-username">`redis.username`</a> | Username for Redis authentication. | "" | No |
 | <a id="opt-redis-password" href="#opt-redis-password" title="#opt-redis-password">`redis.password`</a> | Password for Redis authentication. In Kubernetes, these can be provided via secrets. | "" | No |
 | <a id="opt-redis-db" href="#opt-redis-db" title="#opt-redis-db">`redis.db`</a> | Redis database number to select. | 0 | No |
@@ -207,6 +220,9 @@ data:
 | <a id="opt-redis-readTimeout" href="#opt-redis-readTimeout" title="#opt-redis-readTimeout">`redis.readTimeout`</a> | Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
 | <a id="opt-redis-writeTimeout" href="#opt-redis-writeTimeout" title="#opt-redis-writeTimeout">`redis.writeTimeout`</a> | Timeout for socket writes. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
 | <a id="opt-redis-dialTimeout" href="#opt-redis-dialTimeout" title="#opt-redis-dialTimeout">`redis.dialTimeout`</a> | Timeout for establishing new connections. Zero means no timeout. | 5s | No |
+| <a id="opt-redis-masterName" href="#opt-redis-masterName" title="#opt-redis-masterName">`redis.masterName`</a> | Name of the Redis master set. Required when using [Redis Sentinel](https://redis.io/docs/management/sentinel/). | "" | Yes (when using Sentinel) |
+| <a id="opt-redis-sentinelUsername" href="#opt-redis-sentinelUsername" title="#opt-redis-sentinelUsername">`redis.sentinelUsername`</a> | Username for Redis Sentinel authentication. Can be different from `redis.username`. | "" | No |
+| <a id="opt-redis-sentinelPassword" href="#opt-redis-sentinelPassword" title="#opt-redis-sentinelPassword">`redis.sentinelPassword`</a> | Password for Redis Sentinel authentication. Can be different from `redis.password`. | "" | No |
 | <a id="opt-redis-tls-ca" href="#opt-redis-tls-ca" title="#opt-redis-tls-ca">`redis.tls.ca`</a> | Path to the certificate authority used for the secure connection to Redis, it defaults to the system bundle. | "" | No |
 | <a id="opt-redis-tls-cert" href="#opt-redis-tls-cert" title="#opt-redis-tls-cert">`redis.tls.cert`</a> | Path to the public certificate used for the secure connection to Redis. When this option is set, the `key` option is required. | "" | No |
 | <a id="opt-redis-tls-key" href="#opt-redis-tls-key" title="#opt-redis-tls-key">`redis.tls.key`</a> | Path to the private key used for the secure connection to Redis. When this option is set, the `cert` option is required. | "" | No |
