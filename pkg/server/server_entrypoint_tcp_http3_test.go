@@ -6,9 +6,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -485,6 +487,120 @@ func TestNewHTTP3ServerTimeouts(t *testing.T) {
 	assert.Equal(t, 42*time.Second, entryPoint.http3Server.Server.IdleTimeout)
 	assert.Equal(t, 12345, entryPoint.http3Server.Server.MaxHeaderBytes)
 	assert.NotNil(t, entryPoint.http3Server.Server.Handler)
+}
+
+func TestHTTP3ECHHandshake(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	echKey, err := traefiktls.NewECHKey("public.example.org")
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	// The outer ClientHello carries the public name, so the ECH keys must live on its TLS config.
+	router.AddHTTPTLSConfig("public.example.org", &tls.Config{
+		Certificates:             []tls.Certificate{tlsCert},
+		EncryptedClientHelloKeys: []tls.EncryptedClientHelloKey{*echKey},
+	}, traefiktls.DefaultTLSConfigName)
+	var hiddenConfigSelected atomic.Bool
+	// After decryption, the inner ClientHello selects the hidden domain's config.
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+			hiddenConfigSelected.Store(true)
+			return &tlsCert, nil
+		},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	configList, err := traefiktls.ECHConfigToConfigList(echKey.Config)
+	require.NoError(t, err)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	conn, err := quic.DialAddr(t.Context(), entryPoint.http3Server.http3conn.LocalAddr().String(), &tls.Config{
+		RootCAs:                        certPool,
+		ServerName:                     "example.com",
+		NextProtos:                     []string{"h3"},
+		EncryptedClientHelloConfigList: configList,
+		MinVersion:                     tls.VersionTLS13,
+	}, &quic.Config{})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.CloseWithError(0, "") })
+
+	state := conn.ConnectionState().TLS
+	assert.True(t, state.ECHAccepted)
+	assert.Equal(t, "example.com", state.ServerName)
+	assert.True(t, hiddenConfigSelected.Load())
+}
+
+func TestHTTP3GetEncryptedClientHelloKeys(t *testing.T) {
+	expected := []tls.EncryptedClientHelloKey{{Config: []byte("config"), PrivateKey: []byte("key")}}
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+	router.AddHTTPTLSConfig("public.example.com", &tls.Config{EncryptedClientHelloKeys: expected}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.NotFoundHandler(), &tls.Config{})
+	router.SetHTTPSForwarder(nil)
+
+	server := &http3server{}
+	server.Switch(router)
+
+	clientConn, serverConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = clientConn.Close()
+		_ = serverConn.Close()
+	})
+
+	keys, err := server.getEncryptedClientHelloKeys(&tls.ClientHelloInfo{
+		ServerName: "public.example.com",
+		Conn:       connWithRemoteAddr{Conn: clientConn},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, expected, keys)
+
+	keys, err = server.getEncryptedClientHelloKeys(&tls.ClientHelloInfo{
+		ServerName: "unknown.example.com",
+		Conn:       connWithRemoteAddr{Conn: clientConn},
+	})
+	require.NoError(t, err)
+	assert.NotNil(t, keys)
+	assert.Empty(t, keys)
+}
+
+type connWithRemoteAddr struct {
+	net.Conn
+}
+
+func (connWithRemoteAddr) RemoteAddr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 443}
 }
 
 type clientSessionCache struct {

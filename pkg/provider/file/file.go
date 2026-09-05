@@ -280,6 +280,9 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 				}
 				options.ClientAuth.CAFiles = caCerts
 
+				options.ECHKeys = readECHKeyContents(ctx, options.ECHKeys)
+				options.ECHDecryptOnlyKeys = readECHKeyContents(ctx, options.ECHDecryptOnlyKeys)
+
 				configuration.TLS.Options[name] = options
 			}
 		}
@@ -477,6 +480,25 @@ func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration
 		ProviderName:  "file",
 		Configuration: configuration,
 	}
+}
+
+// readECHKeyContents inlines ECH key file contents. Unreadable entries are
+// kept as-is so the TLS manager fails the option instead of silently serving
+// it without ECH.
+func readECHKeyContents(ctx context.Context, echKeys []types.FileOrContent) []types.FileOrContent {
+	var contents []types.FileOrContent
+	for _, echKey := range echKeys {
+		content, err := echKey.Read()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Unable to read ECH key")
+			contents = append(contents, echKey)
+			continue
+		}
+
+		contents = append(contents, types.FileOrContent(content))
+	}
+
+	return contents
 }
 
 func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguration) []*tls.CertAndStores {
