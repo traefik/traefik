@@ -51,6 +51,11 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 
 type retryResponseWriterContextKey struct{}
 
+// StripRetryContext returns a context that hides any retry state from its parent context.
+func StripRetryContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, shouldRetryContextKey{}, nil)
+}
+
 // WrapHandler wraps a given http.Handler to inject the httptrace.ClientTrace in the request context when it is needed
 // by the retry middleware.
 func WrapHandler(next http.Handler) http.Handler {
