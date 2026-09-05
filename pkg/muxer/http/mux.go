@@ -122,14 +122,16 @@ var reservedCharacters = map[string]rune{
 }
 
 // getRoutingPath retrieves the routing path from the request context.
-// It returns nil if the routing path is not set in the context.
-func getRoutingPath(req *http.Request) *string {
+// The second return value reports whether it was set.
+func getRoutingPath(req *http.Request) (string, bool) {
 	routingPath := req.Context().Value(mux.RoutingPathKey)
-	if routingPath != nil {
-		rp := routingPath.(string)
-		return &rp
+	if routingPath == nil {
+		return "", false
 	}
-	return nil
+
+	rp, ok := routingPath.(string)
+
+	return rp, ok
 }
 
 // withRoutingPath decodes non-reserved characters in the EscapedPath and stores it in the request context to be able to use it for routing.
@@ -138,7 +140,22 @@ func getRoutingPath(req *http.Request) *string {
 func withRoutingPath(req *http.Request) (*http.Request, error) {
 	escapedPath := req.URL.EscapedPath()
 
+	// Without a percent-encoded character there is nothing to decode, and the
+	// escaped path can be used as the routing path as is. This is the common
+	// case, and it runs on every request.
+	if !strings.ContainsRune(escapedPath, '%') {
+		return req.WithContext(
+			context.WithValue(
+				req.Context(),
+				mux.RoutingPathKey,
+				escapedPath,
+			),
+		), nil
+	}
+
 	var routingPathBuilder strings.Builder
+	routingPathBuilder.Grow(len(escapedPath))
+
 	for i := 0; i < len(escapedPath); i++ {
 		if escapedPath[i] != '%' {
 			routingPathBuilder.WriteByte(escapedPath[i])
