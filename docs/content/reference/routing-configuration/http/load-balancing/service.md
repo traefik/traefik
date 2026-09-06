@@ -307,6 +307,36 @@ Below are the available options for the health check mechanism:
 | <a id="opt-method" href="#opt-method" title="#opt-method">`method`</a> | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |
 | <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines the expected HTTP status code of the response to the health check request.                                            |         | No       |
 
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    my-service:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.my-service]
+    [http.services.my-service.loadBalancer]
+      [http.services.my-service.loadBalancer.healthCheck]
+        path = "/status"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
 ### Sticky Sessions
 
 When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
@@ -482,6 +512,34 @@ Below are the available options for the passive health check mechanism:
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
 | <a id="opt-failureWindow" href="#opt-failureWindow" title="#opt-failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
 | <a id="opt-maxFailedAttempts" href="#opt-maxFailedAttempts" title="#opt-maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    my-service:
+      loadBalancer:
+        passiveHealthCheck:
+          failureWindow: "3s"
+          maxFailedAttempts: 3
+        servers:
+        - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.my-service]
+    [http.services.my-service.loadBalancer]
+      [http.services.my-service.loadBalancer.passiveHealthCheck]
+        failureWindow = "3s"
+        maxFailedAttempts = 3
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
 
 ### Middlewares
 
