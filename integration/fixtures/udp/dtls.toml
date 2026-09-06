@@ -1,0 +1,33 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.dtls]
+    address = ":8094/udp"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+[udp.routers]
+  [udp.routers.to-whoami-a]
+    service = "whoami-a"
+    entryPoints = [ "dtls" ]
+    [udp.routers.to-whoami-a.tls]
+
+[udp.services]
+  [udp.services.whoami-a.loadBalancer]
+    [[udp.services.whoami-a.loadBalancer.servers]]
+      address = "{{ .WhoamiAIP}}:8080"
+
+[[tls.certificates]]
+  certFile = "fixtures/udp/dtls.crt"
+  keyFile = "fixtures/udp/dtls.key"
