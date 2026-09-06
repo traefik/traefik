@@ -115,9 +115,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 				UDPRouters:  test.routerConfig,
 			}
 			serviceManager := udp.NewManager(conf)
-			routerManager := NewManager(conf, serviceManager)
+			routerManager := NewManager(conf, serviceManager, nil)
 
-			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints, nil)
 
 			// even though conf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking

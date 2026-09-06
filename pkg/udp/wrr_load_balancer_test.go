@@ -11,7 +11,7 @@ type fakeHandler struct {
 	name string
 }
 
-func (f fakeHandler) ServeUDP(conn *Conn) {}
+func (f fakeHandler) ServeUDP(conn WriteCloser) {}
 
 func TestLoadBalancing(t *testing.T) {
 	testCases := []struct {

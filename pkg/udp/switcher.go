@@ -10,7 +10,7 @@ type HandlerSwitcher struct {
 }
 
 // ServeUDP implements the Handler interface.
-func (s *HandlerSwitcher) ServeUDP(conn *Conn) {
+func (s *HandlerSwitcher) ServeUDP(conn WriteCloser) {
 	handler := s.handler.Get()
 	h, ok := handler.(Handler)
 	if ok {

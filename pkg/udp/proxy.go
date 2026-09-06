@@ -19,8 +19,8 @@ func NewProxy(address string) (*Proxy, error) {
 }
 
 // ServeUDP implements the Handler interface.
-func (p *Proxy) ServeUDP(conn *Conn) {
-	log.Debug().Msgf("Handling UDP stream from %s to %s", conn.rAddr, p.target)
+func (p *Proxy) ServeUDP(conn WriteCloser) {
+	log.Debug().Msgf("Handling UDP stream from %s to %s", conn.RemoteAddr(), p.target)
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()

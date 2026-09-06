@@ -259,6 +259,10 @@ func (c *Conn) Close() error {
 	return nil
 }
 
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.rAddr
+}
+
 // readLoop waits for data to come from the listener's readLoop.
 // It then waits for a Read operation to be ready to consume said data,
 // that is to say it waits on readCh to receive the slice of bytes that the Read operation wants to read onto.

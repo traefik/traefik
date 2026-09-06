@@ -27,7 +27,7 @@ func TestShutdownUDPConn(t *testing.T) {
 	require.NoError(t, err)
 
 	go entryPoint.Start(t.Context())
-	entryPoint.Switch(udp.HandlerFunc(func(conn *udp.Conn) {
+	entryPoint.Switch(udp.HandlerFunc(func(conn udp.WriteCloser) {
 		for {
 			b := make([]byte, 1024*1024)
 			n, err := conn.Read(b)

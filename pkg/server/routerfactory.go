@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
@@ -23,8 +24,9 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP []string
-	entryPointsUDP []string
+	entryPointsTCP     []string
+	entryPointsUDP     []string
+	entryPointsUDPAddr map[string]net.Addr
 
 	allowACMEByPass map[string]bool
 
@@ -56,6 +58,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	allowACMEByPass := map[string]bool{}
+	entryPointsUDPAddr := map[string]net.Addr{}
 	var entryPointsTCP, entryPointsUDP []string
 	for name, ep := range staticConfiguration.EntryPoints {
 		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
@@ -68,6 +71,13 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 
 		if protocol == "udp" {
 			entryPointsUDP = append(entryPointsUDP, name)
+
+			addr, err := net.ResolveUDPAddr("udp", ep.GetAddress())
+			if err != nil {
+				log.Error().Err(err).Msg("Invalid UDP entrypoint address")
+			} else {
+				entryPointsUDPAddr[name] = addr
+			}
 		} else {
 			entryPointsTCP = append(entryPointsTCP, name)
 		}
@@ -86,6 +96,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	return &RouterFactory{
 		entryPointsTCP:      entryPointsTCP,
 		entryPointsUDP:      entryPointsUDP,
+		entryPointsUDPAddr:  entryPointsUDPAddr,
 		managerFactory:      managerFactory,
 		observabilityMgr:    observabilityMgr,
 		tlsManager:          tlsManager,
@@ -140,8 +151,8 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	// UDP
 	svcUDPManager := udpsvc.NewManager(rtConf)
-	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager)
-	routersUDP := rtUDPManager.BuildHandlers(ctx, f.entryPointsUDP)
+	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager, f.tlsManager)
+	routersUDP := rtUDPManager.BuildHandlers(ctx, f.entryPointsUDP, f.entryPointsUDPAddr)
 
 	rtConf.PopulateUsedBy()
 
