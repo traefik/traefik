@@ -53,6 +53,8 @@ type ServersTransportSpec struct {
 	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
 	// DisableHTTP2 disables HTTP/2 for connections with backend servers.
 	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
+	// PreferIPv6 prefers IPv6 over IPv4 when resolving backend server hostnames, falling back to IPv4 when no IPv6 address is reachable.
+	PreferIPv6 bool `json:"preferIPv6,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	//
 	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.

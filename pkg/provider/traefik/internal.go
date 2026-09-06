@@ -406,6 +406,7 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 		InsecureSkipVerify:  i.staticCfg.ServersTransport.InsecureSkipVerify,
 		RootCAs:             i.staticCfg.ServersTransport.RootCAs,
 		MaxIdleConnsPerHost: i.staticCfg.ServersTransport.MaxIdleConnsPerHost,
+		PreferIPv6:          i.staticCfg.ServersTransport.PreferIPv6,
 	}
 
 	if i.staticCfg.ServersTransport.Spiffe != nil {
