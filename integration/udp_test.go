@@ -1,12 +1,15 @@
 package integration
 
 import (
+	"context"
+	"crypto/x509"
 	"net"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/pion/dtls/v3"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,6 +61,49 @@ func guessWhoUDP(addr string) (string, error) {
 	return string(out[:n]), nil
 }
 
+func guessWhoDTLS(addr, serverName string) (string, string, error) {
+	rAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return "", "", err
+	}
+
+	conn, err := dtls.Dial("udp", rAddr, &dtls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         serverName,
+	})
+	if err != nil {
+		return "", "", err
+	}
+	defer conn.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := conn.HandshakeContext(ctx); err != nil {
+		return "", "", err
+	}
+
+	certCN := ""
+	if state, ok := conn.ConnectionState(); ok && len(state.PeerCertificates) > 0 {
+		cert, err := x509.ParseCertificate(state.PeerCertificates[0])
+		if err != nil {
+			return "", "", err
+		}
+		certCN = cert.Subject.CommonName
+	}
+
+	if _, err := conn.Write([]byte("WHO")); err != nil {
+		return "", "", err
+	}
+
+	out := make([]byte, 2048)
+	n, err := conn.Read(out)
+	if err != nil {
+		return "", "", err
+	}
+	return string(out[:n]), certCN, nil
+}
+
 func (s *UDPSuite) TestWRR() {
 	file := s.adaptFile("fixtures/udp/wrr.toml", struct {
 		WhoamiAIP string
@@ -105,4 +151,27 @@ func (s *UDPSuite) TestWRR() {
 	case <-time.Tick(5 * time.Second):
 		log.Info().Msg("Timeout")
 	}
+}
+
+func (s *UDPSuite) TestDTLS() {
+	file := s.adaptFile("fixtures/udp/dtls.toml", struct {
+		WhoamiAIP string
+	}{
+		WhoamiAIP: s.getComposeServiceIP("whoami-a"),
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("whoami-a"))
+	require.NoError(s.T(), err)
+
+	out, certCN, err := guessWhoDTLS("127.0.0.1:8094", "")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-a")
+	assert.NotEmpty(s.T(), certCN)
+
+	out, certCN, err = guessWhoDTLS("127.0.0.1:8094", "dtls.local")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-a")
+	assert.Equal(s.T(), "dtls.local", certCN)
 }

@@ -13,7 +13,7 @@ import (
 
 func TestProxy_ServeUDP(t *testing.T) {
 	backendAddr := ":8081"
-	go newServer(t, backendAddr, HandlerFunc(func(conn *Conn) {
+	go newServer(t, backendAddr, HandlerFunc(func(conn WriteCloser) {
 		for {
 			b := make([]byte, 1024*1024)
 			n, err := conn.Read(b)
@@ -56,7 +56,7 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 	dataSize := 65507
 
 	backendAddr := ":8083"
-	go newServer(t, backendAddr, HandlerFunc(func(conn *Conn) {
+	go newServer(t, backendAddr, HandlerFunc(func(conn WriteCloser) {
 		buffer := make([]byte, dataSize)
 
 		n, err := conn.Read(buffer)

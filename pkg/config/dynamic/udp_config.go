@@ -55,8 +55,9 @@ func (w *UDPWRRService) SetDefaults() {
 
 // UDPRouter defines the configuration for an UDP router.
 type UDPRouter struct {
-	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
-	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	EntryPoints []string            `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Service     string              `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	TLS         *RouterUDPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -110,4 +111,11 @@ func (l *UDPServersLoadBalancer) mergeable(loadBalancer *UDPServersLoadBalancer)
 type UDPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
 	Port    string `json:"-" toml:"-" yaml:"-" file:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterUDPTLSConfig holds the DTLS configuration for a router.
+type RouterUDPTLSConfig struct {
+	Options string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
 }

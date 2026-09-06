@@ -304,6 +304,10 @@ func (c *Conn) readLoop() {
 	}
 }
 
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.rAddr
+}
+
 func (c *Conn) close() {
 	c.doneOnce.Do(func() {
 		close(c.doneCh)

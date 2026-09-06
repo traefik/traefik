@@ -29,7 +29,7 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 }
 
 // ServeUDP forwards the connection to the right service.
-func (b *WRRLoadBalancer) ServeUDP(conn *Conn) {
+func (b *WRRLoadBalancer) ServeUDP(conn WriteCloser) {
 	b.lock.Lock()
 	next, err := b.next()
 	b.lock.Unlock()

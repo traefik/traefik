@@ -125,7 +125,10 @@ require (
 	sigs.k8s.io/yaml v1.6.0
 )
 
-require github.com/go-acme/lego/v4 v4.35.2
+require (
+	github.com/go-acme/lego/v4 v4.35.2
+	github.com/pion/dtls/v3 v3.1.8
+)
 
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
@@ -323,6 +326,8 @@ require (
 	github.com/ovh/go-ovh v1.9.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/peterhellberg/link v1.2.0 // indirect
+	github.com/pion/logging v0.2.4 // indirect
+	github.com/pion/transport/v4 v4.0.2 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
