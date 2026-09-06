@@ -6,6 +6,8 @@
 - "traefik.http.middlewares.middleware02.basicauth.removeheader=true"
 - "traefik.http.middlewares.middleware02.basicauth.users=foobar, foobar"
 - "traefik.http.middlewares.middleware02.basicauth.usersfile=foobar"
+- "traefik.http.middlewares.middleware03.buffering.disablerequestbuffer=true"
+- "traefik.http.middlewares.middleware03.buffering.disableresponsebuffer=true"
 - "traefik.http.middlewares.middleware03.buffering.maxrequestbodybytes=42"
 - "traefik.http.middlewares.middleware03.buffering.maxresponsebodybytes=42"
 - "traefik.http.middlewares.middleware03.buffering.memrequestbodybytes=42"

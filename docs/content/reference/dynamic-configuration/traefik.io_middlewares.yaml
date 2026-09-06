@@ -88,6 +88,19 @@ spec:
                   This middleware retries or limits the size of requests that can be forwarded to backends.
                   More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#maxrequestbodybytes
                 properties:
+                  disableRequestBuffer:
+                    description: |-
+                      DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
+                      When true, MaxRequestBodyBytes is not enforced.
+                      Default: false.
+                    type: boolean
+                  disableResponseBuffer:
+                    description: |-
+                      DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
+                      This is required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll watch endpoints.
+                      When true, MaxResponseBodyBytes is not enforced.
+                      Default: false.
+                    type: boolean
                   maxRequestBodyBytes:
                     description: |-
                       MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
