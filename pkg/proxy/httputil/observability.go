@@ -43,6 +43,11 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 		tracer.CaptureClientRequest(span, req)
 		tracing.InjectContextIntoCarrier(req)
+
+		// Add logical service name to client span if available.
+		if serviceName, ok := observability.ServiceNameFromContext(req.Context()); ok {
+			span.SetAttributes(attribute.String("traefik.service.name", serviceName))
+		}
 	}
 
 	var statusCode int
