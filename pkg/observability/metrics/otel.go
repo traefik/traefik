@@ -201,9 +201,9 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		err      error
 	)
 	if config.GRPC != nil {
-		exporter, err = newGRPCExporter(ctx, config.GRPC)
+		exporter, err = newGRPCExporter(ctx, config.GRPC, config.Temporality)
 	} else {
-		exporter, err = newHTTPExporter(ctx, config.HTTP)
+		exporter, err = newHTTPExporter(ctx, config.HTTP, config.Temporality)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("creating exporter: %w", err)
@@ -256,7 +256,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 	return meterProvider, nil
 }
 
-func newHTTPExporter(ctx context.Context, config *otypes.OTelHTTP) (sdkmetric.Exporter, error) {
+func newHTTPExporter(ctx context.Context, config *otypes.OTelHTTP, temporality string) (sdkmetric.Exporter, error) {
 	endpoint, err := url.Parse(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
@@ -285,10 +285,14 @@ func newHTTPExporter(ctx context.Context, config *otypes.OTelHTTP) (sdkmetric.Ex
 		opts = append(opts, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
 	}
 
+	if selector := temporalitySelector(temporality); selector != nil {
+		opts = append(opts, otlpmetrichttp.WithTemporalitySelector(selector))
+	}
+
 	return otlpmetrichttp.New(ctx, opts...)
 }
 
-func newGRPCExporter(ctx context.Context, config *otypes.OTelGRPC) (sdkmetric.Exporter, error) {
+func newGRPCExporter(ctx context.Context, config *otypes.OTelGRPC, temporality string) (sdkmetric.Exporter, error) {
 	host, port, err := net.SplitHostPort(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
@@ -313,7 +317,27 @@ func newGRPCExporter(ctx context.Context, config *otypes.OTelGRPC) (sdkmetric.Ex
 		opts = append(opts, otlpmetricgrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 	}
 
+	if selector := temporalitySelector(temporality); selector != nil {
+		opts = append(opts, otlpmetricgrpc.WithTemporalitySelector(selector))
+	}
+
 	return otlpmetricgrpc.New(ctx, opts...)
+}
+
+// temporalitySelector returns the appropriate sdkmetric.TemporalitySelector
+// for the given temporality preference string.
+// Returns nil if the string is empty or unrecognized, allowing the SDK default (cumulative) to apply.
+func temporalitySelector(temporality string) sdkmetric.TemporalitySelector {
+	switch strings.ToLower(strings.TrimSpace(temporality)) {
+	case "delta":
+		return sdkmetric.DeltaTemporalitySelector
+	case "cumulative":
+		return sdkmetric.CumulativeTemporalitySelector
+	case "lowmemory":
+		return sdkmetric.LowMemoryTemporalitySelector
+	default:
+		return nil
+	}
 }
 
 func newOTLPCounterFrom(meter metric.Meter, name, desc string) *otelCounter {
