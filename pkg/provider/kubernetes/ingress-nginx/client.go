@@ -511,7 +511,6 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	return slices.Contains(c.watchedNamespaces, ns)
 }
 
-// isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
 // setupPodDiscovery identifies the controller pods, using the pod this instance
 // runs in as the reference: its namespace and labels select the sibling pods.
 func (c *clientWrapper) setupPodDiscovery(ctx context.Context) error {
@@ -529,7 +528,12 @@ func (c *clientWrapper) setupPodDiscovery(ctx context.Context) error {
 		return fmt.Errorf("pod %s/%s has no label to select the controller pods with", pod.Namespace, pod.Name)
 	}
 
-	// The status addresses are read from the nodes running the controller pods.
+	// The pods and the nodes they run on are watched to keep the status up to
+	// date, so listing both must be allowed for the informers to ever sync.
+	if _, err = c.clientset.CoreV1().Pods(pod.Namespace).List(ctx, metav1.ListOptions{Limit: 1}); err != nil {
+		return fmt.Errorf("listing pods: %w", err)
+	}
+
 	if _, err = c.clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{Limit: 1}); err != nil {
 		return fmt.Errorf("listing nodes: %w", err)
 	}
@@ -540,6 +544,7 @@ func (c *clientWrapper) setupPodDiscovery(ctx context.Context) error {
 	return nil
 }
 
+// isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
 func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
 		return false
