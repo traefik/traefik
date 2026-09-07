@@ -125,8 +125,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0
 )
 
-require github.com/go-acme/lego/v4 v4.35.2
-
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
