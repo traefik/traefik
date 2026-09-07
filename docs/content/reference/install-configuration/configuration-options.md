@@ -5,7 +5,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 # Install Configuration Options
 ## Configuration Options
 
-| Field | Description | Default | 
+| Field | Description | Default |
 |:-------|:------------|:-------|
 | <a id="opt-accesslog" href="#opt-accesslog" title="#opt-accesslog">accesslog</a> | Access log settings. | false |
 | <a id="opt-accesslog-addinternals" href="#opt-accesslog-addinternals" title="#opt-accesslog-addinternals">accesslog.addinternals</a> | Enables access log for internal services (ping, dashboard, etc...). | false |
