@@ -86,7 +86,7 @@ ok      github.com/traefik/traefik   0.005s  coverage: 4.1% of statements
 Test success
 ```
 
-For development purposes, you can specify which tests to run by using (only works the `test-integration` target):
+For development purposes, use `TESTFLAGS` to select tests with the `test-unit` and `test-integration` targets.
 
 ??? note "Configuring Tailscale for Docker Desktop user"
 
@@ -109,9 +109,11 @@ For development purposes, you can specify which tests to run by using (only work
     ```
     
 ```bash
-# Run every tests in the MyTest suite
-TESTFLAGS="-test.run TestAccessLogSuite" make test-integration
+# Run all tests in the TestAccessLogSuite suite
+make test-integration TESTFLAGS='-test.run ^TestAccessLogSuite$$'
 
-# Run the test "MyTest" in the MyTest suite
-TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog$" make test-integration
+# Run only TestAccessLog in the TestAccessLogSuite suite
+make test-integration TESTFLAGS='-test.run ^TestAccessLogSuite$$ -testify.m ^TestAccessLog$$'
 ```
+
+Escape each regular expression end anchor as `$$` so that Make passes a literal `$` to the test command.
