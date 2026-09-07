@@ -25,6 +25,34 @@
 				"web"
 			]
 		},
+		"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"default-forwardauth-service@kubernetescrd"
+			],
+			"service": "default-test-forwardauth-service-route-a856ffa74d5bb442d20f",
+			"rule": "Host(`forwardauth.com`)",
+			"priority": 23,
+			"observability": {
+				"accessLogs": true,
+				"metrics": true,
+				"tracing": true,
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "test-forwardauth-service.route",
+						"kind": "IngressRoute"
+					}
+				}
+			},
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
 		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"entryPoints": [
 				"web"
@@ -186,6 +214,20 @@
 		}
 	},
 	"middlewares": {
+		"default-forwardauth-service@kubernetescrd": {
+			"forwardAuth": {
+				"service": "default-forwardauth-service-forwardauth-service",
+				"path": "/verify",
+				"authResponseHeaders": [
+					"X-Auth-User"
+				],
+				"maxBodySize": -1
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd"
+			]
+		},
 		"default-mychain@kubernetescrd": {
 			"chain": {
 				"middlewares": [
@@ -224,6 +266,37 @@
 		"dashboard@internal": {
 			"status": "enabled"
 		},
+		"default-forwardauth-service-forwardauth-service@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.8:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
+			}
+		},
 		"default-hrw1@kubernetescrd": {
 			"highestRandomWeight": {
 				"services": [
@@ -252,6 +325,40 @@
 				]
 			},
 			"status": "enabled"
+		},
+		"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.8:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd"
+			],
+			"serverStatus": {
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
+			}
 		},
 		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"loadBalancer": {
