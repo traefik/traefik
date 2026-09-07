@@ -137,6 +137,37 @@ than the name of a service defined by another provider.
     addresses the client cannot reach, so a relative `Location` is forwarded to the client
     unchanged and resolved by the client against the original request.
 
+    This only matters for an authentication server that redirects (for example to a login page)
+    instead of answering `2xx`/`401` directly. A relative redirect resolved against the original
+    request means the client's next request lands back on Traefik, under the same host — so, for
+    that redirect to actually resolve to something, a router must also expose the target path.
+    The `service` reused by `forwardAuth` can be reused by that router as well; it is an ordinary
+    service like any other, referenced from wherever it is needed:
+
+    ```yaml
+    http:
+      services:
+        auth-service:
+          loadBalancer:
+            servers:
+              - url: "http://auth-1:9000"
+              - url: "http://auth-2:9000"
+
+      middlewares:
+        test-auth:
+          forwardAuth:
+            service: auth-service
+            path: /verify
+
+      routers:
+        login-page:
+          rule: "Host(`app.example.com`) && PathPrefix(`/login`)"
+          service: auth-service
+    ```
+
+    An authentication server that only ever answers `2xx` or `401` — for example a bearer-token or
+    API-key check — never sends a `Location` header, so none of this applies.
+
 ### authResponseHeadersRegex
 
 It allows partial matching of the regular expression against the header key.
