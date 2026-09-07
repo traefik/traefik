@@ -53,7 +53,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 	w.writeln(`## Configuration Options`)
 
 	w.writeln(`
-| Field | Description | Default | 
+| Field | Description | Default |
 |:-------|:------------|:-------|`)
 
 	for _, flat := range flats {
