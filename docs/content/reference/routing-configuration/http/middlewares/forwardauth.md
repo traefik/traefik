@@ -131,11 +131,11 @@ than the name of a service defined by another provider.
 
 !!! info "Relative Location headers"
 
-    When `preserveLocationHeader` is `false` (the default) and the authentication server answers
-    with a relative `Location` header, the redirect is resolved against the host of the original
-    request rather than against the authentication server. A service's backends are internal
-    addresses, so resolving against one of them would produce a URL the client cannot reach.
-    This matches what a browser would resolve the relative header to on its own.
+    With `address`, a relative `Location` header returned by the authentication server is resolved
+    against the authentication server URL when `preserveLocationHeader` is `false` (the default).
+    With `service` there is no such URL to resolve against, as the service backends are internal
+    addresses the client cannot reach, so a relative `Location` is forwarded to the client
+    unchanged and resolved by the client against the original request.
 
 ### authResponseHeadersRegex
 

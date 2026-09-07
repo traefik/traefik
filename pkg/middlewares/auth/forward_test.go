@@ -1642,3 +1642,100 @@ func TestForwardAuthServiceMaxResponseBodySize(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
+
+func TestForwardAuthServiceRelativeRedirect(t *testing.T) {
+	authService := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Location", "/login?rd=%2Fdashboard")
+		w.WriteHeader(http.StatusFound)
+	})
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("next handler should not be called")
+	})
+
+	auth := dynamic.ForwardAuth{Service: "auth@file"}
+
+	middleware, err := NewForward(t.Context(), next, auth, mockServiceBuilder{handler: authService}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+	assert.Equal(t, "/login?rd=%2Fdashboard", res.Header.Get("Location"))
+}
+
+// TestForwardAuthServiceRelativeRedirectTLS ensures a relative Location is not resolved against the
+// http placeholder URL, which would downgrade an HTTPS request to plaintext.
+func TestForwardAuthServiceRelativeRedirectTLS(t *testing.T) {
+	authService := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Location", "/login")
+		w.WriteHeader(http.StatusFound)
+	})
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("next handler should not be called")
+	})
+
+	auth := dynamic.ForwardAuth{Service: "auth@file"}
+
+	middleware, err := NewForward(t.Context(), next, auth, mockServiceBuilder{handler: authService}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewTLSServer(middleware)
+	t.Cleanup(ts.Close)
+
+	client := ts.Client()
+	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+
+	location := res.Header.Get("Location")
+	assert.Equal(t, "/login", location)
+	assert.NotContains(t, location, "http://")
+}
+
+// TestForwardAuthServiceRequestShape ensures the authentication request handed to the service is
+// shaped like a server-side request: the service handler is a handler, not an http.Client.
+func TestForwardAuthServiceRequestShape(t *testing.T) {
+	var gotBodyNil bool
+	var gotRequestURI string
+
+	authService := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotBodyNil = r.Body == nil
+		gotRequestURI = r.RequestURI
+		w.WriteHeader(http.StatusOK)
+	})
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{Service: "auth@file", Path: "/verify?a=b"}
+
+	middleware, err := NewForward(t.Context(), next, auth, mockServiceBuilder{handler: authService}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.False(t, gotBodyNil)
+	assert.Equal(t, "/verify?a=b", gotRequestURI)
+}
