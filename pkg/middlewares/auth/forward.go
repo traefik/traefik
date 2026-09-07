@@ -225,6 +225,13 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if fa.serviceHandler != nil {
+		// The service handler is a server-side handler: unlike an http.Client it is entitled to
+		// assume a non-nil Body and a set RequestURI, as mirrored from customerrors.newRequest.
+		forwardReq.Body = http.NoBody
+		forwardReq.RequestURI = forwardReq.URL.RequestURI()
+	}
+
 	forwardBody := fa.forwardBody
 	// When a CONNECT method has a body with an unknown length we consider the bytes as tunnel data.
 	// Therefore, we do not want to forward them to the auth server.
@@ -408,7 +415,11 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, error) {
-	if !fa.preserveLocationHeader {
+	// With a service, the authentication request targets a placeholder URL built from the client
+	// Host, not a reachable authentication server, so there is nothing meaningful to resolve a
+	// relative Location against. Forwarding it untouched lets the client resolve it against the
+	// original request, which yields the correct scheme as well as the correct host.
+	if !fa.preserveLocationHeader && fa.serviceHandler == nil {
 		return forwardResponse.Location()
 	}
 
