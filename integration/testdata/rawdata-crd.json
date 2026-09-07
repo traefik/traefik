@@ -18,6 +18,27 @@
 				"web"
 			]
 		},
+		"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"default-forwardauth-service@kubernetescrd"
+			],
+			"service": "default-test-forwardauth-service-route-a856ffa74d5bb442d20f",
+			"rule": "Host(`forwardauth.com`)",
+			"priority": 23,
+			"observability": {
+				"accessLogs": true,
+				"metrics": true,
+				"tracing": true,
+				"traceVerbosity": "minimal"
+			},
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
 		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"entryPoints": [
 				"web"
@@ -137,6 +158,20 @@
 		}
 	},
 	"middlewares": {
+		"default-forwardauth-service@kubernetescrd": {
+			"forwardAuth": {
+				"service": "default-forwardauth-service-forwardauth-service",
+				"path": "/verify",
+				"authResponseHeaders": [
+					"X-Auth-User"
+				],
+				"maxBodySize": -1
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd"
+			]
+		},
 		"default-mychain@kubernetescrd": {
 			"chain": {
 				"middlewares": [
@@ -175,6 +210,28 @@
 		"dashboard@internal": {
 			"status": "enabled"
 		},
+		"default-forwardauth-service-forwardauth-service@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.4:80"
+					},
+					{
+						"url": "http://10.42.0.7:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.7:80": "UP"
+			}
+		},
 		"default-hrw1@kubernetescrd": {
 			"highestRandomWeight": {
 				"services": [
@@ -204,14 +261,39 @@
 			},
 			"status": "enabled"
 		},
+		"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.4:80"
+					},
+					{
+						"url": "http://10.42.0.7:80"
+					}
+				],
+				"strategy": "wrr",
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test-forwardauth-service-route-a856ffa74d5bb442d20f@kubernetescrd"
+			],
+			"serverStatus": {
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.7:80": "UP"
+			}
+		},
 		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.7:80"
 					}
 				],
 				"strategy": "wrr",
@@ -225,18 +307,18 @@
 				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.7:80": "UP"
 			}
 		},
 		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.7:80"
 					}
 				],
 				"strategy": "wrr",
@@ -250,18 +332,18 @@
 				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.7:80": "UP"
 			}
 		},
 		"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.7:80"
 					}
 				],
 				"strategy": "wrr",
@@ -276,18 +358,18 @@
 				"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.7:80": "UP"
 			}
 		},
 		"default-whoami-80@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.7:80"
 					}
 				],
 				"strategy": "wrr",
@@ -298,8 +380,8 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.7:80": "UP"
 			}
 		},
 		"default-wrr1@kubernetescrd": {
@@ -371,16 +453,16 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.2:8080"
+						"address": "10.42.0.6:8080"
 					},
 					{
-						"address": "10.42.0.6:8080"
+						"address": "10.42.0.10:8080"
 					}
 				]
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.2:8080": "UP",
+				"10.42.0.10:8080": "UP",
 				"10.42.0.6:8080": "UP"
 			}
 		},
@@ -430,10 +512,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.4:8090"
+						"address": "10.42.0.2:8090"
 					},
 					{
-						"address": "10.42.0.7:8090"
+						"address": "10.42.0.9:8090"
 					}
 				]
 			},
