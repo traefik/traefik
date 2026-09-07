@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -504,6 +505,9 @@ func (fa *forwardAuth) doForward(forwardReq *http.Request) (*http.Response, erro
 	return recorder.result(forwardReq), nil
 }
 
+// Compile time validation that the response recorder implements http interfaces correctly.
+var _ middlewares.Stateful = &authResponseRecorder{}
+
 // authResponseRecorder captures the response produced by the service handler,
 // so that ForwardAuth can inspect it before deciding whether to allow the request.
 type authResponseRecorder struct {
@@ -552,6 +556,16 @@ func (r *authResponseRecorder) Write(buf []byte) (int, error) {
 	}
 
 	return len(buf), nil
+}
+
+// Flush is a no-op: the whole response is buffered before ForwardAuth inspects
+// it, so there is nothing to stream to a client mid-request.
+func (r *authResponseRecorder) Flush() {}
+
+// Hijack is not supported: the authentication request is a plain request/response
+// exchange with no connection to hand over.
+func (r *authResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return nil, nil, fmt.Errorf("%T does not implement http.Hijacker", r)
 }
 
 func (r *authResponseRecorder) result(forwardReq *http.Request) *http.Response {

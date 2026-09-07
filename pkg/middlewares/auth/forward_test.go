@@ -1739,3 +1739,45 @@ func TestForwardAuthServiceRequestShape(t *testing.T) {
 	assert.False(t, gotBodyNil)
 	assert.Equal(t, "/verify?a=b", gotRequestURI)
 }
+
+func TestForwardAuthServiceResponseWriterInterfaces(t *testing.T) {
+	authService := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, isFlusher := w.(http.Flusher)
+		_, isHijacker := w.(http.Hijacker)
+		assert.True(t, isFlusher, "recorder must implement http.Flusher")
+		assert.True(t, isHijacker, "recorder must implement http.Hijacker")
+
+		w.Header().Set("X-Auth-User", "user@example.com")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "chunk-1")
+		w.(http.Flusher).Flush()
+		fmt.Fprint(w, "chunk-2")
+
+		_, _, err := w.(http.Hijacker).Hijack()
+		require.Error(t, err)
+	})
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{Service: "auth@file", AuthResponseHeaders: []string{"X-Auth-User"}}
+
+	middleware, err := NewForward(t.Context(), next, auth, mockServiceBuilder{handler: authService}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, "traefik\n", string(body))
+}
