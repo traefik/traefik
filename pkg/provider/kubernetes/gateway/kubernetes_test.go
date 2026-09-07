@@ -6028,7 +6028,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							EntryPoints: []string{"tls"},
 							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-3d1ac395a1a425187f7e-wrr",
 							Priority:    15,
-							Rule:        `HostSNI("foo.example.com") || HostSNI("bar.example.com")`,
+							Rule:        `HostSNI("bar.example.com") || HostSNI("foo.example.com")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
@@ -9317,7 +9317,7 @@ func Test_findMatchingHostnames(t *testing.T) {
 			desc:             "Multiple route hostnames with multiple matching route hostnames",
 			listenerHostname: new(gatev1.Hostname("*.foo.com")),
 			routeHostnames:   []gatev1.Hostname{"toto.foo.com", "test.foo.com", "test.buz.com"},
-			want:             []gatev1.Hostname{"toto.foo.com", "test.foo.com"},
+			want:             []gatev1.Hostname{"test.foo.com", "toto.foo.com"},
 			wantOk:           true,
 		},
 		{
@@ -9325,6 +9325,13 @@ func Test_findMatchingHostnames(t *testing.T) {
 			listenerHostname: new(gatev1.Hostname("*.foo.com")),
 			routeHostnames:   []gatev1.Hostname{"*.bar.foo.com"},
 			want:             []gatev1.Hostname{"*.bar.foo.com"},
+			wantOk:           true,
+		},
+		{
+			desc:             "Duplicate intersections are returned once",
+			listenerHostname: new(gatev1.Hostname("bar.foo.com")),
+			routeHostnames:   []gatev1.Hostname{"*.foo.com", "bar.foo.com"},
+			want:             []gatev1.Hostname{"bar.foo.com"},
 			wantOk:           true,
 		},
 	}

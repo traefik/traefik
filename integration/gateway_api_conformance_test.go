@@ -191,11 +191,11 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	// fail before the test binary timeout, which would discard the whole run
 	// and its report.
 	timeoutConfig := config.DefaultTimeoutConfig()
-	timeoutConfig.GatewayMustHaveAddress = 120 * time.Second
-	timeoutConfig.GatewayMustHaveCondition = 120 * time.Second
-	timeoutConfig.GWCMustBeAccepted = 120 * time.Second
-	timeoutConfig.ListenerSetMustHaveCondition = 120 * time.Second
-	timeoutConfig.NamespacesMustBeReady = 300 * time.Second
+	timeoutConfig.GatewayMustHaveAddress = 30 * time.Second
+	timeoutConfig.GatewayMustHaveCondition = 30 * time.Second
+	timeoutConfig.GWCMustBeAccepted = 30 * time.Second
+	timeoutConfig.ListenerSetMustHaveCondition = 30 * time.Second
+	timeoutConfig.NamespacesMustBeReady = 60 * time.Second
 
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
 		Client:     s.kubeClient,
@@ -224,10 +224,10 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 			},
 			// Here we are concatenating the features supported by the Traefik Gateway API implementation with the
 			// features supported by the Traefik Gateway API operator.
-			// TODO: support static addresses feature.
 			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
 				features.GatewayEmptyAddressFeature.Name,
 				features.GatewayInfrastructurePropagationFeature.Name,
+				features.GatewayStaticAddressesFeature.Name,
 			}),
 		},
 	})

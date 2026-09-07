@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"slices"
 	"sort"
@@ -1179,20 +1180,20 @@ func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []g
 		return []gatev1.Hostname{*listenerHostname}, true
 	}
 
-	var matches []gatev1.Hostname
+	matches := map[gatev1.Hostname]struct{}{}
 	for _, routeHostname := range routeHostnames {
 		if match := findMatchingHostname(*listenerHostname, routeHostname); match != "" {
-			matches = append(matches, match)
+			matches[match] = struct{}{}
 			continue
 		}
 
 		if match := findMatchingHostname(routeHostname, *listenerHostname); match != "" {
-			matches = append(matches, match)
+			matches[match] = struct{}{}
 			continue
 		}
 	}
 
-	return matches, len(matches) > 0
+	return slices.Sorted(maps.Keys(matches)), len(matches) > 0
 }
 
 func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
