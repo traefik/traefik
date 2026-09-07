@@ -282,10 +282,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
+		forwardAuthName, forwardAuth, forwardAuthService, err := p.createForwardAuthMiddleware(ctxMid, client, middleware.Namespace, id+"-forwardauth-service", middleware.Spec.ForwardAuth)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading forward auth middleware")
 			continue
+		}
+
+		if forwardAuth != nil && forwardAuthName != "" {
+			forwardAuth.Service = forwardAuthName
+
+			if forwardAuthService != nil {
+				serviceName := id + "-forwardauth-service"
+				forwardAuth.Service = serviceName
+				addToConfig(log.Ctx(ctxMid), "service", serviceName, conf.HTTP.Services, forwardAuthService)
+			}
 		}
 
 		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, id+"-errorpage-service", middleware.Spec.Errors)
@@ -1077,16 +1087,31 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	return r, nil
 }
 
-func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
+// createForwardAuthMiddleware builds the ForwardAuth dynamic configuration.
+// When the middleware references a service, it also returns the name of the
+// service to build, and the corresponding dynamic service configuration,
+// mirroring createErrorPageMiddleware.
+func (p *Provider) createForwardAuthMiddleware(ctx context.Context, client Client, namespace, serviceKey string, auth *traefikv1alpha1.ForwardAuth) (string, *dynamic.ForwardAuth, *dynamic.Service, error) {
 	if auth == nil {
-		return nil, nil
+		return "", nil, nil, nil
 	}
-	if len(auth.Address) == 0 {
-		return nil, errors.New("forward authentication requires an address")
+
+	if len(auth.Address) == 0 && auth.Service == nil {
+		return "", nil, nil, errors.New("forward authentication requires an address or a service")
+	}
+	if len(auth.Address) > 0 && auth.Service != nil {
+		return "", nil, nil, errors.New("forward authentication address and service options are mutually exclusive")
+	}
+	if auth.Service != nil && auth.TLS != nil {
+		return "", nil, nil, errors.New("forward authentication cannot use the tls option with a service, configure a ServersTransport on the service instead")
+	}
+	if len(auth.Path) > 0 && auth.Service == nil {
+		return "", nil, nil, errors.New("forward authentication path option requires the service option")
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
 		Address:                  auth.Address,
+		Path:                     auth.Path,
 		TrustForwardHeader:       auth.TrustForwardHeader,
 		AuthResponseHeaders:      auth.AuthResponseHeaders,
 		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
@@ -1114,17 +1139,17 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		}
 
 		if len(auth.TLS.CASecret) > 0 {
-			caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
+			caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, client)
 			if err != nil {
-				return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+				return "", nil, nil, fmt.Errorf("failed to load auth ca secret: %w", err)
 			}
 			forwardAuth.TLS.CA = caSecret
 		}
 
 		if len(auth.TLS.CertSecret) > 0 {
-			authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
+			authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, client)
 			if err != nil {
-				return nil, fmt.Errorf("failed to load auth secret: %w", err)
+				return "", nil, nil, fmt.Errorf("failed to load auth secret: %w", err)
 			}
 			forwardAuth.TLS.Cert = authSecretCert
 			forwardAuth.TLS.Key = authSecretKey
@@ -1133,7 +1158,25 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		forwardAuth.TLS.CAOptional = auth.TLS.CAOptional
 	}
 
-	return forwardAuth, nil
+	if auth.Service == nil {
+		return "", forwardAuth, nil, nil
+	}
+
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
+		nameBuilder:               p.nameBuilder,
+	}
+
+	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, auth.Service.LoadBalancerSpec, serviceKey)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	return balancerName, forwardAuth, balancerServerHTTP, nil
 }
 
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
