@@ -129,6 +129,14 @@ than the name of a service defined by another provider.
     to the backend), set a [`serversTransport`](../../kubernetes/crd/http/serverstransport.md) on
     the middleware's `service`.
 
+!!! info "Relative Location headers"
+
+    When `preserveLocationHeader` is `false` (the default) and the authentication server answers
+    with a relative `Location` header, the redirect is resolved against the host of the original
+    request rather than against the authentication server. A service's backends are internal
+    addresses, so resolving against one of them would produce a URL the client cannot reach.
+    This matches what a browser would resolve the relative header to on its own.
+
 ### authResponseHeadersRegex
 
 It allows partial matching of the regular expression against the header key.
