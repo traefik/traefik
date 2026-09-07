@@ -317,6 +317,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// auth-response-headers semantics. By design, Traefik asserts no identity the
 	// operator did not opt into: trusting unlisted client headers downstream is a
 	// backend misconfiguration, not a spoofing flaw here.
+	// Note: the header names aliasing the authResponseHeaders (e.g. X_Auth_User or X.Auth.User) are not handled here,
+	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 	for _, headerName := range fa.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)

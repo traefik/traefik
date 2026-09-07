@@ -98,7 +98,7 @@ spec:
 | <a id="opt-routesn-observability-traceVerbosity" href="#opt-routesn-observability-traceVerbosity" title="#opt-routesn-observability-traceVerbosity">`routes[n].`<br />`observability.`<br />`traceVerbosity`</a> | Defines the verbosity level of the tracing for this route. Valid values are `minimal` and `detailed`. See [here](../../../http/routing/observability.md) for more information.                                                                                                                                                                                                   | minimal | No       |
 | <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | TLS configuration.<br />Can be an empty value(`{}`):<br />A self signed is generated in such a case<br />(or the [default certificate](../tls/tlsstore.md) is used if it is defined.)                                                                                                                                                                                                   |         | No       |
 | <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].`<br />`services`</a> | List of any combination of [TraefikService](./traefikservice.md) and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br /> Exhaustive list of option in the [`Service`](./service.md#configuration-options) documentation.                                                                                                              |         | No       |
-| <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the same namesapce as the `IngressRoute`)                                                                                                                                                                                                                             | ""      | No       |
+| <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the same namespace as the `IngressRoute`)                                                                                                                                                                                                                             | ""      | No       |
 | <a id="opt-tls-options-name" href="#opt-tls-options-name" title="#opt-tls-options-name">`tls.`<br />`options.name`</a> | Name of the [`TLSOption`](../tls/tlsoption.md) to use.<br />More information [here](#tls-options).                                                                                                                                                                                                                                                                                      | ""      | No       |
 | <a id="opt-tls-options-namespace" href="#opt-tls-options-namespace" title="#opt-tls-options-namespace">`tls.`<br />`options.namespace`</a> | Namespace of the [`TLSOption`](../tls/tlsoption.md) to use.                                                                                                                                                                                                                                                                                                                             | ""      | No       |
 | <a id="opt-tls-certResolver" href="#opt-tls-certResolver" title="#opt-tls-certResolver">`tls.certResolver`</a> | Name of the [Certificate Resolver](../../../../install-configuration/tls/certificate-resolvers/overview.md) to use to generate automatic TLS certificates.                                                                                                                                                                                                                       | ""      | No       |
@@ -183,6 +183,10 @@ Since a TLS options reference is mapped to a host name, if a configuration intro
 a situation where the same host name (from a `Host` rule) gets matched with two 
 TLS options references, a conflict occurs, such as in the example below.
 
+The conflict detection is not scoped to a namespace: an `IngressRoute` defined in any
+namespace, and even a router coming from another provider, conflicts with this one as
+soon as it serves the same host name on the same entry point.
+
 ??? example
 
     ```yaml tab="IngressRoute01"
@@ -225,6 +229,14 @@ TLS options references, a conflict occurs, such as in the example below.
 If that happens, both mappings are discarded, and the host name
 (`example.net` in the example) for these routers gets associated with
  the default TLS options instead.
+
+!!! important "Default TLS Options"
+
+    The `default` TLS options are the fallback of the conflict resolution, and should
+    therefore not be less secure than the options they can replace.
+
+    See [Conflicting TLS Options](../../../http/tls/tls-options.md#conflicting-tls-options)
+    for more information.
 
 ### Multi-Layer Routing with IngressRoutes
 

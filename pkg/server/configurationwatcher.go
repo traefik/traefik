@@ -21,6 +21,8 @@ type ConfigurationWatcher struct {
 
 	defaultEntryPoints []string
 
+	strictTLSOptions bool
+
 	allProvidersConfigs chan dynamic.Message
 
 	newConfigs chan dynamic.Configurations
@@ -39,6 +41,7 @@ func NewConfigurationWatcher(
 	pvd provider.Provider,
 	defaultEntryPoints []string,
 	requiredProvider string,
+	strictTLSOptions bool,
 ) *ConfigurationWatcher {
 	return &ConfigurationWatcher{
 		providerAggregator:  pvd,
@@ -47,6 +50,7 @@ func NewConfigurationWatcher(
 		routinesPool:        routinesPool,
 		defaultEntryPoints:  defaultEntryPoints,
 		requiredProvider:    requiredProvider,
+		strictTLSOptions:    strictTLSOptions,
 	}
 }
 
@@ -93,17 +97,18 @@ func (c *ConfigurationWatcher) startProviderAggregator() {
 // is always available for processing.
 func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	newConfigurations := make(dynamic.Configurations)
-	transformedConfigurations := make(dynamic.Configurations)
 
 	var output chan dynamic.Configurations
+
+	var pending dynamic.Configurations
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		// DeepCopy is necessary because transformedConfigurations gets modified later by the consumer of c.newConfigs.
-		case output <- transformedConfigurations.DeepCopy():
+		case output <- pending:
 			output = nil
+			pending = nil
 
 		default:
 			select {
@@ -136,16 +141,20 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
 
-				transformedConfigurations = newConfigurations
+				// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
+				transformedConfigurations := newConfigurations.DeepCopy()
 				for _, transform := range c.configurationTransformers {
-					transformedConfigurations = transform(logger.WithContext(ctx), transformedConfigurations.DeepCopy())
+					// Each transformer gets its own copy because a transformer could keep a reference to the one it received.
+					transformedConfigurations = transform(logger.WithContext(ctx), transformedConfigurations)
+					transformedConfigurations = transformedConfigurations.DeepCopy()
 				}
 
 				output = c.newConfigs
+				pending = transformedConfigurations
 
-			// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
-			case output <- transformedConfigurations.DeepCopy():
+			case output <- pending:
 				output = nil
+				pending = nil
 			}
 		}
 	}
@@ -177,7 +186,7 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 			conf := mergeConfiguration(newConfigs.DeepCopy(), c.defaultEntryPoints)
 			conf = applyModel(conf)
 			if conf.HTTP != nil {
-				conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers)
+				conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers, c.strictTLSOptions)
 			}
 
 			for _, listener := range c.configurationListeners {
