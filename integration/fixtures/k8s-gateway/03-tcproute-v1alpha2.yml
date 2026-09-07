@@ -1,0 +1,17 @@
+---
+# TCPRoute authored under the v1alpha2 API: the only version served by the
+# Gateway API v1.5.1 CRDs.
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+    - name: my-tls-gateway
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 8080
+          weight: 1

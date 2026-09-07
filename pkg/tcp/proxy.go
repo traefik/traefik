@@ -102,6 +102,6 @@ func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 
 // isSocketNotConnectedError reports whether err is a socket not connected error.
 func isSocketNotConnectedError(err error) bool {
-	var oerr *net.OpError
-	return errors.As(err, &oerr) && errors.Is(err, syscall.ENOTCONN)
+	_, ok := errors.AsType[*net.OpError](err)
+	return ok && errors.Is(err, syscall.ENOTCONN)
 }

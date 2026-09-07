@@ -65,7 +65,7 @@ func NewTLSStoreInformer(client versioned.Interface, namespace string, resyncPer
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredTLSStoreInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
@@ -90,7 +90,7 @@ func NewFilteredTLSStoreInformer(client versioned.Interface, namespace string, r
 				}
 				return client.TraefikV1alpha1().TLSStores(namespace).Watch(ctx, options)
 			},
-		},
+		}, client),
 		&crdtraefikiov1alpha1.TLSStore{},
 		resyncPeriod,
 		indexers,

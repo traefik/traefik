@@ -28,8 +28,12 @@ package v1alpha1
 
 // MiddlewareRefApplyConfiguration represents a declarative configuration of the MiddlewareRef type for use
 // with apply.
+//
+// MiddlewareRef is a reference to a Middleware resource.
 type MiddlewareRefApplyConfiguration struct {
-	Name      *string `json:"name,omitempty"`
+	// Name defines the name of the referenced Middleware resource.
+	Name *string `json:"name,omitempty"`
+	// Namespace defines the namespace of the referenced Middleware resource.
 	Namespace *string `json:"namespace,omitempty"`
 }
 

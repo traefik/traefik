@@ -101,7 +101,7 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 		configurations[containerName] = confFromLabel
 	}
 
-	return provider.Merge(ctx, configurations)
+	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
 }
 
 func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {

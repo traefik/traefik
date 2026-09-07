@@ -1,6 +1,7 @@
 package try
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -25,6 +26,8 @@ func BodyContains(values ...string) ResponseCondition {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
+		res.Body = io.NopCloser(bytes.NewBuffer(body))
+
 		for _, value := range values {
 			if !strings.Contains(string(body), value) {
 				return fmt.Errorf("could not find '%s' in body '%s'", value, string(body))
@@ -42,6 +45,8 @@ func BodyNotContains(values ...string) ResponseCondition {
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
+
+		res.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		for _, value := range values {
 			if strings.Contains(string(body), value) {
@@ -61,6 +66,8 @@ func BodyContainsOr(values ...string) ResponseCondition {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
+		res.Body = io.NopCloser(bytes.NewBuffer(body))
+
 		for _, value := range values {
 			if strings.Contains(string(body), value) {
 				return nil
@@ -78,6 +85,8 @@ func HasBody() ResponseCondition {
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
+
+		res.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		if len(body) == 0 {
 			return errors.New("response doesn't have body content")

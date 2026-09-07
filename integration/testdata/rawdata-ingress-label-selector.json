@@ -53,7 +53,15 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "test.ingress",
+						"serviceName": "whoami",
+						"servicePort": "http"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [

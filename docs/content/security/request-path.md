@@ -133,3 +133,8 @@ entryPoints:
 --entryPoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=false
 --entryPoints.websecure.http.encodedCharacters.allowEncodedHash=false
 ```
+
+!!! info "Encoded Characters filtering on a per-route basis"
+
+    If you need to configure encoded character filtering on a per-route basis, you can use the `EncodedCharacters` middleware.
+    Refer to the documentation for the [`EncodedCharacter` middleware](../reference/routing-configuration/http/middlewares/encodedcharacters.md) for detailed implementation instructions and configuration options.

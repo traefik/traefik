@@ -86,6 +86,20 @@ spec:
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-maxage">`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`</a> | Sets the Max-Age attribute (in seconds) on the sticky session cookie.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `42` |
 | <a id="opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" href="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path" title="#opt-traefik-ingress-kubernetes-ioservice-sticky-cookie-path">`traefik.ingress.kubernetes.io/service.sticky.cookie.path`</a> | Sets the Path attribute on the sticky session cookie, defining the path that must exist in the requested URL.<br/>See [sticky sessions](../kubernetes/crd/http/traefikservice.md#stickiness-on-multiple-levels) for more information. | `/foobar` |
 
+!!! note "Service annotations and middlewares"
+
+    These `service` annotations configure a Kubernetes Service only when it is used as a backend of the Ingress.
+    They are not applied to a Service that is referenced by a middleware, such as the [ErrorPages](../http/middlewares/errorpages.md) middleware: the middleware's service is configured from the middleware definition, which does not read annotations set on Kubernetes Services.
+    To set the `serversTransport` in that case, declare it in the middleware definition instead.
+
+??? info "`traefik.ingress.kubernetes.io/service.middlewares`"
+
+    See [service middlewares](../http/load-balancing/service.md#middlewares) for more information.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.middlewares: auth@file,prefix@kubernetescrd
+    ```
+
 ## TLS
 
 ### Enabling TLS via HTTP Options on Entrypoint
@@ -232,7 +246,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.6
+              image: traefik:v3.7
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls

@@ -28,7 +28,11 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
 		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteTCP.Name).Str("namespace", ingressRouteTCP.Namespace).Logger()
 
-		if !shouldProcessIngress(p.IngressClass, ingressRouteTCP.Annotations[annotationKubernetesIngressClass]) {
+		ingressClassName, usingDeprecatedAnnotation := getIngressClassName(ingressRouteTCP.Spec.IngressClassName, ingressRouteTCP.Annotations)
+		if usingDeprecatedAnnotation {
+			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
+		}
+		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue
 		}
 
@@ -329,7 +333,7 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 	}
 
 	if strings.Contains(serversTransportName, providerNamespaceSeparator) {
-		if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
+		if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+ProviderName) {
 			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
 			// if the provider namespace kubernetescrd is used,
 			// we don't allow this format to avoid cross namespace references.

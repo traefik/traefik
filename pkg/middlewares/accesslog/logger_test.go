@@ -21,9 +21,11 @@ import (
 	"time"
 
 	"github.com/containous/alice"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
@@ -58,40 +60,102 @@ var (
 	testStart                     = time.Now()
 )
 
-func TestOTelAccessLogWithBody(t *testing.T) {
+func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		format      string
-		bodyCheckFn func(*testing.T, string)
+		desc             string
+		format           string
+		filePath         string
+		dualOutput       bool
+		bodyCheckFn      func(*testing.T, string)
+		outLoggerCheckFn func(*testing.T, *logrus.Logger)
 	}{
 		{
-			desc:   "Common format with log body",
-			format: CommonFormat,
+			desc:       "Common format with log body",
+			format:     CommonFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
 				// For common format, verify the body contains the Traefik common log formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
 			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.Equal(t, l.Out, io.Discard)
+			},
 		},
 		{
-			desc:   "Generic CLF format with log body",
-			format: GenericCLFFormat,
+			desc:       "Generic CLF format with log body",
+			format:     GenericCLFFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
 				// For generic CLF format, verify the body contains the CLF formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*"}`, log)
 			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.Equal(t, l.Out, io.Discard)
+			},
 		},
 		{
-			desc:   "JSON format with log body",
-			format: JSONFormat,
+			desc:       "JSON format with log body",
+			format:     JSONFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
 				// For JSON format, verify the body contains the JSON formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*DownstreamStatus.*:200.*"}`, log)
+
+				// The body carries the entry level and time, not the logrus zero values.
+				assert.Regexp(t, `\\"level\\":\\"info\\"`, log)
+				assert.NotRegexp(t, `0001-01-01T00:00:00Z`, log)
+			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.Equal(t, l.Out, io.Discard)
+			},
+		},
+		{
+			desc:       "Common format with log body and Dual Output (STDOUT + OTEL)",
+			format:     CommonFormat,
+			filePath:   "",
+			dualOutput: true,
+			bodyCheckFn: func(t *testing.T, log string) {
+				t.Helper()
+
+				// For common format, verify the body contains the Traefik common log formatted string
+				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
+			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.NotEqual(t, l.Out, io.Discard)
+			},
+		},
+		{
+			desc:       "Common format with log body and Dual Output (File logging + OTEL)",
+			format:     CommonFormat,
+			filePath:   filepath.Join(t.TempDir(), "traefik.log"),
+			dualOutput: true,
+			bodyCheckFn: func(t *testing.T, log string) {
+				t.Helper()
+
+				// For common format, verify the body contains the Traefik common log formatted string
+				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
+			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.NotEqual(t, l.Out, io.Discard)
 			},
 		},
 	}
@@ -120,7 +184,9 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 			t.Cleanup(collector.Close)
 
 			config := &otypes.AccessLog{
-				Format: test.format,
+				Format:     test.format,
+				DualOutput: test.dualOutput,
+				FilePath:   test.filePath,
 				OTLP: &otypes.OTelLog{
 					ServiceName:        "test",
 					ResourceAttributes: map[string]string{"resource": "attribute"},
@@ -181,6 +247,9 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 
 				// Run format-specific body checks
 				test.bodyCheckFn(t, log)
+
+				// Run OUT logger checks
+				test.outLoggerCheckFn(t, logHandler.logger)
 			}
 		})
 	}
@@ -390,7 +459,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 func TestCommonLogger(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -402,7 +471,7 @@ func TestCommonLogger(t *testing.T) {
 func TestCommonLoggerWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	// wait a bit for the buffer to be written in the file.
 	time.Sleep(50 * time.Millisecond)
@@ -422,7 +491,7 @@ func TestCommonLoggerDropQueryParameters(t *testing.T) {
 		},
 	}
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat, Fields: fieldConfig}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -434,7 +503,7 @@ func TestCommonLoggerDropQueryParameters(t *testing.T) {
 func TestLoggerGenericCLF(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -446,7 +515,7 @@ func TestLoggerGenericCLF(t *testing.T) {
 func TestLoggerGenericCLFWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat, BufferingSize: 1024}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	// wait a bit for the buffer to be written in the file.
 	time.Sleep(50 * time.Millisecond)
@@ -466,7 +535,7 @@ func TestLoggerGenericCLFDropQueryParameters(t *testing.T) {
 		},
 	}
 	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat, Fields: fieldConfig}
-	doLogging(t, config, false)
+	doLogging(t, config, false, false)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -513,6 +582,7 @@ func TestLoggerJSON(t *testing.T) {
 		config   *otypes.AccessLog
 		tls      bool
 		tracing  bool
+		metadata bool
 		expected map[string]func(t *testing.T, value any)
 	}{
 		{
@@ -596,6 +666,50 @@ func TestLoggerJSON(t *testing.T) {
 				SpanID:                    assertString("0100000000000000"),
 				OTelTraceID:               assertString("01000000000000000000000000000000"),
 				OTelSpanID:                assertString("0100000000000000"),
+			},
+		},
+		{
+			desc: "default config with metadata",
+			config: &otypes.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+			},
+			metadata: true,
+			expected: map[string]func(t *testing.T, value any){
+				RequestContentSize:         assertFloat64(0),
+				RequestHost:                assertString(testHostname),
+				RequestAddr:                assertString(testHostname),
+				RequestMethod:              assertString(testMethod),
+				RequestPath:                assertString(testPath + "?param1=test1&param2=test2"),
+				RequestProtocol:            assertString(testProto),
+				RequestScheme:              assertString(testScheme),
+				RequestPort:                assertString("-"),
+				DownstreamStatus:           assertFloat64(float64(testStatus)),
+				DownstreamContentSize:      assertFloat64(float64(len(testContent))),
+				OriginContentSize:          assertFloat64(float64(len(testContent))),
+				OriginStatus:               assertFloat64(float64(testStatus)),
+				RequestRefererHeader:       assertString(testReferer),
+				RequestUserAgentHeader:     assertString(testUserAgent),
+				RouterName:                 assertString(testRouterName),
+				ServiceURL:                 assertString(testServiceName),
+				ClientUsername:             assertString(testUsername),
+				ClientHost:                 assertString(testHostname),
+				ClientPort:                 assertString(strconv.Itoa(testPort)),
+				ClientAddr:                 assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
+				"level":                    assertString("info"),
+				"msg":                      assertString(""),
+				"downstream_Content-Type":  assertString("text/plain; charset=utf-8"),
+				RequestCount:               assertFloat64NotZero(),
+				Duration:                   assertFloat64NotZero(),
+				Overhead:                   assertFloat64NotZero(),
+				RetryAttempts:              assertFloat64(float64(testRetryAttempts)),
+				"time":                     assertNotEmpty(),
+				"StartLocal":               assertNotEmpty(),
+				"StartUTC":                 assertNotEmpty(),
+				KubernetesIngressNamespace: assertString("test-namespace"),
+				KubernetesIngressName:      assertString("test-ingress"),
+				KubernetesServiceName:      assertString("test-service"),
+				KubernetesServicePort:      assertString("test-port"),
 			},
 		},
 		{
@@ -848,9 +962,9 @@ func TestLoggerJSON(t *testing.T) {
 
 			test.config.FilePath = logFilePath
 			if test.tls {
-				doLoggingTLS(t, test.config, test.tracing)
+				doLoggingTLS(t, test.config, test.tracing, test.metadata)
 			} else {
-				doLogging(t, test.config, test.tracing)
+				doLogging(t, test.config, test.tracing, test.metadata)
 			}
 
 			logData, err := os.ReadFile(logFilePath)
@@ -1122,7 +1236,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			file, restoreStdout := captureStdout(t)
 			defer restoreStdout()
 
-			doLogging(t, test.config, false)
+			doLogging(t, test.config, false, false)
 
 			written, err := os.ReadFile(file.Name())
 			require.NoError(t, err, "unable to read captured stdout from file")
@@ -1210,7 +1324,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	return file, restoreStdout
 }
 
-func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing bool) {
+func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing, metadata bool) {
 	t.Helper()
 	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
@@ -1261,9 +1375,22 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing 
 
 	// Injection of the observability variables in the request context.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return observability.WithObservabilityHandler(next, observability.Observability{
+		obs := observability.Observability{
 			AccessLogsEnabled: true,
-		}), nil
+		}
+
+		if metadata {
+			obs.Metadata = &dynamic.ObservabilityMetadata{
+				Ingress: &dynamic.KubernetesIngressMetadata{
+					Namespace:   "test-namespace",
+					IngressName: "test-ingress",
+					ServiceName: "test-service",
+					ServicePort: "test-port",
+				},
+			}
+		}
+
+		return observability.WithObservabilityHandler(next, obs), nil
 	})
 
 	chain = chain.Append(logger.AliceConstructor())
@@ -1273,16 +1400,16 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing 
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 }
 
-func doLoggingTLS(t *testing.T, config *otypes.AccessLog, tracing bool) {
+func doLoggingTLS(t *testing.T, config *otypes.AccessLog, tracing, metadata bool) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, true, tracing)
+	doLoggingTLSOpt(t, config, true, tracing, metadata)
 }
 
-func doLogging(t *testing.T, config *otypes.AccessLog, tracing bool) {
+func doLogging(t *testing.T, config *otypes.AccessLog, tracing, metadata bool) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, false, tracing)
+	doLoggingTLSOpt(t, config, false, tracing, metadata)
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {

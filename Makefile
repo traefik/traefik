@@ -103,7 +103,7 @@ test-integration:
 #? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the traefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.6" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.7" $(TESTFLAGS)
 
 .PHONY: test-knative-conformance
 #? test-knative-conformance: Run the Knative conformance tests

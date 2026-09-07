@@ -23,6 +23,8 @@ var (
 	StartDate = time.Now()
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
+	// DashboardName holds the custom name for the dashboard.
+	DashboardName = ""
 )
 
 // Handler expose version routes.
@@ -42,11 +44,13 @@ func (v Handler) Append(router *mux.Router) {
 				StartDate          time.Time `json:"startDate"`
 				UUID               string    `json:"uuid,omitempty"`
 				DisableDashboardAd bool      `json:"disableDashboardAd,omitempty"`
+				DashboardName      string    `json:"dashboardName,omitempty"`
 			}{
 				Version:            Version,
 				Codename:           Codename,
 				StartDate:          StartDate,
 				DisableDashboardAd: DisableDashboardAd,
+				DashboardName:      DashboardName,
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -56,6 +57,27 @@ const (
 	// before releasing all resources related to that session.
 	DefaultUDPTimeout = 3 * time.Second
 )
+
+// providerNames is the ordered list of the Traefik provider names.
+var providerNames = []string{
+	gateway.ProviderName,
+	crd.ProviderName,
+	ingress.ProviderName,
+	ingressnginx.ProviderName,
+	docker.SwarmName,
+	docker.DockerName,
+	file.ProviderName,
+	redis.ProviderName,
+	knative.ProviderName,
+	consul.ProviderName,
+	consulcatalog.ProviderName,
+	nomad.ProviderName,
+	etcd.ProviderName,
+	ecs.ProviderName,
+	http.ProviderName,
+	zk.ProviderName,
+	rest.ProviderName,
+}
 
 // Allowed characters in URL following RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986#section-2)
 var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.:~-]*$`)
@@ -116,8 +138,9 @@ type CertificateResolver struct {
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CheckNewVersion        bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	SendAnonymousUsage     bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	NotAppendXForwardedFor bool `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -162,6 +185,7 @@ type API struct {
 	Dashboard          bool   `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
 	Debug              bool   `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	DisableDashboardAd bool   `description:"Disable ad in the dashboard." json:"disableDashboardAd,omitempty" toml:"disableDashboardAd,omitempty" yaml:"disableDashboardAd,omitempty" export:"true"`
+	DashboardName      string `description:"Custom name for the dashboard." json:"dashboardName,omitempty" toml:"dashboardName,omitempty" yaml:"dashboardName,omitempty" export:"true"`
 	// TODO: Re-enable statistics
 	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
@@ -170,6 +194,7 @@ type API struct {
 func (a *API) SetDefaults() {
 	a.BasePath = "/"
 	a.Dashboard = true
+	a.DashboardName = ""
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
@@ -236,6 +261,7 @@ func (t *Tracing) SetDefaults() {
 // Providers contains providers configuration.
 type Providers struct {
 	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
+	Precedence                []string        `description:"Defines the routing precedence between providers." json:"precedence,omitempty" toml:"precedence,omitempty" yaml:"precedence,omitempty" export:"true"`
 
 	Docker                 *docker.Provider               `description:"Enables Docker provider." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Swarm                  *docker.SwarmProvider          `description:"Enables Docker Swarm provider." json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -256,6 +282,11 @@ type Providers struct {
 	HTTP                   *http.Provider                 `description:"Enables HTTP provider." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Plugin map[string]PluginConf `description:"Plugins configuration." json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (p *Providers) SetDefaults() {
+	p.Precedence = providerNames
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -286,6 +317,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
+	}
+
+	for i, providerName := range c.Providers.Precedence {
+		c.Providers.Precedence[i] = strings.ToLower(providerName)
 	}
 
 	if c.Providers.Docker != nil {
@@ -372,19 +407,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
 			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
-
 			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
 			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
-
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
 
 			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
@@ -436,6 +463,21 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
+		}
+	}
+
+	if c.Providers != nil {
+		for _, providerName := range c.Providers.Precedence {
+			if !slices.Contains(providerNames, providerName) {
+				return fmt.Errorf("provider %q is not a valid provider name", providerName)
+			}
 		}
 	}
 

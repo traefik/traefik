@@ -34,6 +34,7 @@ var hopHeaders = []string{
 	"Trailer", // not Trailers per URL above; https://www.rfc-editor.org/errata_search.php?eid=4522
 	"Transfer-Encoding",
 	"Upgrade",
+	"Http2-Settings", // canonicalized version of "HTTP2-Settings", connection-specific as per RFC 7540 section 3.2.1
 }
 
 type pool[T any] struct {
@@ -175,6 +176,13 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Since go1.24, unencrypted HTTP/2 is served through http.Server#Protocols, which supports prior knowledge only
+	// and not the deprecated "Upgrade: h2c" mechanism (https://go.dev/doc/go1.24#nethttppkgnethttp).
+	// As Traefik no longer honors an h2c upgrade, the token has no reason to reach a backend.
+	if httpguts.HeaderValuesContainsToken([]string{reqUpType}, "h2c") {
+		reqUpType = ""
+	}
+
 	if reqUpType != "" {
 		outReq.Header.Set("Connection", "Upgrade")
 		outReq.Header.Set("Upgrade", reqUpType)
@@ -205,6 +213,8 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	u2.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
+	// URL.RequestURI gives Opaque precedence over the path, an opaque outgoing URL would discard the path set above.
+	u2.Opaque = ""
 
 	outReq.SetHost(u2.Host)
 	outReq.Header.SetHost(u2.Host)
@@ -219,18 +229,20 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	outReq.Header.SetMethod(req.Method)
 
-	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		// If we aren't the first proxy retain prior
-		// X-Forwarded-For information as a comma+space
-		// separated list and fold multiple headers into one.
-		prior, ok := req.Header["X-Forwarded-For"]
-		if len(prior) > 0 {
-			clientIP = strings.Join(prior, ", ") + ", " + clientIP
-		}
+	if !proxyhttputil.ShouldNotAppendXFF(req.Context()) {
+		if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+			// If we aren't the first proxy retain prior
+			// X-Forwarded-For information as a comma+space
+			// separated list and fold multiple headers into one.
+			prior, ok := req.Header["X-Forwarded-For"]
+			if len(prior) > 0 {
+				clientIP = strings.Join(prior, ", ") + ", " + clientIP
+			}
 
-		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
-		if !omit {
-			outReq.Header.Set("X-Forwarded-For", clientIP)
+			omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
+			if !omit {
+				outReq.Header.Set("X-Forwarded-For", clientIP)
+			}
 		}
 	}
 

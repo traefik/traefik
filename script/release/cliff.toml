@@ -48,7 +48,7 @@ trim = true
 ############################################
 
 [git]
-tag_pattern = "v3\\.6.*"
+tag_pattern = "v3\\.7.*"
 ignore_tags = "v2\\..*"
 
 filter_commits = false

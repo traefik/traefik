@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-server-alias
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "alias1.localhost,alias2.localhost"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: original.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix

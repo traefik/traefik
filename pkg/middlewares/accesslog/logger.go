@@ -118,7 +118,9 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		logger.Out = io.Discard
+		if !config.DualOutput {
+			logger.Out = io.Discard
+		}
 	}
 
 	// Transform header names to a canonical form, to be used as is without further transformations,
@@ -204,6 +206,15 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		Request: request{
 			headers: req.Header,
 		},
+	}
+
+	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
+		if metadata.Ingress != nil {
+			logDataTable.Core[KubernetesIngressNamespace] = metadata.Ingress.Namespace
+			logDataTable.Core[KubernetesIngressName] = metadata.Ingress.IngressName
+			logDataTable.Core[KubernetesServiceName] = metadata.Ingress.ServiceName
+			logDataTable.Core[KubernetesServicePort] = metadata.Ingress.ServicePort
+		}
 	}
 
 	if span := trace.SpanFromContext(req.Context()); span != nil {
@@ -378,6 +389,16 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	if h.config.OTLP != nil {
 		// If the logger is configured to use OpenTelemetry,
 		// we compute the log body with the formatter.
+		// The formatter reads the entry level and time, which logrus only sets when the log method is called.
+		// Setting them here avoids formatting a body with the zero values, and makes logrus reuse
+		// this timestamp, so the OTLP body and the regular output carry the same level and time.
+		entry.Level = logrus.InfoLevel
+
+		entry.Time = time.Now()
+		if t, ok := core[StartUTC].(time.Time); ok {
+			entry.Time = t
+		}
+
 		mBytes, err := h.logger.Formatter.Format(entry)
 		if err != nil {
 			message = fmt.Sprintf("Failed to format access log entry: %v", err)

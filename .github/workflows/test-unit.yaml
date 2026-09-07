@@ -39,6 +39,7 @@ jobs:
 
   test-ui-unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Check out code

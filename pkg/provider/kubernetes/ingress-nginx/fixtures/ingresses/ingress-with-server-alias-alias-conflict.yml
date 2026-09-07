@@ -1,0 +1,43 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: first-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "shared.localhost"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: first.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: second-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "shared.localhost"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: second.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix

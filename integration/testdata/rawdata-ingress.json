@@ -53,7 +53,15 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "test.ingress.https",
+						"serviceName": "whoami",
+						"servicePort": "http"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -71,7 +79,15 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "test.ingress",
+						"serviceName": "whoami",
+						"servicePort": "http"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -89,7 +105,15 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "whoami-drop-route",
+						"serviceName": "whoami",
+						"servicePort": "80"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -107,7 +131,15 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"ingressName": "whoami-keep-route",
+						"serviceName": "whoami",
+						"servicePort": "80"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [

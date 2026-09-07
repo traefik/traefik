@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
@@ -49,7 +50,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "empty",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 			},
 			expected: &Configuration{
 				EntryPoints: EntryPoints{"http": &EntryPoint{
@@ -69,9 +70,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -83,13 +83,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 			},
 		},
 		{
 			desc: "ACME simple",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -118,9 +118,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -132,7 +131,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -148,7 +147,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DelayBeforeCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -178,9 +177,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -192,7 +190,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -200,7 +198,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DelayBeforeChecks: 123,
 								},
 							},
@@ -212,7 +210,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DisablePropagationCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -242,9 +240,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -256,7 +253,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -264,7 +261,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:                "bar",
 								DisablePropagationCheck: true,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DisableChecks: true,
 								},
 							},
@@ -439,6 +436,121 @@ func TestValidateConfiguration_BasePath(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestProvidersPrecedence(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		cfg           *Configuration
+		expectedError bool
+		expected      []string
+	}{
+		{
+			desc: "No precedence",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: providerNames,
+				},
+			},
+			expected: providerNames,
+		},
+		{
+			desc: "Precedence with non existing provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"unknown"},
+				},
+			},
+			expectedError: true,
+		},
+		{
+			desc: "Precedence with upper case provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"DOCKER"},
+				},
+			},
+			expected: []string{"docker"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			test.cfg.SetEffectiveConfiguration()
+			err := test.cfg.ValidateConfiguration()
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
+			}
+		})
+	}
+}
+
+func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		underscore  string
+		alias       string
+		expectError bool
+	}{
+		{
+			desc: "no strategy configured",
+		},
+		{
+			desc:  "only the new option configured",
+			alias: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured",
+			underscore: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured, set to keep",
+			underscore: AliasHeadersStrategyKeep,
+		},
+		{
+			desc:       "both options configured with the same value",
+			underscore: AliasHeadersStrategyDelete,
+			alias:      AliasHeadersStrategyDelete,
+		},
+		{
+			desc:        "both options configured with different values",
+			underscore:  AliasHeadersStrategyDelete,
+			alias:       AliasHeadersStrategyReject,
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					"web": &EntryPoint{
+						Address: ":80",
+						HTTP: HTTPConfig{
+							AliasHeadersStrategy:      test.alias,
+							UnderscoreHeadersStrategy: test.underscore,
+						},
+					},
+				},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
 		})
 	}
 }

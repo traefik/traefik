@@ -28,16 +28,45 @@ package v1alpha1
 
 // IngressRouteTCPSpecApplyConfiguration represents a declarative configuration of the IngressRouteTCPSpec type for use
 // with apply.
+//
+// IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
 type IngressRouteTCPSpecApplyConfiguration struct {
-	Routes      []RouteTCPApplyConfiguration `json:"routes,omitempty"`
-	EntryPoints []string                     `json:"entryPoints,omitempty"`
-	TLS         *TLSTCPApplyConfiguration    `json:"tls,omitempty"`
+	// IngressClassName defines the name of the IngressClass cluster resource.
+	IngressClassName *string `json:"ingressClassName,omitempty"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteTCPApplyConfiguration `json:"routes,omitempty"`
+	// TLS defines the TLS configuration on a layer 4 / TCP Route.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/routing/router/#tls
+	TLS *TLSTCPApplyConfiguration `json:"tls,omitempty"`
 }
 
 // IngressRouteTCPSpecApplyConfiguration constructs a declarative configuration of the IngressRouteTCPSpec type for use with
 // apply.
 func IngressRouteTCPSpec() *IngressRouteTCPSpecApplyConfiguration {
 	return &IngressRouteTCPSpecApplyConfiguration{}
+}
+
+// WithIngressClassName sets the IngressClassName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the IngressClassName field is set to the value of the last call.
+func (b *IngressRouteTCPSpecApplyConfiguration) WithIngressClassName(value string) *IngressRouteTCPSpecApplyConfiguration {
+	b.IngressClassName = &value
+	return b
+}
+
+// WithEntryPoints adds the given value to the EntryPoints field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the EntryPoints field.
+func (b *IngressRouteTCPSpecApplyConfiguration) WithEntryPoints(values ...string) *IngressRouteTCPSpecApplyConfiguration {
+	for i := range values {
+		b.EntryPoints = append(b.EntryPoints, values[i])
+	}
+	return b
 }
 
 // WithRoutes adds the given value to the Routes field in the declarative configuration
@@ -49,16 +78,6 @@ func (b *IngressRouteTCPSpecApplyConfiguration) WithRoutes(values ...*RouteTCPAp
 			panic("nil value passed to WithRoutes")
 		}
 		b.Routes = append(b.Routes, *values[i])
-	}
-	return b
-}
-
-// WithEntryPoints adds the given value to the EntryPoints field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the EntryPoints field.
-func (b *IngressRouteTCPSpecApplyConfiguration) WithEntryPoints(values ...string) *IngressRouteTCPSpecApplyConfiguration {
-	for i := range values {
-		b.EntryPoints = append(b.EntryPoints, values[i])
 	}
 	return b
 }

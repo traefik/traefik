@@ -438,6 +438,95 @@ func (s *TCPSuite) TestPostgresSTARTTLSPassthrough() {
 	assert.Equal(s.T(), byte('R'), header[0])
 }
 
+// TestTCPWildcardHostSNI verifies that a wildcard HostSNI rule HostSNI(`*.snitest.com`)
+// routes TLS connections for any matching subdomain to the configured backend.
+func (s *SimpleSuite) TestTCPWildcardHostSNI() {
+	backend := startTestServer("9041", http.StatusOK, "")
+	defer backend.Close()
+
+	file := s.adaptFile("fixtures/tcp/wildcard-hostsni-tls-options.toml", struct {
+		Backend string
+	}{
+		Backend: "127.0.0.1:9041",
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for the wildcard TCP router to be loaded.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
+		try.BodyContains("HostSNI(`*.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	// foo.snitest.com matches the wildcard: TLS connection must succeed.
+	conn, err := tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
+		ServerName:         "foo.snitest.com",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(s.T(), err)
+	conn.Close()
+
+	// bar.snitest.com also matches the wildcard: TLS connection must succeed.
+	conn, err = tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
+		ServerName:         "bar.snitest.com",
+		InsecureSkipVerify: true,
+	})
+	require.NoError(s.T(), err)
+	conn.Close()
+}
+
+// TestTCPWildcardHostSNITLSOptions verifies that:
+//   - a wildcard HostSNI rule HostSNI(`*.snitest.com`) with TLS option "foo" (minTLS12)
+//     routes and accepts TLS 1.2 connections for any matching subdomain;
+//   - a more specific rule HostSNI(`bar.snitest.com`) with TLS option "bar" (minTLS13)
+//     takes priority for that subdomain and rejects TLS 1.2-only connections.
+func (s *SimpleSuite) TestTCPWildcardHostSNITLSOptions() {
+	backend := startTestServer("9041", http.StatusOK, "")
+	defer backend.Close()
+
+	file := s.adaptFile("fixtures/tcp/wildcard-hostsni-tls-options.toml", struct {
+		Backend string
+	}{
+		Backend: "127.0.0.1:9041",
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both TCP routers to be loaded.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
+		try.BodyContains("HostSNI(`*.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	// foo.snitest.com matches the wildcard (TLS option "foo", minTLS12).
+	// A TLS 1.2 connection must succeed.
+	conn, err := tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
+		ServerName:         "foo.snitest.com",
+		InsecureSkipVerify: true,
+		MinVersion:         tls.VersionTLS12,
+		MaxVersion:         tls.VersionTLS12,
+	})
+	require.NoError(s.T(), err)
+	conn.Close()
+
+	// bar.snitest.com has a specific rule with TLS option "bar" (minTLS13).
+	// A TLS 1.2-only connection must be rejected.
+	conn, err = tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
+		ServerName:         "bar.snitest.com",
+		InsecureSkipVerify: true,
+		MinVersion:         tls.VersionTLS13,
+		MaxVersion:         tls.VersionTLS13,
+	})
+	require.NoError(s.T(), err)
+	conn.Close()
+
+	// bar.snitest.com without a version cap: connection must succeed.
+	conn, err = tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
+		ServerName:         "other.snitest.com",
+		InsecureSkipVerify: true,
+		MinVersion:         tls.VersionTLS11,
+		MaxVersion:         tls.VersionTLS11,
+	})
+	require.NoError(s.T(), err)
+	conn.Close()
+}
+
 func welcome(addr string) (string, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {

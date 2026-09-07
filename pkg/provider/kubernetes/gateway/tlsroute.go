@@ -37,7 +37,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 			continue
 		}
 
-		var parentStatuses []gatev1alpha2.RouteParentStatus
+		var parentStatuses []gatev1.RouteParentStatus
 		for _, match := range routeParentRefs {
 			acceptedCondition := metav1.Condition{
 				Type:               string(gatev1.RouteConditionAccepted),
@@ -99,8 +99,22 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 			})
 		}
 
-		routeStatus := gatev1alpha2.TLSRouteStatus{
-			RouteStatus: gatev1alpha2.RouteStatus{
+		// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
+		// Note that when there is HTTPS listeners this will predate the traffic and reject the connection to undefined hosts instead of returning a 404.
+		if len(conf.TCP.Routers) > 0 {
+			conf.TCP.Routers["deny-unknown-host"] = &dynamic.TCPRouter{
+				Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+				Priority: 1,
+				Service:  "deny-unknown-host",
+				TLS:      &dynamic.RouterTCPTLSConfig{},
+			}
+			conf.TCP.Services["deny-unknown-host"] = &dynamic.TCPService{
+				LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+			}
+		}
+
+		routeStatus := gatev1.TLSRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
 				Parents: parentStatuses,
 			},
 		}
@@ -112,7 +126,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1alpha2.TLSRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
@@ -183,7 +197,7 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 }
 
 // loadTLSWRRService is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1alpha2.TLSRoute) (string, *metav1.Condition) {
+func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.TCP.Services[name]; ok {
 		return name, nil
@@ -226,7 +240,7 @@ func (p *Provider) loadTLSWRRService(conf *dynamic.Configuration, routerName str
 	return name, condition
 }
 
-func (p *Provider) loadTLSService(routerName string, route *gatev1alpha2.TLSRoute, backendIndex int, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTLSService(routerName string, route *gatev1.TLSRoute, backendIndex int, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -299,7 +313,7 @@ func (p *Provider) loadTLSService(routerName string, route *gatev1alpha2.TLSRout
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
-func (p *Provider) loadTLSServers(namespace string, route *gatev1alpha2.TLSRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *metav1.Condition) {
+func (p *Provider) loadTLSServers(namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
 		return nil, &metav1.Condition{
@@ -365,7 +379,7 @@ func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
 			continue
 		}
 
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-]+\.`, 1)
 		rules = append(rules, fmt.Sprintf("HostSNIRegexp(%q)", fmt.Sprintf("^%s$", host)))
 	}
 

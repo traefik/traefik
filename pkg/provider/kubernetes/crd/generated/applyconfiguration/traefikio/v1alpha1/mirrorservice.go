@@ -33,9 +33,13 @@ import (
 
 // MirrorServiceApplyConfiguration represents a declarative configuration of the MirrorService type for use
 // with apply.
+//
+// MirrorService holds the mirror configuration.
 type MirrorServiceApplyConfiguration struct {
 	LoadBalancerSpecApplyConfiguration `json:",inline"`
-	Percent                            *int `json:"percent,omitempty"`
+	// Percent defines the part of the traffic to mirror.
+	// Supported values: 0 to 100.
+	Percent *int `json:"percent,omitempty"`
 }
 
 // MirrorServiceApplyConfiguration constructs a declarative configuration of the MirrorService type for use with
@@ -65,6 +69,19 @@ func (b *MirrorServiceApplyConfiguration) WithKind(value string) *MirrorServiceA
 // If called multiple times, the Namespace field is set to the value of the last call.
 func (b *MirrorServiceApplyConfiguration) WithNamespace(value string) *MirrorServiceApplyConfiguration {
 	b.LoadBalancerSpecApplyConfiguration.Namespace = &value
+	return b
+}
+
+// WithMiddlewares adds the given value to the Middlewares field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Middlewares field.
+func (b *MirrorServiceApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyConfiguration) *MirrorServiceApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMiddlewares")
+		}
+		b.LoadBalancerSpecApplyConfiguration.Middlewares = append(b.LoadBalancerSpecApplyConfiguration.Middlewares, *values[i])
+	}
 	return b
 }
 
