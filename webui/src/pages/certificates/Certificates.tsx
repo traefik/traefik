@@ -108,7 +108,7 @@ export const Certificates = () => {
   return (
     <>
       <PageTitle title="Certificates" />
-      <TableFilter errorStatusValue="expired" />
+      <TableFilter errorStatusValue="expired" errorStatusLabel="Expired" />
       <CertificatesRender
         error={error}
         isEmpty={isEmpty}

@@ -43,10 +43,12 @@ const statuses: Status[] = [
 
 export const TableFilter = ({
   hideStatusFilter,
-  errorStatusValue,
+  errorStatusValue = 'disabled',
+  errorStatusLabel = 'Errors',
 }: {
   hideStatusFilter?: boolean
   errorStatusValue?: string
+  errorStatusLabel?: string
 }) => {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -74,6 +76,7 @@ export const TableFilter = ({
         {!hideStatusFilter &&
           statuses.map(({ id, value, name }) => {
             const statusValue = id === 'disabled' ? errorStatusValue : value
+            const usedName = id === 'disabled' ? errorStatusLabel : name
 
             return (
             <Button
@@ -81,9 +84,9 @@ export const TableFilter = ({
               css={{ marginRight: '$3', boxShadow: 'none' }}
               ghost={state.status !== statusValue}
               variant={state.status !== statusValue ? 'secondary' : 'primary'}
-              onClick={() => onStatusClick(value)}
+              onClick={() => onStatusClick(statusValue)}
             >
-              {name}
+              {usedName}
             </Button>
           )})}
       </Flex>
