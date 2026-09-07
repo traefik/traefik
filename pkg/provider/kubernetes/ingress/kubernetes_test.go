@@ -2567,11 +2567,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "default-whoami-nil-port-name-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-nil-endpointslice-port-name",
-										ServiceName: "whoami-nil-port-name",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-nil-endpointslice-port-name",
 									},
 								},
 							},
@@ -2584,6 +2583,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami-nil-port-name",
+										Port:      "80",
+									},
 								},
 							},
 						},
@@ -2603,11 +2611,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "default-whoami-nil-port-value-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "ingress-with-nil-endpointslice-port-value",
-										ServiceName: "whoami-nil-port-value",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-nil-endpointslice-port-value",
 									},
 								},
 							},
@@ -2620,6 +2627,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami-nil-port-value",
+										Port:      "80",
+									},
 								},
 							},
 						},
