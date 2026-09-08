@@ -10,14 +10,19 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
+// documentSeparator matches the line separating two YAML documents. The line
+// ending depends on the platform the repository is checked out on, and a
+// separator missed here silently drops every document after it.
+var documentSeparator = regexp.MustCompile(`(?m)^---[ \t]*\r?\n`)
+
 // MustParseYaml parses a YAML to objects.
 func MustParseYaml(content []byte) []runtime.Object {
 	acceptedK8sTypes := regexp.MustCompile(`^(Namespace|Deployment|EndpointSlice|Node|Service|ConfigMap|Ingress|IngressRoute|IngressRouteTCP|IngressRouteUDP|Middleware|MiddlewareTCP|Secret|TLSOption|TLSStore|TraefikService|IngressClass|ServersTransport|ServersTransportTCP|GatewayClass|Gateway|GRPCRoute|HTTPRoute|TCPRoute|TLSRoute|ReferenceGrant|BackendTLSPolicy)$`)
 
-	files := strings.Split(string(content), "---\n")
+	files := documentSeparator.Split(string(content), -1)
 	retVal := make([]runtime.Object, 0, len(files))
 	for _, file := range files {
-		if file == "\n" || file == "" {
+		if strings.TrimSpace(file) == "" {
 			continue
 		}
 
