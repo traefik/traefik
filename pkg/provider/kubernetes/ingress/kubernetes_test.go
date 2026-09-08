@@ -3197,6 +3197,8 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 }
 
 func TestIngressEndpointStatus(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc     string
 		endpoint *EndpointIngress
@@ -3256,6 +3258,8 @@ func TestIngressEndpointStatus(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, ingressEndpointStatus(test.endpoint))
 		})
 	}
