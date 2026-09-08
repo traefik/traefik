@@ -367,6 +367,14 @@ rules:
   verbs:
   - update
 - apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gateways/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - gateway.traefik.io
   resources:
   - traefikproxies

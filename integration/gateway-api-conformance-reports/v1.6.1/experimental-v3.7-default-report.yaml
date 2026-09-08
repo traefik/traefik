@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-07T15:24:48+02:00"
+date: "2026-09-08T09:13:54+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -22,19 +22,19 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 2
+      Passed: 3
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
     - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     unsupportedFeatures:
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
-    - GatewayStaticAddresses
     - ListenerSet
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
@@ -48,13 +48,14 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 28
+      Passed: 29
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - GatewayAddressEmpty
     - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
     - HTTPRoute308RedirectStatusCode
@@ -79,7 +80,6 @@ profiles:
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
-    - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
     - HTTPRouteRequestMirror
@@ -102,12 +102,13 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 6
+      Passed: 7
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
     - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
@@ -116,7 +117,6 @@ profiles:
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
-    - GatewayStaticAddresses
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.

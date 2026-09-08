@@ -31,6 +31,7 @@ import (
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -210,6 +211,14 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 			TimeoutConfig:              timeoutConfig,
 			EnableAllSupportedFeatures: false,
 			RunTest:                    *gatewayAPIConformanceRunTest,
+			UsableNetworkAddresses: []gatev1.GatewaySpecAddress{{
+				Type:  ptr.To(gatev1.IPAddressType),
+				Value: s.loadBalancer.StaticAddress(),
+			}},
+			UnusableNetworkAddresses: []gatev1.GatewaySpecAddress{{
+				Type:  ptr.To(gatev1.IPAddressType),
+				Value: nodeLBUnusableAddress,
+			}},
 			Implementation: v1.Implementation{
 				Organization: "traefik",
 				Project:      "traefik",
