@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -152,6 +153,25 @@ func TestNewRateLimiter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRedisClientCleanup(t *testing.T) {
+	client := func() redis.UniversalClient {
+		handler, err := New(t.Context(), http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), dynamic.RateLimit{
+			Average: 1,
+			Redis: &dynamic.Redis{
+				Endpoints: []string{"127.0.0.1:0"},
+			},
+		}, "rate-limiter")
+		require.NoError(t, err)
+
+		return handler.(*rateLimiter).limiter.(*redisLimiter).client.(redis.UniversalClient)
+	}()
+
+	require.Eventually(t, func() bool {
+		runtime.GC()
+		return errors.Is(client.Ping(context.Background()).Err(), redis.ErrClosed)
+	}, 5*time.Second, 10*time.Millisecond)
 }
 
 func TestInMemoryRateLimit(t *testing.T) {
