@@ -3,6 +3,7 @@ package ingressnginx
 import (
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -155,4 +156,38 @@ func TestApplyFromToWwwRedirect(t *testing.T) {
 			assert.Equal(t, test.expectedLoc, recorder.Header().Get("Location"))
 		})
 	}
+}
+
+// The upstream vhost rewrites the request Host for the backend. The auth
+// middleware resolves $host in its auth-signin redirect from the incoming
+// request, so it has to run before the rewrite, otherwise the client is
+// redirected to the internal upstream host.
+func TestApplyMiddlewaresUpstreamVhostAfterAuth(t *testing.T) {
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:     make(map[string]*dynamic.Router),
+			Middlewares: make(map[string]*dynamic.Middleware),
+		},
+	}
+
+	loc := &location{
+		UpstreamVhost: &dynamic.UpstreamVHost{VHost: "svc.ns.svc.cluster.local:8084"},
+		SnippetAuth: &dynamic.Snippet{
+			Auth: &dynamic.Auth{
+				Address:       "http://oauth.ns.svc.cluster.local:4180/oauth2/auth",
+				AuthSigninURL: "https://$host/oauth2/start?rd=$escaped_request_uri",
+			},
+		},
+	}
+	rt := &dynamic.Router{EntryPoints: []string{"web"}, Service: "backend"}
+
+	p := &Provider{}
+	p.applyMiddlewares(&model{}, loc, "router", rt, conf)
+
+	require.Contains(t, rt.Middlewares, "router-snippet")
+	require.Contains(t, rt.Middlewares, "router-vhost")
+
+	assert.Less(t,
+		slices.Index(rt.Middlewares, "router-snippet"),
+		slices.Index(rt.Middlewares, "router-vhost"))
 }
