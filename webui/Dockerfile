@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:24-alpine3.24
 # Current Active LTS release according to (https://nodejs.org/en/about/releases/)
 
