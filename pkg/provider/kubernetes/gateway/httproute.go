@@ -23,95 +23,107 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, attached attachedRoutes) {
-	routes, err := p.client.ListHTTPRoutes()
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Unable to list HTTPRoutes")
+func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, conf *dynamic.Configuration, attached attachedRoutes) {
+	logger := log.Ctx(ctx).With().
+		Str("http_route", route.Name).
+		Str("namespace", route.Namespace).
+		Logger()
+
+	routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
+	if len(routeParentRefs) == 0 {
 		return
 	}
 
-	for _, route := range routes {
-		logger := log.Ctx(ctx).With().
-			Str("http_route", route.Name).
-			Str("namespace", route.Namespace).
-			Logger()
-
-		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
-		if len(routeParentRefs) == 0 {
-			continue
+	var parentStatuses []gatev1.RouteParentStatus
+	for _, match := range routeParentRefs {
+		acceptedCondition := metav1.Condition{
+			Type:               string(gatev1.RouteConditionAccepted),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonNoMatchingParent),
 		}
 
-		var parentStatuses []gatev1.RouteParentStatus
-		for _, match := range routeParentRefs {
-			acceptedCondition := metav1.Condition{
-				Type:               string(gatev1.RouteConditionAccepted),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: route.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.RouteReasonNoMatchingParent),
+		var resolvedRefCondition *metav1.Condition
+		for _, listener := range match.Listeners {
+			// A parentRef can target specific listeners through its SectionName or Port.
+			accepted := matchListener(listener, match.ParentRef)
+
+			if accepted && !allowRoute(listener, route.Namespace, kindHTTPRoute) {
+				if acceptedCondition.Status == metav1.ConditionFalse {
+					acceptedCondition.Reason = string(gatev1.RouteReasonNotAllowedByListeners)
+				}
+				accepted = false
 			}
 
-			var resolvedRefCondition *metav1.Condition
-			for _, listener := range match.listeners {
-				attachment := attachmentForListener(match, listener, route.Namespace, kindHTTPRoute, route.Spec.Hostnames)
-				accepted := attachment.attached
-				reason := attachment.reason
-
-				if accepted && attached.HasConflict(attachment.listenerKey, kindHTTPRoute, attachment.hostnames) {
-					accepted = false
-					reason = routeReasonHostnameConflict
+			hostnames, ok := findMatchingHostnames(listener.Hostname, route.Spec.Hostnames)
+			if accepted && !ok {
+				if acceptedCondition.Status == metav1.ConditionFalse {
+					acceptedCondition.Reason = string(gatev1.RouteReasonNoMatchingListenerHostname)
 				}
-				if reason != "" && acceptedCondition.Status == metav1.ConditionFalse {
-					acceptedCondition.Reason = string(reason)
-				}
-
-				if accepted {
-					// Gateway listener should have AttachedRoutes set even when Gateway has unresolved refs.
-					listener.Status.AttachedRoutes++
-				}
-
-				// The ResolvedRefs condition must be reported for every parentRef,
-				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, attachment.hostnames)
-				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = new(condition)
-				}
-
-				if accepted && listener.Attached {
-					mergeHTTPConfiguration(routeConf, conf)
-
-					// Only consider the route attached if the listener is in an "attached" state.
-					acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
-					acceptedCondition.Status = metav1.ConditionTrue
-				}
+				accepted = false
 			}
 
-			parentStatusConditions := []metav1.Condition{acceptedCondition}
-			if resolvedRefCondition != nil {
-				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			ref := listenerRef{
+				GatewayNamespace: match.GatewayNamespace,
+				GatewayName:      match.GatewayName,
+				Name:             listener.Name,
+			}
+			if accepted && attached.Conflicts(ref, kindHTTPRoute, hostnames) {
+				if acceptedCondition.Status == metav1.ConditionFalse {
+					acceptedCondition.Reason = string(routeReasonHostnameConflict)
+				}
+				accepted = false
 			}
 
-			parentStatuses = append(parentStatuses, gatev1.RouteParentStatus{
-				ParentRef:      match.parentRef,
-				ControllerName: controllerName,
-				Conditions:     parentStatusConditions,
-			})
+			if accepted {
+				// Gateway listener should have AttachedRoutes set even when Gateway has unresolved refs.
+				listener.Status.AttachedRoutes++
+
+				attached.Attach(ref, kindHTTPRoute, hostnames)
+			}
+
+			// The ResolvedRefs condition must be reported for every parentRef,
+			// even when the route does not attach to the listener.
+			routeConf, condition := p.loadHTTPRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
+			if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
+				resolvedRefCondition = new(condition)
+			}
+
+			if accepted && listener.Attached {
+				mergeHTTPConfiguration(routeConf, conf)
+
+				// Only consider the route attached if the listener is in an "attached" state.
+				acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
+				acceptedCondition.Status = metav1.ConditionTrue
+			}
 		}
 
-		status := gatev1.HTTPRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+		parentStatusConditions := []metav1.Condition{acceptedCondition}
+		if resolvedRefCondition != nil {
+			parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
 		}
-		if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, status); err != nil {
-			logger.Warn().
-				Err(err).
-				Msg("Unable to update HTTPRoute status")
-		}
+
+		parentStatuses = append(parentStatuses, gatev1.RouteParentStatus{
+			ParentRef:      match.ParentRef,
+			ControllerName: controllerName,
+			Conditions:     parentStatusConditions,
+		})
+	}
+
+	status := gatev1.HTTPRouteStatus{
+		RouteStatus: gatev1.RouteStatus{
+			Parents: parentStatuses,
+		},
+	}
+	if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, status); err != nil {
+		logger.Warn().
+			Err(err).
+			Msg("Unable to update HTTPRoute status")
 	}
 }
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -523,8 +535,7 @@ func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace s
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
-				policyAncestorStatus.Conditions = append(
-					policyAncestorStatus.Conditions,
+				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
 					metav1.Condition{
 						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
