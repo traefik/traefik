@@ -18,6 +18,109 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
     TLS options are not supported by label or tag-based providers. However, you can define them when using a [KV provider](../../other-providers/kv.md).
 
+!!! important "TLSOption in Kubernetes"
+
+    With the [TLSOption resource](../../kubernetes/crd/tls/tlsoption.md), the option named `default` applies to every router
+    that does not reference a TLSOption explicitly, whatever the namespace it is defined in.
+    The [`defaultTLSResourcesNamespace`](../../../install-configuration/providers/kubernetes/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide default can be defined in.
+
+### Server Name Association
+
+The TLS options are configured on a router, but they are applied during the TLS handshake,
+that is to say before the routing occurs, when the server name (SNI) is the only information available.
+A TLS options reference is therefore always mapped to the host names found in the `Host` part of the router rule,
+and neither to the router nor to its rule.
+There could also be several `Host` parts in a rule, in which case the TLS options reference is mapped to as many host names.
+
+In the case of domain fronting, if the TLS options associated with the Host header and the SNI are different,
+Traefik responds with a `421 Misdirected Request` status code.
+
+### Conflicting TLS Options
+
+Since a TLS options reference is mapped to a host name, a conflict occurs when a configuration introduces a situation
+where the same host name, on the same entry point, is matched with two different TLS options references,
+such as in the example below:
+
+```yaml tab="Structured (YAML)"
+# Dynamic configuration
+
+http:
+  routers:
+    routerfoo:
+      rule: "Host(`example.com`) && Path(`/foo`)"
+      tls:
+        options: foo
+
+    routerbar:
+      rule: "Host(`example.com`) && Path(`/bar`)"
+      tls:
+        options: bar
+```
+
+```toml tab="Structured (TOML)"
+# Dynamic configuration
+
+[http.routers]
+  [http.routers.routerfoo]
+    rule = "Host(`example.com`) && Path(`/foo`)"
+    [http.routers.routerfoo.tls]
+      options = "foo"
+
+  [http.routers.routerbar]
+    rule = "Host(`example.com`) && Path(`/bar`)"
+    [http.routers.routerbar.tls]
+      options = "bar"
+```
+
+If that happens, both mappings are discarded, and the host name (`example.com` in this example)
+gets associated with the `default` TLS options instead.
+
+The conflict detection is not limited to a single provider:
+routers coming from different providers, for example a router defined with a container label
+and another one defined with the file provider, conflict with each other as soon as they serve
+the same host name on the same entry point.
+
+!!! important "Default TLS Options"
+
+    The `default` TLS options are the fallback of the conflict resolution,
+    and should therefore not be less secure than the options they can replace.
+    A router relying on a mutual TLS authentication (`clientAuth`), for example,
+    no longer enforces it if a conflict on its host name falls back to `default`
+    TLS options that do not require it.
+
+    The surest way to avoid this is to have all the routers serving the same host name,
+    on the same entry point, reference the same TLS options.
+
+#### Strict TLS Options
+
+The [`core.strictTLSOptions`](../../../install-configuration/configuration-options.md#opt-core-stricttlsoptions)
+install configuration option disables the fallback to the `default` TLS options.
+When it is enabled, the routers involved in the conflict are marked in error and are not built at all,
+and the host name is no longer mapped to any TLS options.
+
+!!! warning "Disabled routers"
+
+    Enabling `strictTLSOptions` fails closed: a conflict disables all the routers serving the conflicting host name
+    on the concerned entry point, until the conflict is resolved.
+
+```yaml tab="File (YAML)"
+## Install configuration
+core:
+  strictTLSOptions: true
+```
+
+```toml tab="File (TOML)"
+## Install configuration
+[core]
+  strictTLSOptions = true
+```
+
+```bash tab="CLI"
+## Install configuration
+--core.strictTLSOptions=true
+```
+
 ### Minimum TLS Version
 
 ```yaml tab="Structured (YAML)"
@@ -106,7 +209,7 @@ tls:
 
 ### Curve Preferences
 
-This option allows to set the preferred elliptic curves.
+This option allows setting the preferred elliptic curves.
 
 The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
 
@@ -158,7 +261,7 @@ tls:
 
 _Optional, Default="h2, http/1.1, acme-tls/1"_
 
-This option allows to specify the list of supported application level protocols for the TLS handshake,
+This option allows specifying the list of supported application level protocols for the TLS handshake,
 in order of preference.
 If the client supports ALPN, the selected protocol will be one from this list, 
 and the connection will fail if there is no mutually supported protocol.
@@ -231,8 +334,8 @@ _Optional, Default="false"_
 
 When set to true, Traefik disables the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.
 
-```yaml tab="File (YAML)"
-# Dynamic configuration
+```yaml tab="Structured (YAML)"
+# routing configuration
 
 tls:
   options:
@@ -240,8 +343,8 @@ tls:
       disableSessionTickets: true
 ```
 
-```toml tab="File (TOML)"
-# Dynamic configuration
+```toml tab="Structured (TOML)"
+# routing configuration
 
 [tls.options]
   [tls.options.default]

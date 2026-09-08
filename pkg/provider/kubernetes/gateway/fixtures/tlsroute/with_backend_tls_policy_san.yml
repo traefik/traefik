@@ -1,0 +1,80 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: supersecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJxRENDQVU2Z0F3SUJBZ0lVWU9zcjBRZ0hPQnE0a1lSQ0w1K1REZFZ0NmJRd0NnWUlLb1pJemowRUF3SXcKRmpFVU1CSUdBMVVFQXd3TFpYaGhiWEJzWlM1amIyMHdIaGNOTWpVeE1ERXdNRGN4TnpNd1doY05NelV4TURBNApNRGN4TnpNd1dqQVdNUlF3RWdZRFZRUUREQXRsZUdGdGNHeGxMbU52YlRCWk1CTUdCeXFHU000OUFnRUdDQ3FHClNNNDlBd0VIQTBJQUJET3JpdzNaUTd3SWhXcmJQUzZKRlFUM2JUb05DRjAwdlNWNWZhYjZUYlh5TDh0bHNHcmUKVFJJRjJFd2dzdGVNT2t4R0tLU2xEdnVhRHdxOHAvcVYrMHVqZWpCNE1CMEdBMVVkRGdRV0JCUk1Fa3VleFhRaApVdERnUmcxS0J2NzJDRHErRXpBZkJnTlZIU01FR0RBV2dCUk1Fa3VleFhRaFV0RGdSZzFLQnY3MkNEcStFekFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUNVR0ExVWRFUVFlTUJ5Q0MyVjRZVzF3YkdVdVkyOXRnZzBxTG1WNFlXMXcKYkdVdVkyOXRNQW9HQ0NxR1NNNDlCQU1DQTBnQU1FVUNJUURzODdWazBzd0E2SGdPSmpST3llMW14RDgzcWNHeQpwZUZnb3hWOTNEeStjd0lnVjBNTUVKSmJWc1R5WkszRVErK1hjNXJFTDc4bnJKK1lJRVYrckNVV2o1VT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ==
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ253Z0w1RFk0VUIxNHNNNmYKRGlrUWR0cWgyUVcxQXJmRjRmYzFVRnppZmRHaFJBTkNBQVF6cTRzTjJVTzhDSVZxMnowdWlSVUU5MjA2RFFoZApOTDBsZVgybStrMjE4aS9MWmJCcTNrMFNCZGhNSUxMWGpEcE1SaWlrcFE3N21nOEt2S2Y2bGZ0TAotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
+
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tls
+      protocol: TLS
+      port: 9001
+      hostname: foo.com
+      tls:
+        mode: Terminate # Default mode
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+            group: ""
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+
+---
+kind: BackendTLSPolicy
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: policy-1
+  namespace: default
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: whoami
+  validation:
+    hostname: whoami
+    subjectAltNames:
+      - type: Hostname
+        hostname: whoami.default.svc.cluster.local
+      - type: URI
+        uri: spiffe://cluster.local/ns/default/sa/whoami

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/muxer"
@@ -70,7 +70,7 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 
 	if hostExpr == "*" {
 		// Since a HostSNI(`*`) rule has been provided as catchAll for non-TLS TCP,
-		// it allows matching with an empty serverName.
+		// it allows matching with an empty serverName or every serverName.
 		tree.matcher = func(meta ConnData) bool { return true }
 		return nil
 	}

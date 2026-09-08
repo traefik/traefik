@@ -126,7 +126,6 @@ For Kubernetes providers, you can configure Traefik using the native Ingress or 
                 backend:
                   service:
                     name: whoami
-                    namespace: apps
                     port:
                       number: 80
       tls:

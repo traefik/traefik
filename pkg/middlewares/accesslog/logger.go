@@ -76,7 +76,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.Hook) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		if config.MaxSize > 0 || config.MaxAge > 0 || config.MaxBackups > 0 || config.Compress {
@@ -116,6 +116,10 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
+	}
+
+	for _, hook := range hooks {
+		logger.Hooks.Add(hook)
 	}
 
 	if config.OTLP != nil {
@@ -402,6 +406,16 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	if h.config.OTLP != nil {
 		// If the logger is configured to use OpenTelemetry,
 		// we compute the log body with the formatter.
+		// The formatter reads the entry level and time, which logrus only sets when the log method is called.
+		// Setting them here avoids formatting a body with the zero values, and makes logrus reuse
+		// this timestamp, so the OTLP body and the regular output carry the same level and time.
+		entry.Level = logrus.InfoLevel
+
+		entry.Time = time.Now()
+		if t, ok := core[StartUTC].(time.Time); ok {
+			entry.Time = t
+		}
+
 		mBytes, err := h.logger.Formatter.Format(entry)
 		if err != nil {
 			message = fmt.Sprintf("Failed to format access log entry: %v", err)

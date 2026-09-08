@@ -71,6 +71,13 @@ func method(tree *matchersTree, methods ...string) error {
 func host(tree *matchersTree, hosts ...string) error {
 	hostExpr := hosts[0]
 
+	if hostExpr == "*" {
+		// On the TCP side, * matches every serverName (empty or not),
+		// so we keep the same behavior in Host for consistency.
+		tree.matcher = func(req *http.Request) bool { return true }
+		return nil
+	}
+
 	if !muxer.IsASCII(hostExpr) {
 		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", hostExpr)
 	}

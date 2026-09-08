@@ -52,7 +52,7 @@ func ShouldNotAppendXFF(ctx context.Context) bool {
 }
 
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
-	return &httputil.ReverseProxy{
+	proxy := &httputil.ReverseProxy{
 		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
@@ -60,6 +60,8 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
+
+	return newConnectHandler(newH2CUpgradeHandler(proxy))
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
@@ -102,10 +104,31 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 		pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
+		// URL.RequestURI gives Opaque precedence over the path, an opaque outgoing URL would discard the path set above.
+		pr.Out.URL.Opaque = ""
+
+		// Forward the declared request trailer names, but never their values: they arrive
+		// after the header section, once routing and security decisions are made, and would
+		// otherwise reach the backend under a name sanitized in the header section.
+		// Discarding them is allowed by https://www.rfc-editor.org/rfc/rfc9112#section-7.1.2,
+		// and the names are kept as the hint of what was dropped described in
+		// https://www.rfc-editor.org/rfc/rfc9110#section-6.6.2
+		// Emptying the outgoing map is what makes this hold whatever the middleware chain did
+		// to the incoming request, as the transport only writes pr.Out.Trailer.
+		// Response trailers are unaffected.
+		for name := range pr.Out.Trailer {
+			pr.Out.Trailer[name] = nil
+		}
 
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1
 		pr.Out.ProtoMinor = 1
+
+		// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
+		// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
+		if pr.Out.Method == http.MethodConnect {
+			pr.Out.Close = true
+		}
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
@@ -201,14 +224,13 @@ func statusText(statusCode int) string {
 // and the client configuration should allow to verify the server certificate.
 func isTLSConfigError(err error) bool {
 	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
-	var recordHeaderErr tls.RecordHeaderError
-	if errors.As(err, &recordHeaderErr) {
+	if _, ok := errors.AsType[tls.RecordHeaderError](err); ok {
 		return true
 	}
 
 	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
-	var certVerificationErr *tls.CertificateVerificationError
-	return errors.As(err, &certVerificationErr)
+	_, ok := errors.AsType[*tls.CertificateVerificationError](err)
+	return ok
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
@@ -219,8 +241,7 @@ func ComputeStatusCode(err error) int {
 	case errors.Is(err, context.Canceled):
 		return StatusClientClosedRequest
 	default:
-		var netErr net.Error
-		if errors.As(err, &netErr) {
+		if netErr, ok := errors.AsType[net.Error](err); ok {
 			if netErr.Timeout() {
 				return http.StatusGatewayTimeout
 			}

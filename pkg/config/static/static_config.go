@@ -3,16 +3,16 @@ package static
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"slices"
 	"strings"
 	"time"
 
-	legolog "github.com/go-acme/lego/v4/log"
-	"github.com/rs/zerolog"
+	legolog "github.com/go-acme/lego/v5/log"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -105,7 +105,6 @@ type Configuration struct {
 
 	Experimental *Experimental `description:"Experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 
-	// Deprecated: Please do not use this field.
 	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
@@ -117,6 +116,8 @@ type Configuration struct {
 type Core struct {
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	DefaultRuleSyntax string `description:"Defines the rule parser default syntax (v2 or v3)" json:"defaultRuleSyntax,omitempty" toml:"defaultRuleSyntax,omitempty" yaml:"defaultRuleSyntax,omitempty"`
+
+	StrictTLSOptions bool `description:"Disables the unsafe fallback to the default TLS options for the routers with conflicting TLS options." json:"strictTLSOptions,omitempty" toml:"strictTLSOptions,omitempty" yaml:"strictTLSOptions,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -214,6 +215,8 @@ type ForwardingTimeouts struct {
 	DialTimeout           ptypes.Duration `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
 	ResponseHeaderTimeout ptypes.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
 	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself" json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
+	ReadTimeout           ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. If zero, no timeout exists." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout          ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. If zero, no timeout exists." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -353,9 +356,24 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	// Configure Ingress NGINX provider.
-	if c.Providers.KubernetesIngressNGINX != nil {
+	if c.Providers.KubernetesIngressNGINX != nil && !c.Providers.KubernetesIngressNGINX.DisableNonTLSRouters {
+		var hasDefinedDefaults bool
+		for _, entryPoint := range c.EntryPoints {
+			if entryPoint.AsDefault {
+				hasDefinedDefaults = true
+				break
+			}
+		}
+
 		var nonTLSEntryPoints []string
 		for epName, entryPoint := range c.EntryPoints {
+			if hasDefinedDefaults && !entryPoint.AsDefault {
+				continue
+			}
+			// Skip internal entrypoint.
+			if epName == DefaultInternalEntryPointName {
+				continue
+			}
 			if entryPoint.HTTP.TLS == nil {
 				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
 			}
@@ -391,19 +409,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
 			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
-
 			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
 			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
-
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
 
 			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
@@ -455,6 +465,13 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
 		}
 	}
 
@@ -536,8 +553,13 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
+	legolog.SetDefault(
+		slog.New(
+			slogzerolog.Option{Logger: &log.Logger}.
+				NewZerologHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

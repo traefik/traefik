@@ -82,7 +82,7 @@ If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed i
 
 This is useful for grouping IPv6 addresses into subnets to prevent bypassing this middleware by obtaining a new IPv6.
 
-- `ipv6Subnet` is ignored if its value is outside 0-128 interval
+- `ipv6Subnet` causes middleware creation to fail if its value is ≤ 0 or > 128.
 
 #### Example of ipv6Subnet
 

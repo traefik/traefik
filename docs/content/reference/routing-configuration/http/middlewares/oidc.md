@@ -23,7 +23,7 @@ spec:
     oidc:
       issuer: "https://tenant.auth0.com/realms/myrealm"
       redirectUrl: "/callback"
-      clientID: "urn:k8s:secret:my-secret:clientId"
+      clientId: "urn:k8s:secret:my-secret:clientId"
       clientSecret: "urn:k8s:secret:my-secret:clientSecret"
       session:
         name: customsessioncookiename
@@ -61,9 +61,11 @@ stringData:
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
 | <a id="opt-issuer" href="#opt-issuer" title="#opt-issuer">`issuer`</a> | Defines the URL to the OpenID Connect provider (for example, `https://accounts.google.com`). <br /> It should point to the server which provides the OpenID Connect configuration. | "" | Yes |
+| <a id="opt-trustedIssuer" href="#opt-trustedIssuer" title="#opt-trustedIssuer">`trustedIssuer`</a> | Defines a trusted issuer URL to validate against in addition to the one discovered from the OpenID Connect provider. | "" | No |
+| <a id="opt-disableIssuerCheck" href="#opt-disableIssuerCheck" title="#opt-disableIssuerCheck">`disableIssuerCheck`</a> | Disables the issuer validation check during token verification. | false | No |
 | <a id="opt-redirectUrl" href="#opt-redirectUrl" title="#opt-redirectUrl">`redirectUrl`</a> | Defines the URL used by the OpenID Connect provider to redirect back to the middleware once the authorization is complete. (More information [here](#redirecturl)) | "" | Yes |
-| <a id="opt-clientID" href="#opt-clientID" title="#opt-clientID">`clientID`</a> | Defines the unique client identifier for an account on the OpenID Connect provider, must be set when the `clientSecret` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
-| <a id="opt-clientSecret" href="#opt-clientSecret" title="#opt-clientSecret">`clientSecret`</a> | Defines the unique client secret for an account on the OpenID Connect provider, must be set when the `clientID` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
+| <a id="opt-clientId" href="#opt-clientId" title="#opt-clientId">`clientId`</a> | Defines the unique client identifier for an account on the OpenID Connect provider, must be set when the `clientSecret` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
+| <a id="opt-clientSecret" href="#opt-clientSecret" title="#opt-clientSecret">`clientSecret`</a> | Defines the unique client secret for an account on the OpenID Connect provider, must be set when the `clientId` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
 | <a id="opt-claims" href="#opt-claims" title="#opt-claims">`claims`</a> | Defines the claims to validate in order to authorize the request. <br /> The `claims` option can only be used with JWT-formatted token.  (More information [here](#claims)) | ""      | No       |
 | <a id="opt-usernameClaim" href="#opt-usernameClaim" title="#opt-usernameClaim">`usernameClaim`</a> | Defines the claim that will be evaluated to populate the `clientusername` in the access logs. <br /> The `usernameClaim` option can only be used with JWT-formatted token.| ""      | No       |
 | <a id="opt-forwardHeaders" href="#opt-forwardHeaders" title="#opt-forwardHeaders">`forwardHeaders`</a> | Defines the HTTP headers to add to requests and populates them with values extracted from the access token claims returned by the authorization server. <br /> Claims to be forwarded that are not found in the JWT result in empty headers. <br /> The `forwardHeaders` option can only be used with JWT-formatted token. | []      | No       |
@@ -112,9 +114,10 @@ stringData:
 | <a id="opt-session-store-redis-sentinel-masterSet" href="#opt-session-store-redis-sentinel-masterSet" title="#opt-session-store-redis-sentinel-masterSet">`session.store.redis.sentinel.masterSet`</a> | Name of the set of main nodes to use for main selection. Required when using Sentinel.               | "" | No       |
 | <a id="opt-session-store-redis-sentinel-username" href="#opt-session-store-redis-sentinel-username" title="#opt-session-store-redis-sentinel-username">`session.store.redis.sentinel.username`</a> | Username to use for sentinel authentication (can be different from `username`)                       | "" | No       |
 | <a id="opt-session-store-redis-sentinel-password" href="#opt-session-store-redis-sentinel-password" title="#opt-session-store-redis-sentinel-password">`session.store.redis.sentinel.password`</a> | Password to use for sentinel authentication (can be different from `password`)                       | "" | No       |
-| <a id="opt-csrf" href="#opt-csrf" title="#opt-csrf">`csrf`</a> | When enabled, a CSRF cookie, named `traefikee-csrf-token`, is bound to the OIDC session to protect service from CSRF attacks. <br /> It is based on the [Signed Double Submit Cookie](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#signed-double-submit-cookie) implementation as defined by the OWASP Foundation.<br />Moreinformation [here](#csrf). | "" | No |
+| <a id="opt-session-store-keyPrefix" href="#opt-session-store-keyPrefix" title="#opt-session-store-keyPrefix">`session.store.keyPrefix`</a> | Defines the prefix of the key for the entries that store the sessions. | "" | No |
+| <a id="opt-csrf" href="#opt-csrf" title="#opt-csrf">`csrf`</a> | When enabled, a CSRF cookie, named `hub-csrf-token`, is bound to the OIDC session to protect service from CSRF attacks. <br /> It is based on the [Signed Double Submit Cookie](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#signed-double-submit-cookie) implementation as defined by the OWASP Foundation.<br />Moreinformation [here](#csrf). | "" | No |
 | <a id="opt-csrf-secure" href="#opt-csrf-secure" title="#opt-csrf-secure">`csrf.secure`</a> | Defines whether the CSRF cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
-| <a id="opt-csrf-headerName" href="#opt-csrf-headerName" title="#opt-csrf-headerName">`csrf.headerName`</a> | Defines the name of the header used to send the CSRF token value received previously in the CSRF cookie. | TraefikHub-Csrf-Token | No |
+| <a id="opt-csrf-headerName" href="#opt-csrf-headerName" title="#opt-csrf-headerName">`csrf.headerName`</a> | Defines the name of the header used to send the CSRF token value received previously in the CSRF cookie. | Hub-Csrf-Token | No |
 
 ### redirectUrl
 
@@ -182,15 +185,15 @@ spec:
     oidc:
       issuer: "https://tenant.auth0.com/realms/myrealm"
       redirectUrl: "/callback"
-      clientID: my-oidc-client-name
+      clientId: my-oidc-client-name
       clientSecret: mysecret
 ```
 
-### clientID, clientSecret
+### clientId, clientSecret
 
 #### Storing secret values in Kubernetes secrets
 
-When configuring the `clientID` and the `clientSecret`, it is possible to reference Kubernetes secrets defined in the same namespace as the Middleware.
+When configuring the `clientId` and the `clientSecret`, it is possible to reference Kubernetes secrets defined in the same namespace as the Middleware.
 The reference to a Kubernetes secret takes the form of a URN:
 
 ```text
@@ -398,7 +401,7 @@ spec:
     oidc:
       issuer: "https://tenant.auth0.com/realms/myrealm"
       redirectUrl: "/callback"
-      clientID: my-oidc-client-name
+      clientId: my-oidc-client-name
       clientSecret: mysecret
       session:
         store:

@@ -79,7 +79,7 @@ services:
       - "443:443"
 
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./certs:/certs:ro
       - ./dynamic:/dynamic:ro
 

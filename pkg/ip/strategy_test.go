@@ -49,19 +49,19 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 		{
 			desc:       "Use RemoteAddr, ipv4, ignore subnet",
 			expected:   "192.0.2.1",
-			ipv6Subnet: intPtr(24),
+			ipv6Subnet: new(24),
 		},
 		{
 			desc:       "Use RemoteAddr, ipv6 brackets with port, subnet",
 			remoteAddr: ipv6BracketsPort,
 			expected:   "::abcd:0:0:0",
-			ipv6Subnet: intPtr(80),
+			ipv6Subnet: new(80),
 		},
 		{
 			desc:       "Use RemoteAddr, ipv6 brackets with zone and port, subnet",
 			remoteAddr: ipv6BracketsZonePort,
 			expected:   "::abcd:0:0:0",
-			ipv6Subnet: intPtr(80),
+			ipv6Subnet: new(80),
 		},
 
 		// Valid IP, invalid subnet
@@ -69,7 +69,7 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 			desc:       "Use RemoteAddr, ipv6 brackets with port, invalid subnet",
 			remoteAddr: ipv6BracketsPort,
 			expected:   "::abcd:ffff:c0a8:1",
-			ipv6Subnet: intPtr(500),
+			ipv6Subnet: new(500),
 		},
 	}
 
@@ -121,14 +121,14 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 			depth:         2,
 			xForwardedFor: "10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "10.0.0.2",
-			ipv6Subnet:    intPtr(80),
+			ipv6Subnet:    new(80),
 		},
 		{
 			desc:          "Use depth with IPv6 subnet",
 			depth:         2,
 			xForwardedFor: "10.0.0.3," + ipv6Basic + ",10.0.0.1",
 			expected:      "::abcd:0:0:0",
-			ipv6Subnet:    intPtr(80),
+			ipv6Subnet:    new(80),
 		},
 	}
 
@@ -196,8 +196,4 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 			assert.Equal(t, test.expected, actual)
 		})
 	}
-}
-
-func intPtr(value int) *int {
-	return &value
 }

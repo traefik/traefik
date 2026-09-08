@@ -14,6 +14,10 @@ type model struct {
 	// Servers holds one entry per distinct hostname across all ingresses.
 	Servers map[string]*server
 
+	// ProcessedIngresses holds the ingresses that contributed routing
+	// configuration and should have their published status refreshed.
+	ProcessedIngresses []*netv1.Ingress
+
 	// PassthroughBackends holds ssl-passthrough entries.
 	PassthroughBackends []*sslPassthroughBackend
 
@@ -168,8 +172,8 @@ type location struct {
 	// AccessLog, if non-nil, overrides the router-level access log setting.
 	AccessLog *bool
 
-	// AppRoot, if non-nil, is the path to redirect bare "/" requests to.
-	AppRoot *string
+	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
+	AppRoot *dynamic.AppRoot
 
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
@@ -286,4 +290,26 @@ type sslPassthroughBackend struct {
 
 	// RouterKey is the unique key used to name the TCP router.
 	RouterKey string
+
+	// SSLRedirect indicates that HTTP requests to this host should be redirected
+	// to HTTPS with a 308 Permanent Redirect, following the same semantics as
+	// regular locations (see sslRedirectEnabled).
+	SSLRedirect bool
+
+	// HTTPServiceName is the key for the HTTP service proxying to the backend.
+	// Unlike BackendName it is scoped to the ingress, because per-ingress
+	// annotations (e.g. backend-protocol) shape the service.
+	// It is empty when the serversTransport could not be built: only the TCP
+	// passthrough router is created in that case.
+	HTTPServiceName string
+
+	// ServersTransportName is the unique name of the per-ingress transport.
+	ServersTransportName string
+
+	// ServersTransport holds the resolved per-ingress transport config for the
+	// HTTP router. The translator registers it once per unique ServersTransportName.
+	ServersTransport *dynamic.ServersTransport
+
+	// Config holds all parsed annotation values for the ingress.
+	Config IngressConfig
 }

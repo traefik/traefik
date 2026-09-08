@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -514,12 +513,10 @@ func TestInitAccount(t *testing.T) {
 		{
 			desc: "Existing account with all information",
 			account: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -527,20 +524,16 @@ func TestInitAccount(t *testing.T) {
 			email:   "foo@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
-			desc: "Existing account with no email",
-			account: &Account{
-				KeyType: certcrypto.RSA4096,
-			},
+			desc:    "Existing account with no email",
+			account: &Account{},
 			email:   "foo@foo.net",
-			keyType: "EC256",
+			keyType: "4096",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -551,8 +544,7 @@ func TestInitAccount(t *testing.T) {
 			email:   "bar@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -562,8 +554,7 @@ func TestInitAccount(t *testing.T) {
 			},
 			email: "bar@foo.net",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.RSA4096,
+				Email: "foo@foo.net",
 			},
 		},
 	}
@@ -573,10 +564,9 @@ func TestInitAccount(t *testing.T) {
 
 			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
 
-			actualAccount, err := acmeProvider.initAccount(t.Context())
+			actualAccount, err := acmeProvider.initAccount()
 			assert.NoError(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
-			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
 }

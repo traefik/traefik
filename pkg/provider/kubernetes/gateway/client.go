@@ -16,16 +16,14 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
@@ -45,8 +43,7 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
-	labelSelector       string
-	experimentalChannel bool
+	labelSelector string
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -148,30 +145,34 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		options.LabelSelector = c.labelSelector
 	}
 
-	c.factoryNamespace = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
 	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions))
+	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions), gateinformers.WithTransform(k8s.StripManagedFields))
 	_, err = c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, ns := range namespaces {
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		endpointSliceInformer := factoryKube.Discovery().V1().EndpointSlices().Informer()
+		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceByServiceNameIndexers); err != nil {
+			return nil, err
+		}
+		_, err = endpointSliceInformer.AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
-		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns))
+		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryGateway.Gateway().V1().Gateways().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -184,7 +185,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1beta1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
+		_, err = factoryGateway.Gateway().V1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -202,14 +203,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		if c.experimentalChannel {
-			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
-			if err != nil {
-				return nil, err
-			}
+		_, err = factoryGateway.Gateway().V1().TCPRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -309,10 +308,10 @@ func (c *clientWrapper) ListGRPCRoutes() ([]*gatev1.GRPCRoute, error) {
 	return grpcRoutes, nil
 }
 
-func (c *clientWrapper) ListTCPRoutes() ([]*gatev1alpha2.TCPRoute, error) {
-	var tcpRoutes []*gatev1alpha2.TCPRoute
+func (c *clientWrapper) ListTCPRoutes() ([]*gatev1.TCPRoute, error) {
+	var tcpRoutes []*gatev1.TCPRoute
 	for _, namespace := range c.watchedNamespaces {
-		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(namespace).List(labels.Everything())
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().TCPRoutes().Lister().TCPRoutes(namespace).List(labels.Everything())
 		if err != nil {
 			return nil, fmt.Errorf("listing TCP routes in namespace %s", namespace)
 		}
@@ -337,12 +336,12 @@ func (c *clientWrapper) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
 	return tlsRoutes, nil
 }
 
-func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
+func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1.ReferenceGrant, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get ReferenceGrants: namespace %s is not within watched namespaces", namespace)
 	}
 
-	referenceGrants, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1beta1().ReferenceGrants().Lister().ReferenceGrants(namespace).List(labels.Everything())
+	referenceGrants, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().ReferenceGrants().Lister().ReferenceGrants(namespace).List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}
@@ -375,14 +374,11 @@ func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName stri
 		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
-	}
-	serviceSelector := labels.NewSelector()
-	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
-
-	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
+	return k8s.EndpointSlicesByServiceName(
+		c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Informer().GetIndexer(),
+		namespace,
+		serviceName,
+	)
 }
 
 // ListBackendTLSPoliciesForService returns the BackendTLSPolicy for the given service name in the given namespace.
@@ -501,7 +497,7 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.HTTPRouteStatus) error {
+func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.HTTPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating HTTPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -514,16 +510,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -552,7 +539,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.GRPCRouteStatus) error {
+func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.GRPCRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating GRPCRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -565,16 +552,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -603,29 +581,20 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.TCPRouteStatus) error {
+func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TCPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1().TCPRoutes().Lister().TCPRoutes(route.Namespace).Get(route.Name)
 		if err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -633,13 +602,13 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 		}
 
 		currentRoute = currentRoute.DeepCopy()
-		currentRoute.Status = gatev1alpha2.TCPRouteStatus{
+		currentRoute.Status = gatev1.TCPRouteStatus{
 			RouteStatus: gatev1.RouteStatus{
 				Parents: parentStatuses,
 			},
 		}
 
-		if _, err = c.csGateway.GatewayV1alpha2().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+		if _, err = c.csGateway.GatewayV1().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
 			return err
@@ -654,7 +623,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
-func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1.TLSRouteStatus) error {
+func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TLSRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TLSRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -667,16 +636,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 			return err
 		}
 
-		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
-		copy(parentStatuses, status.Parents)
-
-		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
-		for _, parentStatus := range currentRoute.Status.Parents {
-			if parentStatus.ControllerName != controllerName {
-				parentStatuses = append(parentStatuses, parentStatus)
-			}
-		}
+		parentStatuses := mergeRouteParentStatuses(route.Namespace, currentRoute.Status.Parents, status.Parents, gateways)
 
 		// do not update status when nothing has changed.
 		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
@@ -779,6 +739,35 @@ func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, namespace)
+}
+
+// mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
+func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
+	parentStatuses := make([]gatev1.RouteParentStatus, len(desiredParents))
+	copy(parentStatuses, desiredParents)
+
+	for _, currentParent := range currentParents {
+		// Keep statuses added by other gateway controllers.
+		if currentParent.ControllerName != controllerName {
+			parentStatuses = append(parentStatuses, currentParent)
+			continue
+		}
+
+		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
+		// Also, keep statuses from gateways managed by other Traefik instances.
+		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
+		// SectionName or Port is not used.
+		parentNamespace := string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace)))
+		isManaged := slices.ContainsFunc(gateways, func(gw gatewayWithListeners) bool {
+			return gw.Namespace == parentNamespace && gw.Name == string(currentParent.ParentRef.Name)
+		})
+
+		if !isManaged {
+			parentStatuses = append(parentStatuses, currentParent)
+		}
+	}
+
+	return parentStatuses
 }
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {

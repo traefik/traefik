@@ -2,6 +2,7 @@ package ingressnginx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -100,8 +100,9 @@ type Provider struct {
 
 	IPAllowListStrategy *dynamic.IPStrategy `description:"Defines the IP strategy to determine the client IP for allowlist/whitelist source range annotations." json:"ipAllowListStrategy,omitempty" toml:"ipAllowListStrategy,omitempty" yaml:"ipAllowListStrategy,omitempty" export:"true"`
 
-	HTTPEntryPoint  string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
-	HTTPSEntryPoint string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
+	HTTPEntryPoint       string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
+	HTTPSEntryPoint      string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
+	DisableNonTLSRouters bool   `description:"Disables the creation of non-TLS routers for Ingress resources. Cannot be used together with httpEntryPoint." json:"disableNonTLSRouters,omitempty" toml:"disableNonTLSRouters,omitempty" yaml:"disableNonTLSRouters,omitempty" export:"true"`
 	// TLSEntryPoints is set to the HTTPSEntryPoint value if it is set, otherwise it is left empty.
 	TLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
@@ -132,9 +133,7 @@ type Provider struct {
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
 
-	k8sClient         *clientWrapper
-	lastConfiguration safe.Safe
-
+	k8sClient           *clientWrapper
 	applyMiddlewareFunc func(routerKey string, router *dynamic.Router, config *dynamic.Configuration, ingressConfig IngressConfig) error
 }
 
@@ -213,7 +212,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this
 					// throttling interval -- if we're hitting our throttle, we may have
 					// dropped events. This is fine, because we don't treat different
@@ -221,18 +220,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// track more information about the dropped events.
 					conf := p.loadConfiguration(ctxLog)
 
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  ProviderName,
-							Configuration: conf,
-						}
+					configurationChan <- dynamic.Message{
+						ProviderName:  ProviderName,
+						Configuration: conf,
 					}
 
 					// If we're throttling, we sleep here for the throttle duration to
@@ -268,23 +258,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	mc := p.build(ctx, ingressClasses)
 
 	// Update ingress statuses (requires k8s access, must happen in Phase 1 context).
-	for _, server := range mc.Servers {
-		for _, loc := range server.Locations {
-			if loc.IngressName == "" {
-				continue
-			}
-			// Retrieve the original ingress to update its status.
-			for _, ing := range p.k8sClient.ListIngresses() {
-				if ing.Namespace == loc.Namespace && ing.Name == loc.IngressName {
-					if err := p.updateIngressStatus(ing); err != nil {
-						log.Ctx(ctx).Error().Err(err).
-							Str("namespace", ing.Namespace).
-							Str("ingress", ing.Name).
-							Msg("Error while updating ingress status")
-					}
-					break
-				}
-			}
+	for _, ing := range mc.ProcessedIngresses {
+		if err := p.updateIngressStatus(ing); err != nil {
+			log.Ctx(ctx).Error().Err(err).
+				Str("namespace", ing.Namespace).
+				Str("ingress", ing.Name).
+				Msg("Error while updating ingress status")
 		}
 	}
 
@@ -293,6 +272,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) validateConfiguration() error {
+	if p.DisableNonTLSRouters && p.HTTPEntryPoint != "" {
+		return errors.New("httpEntryPoint cannot be set when disableNonTLSRouters is true")
+	}
+
 	// Validates and parses the default backend configuration.
 	if p.DefaultBackendService != "" {
 		parts := strings.Split(p.DefaultBackendService, "/")

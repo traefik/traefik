@@ -9,7 +9,36 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"k8s.io/utils/ptr"
+)
+
+// Strategies for handling request headers whose name aliases another header name.
+const (
+	// AliasHeadersStrategyKeep is the strategy to forward the request headers with an aliasing name as is.
+	AliasHeadersStrategyKeep = "keep"
+	// AliasHeadersStrategyDelete is the strategy to delete the request headers with an aliasing name before routing.
+	AliasHeadersStrategyDelete = "delete"
+	// AliasHeadersStrategyReject is the strategy to reject the requests carrying a header with an aliasing name.
+	AliasHeadersStrategyReject = "reject"
+)
+
+// Strategies for handling request headers with underscores in their names.
+//
+// Deprecated: please use the AliasHeadersStrategy* constants instead.
+const (
+	// UnderscoreHeadersStrategyKeep is the strategy to forward the request headers with underscores as is.
+	//
+	// Deprecated: please use AliasHeadersStrategyKeep instead.
+	UnderscoreHeadersStrategyKeep = "keep"
+
+	// UnderscoreHeadersStrategyDelete is the strategy to delete headers with underscores from the request before routing.
+	//
+	// Deprecated: please use AliasHeadersStrategyDelete instead.
+	UnderscoreHeadersStrategyDelete = "delete"
+
+	// UnderscoreHeadersStrategyReject is the strategy to reject request with headers with underscores.
+	//
+	// Deprecated: please use AliasHeadersStrategyReject instead.
+	UnderscoreHeadersStrategyReject = "reject"
 )
 
 // EntryPoint holds the entry point configuration.
@@ -73,12 +102,18 @@ type HTTPConfig struct {
 	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
 	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
 	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	AliasHeadersStrategy  string             `description:"Defines the strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject)." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
+
+	// UnderscoreHeadersStrategy is the strategy to handle request headers with underscores in their names.
+	//
+	// Deprecated: please use AliasHeadersStrategy instead.
+	UnderscoreHeadersStrategy string `description:"Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Deprecated: please use aliasHeadersStrategy instead)" json:"underscoreHeadersStrategy,omitempty" toml:"underscoreHeadersStrategy,omitempty" yaml:"underscoreHeadersStrategy,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (c *HTTPConfig) SetDefaults() {
-	c.SanitizePath = ptr.To(true)
-	c.MaxHeaderBytes = http.DefaultMaxHeaderBytes
+func (h *HTTPConfig) SetDefaults() {
+	h.SanitizePath = new(true)
+	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.
@@ -202,8 +237,8 @@ type ObservabilityConfig struct {
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
-	o.AccessLogs = ptr.To(true)
-	o.Metrics = ptr.To(true)
-	o.Tracing = ptr.To(true)
+	o.AccessLogs = new(true)
+	o.Metrics = new(true)
+	o.Tracing = new(true)
 	o.TraceVerbosity = otypes.MinimalVerbosity
 }

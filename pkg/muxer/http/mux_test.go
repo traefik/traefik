@@ -47,7 +47,7 @@ func TestMuxer(t *testing.T) {
 			desc: "Host IPv6",
 			rule: "Host(`10::10`)",
 			expected: map[string]int{
-				"http://10::10/foo": http.StatusOK,
+				"http://[10::10]/foo": http.StatusOK,
 			},
 		},
 		{
@@ -557,6 +557,20 @@ func TestParseDomains(t *testing.T) {
 		{
 			description: "Host rule with no domain",
 			expression:  "Host() && Path(`/test`)",
+		},
+		{
+			description: "Negated Host rule",
+			expression:  "!Host(`foo.bar`)",
+		},
+		{
+			description: "Host rule and negated Host rule",
+			expression:  "Host(`foo.bar`) && !Host(`bar.buz`)",
+			domain:      []string{"foo.bar"},
+		},
+		{
+			description: "Negated group of Host rules",
+			expression:  "Host(`foo.bar`) && !(Host(`bar.buz`) || Host(`buz.bar`))",
+			domain:      []string{"foo.bar"},
 		},
 	}
 

@@ -36,7 +36,7 @@ spec:
   entryPoints:
     - web
   routes:
-  - match: Host(`example.com`) && PathPrefix(`/allowlist`)
+  - match: HostSNI(`example.com`)
     kind: Rule
     services:
     - name: whoami

@@ -10,7 +10,6 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -149,10 +148,12 @@ func (r *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
 
 // RouterTLSConfig holds the TLS configuration for a router.
 type RouterTLSConfig struct {
-	Options         string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
-	ResolvedOptions string         `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
-	CertResolver    string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
-	Domains         []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
+	Options         string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
+	ResolvedOptions string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	// ConflictingOptions is set when the router conflicts with another router configured with different TLS options for the same host.
+	ConflictingOptions bool           `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	CertResolver       string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
+	Domains            []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -236,7 +237,7 @@ type FailoverError struct {
 
 // SetDefaults Default values for a WRRService.
 func (m *FailoverError) SetDefaults() {
-	m.MaxRequestBodyBytes = ptr.To(FailoverErrorsDefaultMaxRequestBodyBytes)
+	m.MaxRequestBodyBytes = new(FailoverErrorsDefaultMaxRequestBodyBytes)
 }
 
 // +k8s:deepcopy-gen=true
@@ -357,6 +358,11 @@ type Cookie struct {
 	// Expires defines the number of seconds to add to the current time to calculate the expiration date of the cookie.
 	// This option is exposed only for the Ingress NGINX provider.
 	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// PreserveLeadingDot defines whether a leading dot in the Domain attribute is written as-is in the Set-Cookie header,
+	// instead of being stripped as mandated by RFC 6265.
+	// This option is exposed only for the Ingress NGINX provider.
+	PreserveLeadingDot bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // SetDefaults set the default values for a Cookie.
@@ -424,7 +430,7 @@ func (l *ServersLoadBalancer) Merge(other *ServersLoadBalancer) bool {
 
 // SetDefaults Default values for a ServersLoadBalancer.
 func (l *ServersLoadBalancer) SetDefaults() {
-	l.PassHostHeader = ptr.To(DefaultPassHostHeader)
+	l.PassHostHeader = new(DefaultPassHostHeader)
 
 	l.Strategy = BalancerStrategyWRR
 	l.ResponseForwarding = &ResponseForwarding{}
@@ -498,7 +504,7 @@ type ServerHealthCheck struct {
 
 // SetDefaults Default values for a HealthCheck.
 func (h *ServerHealthCheck) SetDefaults() {
-	h.FollowRedirects = ptr.To(true)
+	h.FollowRedirects = new(true)
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
@@ -537,8 +543,10 @@ type ServersTransport struct {
 	MaxIdleConnsPerHost int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used. If negative, disables connection reuse." json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts     `description:"Defines the timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2        bool                    `description:"Disables HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
-	PeerCertURI         string                  `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
-	Spiffe              *Spiffe                 `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
+	PeerCertURI  string           `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty"`
+	PeerCertSANs []traefiktls.SAN `description:"Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification." json:"peerCertSANs,omitempty" toml:"peerCertSANs,omitempty" yaml:"peerCertSANs,omitempty"`
+	Spiffe       *Spiffe          `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -560,10 +568,8 @@ type ForwardingTimeouts struct {
 	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself." json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
 	ReadIdleTimeout       ptypes.Duration `description:"The timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection. If zero, no health check is performed." json:"readIdleTimeout,omitempty" toml:"readIdleTimeout,omitempty" yaml:"readIdleTimeout,omitempty" export:"true"`
 	PingTimeout           ptypes.Duration `description:"The timeout after which the HTTP/2 connection will be closed if a response to ping is not received." json:"pingTimeout,omitempty" toml:"pingTimeout,omitempty" yaml:"pingTimeout,omitempty" export:"true"`
-
-	// related to NGINX provider
-	ReadTimeout  ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
-	WriteTimeout ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
+	ReadTimeout           ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout          ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

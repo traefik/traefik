@@ -299,6 +299,10 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 	}
 
 	if routerConfig.TLS != nil {
+		if routerConfig.TLS.ConflictingOptions {
+			return nil, errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host")
+		}
+
 		// Don't build the router if the TLSOptions configuration is invalid.
 		tlsOptionsName := tls.DefaultTLSConfigName
 		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {

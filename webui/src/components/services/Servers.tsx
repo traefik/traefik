@@ -30,11 +30,6 @@ function getServerStatusList(data: Service.Details) {
   }))
 }
 
-export const getProviderFromName = (serviceName: string, defaultProvider: string): string => {
-  const [, provider] = serviceName.split('@')
-  return provider || defaultProvider
-}
-
 const Servers = ({ data, protocol }: ServersProps) => {
   const serversList = useMemo(() => getServerStatusList(data), [data])
 

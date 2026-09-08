@@ -21,7 +21,7 @@ and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
 !!! info "Default protocol"
 
-    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318/v1/metrics.
+    The OpenTelemetry exporter will export metrics to the collector using HTTP by default to https://localhost:4318.
 
 ### Configuration Example
 
@@ -68,14 +68,14 @@ metrics:
 | <a id="opt-metrics-otlp-addEntryPointsLabels" href="#opt-metrics-otlp-addEntryPointsLabels" title="#opt-metrics-otlp-addEntryPointsLabels">`metrics.otlp.addEntryPointsLabels`</a> | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
 | <a id="opt-metrics-otlp-addRoutersLabels" href="#opt-metrics-otlp-addRoutersLabels" title="#opt-metrics-otlp-addRoutersLabels">`metrics.otlp.addRoutersLabels`</a> | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
 | <a id="opt-metrics-otlp-addServicesLabels" href="#opt-metrics-otlp-addServicesLabels" title="#opt-metrics-otlp-addServicesLabels">`metrics.otlp.addServicesLabels`</a> | Enable metrics on services.                                                                                                                                      | true                                               | No       |
-| <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.                                                                                                                   | ".005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10" | No       |
+| <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.                                                                                                                   | ".005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10" | No       |
 | <a id="opt-metrics-otlp-pushInterval" href="#opt-metrics-otlp-pushInterval" title="#opt-metrics-otlp-pushInterval">`metrics.otlp.pushInterval`</a> | Interval at which metrics are sent to the OpenTelemetry Collector.                                                                                               | 10s                                                | No       |
 | <a id="opt-metrics-otlp-http" href="#opt-metrics-otlp-http" title="#opt-metrics-otlp-http">`metrics.otlp.http`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
-| <a id="opt-metrics-otlp-http-endpoint" href="#opt-metrics-otlp-http-endpoint" title="#opt-metrics-otlp-http-endpoint">`metrics.otlp.http.endpoint`</a> | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`"                                                           | "https://localhost:4318/v1/metrics"                 | Yes      |
+| <a id="opt-metrics-otlp-http-endpoint" href="#opt-metrics-otlp-http-endpoint" title="#opt-metrics-otlp-http-endpoint">`metrics.otlp.http.endpoint`</a> | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`"                                                           | "https://localhost:4318"                 | Yes      |
 | <a id="opt-metrics-otlp-http-headers" href="#opt-metrics-otlp-http-headers" title="#opt-metrics-otlp-http-headers">`metrics.otlp.http.headers`</a> | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector.                                                                             | -                                                  | No       |
 | <a id="opt-metrics-otlp-http-tls-ca" href="#opt-metrics-otlp-http-tls-ca" title="#opt-metrics-otlp-http-tls-ca">`metrics.otlp.http.tls.ca`</a> | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle.                          | ""                                                 | No       |
 | <a id="opt-metrics-otlp-http-tls-cert" href="#opt-metrics-otlp-http-tls-cert" title="#opt-metrics-otlp-http-tls-cert">`metrics.otlp.http.tls.cert`</a> | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | ""                                                 | No       |
-| <a id="opt-metrics-otlp-http-tls-key" href="#opt-metrics-otlp-http-tls-key" title="#opt-metrics-otlp-http-tls-key">`metrics.otlp.http.tls.key`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
+| <a id="opt-metrics-otlp-http-tls-key" href="#opt-metrics-otlp-http-tls-key" title="#opt-metrics-otlp-http-tls-key">`metrics.otlp.http.tls.key`</a> | Defines the path to the private key used for the TLS connection.              | ""                                         | No       |
 | <a id="opt-metrics-otlp-http-tls-insecureskipverify" href="#opt-metrics-otlp-http-tls-insecureskipverify" title="#opt-metrics-otlp-http-tls-insecureskipverify">`metrics.otlp.http.tls.insecureskipverify`</a> | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.                   | false                                              | Yes      |
 | <a id="opt-metrics-otlp-grpc" href="#opt-metrics-otlp-grpc" title="#opt-metrics-otlp-grpc">`metrics.otlp.grpc`</a> | This instructs the exporter to send metrics to the OpenTelemetry Collector using gRPC.                                                                           | null/false                                         | No       |
 | <a id="opt-metrics-otlp-grpc-endpoint" href="#opt-metrics-otlp-grpc-endpoint" title="#opt-metrics-otlp-grpc-endpoint">`metrics.otlp.grpc.endpoint`</a> | Address of the OpenTelemetry Collector to send metrics to.<br /> Format="`<host>:<port>`"                                                                        | "localhost:4317"                                   | Yes      |
@@ -83,7 +83,7 @@ metrics:
 | <a id="opt-metrics-otlp-grpc-insecure" href="#opt-metrics-otlp-grpc-insecure" title="#opt-metrics-otlp-grpc-insecure">`metrics.otlp.grpc.insecure`</a> | Allows exporter to send metrics to the OpenTelemetry Collector without using a secured protocol.                                                                 | false                                              | Yes      |
 | <a id="opt-metrics-otlp-grpc-tls-ca" href="#opt-metrics-otlp-grpc-tls-ca" title="#opt-metrics-otlp-grpc-tls-ca">`metrics.otlp.grpc.tls.ca`</a> | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle.                          | -                                                  | No       |
 | <a id="opt-metrics-otlp-grpc-tls-cert" href="#opt-metrics-otlp-grpc-tls-cert" title="#opt-metrics-otlp-grpc-tls-cert">`metrics.otlp.grpc.tls.cert`</a> | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | -                                                  | No       |
-| <a id="opt-metrics-otlp-grpc-tls-key" href="#opt-metrics-otlp-grpc-tls-key" title="#opt-metrics-otlp-grpc-tls-key">`metrics.otlp.grpc.tls.key`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
+| <a id="opt-metrics-otlp-grpc-tls-key" href="#opt-metrics-otlp-grpc-tls-key" title="#opt-metrics-otlp-grpc-tls-key">`metrics.otlp.grpc.tls.key`</a> | Defines the path to the private key used for the TLS connection.              | -                                         | No       |
 | <a id="opt-metrics-otlp-grpc-tls-insecureskipverify" href="#opt-metrics-otlp-grpc-tls-insecureskipverify" title="#opt-metrics-otlp-grpc-tls-insecureskipverify">`metrics.otlp.grpc.tls.insecureskipverify`</a> | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.                   | false                                              | Yes      |
 
 ### resourceAttributes
@@ -129,7 +129,7 @@ metrics:
 | Field | Description      | Default              | Required |
 |:------|:-------------------------------|:---------------------|:---------|
 | <a id="opt-metrics-addInternals-2" href="#opt-metrics-addInternals-2" title="#opt-metrics-addInternals-2">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
-| <a id="opt-datadog-address" href="#opt-datadog-address" title="#opt-datadog-address">`datadog.address`</a> | Defines the address for the exporter to send metrics to datadog-agent. More information [here](#address)|  `127.0.0.1:8125`     | Yes   |
+| <a id="opt-datadog-address" href="#opt-datadog-address" title="#opt-datadog-address">`datadog.address`</a> | Defines the address for the exporter to send metrics to datadog-agent. More information [here](#address)|  `localhost:8125`     | Yes   |
 | <a id="opt-datadog-addEntryPointsLabels" href="#opt-datadog-addEntryPointsLabels" title="#opt-datadog-addEntryPointsLabels">`datadog.addEntryPointsLabels`</a> | Enable metrics on entry points. |  true   | No   |
 | <a id="opt-datadog-addRoutersLabels" href="#opt-datadog-addRoutersLabels" title="#opt-datadog-addRoutersLabels">`datadog.addRoutersLabels`</a> | Enable metrics on routers. |  false   | No   |
 | <a id="opt-datadog-addServicesLabels" href="#opt-datadog-addServicesLabels" title="#opt-datadog-addServicesLabels">`datadog.addServicesLabels`</a> | Enable metrics on services. |  true   | No   |
@@ -147,17 +147,17 @@ To explicitly define the socket type and avoid automatic detection, you can use 
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
-    address: 127.0.0.1:8125
+    address: localhost:8125
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.datadog]
-    address = "127.0.0.1:8125"
+    address = "localhost:8125"
 ```
 
 ```bash tab="CLI"
---metrics.datadog.address=127.0.0.1:8125
+--metrics.datadog.address=localhost:8125
 ```
 
 ### InfluxDB v2
@@ -186,7 +186,7 @@ metrics:
 
 | Field      | Description      | Default | Required |
 |:-----------|-------------------------|:--------|:---------|
-| <a id="opt-metrics-addInternal" href="#opt-metrics-addInternal" title="#opt-metrics-addInternal">`metrics.addInternal`</a> | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
+| <a id="opt-metrics-addInternals-3" href="#opt-metrics-addInternals-3" title="#opt-metrics-addInternals-3">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
 | <a id="opt-metrics-influxDB2-addEntryPointsLabels" href="#opt-metrics-influxDB2-addEntryPointsLabels" title="#opt-metrics-influxDB2-addEntryPointsLabels">`metrics.influxDB2.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-influxDB2-addRoutersLabels" href="#opt-metrics-influxDB2-addRoutersLabels" title="#opt-metrics-influxDB2-addRoutersLabels">`metrics.influxDB2.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-influxDB2-addServicesLabels" href="#opt-metrics-influxDB2-addServicesLabels" title="#opt-metrics-influxDB2-addServicesLabels">`metrics.influxDB2.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
@@ -231,7 +231,7 @@ metrics:
 
 | Field      | Description         | Default | Required |
 |:-----------|---------------------|:--------|:---------|
-| <a id="opt-metrics-addInternals-3" href="#opt-metrics-addInternals-3" title="#opt-metrics-addInternals-3">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
+| <a id="opt-metrics-addInternals-4" href="#opt-metrics-addInternals-4" title="#opt-metrics-addInternals-4">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
 | <a id="opt-metrics-prometheus-addEntryPointsLabels" href="#opt-metrics-prometheus-addEntryPointsLabels" title="#opt-metrics-prometheus-addEntryPointsLabels">`metrics.prometheus.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-prometheus-addRoutersLabels" href="#opt-metrics-prometheus-addRoutersLabels" title="#opt-metrics-prometheus-addRoutersLabels">`metrics.prometheus.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-prometheus-addServicesLabels" href="#opt-metrics-prometheus-addServicesLabels" title="#opt-metrics-prometheus-addServicesLabels">`metrics.prometheus.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
@@ -304,7 +304,7 @@ metrics:
 
 | Field      | Description       | Default | Required |
 |:-----------|:-------------------------|:--------|:---------|
-| <a id="opt-metrics-addInternals-4" href="#opt-metrics-addInternals-4" title="#opt-metrics-addInternals-4">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
+| <a id="opt-metrics-addInternals-5" href="#opt-metrics-addInternals-5" title="#opt-metrics-addInternals-5">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
 | <a id="opt-metrics-statsD-addEntryPointsLabels" href="#opt-metrics-statsD-addEntryPointsLabels" title="#opt-metrics-statsD-addEntryPointsLabels">`metrics.statsD.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-statsD-addRoutersLabels" href="#opt-metrics-statsD-addRoutersLabels" title="#opt-metrics-statsD-addRoutersLabels">`metrics.statsD.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-statsD-addServicesLabels" href="#opt-metrics-statsD-addServicesLabels" title="#opt-metrics-statsD-addServicesLabels">`metrics.statsD.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
