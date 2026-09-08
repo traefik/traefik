@@ -162,6 +162,17 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 			},
 		}
 
+		if !router.TLS.Passthrough {
+			// TODO: report an unresolvable TLSOptions reference via the listener's ResolvedRefs condition
+			// instead of falling back to the default TLS options.
+			tlsOptionsRef, err := p.resolveTLSOptions(listener.TLS, gatewayNamespace)
+			if err != nil {
+				log.Error().Err(err).Msg("Unable to resolve TLSOptions reference")
+			} else {
+				router.TLS.Options = tlsOptionsRef
+			}
+		}
+
 		// Routing criteria should be introduced at some point.
 		routerName := makeRouterName(strings.ToLower(kindTLSRoute), "", route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 

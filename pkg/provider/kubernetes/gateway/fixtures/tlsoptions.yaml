@@ -1,0 +1,44 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoptions
+  namespace: default
+
+spec:
+  minVersion: VersionTLS12
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoptions
+  namespace: other
+
+spec:
+  minVersion: VersionTLS13
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoptions
+  namespace: granted
+
+spec:
+  minVersion: VersionTLS13
+
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: tlsoptions-from-default
+  namespace: granted
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: default
+  to:
+    - group: traefik.io
+      kind: TLSOption

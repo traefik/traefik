@@ -50,6 +50,7 @@ const (
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
+	kindTLSOption      = "TLSOption"
 
 	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
@@ -60,6 +61,17 @@ const (
 	schemeHTTP  = "http"
 	schemeHTTPS = "https"
 	schemeH2C   = "h2c"
+
+	// tlsOptionsNameKey and tlsOptionsNamespaceKey are the listener TLS options keys used to reference a
+	// TLSOption CRD from a Gateway listener (gatev1.ListenerTLSConfig.Options). tlsOptionsNamespaceKey is
+	// optional and defaults to the Gateway's own namespace when absent.
+	tlsOptionsNameKey      = "tls.traefik.io/tlsoptions.name"
+	tlsOptionsNamespaceKey = "tls.traefik.io/tlsoptions.namespace"
+
+	// tlsOptionsProviderName is the provider that materializes TLSOption CRDs into dynamic.Configuration.TLS.Options.
+	// The Gateway provider never builds TLSOption content itself, so resolved references must always be
+	// qualified with this provider name for the aggregator to find them.
+	tlsOptionsProviderName = "kubernetescrd"
 )
 
 // Provider holds configurations of the provider.
@@ -901,6 +913,38 @@ func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*
 	}
 
 	return certAndStore, nil
+}
+
+// resolveTLSOptions resolves a listener's TLSOptions extension (tls.traefik.io/tlsoptions.name and, optionally,
+// tls.traefik.io/tlsoptions.namespace) into a cross-provider-qualified TLSOption reference, suitable for
+// dynamic.RouterTLSConfig.Options / dynamic.RouterTCPTLSConfig.Options.
+// It returns ("", nil) when the listener does not reference a TLSOptions (default TLS options apply).
+// TLSOption objects are only materialized into dynamic.Configuration.TLS.Options by the kubernetescrd
+// provider, so the reference is always qualified with that provider's name.
+func (p *Provider) resolveTLSOptions(listenerTLS *gatev1.ListenerTLSConfig, gatewayNamespace string) (string, error) {
+	if listenerTLS == nil {
+		return "", nil
+	}
+
+	name, ok := listenerTLS.Options[tlsOptionsNameKey]
+	if !ok || len(name) == 0 {
+		return "", nil
+	}
+
+	namespace := gatewayNamespace
+	if ns, ok := listenerTLS.Options[tlsOptionsNamespaceKey]; ok && len(ns) > 0 {
+		namespace = string(ns)
+	}
+
+	if err := p.isReferenceGranted(kindGateway, gatewayNamespace, traefikv1alpha1.GroupName, kindTLSOption, string(name), namespace); err != nil {
+		return "", fmt.Errorf("TLSOption %s/%s: %w", namespace, name, err)
+	}
+
+	if _, err := p.client.GetTLSOption(namespace, string(name)); err != nil {
+		return "", fmt.Errorf("TLSOption %s/%s: %w", namespace, name, err)
+	}
+
+	return namespace + "-" + string(name) + "@" + tlsOptionsProviderName, nil
 }
 
 func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
