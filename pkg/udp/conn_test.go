@@ -3,6 +3,7 @@ package udp
 import (
 	"errors"
 	"io"
+	"maps"
 	"net"
 	"testing"
 	"time"
@@ -205,10 +206,10 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	assert.Len(t, ln.conns, 10)
+	assert.Len(t, connsSnapshot(ln), 10)
 
 	time.Sleep(ln.timeout + time.Second)
-	assert.Empty(t, ln.conns)
+	assert.Empty(t, connsSnapshot(ln))
 }
 
 func TestShutdown(t *testing.T) {
@@ -331,4 +332,13 @@ func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Dur
 	case <-time.Tick(timeout):
 		t.Fatalf("Timeout during echo for: %s", data)
 	}
+}
+
+// connsSnapshot copies the listener sessions under its lock. They are removed
+// by Conn.Close from the session read loops, so the map cannot be read directly.
+func connsSnapshot(ln *Listener) map[string]*Conn {
+	ln.mu.RLock()
+	defer ln.mu.RUnlock()
+
+	return maps.Clone(ln.conns)
 }

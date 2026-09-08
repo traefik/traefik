@@ -55,7 +55,9 @@ func TestConnPool_ConnReuse(t *testing.T) {
 			var connAlloc int
 			dialer := func() (net.Conn, error) {
 				connAlloc++
-				return &net.TCPConn{}, nil
+				// mockConn blocks in Read, so the readLoop does not mark the
+				// connection broken before AcquireConn checks it.
+				return &mockConn{doneCh: make(chan struct{})}, nil
 			}
 
 			pool := newConnPool(2, 0, 0, dialer)

@@ -473,8 +473,8 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			assert.Equal(t, test.expNumRemovedServers, removedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, upsertedServers, "upserted servers")
-			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
-			assert.Equal(t, []string{"service", "foobar", "url", targetURL.String()}, gauge.LastLabelValues)
+			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue(), delta, "ServerUp Gauge")
+			assert.Equal(t, []string{"service", "foobar", "url", targetURL.String()}, gauge.LastLabelValues())
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}

@@ -320,7 +320,7 @@ func TestOCSPStapler_updateStaple(t *testing.T) {
 			ocspStapler := newOCSPStapler(nil)
 			ocspStapler.client = &http.Client{Timeout: time.Second}
 
-			err = ocspStapler.updateStaple(t.Context(), test.entry)
+			err := ocspStapler.updateStaple(t.Context(), test.entry)
 			if test.expectError {
 				require.Error(t, err)
 				return

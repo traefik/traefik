@@ -1,44 +1,102 @@
 package testhelpers
 
-import "github.com/go-kit/kit/metrics"
+import (
+	"slices"
+	"sync"
 
-// CollectingCounter is a metrics.Counter implementation that enables access to the CounterValue and LastLabelValues.
+	"github.com/go-kit/kit/metrics"
+)
+
+// CollectingCounter is a metrics.Counter implementation that enables access to the counter value and last label values.
+// It is safe for concurrent use, as the instrumented code usually runs in its own goroutine.
 type CollectingCounter struct {
-	CounterValue    float64
-	LastLabelValues []string
+	mu              sync.RWMutex
+	counterValue    float64
+	lastLabelValues []string
 }
 
 // With is there to satisfy the metrics.Counter interface.
 func (c *CollectingCounter) With(labelValues ...string) metrics.Counter {
-	c.LastLabelValues = labelValues
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.lastLabelValues = labelValues
+
 	return c
 }
 
 // Add is there to satisfy the metrics.Counter interface.
 func (c *CollectingCounter) Add(delta float64) {
-	c.CounterValue += delta
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.counterValue += delta
 }
 
-// CollectingGauge is a metrics.Gauge implementation that enables access to the GaugeValue and LastLabelValues.
+// CounterValue returns the accumulated counter value.
+func (c *CollectingCounter) CounterValue() float64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.counterValue
+}
+
+// LastLabelValues returns a copy of the label values of the last With call.
+func (c *CollectingCounter) LastLabelValues() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return slices.Clone(c.lastLabelValues)
+}
+
+// CollectingGauge is a metrics.Gauge implementation that enables access to the gauge value and last label values.
+// It is safe for concurrent use, as the instrumented code usually runs in its own goroutine.
 type CollectingGauge struct {
-	GaugeValue      float64
-	LastLabelValues []string
+	mu              sync.RWMutex
+	gaugeValue      float64
+	lastLabelValues []string
 }
 
 // With is there to satisfy the metrics.Gauge interface.
 func (g *CollectingGauge) With(labelValues ...string) metrics.Gauge {
-	g.LastLabelValues = labelValues
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.lastLabelValues = labelValues
+
 	return g
 }
 
 // Set is there to satisfy the metrics.Gauge interface.
 func (g *CollectingGauge) Set(value float64) {
-	g.GaugeValue = value
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.gaugeValue = value
 }
 
 // Add is there to satisfy the metrics.Gauge interface.
 func (g *CollectingGauge) Add(delta float64) {
-	g.GaugeValue = delta
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.gaugeValue = delta
+}
+
+// GaugeValue returns the current gauge value.
+func (g *CollectingGauge) GaugeValue() float64 {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	return g.gaugeValue
+}
+
+// LastLabelValues returns a copy of the label values of the last With call.
+func (g *CollectingGauge) LastLabelValues() []string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	return slices.Clone(g.lastLabelValues)
 }
 
 // CollectingHealthCheckMetrics can be used for testing the Metrics instrumentation of the HealthCheck package.
