@@ -81,7 +81,7 @@ func (r *Muxer) AddRoute(rule string, priority int, handler http.Handler) error 
 	return nil
 }
 
-// ParseDomains extract domains from rule.
+// ParseDomains extract the domains from positive Host matchers (not negated) in a rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
 	for matcher := range httpFuncs {
@@ -103,7 +103,7 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParseMatchers([]string{hostMatcher}), nil
+	return buildTree().ParsePositiveMatchers([]string{hostMatcher}), nil
 }
 
 func path(route *mux.Route, paths ...string) error {
