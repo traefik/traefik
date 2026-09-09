@@ -19,7 +19,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attached attachedRoutes) {
+func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes) {
 	logger := log.Ctx(ctx).With().
 		Str("grpc_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -65,7 +65,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 				GatewayName:      match.GatewayName,
 				Name:             listener.Name,
 			}
-			if accepted && attached.Conflicts(ref, kindGRPCRoute, hostnames) {
+			if accepted && attachedRoutes.Conflicts(ref, kindGRPCRoute, hostnames) {
 				if acceptedCondition.Status == metav1.ConditionFalse {
 					acceptedCondition.Reason = string(routeReasonHostnameConflict)
 				}
@@ -76,7 +76,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 				// Gateway listener should have AttachedRoutes set even when Gateway has unresolved refs.
 				listener.Status.AttachedRoutes++
 
-				attached.Attach(ref, kindGRPCRoute, hostnames)
+				attachedRoutes.Attach(ref, kindGRPCRoute, hostnames)
 			}
 
 			// The ResolvedRefs condition must be reported for every parentRef,
