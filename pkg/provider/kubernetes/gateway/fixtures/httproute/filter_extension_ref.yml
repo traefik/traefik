@@ -1,4 +1,20 @@
 ---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-default-to-service
+  namespace: bar
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: default
+  to:
+    - group: ""
+      kind: Service
+      name: whoami-bar
+
+---
 kind: GatewayClass
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
@@ -49,6 +65,19 @@ spec:
           weight: 1
           kind: Service
           group: ""
+        # Cross-namespace backendRef
+        - name: whoami-bar
+          namespace: bar
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+          filters:
+            - type: ExtensionRef
+              extensionRef:
+                group: traefik.io
+                kind: Middleware
+                name: my-backend-middleware
       filters:
         - type: ExtensionRef
           extensionRef:

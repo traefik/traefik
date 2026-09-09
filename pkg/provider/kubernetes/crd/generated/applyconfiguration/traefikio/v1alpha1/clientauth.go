@@ -28,9 +28,13 @@ package v1alpha1
 
 // ClientAuthApplyConfiguration represents a declarative configuration of the ClientAuth type for use
 // with apply.
+//
+// ClientAuth holds the TLS client authentication configuration.
 type ClientAuthApplyConfiguration struct {
-	SecretNames    []string `json:"secretNames,omitempty"`
-	ClientAuthType *string  `json:"clientAuthType,omitempty"`
+	// SecretNames defines the names of the referenced Kubernetes Secret storing certificate details.
+	SecretNames []string `json:"secretNames,omitempty"`
+	// ClientAuthType defines the client authentication type to apply.
+	ClientAuthType *string `json:"clientAuthType,omitempty"`
 }
 
 // ClientAuthApplyConfiguration constructs a declarative configuration of the ClientAuth type for use with

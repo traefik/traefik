@@ -7,7 +7,6 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 func Test_detectChanges(t *testing.T) {
@@ -188,7 +187,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Ready: new(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -197,7 +196,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Ready: new(false)},
 				}},
 			},
 			want: true,
@@ -210,7 +209,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -219,7 +218,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(false)},
 				}},
 			},
 			want: true,
@@ -232,7 +231,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(false)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -241,7 +240,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(true)},
 				}},
 			},
 			want: true,
@@ -262,7 +261,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(true)},
 				}},
 			},
 		},
@@ -282,7 +281,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Serving: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Serving: new(false)},
 				}},
 			},
 			want: true,
@@ -303,7 +302,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(false)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(false)},
 				}},
 			},
 		},
@@ -323,7 +322,7 @@ func Test_detectChanges(t *testing.T) {
 				},
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
-					Conditions: discoveryv1.EndpointConditions{Terminating: ptr.To(true)},
+					Conditions: discoveryv1.EndpointConditions{Terminating: new(true)},
 				}},
 			},
 			want: true,
@@ -351,7 +350,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "1",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: ptr.To[int32](80),
+					Port: new(int32(80)),
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
@@ -359,7 +358,7 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "2",
 				},
 				Ports: []discoveryv1.EndpointPort{{
-					Port: ptr.To[int32](8080),
+					Port: new(int32(8080)),
 				}},
 			},
 			want: true,

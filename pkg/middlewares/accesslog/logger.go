@@ -75,7 +75,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.Hook) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -107,6 +107,10 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		Level:     logrus.InfoLevel,
 	}
 
+	for _, hook := range hooks {
+		logger.Hooks.Add(hook)
+	}
+
 	if config.OTLP != nil {
 		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
 		if err != nil {
@@ -114,7 +118,9 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		logger.Out = io.Discard
+		if !config.DualOutput {
+			logger.Out = io.Discard
+		}
 	}
 
 	// Transform header names to a canonical form, to be used as is without further transformations,
@@ -202,6 +208,22 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
+	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
+		// Dispatch on the source resource kind so each kind maps to its own
+		// stable access-log field names. A single generic struct backs every
+		// Kubernetes provider; only the kind differs.
+		if k := metadata.Ingress; k != nil {
+			switch k.Kind {
+			case "Ingress":
+				logDataTable.Core[KubernetesIngressNamespace] = k.Namespace
+				logDataTable.Core[KubernetesIngressName] = k.Name
+			case "IngressRoute":
+				logDataTable.Core[KubernetesIngressRouteNamespace] = k.Namespace
+				logDataTable.Core[KubernetesIngressRouteName] = k.Name
+			}
+		}
+	}
+
 	if span := trace.SpanFromContext(req.Context()); span != nil {
 		spanContext := span.SpanContext()
 		if spanContext.HasTraceID() && spanContext.HasSpanID() {
@@ -270,6 +292,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		logDataTable.DownstreamResponse.status = capt.StatusCode()
 		logDataTable.DownstreamResponse.size = capt.ResponseSize()
 		logDataTable.Request.size = capt.RequestSize()
+
+		// Service-level observability metadata is written by the leaf service
+		// handler while the chain runs (the state container is shared by
+		// pointer via the request context). Read it once here so the fields
+		// reflect the backend the load balancer actually dispatched to.
+		if state := observability.GetServiceObservabilityState(reqWithDataTable.Context()); state != nil && state.Metadata != nil {
+			if k := state.Metadata.Kubernetes; k != nil {
+				core[KubernetesServiceName] = k.Name
+				core[KubernetesServiceNamespace] = k.Namespace
+				core[KubernetesServicePort] = k.Port
+			}
+		}
 
 		if _, ok := core[ClientUsername]; !ok {
 			core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
@@ -374,6 +408,16 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	if h.config.OTLP != nil {
 		// If the logger is configured to use OpenTelemetry,
 		// we compute the log body with the formatter.
+		// The formatter reads the entry level and time, which logrus only sets when the log method is called.
+		// Setting them here avoids formatting a body with the zero values, and makes logrus reuse
+		// this timestamp, so the OTLP body and the regular output carry the same level and time.
+		entry.Level = logrus.InfoLevel
+
+		entry.Time = time.Now()
+		if t, ok := core[StartUTC].(time.Time); ok {
+			entry.Time = t
+		}
+
 		mBytes, err := h.logger.Formatter.Format(entry)
 		if err != nil {
 			message = fmt.Sprintf("Failed to format access log entry: %v", err)

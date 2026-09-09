@@ -1,7 +1,7 @@
 import { Box, Flex, Image, Link, Text } from '@traefik-labs/faency'
 import { useMemo, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 
 import verifySignature from '../../utils/workers/scriptVerification'
 
@@ -9,7 +9,7 @@ import { PUBLIC_KEY } from './constants'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
-import { TopNav } from 'layout/Navigation'
+import { TopNav } from 'layout/navigation'
 
 const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
 
@@ -79,7 +79,7 @@ const HubDashboard = ({ path }: { path: string }) => {
         <Image src="/img/gopher-something-went-wrong.png" width={400} />
         <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>Oops! We couldn't load the demo content.</Text>
         <Text size={6} css={{ textAlign: 'center', lineHeight: 1.4 }}>
-          Don't worry — you can still learn more about{' '}
+          Don't worry â€” you can still learn more about{' '}
           <Text size={6} css={{ fontWeight: '$semiBold' }}>
             Traefik Hub API Management
           </Text>{' '}

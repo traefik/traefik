@@ -33,11 +33,20 @@ import (
 
 // MirroringApplyConfiguration represents a declarative configuration of the Mirroring type for use
 // with apply.
+//
+// Mirroring holds the mirroring service configuration.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/load-balancing/service/#mirroring
 type MirroringApplyConfiguration struct {
 	LoadBalancerSpecApplyConfiguration `json:",inline"`
-	MirrorBody                         *bool                             `json:"mirrorBody,omitempty"`
-	MaxBodySize                        *int64                            `json:"maxBodySize,omitempty"`
-	Mirrors                            []MirrorServiceApplyConfiguration `json:"mirrors,omitempty"`
+	// MirrorBody defines whether the body of the request should be mirrored.
+	// Default value is true.
+	MirrorBody *bool `json:"mirrorBody,omitempty"`
+	// MaxBodySize defines the maximum size allowed for the body of the request.
+	// If the body is larger, the request is not mirrored.
+	// Default value is -1, which means unlimited size.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// Mirrors defines the list of mirrors where Traefik will duplicate the traffic.
+	Mirrors []MirrorServiceApplyConfiguration `json:"mirrors,omitempty"`
 }
 
 // MirroringApplyConfiguration constructs a declarative configuration of the Mirroring type for use with
@@ -67,6 +76,19 @@ func (b *MirroringApplyConfiguration) WithKind(value string) *MirroringApplyConf
 // If called multiple times, the Namespace field is set to the value of the last call.
 func (b *MirroringApplyConfiguration) WithNamespace(value string) *MirroringApplyConfiguration {
 	b.LoadBalancerSpecApplyConfiguration.Namespace = &value
+	return b
+}
+
+// WithMiddlewares adds the given value to the Middlewares field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Middlewares field.
+func (b *MirroringApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyConfiguration) *MirroringApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMiddlewares")
+		}
+		b.LoadBalancerSpecApplyConfiguration.Middlewares = append(b.LoadBalancerSpecApplyConfiguration.Middlewares, *values[i])
+	}
 	return b
 }
 

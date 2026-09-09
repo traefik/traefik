@@ -28,7 +28,10 @@ package v1alpha1
 
 // CertificateApplyConfiguration represents a declarative configuration of the Certificate type for use
 // with apply.
+//
+// Certificate holds a secret name for the TLSStore resource.
 type CertificateApplyConfiguration struct {
+	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretName *string `json:"secretName,omitempty"`
 }
 

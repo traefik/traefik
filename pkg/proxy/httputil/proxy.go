@@ -19,61 +19,145 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
+type key string
+
 const (
 	// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
 	StatusClientClosedRequest = 499
 
 	// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 	StatusClientClosedRequestText = "Client Closed Request"
+
+	notAppendXFFKey key = "NotAppendXFF"
 )
 
+// SetNotAppendXFF indicates xff should not be appended.
+func SetNotAppendXFF(ctx context.Context) context.Context {
+	return context.WithValue(ctx, notAppendXFFKey, true)
+}
+
+// ShouldNotAppendXFF returns whether X-Forwarded-For should not be appended.
+func ShouldNotAppendXFF(ctx context.Context) bool {
+	val := ctx.Value(notAppendXFFKey)
+	if val == nil {
+		return false
+	}
+
+	notAppendXFF, ok := val.(bool)
+	if !ok {
+		return false
+	}
+
+	return notAppendXFF
+}
+
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
-	return &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader, preservePath),
+	proxy := &httputil.ReverseProxy{
+		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
 		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ErrorHandler:  ErrorHandler,
 	}
+
+	return newConnectHandler(newH2CUpgradeHandler(proxy))
 }
 
-func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(req *http.Request) {
-	return func(outReq *http.Request) {
-		outReq.URL.Scheme = target.Scheme
-		outReq.URL.Host = target.Host
+func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
+	return func(pr *httputil.ProxyRequest) {
+		copyForwardedHeader(pr.Out.Header, pr.In.Header)
+		if !ShouldNotAppendXFF(pr.In.Context()) {
+			if clientIP, _, err := net.SplitHostPort(pr.In.RemoteAddr); err == nil {
+				// If we aren't the first proxy retain prior
+				// X-Forwarded-For information as a comma+space
+				// separated list and fold multiple headers into one.
+				prior, ok := pr.Out.Header["X-Forwarded-For"]
+				omit := ok && prior == nil // Issue 38079: nil now means don't populate the header
+				if len(prior) > 0 {
+					clientIP = strings.Join(prior, ", ") + ", " + clientIP
+				}
+				if !omit {
+					pr.Out.Header.Set("X-Forwarded-For", clientIP)
+				}
+			}
+		}
 
-		u := outReq.URL
-		if outReq.RequestURI != "" {
-			parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
+		pr.Out.URL.Scheme = target.Scheme
+		pr.Out.URL.Host = target.Host
+
+		u := pr.Out.URL
+		if pr.Out.RequestURI != "" {
+			parsedURL, err := url.ParseRequestURI(pr.Out.RequestURI)
 			if err == nil {
 				u = parsedURL
 			}
 		}
 
-		outReq.URL.Path = u.Path
-		outReq.URL.RawPath = u.RawPath
+		pr.Out.URL.Path = u.Path
+		pr.Out.URL.RawPath = u.RawPath
 
 		if preservePath {
-			outReq.URL.Path, outReq.URL.RawPath = JoinURLPath(target, u)
+			pr.Out.URL.Path, pr.Out.URL.RawPath = JoinURLPath(target, u)
 		}
 
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
-		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
-		outReq.RequestURI = "" // Outgoing request should not have RequestURI
+		pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
+		pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
+		// URL.RequestURI gives Opaque precedence over the path, an opaque outgoing URL would discard the path set above.
+		pr.Out.URL.Opaque = ""
 
-		outReq.Proto = "HTTP/1.1"
-		outReq.ProtoMajor = 1
-		outReq.ProtoMinor = 1
+		// Forward the declared request trailer names, but never their values: they arrive
+		// after the header section, once routing and security decisions are made, and would
+		// otherwise reach the backend under a name sanitized in the header section.
+		// Discarding them is allowed by https://www.rfc-editor.org/rfc/rfc9112#section-7.1.2,
+		// and the names are kept as the hint of what was dropped described in
+		// https://www.rfc-editor.org/rfc/rfc9110#section-6.6.2
+		// Emptying the outgoing map is what makes this hold whatever the middleware chain did
+		// to the incoming request, as the transport only writes pr.Out.Trailer.
+		// Response trailers are unaffected.
+		for name := range pr.Out.Trailer {
+			pr.Out.Trailer[name] = nil
+		}
+
+		pr.Out.Proto = "HTTP/1.1"
+		pr.Out.ProtoMajor = 1
+		pr.Out.ProtoMinor = 1
+
+		// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
+		// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
+		if pr.Out.Method == http.MethodConnect {
+			pr.Out.Close = true
+		}
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
-			outReq.Host = outReq.URL.Host
+			pr.Out.Host = pr.Out.URL.Host
 		}
 
-		if isWebSocketUpgrade(outReq) {
-			cleanWebSocketHeaders(outReq)
+		if isWebSocketUpgrade(pr.Out) {
+			cleanWebSocketHeaders(pr.Out)
 		}
+	}
+}
+
+// copyForwardedHeader copies header that are removed by the reverseProxy when a rewriteRequest is used.
+func copyForwardedHeader(dst, src http.Header) {
+	prior, ok := src["X-Forwarded-For"]
+	if ok {
+		dst["X-Forwarded-For"] = prior
+	}
+	prior, ok = src["Forwarded"]
+	if ok {
+		dst["Forwarded"] = prior
+	}
+	prior, ok = src["X-Forwarded-Host"]
+	if ok {
+		dst["X-Forwarded-Host"] = prior
+	}
+	prior, ok = src["X-Forwarded-Proto"]
+	if ok {
+		dst["X-Forwarded-Proto"] = prior
 	}
 }
 
@@ -140,14 +224,13 @@ func statusText(statusCode int) string {
 // and the client configuration should allow to verify the server certificate.
 func isTLSConfigError(err error) bool {
 	// tls.RecordHeaderError is returned when the client sends a TLS request to a non-TLS server.
-	var recordHeaderErr tls.RecordHeaderError
-	if errors.As(err, &recordHeaderErr) {
+	if _, ok := errors.AsType[tls.RecordHeaderError](err); ok {
 		return true
 	}
 
 	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
-	var certVerificationErr *tls.CertificateVerificationError
-	return errors.As(err, &certVerificationErr)
+	_, ok := errors.AsType[*tls.CertificateVerificationError](err)
+	return ok
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
@@ -158,8 +241,7 @@ func ComputeStatusCode(err error) int {
 	case errors.Is(err, context.Canceled):
 		return StatusClientClosedRequest
 	default:
-		var netErr net.Error
-		if errors.As(err, &netErr) {
+		if netErr, ok := errors.AsType[net.Error](err); ok {
 			if netErr.Timeout() {
 				return http.StatusGatewayTimeout
 			}

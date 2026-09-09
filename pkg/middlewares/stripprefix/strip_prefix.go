@@ -78,6 +78,8 @@ func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				return
 			}
 
+			// Note: the header names aliasing the ForwardedPrefixHeader (e.g. X_Forwarded_Prefix) are not handled here,
+			// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 			req.Header.Add(ForwardedPrefixHeader, prefix)
 			req.RequestURI = req.URL.RequestURI()
 			break

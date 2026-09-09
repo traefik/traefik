@@ -28,9 +28,13 @@ package v1alpha1
 
 // ClientTLSWithCAOptionalApplyConfiguration represents a declarative configuration of the ClientTLSWithCAOptional type for use
 // with apply.
+//
+// ClientTLSWithCAOptional holds the client TLS configuration.
+// TODO: This has to be removed once the CAOptional option is removed.
 type ClientTLSWithCAOptionalApplyConfiguration struct {
 	ClientTLSApplyConfiguration `json:",inline"`
-	CAOptional                  *bool `json:"caOptional,omitempty"`
+	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
+	CAOptional *bool `json:"caOptional,omitempty"`
 }
 
 // ClientTLSWithCAOptionalApplyConfiguration constructs a declarative configuration of the ClientTLSWithCAOptional type for use with

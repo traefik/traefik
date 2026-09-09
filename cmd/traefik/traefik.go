@@ -97,14 +97,21 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
-	log.Warn().Msg("Traefik can reject some encoded characters in the request path. " +
-		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986), " +
-		"it is recommended to set these options to `false` to avoid split-view situation. " +
-		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.6/migrate/v3/#encoded-characters-configuration-default-values")
-
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	staticConfiguration.SetEffectiveConfiguration()
+
+	// Warn only when no entryPoint disallows an encoded character:
+	// a single denial means the operator already knows about these options.
+	// Keep this after SetEffectiveConfiguration: it creates the default entryPoint,
+	// without which a bare configuration would never warn.
+	if staticConfiguration.HasTCPEntryPoint() && !staticConfiguration.HasDeniedEncodedCharacters() {
+		log.Warn().Msg("Traefik can reject some encoded characters in the request path. " +
+			"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986), " +
+			"it is recommended to set these options to `false` to avoid split-view situation. " +
+			"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.6/migrate/v3/#encoded-characters-configuration-default-values")
+	}
+
 	if err := staticConfiguration.ValidateConfiguration(); err != nil {
 		return err
 	}
@@ -231,6 +238,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.API != nil {
 		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+		version.DashboardName = staticConfiguration.API.DashboardName
 	}
 
 	// Plugins
@@ -302,7 +310,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, observabilityMgr, transportManager, proxyBuilder, acmeHTTPHandler)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, observabilityMgr, transportManager, proxyBuilder, acmeHTTPHandler, tlsManager)
 
 	// Router factory
 
@@ -318,6 +326,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		providerAggregator,
 		getDefaultsEntrypoints(staticConfiguration),
 		"internal",
+		staticConfiguration.Core != nil && staticConfiguration.Core.StrictTLSOptions,
 	)
 
 	// TLS
@@ -385,7 +394,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			}
 
 			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
-				log.Error().Err(err).Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
+				log.Error().Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
 					Msg("Router uses a nonexistent certificate resolver")
 			}
 		}

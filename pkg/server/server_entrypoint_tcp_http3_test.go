@@ -2,17 +2,25 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -98,7 +106,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.AddHTTPTLSConfig("*", &tls.Config{
@@ -160,7 +168,7 @@ func TestHTTP30RTT(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.AddHTTPTLSConfig("example.com", &tls.Config{
@@ -214,6 +222,269 @@ func TestHTTP30RTT(t *testing.T) {
 
 	// 0RTT need to be false.
 	assert.False(t, earlyConnection.ConnectionState().Used0RTT)
+}
+
+func TestHTTP3ReadTimeout(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(300 * time.Millisecond)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:8091",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	bodyReadErr := make(chan error, 1)
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := io.ReadAll(req.Body)
+		bodyReadErr <- err
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	transport := &http3.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:    certPool,
+			ServerName: "example.com",
+		},
+		// Force the dial to our local test server regardless of the request URL's host.
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return quic.DialAddr(ctx, "127.0.0.1:8091", tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = transport.Close() })
+
+	// A body that trickles one byte every 100ms — 2s total, well past the 300ms readTimeout above.
+	pr, pw := io.Pipe()
+	go func() {
+		for range 20 {
+			if _, err := pw.Write([]byte("x")); err != nil {
+				return
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		_ = pw.Close()
+	}()
+
+	req, err := http.NewRequest(http.MethodPost, "https://example.com:8091/", pr)
+	require.NoError(t, err)
+	req.ContentLength = -1
+
+	start := time.Now()
+	_, roundTripErr := transport.RoundTrip(req)
+	elapsed := time.Since(start)
+
+	t.Logf("RoundTrip returned after %s, err=%v", elapsed, roundTripErr)
+
+	assert.Less(t, elapsed, time.Second)
+
+	select {
+	case err := <-bodyReadErr:
+		t.Logf("server body read returned: %v", err)
+		assert.ErrorIs(t, err, os.ErrDeadlineExceeded)
+	case <-time.After(time.Second):
+		t.Fatal("server handler never observed the body read being cut off")
+	}
+}
+
+func TestHTTP3StickyBackendTransport(t *testing.T) {
+	const backendConnHeader = "X-Backend-Conn"
+
+	// RemoteAddr identifies the backend connection, the challenge making Traefik stick to it as an NTLM backend would.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("WWW-Authenticate", "NTLM")
+		rw.Header().Set(backendConnHeader, req.RemoteAddr)
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(backend.Close)
+
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+	roundTripper, err := transportManager.GetRoundTripper("default@internal")
+	require.NoError(t, err)
+
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		outReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, backend.URL, http.NoBody)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		resp, err := roundTripper.RoundTrip(outReq)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		rw.Header().Set(backendConnHeader, resp.Header.Get(backendConnHeader))
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	http3Addr := entryPoint.http3Server.http3conn.LocalAddr().String()
+
+	// Each transport holds its own QUIC connection to the entrypoint.
+	newClient := func() *http3.Transport {
+		transport := &http3.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs:    certPool,
+				ServerName: "example.com",
+			},
+			Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+				return quic.DialAddr(ctx, http3Addr, tlsCfg, cfg)
+			},
+		}
+		t.Cleanup(func() { _ = transport.Close() })
+
+		return transport
+	}
+
+	backendConnFor := func(transport *http3.Transport) string {
+		t.Helper()
+
+		req, err := http.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
+		require.NoError(t, err)
+
+		resp, err := transport.RoundTrip(req)
+		require.NoError(t, err)
+
+		t.Cleanup(func() { _ = resp.Body.Close() })
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		return resp.Header.Get(backendConnHeader)
+	}
+
+	firstClient, secondClient := newClient(), newClient()
+
+	firstConn := backendConnFor(firstClient)
+	firstStickyConn := backendConnFor(firstClient)
+	firstReusedConn := backendConnFor(firstClient)
+	secondConn := backendConnFor(secondClient)
+	secondStickyConn := backendConnFor(secondClient)
+
+	// The challenge on the first call moves the following ones to a connection dedicated to that client.
+	assert.NotEqual(t, firstConn, firstStickyConn)
+	// That dedicated connection is then reused, which is what a connection-bound authentication relies on.
+	assert.Equal(t, firstStickyConn, firstReusedConn)
+	// A client must never be served by the connection another one is stuck to.
+	assert.NotEqual(t, firstStickyConn, secondConn)
+	assert.NotEqual(t, firstStickyConn, secondStickyConn)
+}
+
+func TestNewHTTP3ServerTimeouts(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.IdleTimeout = ptypes.Duration(42 * time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP:             static.HTTPConfig{MaxHeaderBytes: 12345},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("*", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	assert.Equal(t, 42*time.Second, entryPoint.http3Server.Server.IdleTimeout)
+	assert.Equal(t, 12345, entryPoint.http3Server.Server.MaxHeaderBytes)
+	assert.NotNil(t, entryPoint.http3Server.Server.Handler)
 }
 
 type clientSessionCache struct {

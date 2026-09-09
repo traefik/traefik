@@ -123,7 +123,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	connCount := pointer[int32](0)
+	connCount := new(int32(0))
 	srv.Config.ConnState = func(conn net.Conn, state http.ConnState) {
 		if state == http.StateNew {
 			atomic.AddInt32(connCount, 1)
@@ -181,6 +181,193 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 
 	count = atomic.LoadInt32(connCount)
 	assert.EqualValues(t, 2, count)
+}
+
+func TestValidCipherSuites(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	srv.TLS = &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
+	srv.StartTLS()
+
+	transportManager := NewTransportManager(nil)
+
+	dynamicConf := map[string]*dynamic.ServersTransport{
+		"test": {
+			ServerName:   "example.com",
+			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+		},
+	}
+
+	transportManager.Update(dynamicConf)
+	require.NoError(t, err)
+	tr, err := transportManager.GetRoundTripper("test")
+	require.NoError(t, err)
+	client := http.Client{Transport: tr}
+	resp, err := client.Get(srv.URL)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestValidTLSVersions(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	srv.TLS = &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MaxVersion:   tls.VersionTLS12,
+		MinVersion:   tls.VersionTLS11,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
+	srv.StartTLS()
+
+	transportManager := NewTransportManager(nil)
+
+	dynamicConf := map[string]*dynamic.ServersTransport{
+		"test": {
+			ServerName:   "example.com",
+			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			MaxVersion:   "VersionTLS12",
+			MinVersion:   "VersionTLS11",
+			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+		},
+	}
+
+	transportManager.Update(dynamicConf)
+	require.NoError(t, err)
+	tr, err := transportManager.GetRoundTripper("test")
+	require.NoError(t, err)
+	client := http.Client{Transport: tr}
+	resp, err := client.Get(srv.URL)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestInvalidTLSConfig(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		transport *dynamic.ServersTransport
+	}{
+		{
+			desc: "invalid CipherSuite name",
+			transport: &dynamic.ServersTransport{
+				ServerName:   "example.com",
+				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385"},
+			},
+		},
+		{
+			desc: "invalid MinVersion",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				MinVersion: "VersionTLS09",
+			},
+		},
+		{
+			desc: "invalid MaxVersion",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				MaxVersion: "VersionTLS16",
+			},
+		},
+		{
+			desc: "MinVersion above MaxVersion",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				MinVersion: "VersionTLS13",
+				MaxVersion: "VersionTLS12",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"test": test.transport})
+
+			// A nil TLSConfig means the configuration was invalid and the transport manager correctly ignored it.
+			assert.Nil(t, transportManager.tlsConfigs["test"])
+		})
+	}
+}
+
+func TestNoCipherSuitesUsesDefaults(t *testing.T) {
+	// The server is pinned to TLS 1.2 and a single cipher from Go's default
+	// list, so the handshake only succeeds if the client falls back to the
+	// default cipher list instead of an empty one.
+	testCases := []struct {
+		desc         string
+		transport    *dynamic.ServersTransport
+		serverCipher uint16
+	}{
+		{
+			desc: "no cipher config with ServerName and RootCAs",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		{
+			desc: "only InsecureSkipVerify",
+			transport: &dynamic.ServersTransport{
+				InsecureSkipVerify: true,
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+	}
+
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+
+			srv.TLS = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+				MaxVersion:   tls.VersionTLS12,
+				CipherSuites: []uint16{test.serverCipher},
+			}
+			srv.StartTLS()
+			defer srv.Close()
+
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"test": test.transport})
+
+			tr, err := transportManager.GetRoundTripper("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+			resp, err := client.Get(srv.URL)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+		})
+	}
 }
 
 func TestMTLS(t *testing.T) {
@@ -354,7 +541,14 @@ func TestSpiffeMTLS(t *testing.T) {
 			transportManager.Update(dynamicConf)
 
 			tr, err := transportManager.GetRoundTripper("test")
-			require.NoError(t, err)
+			if err != nil {
+				// An invalid TLS configuration (e.g. SPIFFE enabled without a
+				// workloadapi source) is rejected by the manager and the
+				// transport is never installed; that itself is the expected
+				// failure mode.
+				require.True(t, test.wantError, "unexpected GetRoundTripper error: %v", err)
+				return
+			}
 
 			client := http.Client{Transport: tr}
 
@@ -579,6 +773,26 @@ func TestKerberosRoundTripper(t *testing.T) {
 			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
 			expectedOriginalCount:       1,
 			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase negotiate scheme",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase ntlm scheme carrying a challenge",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"ntlm TlRMTVNTUAAB"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a scheme that only starts like NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLMish"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount:       3,
 		},
 	}
 

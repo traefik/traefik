@@ -1,0 +1,10 @@
+[http.routers]
+  [http.routers.router1]
+    entryPoints = ["web"]
+    rule = "PathPrefix(`/`)"
+    service = "service1"
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Server }}"

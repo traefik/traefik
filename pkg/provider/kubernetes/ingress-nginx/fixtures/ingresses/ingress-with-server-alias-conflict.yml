@@ -1,0 +1,41 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: primary-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: conflict.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alias-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "alias1.localhost,conflict.localhost"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: original.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix

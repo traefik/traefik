@@ -6,16 +6,18 @@ import { HubDemoContext } from './demoNavContext'
 import { HubIcon } from './icons'
 
 import Tooltip from 'components/Tooltip'
-import { BasicNavigationItem, LAPTOP_BP } from 'layout/Navigation'
+import { BasicNavigationItem, LAPTOP_BP } from 'layout/navigation'
 
 const ApimDemoNavMenu = ({
   isResponsive,
   isSmallScreen,
   isExpanded,
+  onSidePanelToggle,
 }: {
   isResponsive: boolean
   isSmallScreen: boolean
   isExpanded: boolean
+  onSidePanelToggle: (isOpen: boolean) => void
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { navigationItems: hubDemoNavItems } = useContext(HubDemoContext)
@@ -38,7 +40,7 @@ const ApimDemoNavMenu = ({
             transition: 'transform 0.3s ease-in-out',
           }}
         />
-        {isSmallScreen ? (
+        {isSmallScreen && isResponsive ? (
           <Tooltip label="Hub demo">
             <Box css={{ ml: 4, color: '$navButtonText' }}>
               <HubIcon width={20} />
@@ -74,6 +76,7 @@ const ApimDemoNavMenu = ({
             route={route}
             isSmallScreen={isSmallScreen}
             isExpanded={isExpanded}
+            onSidePanelToggle={onSidePanelToggle}
           />
         ))}
       </Box>
