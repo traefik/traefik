@@ -147,6 +147,15 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 			}
 			if listener.Protocol == gatev1.HTTPSProtocolType {
 				router.TLS = &dynamic.RouterTLSConfig{}
+
+				// TODO: report an unresolvable TLSOptions reference via the listener's ResolvedRefs condition
+				// instead of falling back to the default TLS options.
+				tlsOptionsRef, err := p.resolveTLSOptions(listener.TLS, gatewayNamespace)
+				if err != nil {
+					log.Ctx(ctx).Error().Err(err).Msg("Unable to resolve TLSOptions reference")
+				} else {
+					router.TLS.Options = tlsOptionsRef
+				}
 			}
 
 			var err error

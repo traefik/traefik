@@ -15,6 +15,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	traefikfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -49,6 +50,11 @@ func init() {
 	if err := gatev1alpha3.AddToScheme(kscheme.Scheme); err != nil {
 		panic(err)
 	}
+
+	// required by k8s.MustParseYaml, to decode TLSOption fixtures.
+	if err := traefikv1alpha1.AddToScheme(kscheme.Scheme); err != nil {
+		panic(err)
+	}
 }
 
 const (
@@ -71,12 +77,12 @@ NL0leX2m+k218i/LZbBq3k0SBdhMILLXjDpMRiikpQ77mg8KvKf6lftL
 )
 
 func TestGatewayClassLabelSelector(t *testing.T) {
-	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
+	k8sObjects, gwObjects, crdObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 	// This is initialized by the Provider init method but this cannot be called in a unit test.
 	client.labelSelector = "name=traefik-internal"
@@ -779,6 +785,150 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		{
 			desc:  "Simple HTTPRoute with protocol HTTPS",
 			paths: []string{"services.yml", "httproute/with_protocol_https.yml"},
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
+							EntryPoints: []string{"websecure"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "HTTPRoute with protocol HTTPS and TLSOptions ref",
+			paths: []string{"services.yml", "httproute/with_tlsoptions_ref.yml"},
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
+							EntryPoints: []string{"websecure"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
+							Rule:        `Host("foo.com") && Path("/bar")`,
+							Priority:    100008,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTLSConfig{Options: "default-mytlsoptions@kubernetescrd"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "HTTPRoute with protocol HTTPS and missing TLSOptions ref",
+			paths: []string{"services.yml", "httproute/with_missing_tlsoptions_ref.yml"},
 			entryPoints: map[string]Entrypoint{"websecure": {
 				Address: ":443",
 			}},
@@ -2970,12 +3120,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -2995,6 +3145,98 @@ func TestLoadHTTPRoutes(t *testing.T) {
 
 			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func Test_resolveTLSOptions(t *testing.T) {
+	k8sObjects, gwObjects, crdObjects := readResources(t, []string{"tlsoptions.yaml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+	client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{client: client}
+
+	testCases := []struct {
+		desc             string
+		listenerTLS      *gatev1.ListenerTLSConfig
+		gatewayNamespace string
+		expected         string
+		wantErr          bool
+	}{
+		{
+			desc:             "nil listener TLS config",
+			listenerTLS:      nil,
+			gatewayNamespace: "default",
+			expected:         "",
+		},
+		{
+			desc:             "no TLSOptions name key set",
+			listenerTLS:      &gatev1.ListenerTLSConfig{},
+			gatewayNamespace: "default",
+			expected:         "",
+		},
+		{
+			desc: "name-only key resolves in the Gateway's own namespace",
+			listenerTLS: &gatev1.ListenerTLSConfig{
+				Options: map[gatev1.AnnotationKey]gatev1.AnnotationValue{
+					tlsOptionsNameKey: "mytlsoptions",
+				},
+			},
+			gatewayNamespace: "default",
+			expected:         "default-mytlsoptions@kubernetescrd",
+		},
+		{
+			desc: "name and namespace keys resolve in the given namespace when a ReferenceGrant allows it",
+			listenerTLS: &gatev1.ListenerTLSConfig{
+				Options: map[gatev1.AnnotationKey]gatev1.AnnotationValue{
+					tlsOptionsNameKey:      "mytlsoptions",
+					tlsOptionsNamespaceKey: "granted",
+				},
+			},
+			gatewayNamespace: "default",
+			expected:         "granted-mytlsoptions@kubernetescrd",
+		},
+		{
+			desc: "cross-namespace reference without a ReferenceGrant returns an error",
+			listenerTLS: &gatev1.ListenerTLSConfig{
+				Options: map[gatev1.AnnotationKey]gatev1.AnnotationValue{
+					tlsOptionsNameKey:      "mytlsoptions",
+					tlsOptionsNamespaceKey: "other",
+				},
+			},
+			gatewayNamespace: "default",
+			wantErr:          true,
+		},
+		{
+			desc: "nonexistent TLSOption returns an error",
+			listenerTLS: &gatev1.ListenerTLSConfig{
+				Options: map[gatev1.AnnotationKey]gatev1.AnnotationValue{
+					tlsOptionsNameKey: "doesnotexist",
+				},
+			},
+			gatewayNamespace: "default",
+			wantErr:          true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result, err := p.resolveTLSOptions(test.listenerTLS, test.gatewayNamespace)
+			if test.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, result)
 		})
 	}
 }
@@ -3431,12 +3673,12 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -3766,12 +4008,12 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/filter_extension_ref.yml"})
+			k8sObjects, gwObjects, crdObjects := readResources(t, []string{"services.yml", "httproute/filter_extension_ref.yml"})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -3922,12 +4164,12 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -4209,12 +4451,12 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "grpcroute/filter_extension_ref.yml"})
+			k8sObjects, gwObjects, crdObjects := readResources(t, []string{"services.yml", "grpcroute/filter_extension_ref.yml"})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -5226,12 +5468,12 @@ func TestLoadTCPRoutes(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -5610,6 +5852,84 @@ func TestLoadTLSRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "TLS listener in Terminate mode with TLSOptions ref to TLSRoute",
+			paths: []string{"services.yml", "tlsroute/with_tlsoptions_ref.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-9b0a20a4280b613a67a9": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-9b0a20a4280b613a67a9-wrr",
+							Priority:    15,
+							Rule:        `HostSNI("foo.example.com")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Options: "default-mytlsoptions@kubernetescrd",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-9b0a20a4280b613a67a9-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-9b0a20a4280b613a67a9-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-tcp-0-9b0a20a4280b613a67a9-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -6640,12 +6960,12 @@ func TestLoadTLSRoutes(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -7781,12 +8101,12 @@ func TestLoadMixedRoutes(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -8126,12 +8446,12 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				return
 			}
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -8494,10 +8814,10 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
+			k8sObjects, gwObjects, crdObjects := readResources(t, []string{"services.yml", test.path})
 
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -9393,12 +9713,12 @@ func Test_gatewayAddresses(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, test.paths)
+			k8sObjects, gwObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -9439,11 +9759,12 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 	return client
 }
 
-func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
+func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 	t.Helper()
 
 	var k8sObjects []runtime.Object
 	var gwObjects []runtime.Object
+	var crdObjects []runtime.Object
 	for _, path := range paths {
 		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
 		if err != nil {
@@ -9455,13 +9776,15 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 			switch obj.GetObjectKind().GroupVersionKind().Group {
 			case "gateway.networking.k8s.io":
 				gwObjects = append(gwObjects, obj)
+			case "traefik.io":
+				crdObjects = append(crdObjects, obj)
 			default:
 				k8sObjects = append(k8sObjects, obj)
 			}
 		}
 	}
 
-	return k8sObjects, gwObjects
+	return k8sObjects, gwObjects, crdObjects
 }
 
 func Test_makeGatewayStatus(t *testing.T) {
@@ -9594,12 +9917,12 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.fixture})
+			k8sObjects, gwObjects, crdObjects := readResources(t, []string{"services.yml", test.fixture})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -9659,12 +9982,12 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.fixture})
+			k8sObjects, gwObjects, crdObjects := readResources(t, []string{"services.yml", test.fixture})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
@@ -9733,12 +10056,12 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.fixture})
+			k8sObjects, gwObjects, crdObjects := readResources(t, []string{"services.yml", test.fixture})
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := newClientImpl(kubeClient, gwClient, traefikfake.NewSimpleClientset(crdObjects...))
 			client.experimentalChannel = true
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))

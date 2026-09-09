@@ -140,6 +140,53 @@ spec:
           from: Same
 ```
 
+### TLS Options
+
+Traefik supports attaching a [TLSOption](./crd/tls/tlsoption.md) to a Gateway listener, to configure parameters of the TLS connection such as the minimum TLS version, cipher suites, or client authentication.
+
+Because `TLSOption` is a Traefik CRD, and not part of the Gateway API specification, it is referenced through the listener's `tls.options` extension map, using the `tls.traefik.io/tlsoptions.name` key (and, optionally, `tls.traefik.io/tlsoptions.namespace`, which defaults to the Gateway's own namespace when omitted):
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: example-com-tls
+        options:
+          tls.traefik.io/tlsoptions.name: mytlsoptions
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoptions
+  namespace: default
+spec:
+  minVersion: VersionTLS12
+```
+
+!!! important "Requires the Kubernetes CRD provider"
+
+    `TLSOption` content is only loaded by the [Kubernetes CRD provider](../../install-configuration/providers/kubernetes/kubernetes-crd.md) (`--providers.kubernetescrd`). This means TLS options resolution from the Gateway API provider only takes effect when both `--providers.kubernetescrd` and `--providers.kubernetesgateway` are enabled on the same Traefik instance.
+
+    This feature does not currently support the CRD provider's `SafeNaming` mode: TLSOptions resolution will fail if `--providers.kubernetescrd.safenaming=true` is set.
+
+If the referenced `TLSOption` cannot be found, or a `ReferenceGrant` does not permit a cross-namespace reference, an error is logged and the listener falls back to the default TLS options.
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 

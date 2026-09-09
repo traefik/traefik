@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	traefikclientset "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	traefikinformers "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
@@ -35,12 +38,14 @@ const resyncPeriod = 10 * time.Minute
 type clientWrapper struct {
 	csGateway gateclientset.Interface
 	csKube    kclientset.Interface
+	csTraefik traefikclientset.Interface
 
 	factoryNamespace    kinformers.SharedInformerFactory
 	factoryGatewayClass gateinformers.SharedInformerFactory
 	factoriesGateway    map[string]gateinformers.SharedInformerFactory
 	factoriesKube       map[string]kinformers.SharedInformerFactory
 	factoriesSecret     map[string]kinformers.SharedInformerFactory
+	factoriesTraefik    map[string]traefikinformers.SharedInformerFactory
 
 	isNamespaceAll    bool
 	watchedNamespaces []string
@@ -63,16 +68,23 @@ func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, err
 		return nil, err
 	}
 
-	return newClientImpl(csKube, csGateway), nil
+	csTraefik, err := traefikclientset.NewForConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return newClientImpl(csKube, csGateway, csTraefik), nil
 }
 
-func newClientImpl(csKube kclientset.Interface, csGateway gateclientset.Interface) *clientWrapper {
+func newClientImpl(csKube kclientset.Interface, csGateway gateclientset.Interface, csTraefik traefikclientset.Interface) *clientWrapper {
 	return &clientWrapper{
 		csGateway:        csGateway,
 		csKube:           csKube,
+		csTraefik:        csTraefik,
 		factoriesGateway: make(map[string]gateinformers.SharedInformerFactory),
 		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
 		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
+		factoriesTraefik: make(map[string]traefikinformers.SharedInformerFactory),
 	}
 }
 
@@ -219,9 +231,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
+		factoryTraefik := traefikinformers.NewSharedInformerFactoryWithOptions(c.csTraefik, resyncPeriod, traefikinformers.WithNamespace(ns))
+		_, err = factoryTraefik.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
 		c.factoriesGateway[ns] = factoryGateway
 		c.factoriesKube[ns] = factoryKube
 		c.factoriesSecret[ns] = factorySecret
+		c.factoriesTraefik[ns] = factoryTraefik
 	}
 
 	c.factoryNamespace.Start(stopCh)
@@ -231,6 +250,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesGateway[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
+		c.factoriesTraefik[ns].Start(stopCh)
 	}
 
 	for t, ok := range c.factoryNamespace.WaitForCacheSync(stopCh) {
@@ -259,6 +279,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 
 		for t, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+			}
+		}
+
+		for t, ok := range c.factoriesTraefik[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
@@ -434,6 +460,14 @@ func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap,
 		return nil, fmt.Errorf("failed to get configMap %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(name)
+}
+
+// GetTLSOption returns the named TLSOption from the given namespace.
+func (c *clientWrapper) GetTLSOption(namespace, name string) (*traefikv1alpha1.TLSOption, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get TLSOption %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+	return c.factoriesTraefik[c.lookupNamespace(namespace)].Traefik().V1alpha1().TLSOptions().Lister().TLSOptions(namespace).Get(name)
 }
 
 func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error {
