@@ -7771,6 +7771,122 @@ func TestLoadMixedRoutes(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "GRPCRoute created first wins the conflicting hostname over the HTTPRoute",
+			paths: []string{"services.yml", "mixed/with_grpcroute_priority_over_httproute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web": {Address: ":9080"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-46e5641ba0ccfa2eff8a": {
+							EntryPoints: []string{"web"},
+							Service:     "grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-46e5641ba0ccfa2eff8a-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    22,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-46e5641ba0ccfa2eff8a-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-46e5641ba0ccfa2eff8a-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-46e5641ba0ccfa2eff8a-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "h2c://10.10.0.1:80"},
+									{URL: "h2c://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTPRoute created first wins the conflicting hostname over the GRPCRoute",
+			paths: []string{"services.yml", "mixed/with_httproute_priority_over_grpcroute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web": {Address: ":9080"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-3fcf93756cef1b546fd2": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-3fcf93756cef1b546fd2-wrr",
+							Rule:        `Host("foo.com") && PathPrefix("/")`,
+							Priority:    9,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-3fcf93756cef1b546fd2-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-3fcf93756cef1b546fd2-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-3fcf93756cef1b546fd2-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -8239,15 +8355,15 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Kind:      new(gatev1.Kind("Gateway")),
 			}},
 			want: []gatewayListenersForParentRef{{
-				parentRef: gatev1.ParentReference{
+				ParentRef: gatev1.ParentReference{
 					Name:      "gateway",
 					Namespace: new(gatev1.Namespace("default")),
 					Group:     new(gatev1.Group(gatev1.GroupName)),
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
-				gatewayName:      "gateway",
-				gatewayNamespace: "default",
-				listeners:        []gatewayListener{{}},
+				GatewayName:      "gateway",
+				GatewayNamespace: "default",
+				Listeners:        []gatewayListener{{}},
 			}},
 		},
 		{
@@ -8264,14 +8380,14 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Kind:  new(gatev1.Kind("Gateway")),
 			}},
 			want: []gatewayListenersForParentRef{{
-				parentRef: gatev1.ParentReference{
+				ParentRef: gatev1.ParentReference{
 					Name:  "gateway",
 					Group: new(gatev1.Group(gatev1.GroupName)),
 					Kind:  new(gatev1.Kind("Gateway")),
 				},
-				gatewayName:      "gateway",
-				gatewayNamespace: "default",
-				listeners:        []gatewayListener{{}},
+				GatewayName:      "gateway",
+				GatewayNamespace: "default",
+				Listeners:        []gatewayListener{{}},
 			}},
 		},
 		{
@@ -8299,15 +8415,15 @@ func Test_matchingGatewayListener(t *testing.T) {
 				},
 			},
 			want: []gatewayListenersForParentRef{{
-				parentRef: gatev1.ParentReference{
+				ParentRef: gatev1.ParentReference{
 					Name:      "gateway",
 					Namespace: new(gatev1.Namespace("default")),
 					Group:     new(gatev1.Group(gatev1.GroupName)),
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
-				gatewayName:      "gateway",
-				gatewayNamespace: "default",
-				listeners:        []gatewayListener{{}},
+				GatewayName:      "gateway",
+				GatewayNamespace: "default",
+				Listeners:        []gatewayListener{{}},
 			}},
 		},
 		{
@@ -8327,15 +8443,15 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Kind:      new(gatev1.Kind("Gateway")),
 			}},
 			want: []gatewayListenersForParentRef{{
-				parentRef: gatev1.ParentReference{
+				ParentRef: gatev1.ParentReference{
 					Name:      "gateway",
 					Namespace: new(gatev1.Namespace("default")),
 					Group:     new(gatev1.Group(gatev1.GroupName)),
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
-				gatewayName:      "gateway",
-				gatewayNamespace: "default",
-				listeners: []gatewayListener{
+				GatewayName:      "gateway",
+				GatewayNamespace: "default",
+				Listeners: []gatewayListener{
 					{Name: "web"},
 					{Name: "websecure"},
 				},
@@ -8364,15 +8480,15 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Kind:      new(gatev1.Kind("Gateway")),
 			}},
 			want: []gatewayListenersForParentRef{{
-				parentRef: gatev1.ParentReference{
+				ParentRef: gatev1.ParentReference{
 					Name:      "gateway-a",
 					Namespace: new(gatev1.Namespace("default")),
 					Group:     new(gatev1.Group(gatev1.GroupName)),
 					Kind:      new(gatev1.Kind("Gateway")),
 				},
-				gatewayName:      "gateway-a",
-				gatewayNamespace: "default",
-				listeners:        []gatewayListener{{Name: "web"}},
+				GatewayName:      "gateway-a",
+				GatewayNamespace: "default",
+				Listeners:        []gatewayListener{{Name: "web"}},
 			}},
 		},
 		{
@@ -8393,16 +8509,16 @@ func Test_matchingGatewayListener(t *testing.T) {
 				Port:      new(gatev1.PortNumber(8080)),
 			}},
 			want: []gatewayListenersForParentRef{{
-				parentRef: gatev1.ParentReference{
+				ParentRef: gatev1.ParentReference{
 					Name:      "gateway",
 					Namespace: new(gatev1.Namespace("default")),
 					Group:     new(gatev1.Group(gatev1.GroupName)),
 					Kind:      new(gatev1.Kind("Gateway")),
 					Port:      new(gatev1.PortNumber(8080)),
 				},
-				gatewayName:      "gateway",
-				gatewayNamespace: "default",
-				listeners:        []gatewayListener{{Name: "web", Port: 80}},
+				GatewayName:      "gateway",
+				GatewayNamespace: "default",
+				Listeners:        []gatewayListener{{Name: "web", Port: 80}},
 			}},
 		},
 	}
@@ -8533,6 +8649,205 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, gateway.Status.Listeners, 1)
 			assert.Equal(t, int32(1), gateway.Status.Listeners[0].AttachedRoutes)
+		})
+	}
+}
+
+func Test_loadHTTPAndGRPCRoutes_hostnameConflict(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		path            string
+		acceptedRoute   string
+		acceptedIsHTTP  bool
+		conflictedRoute string
+	}{
+		{
+			desc:            "HTTPRoute created first",
+			path:            "mixed/with_httproute_priority_over_grpcroute.yml",
+			acceptedRoute:   "http-app-conflict",
+			acceptedIsHTTP:  true,
+			conflictedRoute: "grpc-app-conflict",
+		},
+		{
+			desc:            "GRPCRoute created first",
+			path:            "mixed/with_grpcroute_priority_over_httproute.yml",
+			acceptedRoute:   "grpc-app-priority",
+			conflictedRoute: "http-app-priority",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
+
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				EntryPoints: map[string]Entrypoint{"web": {Address: ":9080"}},
+				client:      client,
+			}
+
+			_ = p.loadConfigurationFromGateways(t.Context())
+
+			getParents := func(name string, isHTTP bool) []gatev1.RouteParentStatus {
+				t.Helper()
+				if isHTTP {
+					route, err := gwClient.GatewayV1().HTTPRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+					require.NoError(t, err)
+					return route.Status.Parents
+				}
+				route, err := gwClient.GatewayV1().GRPCRoutes("default").Get(t.Context(), name, metav1.GetOptions{})
+				require.NoError(t, err)
+				return route.Status.Parents
+			}
+
+			acceptedParents := getParents(test.acceptedRoute, test.acceptedIsHTTP)
+			require.Len(t, acceptedParents, 1)
+			acceptedCondition := findCondition(acceptedParents[0].Conditions, gatev1.RouteConditionAccepted)
+			require.NotNil(t, acceptedCondition)
+			assert.Equal(t, metav1.ConditionTrue, acceptedCondition.Status)
+			assert.Equal(t, string(gatev1.RouteReasonAccepted), acceptedCondition.Reason)
+
+			conflictedParents := getParents(test.conflictedRoute, !test.acceptedIsHTTP)
+			require.Len(t, conflictedParents, 1)
+			conflictedCondition := findCondition(conflictedParents[0].Conditions, gatev1.RouteConditionAccepted)
+			require.NotNil(t, conflictedCondition)
+			assert.Equal(t, metav1.ConditionFalse, conflictedCondition.Status)
+			assert.Equal(t, string(routeReasonHostnameConflict), conflictedCondition.Reason)
+
+			gateway, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "my-gateway", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Len(t, gateway.Status.Listeners, 1)
+			assert.Equal(t, int32(1), gateway.Status.Listeners[0].AttachedRoutes)
+		})
+	}
+}
+
+func Test_attachedRoutes_conflicts(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		attachedKind      string
+		attachedHostnames []gatev1.Hostname
+		attachedListener  listenerRef
+		kind              string
+		hostnames         []gatev1.Hostname
+		expected          bool
+	}{
+		{
+			desc:              "same kind",
+			attachedKind:      kindHTTPRoute,
+			attachedHostnames: []gatev1.Hostname{"foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindHTTPRoute,
+			hostnames: []gatev1.Hostname{"foo.com"},
+		},
+		{
+			desc:              "another listener",
+			attachedKind:      kindHTTPRoute,
+			attachedHostnames: []gatev1.Hostname{"foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "websecure",
+			},
+			kind:      kindGRPCRoute,
+			hostnames: []gatev1.Hostname{"foo.com"},
+		},
+		{
+			desc:              "disjoint hostnames",
+			attachedKind:      kindHTTPRoute,
+			attachedHostnames: []gatev1.Hostname{"foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindGRPCRoute,
+			hostnames: []gatev1.Hostname{"bar.com"},
+		},
+		{
+			desc:              "same hostname",
+			attachedKind:      kindHTTPRoute,
+			attachedHostnames: []gatev1.Hostname{"foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindGRPCRoute,
+			hostnames: []gatev1.Hostname{"bar.com", "foo.com"},
+			expected:  true,
+		},
+		{
+			desc:              "attached wildcard hostname",
+			attachedKind:      kindGRPCRoute,
+			attachedHostnames: []gatev1.Hostname{"*.foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindHTTPRoute,
+			hostnames: []gatev1.Hostname{"bar.foo.com"},
+			expected:  true,
+		},
+		{
+			desc:              "wildcard hostname",
+			attachedKind:      kindGRPCRoute,
+			attachedHostnames: []gatev1.Hostname{"bar.foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindHTTPRoute,
+			hostnames: []gatev1.Hostname{"*.foo.com"},
+			expected:  true,
+		},
+		{
+			desc:              "attached without hostname",
+			attachedKind:      kindHTTPRoute,
+			attachedHostnames: nil,
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindGRPCRoute,
+			hostnames: []gatev1.Hostname{"foo.com"},
+			expected:  true,
+		},
+		{
+			desc:              "without hostname",
+			attachedKind:      kindHTTPRoute,
+			attachedHostnames: []gatev1.Hostname{"foo.com"},
+			attachedListener: listenerRef{
+				GatewayNamespace: "default",
+				GatewayName:      "my-gateway",
+				Name:             "web",
+			},
+			kind:      kindGRPCRoute,
+			hostnames: nil,
+			expected:  true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			attached := make(attachedRoutes)
+			attached.Record(test.attachedListener, test.attachedKind, test.attachedHostnames)
+
+			listener := listenerRef{GatewayNamespace: "default", GatewayName: "my-gateway", Name: "web"}
+			assert.Equal(t, test.expected, attached.Conflicts(listener, test.kind, test.hostnames))
 		})
 	}
 }

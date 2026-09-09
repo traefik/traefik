@@ -48,9 +48,9 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 			}
 
 			var resolvedRefCondition *metav1.Condition
-			for _, listener := range match.listeners {
+			for _, listener := range match.Listeners {
 				// A parentRef can target specific listeners through its SectionName or Port.
-				accepted := matchListener(listener, match.parentRef)
+				accepted := matchListener(listener, match.ParentRef)
 
 				if accepted && !allowRoute(listener, route.Namespace, kindTLSRoute) {
 					if acceptedCondition.Status == metav1.ConditionFalse {
@@ -73,7 +73,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadTLSRoute(match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
+				routeConf, condition := p.loadTLSRoute(match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -93,7 +93,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 			}
 
 			parentStatuses = append(parentStatuses, gatev1alpha2.RouteParentStatus{
-				ParentRef:      match.parentRef,
+				ParentRef:      match.ParentRef,
 				ControllerName: controllerName,
 				Conditions:     parentStatusConditions,
 			})
