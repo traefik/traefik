@@ -672,11 +672,23 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	return gatewayListeners
 }
 
+// uniqListener identifies a unique listener configuration.
+// The protocol is part of it because a TLS parent router and a plain one are built on the two
+// distinct handlers of an entry point, and because merging them would put the routes of an HTTP
+// listener behind the TLS configuration of an HTTPS one.
+//
+// TODO: The Gateway frontend TLS configuration (client certificate validation) has to be part of it once supported.
+// TODO: The listener TLS options (listener.TLS.Options) have to be part of it once supported.
+type uniqListener struct {
+	epName   string
+	protocol gatev1.ProtocolType
+}
+
 // buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
 // is the most specific match for. Electing the listener per Gateway isolates the listeners of a
 // Gateway without hiding the routes of the other Gateways sharing the entry point.
 func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) {
-	hostnamesByEP := map[string][]string{}
+	hostnamesByListener := map[uniqListener][]string{}
 	for _, gateway := range gateways {
 		for _, listener := range gateway.listeners {
 			if !listener.Attached ||
@@ -684,38 +696,41 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				continue
 			}
 
+			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
+
 			hostname := string(ptr.Deref(listener.Hostname, ""))
-			if !slices.Contains(hostnamesByEP[listener.EPName], hostname) {
-				hostnamesByEP[listener.EPName] = append(hostnamesByEP[listener.EPName], hostname)
+			if !slices.Contains(hostnamesByListener[uniq], hostname) {
+				hostnamesByListener[uniq] = append(hostnamesByListener[uniq], hostname)
 			}
 		}
 	}
 
-	for _, epName := range slices.Sorted(maps.Keys(hostnamesByEP)) {
-		hostnames := hostnamesByEP[epName]
+	uniqListeners := slices.SortedFunc(maps.Keys(hostnamesByListener), func(a, b uniqListener) int {
+		return cmp.Or(cmp.Compare(a.epName, b.epName), cmp.Compare(a.protocol, b.protocol))
+	})
+
+	for _, uniq := range uniqListeners {
+		hostnames := hostnamesByListener[uniq]
 		slices.Sort(hostnames)
 
 		for _, hostname := range hostnames {
-			listenerRouterName := makeListenerRouterName(epName, hostname)
+			listenerRouterName := makeListenerRouterName(uniq, hostname)
 
 			listenerRouter := &dynamic.Router{
 				Rule:        buildListenerRule(hostname, hostnames),
-				EntryPoints: []string{epName},
+				EntryPoints: []string{uniq.epName},
 			}
 
-			var terminatesTLS bool
 			for _, gateway := range gateways {
-				listener := mostSpecificListener(gateway.listeners, epName, hostname)
+				listener := mostSpecificListener(gateway.listeners, uniq, hostname)
 				if listener == nil {
 					continue
 				}
 
 				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
-
-				terminatesTLS = terminatesTLS || listener.Protocol == gatev1.HTTPSProtocolType
 			}
 
-			if terminatesTLS {
+			if uniq.protocol == gatev1.HTTPSProtocolType {
 				listenerTLSOptions := tls.Options{}
 				listenerTLSOptions.SetDefaults()
 
@@ -731,11 +746,10 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 	}
 }
 
-func mostSpecificListener(listeners []gatewayListener, epName, hostname string) *gatewayListener {
+func mostSpecificListener(listeners []gatewayListener, uniq uniqListener, hostname string) *gatewayListener {
 	var elected *gatewayListener
 	for i, listener := range listeners {
-		if listener.EPName != epName || !listener.Attached ||
-			listener.Protocol != gatev1.HTTPProtocolType && listener.Protocol != gatev1.HTTPSProtocolType {
+		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol || !listener.Attached {
 			continue
 		}
 
@@ -1354,13 +1368,15 @@ func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName, 
 
 // makeListenerRouterName hashes the hostname, as provider.Normalize drops the characters
 // telling two of them apart: the "*.example.com" and "example.com" hostnames of an entry
-// point both normalize to the "listener-web-example-com" label.
-func makeListenerRouterName(epName, hostname string) string {
-	label := provider.Normalize(fmt.Sprintf("listener-%s-%s", epName, hostname))
+// point both normalize to the "listener-web-http-example-com" label.
+func makeListenerRouterName(uniq uniqListener, hostname string) string {
+	protocol := strings.ToLower(string(uniq.protocol))
+
+	label := provider.Normalize(fmt.Sprintf("listener-%s-%s-%s", uniq.epName, protocol, hostname))
 
 	h := sha256.New()
 
-	for _, c := range []string{epName, hostname} {
+	for _, c := range []string{uniq.epName, protocol, hostname} {
 		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
 		fmt.Fprintf(h, "%d:%s", len(c), c)
 	}
