@@ -44,13 +44,20 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 }
 
 func (p *Provider) buildSSLRedirect(loc *location) {
+	loc.SSLRedirectOnly = sslRedirectEnabled(loc.Config, loc.HasTLS)
+}
+
+// sslRedirectEnabled reports whether HTTP requests must be redirected to HTTPS.
+// It is shared by the location and the ssl-passthrough paths, so that both honor
+// the same semantics.
+func sslRedirectEnabled(cfg IngressConfig, hasTLS bool) bool {
 	// force-ssl-redirect redirects to HTTPS regardless of whether the Ingress has a TLS block.
-	forceSSLRedirect := ptr.Deref(loc.Config.ForceSSLRedirect, false)
+	forceSSLRedirect := ptr.Deref(cfg.ForceSSLRedirect, false)
 	// When an Ingress has a TLS block, by default SSL redirect should be applied.
 	// When an Ingress does not have a TLS block, SSL redirect should not be applied.
-	sslRedirect := loc.HasTLS && ptr.Deref(loc.Config.SSLRedirect, true)
+	sslRedirect := hasTLS && ptr.Deref(cfg.SSLRedirect, true)
 
-	loc.SSLRedirectOnly = forceSSLRedirect || sslRedirect
+	return forceSSLRedirect || sslRedirect
 }
 
 func (p *Provider) buildAccessLog(loc *location) {
@@ -97,6 +104,11 @@ func (p *Provider) buildAppRoot(loc *location) {
 
 func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHosts map[string]bool) {
 	if !ptr.Deref(loc.Config.FromToWwwRedirect, false) {
+		return
+	}
+
+	// ingress-nginx only flags a server for redirection from an Ingress rule, never for a default backend.
+	if hostname == "" {
 		return
 	}
 
@@ -148,8 +160,13 @@ func (p *Provider) buildRedirect(loc *location) {
 		}
 	}
 
+	regex := ".*"
+	if loc.UseRegex {
+		regex = `^https?://[^/]+` + loc.Path
+	}
+
 	loc.Redirect = &dynamic.RedirectRegex{
-		Regex:       ".*",
+		Regex:       regex,
 		Replacement: url,
 		StatusCode:  &code,
 	}

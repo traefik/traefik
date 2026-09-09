@@ -143,7 +143,7 @@ spec:
 
 ---
 kind: TCPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: tcp-app-default
   namespace: default
@@ -217,7 +217,7 @@ spec:
 
 ---
 kind: TCPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: tcp-app-bar
   namespace: bar

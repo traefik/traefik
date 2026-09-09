@@ -2089,17 +2089,15 @@ func (s *SimpleSuite) TestSimpleOCSP() {
 }
 
 func (s *SimpleSuite) TestSanitizePath() {
-	s.createComposeProject("base")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(rw, req.RequestURI)
+	}))
+	defer backend.Close()
 
 	file := s.adaptFile("fixtures/simple_sanitize_path.toml", struct {
 		Server1           string
 		DefaultRuleSyntax string
-	}{whoami1URL, "v3"})
+	}{backend.URL, "v3"})
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -2107,62 +2105,58 @@ func (s *SimpleSuite) TestSanitizePath() {
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
-		desc     string
-		request  string
-		target   string
-		body     string
-		expected int
+		desc         string
+		request      string
+		target       string
+		expectedBody string
 	}{
 		{
-			desc:     "Explicit call to the route with a middleware",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/without",
 		},
 		{
-			desc:     "Implicit call to the route with a middleware",
-			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit call to the route with a middleware",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit encoded dot dots call to the route with a middleware",
-			request:  "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit encoded dot dots call to the route with a middleware",
+			request:      "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit with encoded unreserved character call to the route with a middleware",
-			request:  "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit with encoded unreserved character call to the route with a middleware",
+			request:      "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware, and disable path sanitization",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without",
 		},
 		{
-			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
-			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:  "127.0.0.1:8001",
-			// The whoami is redirecting to /with, but the path is not sanitized.
-			expected: http.StatusMovedPermanently,
+			desc:         "Implicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without/../with",
 		},
 	}
 
@@ -2174,30 +2168,25 @@ func (s *SimpleSuite) TestSanitizePath() {
 		require.NoError(s.T(), err)
 
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		s.T().Cleanup(func() { _ = resp.Body.Close() })
 		require.NoError(s.T(), err)
 
-		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-
-		if test.body != "" {
-			body, err := io.ReadAll(resp.Body)
-			require.NoError(s.T(), err)
-			assert.Contains(s.T(), string(body), test.body)
-		}
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), test.expectedBody, string(body))
 	}
 }
 
 func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
-	s.createComposeProject("base")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(rw, req.RequestURI)
+	}))
+	defer backend.Close()
 
 	file := s.adaptFile("fixtures/simple_sanitize_path.toml", struct {
 		Server1           string
 		DefaultRuleSyntax string
-	}{whoami1URL, "v2"})
+	}{backend.URL, "v2"})
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -2205,62 +2194,58 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
-		desc     string
-		request  string
-		target   string
-		body     string
-		expected int
+		desc         string
+		request      string
+		target       string
+		expectedBody string
 	}{
 		{
-			desc:     "Explicit call to the route with a middleware",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/without",
 		},
 		{
-			desc:     "Implicit call to the route with a middleware",
-			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit call to the route with a middleware",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit encoded dot dots call to the route with a middleware",
-			request:  "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit encoded dot dots call to the route with a middleware",
+			request:      "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit with encoded unreserved character call to the route with a middleware",
-			request:  "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit with encoded unreserved character call to the route with a middleware",
+			request:      "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware, and disable path sanitization",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without",
 		},
 		{
-			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
-			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:  "127.0.0.1:8001",
-			// The whoami is redirecting to /with, but the path is not sanitized.
-			expected: http.StatusMovedPermanently,
+			desc:         "Implicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without/../with",
 		},
 	}
 
@@ -2272,15 +2257,12 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
 		require.NoError(s.T(), err)
 
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		s.T().Cleanup(func() { _ = resp.Body.Close() })
 		require.NoError(s.T(), err)
 
-		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-
-		if test.body != "" {
-			body, err := io.ReadAll(resp.Body)
-			require.NoError(s.T(), err)
-			assert.Contains(s.T(), string(body), test.body)
-		}
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), test.expectedBody, string(body))
 	}
 }
 
@@ -2463,6 +2445,12 @@ func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
 			return
 		}
 
+		// The deprecated option only handles the names containing an underscore character.
+		if _, ok := r.Header["X.auth.user"]; !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		w.WriteHeader(http.StatusAccepted)
 	})
 
@@ -2500,8 +2488,68 @@ func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
 			require.NoError(s.T(), err)
 
 			req.Header.Set("X-Auth-User", "legit")
-			// Set the underscore variant directly on the map to bypass header name canonicalization.
+			// Set the aliasing variants directly on the map to bypass header name canonicalization.
 			req.Header["X_auth_user"] = []string{"spoof"}
+			req.Header["X.auth.user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
+}
+
+func (s *SimpleSuite) TestAliasHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		if _, ok := r.Header["X.auth.user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_alias_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the aliasing variants directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+			req.Header["X.auth.user"] = []string{"spoof"}
 
 			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
 			require.NoError(s.T(), err)

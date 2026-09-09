@@ -43,4 +43,5 @@ jobs:
       - name: Gateway API conformance test and report
         run: |
           make test-gateway-api-conformance
-          git diff --exit-code
+          # The date at which the report has been generated is expected to differ.
+          git diff --exit-code --ignore-matching-lines='^date:'
