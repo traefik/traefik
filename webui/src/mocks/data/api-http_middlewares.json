@@ -1,13 +1,24 @@
 [
   {
-    "addPrefix": {
-      "prefix": "/foo"
-    },
     "status": "enabled",
     "usedBy": ["web@docker"],
     "name": "add-foo@docker",
     "type": "addprefix",
-    "provider": "docker"
+    "provider": "docker",
+    "addPrefix": {
+      "prefix": "/path",
+      "aCustomObject": {
+        "array of arrays": [
+          [1, 2],
+          [3, 4]
+        ],
+        "array of objects": [{ "some": "value" }, { "another": "value" }],
+        "array of booleans": [true, false, true],
+        "array of numbers": [10, 100, 1000],
+        "array of strings": ["value1", "value2"]
+      }
+    },
+    "error": ["message 1", "message 2"]
   },
   {
     "redirectScheme": {
@@ -55,14 +66,21 @@
     "addPrefix": {
       "prefix": "/path",
       "aCustomObject": {
-        "array of arrays": [[1, 2], [3, 4]],
+        "array of arrays": [
+          [1, 2],
+          [3, 4]
+        ],
         "array of objects": [{ "some": "value" }, { "another": "value" }],
         "array of booleans": [true, false, true],
         "array of numbers": [10, 100, 1000],
         "array of strings": ["value1", "value2"]
       }
     },
-    "error": ["message 1", "message 2"],
+    "error": [
+      "message 1",
+      "message 2",
+      "('colorByStatus' export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports"
+    ],
     "status": "enabled",
     "usedBy": ["foo@docker", "bar@file"],
     "name": "middleware00@docker",
@@ -144,7 +162,10 @@
   },
   {
     "basicAuth": {
-      "users": ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP4HxwgUir3HP4EsggP/QNo0"],
+      "users": [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP4HxwgUir3HP4EsggP/QNo0"
+      ],
       "usersFile": "/etc/foo/my/file/path/.htpasswd",
       "realm": "Hello you are here",
       "removeHeader": true,

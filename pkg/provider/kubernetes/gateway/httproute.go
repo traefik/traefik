@@ -80,7 +80,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gateways []gatewayWithLis
 				// even when the route does not attach to the listener.
 				routeConf, condition := p.loadHTTPRoute(logger.WithContext(ctx), match.gatewayName, match.gatewayNamespace, listener, route, hostnames)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
-					resolvedRefCondition = ptr.To(condition)
+					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
@@ -136,9 +136,6 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routeKey := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", strings.ToLower(kindHTTPRoute), route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri))
-
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
@@ -153,7 +150,8 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 			}
 
 			var err error
-			routerName := makeRouterName(rule, routeKey)
+			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
+			// TODO loadMiddlewares errors could change the condition.
 			router.Middlewares, err = p.loadMiddlewares(conf, route.Namespace, routerName, routeRule.Filters, match.Path)
 			switch {
 			case err != nil:
@@ -165,8 +163,8 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 						Services: []dynamic.WRRService{
 							{
 								Name:   "invalid-httproute-filter",
-								Status: ptr.To(500),
-								Weight: ptr.To(1),
+								Status: new(500),
+								Weight: new(1),
 							},
 						},
 					},
@@ -189,7 +187,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, listener, conf, routerName, routeRule, route)
+				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, listener, conf, routerName, routeRule, route, match.Path)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -204,17 +202,38 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 	return conf, condition
 }
 
-func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routeKey string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute) (string, *metav1.Condition) {
-	name := routeKey + "-wrr"
+func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch) (string, *metav1.Condition) {
+	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
+		return name, nil
+	}
+
+	// A rule with omitted or empty backendRefs, and without any filter that
+	// could make the request receive a response, has no backend to forward to,
+	// and must explicitly respond with a 500 status code.
+	if len(routeRule.BackendRefs) == 0 && len(routeRule.Filters) == 0 {
+		conf.HTTP.Services[name] = &dynamic.Service{
+			Weighted: &dynamic.WeightedRoundRobin{
+				Services: []dynamic.WRRService{
+					{
+						Name:   "no-backend-refs",
+						Status: new(500),
+						Weight: new(1),
+					},
+				},
+			},
+		}
+
 		return name, nil
 	}
 
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
-	for _, backendRef := range routeRule.BackendRefs {
-		svcName, errCondition := p.loadService(ctx, gatewayName, listener, conf, route, backendRef)
-		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
+	for bi, backendRef := range routeRule.BackendRefs {
+		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
+		// usual defacto.
+		svcName, errCondition := p.loadService(ctx, gatewayName, listener, conf, routerName, route, bi, backendRef, pathMatch)
+		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
 				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
@@ -222,7 +241,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
 				Name:   svcName,
-				Status: ptr.To(500),
+				Status: new(500),
 				Weight: weight,
 			})
 			continue
@@ -240,7 +259,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, liste
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -253,7 +272,7 @@ func (p *Provider) loadService(ctx context.Context, gatewayName string, listener
 		namespace = string(*backendRef.Namespace)
 
 		if strings.Contains(string(backendRef.Name), "@") {
-			return provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http"), &metav1.Condition{
+			return provider.Normalize(fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)), &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -264,7 +283,7 @@ func (p *Provider) loadService(ctx context.Context, gatewayName string, listener
 		}
 	}
 
-	serviceName := provider.Normalize(namespace + "-" + string(backendRef.Name) + "-http")
+	serviceName := fmt.Sprintf("%s-svc-%s-%s-%d", routerName, namespace, backendRef.Name, backendIndex)
 
 	if err := p.isReferenceGranted(kindHTTPRoute, route.Namespace, group, string(kind), string(backendRef.Name), namespace); err != nil {
 		return serviceName, &metav1.Condition{
@@ -277,6 +296,19 @@ func (p *Provider) loadService(ctx context.Context, gatewayName string, listener
 		}
 	}
 
+	middlewares, err := p.loadMiddlewares(conf, route.Namespace, serviceName, backendRef.Filters, pathMatch)
+	if err != nil {
+		return serviceName, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonInvalidKind),
+			Message:            fmt.Sprintf("Cannot load filters on HTTPBackendRef %s/%s/%s/%s: %s", group, kind, namespace, backendRef.Name, err),
+		}
+	}
+
+	// TODO may be we could incorporate this "ignored" case into the loadHTTPBackendRef.
 	if group != groupCore || kind != kindService {
 		name, service, err := p.loadHTTPBackendRef(namespace, backendRef)
 		if err != nil {
@@ -291,6 +323,7 @@ func (p *Provider) loadService(ctx context.Context, gatewayName string, listener
 		}
 
 		if service != nil {
+			service.Middlewares = middlewares
 			conf.HTTP.Services[name] = service
 		}
 
@@ -309,9 +342,6 @@ func (p *Provider) loadService(ctx context.Context, gatewayName string, listener
 		}
 	}
 
-	portStr := strconv.FormatInt(int64(port), 10)
-	serviceName = provider.Normalize(serviceName + "-" + portStr)
-
 	lb, st, errCondition := p.loadHTTPServers(ctx, gatewayName, namespace, route, backendRef, listener)
 	if errCondition != nil {
 		return serviceName, errCondition
@@ -322,7 +352,7 @@ func (p *Provider) loadService(ctx context.Context, gatewayName string, listener
 		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
-	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb}
+	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb, Middlewares: middlewares}
 
 	return serviceName, nil
 }
@@ -349,20 +379,20 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	return backendFunc(string(backendRef.Name), namespace)
 }
 
-func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, routerName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
+func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, parentName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
 	type namedMiddleware struct {
 		Name   string
 		Config *dynamic.Middleware
 	}
 
 	pm := ptr.Deref(pathMatch, gatev1.HTTPPathMatch{
-		Type:  ptr.To(gatev1.PathMatchPathPrefix),
-		Value: ptr.To("/"),
+		Type:  new(gatev1.PathMatchPathPrefix),
+		Value: new("/"),
 	})
 
 	var middlewares []namedMiddleware
 	for i, filter := range filters {
-		name := fmt.Sprintf("%s-%s-%d", routerName, strings.ToLower(string(filter.Type)), i)
+		name := fmt.Sprintf("%s-%s-%d", parentName, strings.ToLower(string(filter.Type)), i)
 
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
@@ -488,11 +518,11 @@ func (p *Provider) loadHTTPServers(ctx context.Context, gatewayName, namespace s
 
 			policyAncestorStatus := gatev1.PolicyAncestorStatus{
 				AncestorRef: gatev1.ParentReference{
-					Group:       ptr.To(gatev1.Group(groupGateway)),
-					Kind:        ptr.To(gatev1.Kind(kindGateway)),
-					Namespace:   ptr.To(gatev1.Namespace(namespace)),
+					Group:       new(gatev1.Group(groupGateway)),
+					Kind:        new(gatev1.Kind(kindGateway)),
+					Namespace:   new(gatev1.Namespace(namespace)),
 					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+					SectionName: new(gatev1.SectionName(listener.Name)),
 				},
 				ControllerName: controllerName,
 			}
@@ -614,38 +644,55 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || caCertRef.Kind != "ConfigMap" {
+		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != "ConfigMap" && caCertRef.Kind != "Secret") {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps are supported",
+				Message:            "Only ConfigMaps and Secrets are supported",
 			}
 		}
 
-		configMap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
-		if err != nil {
+		var caCRT string
+		switch caCertRef.Kind {
+		case "ConfigMap":
+			configmap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
+				}
+			}
+			caCRT = configmap.Data["ca.crt"]
+		case "Secret":
+			secret, err := p.client.GetSecret(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting secret %s/%s: %s", namespace, string(caCertRef.Name), err),
+				}
+			}
+			caCRT = string(secret.Data["ca.crt"])
+		}
+
+		if caCRT == "" {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-				Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
-			}
-		}
-
-		caCRT, ok := configMap.Data["ca.crt"]
-		if !ok {
-			return nil, metav1.Condition{
-				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: policy.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-				Message:            fmt.Sprintf("configmap %s/%s does not have a ca.crt", namespace, string(caCertRef.Name)),
+				Message:            fmt.Sprintf("%s %s/%s does not have a ca.crt", caCertRef.Kind, namespace, string(caCertRef.Name)),
 			}
 		}
 
@@ -705,8 +752,8 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 // In case of multiple matches for a route, the maximum priority among all matches is retain.
 func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (string, int) {
 	path := ptr.Deref(match.Path, gatev1.HTTPPathMatch{
-		Type:  ptr.To(gatev1.PathMatchPathPrefix),
-		Value: ptr.To("/"),
+		Type:  new(gatev1.PathMatchPathPrefix),
+		Value: new("/"),
 	})
 
 	var priority int
@@ -853,16 +900,16 @@ func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Midd
 func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch gatev1.HTTPPathMatch) *dynamic.Middleware {
 	var hostname *string
 	if filter.Hostname != nil {
-		hostname = ptr.To(string(*filter.Hostname))
+		hostname = new(string(*filter.Hostname))
 	}
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
 	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
-		port = ptr.To("")
+		port = new("")
 	}
 	if filter.Port != nil {
-		port = ptr.To(strconv.Itoa(int(*filter.Port)))
+		port = new(strconv.Itoa(int(*filter.Port)))
 	}
 
 	var path *string
@@ -896,7 +943,7 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 
 	var host *string
 	if filter.Hostname != nil {
-		host = ptr.To(string(*filter.Hostname))
+		host = new(string(*filter.Hostname))
 	}
 
 	var path *string

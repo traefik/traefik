@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 )
 
 func Test_parseServiceConfig(t *testing.T) {
@@ -23,7 +22,7 @@ func Test_parseServiceConfig(t *testing.T) {
 			},
 			expected: ServiceConfig{
 				Service: Service{
-					NativeLB: ptr.To(true),
+					NativeLB: new(true),
 				},
 			},
 		},

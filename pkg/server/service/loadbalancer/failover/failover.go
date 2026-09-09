@@ -3,11 +3,14 @@ package failover
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // Failover is an http.Handler that can forward requests to the fallback handler
@@ -25,13 +28,33 @@ type Failover struct {
 
 	fallbackStatusMu sync.RWMutex
 	fallbackStatus   bool
+
+	statusCode          types.HTTPCodeRanges
+	maxRequestBodyBytes int64
 }
 
 // New creates a new Failover handler.
-func New(hc *dynamic.HealthCheck) *Failover {
-	return &Failover{
-		wantsHealthCheck: hc != nil,
+func New(config *dynamic.Failover) (*Failover, error) {
+	f := &Failover{wantsHealthCheck: config.HealthCheck != nil}
+
+	if config.Errors != nil {
+		if len(config.Errors.Status) > 0 {
+			httpCodeRanges, err := types.NewHTTPCodeRanges(config.Errors.Status)
+			if err != nil {
+				return nil, fmt.Errorf("creating HTTP code ranges: %w", err)
+			}
+			f.statusCode = httpCodeRanges
+		}
+
+		maxRequestBodyBytes := dynamic.FailoverErrorsDefaultMaxRequestBodyBytes
+		if config.Errors.MaxRequestBodyBytes != nil {
+			maxRequestBodyBytes = *config.Errors.MaxRequestBodyBytes
+		}
+
+		f.maxRequestBodyBytes = maxRequestBodyBytes
 	}
+
+	return f, nil
 }
 
 // RegisterStatusUpdater adds fn to the list of hooks that are run when the
@@ -53,8 +76,33 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	f.handlerStatusMu.RUnlock()
 
 	if handlerStatus {
-		f.handler.ServeHTTP(w, req)
-		return
+		if len(f.statusCode) == 0 {
+			f.handler.ServeHTTP(w, req)
+
+			return
+		}
+
+		// TODO: move reusable request to a common package at some point.
+		rr, _, err := mirror.NewReusableRequest(req, f.maxRequestBodyBytes)
+		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
+			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for failover")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if errors.Is(err, mirror.ErrBodyTooLarge) {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+
+		rw := &responseWriter{ResponseWriter: w, statusCodeRange: f.statusCode}
+		f.handler.ServeHTTP(rw, rr.Clone(req.Context()))
+
+		if !rw.needFallback {
+			return
+		}
+
+		req = rr.Clone(req.Context())
 	}
 
 	f.fallbackStatusMu.RLock()

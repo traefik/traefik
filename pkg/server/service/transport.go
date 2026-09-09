@@ -68,9 +68,10 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 			continue
 		}
 
-		var err error
-
-		var tlsConfig *tls.Config
+		var (
+			err       error
+			tlsConfig *tls.Config
+		)
 		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
 			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", configName)
 		}
@@ -88,9 +89,10 @@ func (t *TransportManager) Update(newConfigs map[string]*dynamic.ServersTranspor
 			continue
 		}
 
-		var err error
-
-		var tlsConfig *tls.Config
+		var (
+			err       error
+			tlsConfig *tls.Config
+		)
 		if tlsConfig, err = t.createTLSConfig(newConfig); err != nil {
 			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s TLS configuration, fallback on default TLS config", newConfigName)
 		}
@@ -169,9 +171,46 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
+		}
+
+		// crypto/tls treats a nil CipherSuites as "use the defaults" but an
+		// empty non-nil slice as "offer no TLS 1.0–1.2 cipher", so this must
+		// stay nil until at least one valid cipher is appended. An invalid
+		// cipher is rejected outright (consistent with TLSOption handling in
+		// pkg/tls/tlsmanager.go) to avoid silently weakening the configured
+		// TLS policy.
+		var cipherSuites []uint16
+		for _, cipher := range cfg.CipherSuites {
+			cipherID, exists := traefiktls.CipherSuites[cipher]
+			if !exists {
+				return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
+			}
+			cipherSuites = append(cipherSuites, cipherID)
+		}
+
+		var minVersion uint16
+		if cfg.MinVersion != "" {
+			value, exists := traefiktls.MinVersion[cfg.MinVersion]
+			if !exists {
+				return nil, fmt.Errorf("invalid TLS minimum version: %s", cfg.MinVersion)
+			}
+			minVersion = value
+		}
+
+		var maxVersion uint16
+		if cfg.MaxVersion != "" {
+			value, exists := traefiktls.MaxVersion[cfg.MaxVersion]
+			if !exists {
+				return nil, fmt.Errorf("invalid TLS maximum version: %s", cfg.MaxVersion)
+			}
+			maxVersion = value
+		}
+
+		if minVersion > maxVersion {
+			return nil, fmt.Errorf("TLS minimum version %s is above the maximum version %s", cfg.MinVersion, cfg.MaxVersion)
 		}
 
 		config = &tls.Config{
@@ -179,6 +218,9 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
+			CipherSuites:       cipherSuites,
+			MinVersion:         minVersion,
+			MaxVersion:         maxVersion,
 		}
 
 		if cfg.PeerCertURI != "" {
@@ -189,6 +231,60 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 	}
 
 	return config, nil
+}
+
+type connWithTimeouts struct {
+	net.Conn
+
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+}
+
+func (c connWithTimeouts) Read(b []byte) (n int, err error) {
+	if c.readTimeout > 0 {
+		// Reset deadline before after each successive read.
+		_ = c.Conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+		defer c.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	n, err = c.Conn.Read(b)
+	if err != nil {
+		return n, err
+	}
+
+	return n, nil
+}
+
+func (c connWithTimeouts) Write(b []byte) (n int, err error) {
+	if c.writeTimeout > 0 {
+		// Reset deadline before after each successive write.
+		_ = c.Conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	n, err = c.Conn.Write(b)
+	if err != nil {
+		return n, err
+	}
+
+	return n, nil
+}
+
+func customDialContext(d *net.Dialer, cfg *dynamic.ForwardingTimeouts) func(ctx context.Context, network string, address string) (net.Conn, error) {
+	return func(ctx context.Context, network, address string) (net.Conn, error) {
+		conn, err := d.DialContext(ctx, network, address)
+
+		if cfg.ReadTimeout <= 0 && cfg.WriteTimeout <= 0 {
+			return conn, err
+		}
+
+		custom := &connWithTimeouts{
+			Conn:         conn,
+			readTimeout:  time.Duration(cfg.ReadTimeout),
+			writeTimeout: time.Duration(cfg.WriteTimeout),
+		}
+		return custom, err
+	}
 }
 
 // createRoundTripper creates an http.RoundTripper configured with the Transport configuration settings.
@@ -224,6 +320,7 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 	if cfg.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
 		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
+		transport.DialContext = customDialContext(dialer, cfg.ForwardingTimeouts)
 		// The forwarding timeout names come from the x/net/http2.Transport fields (ReadIdleTimeout/PingTimeout),
 		// which were used to configure the HTTP/2 health checks before the net/http native support (Go 1.24).
 		// HTTP2Config.SendPingTimeout carries the same semantics as ReadIdleTimeout:
@@ -295,7 +392,10 @@ func (k *kerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 
 func containsNTLMorNegotiate(h []string) bool {
 	return slices.ContainsFunc(h, func(s string) bool {
-		return strings.HasPrefix(s, "NTLM") || strings.HasPrefix(s, "Negotiate")
+		// RFC 9110 section 11.1 defines the auth-scheme as case-insensitive,
+		// hence a challenge is matched on its scheme token whatever its case.
+		scheme, _, _ := strings.Cut(s, " ")
+		return strings.EqualFold(scheme, "NTLM") || strings.EqualFold(scheme, "Negotiate")
 	})
 }
 

@@ -33,6 +33,8 @@ import (
 
 // ServiceApplyConfiguration represents a declarative configuration of the Service type for use
 // with apply.
+//
+// Service defines an upstream HTTP service to proxy traffic to.
 type ServiceApplyConfiguration struct {
 	LoadBalancerSpecApplyConfiguration `json:",inline"`
 }
@@ -64,6 +66,19 @@ func (b *ServiceApplyConfiguration) WithKind(value string) *ServiceApplyConfigur
 // If called multiple times, the Namespace field is set to the value of the last call.
 func (b *ServiceApplyConfiguration) WithNamespace(value string) *ServiceApplyConfiguration {
 	b.LoadBalancerSpecApplyConfiguration.Namespace = &value
+	return b
+}
+
+// WithMiddlewares adds the given value to the Middlewares field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Middlewares field.
+func (b *ServiceApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyConfiguration) *ServiceApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMiddlewares")
+		}
+		b.LoadBalancerSpecApplyConfiguration.Middlewares = append(b.LoadBalancerSpecApplyConfiguration.Middlewares, *values[i])
+	}
 	return b
 }
 

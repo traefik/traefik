@@ -1,0 +1,69 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-endpoint-conditions
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: nginx
+
+spec:
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.1
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+  - addresses:
+      - 10.10.0.2
+    conditions:
+      ready: false
+      serving: true
+      terminating: true
+  - addresses:
+      - 10.10.0.3
+    conditions:
+      ready: false
+      serving: false
+      terminating: true

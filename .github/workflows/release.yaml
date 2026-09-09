@@ -9,7 +9,7 @@ env:
   CGO_ENABLED: 0
   VERSION: ${{ github.ref_name }}
   TRAEFIKER_EMAIL: "traefiker@traefik.io"
-  CODENAME: ramequin
+  CODENAME: langres
 
 jobs:
 
@@ -20,6 +20,7 @@ jobs:
   build:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     strategy:
       matrix:
@@ -31,6 +32,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Go
@@ -63,7 +65,7 @@ jobs:
           echo "GORELEASER_CONFIG_FILE_PATH=$GORELEASER_CONFIG_FILE_PATH" >> $GITHUB_ENV
 
       - name: Build with goreleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
           distribution: goreleaser
           # 'latest', 'nightly', or a semver
@@ -83,6 +85,7 @@ jobs:
   release:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     needs:
       - build
@@ -91,6 +94,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Artifact webui

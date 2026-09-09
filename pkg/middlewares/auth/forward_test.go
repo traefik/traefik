@@ -154,6 +154,83 @@ func TestForwardAuthForwardBody(t *testing.T) {
 	assert.Equal(t, 1, nextCallCount)
 }
 
+func TestForwardAuthDoesNotForwardCONNECTBody(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		contentLength int64
+		enableHTTP2   bool
+		expectedBody  string
+	}{
+		{
+			desc:          "HTTP/1.1 CONNECT with a chunked body",
+			contentLength: -1,
+		},
+		{
+			desc:          "HTTP/2 CONNECT with a chunked body",
+			enableHTTP2:   true,
+			contentLength: -1,
+		},
+		{
+			desc:          "HTTP/1.1 CONNECT with a fixed content-length body",
+			contentLength: 3,
+			expectedBody:  "foo",
+		},
+		{
+			desc:          "HTTP/2 CONNECT with a fixed content-length body",
+			enableHTTP2:   true,
+			contentLength: 3,
+			expectedBody:  "foo",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var serverCallCount int
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				serverCallCount++
+
+				forwardedData, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expectedBody, string(forwardedData))
+			}))
+			t.Cleanup(server.Close)
+
+			var nextCallCount int
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) { nextCallCount++ })
+
+			auth := dynamic.ForwardAuth{
+				ForwardBody:           true,
+				PreserveRequestMethod: true,
+				Address:               server.URL,
+			}
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewUnstartedServer(middleware)
+			if test.enableHTTP2 {
+				ts.EnableHTTP2 = true
+				ts.StartTLS()
+			} else {
+				ts.Start()
+			}
+			t.Cleanup(ts.Close)
+
+			// Explicitly set ContentLength so we can cover both fixed-length and unknown-length bodies.
+			// For unknown length (ContentLength = -1), the HTTP/1.1 client will use chunked encoding.
+			req := testhelpers.MustNewRequest(http.MethodConnect, ts.URL, bytes.NewReader([]byte("foo")))
+			req.ContentLength = test.contentLength
+
+			res, err := ts.Client().Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, 1, serverCallCount)
+			assert.Equal(t, 1, nextCallCount)
+		})
+	}
+}
+
 func TestForwardAuthForwardBodyEmptyBody(t *testing.T) {
 	var serverCallCount int
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -1256,6 +1333,91 @@ func TestForwardAuthMaxResponseBodySize(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expectedBody, string(body))
+		})
+	}
+}
+
+func TestForwardAuthAuthSigninURL(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		authSigninURL      string
+		authServerStatus   int
+		expectedStatus     int
+		expectedLocation   string
+		nextShouldBeCalled bool
+	}{
+		{
+			desc:               "redirects to signin URL on 401",
+			authSigninURL:      "https://auth.example.com/login",
+			authServerStatus:   http.StatusUnauthorized,
+			expectedStatus:     http.StatusFound,
+			expectedLocation:   "https://auth.example.com/login",
+			nextShouldBeCalled: false,
+		},
+		{
+			desc:               "no redirect on 401 without signin URL",
+			authServerStatus:   http.StatusUnauthorized,
+			expectedStatus:     http.StatusUnauthorized,
+			nextShouldBeCalled: false,
+		},
+		{
+			desc:               "no redirect on other error statuses with signin URL",
+			authSigninURL:      "https://auth.example.com/login",
+			authServerStatus:   http.StatusForbidden,
+			expectedStatus:     http.StatusForbidden,
+			nextShouldBeCalled: false,
+		},
+		{
+			desc:               "no redirect on OK status with signin URL",
+			authSigninURL:      "https://auth.example.com/login",
+			authServerStatus:   http.StatusOK,
+			expectedStatus:     http.StatusOK,
+			nextShouldBeCalled: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, http.StatusText(test.authServerStatus), test.authServerStatus)
+			}))
+			t.Cleanup(authServer.Close)
+
+			nextCalled := false
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				nextCalled = true
+			})
+
+			auth := dynamic.ForwardAuth{
+				Address:       authServer.URL,
+				AuthSigninURL: test.authSigninURL,
+			}
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewServer(middleware)
+			t.Cleanup(ts.Close)
+
+			client := &http.Client{
+				CheckRedirect: func(r *http.Request, via []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
+			}
+
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			res, err := client.Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+			assert.Equal(t, test.nextShouldBeCalled, nextCalled)
+
+			if test.expectedLocation != "" {
+				location, err := res.Location()
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedLocation, location.String())
+			} else {
+				assert.Empty(t, res.Header.Get("Location"))
+			}
 		})
 	}
 }

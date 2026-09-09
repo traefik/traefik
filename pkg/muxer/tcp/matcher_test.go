@@ -34,10 +34,10 @@ func Test_HostSNICatchAll(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{
@@ -69,11 +69,6 @@ func Test_HostSNI(t *testing.T) {
 		{
 			desc:     "Invalid HostSNI matcher (too many parameters)",
 			rule:     "HostSNI(`example.com`, `example.org`)",
-			buildErr: true,
-		},
-		{
-			desc:     "Invalid HostSNI matcher (globing sub domain)",
-			rule:     "HostSNI(`*.com`)",
 			buildErr: true,
 		},
 		{
@@ -116,12 +111,6 @@ func Test_HostSNI(t *testing.T) {
 			match:      true,
 		},
 		{
-			desc:       "Matching host with trailing dot",
-			rule:       "HostSNI(`example.com.`)",
-			serverName: "example.com.",
-			match:      true,
-		},
-		{
 			desc:       "Matching host with trailing dot but not in server name",
 			rule:       "HostSNI(`example.com.`)",
 			serverName: "example.com",
@@ -139,16 +128,28 @@ func Test_HostSNI(t *testing.T) {
 			serverName: "foo_bar.example.com",
 			match:      true,
 		},
+		{
+			desc:       "Matching hosts with subdomains with wildcard",
+			rule:       "HostSNI(`*.example.com`)",
+			serverName: "foo.example.com",
+			match:      true,
+		},
+		{
+			desc:       "Matching hosts with subdomains with wildcard",
+			rule:       "HostSNI(`*.*.example.com`)",
+			serverName: "toto.foo.example.com",
+			buildErr:   true,
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -227,10 +228,10 @@ func Test_HostSNIRegexp(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -298,10 +299,10 @@ func Test_ClientIP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -361,10 +362,10 @@ func Test_ALPN(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return

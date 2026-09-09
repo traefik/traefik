@@ -1,5 +1,6 @@
 import { http, passthrough } from 'msw'
 
+import apiCertificates from './data/api-certificates.json'
 import apiEntrypoints from './data/api-entrypoints.json'
 import apiHttpMiddlewares from './data/api-http_middlewares.json'
 import apiHttpRouters from './data/api-http_routers.json'
@@ -15,6 +16,7 @@ import eeApiErrors from './data/ee-api-errors.json'
 import { listHandlers } from './utils'
 
 export const getHandlers = (noDelay: boolean = false) => [
+  ...listHandlers('/api/certificates', apiCertificates, noDelay),
   ...listHandlers('/api/entrypoints', apiEntrypoints, noDelay, true),
   ...listHandlers('/api/errors', eeApiErrors, noDelay),
   ...listHandlers('/api/http/middlewares', apiHttpMiddlewares, noDelay),

@@ -32,10 +32,15 @@ import (
 
 // TLSStoreSpecApplyConfiguration represents a declarative configuration of the TLSStoreSpec type for use
 // with apply.
+//
+// TLSStoreSpec defines the desired state of a TLSStore.
 type TLSStoreSpecApplyConfiguration struct {
-	DefaultCertificate   *CertificateApplyConfiguration  `json:"defaultCertificate,omitempty"`
-	DefaultGeneratedCert *tls.GeneratedCert              `json:"defaultGeneratedCert,omitempty"`
-	Certificates         []CertificateApplyConfiguration `json:"certificates,omitempty"`
+	// DefaultCertificate defines the default certificate configuration.
+	DefaultCertificate *CertificateApplyConfiguration `json:"defaultCertificate,omitempty"`
+	// DefaultGeneratedCert defines the default generated certificate configuration.
+	DefaultGeneratedCert *tls.GeneratedCert `json:"defaultGeneratedCert,omitempty"`
+	// Certificates is a list of secret names, each secret holding a key/certificate pair to add to the store.
+	Certificates []CertificateApplyConfiguration `json:"certificates,omitempty"`
 }
 
 // TLSStoreSpecApplyConfiguration constructs a declarative configuration of the TLSStoreSpec type for use with

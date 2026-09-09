@@ -106,6 +106,32 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 	}
 }
 
+func TestBuildConfigurationErrorIncludesFilename(t *testing.T) {
+	tempDir := t.TempDir()
+
+	file, err := os.CreateTemp(tempDir, "temp*.yml")
+	require.NoError(t, err)
+
+	// passHostHeader is intentionally misindented to produce a YAML syntax error.
+	content := `
+http:
+  services:
+    Service01:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:8000"
+       passHostHeader: true
+`
+	_, err = file.WriteString(content)
+	require.NoError(t, err)
+
+	provider := &Provider{Filename: file.Name()}
+
+	_, err = provider.buildConfiguration()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, file.Name())
+}
+
 func TestProvideWithoutWatch(t *testing.T) {
 	for _, test := range getTestCases() {
 		t.Run(test.desc+" without watch", func(t *testing.T) {

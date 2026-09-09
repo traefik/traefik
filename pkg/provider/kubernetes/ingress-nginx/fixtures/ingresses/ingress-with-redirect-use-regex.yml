@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-redirect-use-regex
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://redirect.example.com/$1$2"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: redirect-regex.localhost
+      http:
+        paths:
+          - path: /(example)(/.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test.route
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: traefik-lb
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+    - services:
+        - name: whoamiudp
+          port: 8000

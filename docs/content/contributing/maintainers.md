@@ -13,8 +13,6 @@ description: "Traefik Proxy is an open source software with a thriving community
 * Nicolas Mengin [@nmengin](https://github.com/nmengin)
 * Michaël Matur [@mmatur](https://github.com/mmatur)
 * Gérald Croës [@geraldcroes](https://github.com/geraldcroes)
-* Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
-* Mathieu Lonjaret [@mpl](https://github.com/mpl)
 * Romain Tribotté [@rtribotte](https://github.com/rtribotte)
 * Kevin Pollet [@kevinpollet](https://github.com/kevinpollet)
 * Harold Ozouf [@jspdown](https://github.com/jspdown)
@@ -38,6 +36,8 @@ People who have had an incredibly positive impact on the project, and are now fo
 * Timo Reimann [@timoreimann](https://github.com/timoreimann)
 * Marco Jantke [@mjantke](https://github.com/mjeri)
 * Ludovic Fernandez [@ldez](https://github.com/ldez)
+* Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
+* Mathieu Lonjaret [@mpl](https://github.com/mpl)
 
 ## Maintainer's Guidelines
 

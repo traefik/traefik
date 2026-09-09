@@ -19,7 +19,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
-const dockerName = "docker"
+// DockerName is the docker provider name.
+const DockerName = "docker"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -51,7 +52,7 @@ func (p *Provider) Init() error {
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, dockerName).Logger()
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, DockerName).Logger()
 		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
@@ -59,7 +60,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			ctx, cancel := context.WithCancel(ctxLog)
 			defer cancel()
 
-			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, dockerName).Logger().WithContext(ctx)
+			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, DockerName).Logger().WithContext(ctx)
 
 			dockerClient, err := p.createClient(ctxLog)
 			if err != nil {
@@ -86,7 +87,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			configuration := builder.build(ctxLog, dockerDataList)
 			configurationChan <- dynamic.Message{
-				ProviderName:  dockerName,
+				ProviderName:  DockerName,
 				Configuration: configuration,
 			}
 
@@ -103,7 +104,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					configuration := builder.build(ctx, containers)
 					if configuration != nil {
 						message := dynamic.Message{
-							ProviderName:  dockerName,
+							ProviderName:  DockerName,
 							Configuration: configuration,
 						}
 						select {

@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-permanent-redirect
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://www.google.com"
+    nginx.ingress.kubernetes.io/permanent-redirect-code: "500"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: permanent-redirect.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

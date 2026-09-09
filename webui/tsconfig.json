@@ -24,10 +24,7 @@
     "baseUrl": "./src",
     "esModuleInterop": true,
     "noImplicitAny": false,
-    "types": ["vitest/globals"],
-    "paths": {
-      "react": ["../node_modules/@types/react"]
-    }
+    "types": ["vitest/globals"]
   },
   "include": ["src", "test/setup.ts", "types/*.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]

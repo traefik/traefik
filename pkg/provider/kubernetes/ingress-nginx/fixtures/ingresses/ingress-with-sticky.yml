@@ -12,6 +12,7 @@ metadata:
     nginx.ingress.kubernetes.io/session-cookie-domain: "foo.localhost"
     nginx.ingress.kubernetes.io/session-cookie-samesite: "None"
     nginx.ingress.kubernetes.io/session-cookie-max-age: "42"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "42"
 
 spec:
   ingressClassName: nginx
