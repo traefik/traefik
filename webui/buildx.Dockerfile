@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:24-alpine3.22
+FROM node:24-alpine3.24
 
 ENV WEBUI_DIR=/src/webui
 RUN mkdir -p $WEBUI_DIR
@@ -11,7 +11,7 @@ ENV VITE_APP_BASE_API_URL="/api"
 
 WORKDIR $WEBUI_DIR
 
-RUN corepack enable
+RUN npm i -g corepack
 RUN yarn workspaces focus --all --production
 
 COPY . $WEBUI_DIR/
