@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -280,6 +281,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse annotations")
 			continue
+		}
+
+		if rtConfig != nil && rtConfig.Router != nil {
+			warnCollapsibleMiddlewareNames(logger, rtConfig.Router.Middlewares)
 		}
 
 		// Middlewares and TLS options always contain cross-provider references.
@@ -630,6 +635,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 				return nil, fmt.Errorf("cross-provider middleware reference is not allowed from namespace %q", namespace)
 			}
 
+			warnCollapsibleMiddlewareNames(log.With().Str("service", service.Name).Str("namespace", namespace).Logger(), svcConfig.Service.Middlewares)
 			svc.Middlewares = svcConfig.Service.Middlewares
 		}
 
@@ -1026,4 +1032,20 @@ func portString(port netv1.ServiceBackendPort) string {
 		return strconv.Itoa(int(port.Number))
 	}
 	return port.Name
+}
+
+func warnCollapsibleMiddlewareNames(logger zerolog.Logger, middlewares []string) {
+	for _, m := range middlewares {
+		name := m
+		if i := strings.IndexByte(m, '@'); i >= 0 {
+			name = m[:i]
+		}
+		if !provider.HasCollapsibleSeparators(name) {
+			continue
+		}
+		logger.Warn().
+			Str("middleware", m).
+			Str("normalized", provider.Normalize(name)).
+			Msg("Middleware reference contains consecutive non-alphanumeric characters that Traefik normalizes to a single dash; the lookup name will differ and may not match a Kubernetes CRD middleware ID")
+	}
 }

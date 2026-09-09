@@ -3,6 +3,7 @@ package provider
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -130,3 +131,35 @@ func Normalize(name string) string {
 	// get function
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
 }
+
+// HasCollapsibleSeparators reports whether name contains consecutive non-alphanumeric
+// characters that Normalize collapses into a single dash (for example "--").
+func HasCollapsibleSeparators(name string) bool {
+	prevSep := false
+	for _, r := range name {
+		sep := !unicode.IsLetter(r) && !unicode.IsNumber(r)
+		if sep && prevSep {
+			return true
+		}
+		prevSep = sep
+	}
+	return false
+}
+
+// MiddlewareNameHint returns an optional explanation for missing-middleware errors when the
+// referenced name would be affected by Normalize collapsing consecutive separators.
+func MiddlewareNameHint(middlewareName string) string {
+	name := middlewareName
+	if i := strings.IndexByte(middlewareName, '@'); i >= 0 {
+		name = middlewareName[:i]
+	}
+	if !HasCollapsibleSeparators(name) {
+		return ""
+	}
+	return fmt.Sprintf(
+		" (hint: Traefik normalizes consecutive non-alphanumeric characters to a single dash, so %q becomes %q; avoid double dashes in Kubernetes middleware names)",
+		name,
+		Normalize(name),
+	)
+}
+
