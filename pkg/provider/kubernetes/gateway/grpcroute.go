@@ -76,7 +76,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 				// Gateway listener should have AttachedRoutes set even when Gateway has unresolved refs.
 				listener.Status.AttachedRoutes++
 
-				attachedRoutes.Attach(ref, kindGRPCRoute, hostnames)
+				attachedRoutes.Set(ref, kindGRPCRoute, hostnames)
 			}
 
 			// The ResolvedRefs condition must be reported for every parentRef,
