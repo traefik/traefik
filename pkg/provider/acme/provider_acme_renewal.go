@@ -91,7 +91,11 @@ func (p *Provider) checkARIRenewal(ctx context.Context, x509Cert *x509.Certifica
 	}
 
 	if renewAt.After(time.Now()) {
-		return false, "", renewAt.Sub(time.Now()), nil
+		retryAfter := renewAt.Sub(time.Now())
+		if info.RetryAfter > 0 && info.RetryAfter < retryAfter {
+			retryAfter = info.RetryAfter
+		}
+		return false, "", retryAfter, nil
 	}
 
 	certID, err := api.MakeARICertID(x509Cert)
