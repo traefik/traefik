@@ -1209,7 +1209,7 @@ type listenerRef struct {
 // It allows detecting the hostname Conflicts between the HTTPRoutes and the GRPCRoutes attached to the same listener.
 type attachedRoutes map[listenerRef]map[gatev1.Hostname]string
 
-func (ar attachedRoutes) Set(ref listenerRef, kind string, hostnames []gatev1.Hostname) {
+func (ar attachedRoutes) Record(ref listenerRef, kind string, hostnames []gatev1.Hostname) {
 	if ar[ref] == nil {
 		ar[ref] = make(map[gatev1.Hostname]string)
 	}

@@ -8844,7 +8844,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			attached := make(attachedRoutes)
-			attached.Set(test.attachedListener, test.attachedKind, test.attachedHostnames)
+			attached.Record(test.attachedListener, test.attachedKind, test.attachedHostnames)
 
 			listener := listenerRef{GatewayNamespace: "default", GatewayName: "my-gateway", Name: "web"}
 			assert.Equal(t, test.expected, attached.Conflicts(listener, test.kind, test.hostnames))

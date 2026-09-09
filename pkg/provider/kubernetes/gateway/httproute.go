@@ -80,7 +80,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 				// Gateway listener should have AttachedRoutes set even when Gateway has unresolved refs.
 				listener.Status.AttachedRoutes++
 
-				attachedRoutes.Set(ref, kindHTTPRoute, hostnames)
+				attachedRoutes.Record(ref, kindHTTPRoute, hostnames)
 			}
 
 			// The ResolvedRefs condition must be reported for every parentRef,
