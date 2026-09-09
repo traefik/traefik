@@ -400,7 +400,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	statusReport.gatewayListeners = selectedGateways
 
 	// The isolation of a listener depends on the other listeners of its entry point.
-	p.buildListenerRouters(selectedGateways, conf)
+	listenerRouters := p.buildListenerRouters(selectedGateways, conf)
 
 	p.loadHTTPRoutes(ctx, selectedGateways, conf, statusReport)
 
@@ -409,6 +409,10 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
 
 	p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
+
+	// A listener with no route attached gives a parent router with no child,
+	// which the router manager reports in error as it has no service either.
+	dropChildlessListenerRouters(conf, listenerRouters)
 
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
@@ -687,7 +691,9 @@ type uniqListener struct {
 // buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
 // is the most specific match for. Electing the listener per Gateway isolates the listeners of a
 // Gateway without hiding the routes of the other Gateways sharing the entry point.
-func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) {
+func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) []string {
+	var listenerRouterNames []string
+
 	hostnamesByListener := map[uniqListener][]string{}
 	for _, gateway := range gateways {
 		for _, listener := range gateway.listeners {
@@ -742,7 +748,29 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 			}
 
 			conf.HTTP.Routers[listenerRouterName] = listenerRouter
+			listenerRouterNames = append(listenerRouterNames, listenerRouterName)
 		}
+	}
+
+	return listenerRouterNames
+}
+
+// dropChildlessListenerRouters removes the parent routers no route is attached to.
+func dropChildlessListenerRouters(conf *dynamic.Configuration, listenerRouterNames []string) {
+	parents := map[string]struct{}{}
+	for _, router := range conf.HTTP.Routers {
+		for _, parent := range router.ParentRefs {
+			parents[parent] = struct{}{}
+		}
+	}
+
+	for _, name := range listenerRouterNames {
+		if _, ok := parents[name]; ok {
+			continue
+		}
+
+		delete(conf.HTTP.Routers, name)
+		delete(conf.TLS.Options, name)
 	}
 }
 
