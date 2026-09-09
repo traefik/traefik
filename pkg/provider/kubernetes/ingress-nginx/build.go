@@ -1171,9 +1171,9 @@ func clientAuthTypeFromString(verifyClient *string) string {
 func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]string, error) {
 	var users []string
 	if authSecretType == "auth-map" {
-		if len(secret.Data) == 0 {
-			return nil, fmt.Errorf("secret %s/%s contains no user credentials", secret.Namespace, secret.Name)
-		}
+		// An empty secret is valid: ingress-nginx still enables auth and challenges
+		// with 401 when no credentials are present (route management separated from
+		// user management). Mirror that instead of skipping the Ingress.
 		for user, pass := range secret.Data {
 			users = append(users, user+":"+string(pass))
 		}

@@ -20,6 +20,11 @@ import (
 
 const (
 	typeNameBasic = "BasicAuth"
+
+	// emptyUsersNotFoundSecret is used only for timing equalization when BasicAuth is
+	// configured with no users. It must be a valid hash for goauth.CheckSecret; it does
+	// not correspond to any real credential.
+	emptyUsersNotFoundSecret = "$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
 )
 
 type basicAuth struct {
@@ -44,14 +49,17 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		return nil, err
 	}
 
-	if len(users) == 0 {
-		return nil, fmt.Errorf("no users found in %s", authConfig.UsersFile)
-	}
-
 	// To prevent timing attacks, we need to compute a hash even if the user is not found.
 	// We assume it to be safe only when the users hashes are all from the same algorithm,
 	// so we can pick the first one as a random hash to compute.
-	notFoundSecret := slices.Collect(maps.Values(users))[0]
+	// An empty user list is allowed (deny-all / always challenge), matching DigestAuth and
+	// ingress-nginx empty auth-secret behavior.
+	var notFoundSecret string
+	if len(users) == 0 {
+		notFoundSecret = emptyUsersNotFoundSecret
+	} else {
+		notFoundSecret = slices.Collect(maps.Values(users))[0]
+	}
 
 	ba := &basicAuth{
 		next:              next,
