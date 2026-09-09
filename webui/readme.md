@@ -24,7 +24,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 - Go to the `webui/` directory
 
-- As we use Yarn v4, you will need to enable corepack before installing dependencies:
+- As we use Yarn v4, you will need to install corepack before installing dependencies:
 
   - `npm i -g corepack`
 
