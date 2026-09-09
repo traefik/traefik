@@ -15,9 +15,12 @@ CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
 source "${CODEGEN_PKG}/kube_codegen.sh"
 
 echo "# Generating Traefik clientset and deepcopy code ..."
+# Scoped to pkg/ because the generator scans the input directory with a plain
+# recursive grep: pointing it at the repository root makes it pick up unrelated
+# Go trees living in the working directory (git worktrees, local plugins, ...).
 kube::codegen::gen_helpers \
   --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
-  "${CURRENT_DIR}"
+  "${CURRENT_DIR}/pkg"
 
 kube::codegen::gen_client \
     --with-applyconfig \

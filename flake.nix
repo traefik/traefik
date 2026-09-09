@@ -7,7 +7,7 @@
 
     # Pinned nixpkgs for kubernetes-controller-tools
     # Search: https://www.nixhub.io/packages/kubernetes-controller-tools
-    nixpkgs-kct.url = "github:NixOS/nixpkgs/ee09932cedcef15aaf476f9343d1dea2cb77e261";
+    nixpkgs-kct.url = "github:NixOS/nixpkgs/c27cdad491a991b11ed731760aa2ef8db0cb0410";
 
     # Pinned nixpkgs for golangci-lint
     # Search: https://www.nixhub.io/packages/golangci-lint
