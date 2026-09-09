@@ -114,9 +114,9 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		// operator provisions. nodeLoadBalancer assigns their addresses.
 		testcontainers.WithCmdArgs("--disable=servicelb"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.1.yml"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/01-operator.yml"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/02-gatewayclass.yml"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/03-bootstrap-gateway.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/01-operator.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/02-gatewayclass.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/03-bootstrap-gateway.yml"),
 		network.WithNetwork(nil, s.network),
 	)
 	require.NoError(s.T(), err)
