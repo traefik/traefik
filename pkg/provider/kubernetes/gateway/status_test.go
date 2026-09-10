@@ -44,6 +44,24 @@ func TestStatusReport_RecordGatewayStatus(t *testing.T) {
 	assert.Equal(t, programmed, report.gateways[gateway])
 }
 
+func TestStatusReport_RecordListenerSetStatus(t *testing.T) {
+	report := newStatusReport()
+	listenerSet := ktypes.NamespacedName{Namespace: "default", Name: "my-listenerset"}
+
+	accepted := gatev1.ListenerSetStatus{
+		Conditions: []metav1.Condition{{Type: string(gatev1.ListenerSetConditionAccepted)}},
+	}
+	report.RecordListenerSetStatus(listenerSet, accepted)
+	assert.Equal(t, accepted, report.listenerSets[listenerSet])
+
+	// A later record for the same ListenerSet overwrites the previous one.
+	programmed := gatev1.ListenerSetStatus{
+		Conditions: []metav1.Condition{{Type: string(gatev1.ListenerSetConditionProgrammed)}},
+	}
+	report.RecordListenerSetStatus(listenerSet, programmed)
+	assert.Equal(t, programmed, report.listenerSets[listenerSet])
+}
+
 func TestStatusReport_RecordHTTPRouteStatus(t *testing.T) {
 	report := newStatusReport()
 	route := ktypes.NamespacedName{Namespace: "default", Name: "my-route"}

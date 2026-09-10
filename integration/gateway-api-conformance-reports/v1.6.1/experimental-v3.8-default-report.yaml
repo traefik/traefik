@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-07-31T16:55:17+02:00"
+date: "2026-08-25T17:43:40+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -18,8 +18,26 @@ profiles:
       Failed: 0
       Passed: 15
       Skipped: 0
+  extended:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 7
+      Skipped: 0
+    supportedFeatures:
+    - GatewayPort8080
+    - ListenerSet
+    unsupportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
+    - GatewayStaticAddresses
   name: GATEWAY-GRPC
-  summary: Core tests succeeded.
+  summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: partial
     skippedTests:
@@ -32,7 +50,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 28
+      Passed: 40
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -56,6 +74,7 @@ profiles:
     - HTTPRouteQueryParamMatching
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
+    - ListenerSet
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
@@ -73,7 +92,6 @@ profiles:
     - HTTPRouteRetry
     - HTTPRouteRetryBackendTimeout
     - HTTPRouteRetryConnectionError
-    - ListenerSet
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
 - core:
@@ -82,8 +100,27 @@ profiles:
       Failed: 0
       Passed: 19
       Skipped: 0
+  extended:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 7
+      Skipped: 0
+    supportedFeatures:
+    - GatewayPort8080
+    - ListenerSet
+    - TCPRoute
+    unsupportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
+    - GatewayStaticAddresses
   name: GATEWAY-TCP
-  summary: Core tests succeeded.
+  summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:
@@ -94,10 +131,11 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 4
+      Passed: 12
       Skipped: 0
     supportedFeatures:
     - GatewayPort8080
+    - ListenerSet
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
@@ -109,7 +147,6 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
-    - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:

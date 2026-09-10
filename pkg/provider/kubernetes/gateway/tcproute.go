@@ -75,7 +75,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadTCPRoute(match.gatewayName, match.gatewayNamespace, listener, route)
+				routeConf, condition := p.loadTCPRoute(listener, route)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -95,10 +95,11 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 				}
 			}
 
-			parentStatusConditions := []metav1.Condition{acceptedCondition}
-			if resolvedRefCondition != nil {
-				parentStatusConditions = append(parentStatusConditions, *resolvedRefCondition)
+			if resolvedRefCondition == nil {
+				resolvedRefCondition = new(defaultResolvedRefsCondition(route.Generation))
 			}
+
+			parentStatusConditions := []metav1.Condition{acceptedCondition, *resolvedRefCondition}
 
 			statusReport.RecordTCPRouteStatus(ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gatev1.RouteParentStatus{
 				ParentRef:      match.parentRef,
@@ -109,7 +110,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TCPRoute) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1.TCPRoute) (*dynamic.Configuration, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
@@ -147,7 +148,7 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 		}
 
 		// Routing criteria should be introduced at some point.
-		routerName := makeRouterName(strings.ToLower(kindTCPRoute), "", route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
+		routerName := makeRouterName(strings.ToLower(kindTCPRoute), "", route.Namespace, route.Name, listener, ri)
 
 		if len(rule.BackendRefs) == 1 && isInternalService(rule.BackendRefs[0]) {
 			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
