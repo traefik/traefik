@@ -7,10 +7,24 @@ import (
 )
 
 func TestDoubleWildcardPenalty(t *testing.T) {
-	assert.Equal(t, 0, DoubleWildcardPenalty("example.com"))
-	assert.Equal(t, 0, DoubleWildcardPenalty("*"))
-	assert.Equal(t, 0, DoubleWildcardPenalty("*.example.com"))
-	assert.Equal(t, 2, DoubleWildcardPenalty("**.example.com"))
+	testCases := []struct {
+		desc     string
+		hostExpr string
+		expected int
+	}{
+		{desc: "exact host", hostExpr: "example.com", expected: 0},
+		{desc: "catch-all", hostExpr: "*", expected: 0},
+		{desc: "wildcard", hostExpr: "*.example.com", expected: 0},
+		{desc: "double wildcard", hostExpr: "**.example.com", expected: 2},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, DoubleWildcardPenalty(test.hostExpr))
+		})
+	}
 }
 
 func TestDomainMatchHostExpression(t *testing.T) {
