@@ -532,6 +532,16 @@ func TestGetRulePriority(t *testing.T) {
 			rule:     "HostSNI(`example.org`) && !HostSNI(`**.example.org`)",
 			expected: 52,
 		},
+		{
+			desc:     "double wildcard rule with another matcher",
+			rule:     "HostSNI(`**.example.org`) && ALPN(`h2`)",
+			expected: 37,
+		},
+		{
+			desc:     "HostSNI(`*`) rule with another matcher",
+			rule:     "HostSNI(`*`) && ALPN(`h2`)",
+			expected: 26,
+		},
 	}
 
 	for _, test := range testCases {

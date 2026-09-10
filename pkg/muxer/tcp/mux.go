@@ -96,22 +96,10 @@ func (m *Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 // The priority is calculated using the length of rule, the stars of a double wildcard host not counting.
 // There is a special case where the HostSNI(`*`) has a priority of -1.
 func GetRulePriority(rule string) int {
-	catchAllParser, err := rules.NewParser([]string{"HostSNI"})
+	ruleTree, err := parseRuleTree(rule)
 	if err != nil {
 		return len(rule)
 	}
-
-	parse, err := catchAllParser.Parse(rule)
-	if err != nil {
-		return len(rule)
-	}
-
-	buildTree, ok := parse.(rules.TreeBuilder)
-	if !ok {
-		return len(rule)
-	}
-
-	ruleTree := buildTree()
 
 	// Special case for when the catchAll fallback is present.
 	// When no user-defined priority is found, the lowest computable priority minus one is used,
@@ -193,6 +181,16 @@ func (m *Muxer) HasRoutes() bool {
 // ParseHostSNI extracts the positive HostSNI matchers values (not negated) declared in a rule.
 // This is a first naive implementation used in TCP routing.
 func ParseHostSNI(rule string) ([]string, error) {
+	ruleTree, err := parseRuleTree(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	return ruleTree.ParsePositiveMatchers([]string{"HostSNI"}), nil
+}
+
+// parseRuleTree parses the rule with every TCP matcher known, whatever the syntax.
+func parseRuleTree(rule string) (*rules.Tree, error) {
 	var matchers []string
 	for matcher := range tcpFuncs {
 		matchers = append(matchers, matcher)
@@ -216,7 +214,7 @@ func ParseHostSNI(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParsePositiveMatchers([]string{"HostSNI"}), nil
+	return buildTree(), nil
 }
 
 // routes implements sort.Interface.
