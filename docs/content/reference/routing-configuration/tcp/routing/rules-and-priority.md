@@ -57,7 +57,7 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
     Hence, only TLS routers will be able to specify a domain name with that rule.
     However, there is one special use case for `HostSNI` with non-TLS routers:
     when one wants a non-TLS router that matches all (non-TLS) requests,
-    one should use the specific ```HostSNI(`*`)``` syntax. A bare `**` is not valid.
+    one should use the specific ```HostSNI(`*`)``` syntax.
 
 !!! info "Wildcard subdomain matching"
 
