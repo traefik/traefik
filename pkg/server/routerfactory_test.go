@@ -185,7 +185,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			dialerManager := tcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-			observabiltyMgr := middleware.NewObservabilityMgr(staticConfig, nil, nil, nil, nil, nil)
+			observabiltyMgr := middleware.NewObservabilityMgr(staticConfig, nil, nil, nil, nil, nil, nil)
 			factory, err := NewRouterFactory(staticConfig, managerFactory, tlsManager, observabiltyMgr, nil, dialerManager)
 			require.NoError(t, err)
 

@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -27,10 +29,11 @@ type ObservabilityMgr struct {
 	semConvMetricRegistry  *metrics.SemConvMetricsRegistry
 	tracer                 *tracing.Tracer
 	tracerCloser           io.Closer
+	rotateTraefikLog       func() error
 }
 
 // NewObservabilityMgr creates a new ObservabilityMgr.
-func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Registry, semConvMetricRegistry *metrics.SemConvMetricsRegistry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracer, tracerCloser io.Closer) *ObservabilityMgr {
+func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Registry, semConvMetricRegistry *metrics.SemConvMetricsRegistry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracer, tracerCloser io.Closer, rotateTraefikLog func() error) *ObservabilityMgr {
 	return &ObservabilityMgr{
 		config:                 config,
 		metricsRegistry:        metricsRegistry,
@@ -38,6 +41,7 @@ func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Re
 		accessLoggerMiddleware: accessLoggerMiddleware,
 		tracer:                 tracer,
 		tracerCloser:           tracerCloser,
+		rotateTraefikLog:       rotateTraefikLog,
 	}
 }
 
@@ -117,12 +121,22 @@ func (o *ObservabilityMgr) Close() {
 	}
 }
 
-func (o *ObservabilityMgr) RotateAccessLogs() error {
-	if o.accessLoggerMiddleware == nil {
-		return nil
+func (o *ObservabilityMgr) RotateLogs() error {
+	var errs []error
+
+	if o.rotateTraefikLog != nil {
+		if err := o.rotateTraefikLog(); err != nil {
+			errs = append(errs, fmt.Errorf("rotating traefik log: %w", err))
+		}
 	}
 
-	return o.accessLoggerMiddleware.Rotate()
+	if o.accessLoggerMiddleware != nil {
+		if err := o.accessLoggerMiddleware.Rotate(); err != nil {
+			errs = append(errs, fmt.Errorf("rotating access log: %w", err))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig) http.Handler {

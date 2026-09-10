@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 // FooCert is a PEM-encoded TLS cert.
@@ -113,6 +115,20 @@ func TestAppendCertMetric(t *testing.T) {
 			assert.Equal(t, test.expected, gauge.metrics)
 		})
 	}
+}
+
+func TestSetupLoggerReturnsErrorWhenLogFileCannotBeOpened(t *testing.T) {
+	logFile := filepath.Join(t.TempDir(), "missing", "traefik.log")
+
+	_, err := setupLogger(t.Context(), &static.Configuration{
+		Log: &otypes.TraefikLog{
+			FilePath: logFile,
+		},
+	})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "opening log file")
+	assert.Contains(t, err.Error(), logFile)
 }
 
 func TestGetDefaultsEntrypoints(t *testing.T) {
