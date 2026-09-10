@@ -68,7 +68,6 @@ These matchers will match the request's host in lowercase.
 
     As an exception to the rules above, a bare `*` is not treated as a subdomain wildcard but as a catch-all:
     ``Host(`*`)`` matches every request regardless of its host, including requests with no host at all.
-    A bare `**` is not valid.
     This mirrors the behaviour of the TCP [``HostSNI(`*`)``](../../tcp/routing/rules-and-priority.md#hostsni-and-hostsniregexp) matcher, so both stay consistent.
 
 | Behavior                                                        | Rule                                                                    |
