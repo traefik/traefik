@@ -512,6 +512,26 @@ func TestGetRulePriority(t *testing.T) {
 			rule:     "   HostSNI ( `*` )       ",
 			expected: -1,
 		},
+		{
+			desc:     "subdomain rule",
+			rule:     "HostSNI(`a.example.org`)",
+			expected: 24,
+		},
+		{
+			desc:     "wildcard rule",
+			rule:     "HostSNI(`*.example.org`)",
+			expected: 24,
+		},
+		{
+			desc:     "double wildcard rule",
+			rule:     "HostSNI(`**.example.org`)",
+			expected: 23,
+		},
+		{
+			desc:     "negated double wildcard rule",
+			rule:     "HostSNI(`example.org`) && !HostSNI(`**.example.org`)",
+			expected: 52,
+		},
 	}
 
 	for _, test := range testCases {

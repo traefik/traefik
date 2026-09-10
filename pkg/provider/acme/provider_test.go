@@ -222,6 +222,20 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			expectedDomains: nil,
 		},
 		{
+			desc:            "double wildcard ignored",
+			domains:         types.Domain{Main: "**.traefik.wtf", SANs: []string{"**.acme.wtf", "traefik.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			expectedErr:     "",
+			expectedDomains: []string{"traefik.wtf"},
+		},
+		{
+			desc:            "double wildcard only",
+			domains:         types.Domain{Main: "**.traefik.wtf"},
+			dnsChallenge:    &DNSChallenge{},
+			expectedErr:     "",
+			expectedDomains: nil,
+		},
+		{
 			desc:            "wildcard and SANs",
 			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"traefik.wtf"}},
 			dnsChallenge:    &DNSChallenge{},
@@ -248,7 +262,7 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
 			} else {
-				assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
+				assert.Equal(t, test.expectedDomains, domains, "Unexpected domains.")
 			}
 		})
 	}

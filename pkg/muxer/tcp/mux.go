@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 	"github.com/traefik/traefik/v3/pkg/rules"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -92,7 +93,7 @@ func (m *Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 }
 
 // GetRulePriority computes the priority for a given rule.
-// The priority is calculated using the length of rule.
+// The priority is calculated using the length of rule, the stars of a double wildcard host not counting.
 // There is a special case where the HostSNI(`*`) has a priority of -1.
 func GetRulePriority(rule string) int {
 	catchAllParser, err := rules.NewParser([]string{"HostSNI"})
@@ -120,7 +121,12 @@ func GetRulePriority(rule string) int {
 		return -1
 	}
 
-	return len(rule)
+	priority := len(rule)
+	for _, host := range ruleTree.ParsePositiveMatchers([]string{"HostSNI"}) {
+		priority -= muxer.DoubleWildcardPenalty(host)
+	}
+
+	return priority
 }
 
 // AddRoute adds a new route, associated to the given handler, at the given

@@ -18,7 +18,7 @@ The table below lists all the available matchers:
 
 | Rule                                                        | Description                                                                                      |
 |-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`. Supports wildcard subdomain matching (e.g. `*.example.com`).<br /> More information [here](#hostsni-and-hostsniregexp). |
+| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`. Supports wildcard subdomain matching (e.g. `*.example.com`, `**.example.com`).<br /> More information [here](#hostsni-and-hostsniregexp). |
 | <a id="opt-HostSNIRegexpregexp" href="#opt-HostSNIRegexpregexp" title="#opt-HostSNIRegexpregexp">[```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
 | <a id="opt-ClientIPip" href="#opt-ClientIPip" title="#opt-ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
 | <a id="opt-ALPNprotocol" href="#opt-ALPNprotocol" title="#opt-ALPNprotocol">[```ALPN(`protocol`)```](#alpn)</a> | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
@@ -57,14 +57,17 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
     Hence, only TLS routers will be able to specify a domain name with that rule.
     However, there is one special use case for `HostSNI` with non-TLS routers:
     when one wants a non-TLS router that matches all (non-TLS) requests,
-    one should use the specific ```HostSNI(`*`)``` syntax.
+    one should use the specific ```HostSNI(`*`)``` syntax. A bare `**` is not valid.
 
 !!! info "Wildcard subdomain matching"
 
-    The `HostSNI` matcher supports a single-level wildcard prefix (`*.example.com`) to match any direct subdomain of `example.com`.
+    The `HostSNI` matcher supports a wildcard prefix to match the subdomains of a domain:
+    `*.example.com` matches any direct subdomain of `example.com`, and `**.example.com` any of its subdomains, nested ones included.
     It should be preferred over the `HostSNIRegexp` matcher as it allows attaching a TLS option and is more efficient.
 
-    A wildcard matches exactly one subdomain label: `*.example.com` matches `foo.example.com` but not `foo.bar.example.com` or `example.com` itself.    
+    A single wildcard matches exactly one subdomain label, a double wildcard one or more:
+    `*.example.com` matches `foo.example.com` but not `foo.bar.example.com`, while `**.example.com` matches both.
+    Neither matches `example.com` itself.
 
     This is only available with the **v3 rule syntax** (the default).
 
@@ -90,6 +93,12 @@ Match TCP connections opened on any direct subdomain of `example.com` (e.g. `foo
 
 ```yaml
 HostSNI(`*.example.com`)
+```
+
+Match TCP connections opened on any subdomain of `example.com`, nested ones included (e.g. `foo.bar.example.com`):
+
+```yaml
+HostSNI(`**.example.com`)
 ```
 
 Match TCP connections opened on any subdomain of `example.com` (including nested subdomains), using a regular expression:
@@ -208,6 +217,9 @@ ALPN(`h2`)
 
 To avoid path overlap, routes are sorted, by default, in descending order using rules length.
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
+The stars of a double wildcard host do not count toward this length,
+so that it always ranks below the single wildcard and the exact hosts it covers:
+``HostSNI(`foo.example.com`)`` has a priority of 26, ``HostSNI(`*.example.com`)`` of 24, and ``HostSNI(`**.example.com`)`` of 23.
 A value of `0` for the priority is ignored: `priority: 0` means that the default rules length sorting is used.
 
 Negative priority values are supported.
