@@ -15,17 +15,27 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/sync/singleflight"
 )
 
 const (
 	typeNameBasic = "BasicAuth"
-
-	// emptyUsersNotFoundSecret is used only for timing equalization when BasicAuth is
-	// configured with no users. It must be a valid hash for goauth.CheckSecret; it does
-	// not correspond to any real credential.
-	emptyUsersNotFoundSecret = "$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
 )
+
+// emptyUsersNotFoundSecret is used only for timing equalization when BasicAuth is
+// configured with no users. It must be a valid hash for goauth.CheckSecret; it does
+// not correspond to any real credential.
+var emptyUsersNotFoundSecret = mustEmptyUsersNotFoundSecret()
+
+func mustEmptyUsersNotFoundSecret() string {
+	// MinCost: never matched against a real password; deny-all path only.
+	hash, err := bcrypt.GenerateFromPassword([]byte("empty-users"), bcrypt.MinCost)
+	if err != nil {
+		panic("basic auth: generate empty-users timing hash: " + err.Error())
+	}
+	return string(hash)
+}
 
 type basicAuth struct {
 	next         http.Handler
