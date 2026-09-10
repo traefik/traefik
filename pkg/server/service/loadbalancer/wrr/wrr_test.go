@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -228,6 +229,35 @@ func TestBalancerAllServersFenced(t *testing.T) {
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
+}
+
+// TestBalancerAllHealthyServersFenced checks that the balancer returns without
+// looping forever when the only up servers are fenced.
+// This state is reachable during a rolling update with sticky sessions: the
+// health check marks the non-fenced servers down while the draining (fenced)
+// server is still up, leaving no server that is both up and non-fenced.
+func TestBalancerAllHealthyServersFenced(t *testing.T) {
+	balancer := New(nil, false)
+
+	balancer.Add("fenced", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(1), true)
+	balancer.Add("healthy", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(1), false)
+
+	// The only non-fenced server goes down.
+	balancer.SetStatus(t.Context(), "healthy", false)
+
+	done := make(chan int, 1)
+	go func() {
+		recorder := httptest.NewRecorder()
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		done <- recorder.Result().StatusCode
+	}()
+
+	select {
+	case code := <-done:
+		assert.Equal(t, http.StatusServiceUnavailable, code)
+	case <-time.After(time.Second):
+		t.Fatal("balancer.ServeHTTP did not return: nextServer is stuck in an infinite loop")
+	}
 }
 
 func TestSticky(t *testing.T) {
