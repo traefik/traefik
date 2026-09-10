@@ -61,8 +61,7 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
 
 !!! info "Wildcard subdomain matching"
 
-    The `HostSNI` matcher supports a wildcard prefix to match the subdomains of a domain:
-    `*.example.com` matches any direct subdomain of `example.com`, and `**.example.com` any of its subdomains, nested ones included.
+    The `HostSNI` matcher supports a wildcard prefix to match the subdomains of a domain.
     It should be preferred over the `HostSNIRegexp` matcher as it allows attaching a TLS option and is more efficient.
 
     A single wildcard matches exactly one subdomain label, a double wildcard one or more:
