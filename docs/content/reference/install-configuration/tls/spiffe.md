@@ -22,7 +22,7 @@ Traefik is able to connect to the Workload API to obtain an X509-SVID used to se
 
 ## Workload API
 
-To enable SPIFFE globally, you need to set up the [static configuration](../../../getting-started/configuration-overview.md#the-static-configuration). The `workloadAPIAddr` option specifies the address of the SPIFFE [Workload API](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/#spiffe-workload-api).
+To enable SPIFFE globally, you need to set up the [static configuration](../../../getting-started/configuration-overview.md#the-install-configuration). The `workloadAPIAddr` option specifies the address of the SPIFFE [Workload API](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/#spiffe-workload-api).
 
 ```yaml tab="File (YAML)"
 ## Static configuration.
