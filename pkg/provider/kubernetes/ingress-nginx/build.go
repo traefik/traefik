@@ -265,10 +265,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Logger()
 		ctxIng := logger.WithContext(ctx)
 
-		// ssl-passthrough: handled per-rule. serversTransport is not needed for passthrough.
+		// ssl-passthrough: handled per-rule.
 		if ptr.Deref(ing.config.SSLPassthrough, false) {
 			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
-			if len(ing.Spec.TLS) > 0 {
+			hasTLS := len(ing.Spec.TLS) > 0
+			if hasTLS {
 				if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
 					logger.Warn().Err(err).Msg("Error loading TLS certificates for ssl-passthrough ingress")
 				}
@@ -312,11 +313,26 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ing.Namespace+"-"+ing.Name+"-"+rule.Host), "-")
-				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
+				ptBackend := &sslPassthroughBackend{
 					BackendName: ptBackendName,
 					Hostname:    rule.Host,
 					RouterKey:   routerKey,
-				})
+					SSLRedirect: sslRedirectEnabled(ing.config, hasTLS),
+					Config:      ing.config,
+				}
+
+				// The serversTransport only shapes the HTTP router: when it cannot be built,
+				// the TCP passthrough router must still be created.
+				nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
+				if err != nil {
+					logger.Error().Err(err).Msgf("Cannot build serversTransport for ssl-passthrough on host %q, skipping its HTTP router", rule.Host)
+				} else {
+					ptBackend.HTTPServiceName = provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
+					ptBackend.ServersTransportName = nst.name
+					ptBackend.ServersTransport = nst.ServersTransport
+				}
+
+				mc.PassthroughBackends = append(mc.PassthroughBackends, ptBackend)
 				markProcessedIngress(ing.Ingress)
 			}
 			continue

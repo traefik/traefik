@@ -1357,7 +1357,7 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 		// When a namespace is explicitly configured, the default TLS options can only be defined in this namespace.
 		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName &&
 			p.DefaultTLSResourcesNamespace != "" && tlsOptionsCRD.Namespace != p.DefaultTLSResourcesNamespace {
-			logger.Error().Msgf("Ignoring default TLS options: they can only be defined in the %q namespace", p.DefaultTLSResourcesNamespace)
+			logger.Warn().Msgf("Ignoring default TLS options: they can only be defined in the %q namespace", p.DefaultTLSResourcesNamespace)
 			continue
 		}
 
@@ -1441,7 +1441,7 @@ func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[strin
 		// When a namespace is explicitly configured, the default TLS store can only be defined in this namespace.
 		if t.Name == tls.DefaultTLSStoreName &&
 			p.DefaultTLSResourcesNamespace != "" && t.Namespace != p.DefaultTLSResourcesNamespace {
-			logger.Error().Msgf("Ignoring default TLS store: it can only be defined in the %q namespace", p.DefaultTLSResourcesNamespace)
+			logger.Warn().Msgf("Ignoring default TLS store: it can only be defined in the %q namespace", p.DefaultTLSResourcesNamespace)
 			continue
 		}
 

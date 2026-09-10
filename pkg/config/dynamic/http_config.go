@@ -358,6 +358,11 @@ type Cookie struct {
 	// Expires defines the number of seconds to add to the current time to calculate the expiration date of the cookie.
 	// This option is exposed only for the Ingress NGINX provider.
 	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// PreserveLeadingDot defines whether a leading dot in the Domain attribute is written as-is in the Set-Cookie header,
+	// instead of being stripped as mandated by RFC 6265.
+	// This option is exposed only for the Ingress NGINX provider.
+	PreserveLeadingDot bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // SetDefaults set the default values for a Cookie.
