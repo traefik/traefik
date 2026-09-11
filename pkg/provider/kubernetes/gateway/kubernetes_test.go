@@ -3211,12 +3211,16 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
-							Rule:        `Host("foo.com") && Path("/bar")`,
-							Priority:    100008,
-							RuleSyntax:  "default",
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3261,7 +3265,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -4584,12 +4590,16 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
-							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
-							Rule:        `Host("foo.com") && PathPrefix("/")`,
-							Priority:    22,
-							RuleSyntax:  "default",
+							Rule:        `Host("*")`,
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:       `Host("foo.com") && PathPrefix("/")`,
+							Priority:   22,
+							RuleSyntax: "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4635,7 +4645,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -4657,12 +4669,16 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
-							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
-							Rule:        `Host("foo.com") && PathPrefix("/")`,
-							Priority:    22,
-							RuleSyntax:  "default",
+							Rule:        `Host("*")`,
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:       `Host("foo.com") && PathPrefix("/")`,
+							Priority:   22,
+							RuleSyntax: "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4707,7 +4723,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -4729,12 +4747,16 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
-							Service:     "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
-							Rule:        `Host("foo.com") && PathPrefix("/")`,
-							Priority:    22,
-							RuleSyntax:  "default",
+							Rule:        `Host("*")`,
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:       `Host("foo.com") && PathPrefix("/")`,
+							Priority:   22,
+							RuleSyntax: "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -4774,7 +4796,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -5851,7 +5875,9 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -7710,6 +7736,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
@@ -7798,6 +7825,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
@@ -7881,6 +7909,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
