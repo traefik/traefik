@@ -177,8 +177,38 @@ type KerberosRoundTripper struct {
 	OriginalRoundTripper http.RoundTripper
 }
 
-type stickyRoundTripper struct {
-	RoundTripper http.RoundTripper
+// stickyRoundTrippers is keyed by owner, as there is one KerberosRoundTripper per ServersTransport and a dedicated
+// round tripper carries the whole transport configuration (TLS client configuration, timeouts, connection pool) of
+// the ServersTransport that created it, hence cannot be shared with another one.
+// The map is lazily allocated, as most client connections never reach a Kerberos or NTLM backend.
+type stickyRoundTrippers struct {
+	mu            sync.Mutex
+	roundTrippers map[*KerberosRoundTripper]http.RoundTripper
+}
+
+func (s *stickyRoundTrippers) get(owner *KerberosRoundTripper) http.RoundTripper {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.roundTrippers[owner]
+}
+
+// stick keeps the round tripper already stored for the given owner, as concurrent requests on the same client
+// connection (HTTP/2 streams) can race on the same owner, and replacing an in-use round tripper would orphan the
+// backend connections it holds.
+func (s *stickyRoundTrippers) stick(owner *KerberosRoundTripper) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, ok := s.roundTrippers[owner]; ok {
+		return
+	}
+
+	if s.roundTrippers == nil {
+		s.roundTrippers = make(map[*KerberosRoundTripper]http.RoundTripper)
+	}
+
+	s.roundTrippers[owner] = owner.new()
 }
 
 type transportKeyType string
@@ -186,17 +216,17 @@ type transportKeyType string
 var transportKey transportKeyType = "transport"
 
 func AddTransportOnContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, transportKey, &stickyRoundTripper{})
+	return context.WithValue(ctx, transportKey, &stickyRoundTrippers{})
 }
 
 func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	value, ok := request.Context().Value(transportKey).(*stickyRoundTripper)
+	connRoundTrippers, ok := request.Context().Value(transportKey).(*stickyRoundTrippers)
 	if !ok {
 		return k.OriginalRoundTripper.RoundTrip(request)
 	}
 
-	if value.RoundTripper != nil {
-		return value.RoundTripper.RoundTrip(request)
+	if roundTripper := connRoundTrippers.get(k); roundTripper != nil {
+		return roundTripper.RoundTrip(request)
 	}
 
 	resp, err := k.OriginalRoundTripper.RoundTrip(request)
@@ -205,7 +235,7 @@ func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 	// We put a dedicated roundTripper in the ConnContext.
 	// This will stick the next calls to the same connection with the backend.
 	if err == nil && containsNTLMorNegotiate(resp.Header.Values("WWW-Authenticate")) {
-		value.RoundTripper = k.new()
+		connRoundTrippers.stick(k)
 	}
 	return resp, err
 }
