@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-09T12:00:32+02:00"
+date: "2026-09-09T15:55:02+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -8,7 +8,7 @@ implementation:
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.8
+  version: v3.7
 kind: ConformanceReport
 mode: default
 profiles:
@@ -18,35 +18,50 @@ profiles:
       Failed: 0
       Passed: 15
       Skipped: 0
-  name: GATEWAY-GRPC
-  summary: Core tests succeeded.
-- core:
-    result: partial
-    skippedTests:
-    - HTTPRouteMultipleGateways
-    statistics:
-      Failed: 0
-      Passed: 36
-      Skipped: 1
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 30
+      Passed: 3
+      Skipped: 0
+    supportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayInfrastructurePropagation
+    - GatewayPort8080
+    - GatewayStaticAddresses
+    unsupportedFeatures:
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - ListenerSet
+  name: GATEWAY-GRPC
+  summary: Core tests succeeded. Extended tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 37
+      Skipped: 0
+  extended:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 29
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
-    - BackendTLSPolicySANValidation
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayAddressEmpty
+    - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
     - HTTPRoute308RedirectStatusCode
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteBackendRequestHeaderModification
-    - HTTPRouteCORS
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
@@ -59,13 +74,14 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
-    - GatewayAddressEmpty
+    - BackendTLSPolicySANValidation
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
-    - GatewayInfrastructurePropagation
-    - GatewayStaticAddresses
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - HTTPRouteBackendTimeout
+    - HTTPRouteCORS
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
@@ -75,15 +91,7 @@ profiles:
     - HTTPRouteRetryConnectionError
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
-- core:
-    result: success
-    statistics:
-      Failed: 0
-      Passed: 19
-      Skipped: 0
-  name: GATEWAY-TCP
-  summary: Core tests succeeded.
+  summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:
@@ -94,36 +102,31 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 4
+      Passed: 7
       Skipped: 0
     supportedFeatures:
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayAddressEmpty
+    - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
-    - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
-    - GatewayInfrastructurePropagation
-    - GatewayStaticAddresses
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:
 - GRPCRouteNamedRule
+- GatewayInfrastructure
+- GatewayOptionalAddressValue
 - HTTPRoute303Redirect
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
 - HTTPRouteNamedRule
-- TCPRouteInvalidBackendRefNonexistent
-- TCPRouteInvalidCrossNamespaceBackendRef
-- TCPRouteInvalidNonTCPListener
-- TCPRouteParentRefAttachAll
-- TCPRouteParentRefPortAndSectionName
-- TCPRouteReferenceGrant
-- TCPRouteWeightedRouting
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace

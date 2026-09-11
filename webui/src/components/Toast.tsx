@@ -1,6 +1,6 @@
 import { Box, Button, Flex, styled, Text } from '@traefik-labs/faency'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useMemo } from 'react'
 import { FiX } from 'react-icons/fi'
 
 import { colorByStatus, iconByStatus } from 'components/resources/Status'
@@ -38,6 +38,25 @@ const toastVariants = {
   },
 }
 
+const propsBySeverity = {
+  info: {
+    color: colorByStatus.info,
+    icon: iconByStatus.info,
+  },
+  success: {
+    color: colorByStatus.success,
+    icon: iconByStatus.success,
+  },
+  warning: {
+    color: colorByStatus.warning,
+    icon: iconByStatus.warning,
+  },
+  error: {
+    color: colorByStatus.error,
+    icon: iconByStatus.error,
+  },
+}
+
 export type ToastState = {
   severity: Resource.Status
   message?: string
@@ -58,37 +77,20 @@ export const Toast = ({ message, dismiss, severity = 'error', icon, isVisible = 
     }
   }, [timeout, dismiss])
 
-  const propsBySeverity = {
-    info: {
-      color: colorByStatus.info,
-      icon: iconByStatus.info,
-    },
-    success: {
-      color: colorByStatus.success,
-      icon: iconByStatus.success,
-    },
-    warning: {
-      color: colorByStatus.warning,
-      icon: iconByStatus.warning,
-    },
-    error: {
-      color: colorByStatus.error,
-      icon: iconByStatus.error,
-    },
-  }
+  const severityProps = useMemo(() => propsBySeverity[severity] ?? propsBySeverity.info, [severity])
 
   return (
     <AnimatePresence>
       {isVisible && (
         <AnimatedToastContainer
-          css={{ backgroundColor: propsBySeverity[severity].color }}
+          css={{ backgroundColor: severityProps.color }}
           gap={2}
           initial="create"
           animate="visible"
           exit="hidden"
           variants={toastVariants}
         >
-          <Box css={{ width: '$4', height: '$4', color: 'white' }}>{icon ? icon : propsBySeverity[severity].icon}</Box>
+          <Box css={{ width: '$4', height: '$4', color: 'white' }}>{icon ? icon : severityProps.icon}</Box>
           <Text css={{ color: 'white', fontWeight: 600, lineHeight: '$4' }}>{message}</Text>
           {!timeout && (
             <CloseButton ghost onClick={dismiss} css={{ px: '$2' }}>

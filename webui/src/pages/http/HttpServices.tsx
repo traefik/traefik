@@ -1,7 +1,7 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex, Text } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 
 import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
 import { ProviderIconWithTooltip } from 'components/icons/providers'
