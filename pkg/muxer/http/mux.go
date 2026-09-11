@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 	"github.com/traefik/traefik/v3/pkg/rules"
 )
 
@@ -71,9 +72,20 @@ func (m *Muxer) SetDefaultHandler(handler http.Handler) {
 }
 
 // GetRulePriority computes the priority for a given rule.
-// The priority is calculated using the length of rule.
+// The priority is calculated using the length of rule, the stars of a double wildcard host not counting.
 func GetRulePriority(rule string) int {
-	return len(rule)
+	priority := len(rule)
+
+	domains, err := ParseDomains(rule)
+	if err != nil {
+		return priority
+	}
+
+	for _, domain := range domains {
+		priority -= muxer.DoubleWildcardPenalty(domain)
+	}
+
+	return priority
 }
 
 // AddRoute add a new route to the router.

@@ -129,13 +129,10 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gatewayName, gatewayNamesp
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax:  "default",
-				Rule:        rule,
-				Priority:    priority + len(route.Spec.Rules) - ri,
-				EntryPoints: []string{listener.EPName},
-			}
-			if listener.Protocol == gatev1.HTTPSProtocolType {
-				router.TLS = &dynamic.RouterTLSConfig{}
+				RuleSyntax: "default",
+				Rule:       rule,
+				Priority:   priority + len(route.Spec.Rules) - ri,
+				ParentRefs: listener.RouterNames,
 			}
 
 			var err error
@@ -735,14 +732,7 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 			priority = len(host)
 		}
 
-		wildcard := strings.Count(host, "*")
-		if wildcard == 0 {
-			rules = append(rules, fmt.Sprintf("Host(%q)", host))
-			continue
-		}
-
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
-		rules = append(rules, fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host)))
+		rules = append(rules, fmt.Sprintf("Host(%q)", hostnameMatcherValue(host)))
 	}
 
 	switch len(rules) {
