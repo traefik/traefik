@@ -5,7 +5,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 # Install Configuration Options
 ## Configuration Options
 
-| Field | Description | Default | 
+| Field | Description | Default |
 |:-------|:------------|:-------|
 | <a id="opt-accesslog" href="#opt-accesslog" title="#opt-accesslog">accesslog</a> | Access log settings. | false |
 | <a id="opt-accesslog-addinternals" href="#opt-accesslog-addinternals" title="#opt-accesslog-addinternals">accesslog.addinternals</a> | Enables access log for internal services (ping, dashboard, etc...). | false |
@@ -73,7 +73,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-certificatesresolvers-name-acme-httpchallenge" href="#opt-certificatesresolvers-name-acme-httpchallenge" title="#opt-certificatesresolvers-name-acme-httpchallenge">certificatesresolvers._name_.acme.httpchallenge</a> | Activate HTTP-01 Challenge. | false |
 | <a id="opt-certificatesresolvers-name-acme-httpchallenge-delay" href="#opt-certificatesresolvers-name-acme-httpchallenge-delay" title="#opt-certificatesresolvers-name-acme-httpchallenge-delay">certificatesresolvers._name_.acme.httpchallenge.delay</a> | Delay between the creation of the challenge and the validation. | 0 |
 | <a id="opt-certificatesresolvers-name-acme-httpchallenge-entrypoint" href="#opt-certificatesresolvers-name-acme-httpchallenge-entrypoint" title="#opt-certificatesresolvers-name-acme-httpchallenge-entrypoint">certificatesresolvers._name_.acme.httpchallenge.entrypoint</a> | HTTP challenge EntryPoint | |
-| <a id="opt-certificatesresolvers-name-acme-keytype" href="#opt-certificatesresolvers-name-acme-keytype" title="#opt-certificatesresolvers-name-acme-keytype">certificatesresolvers._name_.acme.keytype</a> | KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. | RSA4096 |
+| <a id="opt-certificatesresolvers-name-acme-keytype" href="#opt-certificatesresolvers-name-acme-keytype" title="#opt-certificatesresolvers-name-acme-keytype">certificatesresolvers._name_.acme.keytype</a> | KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. | EC256 |
 | <a id="opt-certificatesresolvers-name-acme-preferredchain" href="#opt-certificatesresolvers-name-acme-preferredchain" title="#opt-certificatesresolvers-name-acme-preferredchain">certificatesresolvers._name_.acme.preferredchain</a> | Preferred chain to use. | |
 | <a id="opt-certificatesresolvers-name-acme-profile" href="#opt-certificatesresolvers-name-acme-profile" title="#opt-certificatesresolvers-name-acme-profile">certificatesresolvers._name_.acme.profile</a> | Certificate profile to use. | |
 | <a id="opt-certificatesresolvers-name-acme-storage" href="#opt-certificatesresolvers-name-acme-storage" title="#opt-certificatesresolvers-name-acme-storage">certificatesresolvers._name_.acme.storage</a> | Storage to use. | acme.json |

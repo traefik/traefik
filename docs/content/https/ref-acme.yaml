@@ -59,11 +59,11 @@ certificatesResolvers:
       # KeyType to use.
       #
       # Optional
-      # Default: "RSA4096"
+      # Default: "EC256"
       #
       # Available values : "EC256", "EC384", "RSA2048", "RSA4096", "RSA8192"
       #
-      # keyType: RSA4096
+      # keyType: EC256
 
       # Use a TLS-ALPN-01 ACME challenge.
       #
