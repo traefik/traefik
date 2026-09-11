@@ -10,6 +10,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_mergeConfiguration(t *testing.T) {
@@ -272,6 +273,27 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 				"foo@provider-2": {
 					MinVersion: "VersionTLS12",
+				},
+			},
+		},
+		{
+			desc: "Preserve an invalid default TLS option",
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"default": {
+								MinVersion: "VersionTLS13",
+								ECHKeys:    []types.FileOrContent{""},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]tls.Options{
+				"default": {
+					MinVersion: "VersionTLS13",
+					ECHKeys:    []types.FileOrContent{""},
 				},
 			},
 		},
