@@ -1387,6 +1387,11 @@ func TestLoadIngresses(t *testing.T) {
 								Realm: "Authentication Required",
 							},
 						},
+						"default-ingress-with-basicauth-whoami-80-remove-authorization-header": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Authorization": ""},
+							},
+						},
 						"default-ingress-with-basicauth-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -1411,6 +1416,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-basicauth-whoami-80": {
+							Middlewares: []string{"default-ingress-with-basicauth-whoami-80-remove-authorization-header"},
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -1440,6 +1446,292 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-basicauth": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Basic Auth with Forward Auth",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-basicauth-forwardauth.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/basicauth")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-basicauth-forwardauth-rule-0-path-0-basic-auth", "default-ingress-with-basicauth-forwardauth-rule-0-path-0-snippet", "default-ingress-with-basicauth-forwardauth-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-basicauth-forwardauth-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-basicauth-forwardauth",
+									},
+								},
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/basicauth")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls-basic-auth", "default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls-snippet", "default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-basicauth-forwardauth-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-basicauth-forwardauth",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-basic-auth": {
+							BasicAuth: &dynamic.BasicAuth{
+								Users: dynamic.Users{
+									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+								},
+								Realm: "Authentication Required",
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls-basic-auth": {
+							BasicAuth: &dynamic.BasicAuth{
+								Users: dynamic.Users{
+									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+								},
+								Realm: "Authentication Required",
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-snippet": {
+							Snippet: &dynamic.Snippet{
+								Auth: &dynamic.Auth{
+									Address: "http://whoami.default.svc/",
+								},
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls-snippet": {
+							Snippet: &dynamic.Snippet{
+								Auth: &dynamic.Auth{
+									Address: "http://whoami.default.svc/",
+								},
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-whoami-80-remove-authorization-header": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Authorization": ""},
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-basicauth-forwardauth-whoami-80": {
+							Middlewares: []string{"default-ingress-with-basicauth-forwardauth-whoami-80-remove-authorization-header"},
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-basicauth-forwardauth",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-basicauth-forwardauth": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Digest Auth",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-digestauth.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-digestauth-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/digestauth")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-digestauth-rule-0-path-0-digest-auth", "default-ingress-with-digestauth-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-digestauth-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-digestauth",
+									},
+								},
+							},
+						},
+						"default-ingress-with-digestauth-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/digestauth")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-digestauth-rule-0-path-0-tls-digest-auth", "default-ingress-with-digestauth-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-digestauth-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-digestauth",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-digestauth-rule-0-path-0-digest-auth": {
+							DigestAuth: &dynamic.DigestAuth{
+								Users: dynamic.Users{
+									"user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
+								},
+								Realm: "Authentication Required",
+							},
+						},
+						"default-ingress-with-digestauth-rule-0-path-0-tls-digest-auth": {
+							DigestAuth: &dynamic.DigestAuth{
+								Users: dynamic.Users{
+									"user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
+								},
+								Realm: "Authentication Required",
+							},
+						},
+						"default-ingress-with-digestauth-whoami-80-remove-authorization-header": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Authorization": ""},
+							},
+						},
+						"default-ingress-with-digestauth-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-digestauth-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-digestauth-whoami-80": {
+							Middlewares: []string{"default-ingress-with-digestauth-whoami-80-remove-authorization-header"},
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-digestauth",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-digestauth": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -7235,6 +7527,16 @@ func TestLoadIngresses(t *testing.T) {
 								Realm: "Authentication Required",
 							},
 						},
+						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-remove-authorization-header": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Authorization": ""},
+							},
+						},
+						"default-ingress-with-default-backend-per-host-basic-auth-whoami-80-remove-authorization-header": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Authorization": ""},
+							},
+						},
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -7271,6 +7573,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend": {
+							Middlewares: []string{"default-ingress-with-default-backend-per-host-basic-auth-default-backend-remove-authorization-header"},
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{URL: "http://10.10.0.1:80"},
@@ -7294,6 +7597,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-whoami-80": {
+							Middlewares: []string{"default-ingress-with-default-backend-per-host-basic-auth-whoami-80-remove-authorization-header"},
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{URL: "http://10.10.0.1:80"},
