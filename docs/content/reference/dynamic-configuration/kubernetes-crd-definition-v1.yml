@@ -138,6 +138,19 @@ spec:
                         More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#priority
                       maximum: 9223372036854775000
                       type: integer
+                    respondingTimeouts:
+                      description: RespondingTimeouts defines the timeouts for responding
+                        to client requests.
+                      properties:
+                        roundTrip:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: |-
+                            RoundTrip defines the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
+                            If zero, no timeout applies.
+                          x-kubernetes-int-or-string: true
+                      type: object
                     services:
                       description: |-
                         Services defines the list of Service.

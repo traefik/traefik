@@ -1,0 +1,46 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[accessLog]
+  format = "json"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router-ws]
+    service = "service-ws"
+    rule = "Path(`/ws`)"
+    [http.routers.router-ws.respondingTimeouts]
+      roundTrip = "1s"
+
+  [http.routers.router-ws-hang]
+    service = "service-ws-hang"
+    rule = "Path(`/ws-hang`)"
+    [http.routers.router-ws-hang.respondingTimeouts]
+      roundTrip = "1s"
+
+[http.services]
+  [http.services.service-ws]
+    [http.services.service-ws.loadBalancer]
+      [[http.services.service-ws.loadBalancer.servers]]
+        url = "{{ .WebsocketServer }}"
+
+  [http.services.service-ws-hang]
+    [http.services.service-ws-hang.loadBalancer]
+      [[http.services.service-ws-hang.loadBalancer.servers]]
+        url = "{{ .HangServer }}"

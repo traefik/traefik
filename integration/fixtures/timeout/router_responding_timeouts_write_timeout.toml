@@ -1,0 +1,42 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+    [entryPoints.web.transport.respondingTimeouts]
+      writeTimeout = "1s"
+
+[accessLog]
+  format = "json"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "Path(`/roundTrip`)"
+    [http.routers.router1.respondingTimeouts]
+      roundTrip = "3s"
+
+  # No roundTrip: the entrypoint writeTimeout is the only bound on the response.
+  [http.routers.router2]
+    service = "service1"
+    rule = "Path(`/noRoundTrip`)"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.TimeoutEndpoint}}:9000"

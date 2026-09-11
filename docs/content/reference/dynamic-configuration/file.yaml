@@ -30,6 +30,8 @@ http:
         metrics: true
         tracing: true
         traceVerbosity: foobar
+      respondingTimeouts:
+        roundTrip: 42s
     Router1:
       entryPoints:
         - foobar
@@ -58,6 +60,8 @@ http:
         metrics: true
         tracing: true
         traceVerbosity: foobar
+      respondingTimeouts:
+        roundTrip: 42s
   services:
     Service01:
       failover:
