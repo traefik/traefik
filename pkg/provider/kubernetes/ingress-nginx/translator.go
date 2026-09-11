@@ -623,20 +623,21 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 }
 
 // applyAppRootRedirect registers the extra router matching "/" for the app-root
-// middleware. The middleware itself is registered by applyMiddlewares, and its
-// service is never reached because the redirect short-circuits the chain.
+// middleware. The middleware itself is registered by applyMiddlewares.
 func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, obs *dynamic.RouterObservabilityConfig, conf *dynamic.Configuration) {
 	if loc.AppRoot == nil || loc.AppRootExtraRouterRule == "" {
 		return
 	}
 
+	// The redirect router does not carry the location middlewares (auth included),
+	// so it must never reach the backend.
 	conf.HTTP.Routers[routerKey+"-app-root-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          loc.AppRootExtraRouterRule,
 		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{routerKey + "-app-root"},
-		Service:       rt.Service,
+		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
 	}

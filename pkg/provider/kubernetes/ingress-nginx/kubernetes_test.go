@@ -5094,7 +5094,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("app-root.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-app-root-whoami-80",
+							Service:     "unavailable-service",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -5129,7 +5129,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("app-root.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-app-root-whoami-80",
+							Service:     "unavailable-service",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -5246,7 +5246,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `(Host("app-root.localhost") || Host("alias1.localhost")) && Path("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-app-root-alias-whoami-80",
+							Service:     "unavailable-service",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
@@ -5281,7 +5281,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `(Host("app-root.localhost") || Host("alias1.localhost")) && Path("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-app-root-alias-whoami-80",
+							Service:     "unavailable-service",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesIngressMetadata{
