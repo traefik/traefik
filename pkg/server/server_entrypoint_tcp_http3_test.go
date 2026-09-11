@@ -514,3 +514,112 @@ func (c *clientSessionCache) Put(sessionKey string, cs *tls.ClientSessionState) 
 	c.cache.Put(sessionKey, cs)
 	c.puts <- sessionKey
 }
+
+func TestHTTP3ShutdownHonoursGraceTimeOut(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.LifeCycle.RequestAcceptGraceTimeout = 0
+	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(5 * time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:8092",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	// The handler is still writing its response when the shutdown starts.
+	handlerStarted := make(chan struct{})
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		close(handlerStarted)
+		time.Sleep(800 * time.Millisecond)
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write([]byte("finished"))
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	transport := &http3.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:    certPool,
+			ServerName: "example.com",
+		},
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return quic.DialAddr(ctx, "127.0.0.1:8092", tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = transport.Close() })
+
+	type result struct {
+		body string
+		err  error
+	}
+	results := make(chan result, 1)
+
+	go func() {
+		req, reqErr := http.NewRequest(http.MethodGet, "https://example.com:8092/", http.NoBody)
+		if reqErr != nil {
+			results <- result{err: reqErr}
+			return
+		}
+
+		resp, rtErr := transport.RoundTrip(req)
+		if rtErr != nil {
+			results <- result{err: rtErr}
+			return
+		}
+		defer resp.Body.Close()
+
+		body, readErr := io.ReadAll(resp.Body)
+		results <- result{body: string(body), err: readErr}
+	}()
+
+	// Only shut down once the request is actually in flight, otherwise the
+	// server has nothing to wait for and Close would look identical to Shutdown.
+	select {
+	case <-handlerStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the HTTP/3 request never reached the handler")
+	}
+
+	start := time.Now()
+	entryPoint.Shutdown(ctx)
+	t.Logf("entrypoint shutdown returned after %s", time.Since(start))
+
+	// Deliberately not asserted on elapsed time: quic-go's Close also waits for
+	// connections to finish closing, so both paths take roughly as long. What
+	// separates them is whether the in-flight request completes or is torn down
+	// — with Close the RoundTrip below fails with H3_NO_ERROR mid-response.
+	select {
+	case res := <-results:
+		require.NoError(t, res.err)
+		assert.Equal(t, "finished", res.body)
+	case <-time.After(5 * time.Second):
+		t.Fatal("the HTTP/3 response never completed")
+	}
+}
