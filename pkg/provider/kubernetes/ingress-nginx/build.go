@@ -520,9 +520,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				if backend, ok := mc.Backends[backendName]; ok {
 					endpointCount = len(backend.Endpoints)
 				}
-				needsAppRootRouter := !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host]
-				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount, needsAppRootRouter)
-				if loc.AppRootExtraRouterRule != "" {
+				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+
+				// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
+				// even when the Ingress declares no "/" path. In Traefik a request has to match
+				// a router before any middleware runs, hence the extra router.
+				if loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
+					loc.AppRootExtraRouterRule = buildAppRootRouterRule(rule.Host, loc.Aliases)
 					hostsWithAppRootRouter[rule.Host] = true
 				}
 
@@ -580,7 +584,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					mc.Backends[defaultBackendName] = bk
 					mc.DefaultBackend = bk
 
-					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints), false)
+					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
 					mc.DefaultBackendLocation = loc
 					markProcessedIngress(ing.Ingress)
 				}
@@ -637,9 +641,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				if backend, ok := mc.Backends[ingDefaultBackendName]; ok {
 					endpointCount = len(backend.Endpoints)
 				}
-				// The ingress default backend is a host-only catch-all, so it already
-				// matches "/" and needs no extra app-root router.
-				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount, false)
+				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)

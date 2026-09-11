@@ -643,6 +643,15 @@ func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, o
 	}
 }
 
+// buildAppRootRouterRule builds the rule of the extra "/" router carrying the app-root middleware.
+// A host-less rule lands on the ingress-nginx catch-all server, which redirects "/" too.
+func buildAppRootRouterRule(host string, aliases []string) string {
+	if host == "" {
+		return `Path("/")`
+	}
+	return fmt.Sprintf("%s && Path(%q)", buildHostRule(host, aliases), "/")
+}
+
 // buildHostRule builds the host part of a router rule, covering the hostname and
 // all the server-alias hostnames resolved for the location.
 func buildHostRule(host string, aliases []string) string {
