@@ -42,11 +42,18 @@ func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// If the configuration changes afterward (e.g. a router for this SNI is added
 		// or its TLS options change), that per-connection value goes stale: it keeps
 		// disagreeing with the router's freshly-resolved options on every subsequent
-		// request, so every request on this connection would 421 forever. Asking the
-		// client to close the connection forces it to re-handshake on its next
-		// request, which re-resolves the TLS options name against the current
-		// configuration and self-heals.
+		// request, so every request on this connection would 421 forever. Closing the
+		// connection forces the client to re-handshake on its next request, which
+		// re-resolves the TLS options name against the current configuration and
+		// self-heals.
+		//
+		// The "Connection: close" response header is enough to achieve this on
+		// HTTP/1.1 (plain TCP close) and HTTP/2 (translated by the Go server into a
+		// GOAWAY). It has no effect on HTTP/3: the header is forbidden by the H3 spec
+		// and silently dropped by quic-go, so the underlying QUIC connection must be
+		// closed directly instead.
 		rw.Header().Set("Connection", "close")
+		tcp.CloseConn(req.Context())
 		http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
 		return
 	}
