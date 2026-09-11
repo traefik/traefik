@@ -57,10 +57,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.RewriteTarget, n
 			return nil, fmt.Errorf("compiling regular expression %s: %w", config.Regex, err)
 		}
 
-		// When rewrite-target is a full URL and there's no capture group,
-		// append .* to match the entire path and avoid leaking unmatched suffix.
+		// When rewrite-target is a full URL, append .* to consume the entire path
+		// and avoid leaking an unmatched suffix into the redirect URL.
+		// Capture groups are greedy, so they still capture their content before the trailing .*.
 		// See https://github.com/traefik/traefik/issues/12931
-		if re.NumSubexp() == 0 && absoluteURLRedirect {
+		if absoluteURLRedirect {
 			re, err = regexp.Compile("(?i)" + strings.TrimSpace(config.Regex) + ".*")
 			if err != nil {
 				return nil, fmt.Errorf("compiling regular expression for absolute URL %s: %w", config.Regex, err)
