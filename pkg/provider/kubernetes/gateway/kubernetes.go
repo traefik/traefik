@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"maps"
 	"os"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -805,17 +804,10 @@ func hostnameCovers(listenerHostname, hostname string) bool {
 	return findMatchingHostname(gatev1.Hostname(listenerHostname), gatev1.Hostname(hostname)) != ""
 }
 
-// buildListenerRule excludes the more specific entry point hostnames with HostRegexp, as
-// httpmuxer.ParseDomains only extracts the Host matchers to bind the router TLS options to an SNI:
-// a Host matcher would make the router own the SNI of the hostnames it excludes.
 func buildListenerRule(hostname string, entryPointHostnames []string) string {
 	rule := `Host("*")`
-	switch {
-	case hostname == "":
-	case strings.Contains(hostname, "*"):
-		rule = fmt.Sprintf("Host(%q) || HostRegexp(%q)", hostname, hostnameRegexp(hostname))
-	default:
-		rule = fmt.Sprintf("Host(%q)", hostname)
+	if hostname != "" {
+		rule = fmt.Sprintf("Host(%q)", hostnameMatcherValue(hostname))
 	}
 
 	var exclusions []string
@@ -824,7 +816,7 @@ func buildListenerRule(hostname string, entryPointHostnames []string) string {
 			continue
 		}
 
-		exclusions = append(exclusions, fmt.Sprintf("HostRegexp(%q)", hostnameRegexp(entryPointHostname)))
+		exclusions = append(exclusions, fmt.Sprintf("Host(%q)", hostnameMatcherValue(entryPointHostname)))
 	}
 
 	if len(exclusions) == 0 {
@@ -834,8 +826,14 @@ func buildListenerRule(hostname string, entryPointHostnames []string) string {
 	return fmt.Sprintf("(%s) && !(%s)", rule, strings.Join(exclusions, " || "))
 }
 
-func hostnameRegexp(hostname string) string {
-	return fmt.Sprintf("^%s$", strings.Replace(regexp.QuoteMeta(hostname), `\*\.`, `[a-z0-9-\.]+\.`, 1))
+// hostnameMatcherValue returns the Host matcher value for a Gateway API hostname,
+// whose wildcard spans one or more labels, unlike the Traefik single one.
+func hostnameMatcherValue(hostname string) string {
+	if suffix, ok := strings.CutPrefix(hostname, "*."); ok {
+		return "**." + suffix
+	}
+
+	return hostname
 }
 
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {

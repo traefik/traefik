@@ -732,14 +732,7 @@ func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
 			priority = len(host)
 		}
 
-		wildcard := strings.Count(host, "*")
-		if wildcard == 0 {
-			rules = append(rules, fmt.Sprintf("Host(%q)", host))
-			continue
-		}
-
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-z0-9-\.]+\.`, 1)
-		rules = append(rules, fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host)))
+		rules = append(rules, fmt.Sprintf("Host(%q)", hostnameMatcherValue(host)))
 	}
 
 	switch len(rules) {
