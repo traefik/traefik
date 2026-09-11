@@ -1,0 +1,29 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-app-root-root-path
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/app-root: /foo
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app-root.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+          - path: /bar
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

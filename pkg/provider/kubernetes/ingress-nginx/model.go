@@ -178,6 +178,9 @@ type location struct {
 	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
 	AppRoot *dynamic.AppRoot
 
+	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
+	AppRootExtraRouterRule string
+
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
 
