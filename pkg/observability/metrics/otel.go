@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -351,12 +352,118 @@ type gaugeValue struct {
 type gaugeCollector struct {
 	mu     sync.Mutex
 	values map[string]map[string]gaugeValue
+
+	// dynConfig holds the current dynamic configuration. Together with the
+	// deleted* fields below, it is used to detect gauge values that no
+	// longer belong to any entryPoint, router, service, or server, the same
+	// way promState does for Prometheus. Without this, gauge values for
+	// dynamically created and removed entryPoints/routers/services/servers
+	// would accumulate forever, leading to unbounded memory growth.
+	dynConfig       *dynamicConfig
+	deletedEP       []string
+	deletedRouters  []string
+	deletedServices []string
+	deletedURLs     map[string][]string
+
+	// pendingCallbacks counts how many of the registered gauges' collect
+	// callbacks still have to run before every value marked for deletion
+	// below has had a chance to be observed once more. It resets to
+	// len(values) on every setDynamicConfig call, and reaching zero means
+	// it is safe to clear the deleted* fields, the same way promState clears
+	// them at the end of its single, shared Collect call.
+	pendingCallbacks int
 }
 
 func newOpenTelemetryGaugeCollector() *gaugeCollector {
 	return &gaugeCollector{
-		values: make(map[string]map[string]gaugeValue),
+		values:      make(map[string]map[string]gaugeValue),
+		dynConfig:   newDynamicConfig(),
+		deletedURLs: make(map[string][]string),
 	}
+}
+
+// setDynamicConfig updates the dynamic configuration used to detect stale
+// gauge values, recording which entryPoints/routers/services/server URLs
+// were removed since the previous call, mirroring promState.SetDynamicConfig.
+func (c *gaugeCollector) setDynamicConfig(dynConfig *dynamicConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for ep := range c.dynConfig.entryPoints {
+		if !dynConfig.hasEntryPoint(ep) {
+			c.deletedEP = append(c.deletedEP, ep)
+		}
+	}
+
+	for router := range c.dynConfig.routers {
+		if !dynConfig.hasRouter(router) {
+			c.deletedRouters = append(c.deletedRouters, router)
+		}
+	}
+
+	for service, urls := range c.dynConfig.services {
+		if !dynConfig.hasService(service) {
+			c.deletedServices = append(c.deletedServices, service)
+		}
+
+		for url := range urls {
+			if !dynConfig.hasServerURL(service, url) {
+				c.deletedURLs[service] = append(c.deletedURLs[service], url)
+			}
+		}
+	}
+
+	c.dynConfig = dynConfig
+	c.pendingCallbacks = len(c.values)
+}
+
+// isStale reports whether the given attributes reference an entryPoint,
+// router, service, or server URL that was removed from the dynamic
+// configuration. Unlike a plain absence-from-config check, this only
+// flags values that were previously known and have since been removed, so
+// a value that has simply not been declared yet (for instance because it
+// is observed before the first setDynamicConfig call) is never mistaken
+// for stale. The caller must hold c.mu.
+func (c *gaugeCollector) isStale(attributes otelLabelNamesValues) bool {
+	if ep, ok := attributes.value("entrypoint"); ok && slices.Contains(c.deletedEP, ep) && !c.dynConfig.hasEntryPoint(ep) {
+		return true
+	}
+
+	if router, ok := attributes.value("router"); ok && slices.Contains(c.deletedRouters, router) && !c.dynConfig.hasRouter(router) {
+		return true
+	}
+
+	service, hasService := attributes.value("service")
+	if hasService && slices.Contains(c.deletedServices, service) && !c.dynConfig.hasService(service) {
+		return true
+	}
+
+	if url, ok := attributes.value("url"); ok && hasService && slices.Contains(c.deletedURLs[service], url) && !c.dynConfig.hasServerURL(service, url) {
+		return true
+	}
+
+	return false
+}
+
+// endCallback must be called once by every gauge's collect callback after
+// it is done observing its values. Once every gauge registered on this
+// collector has called it since the last setDynamicConfig call, the
+// deleted* fields are cleared, as they have then all had a chance to prune
+// their stale values. The caller must hold c.mu.
+func (c *gaugeCollector) endCallback() {
+	if c.pendingCallbacks == 0 {
+		return
+	}
+
+	c.pendingCallbacks--
+	if c.pendingCallbacks > 0 {
+		return
+	}
+
+	c.deletedEP = nil
+	c.deletedRouters = nil
+	c.deletedServices = nil
+	c.deletedURLs = make(map[string][]string)
 }
 
 func (c *gaugeCollector) add(name string, delta float64, attributes otelLabelNamesValues) {
@@ -421,9 +528,19 @@ func newOTLPGaugeFrom(meter metric.Meter, name, desc string, unit string) *otelG
 			return nil
 		}
 
-		for _, value := range values {
+		for key, value := range values {
 			observer.ObserveFloat64(c, value.value, metric.WithAttributes(value.attributes.ToLabels()...))
+
+			// Remove stale values once they have been observed a last time,
+			// so that gauges for entryPoints/routers/services/servers that
+			// no longer exist in the dynamic configuration don't accumulate
+			// forever and leak memory.
+			if openTelemetryGaugeCollector.isStale(value.attributes) {
+				delete(values, key)
+			}
 		}
+
+		openTelemetryGaugeCollector.endCallback()
 
 		return nil
 	}, c)
@@ -500,6 +617,17 @@ func (lvs otelLabelNamesValues) With(labelValues ...string) otelLabelNamesValues
 		labelValues = append(labelValues, "unknown")
 	}
 	return append(lvs, labelValues...)
+}
+
+// value returns the value associated with the given label name, and whether
+// it was found.
+func (lvs otelLabelNamesValues) value(name string) (string, bool) {
+	for i := 0; i+1 < len(lvs); i += 2 {
+		if lvs[i] == name {
+			return lvs[i+1], true
+		}
+	}
+	return "", false
 }
 
 // ToLabels is a convenience method to convert a otelLabelNamesValues
