@@ -1056,13 +1056,12 @@ func (p *Provider) sanitizeDomains(ctx context.Context, domain types.Domain) ([]
 	var cleanDomains []string
 	for _, dom := range domains {
 		if strings.HasPrefix(dom, "*.*") {
-			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domains %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
 		}
 
 		if strings.HasPrefix(dom, "**.") {
 			// ACME only issues single-level wildcard certificates.
-			log.Ctx(ctx).Debug().Msgf("Domain %q ignored: ACME does not allow the '**.' wildcard", dom)
-			continue
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domains %q : ACME does not allow '**.' wildcard domain", strings.Join(domains, ","))
 		}
 
 		canonicalDomain := types.CanonicalDomain(dom)

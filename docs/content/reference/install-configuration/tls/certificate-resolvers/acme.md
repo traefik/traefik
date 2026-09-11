@@ -241,7 +241,7 @@ Each domain & SAN will lead to a certificate request.
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a `DNS-01` challenge.
 It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
-For the same reason, the `**.local.com` domain of a ``Host(`**.local.com`)`` router is ignored, and gets no certificate.
+For the same reason, a `**.local.com` domain is refused, and a ``Host(`**.local.com`)`` router gets no certificate.
 
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are invoked.
 In such a case the generated DNS TXT record for both domains is the same.
