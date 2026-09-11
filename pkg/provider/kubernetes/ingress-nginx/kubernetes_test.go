@@ -5538,6 +5538,182 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "App Root - default backend declared",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-app-root-and-default-backend.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-app-root-and-default-backend-default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("app-root.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-and-default-backend-default-backend",
+							Middlewares: []string{"default-ingress-with-app-root-and-default-backend-default-backend-app-root", "default-ingress-with-app-root-and-default-backend-default-backend-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-app-root-and-default-backend",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("app-root.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-and-default-backend-default-backend",
+							Middlewares: []string{"default-ingress-with-app-root-and-default-backend-default-backend-tls-app-root", "default-ingress-with-app-root-and-default-backend-default-backend-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-app-root-and-default-backend",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("app-root.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-and-default-backend-whoami-80",
+							Middlewares: []string{"default-ingress-with-app-root-and-default-backend-rule-0-path-0-app-root", "default-ingress-with-app-root-and-default-backend-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-app-root-and-default-backend",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("app-root.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-and-default-backend-whoami-80",
+							Middlewares: []string{"default-ingress-with-app-root-and-default-backend-rule-0-path-0-tls-app-root", "default-ingress-with-app-root-and-default-backend-rule-0-path-0-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesIngressMetadata{
+										Namespace:   "default",
+										IngressName: "ingress-with-app-root-and-default-backend",
+										ServiceName: "whoami",
+										ServicePort: "80",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-app-root-and-default-backend-default-backend-app-root": {
+							AppRoot: &dynamic.AppRoot{Path: "/foo"},
+						},
+						"default-ingress-with-app-root-and-default-backend-default-backend-tls-app-root": {
+							AppRoot: &dynamic.AppRoot{Path: "/foo"},
+						},
+						"default-ingress-with-app-root-and-default-backend-rule-0-path-0-app-root": {
+							AppRoot: &dynamic.AppRoot{Path: "/foo"},
+						},
+						"default-ingress-with-app-root-and-default-backend-rule-0-path-0-tls-app-root": {
+							AppRoot: &dynamic.AppRoot{Path: "/foo"},
+						},
+						"default-ingress-with-app-root-and-default-backend-default-backend-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-default-backend-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-app-root-and-default-backend",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-app-root-and-default-backend-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-app-root-and-default-backend",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-app-root-and-default-backend": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "App Root - no prefix slash",
 			paths: []string{
 				"services.yml",
