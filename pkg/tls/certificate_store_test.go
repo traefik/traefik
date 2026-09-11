@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -109,6 +110,64 @@ func TestGetBestCertificate_SharedSAN(t *testing.T) {
 
 		clientHello := &tls.ClientHelloInfo{ServerName: "app.example.test"}
 		assert.Same(t, exactCert.Certificate, store.GetBestCertificate(clientHello))
+	}
+}
+
+func TestGetBestCertificateIPReverseAddress(t *testing.T) {
+	cert := &tls.Certificate{}
+
+	dynamicMap := map[string]*CertificateData{
+		"2001:db8::1": {Certificate: cert},
+	}
+
+	store := &CertificateStore{
+		DynamicCerts: safe.New(dynamicMap),
+		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
+	}
+
+	reverseAddr, err := dns.ReverseAddr("2001:db8::1")
+	require.NoError(t, err)
+
+	clientHello := &tls.ClientHelloInfo{ServerName: reverseAddr}
+	assert.Same(t, cert, store.GetBestCertificate(clientHello))
+}
+
+func TestMatchDomainIPReverseAddress(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		serverIP   string
+		certDomain string
+		expected   bool
+	}{
+		{
+			desc:       "IPv4 reverse address",
+			serverIP:   "192.0.2.1",
+			certDomain: "192.0.2.1",
+			expected:   true,
+		},
+		{
+			desc:       "IPv6 reverse address",
+			serverIP:   "2001:db8::1",
+			certDomain: "2001:db8::1",
+			expected:   true,
+		},
+		{
+			desc:       "different IPv6 reverse address",
+			serverIP:   "2001:db8::1",
+			certDomain: "2001:db8::2",
+			expected:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			reverseAddr, err := dns.ReverseAddr(test.serverIP)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, matchDomain(reverseAddr, test.certDomain))
+		})
 	}
 }
 
