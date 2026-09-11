@@ -8,7 +8,15 @@ import (
 	"time"
 )
 
+// sweepBudget caps how many expired entries a single Set reclaims, so that
+// working through a large backlog is amortized over many calls instead of
+// stalling one of them while the mutex is held.
+const sweepBudget = 16
+
 // Map is a thread-safe map with a bounded capacity and per-entry expiration.
+// Expired entries are reclaimed as the map is used: every Set removes a bounded
+// number of them, and Get removes the entry it looked up. Capacity stays a hard
+// upper bound for the case where the entries held are still live.
 type Map[V any] struct {
 	capacity int
 
@@ -44,7 +52,7 @@ func (m *Map[V]) Get(key string) (V, bool) {
 		return zero, false
 	}
 
-	if m.expired(it) {
+	if m.expired(it, m.clock().Unix()) {
 		m.remove(it)
 		return zero, false
 	}
@@ -53,7 +61,9 @@ func (m *Map[V]) Get(key string) (V, bool) {
 }
 
 // Set stores value for a key and resets its expiration to ttlSeconds from now.
-// When the map is full, inserting a new key evicts the entry closest to expiration.
+// It also reclaims a bounded number of entries that have already expired.
+// When the map is full of live entries, inserting a new key evicts the entry
+// closest to expiration.
 func (m *Map[V]) Set(key string, value V, ttlSeconds int) error {
 	if ttlSeconds <= 0 {
 		return fmt.Errorf("ttlSeconds must be greater than 0, got %d", ttlSeconds)
@@ -62,7 +72,15 @@ func (m *Map[V]) Set(key string, value V, ttlSeconds int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	expiry := m.clock().Add(time.Duration(ttlSeconds) * time.Second).Unix()
+	now := m.clock()
+
+	// Reclaim entries whose TTL has already elapsed. Without this, an entry is
+	// only ever removed when it is looked up again or when the map is full, so
+	// a map fed a stream of distinct keys grows to capacity and stays there
+	// long after everything it holds has expired.
+	m.sweepExpired(now.Unix())
+
+	expiry := now.Add(time.Duration(ttlSeconds) * time.Second).Unix()
 
 	if it, ok := m.items[key]; ok {
 		it.value = value
@@ -91,8 +109,21 @@ func (m *Map[V]) Len() int {
 	return len(m.items)
 }
 
-func (m *Map[V]) expired(it *item[V]) bool {
-	return it.expiry <= m.clock().Unix()
+func (m *Map[V]) expired(it *item[V], now int64) bool {
+	return it.expiry <= now
+}
+
+// sweepExpired removes up to sweepBudget entries that have already expired,
+// starting with the one closest to expiration. The caller must hold m.mu.
+func (m *Map[V]) sweepExpired(now int64) {
+	for range sweepBudget {
+		if len(m.expiries) == 0 || !m.expired(m.expiries[0], now) {
+			return
+		}
+
+		it := heap.Pop(&m.expiries).(*item[V])
+		delete(m.items, it.key)
+	}
 }
 
 // freeSpace evicts the entry closest to expiration to make room for a new one.
