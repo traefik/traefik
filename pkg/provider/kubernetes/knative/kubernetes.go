@@ -47,6 +47,7 @@ type Provider struct {
 	Token              string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
 	CertAuthFilePath   string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces         []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	NamespaceSelector  string          `description:"Kubernetes namespace label selector to watch for updates to Kubernetes objects." json:"namespaceSelector,omitempty" toml:"namespaceSelector,omitempty" yaml:"namespaceSelector,omitempty" export:"true"`
 	LabelSelector      string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	PublicEntrypoints  []string        `description:"Entrypoint names used to expose the Ingress publicly. If empty an Ingress is exposed on all entrypoints." json:"publicEntrypoints,omitempty" toml:"publicEntrypoints,omitempty" yaml:"publicEntrypoints,omitempty" export:"true"`
 	PublicService      ServiceRef      `description:"Kubernetes service used to expose the networking controller publicly." json:"publicService,omitempty" toml:"publicService,omitempty" yaml:"publicService,omitempty" export:"true"`
@@ -78,7 +79,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := p.client.WatchAll(p.Namespaces, ctxPool.Done())
+			var eventsChan <-chan any
+			namespaces, err := p.client.aggregateWatchedNamespaces(ctxLog, p.Namespaces, p.NamespaceSelector)
+			if err == nil { // we were able to load the namespaces to watch.
+				eventsChan, err = p.client.WatchAll(namespaces, ctxPool.Done())
+			}
 			if err != nil {
 				logger.Error().Msgf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -147,6 +152,14 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		return nil, fmt.Errorf("parsing label selector: %q", p.LabelSelector)
 	}
 	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
+
+	_, err = labels.Parse(p.NamespaceSelector)
+	if err != nil {
+		return nil, fmt.Errorf("parsing namespace label selector: %q", p.NamespaceSelector)
+	}
+	if p.NamespaceSelector != "" {
+		logger.Info().Msgf("Namespace label selector is: %q", p.NamespaceSelector)
+	}
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
