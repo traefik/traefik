@@ -1,6 +1,8 @@
 package fast
 
 import (
+	"bufio"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -11,6 +13,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -477,6 +480,187 @@ func TestTransferEncodingChunked(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "chunk 0\nchunk 1\nchunk 2\n", string(body))
+}
+
+// statusRecorder records the last status code written downstream,
+// which is what the access logs and the metrics report.
+type statusRecorder struct {
+	http.ResponseWriter
+
+	mu     sync.Mutex
+	status int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+	r.mu.Lock()
+	r.status = code
+	r.mu.Unlock()
+
+	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *statusRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (r *statusRecorder) Status() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return r.status
+}
+
+func TestDownstreamCancelAfterResponseStarted(t *testing.T) {
+	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("Content-Type", "text/event-stream")
+
+		flusher, ok := rw.(http.Flusher)
+		require.True(t, ok)
+
+		for {
+			if _, err := io.WriteString(rw, "data: ping\n\n"); err != nil {
+				return
+			}
+
+			flusher.Flush()
+
+			select {
+			case <-req.Context().Done():
+				return
+			case <-time.After(time.Millisecond):
+			}
+		}
+	}))
+	t.Cleanup(backendServer.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(backendServer.URL), true, true)
+	require.NoError(t, err)
+
+	var panicValue any
+	recorder := &statusRecorder{}
+	handlerDone := make(chan struct{})
+
+	// The downstream server negotiates HTTP/2, as a TLS entry point does:
+	// canceling the request resets the stream instead of closing the connection.
+	proxyServer := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		defer close(handlerDone)
+		defer func() { panicValue = recover() }()
+
+		recorder.ResponseWriter = rw
+		proxyHandler.ServeHTTP(recorder, req)
+	}))
+	proxyServer.EnableHTTP2 = true
+	proxyServer.StartTLS()
+	t.Cleanup(proxyServer.Close)
+
+	ctx, cancel := context.WithCancel(t.Context())
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, proxyServer.URL, http.NoBody)
+	require.NoError(t, err)
+
+	res, err := proxyServer.Client().Do(req)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	require.Equal(t, 2, res.ProtoMajor)
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	_, err = res.Body.Read(make([]byte, 12))
+	require.NoError(t, err)
+
+	cancel()
+
+	select {
+	case <-handlerDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the proxy did not return after the client canceled the request")
+	}
+
+	assert.Equal(t, http.ErrAbortHandler, panicValue)
+	assert.Equal(t, http.StatusOK, recorder.Status())
+}
+
+func TestUpstreamErrorAfterResponseStarted(t *testing.T) {
+	// A backend that commits a chunked 200, writes one chunk,
+	// then goes away without the terminating chunk.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = listener.Close() })
+
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+
+			go func() {
+				defer conn.Close()
+
+				reader := bufio.NewReader(conn)
+				for {
+					line, err := reader.ReadString('\n')
+					if err != nil || line == "\r\n" {
+						break
+					}
+				}
+
+				_, _ = io.WriteString(conn, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n")
+				_, _ = io.WriteString(conn, "5\r\nchunk\r\n")
+			}()
+		}
+	}()
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL("http://"+listener.Addr().String()), true, true)
+	require.NoError(t, err)
+
+	// The panic is left to propagate to the server, which is what aborts the
+	// response: recovering it here would hand the client a complete one.
+	proxyServer := httptest.NewServer(proxyHandler)
+	t.Cleanup(proxyServer.Close)
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, proxyServer.URL, http.NoBody)
+	require.NoError(t, err)
+
+	res, err := proxyServer.Client().Do(req)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	body, err := io.ReadAll(res.Body)
+
+	// The client must be able to tell a truncated payload from a complete one,
+	// and the bytes it did receive must be left untouched.
+	assert.Error(t, err)
+	assert.Equal(t, "chunk", string(body))
+}
+
+func TestUpstreamErrorBeforeResponseStarted(t *testing.T) {
+	// Nothing is listening on this address: the error happens while dialing,
+	// before anything has been written downstream.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	require.NoError(t, listener.Close())
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL("http://"+listener.Addr().String()), true, true)
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
+
+	assert.Equal(t, http.StatusBadGateway, recorder.Code)
 }
 
 func TestConnectRequest(t *testing.T) {
