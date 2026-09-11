@@ -104,9 +104,16 @@ func (p *Provider) buildAppRoot(loc *location, hostname string, needsAppRootRout
 	// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
 	// even when the Ingress declares no "/" path. In Traefik a request has to match
 	// a router before any middleware runs, hence the extra router.
-	if needsAppRootRouter && hostname != "" {
-		loc.AppRootExtraRouterRule = fmt.Sprintf("%s && Path(%q)", buildHostRule(hostname, loc.Aliases), "/")
+	if !needsAppRootRouter {
+		return
 	}
+
+	// A host-less rule lands on the ingress-nginx catch-all server, which redirects "/" too.
+	if hostname == "" {
+		loc.AppRootExtraRouterRule = `Path("/")`
+		return
+	}
+	loc.AppRootExtraRouterRule = fmt.Sprintf("%s && Path(%q)", buildHostRule(hostname, loc.Aliases), "/")
 }
 
 func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHosts map[string]bool) {
