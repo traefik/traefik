@@ -2576,7 +2576,8 @@ func generateTestFilename(desc string) string {
 }
 
 // TestLoadConfigurationFromIngressesWithCrossProviderNamespaces verifies that an Ingress,
-// declaring a `traefik.ingress.kubernetes.io/router.middlewares` annotation,
+// declaring a `traefik.ingress.kubernetes.io/router.middlewares` annotation, or a Service,
+// declaring a `traefik.ingress.kubernetes.io/service.middlewares` annotation,
 // is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
 func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T) {
 	testCases := []struct {
@@ -2584,28 +2585,51 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 		crossProviderNamespaces []string
 		path                    string
 		wantRouter              string
+		wantService             string
 	}{
 		{
-			desc:                    "Ingress with middleware annotation is kept when option is unset (backward compatible)",
+			desc:                    "Ingress with router middleware annotation is kept when option is unset (backward compatible)",
 			crossProviderNamespaces: nil,
 			path:                    "fixtures/Ingress-with-annotations.yml",
 			wantRouter:              "testing-bar",
 		},
 		{
-			desc:                    "Ingress with middleware annotation is dropped when option is empty",
+			desc:                    "Ingress with router middleware annotation is dropped when option is empty",
 			crossProviderNamespaces: []string{},
 			path:                    "fixtures/Ingress-with-annotations.yml",
 		},
 		{
-			desc:                    "Ingress with middleware annotation is kept when its namespace is allow-listed",
+			desc:                    "Ingress with router middleware annotation is kept when its namespace is allow-listed",
 			crossProviderNamespaces: []string{"testing"},
 			path:                    "fixtures/Ingress-with-annotations.yml",
 			wantRouter:              "testing-bar",
 		},
 		{
-			desc:                    "Ingress with middleware annotation is dropped when its namespace is not allow-listed",
+			desc:                    "Ingress with router middleware annotation is dropped when its namespace is not allow-listed",
 			crossProviderNamespaces: []string{"other"},
 			path:                    "fixtures/Ingress-with-annotations.yml",
+		},
+		{
+			desc:                    "Service with middlewares annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with middlewares annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+		},
+		{
+			desc:                    "Service with middlewares annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with middlewares annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
 		},
 	}
 
@@ -2616,12 +2640,20 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
 			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock(test.path))
 
-			if test.wantRouter == "" {
+			if test.wantRouter == "" && test.wantService == "" {
 				assert.Empty(t, conf.HTTP.Routers)
+				assert.Empty(t, conf.HTTP.Services)
 				return
 			}
 
-			assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+			if test.wantRouter != "" {
+				assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+			}
+
+			if test.wantService != "" {
+				assert.Contains(t, conf.HTTP.Services, test.wantService)
+				assert.Equal(t, []string{"foobar@file"}, conf.HTTP.Services[test.wantService].Middlewares)
+			}
 		})
 	}
 }

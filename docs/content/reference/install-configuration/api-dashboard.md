@@ -222,7 +222,7 @@ The dashboard is available by default on the path  `/dashboard/`.
 
 !!! note
 
-    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
+    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
 	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
 As mentioned above in the [Security](#security) section, it is important to secure access to both the dashboard and the API.

@@ -126,7 +126,7 @@ curl -H "Host: whoami.docker.localhost" http://localhost/
 ```
 
 !!! info
-    Make sure to remove the `ports.web.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
+    Make sure to remove the `ports.web.http.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
 
     ```yaml
     redirections:

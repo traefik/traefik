@@ -61,7 +61,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorHandler:  ErrorHandler,
 	}
 
-	return newConnectHandler(proxy)
+	return newConnectHandler(newH2CUpgradeHandler(proxy))
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
@@ -104,6 +104,21 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
 		pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 		pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
+		// URL.RequestURI gives Opaque precedence over the path, an opaque outgoing URL would discard the path set above.
+		pr.Out.URL.Opaque = ""
+
+		// Forward the declared request trailer names, but never their values: they arrive
+		// after the header section, once routing and security decisions are made, and would
+		// otherwise reach the backend under a name sanitized in the header section.
+		// Discarding them is allowed by https://www.rfc-editor.org/rfc/rfc9112#section-7.1.2,
+		// and the names are kept as the hint of what was dropped described in
+		// https://www.rfc-editor.org/rfc/rfc9110#section-6.6.2
+		// Emptying the outgoing map is what makes this hold whatever the middleware chain did
+		// to the incoming request, as the transport only writes pr.Out.Trailer.
+		// Response trailers are unaffected.
+		for name := range pr.Out.Trailer {
+			pr.Out.Trailer[name] = nil
+		}
 
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1

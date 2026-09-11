@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -21,6 +22,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -658,6 +660,26 @@ func TestKerberosRoundTripper(t *testing.T) {
 			expectedOriginalCount:       1,
 			expectedDedicatedCount:      2,
 		},
+		{
+			desc:                        "with a lowercase negotiate scheme",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase ntlm scheme carrying a challenge",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"ntlm TlRMTVNTUAAB"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a scheme that only starts like NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLMish"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount:       3,
+		},
 	}
 
 	for _, test := range testCases {
@@ -774,6 +796,186 @@ func TestPeerCertSANs(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestConnectionTimeouts(t *testing.T) {
+	testCases := []struct {
+		desc                      string
+		readTimeout               ptypes.Duration
+		writeTimeout              ptypes.Duration
+		serverWriteDelay          time.Duration
+		serverReads               bool
+		expectedReadTimeoutError  bool
+		expectedWriteTimeoutError bool
+	}{
+		{
+			desc:                     "read timeout - server delays longer than client timeout",
+			readTimeout:              ptypes.Duration(50 * time.Millisecond),
+			serverWriteDelay:         150 * time.Millisecond,
+			expectedReadTimeoutError: true,
+		},
+		{
+			desc:             "read succeeds with sufficient timeout",
+			readTimeout:      ptypes.Duration(500 * time.Millisecond),
+			serverWriteDelay: 100 * time.Millisecond,
+		},
+		{
+			desc:             "no read timeout - should succeed regardless of delay",
+			serverWriteDelay: 100 * time.Millisecond,
+		},
+		{
+			desc:                      "write timeout triggered when reader stops reading",
+			writeTimeout:              ptypes.Duration(50 * time.Millisecond),
+			expectedWriteTimeoutError: true,
+		},
+		{
+			desc:         "write succeeds within timeout",
+			writeTimeout: ptypes.Duration(500 * time.Millisecond),
+			serverReads:  true,
+		},
+		{
+			desc:        "no write timeout - should succeed",
+			serverReads: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// net.Pipe has no OS buffering: reads and writes block until the other side is ready,
+			// which allows the read and write deadlines to be exercised deterministically.
+			client, server := net.Pipe()
+			defer client.Close()
+			defer server.Close()
+
+			serverDone := make(chan struct{})
+			go func() {
+				defer close(serverDone)
+				_, _ = server.Write([]byte("HELLO1"))
+				if test.serverWriteDelay > 0 {
+					time.Sleep(test.serverWriteDelay)
+				}
+				_, _ = server.Write([]byte("HELLO2"))
+				if test.serverReads {
+					buf := make([]byte, 5)
+					_, _ = server.Read(buf)
+				}
+			}()
+
+			conn := &connWithTimeouts{
+				Conn:         client,
+				readTimeout:  time.Duration(test.readTimeout),
+				writeTimeout: time.Duration(test.writeTimeout),
+			}
+
+			buf := make([]byte, 6)
+			_, err := conn.Read(buf)
+			require.NoError(t, err)
+			require.Equal(t, "HELLO1", string(buf))
+
+			_, err = conn.Read(buf)
+			if test.expectedReadTimeoutError {
+				var netErr net.Error
+				require.ErrorAs(t, err, &netErr)
+				require.True(t, netErr.Timeout())
+				client.Close()
+				<-serverDone
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, "HELLO2", string(buf))
+
+			// Without a reader on the server side, the write only returns once the write deadline fires.
+			if test.serverReads || test.expectedWriteTimeoutError {
+				_, err = conn.Write([]byte("HELLO"))
+				if test.expectedWriteTimeoutError {
+					var netErr net.Error
+					require.ErrorAs(t, err, &netErr)
+					require.True(t, netErr.Timeout())
+				} else {
+					require.NoError(t, err)
+				}
+			}
+
+			client.Close()
+			<-serverDone
+		})
+	}
+}
+
+func TestConnectionTimeoutsAreDefined(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		readTimeout     ptypes.Duration
+		writeTimeout    ptypes.Duration
+		expectedWrapped bool
+	}{
+		{
+			desc:            "read timeout set - should wrap connection with read timeout",
+			readTimeout:     ptypes.Duration(50 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc:            "write timeout set - should wrap connection with write timeout",
+			writeTimeout:    ptypes.Duration(100 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc:            "both timeouts set - should wrap connection with both timeouts",
+			readTimeout:     ptypes.Duration(30 * time.Millisecond),
+			writeTimeout:    ptypes.Duration(60 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc: "no timeouts set - should return raw connection",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			defer ln.Close()
+
+			go func() {
+				for {
+					conn, err := ln.Accept()
+					if err != nil {
+						return
+					}
+					conn.Close()
+				}
+			}()
+
+			dialer := &net.Dialer{Timeout: time.Second}
+
+			cfg := &dynamic.ForwardingTimeouts{
+				ReadTimeout:  test.readTimeout,
+				WriteTimeout: test.writeTimeout,
+			}
+
+			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+			defer cancel()
+
+			conn, err := customDialContext(dialer, cfg)(ctx, "tcp", ln.Addr().String())
+			require.NoError(t, err)
+			require.NotNil(t, conn)
+			defer conn.Close()
+
+			if !test.expectedWrapped {
+				require.IsType(t, &net.TCPConn{}, conn)
+				return
+			}
+
+			require.IsType(t, &connWithTimeouts{}, conn)
+			wrapped := conn.(*connWithTimeouts)
+			assert.Equal(t, time.Duration(test.readTimeout), wrapped.readTimeout)
+			assert.Equal(t, time.Duration(test.writeTimeout), wrapped.writeTimeout)
 		})
 	}
 }

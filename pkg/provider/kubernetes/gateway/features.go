@@ -33,8 +33,11 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 func extendedGatewayFeatures() sets.Set[features.Feature] {
 	return sets.New(
 		features.GatewayPort8080Feature,
+		features.GatewayHTTPListenerIsolationFeature,
+		features.GatewayHTTPSListenerDetectMisdirectedRequestsFeature,
 		features.GatewayFrontendClientCertificateValidationFeature,
-		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature)
+		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature
+	)
 }
 
 // extendedTLSRouteFeatures returns the supported extended TLS Route features.

@@ -20,11 +20,13 @@ linters:
     - err113 # Too strict
     - exhaustive # Not relevant
     - exhaustruct # Not relevant
+    - exhaustruct_v5 # Not relevant
     - forcetypeassert # Too strict
     - gochecknoglobals
     - gochecknoinits
     - gocognit # Too strict
     - gocyclo # FIXME must be fixed
+    - gomodguard # is deprecated (since v2.12.0) due to: new major version. Replaced by gomodguard_v2
     - gosec # Too strict
     - gosmopolitan  # not relevant
     - ireturn # Not relevant
@@ -238,9 +240,17 @@ linters:
           - goconst
           - godot
       - path: (.+)_test.go
-        text: ' always receives '
+        text: '( always receives | is always nil| is unused)'
         linters:
           - unparam
+      # Ignore goconst for the files where it is too noisy.
+      - path: (pkg/muxer/tcp/(matcher|matcher_v2|mux)|pkg/observability/metrics/prometheus|pkg/provider/consulcatalog/consul_catalog|pkg/provider/kubernetes/gateway/.+route|pkg/provider/traefik/internal)\.go
+        linters:
+          - goconst
+      # The nginx annotation parsing repeats "true"/"off"/"https" pervasively, which drowns goconst.
+      - path: pkg/provider/kubernetes/ingress-nginx/.+\.go
+        linters:
+          - goconst
       - path: pkg/server/service/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: pkg/server/middleware/middlewares.go

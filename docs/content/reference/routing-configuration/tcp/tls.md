@@ -97,9 +97,51 @@ labels:
 | Field                                                                              | Description                                                                                                                                                                                                    | Default | Required |
 |:-----------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-passthrough" href="#opt-passthrough" title="#opt-passthrough">`passthrough`</a> | Defines whether the requests should be forwarded "as is", keeping all data encrypted.                                                                                                                          | false   | No       |
-| <a id="opt-options" href="#opt-options" title="#opt-options">`options`</a> | enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-options.md) and will be applied only if a `HostSNI` rule is defined.                                          | ""      | No       |
+| <a id="opt-options" href="#opt-options" title="#opt-options">`options`</a> | enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-options.md) and will be applied only if a `HostSNI` rule is defined.<br/>Unlike HTTP routers, several TCP routers can serve the same `HostSNI` with different TLS options. See [TLS Options and HostSNI](#tls-options-and-hostsni) for more details.                                          | ""      | No       |
 | <a id="opt-certResolver" href="#opt-certResolver" title="#opt-certResolver">`certResolver`</a> | The name of the certificate resolver to use for automatic certificate generation via ACME providers (such as Let's Encrypt). See the [Certificate Resolver](./#certificate-resolver) section for more details. | ""      | No       |
 | <a id="opt-domains" href="#opt-domains" title="#opt-domains">`domains`</a> | List of domains and Subject Alternative Names (SANs) for explicit certificate domain specification. See the [Custom Domains](./#custom-domains) section for more details.                                      | []      | No       |
+
+## TLS Options and HostSNI
+
+Contrary to the [HTTP routers](../http/tls/tls-options.md#conflicting-tls-options),
+several TCP routers can serve the same `HostSNI` with different TLS options,
+and this is not a conflict.
+
+A TCP router rule is not limited to the `HostSNI` matcher, and the TCP muxer is able to
+decide which route matches a connection before the TLS handshake happens.
+The TLS options are therefore selected per route, and not per host name,
+which makes a configuration such as the following one valid:
+
+```yaml tab="Structured (YAML)"
+# Dynamic configuration
+
+tcp:
+  routers:
+    routerfoo:
+      rule: "HostSNI(`example.com`) && ClientIP(`192.168.0.11`)"
+      tls:
+        options: foo
+
+    routerbar:
+      rule: "HostSNI(`example.com`) && ClientIP(`192.168.0.12`)"
+      tls:
+        options: bar
+```
+
+```toml tab="Structured (TOML)"
+# Dynamic configuration
+
+[tcp.routers]
+  [tcp.routers.routerfoo]
+    rule = "HostSNI(`example.com`) && ClientIP(`192.168.0.11`)"
+    [tcp.routers.routerfoo.tls]
+      options = "foo"
+
+  [tcp.routers.routerbar]
+    rule = "HostSNI(`example.com`) && ClientIP(`192.168.0.12`)"
+    [tcp.routers.routerbar.tls]
+      options = "bar"
+```
 
 ## Certificate Resolver
 
