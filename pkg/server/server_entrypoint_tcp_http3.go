@@ -87,7 +87,7 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 			// effect on HTTP/3, so handlers that need to force-close a stale connection
 			// (e.g. snicheck) are given direct access to the QUIC connection instead.
 			ctx = tcp.AddConnCloserInContext(ctx, func() {
-				_ = c.CloseWithError(0, "stale TLS options")
+				_ = c.CloseWithError(quic.ApplicationErrorCode(http3.ErrCodeNoError), "stale TLS options")
 			})
 
 			tlsOptionsName, err := h3.getTLSOptionsName(c)

@@ -49,9 +49,9 @@ func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		//
 		// The "Connection: close" response header is enough to achieve this on
 		// HTTP/1.1 (plain TCP close) and HTTP/2 (translated by the Go server into a
-		// GOAWAY). It has no effect on HTTP/3: the header is forbidden by the H3 spec
-		// and silently dropped by quic-go, so the underlying QUIC connection must be
-		// closed directly instead.
+		// GOAWAY). It carries no meaning in HTTP/3, though: unlike HTTP/2, neither the
+		// wire format nor quic-go interprets it as a signal to close the connection, so
+		// the underlying QUIC connection must be closed directly instead.
 		rw.Header().Set("Connection", "close")
 		tcp.CloseConn(req.Context())
 		http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
