@@ -32,7 +32,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 28
+      Passed: 30
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
