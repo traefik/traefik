@@ -260,6 +260,13 @@ type RateLimit struct {
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
 	// Redis hold the configs of Redis as bucket in rate limiter.
 	Redis *Redis `json:"redis,omitempty"`
+	// Scope defines what the token buckets are scoped to, that is, what a source's budget
+	// is shared across.
+	// It defaults to router with the in-memory bucket, and to middleware with Redis,
+	// which is the existing behavior of each backend.
+	// The Redis bucket does not support the router scope, as its keys do not carry the router.
+	// +kubebuilder:validation:Enum=router;middleware
+	Scope *dynamic.RateLimitScope `json:"scope,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

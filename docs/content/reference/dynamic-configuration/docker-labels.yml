@@ -148,6 +148,7 @@
 - "traefik.http.middlewares.middleware18.ratelimit.redis.tls.key=foobar"
 - "traefik.http.middlewares.middleware18.ratelimit.redis.username=foobar"
 - "traefik.http.middlewares.middleware18.ratelimit.redis.writetimeout=42s"
+- "traefik.http.middlewares.middleware18.ratelimit.scope=foobar"
 - "traefik.http.middlewares.middleware18.ratelimit.sourcecriterion.ipstrategy.depth=42"
 - "traefik.http.middlewares.middleware18.ratelimit.sourcecriterion.ipstrategy.excludedips=foobar, foobar"
 - "traefik.http.middlewares.middleware18.ratelimit.sourcecriterion.ipstrategy.ipv6subnet=42"

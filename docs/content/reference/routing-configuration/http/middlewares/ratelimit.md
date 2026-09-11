@@ -191,6 +191,7 @@ data:
 | <a id="opt-average" href="#opt-average" title="#opt-average">`average`</a> | Number of requests used to define the rate using the `period`.<br /> 0 means **no rate limiting**.<br />More information [here](#rate-and-burst). | 0      | No      |
 | <a id="opt-period" href="#opt-period" title="#opt-period">`period`</a> | Period of time used to define the rate.<br />More information [here](#rate-and-burst). | 1s | No |
 | <a id="opt-burst" href="#opt-burst" title="#opt-burst">`burst`</a> | Maximum number of requests allowed to go through at the very same moment.<br />More information [here](#rate-and-burst).| 1 | No |
+| <a id="opt-scope" href="#opt-scope" title="#opt-scope">`scope`</a> | What the token buckets are scoped to, that is, what a source's budget is shared across. Either `router` or `middleware`.<br />More information [here](#scope). | `router` in memory, `middleware` with Redis | No |
 | <a id="opt-sourceCriterion-requestHost" href="#opt-sourceCriterion-requestHost" title="#opt-sourceCriterion-requestHost">`sourceCriterion.requestHost`</a> | Whether to consider the request host as the source.<br />More information about `sourceCriterion`[here](#sourcecriterion). | false      | No      |
 | <a id="opt-sourceCriterion-requestHeaderName" href="#opt-sourceCriterion-requestHeaderName" title="#opt-sourceCriterion-requestHeaderName">`sourceCriterion.requestHeaderName`</a> | Name of the header used to group incoming requests.<br />More information about `sourceCriterion`[here](#sourcecriterion). | ""      | No      |
 | <a id="opt-sourceCriterion-ipStrategy-depth" href="#opt-sourceCriterion-ipStrategy-depth" title="#opt-sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`depth`](#sourcecriterionipstrategydepth) below. | 0      | No      |
@@ -211,6 +212,32 @@ data:
 | <a id="opt-redis-tls-cert" href="#opt-redis-tls-cert" title="#opt-redis-tls-cert">`redis.tls.cert`</a> | Path to the public certificate used for the secure connection to Redis. When this option is set, the `key` option is required. | "" | No |
 | <a id="opt-redis-tls-key" href="#opt-redis-tls-key" title="#opt-redis-tls-key">`redis.tls.key`</a> | Path to the private key used for the secure connection to Redis. When this option is set, the `cert` option is required. | "" | No |
 | <a id="opt-redis-tls-insecureSkipVerify" href="#opt-redis-tls-insecureSkipVerify" title="#opt-redis-tls-insecureSkipVerify">`redis.tls.insecureSkipVerify`</a> | If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certificate presented by the server regardless of the hostnames it covers. | false | No |
+
+### scope
+
+The `scope` option defines what the token buckets are scoped to, that is, what a source's budget is shared across.
+
+| Value | Meaning |
+|:-------------|:--------------------------------------------------------------------------------------------------------------------------------------|
+| `router`     | Each router referencing the middleware gets its own buckets, so a source gets one budget per router.                                     |
+| `middleware` | The middleware owns one set of buckets shared by every router referencing it, so a source gets one budget however many routers it uses.  |
+
+The default depends on the storage, and preserves what each has always done: the in-memory
+bucket defaults to `router`, and Redis defaults to `middleware`.
+
+!!! warning "Changing the scope changes the effective limit"
+
+    A middleware referenced by N routers enforces N times its configured rate under the
+    `router` scope, and exactly its configured rate under `middleware`. Moving an existing
+    in-memory middleware to `middleware` therefore tightens it by its router count, which is
+    a large factor on a big routing table. Change one middleware at a time and observe the
+    result before moving to the next.
+
+!!! info "Redis"
+
+    The Redis bucket has always been scoped to the middleware, because its keys carry the
+    middleware name and not the router. It does not support the `router` scope, and
+    configuring it that way is rejected.
 
 ### sourceCriterion
 
