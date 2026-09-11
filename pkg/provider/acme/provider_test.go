@@ -218,7 +218,21 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			desc:            "unauthorized wildcard with SAN",
 			domains:         types.Domain{Main: "*.*.traefik.wtf", SANs: []string{"foo.traefik.wtf"}},
 			dnsChallenge:    &DNSChallenge{},
-			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domain \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domains \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unauthorized double wildcard with SAN",
+			domains:         types.Domain{Main: "**.traefik.wtf", SANs: []string{"traefik.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domains \"**.traefik.wtf,traefik.wtf\" : ACME does not allow '**.' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unauthorized double wildcard as SAN",
+			domains:         types.Domain{Main: "traefik.wtf", SANs: []string{"**.traefik.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domains \"traefik.wtf,**.traefik.wtf\" : ACME does not allow '**.' wildcard domain",
 			expectedDomains: nil,
 		},
 		{
@@ -248,7 +262,8 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
 			} else {
-				assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedDomains, domains, "Unexpected domains.")
 			}
 		})
 	}
