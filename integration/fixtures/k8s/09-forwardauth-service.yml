@@ -1,0 +1,33 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forwardauth-service
+  namespace: default
+
+spec:
+  forwardAuth:
+    path: /verify
+    authResponseHeaders:
+      - X-Auth-User
+    service:
+      name: whoami
+      port: 80
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test-forwardauth-service.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`forwardauth.com`)
+    kind: Rule
+    services:
+    - name: whoami
+      port: 80
+    middlewares:
+    - name: forwardauth-service

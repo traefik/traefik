@@ -200,6 +200,8 @@
     [http.middlewares.Middleware10]
       [http.middlewares.Middleware10.forwardAuth]
         address = "foobar"
+        service = "foobar"
+        path = "foobar"
         trustForwardHeader = true
         authResponseHeaders = ["foobar", "foobar"]
         authResponseHeadersRegex = "foobar"

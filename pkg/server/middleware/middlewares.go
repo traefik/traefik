@@ -216,7 +216,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return auth.NewForward(ctx, next, *config.ForwardAuth, middlewareName)
+			return auth.NewForward(ctx, next, *config.ForwardAuth, b.serviceBuilder, middlewareName)
 		}
 	}
 

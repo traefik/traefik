@@ -1,0 +1,42 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## Dynamic Configuration ##
+
+[http.middlewares]
+  [http.middlewares.auth-middleware.forwardAuth]
+    service = "auth-service"
+    path = "/verify"
+    authResponseHeaders = ["X-Auth-User", "X-Auth-Backend"]
+
+[http.services]
+  [http.services.auth-service.loadBalancer]
+    [[http.services.auth-service.loadBalancer.servers]]
+      url = "http://127.0.0.1:{{ .Auth1Port }}"
+    [[http.services.auth-service.loadBalancer.servers]]
+      url = "http://127.0.0.1:{{ .Auth2Port }}"
+
+  [http.services.whoami-service.loadBalancer]
+    [[http.services.whoami-service.loadBalancer.servers]]
+      url = "http://{{ .WhoamiIP }}:80"
+
+[http.routers]
+  [http.routers.protected-router]
+    rule = "PathPrefix(`/protected`)"
+    middlewares = ["auth-middleware"]
+    service = "whoami-service"

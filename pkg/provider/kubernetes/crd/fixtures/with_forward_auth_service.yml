@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forwardauth
+  namespace: default
+
+spec:
+  forwardAuth:
+    path: /verify
+    authResponseHeaders:
+    - "X-Auth-User"
+    service:
+      name: whoami
+      port: 80
