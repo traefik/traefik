@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19955,6 +19956,112 @@ func TestLoadConfigurationIngressStatus(t *testing.T) {
 					assert.Empty(t, ing.Status.LoadBalancer.Ingress)
 				}
 			}
+		})
+	}
+}
+
+func controllerPod(name, nodeName string, ready bool) *corev1.Pod {
+	status := corev1.ConditionFalse
+	if ready {
+		status = corev1.ConditionTrue
+	}
+
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default", Labels: map[string]string{"app": "traefik"}},
+		Spec:       corev1.PodSpec{NodeName: nodeName},
+		Status: corev1.PodStatus{
+			Phase:      corev1.PodRunning,
+			Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: status}},
+		},
+	}
+}
+
+func node(name, internalIP, externalIP string) *corev1.Node {
+	addresses := []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: internalIP}}
+	if externalIP != "" {
+		addresses = append(addresses, corev1.NodeAddress{Type: corev1.NodeExternalIP, Address: externalIP})
+	}
+
+	return &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Status:     corev1.NodeStatus{Addresses: addresses},
+	}
+}
+
+func TestLoadConfigurationIngressStatusFromNodes(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		internalIP     bool
+		podName        string
+		expectedStatus []netv1.IngressLoadBalancerIngress
+	}{
+		{
+			desc:    "external node addresses, with the internal one as a fallback",
+			podName: "traefik-controller-1",
+			expectedStatus: []netv1.IngressLoadBalancerIngress{
+				{IP: "203.0.113.1"},
+				{IP: "10.0.0.2"},
+			},
+		},
+		{
+			desc:       "internal node addresses",
+			internalIP: true,
+			podName:    "traefik-controller-1",
+			expectedStatus: []netv1.IngressLoadBalancerIngress{
+				{IP: "10.0.0.1"},
+				{IP: "10.0.0.2"},
+			},
+		},
+		{
+			desc:    "unknown controller pod",
+			podName: "missing",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Setenv("POD_NAME", test.podName)
+			t.Setenv("POD_NAMESPACE", "default")
+
+			k8sObjects := readResources(t, []string{"services.yml", "ingressclasses.yml", "ingresses/ingress-with-host.yml"})
+			k8sObjects = append(k8sObjects,
+				controllerPod("traefik-controller-1", "node-1", true),
+				controllerPod("traefik-controller-2", "node-2", true),
+				controllerPod("traefik-controller-3", "node-3", false),
+				&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{Name: "other-controller", Namespace: "default", Labels: map[string]string{"app": "other"}},
+					Spec:       corev1.PodSpec{NodeName: "node-4"},
+					Status: corev1.PodStatus{
+						Phase:      corev1.PodRunning,
+						Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}},
+					},
+				},
+				node("node-1", "10.0.0.1", "203.0.113.1"),
+				node("node-2", "10.0.0.2", ""),
+				node("node-3", "10.0.0.3", "203.0.113.3"),
+				node("node-4", "10.0.0.4", "203.0.113.4"),
+			)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			client := newClient(kubeClient)
+
+			eventCh, err := client.WatchAll(t.Context(), "", "")
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				ReportNodeInternalIPAddress: test.internalIP,
+				k8sClient:                   client,
+				NonTLSEntryPoints:           []string{"http"},
+				TLSEntryPoints:              []string{"https"},
+			}
+			p.SetDefaults()
+
+			require.NotNil(t, p.loadConfiguration(t.Context()))
+
+			ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), "ingress-with-host", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			assert.ElementsMatch(t, test.expectedStatus, ing.Status.LoadBalancer.Ingress)
 		})
 	}
 }
