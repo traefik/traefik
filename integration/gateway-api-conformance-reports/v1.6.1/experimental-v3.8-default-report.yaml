@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-09T12:00:32+02:00"
+date: "2026-09-14T10:33:21+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.1
 implementation:
@@ -18,28 +18,47 @@ profiles:
       Failed: 0
       Passed: 15
       Skipped: 0
-  name: GATEWAY-GRPC
-  summary: Core tests succeeded.
-- core:
-    result: partial
-    skippedTests:
-    - HTTPRouteMultipleGateways
-    statistics:
-      Failed: 0
-      Passed: 36
-      Skipped: 1
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 30
+      Passed: 3
+      Skipped: 0
+    supportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
+    - GatewayPort8080
+    - GatewayStaticAddresses
+    unsupportedFeatures:
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - ListenerSet
+  name: GATEWAY-GRPC
+  summary: Core tests succeeded. Extended tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 37
+      Skipped: 0
+  extended:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 33
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - GatewayAddressEmpty
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
     - HTTPRoute308RedirectStatusCode
@@ -59,12 +78,9 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
-    - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
-    - GatewayInfrastructurePropagation
-    - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
@@ -75,15 +91,34 @@ profiles:
     - HTTPRouteRetryConnectionError
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
+  summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:
       Failed: 0
       Passed: 19
       Skipped: 0
+  extended:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 3
+      Skipped: 0
+    supportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
+    - GatewayPort8080
+    - GatewayStaticAddresses
+    - TCPRoute
+    unsupportedFeatures:
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - ListenerSet
   name: GATEWAY-TCP
-  summary: Core tests succeeded.
+  summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:
@@ -94,26 +129,28 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 4
+      Passed: 7
       Skipped: 0
     supportedFeatures:
+    - GatewayAddressEmpty
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
     - GatewayPort8080
+    - GatewayStaticAddresses
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
-    - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
-    - GatewayInfrastructurePropagation
-    - GatewayStaticAddresses
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:
 - GRPCRouteNamedRule
+- GatewayInfrastructure
+- GatewayOptionalAddressValue
 - HTTPRoute303Redirect
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
