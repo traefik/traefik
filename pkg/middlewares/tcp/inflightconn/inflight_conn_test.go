@@ -23,14 +23,16 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 		}
 
 		<-waitCh
-		finishCh <- struct{}{}
 	})
 
 	middleware, err := New(t.Context(), next, dynamic.TCPInFlightConn{Amount: 1}, "foo")
 	require.NoError(t, err)
 
 	// The first connection should succeed and wait.
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", wait: true})
+	go func() {
+		middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", wait: true})
+		close(finishCh)
+	}()
 	requireMessage(t, proceedCh)
 
 	closeCh := make(chan struct{})
