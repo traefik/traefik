@@ -19,6 +19,7 @@ const (
 	acceptEncoding  = "Accept-Encoding"
 	contentEncoding = "Content-Encoding"
 	contentLength   = "Content-Length"
+	contentRange    = "Content-Range"
 	contentType     = "Content-Type"
 )
 
@@ -226,6 +227,15 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 
 	// If we detect a contentEncoding, we know we are never going to compress.
 	if r.rw.Header().Get(contentEncoding) != "" {
+		r.compressionDisabled = true
+		r.rw.WriteHeader(r.statusCode)
+		return r.rw.Write(p)
+	}
+
+	// A response carrying a Content-Range describes the identity representation, so its
+	// Content-Range and Content-Length would no longer describe the body once it is
+	// compressed. The klauspost handler for Gzip skips these responses for the same reason.
+	if r.rw.Header().Get(contentRange) != "" {
 		r.compressionDisabled = true
 		r.rw.WriteHeader(r.statusCode)
 		return r.rw.Write(p)
