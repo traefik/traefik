@@ -944,3 +944,113 @@ func TestRetryWebsocketDelayedFlush(t *testing.T) {
 
 	assert.Equal(t, int32(1), backendCallCount.Load(), "an upgraded request must not be replayed")
 }
+
+// A swallowed attempt must stay invisible to the client. Header, Write and
+// WriteHeader all honour shouldNotWrite; Flush did not, and flushing before any
+// status has been committed makes net/http write an implicit 200 and release the
+// response while the retry loop is still running.
+func TestRetryDoesNotFlushASwallowedAttempt(t *testing.T) {
+	var attempts atomic.Int32
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		if attempts.Add(1) == 1 {
+			rw.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = rw.Write([]byte("first-attempt-body"))
+			rw.(http.Flusher).Flush()
+
+			return
+		}
+
+		rw.Header().Set("X-Attempt", "two")
+		rw.WriteHeader(http.StatusTeapot)
+		_, _ = rw.Write([]byte("second-attempt-body"))
+	}))
+	t.Cleanup(backend.Close)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		resp, err := backend.Client().Get(backend.URL)
+		require.NoError(t, err)
+
+		defer resp.Body.Close()
+
+		for k, v := range resp.Header {
+			rw.Header()[k] = v
+		}
+		rw.WriteHeader(resp.StatusCode)
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		_, _ = rw.Write(body)
+
+		if flusher, ok := rw.(http.Flusher); ok {
+			flusher.Flush()
+		}
+	})
+
+	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 2, Status: []string{"503"}}, &countingRetryListener{}, "traefikTest")
+	require.NoError(t, err)
+
+	front := httptest.NewServer(retry)
+	t.Cleanup(front.Close)
+
+	resp, err := front.Client().Get(front.URL)
+	require.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	// Drain before asserting: an uncommitted flush releases the response to the
+	// client while the retry loop is still running, so reading the status before
+	// EOF would race the second attempt.
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(2), attempts.Load())
+	assert.Equal(t, http.StatusTeapot, resp.StatusCode)
+	assert.Equal(t, "two", resp.Header.Get("X-Attempt"))
+	assert.Equal(t, "second-attempt-body", string(body))
+}
+
+// The guard on the other side: an attempt that is not being swallowed still
+// streams. Only non-final attempts go through the retry responseWriter, so this
+// exercises a first attempt whose status is outside the retriable range.
+func TestRetryFlushesAnAttemptItIsNotSwallowing(t *testing.T) {
+	received := make(chan string, 2)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write([]byte("FULL "))
+		rw.(http.Flusher).Flush()
+		_, _ = rw.Write([]byte("DATA"))
+		rw.(http.Flusher).Flush()
+	})
+
+	retry, err := New(t.Context(), next, dynamic.Retry{Attempts: 2, Status: []string{"503"}}, &countingRetryListener{}, "traefikTest")
+	require.NoError(t, err)
+
+	front := httptest.NewServer(retry)
+	t.Cleanup(front.Close)
+
+	resp, err := front.Client().Get(front.URL)
+	require.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	go func() {
+		buf := make([]byte, 5)
+		n, _ := io.ReadFull(resp.Body, buf)
+		received <- string(buf[:n])
+		rest, _ := io.ReadAll(resp.Body)
+		received <- string(rest)
+	}()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	select {
+	case first := <-received:
+		assert.Equal(t, "FULL ", first, "the first chunk must reach the client before the response ends")
+	case <-time.After(5 * time.Second):
+		t.Fatal("the first flush never reached the client")
+	}
+
+	assert.Equal(t, "DATA", <-received)
+}
