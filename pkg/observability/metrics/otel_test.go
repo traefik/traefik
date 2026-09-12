@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -449,6 +450,112 @@ func TestOpenTelemetry(t *testing.T) {
 			tryAssertMessage(t, c, expectedEntryPointReqDuration)
 		})
 	}
+}
+
+func TestOpenTelemetry_histogramAggregation(t *testing.T) {
+
+	tt := []struct {
+		desc                 string
+		histogramAggregation string
+		expectedMetricType   pmetric.MetricType
+	}{
+		{
+			desc:                 "base2_exponential_bucket_histogram",
+			histogramAggregation: "base2_exponential_bucket_histogram",
+			expectedMetricType:   pmetric.MetricTypeExponentialHistogram,
+		},
+		{
+			desc:                 "explicit_bucket_histogram",
+			histogramAggregation: "explicit_bucket_histogram",
+			expectedMetricType:   pmetric.MetricTypeHistogram,
+		},
+		{
+			desc:                 "default",
+			histogramAggregation: "",
+			expectedMetricType:   pmetric.MetricTypeHistogram,
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.desc, func(t *testing.T) {
+			// The default histogram aggregation is controlled by the OTel SDK itself through this env var, not by a Traefik config option.
+			t.Setenv("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", test.histogramAggregation)
+
+			c := make(chan pmetric.Metrics, 5)
+
+			// ts fakes an OTLP/HTTP collector: it decodes the gzipped protobuf export
+			// request Traefik pushes to it, and forwards the decoded metrics on c.
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gzr, err := gzip.NewReader(r.Body)
+				require.NoError(t, err)
+
+				body, err := io.ReadAll(gzr)
+				require.NoError(t, err)
+
+				req := pmetricotlp.NewExportRequest()
+				err = req.UnmarshalProto(body)
+				require.NoError(t, err)
+
+				c <- req.Metrics()
+
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			t.Cleanup(func() {
+				StopOpenTelemetry()
+				ts.Close()
+			})
+
+			var cfg otypes.OTLP
+			(&cfg).SetDefaults()
+			cfg.AddEntryPointsLabels = true
+			cfg.HTTP = &otypes.OTelHTTP{
+				Endpoint: ts.URL,
+			}
+			cfg.PushInterval = ptypes.Duration(10 * time.Millisecond)
+
+			registry := RegisterOpenTelemetry(t.Context(), &cfg)
+			require.NotNil(t, registry)
+
+			registry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
+
+			const metricName = "traefik_entrypoint_request_duration_seconds"
+
+			timeout := time.After(1 * time.Second)
+			for {
+				select {
+				case <-timeout:
+					t.Fatalf("timed out waiting for metric %s", metricName)
+				case metrics := <-c:
+					// Earlier pushes may not carry the histogram yet, so keep reading until it shows up.
+					metricType, found := findMetricType(metrics, metricName)
+					if !found {
+						continue
+					}
+
+					assert.Equal(t, test.expectedMetricType, metricType)
+					return
+				}
+			}
+		})
+	}
+}
+
+func findMetricType(metrics pmetric.Metrics, name string) (pmetric.MetricType, bool) {
+	for i := range metrics.ResourceMetrics().Len() {
+		rm := metrics.ResourceMetrics().At(i)
+		for j := range rm.ScopeMetrics().Len() {
+			sm := rm.ScopeMetrics().At(j)
+			for k := range sm.Metrics().Len() {
+				m := sm.Metrics().At(k)
+				if m.Name() == name {
+					return m.Type(), true
+				}
+			}
+		}
+	}
+
+	return pmetric.MetricTypeEmpty, false
 }
 
 func assertMessage(t *testing.T, msg string, expected []string) {
