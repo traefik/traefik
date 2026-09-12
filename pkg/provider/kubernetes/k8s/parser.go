@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
@@ -14,6 +15,10 @@ import (
 func MustParseYaml(content []byte) []runtime.Object {
 	acceptedK8sTypes := regexp.MustCompile(`^(Namespace|Deployment|EndpointSlice|Node|Service|ConfigMap|Ingress|IngressRoute|IngressRouteTCP|IngressRouteUDP|Middleware|MiddlewareTCP|Secret|TLSOption|TLSStore|TraefikService|IngressClass|ServersTransport|ServersTransportTCP|GatewayClass|Gateway|GRPCRoute|HTTPRoute|TCPRoute|TLSRoute|ReferenceGrant|BackendTLSPolicy)$`)
 
+	// Normalize line endings so document separators match even when the
+	// working tree uses CRLF (e.g. a checkout made with core.autocrlf=true);
+	// otherwise multi-document fixtures silently decode as one document.
+	content = bytes.ReplaceAll(content, []byte("\r\n"), []byte("\n"))
 	files := strings.Split(string(content), "---\n")
 	retVal := make([]runtime.Object, 0, len(files))
 	for _, file := range files {
