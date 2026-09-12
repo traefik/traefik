@@ -68,6 +68,22 @@ spec:
 | <a id="opt-traefik-ingress-kubernetes-iorouter-observability-tracing" href="#opt-traefik-ingress-kubernetes-iorouter-observability-tracing" title="#opt-traefik-ingress-kubernetes-iorouter-observability-tracing">`traefik.ingress.kubernetes.io/router.observability.tracing`</a> | Controls whether the router produces traces.<br/>See [observability](../http/routing/observability.md) for more information. | `true` |
 | <a id="opt-traefik-ingress-kubernetes-iorouter-observability-traceVerbosity" href="#opt-traefik-ingress-kubernetes-iorouter-observability-traceVerbosity" title="#opt-traefik-ingress-kubernetes-iorouter-observability-traceVerbosity">`traefik.ingress.kubernetes.io/router.observability.traceVerbosity`</a> | Defines the verbosity level of tracing for the router.<br/>Valid values: `minimal`, `detailed`.<br/>Default: `minimal`.<br/>See [observability](../http/routing/observability.md) for more information. | `detailed` |
 
+
+
+!!! warning "Middleware names and double dashes"
+
+    Traefik normalizes generated Kubernetes object names by replacing runs of non-alphanumeric characters with a single dash.
+    A Middleware named `host-rewrite--portal--abc` in namespace `prod` is therefore registered as `prod-host-rewrite-portal-abc@kubernetescrd`, not `prod-host-rewrite--portal--abc@kubernetescrd`.
+
+    Prefer single dashes in Middleware resource names, or reference the **normalized** ID in Ingress annotations:
+
+    ```yaml
+    # Middleware metadata.name: host-rewrite-portal-abc (preferred)
+    traefik.ingress.kubernetes.io/router.middlewares: prod-host-rewrite-portal-abc@kubernetescrd
+    ```
+
+    Using consecutive dashes (`--`) in the annotation reference is a common source of confusing `middleware does not exist` errors.
+
 ### On Service
 
 | Annotation | Description | Value |

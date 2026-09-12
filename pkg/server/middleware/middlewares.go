@@ -41,6 +41,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
+	cfgprovider "github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/recursion"
 )
@@ -70,7 +71,7 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			constructorContext := provider.AddInContext(ctx, middlewareName)
 			if midInf, ok := b.configs[middlewareName]; !ok || midInf.Middleware == nil {
-				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+				return nil, fmt.Errorf("middleware %q does not exist%s", middlewareName, cfgprovider.MiddlewareNameHint(middlewareName))
 			}
 
 			var err error
