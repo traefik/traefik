@@ -11,6 +11,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +23,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	traefikhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"golang.org/x/net/http2"
@@ -246,6 +249,73 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	case <-time.Tick(5 * time.Second):
 		t.Error("Timeout while read")
 	}
+}
+
+// TestReadTimeoutDuringBodyForwarding ensures that when the entrypoint read timeout
+// fires while the request body is still being transferred, the client receives a
+// deterministic 504 Gateway Timeout, and not a 499 Client Closed Request.
+// Both timeouts errors and canceled contexts map to the same status, whatever
+// the race between the two cancellation paths ends up surfacing first.
+func TestReadTimeoutDuringBodyForwarding(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(300 * time.Millisecond)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "", &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	// A backend that drains the body slowly, well past the 300ms read timeout.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		buf := make([]byte, 1)
+		for range 20 {
+			if _, err := req.Body.Read(buf); err != nil {
+				return
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(backend.Close)
+
+	target, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.ErrorHandler = traefikhttputil.ErrorHandler
+
+	router.SetHTTPHandler(proxy)
+
+	conn, err := startEntrypoint(t, entryPoint, router)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	_, err = fmt.Fprintf(conn, "POST /upload HTTP/1.1\r\nHost: test\r\nContent-Length: 20\r\n\r\n")
+	require.NoError(t, err)
+
+	go func() {
+		for range 20 {
+			if _, err := conn.Write([]byte("x")); err != nil {
+				return
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+
+	err = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	require.NoError(t, err)
+
+	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusGatewayTimeout, resp.StatusCode)
 }
 
 func TestKeepAliveMaxRequests(t *testing.T) {
