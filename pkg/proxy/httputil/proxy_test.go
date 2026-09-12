@@ -1,13 +1,16 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -186,6 +189,79 @@ func Test_isTLSConfigError(t *testing.T) {
 			t.Parallel()
 
 			actual := isTLSConfigError(test.err)
+			require.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+type timeoutError struct {
+	timeout bool
+}
+
+func (e timeoutError) Timeout() bool   { return e.timeout }
+func (e timeoutError) Temporary() bool { return e.timeout }
+func (e timeoutError) Error() string {
+	if e.timeout {
+		return "i/o timeout"
+	}
+
+	return "network error"
+}
+
+func TestComputeStatusCode(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		ctx      context.Context
+		err      error
+		expected int
+	}{
+		{
+			desc:     "nil error",
+			expected: http.StatusInternalServerError,
+		},
+		{
+			desc:     "io.EOF",
+			err:      io.EOF,
+			expected: http.StatusBadGateway,
+		},
+		{
+			desc:     "context canceled without read deadline",
+			err:      context.Canceled,
+			expected: StatusClientClosedRequest,
+		},
+		{
+			desc:     "context canceled with future read deadline",
+			ctx:      WithReadDeadline(context.Background(), time.Now().Add(time.Second)),
+			err:      context.Canceled,
+			expected: StatusClientClosedRequest,
+		},
+		{
+			desc:     "context canceled after read deadline",
+			ctx:      WithReadDeadline(context.Background(), time.Now().Add(-time.Second)),
+			err:      context.Canceled,
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc:     "network timeout",
+			err:      timeoutError{timeout: true},
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc:     "network error",
+			err:      timeoutError{timeout: false},
+			expected: http.StatusBadGateway,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.ctx == nil {
+				test.ctx = context.Background()
+			}
+
+			actual := ComputeStatusCode(test.ctx, test.err)
 			require.Equal(t, test.expected, actual)
 		})
 	}

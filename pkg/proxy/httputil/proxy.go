@@ -29,7 +29,23 @@ const (
 	StatusClientClosedRequestText = "Client Closed Request"
 
 	notAppendXFFKey key = "NotAppendXFF"
+	// readDeadlineKey is the context key used to store the read deadline
+	// enforced by the entrypoint's respondingTimeouts.readTimeout for the request.
+	readDeadlineKey key = "ReadDeadline"
 )
+
+// WithReadDeadline stores the read deadline enforced by the entrypoint's
+// respondingTimeouts.readTimeout for the request into the context.
+func WithReadDeadline(ctx context.Context, deadline time.Time) context.Context {
+	return context.WithValue(ctx, readDeadlineKey, deadline)
+}
+
+// ReadDeadlineFromContext returns the read deadline stored in the context by
+// WithReadDeadline, and whether it was present.
+func ReadDeadlineFromContext(ctx context.Context) (time.Time, bool) {
+	deadline, ok := ctx.Value(readDeadlineKey).(time.Time)
+	return deadline, ok
+}
 
 // SetNotAppendXFF indicates xff should not be appended.
 func SetNotAppendXFF(ctx context.Context) context.Context {
@@ -194,7 +210,7 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 
 // ErrorHandlerWithContext is the http.Handler called when something goes wrong when forwarding the request.
 func ErrorHandlerWithContext(ctx context.Context, w http.ResponseWriter, err error) {
-	statusCode := ComputeStatusCode(err)
+	statusCode := ComputeStatusCode(ctx, err)
 
 	logger := log.Ctx(ctx)
 
@@ -234,11 +250,23 @@ func isTLSConfigError(err error) bool {
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
-func ComputeStatusCode(err error) int {
+//
+// A context.Canceled error is ambiguous: both a client disconnecting and the
+// entrypoint read deadline (respondingTimeouts.readTimeout) firing cancel the
+// request context. That race made the status returned for a gateway timeout
+// depend on which cancellation surfaced first (499 or 504). When the read
+// deadline has already passed by the time the request is handled, the timeout
+// is the cause, so a 504 Gateway Timeout is returned regardless of the error
+// that surfaced.
+func ComputeStatusCode(ctx context.Context, err error) int {
 	switch {
 	case errors.Is(err, io.EOF):
 		return http.StatusBadGateway
 	case errors.Is(err, context.Canceled):
+		if deadline, ok := ReadDeadlineFromContext(ctx); ok && !time.Now().Before(deadline) {
+			return http.StatusGatewayTimeout
+		}
+
 		return StatusClientClosedRequest
 	default:
 		if netErr, ok := errors.AsType[net.Error](err); ok {
