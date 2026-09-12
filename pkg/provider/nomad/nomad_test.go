@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/nomad/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -153,6 +154,8 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling1(t *testing.
 			_, _ = w.Write(responses["job_job1_WithGroupService_Scaling1"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job1"):
 			_, _ = w.Write(responses["service_job1"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -213,6 +216,8 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled(t *t
 			_, _ = w.Write(responses["job_job3_WithGroupService_ScalingDisabled"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job3"):
 			_, _ = w.Write(responses["service_job3"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -277,6 +282,8 @@ func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling1(t *test
 			_, _ = w.Write(responses["service_job5task1"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job5task2"):
 			_, _ = w.Write(responses["service_job5task2"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -339,6 +346,8 @@ func Test_getNomadServiceDataWithEmptyServices_TCP(t *testing.T) {
 			_, _ = w.Write(responses["job_job7_TCP"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job7"):
 			_, _ = w.Write(responses["service_job7"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -369,6 +378,8 @@ func Test_getNomadServiceDataWithEmptyServices_UDP(t *testing.T) {
 			_, _ = w.Write(responses["job_job8_UDP"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job8"):
 			_, _ = w.Write(responses["service_job8"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -449,6 +460,8 @@ func Test_getNomadServiceData(t *testing.T) {
 			_, _ = w.Write(responses["service_redis"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/hello-nomad"):
 			_, _ = w.Write(responses["service_hello"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 	t.Cleanup(ts.Close)
@@ -467,4 +480,79 @@ func Test_getNomadServiceData(t *testing.T) {
 	items, err := p.getNomadServiceData(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
+}
+
+func Test_fetchService_HealthChecks(t *testing.T) {
+	serviceListJSON := []byte(`[
+        {"ID": "s1", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-ok"},
+        {"ID": "s2", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-dead-client"},
+        {"ID": "s3", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-bad-deploy"},
+        {"ID": "s4", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-dead-task"}
+    ]`)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.RequestURI, "/v1/service/app") {
+			_, _ = w.Write(serviceListJSON)
+		}
+	}))
+	t.Cleanup(ts.Close)
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	p.client, _ = createClient(p.namespace, p.Endpoint)
+
+	// Create allocation map with different health states
+	healthyPtr := true
+	unhealthyPtr := false
+
+	allocMap := map[string]*api.AllocationListStub{
+		"alloc-ok": {
+			ID:           "alloc-ok",
+			ClientStatus: "running",
+			DeploymentStatus: &api.AllocDeploymentStatus{
+				Healthy: &healthyPtr,
+			},
+			TaskStates: map[string]*api.TaskState{
+				"task1": {State: "running"},
+			},
+		},
+		"alloc-dead-client": {
+			ID:           "alloc-dead-client",
+			ClientStatus: "complete",
+		},
+		"alloc-bad-deploy": {
+			ID:           "alloc-bad-deploy",
+			ClientStatus: "running",
+			DeploymentStatus: &api.AllocDeploymentStatus{
+				Healthy: &unhealthyPtr,
+			},
+		},
+		"alloc-dead-task": {
+			ID:           "alloc-dead-task",
+			ClientStatus: "running",
+			DeploymentStatus: &api.AllocDeploymentStatus{
+				Healthy: &healthyPtr,
+			},
+			TaskStates: map[string]*api.TaskState{
+				"task1": {State: "dead"},
+			},
+		},
+	}
+
+	services, err := p.fetchService(t.Context(), "app", allocMap)
+	require.NoError(t, err)
+	assert.Len(t, services, 4, "Should return all services")
+
+	// Count healthy services
+	healthyCount := 0
+	var healthyAllocID string
+	for _, svc := range services {
+		if svc.Healthy {
+			healthyCount++
+			healthyAllocID = svc.Service.AllocID
+		}
+	}
+
+	assert.Equal(t, 1, healthyCount, "Must filter out ClientDead, DeployBad, and TaskDead")
+	assert.Equal(t, "alloc-ok", healthyAllocID)
 }
