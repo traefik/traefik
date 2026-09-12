@@ -20,7 +20,7 @@ import (
 type DeprecationLoader struct{}
 
 func (d DeprecationLoader) Load(args []string, _ *cli.Command) (bool, error) {
-	hasIncompatibleOptions, err := logDeprecations(args)
+	hasIncompatibleOptions, err := warnForDeprecations(args)
 	if err != nil {
 		log.Error().Err(err).Msg("Deprecated install configuration options analysis failed")
 		return false, nil
@@ -32,8 +32,8 @@ func (d DeprecationLoader) Load(args []string, _ *cli.Command) (bool, error) {
 	return false, nil
 }
 
-// logDeprecations prints deprecation hints and returns whether incompatible deprecated options need to be removed.
-func logDeprecations(arguments []string) (bool, error) {
+// warnForDeprecations prints deprecation hints and returns whether incompatible deprecated options need to be removed.
+func warnForDeprecations(arguments []string) (bool, error) {
 	// This part doesn't handle properly a flag defined like this: --accesslog true
 	// where `true` could be considered as a new argument.
 	// This is not really an issue with the deprecation loader since it will filter the unknown nodes later in this function.
