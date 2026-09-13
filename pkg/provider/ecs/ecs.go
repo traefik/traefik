@@ -518,9 +518,10 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 	taskDef := make(map[string]*ecstypes.TaskDefinition)
 
 	for arn, task := range taskDefArns {
-		if definition, ok := existingTaskDefCache.Get(arn); ok {
+		taskDefinitionArn := aws.ToString(task.TaskDefinitionArn)
+		if definition, ok := existingTaskDefCache.Get(taskDefinitionArn); taskDefinitionArn != "" && ok {
 			taskDef[arn] = definition.(*ecstypes.TaskDefinition)
-			logger.Debug().Msgf("Found cached task definition for %s. Skipping the call", arn)
+			logger.Debug().Msgf("Found cached task definition for %s. Skipping the call", taskDefinitionArn)
 		} else {
 			resp, err := client.ecs.DescribeTaskDefinition(ctx, &ecs.DescribeTaskDefinitionInput{
 				TaskDefinition: task.TaskDefinitionArn,
@@ -530,7 +531,9 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 			}
 
 			taskDef[arn] = resp.TaskDefinition
-			existingTaskDefCache.Set(arn, resp.TaskDefinition, cache.DefaultExpiration)
+			if taskDefinitionArn != "" {
+				existingTaskDefCache.Set(taskDefinitionArn, resp.TaskDefinition, cache.DefaultExpiration)
+			}
 		}
 	}
 	return taskDef, nil
