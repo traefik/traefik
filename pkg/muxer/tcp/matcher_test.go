@@ -140,6 +140,36 @@ func Test_HostSNI(t *testing.T) {
 			serverName: "toto.foo.example.com",
 			buildErr:   true,
 		},
+		{
+			desc:       "Not matching hosts with nested subdomains with wildcard",
+			rule:       "HostSNI(`*.example.com`)",
+			serverName: "toto.foo.example.com",
+			match:      false,
+		},
+		{
+			desc:       "Matching hosts with subdomains with double wildcard",
+			rule:       "HostSNI(`**.example.com`)",
+			serverName: "foo.example.com",
+			match:      true,
+		},
+		{
+			desc:       "Matching hosts with nested subdomains with double wildcard",
+			rule:       "HostSNI(`**.example.com`)",
+			serverName: "toto.foo.example.com",
+			match:      true,
+		},
+		{
+			desc:       "Not matching apex with double wildcard",
+			rule:       "HostSNI(`**.example.com`)",
+			serverName: "example.com",
+			match:      false,
+		},
+		{
+			desc:       "Matching hosts with subdomains with double wildcard in the middle",
+			rule:       "HostSNI(`*.**.example.com`)",
+			serverName: "toto.foo.example.com",
+			buildErr:   true,
+		},
 	}
 
 	for _, test := range testCases {

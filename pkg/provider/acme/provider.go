@@ -618,6 +618,10 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						logger.Error().Err(err).Strs("domains", tlsStore.DefaultGeneratedCert.Domain.ToStrArray()).Msg("domains validation")
 					}
 
+					if len(validDomains) == 0 {
+						continue
+					}
+
 					if p.certExists(validDomains) {
 						logger.Debug().Msg("Default ACME certificate generation is not required.")
 						continue
@@ -1052,7 +1056,12 @@ func (p *Provider) sanitizeDomains(ctx context.Context, domain types.Domain) ([]
 	var cleanDomains []string
 	for _, dom := range domains {
 		if strings.HasPrefix(dom, "*.*") {
-			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domains %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
+		}
+
+		if strings.HasPrefix(dom, "**.") {
+			// ACME only issues single-level wildcard certificates.
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domains %q : ACME does not allow '**.' wildcard domain", strings.Join(domains, ","))
 		}
 
 		canonicalDomain := types.CanonicalDomain(dom)

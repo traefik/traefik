@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 	"github.com/traefik/traefik/v3/pkg/rules"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -92,25 +93,13 @@ func (m *Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 }
 
 // GetRulePriority computes the priority for a given rule.
-// The priority is calculated using the length of rule.
+// The priority is calculated using the length of rule, the stars of a double wildcard host not counting.
 // There is a special case where the HostSNI(`*`) has a priority of -1.
 func GetRulePriority(rule string) int {
-	catchAllParser, err := rules.NewParser([]string{"HostSNI"})
+	ruleTree, err := parseRuleTree(rule)
 	if err != nil {
 		return len(rule)
 	}
-
-	parse, err := catchAllParser.Parse(rule)
-	if err != nil {
-		return len(rule)
-	}
-
-	buildTree, ok := parse.(rules.TreeBuilder)
-	if !ok {
-		return len(rule)
-	}
-
-	ruleTree := buildTree()
 
 	// Special case for when the catchAll fallback is present.
 	// When no user-defined priority is found, the lowest computable priority minus one is used,
@@ -120,7 +109,12 @@ func GetRulePriority(rule string) int {
 		return -1
 	}
 
-	return len(rule)
+	priority := len(rule)
+	for _, host := range ruleTree.ParsePositiveMatchers([]string{"HostSNI"}) {
+		priority -= muxer.DoubleWildcardPenalty(host)
+	}
+
+	return priority
 }
 
 // AddRoute adds a new route, associated to the given handler, at the given
@@ -187,6 +181,16 @@ func (m *Muxer) HasRoutes() bool {
 // ParseHostSNI extracts the positive HostSNI matchers values (not negated) declared in a rule.
 // This is a first naive implementation used in TCP routing.
 func ParseHostSNI(rule string) ([]string, error) {
+	ruleTree, err := parseRuleTree(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	return ruleTree.ParsePositiveMatchers([]string{"HostSNI"}), nil
+}
+
+// parseRuleTree parses the rule with every TCP matcher known, whatever the syntax.
+func parseRuleTree(rule string) (*rules.Tree, error) {
 	var matchers []string
 	for matcher := range tcpFuncs {
 		matchers = append(matchers, matcher)
@@ -210,7 +214,7 @@ func ParseHostSNI(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParsePositiveMatchers([]string{"HostSNI"}), nil
+	return buildTree(), nil
 }
 
 // routes implements sort.Interface.
