@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -149,9 +150,9 @@ func TestWaitForRequiredProvider(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, []string{}, "required", false)
 
-	publishedConfigCount := 0
+	var publishedConfigCount atomic.Int64
 	watcher.AddListener(func(_ dynamic.Configuration) {
-		publishedConfigCount++
+		publishedConfigCount.Add(1)
 	})
 
 	watcher.Start()
@@ -163,7 +164,7 @@ func TestWaitForRequiredProvider(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 
 	// after 20 milliseconds we should have 2 configs published
-	assert.Equal(t, 2, publishedConfigCount, "times configs were published")
+	assert.Equal(t, int64(2), publishedConfigCount.Load(), "times configs were published")
 }
 
 func TestIgnoreTransientConfiguration(t *testing.T) {
@@ -254,19 +255,19 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 	// To be able to "block" the writes, we change the chan to remove buffering.
 	watcher.allProvidersConfigs = make(chan dynamic.Message)
 
-	publishedConfigCount := 0
+	var publishedConfigCount atomic.Int64
 
 	firstConfigHandled := make(chan struct{})
 	blockConfConsumer := make(chan struct{})
 	blockConfConsumerAssert := make(chan struct{})
 	watcher.AddListener(func(config dynamic.Configuration) {
-		publishedConfigCount++
+		publishedConfigCount.Add(1)
 
-		if publishedConfigCount > 2 {
+		if publishedConfigCount.Load() > 2 {
 			t.Fatal("More than 2 published configuration")
 		}
 
-		if publishedConfigCount == 1 {
+		if publishedConfigCount.Load() == 1 {
 			assert.Equal(t, expectedConfig, config)
 			close(firstConfigHandled)
 
@@ -274,7 +275,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			time.Sleep(500 * time.Millisecond)
 		}
 
-		if publishedConfigCount == 2 {
+		if publishedConfigCount.Load() == 2 {
 			assert.Equal(t, expectedConfig3, config)
 			close(blockConfConsumerAssert)
 		}
@@ -344,9 +345,9 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
-	publishedConfigCount := 0
+	var publishedConfigCount atomic.Int64
 	watcher.AddListener(func(_ dynamic.Configuration) {
-		publishedConfigCount++
+		publishedConfigCount.Add(1)
 	})
 
 	watcher.Start()
@@ -359,8 +360,8 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 
 	// To load 5 new configs it would require 150ms (5 configs * 30ms).
 	// In 100ms, we should only have time to load 3 configs.
-	assert.LessOrEqual(t, publishedConfigCount, 3, "config was applied too many times")
-	assert.Positive(t, publishedConfigCount, "config was not applied at least once")
+	assert.LessOrEqual(t, publishedConfigCount.Load(), int64(3), "config was applied too many times")
+	assert.Positive(t, publishedConfigCount.Load(), "config was not applied at least once")
 }
 
 func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
@@ -405,10 +406,8 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
-	var configurationReloads int
-	watcher.AddListener(func(_ dynamic.Configuration) {
-		configurationReloads++
-	})
+	var tracker configTracker
+	watcher.AddListener(tracker.listen)
 
 	watcher.Start()
 
@@ -417,7 +416,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 1, configurationReloads, "Same configuration should not be published multiple times")
+	assert.Equal(t, 1, tracker.Reloads(), "Same configuration should not be published multiple times")
 }
 
 func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
@@ -453,10 +452,8 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
-	var lastConfig dynamic.Configuration
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		lastConfig = conf
-	})
+	var tracker configTracker
+	watcher.AddListener(tracker.listen)
 
 	watcher.Start()
 
@@ -493,7 +490,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	assert.Equal(t, expected, tracker.Last())
 }
 
 func TestListenProvidersIgnoreSameConfig(t *testing.T) {
@@ -540,12 +537,10 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
-	var configurationReloads int
-	var lastConfig dynamic.Configuration
+	var tracker configTracker
 	var once sync.Once
 	watcher.AddListener(func(conf dynamic.Configuration) {
-		configurationReloads++
-		lastConfig = conf
+		tracker.listen(conf)
 
 		// Allows next configurations to be sent by the mock provider as soon as the first configuration message is applied.
 		once.Do(func() {
@@ -590,9 +585,9 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	assert.Equal(t, expected, tracker.Last())
 
-	assert.Equal(t, 1, configurationReloads)
+	assert.Equal(t, 1, tracker.Reloads())
 }
 
 func TestApplyConfigUnderStress(t *testing.T) {
@@ -619,10 +614,8 @@ func TestApplyConfigUnderStress(t *testing.T) {
 		}
 	})
 
-	var configurationReloads int
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		configurationReloads++
-	})
+	var tracker configTracker
+	watcher.AddListener(tracker.listen)
 
 	watcher.Start()
 
@@ -636,8 +629,8 @@ func TestApplyConfigUnderStress(t *testing.T) {
 	// In theory, checking at least one would be sufficient,
 	// but checking for two also ensures that we're looping properly,
 	// and that the whole algo holds, etc.
-	t.Log(configurationReloads)
-	assert.GreaterOrEqual(t, configurationReloads, 2)
+	t.Log(tracker.Reloads())
+	assert.GreaterOrEqual(t, tracker.Reloads(), 2)
 }
 
 func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
@@ -696,12 +689,8 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
-	var configurationReloads int
-	var lastConfig dynamic.Configuration
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		configurationReloads++
-		lastConfig = conf
-	})
+	var tracker configTracker
+	watcher.AddListener(tracker.listen)
 
 	watcher.Start()
 
@@ -738,9 +727,9 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	assert.Equal(t, expected, tracker.Last())
 
-	assert.Equal(t, 2, configurationReloads)
+	assert.Equal(t, 2, tracker.Reloads())
 }
 
 func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
@@ -764,11 +753,9 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
-	var publishedProviderConfig dynamic.Configuration
+	var tracker configTracker
 
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		publishedProviderConfig = conf
-	})
+	watcher.AddListener(tracker.listen)
 
 	watcher.Start()
 
@@ -809,7 +796,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, publishedProviderConfig)
+	assert.Equal(t, expected, tracker.Last())
 }
 
 func TestPublishConfigUpdatedByProvider(t *testing.T) {
@@ -824,7 +811,8 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	}
 
 	pvd := &mockProvider{
-		wait: 10 * time.Millisecond,
+		wait:  10 * time.Millisecond,
+		first: make(chan struct{}),
 		messages: []dynamic.Message{
 			{
 				ProviderName:  "mock",
@@ -839,12 +827,11 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
-	publishedConfigCount := 0
-	watcher.AddListener(func(configuration dynamic.Configuration) {
-		publishedConfigCount++
-
-		// Update the provider configuration published in next dynamic Message which should trigger a new publishing.
-		pvdConfiguration.TCP.Routers["bar"] = &dynamic.TCPRouter{}
+	var publishedConfigCount atomic.Int64
+	published := make(chan struct{}, len(pvd.messages))
+	watcher.AddListener(func(_ dynamic.Configuration) {
+		publishedConfigCount.Add(1)
+		published <- struct{}{}
 	})
 
 	watcher.Start()
@@ -852,10 +839,26 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	t.Cleanup(watcher.Stop)
 	t.Cleanup(routinesPool.Stop)
 
-	// give some time so that the configuration can be processed.
-	time.Sleep(100 * time.Millisecond)
+	// The provider holds the second message until first is signalled, so the
+	// configuration can be updated here with no reader running concurrently.
+	// Publishing it again must be detected as a change, which only holds if the
+	// watcher kept a deep copy rather than a reference.
+	select {
+	case <-published:
+	case <-time.After(time.Second):
+		t.Fatal("first configuration was never published")
+	}
 
-	assert.Equal(t, 2, publishedConfigCount)
+	pvdConfiguration.TCP.Routers["bar"] = &dynamic.TCPRouter{}
+	pvd.first <- struct{}{}
+
+	select {
+	case <-published:
+	case <-time.After(time.Second):
+		t.Fatal("updated configuration was never published")
+	}
+
+	assert.Equal(t, int64(2), publishedConfigCount.Load())
 }
 
 func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
@@ -889,9 +892,9 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
-	publishedConfigCount := 0
+	var publishedConfigCount atomic.Int64
 	watcher.AddListener(func(configuration dynamic.Configuration) {
-		publishedConfigCount++
+		publishedConfigCount.Add(1)
 
 		// Modify the provided configuration.
 		// This should not modify the configuration stored in the configuration watcher and therefore there will be no new publishing.
@@ -906,7 +909,7 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
 
-	assert.Equal(t, 1, publishedConfigCount)
+	assert.Equal(t, int64(1), publishedConfigCount.Load())
 }
 
 func TestConfigurationWatcher_MultipleTransformers(t *testing.T) {
@@ -1040,4 +1043,35 @@ func TestEntryPointTLSResolvedOptions(t *testing.T) {
 	t.Cleanup(watcher.Stop)
 
 	<-run
+}
+
+// configTracker records what a ConfigurationWatcher listener receives. The
+// listener runs on the routines pool, so the test goroutine must not read the
+// recorded values directly.
+type configTracker struct {
+	mu      sync.RWMutex
+	reloads int
+	last    dynamic.Configuration
+}
+
+func (c *configTracker) listen(conf dynamic.Configuration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.reloads++
+	c.last = conf
+}
+
+func (c *configTracker) Reloads() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.reloads
+}
+
+func (c *configTracker) Last() dynamic.Configuration {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.last
 }
