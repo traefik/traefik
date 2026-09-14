@@ -157,6 +157,11 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		fixPragmaCacheControl(&res.Header)
 
 		resCode := res.StatusCode()
+		// fasthttp does not enforce the 3-digit/100-999 status code range net/http requires,
+		// and WriteHeader panics on an out-of-range code with no way to recover it here.
+		if resCode < 100 || resCode > 999 {
+			return fmt.Errorf("unexpected response code %d", resCode)
+		}
 		is1xx := 100 <= resCode && resCode <= 199
 		// treat 101 as a terminal status, see issue 26161
 		is1xxNonTerminal := is1xx && resCode != http.StatusSwitchingProtocols

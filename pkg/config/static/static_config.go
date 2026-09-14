@@ -105,7 +105,6 @@ type Configuration struct {
 
 	Experimental *Experimental `description:"Experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 
-	// Deprecated: Please do not use this field.
 	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
@@ -117,6 +116,8 @@ type Configuration struct {
 type Core struct {
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	DefaultRuleSyntax string `description:"Defines the rule parser default syntax (v2 or v3)" json:"defaultRuleSyntax,omitempty" toml:"defaultRuleSyntax,omitempty" yaml:"defaultRuleSyntax,omitempty"`
+
+	StrictTLSOptions bool `description:"Disables the unsafe fallback to the default TLS options for the routers with conflicting TLS options." json:"strictTLSOptions,omitempty" toml:"strictTLSOptions,omitempty" yaml:"strictTLSOptions,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -354,8 +355,23 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	// Configure Ingress NGINX provider.
 	if c.Providers.KubernetesIngressNGINX != nil {
+		var hasDefinedDefaults bool
+		for _, entryPoint := range c.EntryPoints {
+			if entryPoint.AsDefault {
+				hasDefinedDefaults = true
+				break
+			}
+		}
+
 		var nonTLSEntryPoints []string
 		for epName, entryPoint := range c.EntryPoints {
+			if hasDefinedDefaults && !entryPoint.AsDefault {
+				continue
+			}
+			// Skip internal entrypoint.
+			if epName == DefaultInternalEntryPointName {
+				continue
+			}
 			if entryPoint.HTTP.TLS == nil {
 				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
 			}
@@ -391,19 +407,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
 			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
-
 			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
 			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
-
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
 
 			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
@@ -455,6 +463,13 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
 		}
 	}
 
@@ -523,6 +538,50 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+const protocolTCP = "tcp"
+
+// HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
+// and therefore can serve HTTP requests.
+func (c *Configuration) HasTCPEntryPoint() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err == nil && protocol == protocolTCP {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasDeniedEncodedCharacters reports whether an entryPoint serving HTTP requests
+// disallows at least one encoded character in the request path.
+// UDP entryPoints are left out because they never parse a request path.
+func (c *Configuration) HasDeniedEncodedCharacters() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err != nil || protocol != protocolTCP {
+			continue
+		}
+
+		encodedCharacters := ep.HTTP.EncodedCharacters
+		if encodedCharacters == nil {
+			continue
+		}
+
+		if !encodedCharacters.AllowEncodedSlash ||
+			!encodedCharacters.AllowEncodedBackSlash ||
+			!encodedCharacters.AllowEncodedNullCharacter ||
+			!encodedCharacters.AllowEncodedSemicolon ||
+			!encodedCharacters.AllowEncodedPercent ||
+			!encodedCharacters.AllowEncodedQuestionMark ||
+			!encodedCharacters.AllowEncodedHash {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Configuration) hasUserDefinedEntrypoint() bool {

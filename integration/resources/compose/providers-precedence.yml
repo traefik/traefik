@@ -1,6 +1,6 @@
 services:
   whoami:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: "true"
       traefik.http.routers.docker-router.rule: "PathPrefix(`/http`)"
