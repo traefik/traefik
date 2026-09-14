@@ -47,7 +47,7 @@ HostSNI(`example.com`) || (HostSNI(`example.org`) && !ALPN(`h2`))
 
 ### HostSNI and HostSNIRegexp
 
-`HostSNI` and `HostSNIRegexp` matchers allow to match connections targeted to a given domain.
+`HostSNI` and `HostSNIRegexp` matchers allow matching connections targeted to a given domain.
 
 These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
