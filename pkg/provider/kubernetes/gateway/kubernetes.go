@@ -130,7 +130,7 @@ type gatewayListener struct {
 	Port                         gatev1.PortNumber
 	Protocol                     gatev1.ProtocolType
 	TLS                          *gatev1.ListenerTLSConfig
-	FrontendTLSValidationOptions string
+	FrontendValidationClientAuth *tls.ClientAuth
 	Hostname                     *gatev1.Hostname
 	Status                       *gatev1.ListenerStatus
 	AllowedNamespaces            []string
@@ -455,20 +455,13 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	gatewayListeners := make([]gatewayListener, len(gateway.Spec.Listeners))
 
 	var defaultFrontendValidation frontendValidation
-	var defaultFrontendValidationOptions string
 	frontendValidationPerPort := make(map[gatev1.PortNumber]frontendValidation)
-	frontendValidationPerPortOptions := make(map[gatev1.PortNumber]string)
 
 	if gateway.Spec.TLS != nil && gateway.Spec.TLS.Frontend != nil {
 		defaultFrontendValidation = p.resolveFrontendValidation(gateway, gateway.Spec.TLS.Frontend.Default.Validation)
 
 		for _, entry := range gateway.Spec.TLS.Frontend.PerPort {
 			frontendValidationPerPort[entry.Port] = p.resolveFrontendValidation(gateway, entry.TLS.Validation)
-		}
-
-		defaultFrontendValidationOptions = registerFrontEndValidationOptions(conf, defaultFrontendValidation, gateway.Namespace+"-"+gateway.Name+"-frontend-validation-default")
-		for port, validation := range frontendValidationPerPort {
-			frontendValidationPerPortOptions[port] = registerFrontEndValidationOptions(conf, validation, gateway.Namespace+"-"+gateway.Name+"-frontend-validation"+strconv.Itoa(int(port)))
 		}
 	}
 
@@ -687,11 +680,9 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			// Frontend validation.
 			if listener.Protocol == gatev1.HTTPSProtocolType {
 				fv := defaultFrontendValidation
-				fvOptions := defaultFrontendValidationOptions
 
 				if perPortFV, ok := frontendValidationPerPort[listener.Port]; ok {
 					fv = perPortFV
-					fvOptions = frontendValidationPerPortOptions[listener.Port]
 				}
 
 				if fv.resolvedRefsErr != nil {
@@ -732,7 +723,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 							Message:            "Invalid CA certificate configuration",
 						})
 				}
-				gatewayListeners[i].FrontendTLSValidationOptions = fvOptions
+				gatewayListeners[i].FrontendValidationClientAuth = fv.clientAuth
 			}
 		}
 
@@ -751,11 +742,11 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 // distinct handlers of an entry point, and because merging them would put the routes of an HTTP
 // listener behind the TLS configuration of an HTTPS one.
 //
-// TODO: The Gateway frontend TLS configuration (client certificate validation) has to be part of it once supported.
 // TODO: The listener TLS options (listener.TLS.Options) have to be part of it once supported.
 type uniqListener struct {
-	epName   string
-	protocol gatev1.ProtocolType
+	epName                       string
+	protocol                     gatev1.ProtocolType
+	frontendValidationClientAuth *tls.ClientAuth
 }
 
 // buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
@@ -772,7 +763,11 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				continue
 			}
 
-			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
+			uniq := uniqListener{
+				epName:                       listener.EPName,
+				protocol:                     listener.Protocol,
+				frontendValidationClientAuth: listener.FrontendValidationClientAuth,
+			}
 
 			hostname := string(ptr.Deref(listener.Hostname, ""))
 			if !slices.Contains(hostnamesByListener[uniq], hostname) {
@@ -789,11 +784,26 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 		hostnames := hostnamesByListener[uniq]
 		slices.Sort(hostnames)
 
+		// Hostnames across every validation group sharing this entry point, so exclusions
+		// account for listeners with different frontend validation too.
+		var epHostnames []string
+		for other, others := range hostnamesByListener {
+			if other.epName != uniq.epName || other.protocol != uniq.protocol {
+				continue
+			}
+			for _, h := range others {
+				if !slices.Contains(epHostnames, h) {
+					epHostnames = append(epHostnames, h)
+				}
+			}
+		}
+		slices.Sort(epHostnames)
+
 		for _, hostname := range hostnames {
 			listenerRouterName := makeListenerRouterName(uniq, hostname)
 
 			listenerRouter := &dynamic.Router{
-				Rule:        buildListenerRule(hostname, hostnames),
+				Rule:        buildListenerRule(hostname, epHostnames),
 				EntryPoints: []string{uniq.epName},
 			}
 
@@ -809,6 +819,10 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 			if uniq.protocol == gatev1.HTTPSProtocolType {
 				listenerTLSOptions := tls.Options{}
 				listenerTLSOptions.SetDefaults()
+
+				if uniq.frontendValidationClientAuth != nil {
+					listenerTLSOptions.ClientAuth = *uniq.frontendValidationClientAuth
+				}
 
 				conf.TLS.Options[listenerRouterName] = listenerTLSOptions
 
@@ -847,7 +861,8 @@ func dropChildlessListenerRouters(conf *dynamic.Configuration, listenerRouterNam
 func mostSpecificListener(listeners []gatewayListener, uniq uniqListener, hostname string) *gatewayListener {
 	var elected *gatewayListener
 	for i, listener := range listeners {
-		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol || !listener.Attached {
+		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol ||
+			listener.FrontendValidationClientAuth != uniq.frontendValidationClientAuth || !listener.Attached {
 			continue
 		}
 
@@ -1014,20 +1029,6 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 	}
 
 	return res
-}
-
-func registerFrontEndValidationOptions(conf *dynamic.Configuration, validation frontendValidation, name string) string {
-	if validation.clientAuth == nil {
-		return ""
-	}
-
-	name = provider.Normalize(name)
-	if conf.TLS.Options == nil {
-		conf.TLS.Options = make(map[string]tls.Options)
-	}
-	conf.TLS.Options[name] = tls.Options{ClientAuth: *validation.clientAuth}
-
-	return name
 }
 
 func hasInsecureFrontendValidationMode(gateway *gatev1.Gateway) bool {
@@ -1629,7 +1630,15 @@ func makeListenerRouterName(uniq uniqListener, hostname string) string {
 
 	h := sha256.New()
 
-	for _, c := range []string{uniq.epName, protocol, hostname} {
+	components := []string{uniq.epName, protocol, hostname}
+	if uniq.frontendValidationClientAuth != nil {
+		components = append(components, uniq.frontendValidationClientAuth.ClientAuthType)
+		for _, caFile := range uniq.frontendValidationClientAuth.CAFiles {
+			components = append(components, string(caFile))
+		}
+	}
+
+	for _, c := range components {
 		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
 		fmt.Fprintf(h, "%d:%s", len(c), c)
 	}
