@@ -77,7 +77,8 @@ func (i *inFlightConn) increment(ip string) error {
 
 // decrement decreases the counter for the number of connections tracked for the
 // given IP.
-// It ensures that the counter does not go below zero.
+// It ensures that the counter does not go below zero, and forgets the IP once
+// its last connection is released.
 func (i *inFlightConn) decrement(ip string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -87,4 +88,9 @@ func (i *inFlightConn) decrement(ip string) {
 	}
 
 	i.connections[ip]--
+
+	// Otherwise the map would grow forever, as increment reads a missing key as zero.
+	if i.connections[ip] == 0 {
+		delete(i.connections, ip)
+	}
 }

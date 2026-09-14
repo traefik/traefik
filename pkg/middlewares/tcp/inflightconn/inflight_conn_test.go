@@ -1,10 +1,12 @@
 package inflightconn
 
 import (
+	"fmt"
 	"net"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -13,7 +15,6 @@ import (
 func TestInFlightConn_ServeTCP(t *testing.T) {
 	proceedCh := make(chan struct{})
 	waitCh := make(chan struct{})
-	finishCh := make(chan struct{})
 
 	next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		proceedCh <- struct{}{}
@@ -23,14 +24,17 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 		}
 
 		<-waitCh
-		finishCh <- struct{}{}
 	})
 
 	middleware, err := New(t.Context(), next, dynamic.TCPInFlightConn{Amount: 1}, "foo")
 	require.NoError(t, err)
 
 	// The first connection should succeed and wait.
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", wait: true})
+	firstServedCh := make(chan struct{})
+	go func() {
+		middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", wait: true})
+		close(firstServedCh)
+	}()
 	requireMessage(t, proceedCh)
 
 	closeCh := make(chan struct{})
@@ -44,11 +48,31 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 	requireMessage(t, proceedCh)
 
 	// Once the first connection is closed, next connection with the same remote address should succeed.
+	// Waiting for ServeTCP to return, and not only for the handler to be released,
+	// is what guarantees that the deferred decrement has already run.
 	close(waitCh)
-	requireMessage(t, finishCh)
+	requireMessage(t, firstServedCh)
 
 	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000"})
 	requireMessage(t, proceedCh)
+}
+
+func TestInFlightConn_ReleasedConnectionsAreForgotten(t *testing.T) {
+	middleware, err := New(t.Context(), tcp.HandlerFunc(func(tcp.WriteCloser) {}), dynamic.TCPInFlightConn{Amount: 1}, "foo")
+	require.NoError(t, err)
+
+	inFlight, ok := middleware.(*inFlightConn)
+	require.True(t, ok)
+
+	// Each connection is fully served, and therefore released, before the next one starts.
+	for i := range 256 {
+		inFlight.ServeTCP(fakeConn{addr: fmt.Sprintf("10.0.0.%d:9000", i)})
+	}
+
+	inFlight.mu.Lock()
+	defer inFlight.mu.Unlock()
+
+	assert.Empty(t, inFlight.connections)
 }
 
 func requireMessage(t *testing.T, c chan struct{}) {
@@ -73,7 +97,12 @@ func (c fakeConn) RemoteAddr() net.Addr {
 }
 
 func (c fakeConn) Close() error {
-	close(c.closeCh)
+	// The middleware closes every connection it rejects, including the ones
+	// the test does not watch.
+	if c.closeCh != nil {
+		close(c.closeCh)
+	}
+
 	return nil
 }
 
