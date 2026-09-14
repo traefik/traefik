@@ -194,6 +194,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-ingressClassByName" href="#opt-providers-kubernetesIngressNGINX-ingressClassByName" title="#opt-providers-kubernetesIngressNGINX-ingressClassByName">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`ingressClassByName`</a> | When `true`, any IngressClass whose **name** matches `ingressClass` is include in discovery, even if its `spec.controller` does not match `controllerClass`. This is evaluated alongside the controller-based selection, not instead of it.                                                                                                                                          | false   | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-publishService" href="#opt-providers-kubernetesIngressNGINX-publishService" title="#opt-providers-kubernetesIngressNGINX-publishService">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`publishService`</a> | Service fronting the Ingress controller. Takes the form `namespace/name`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-publishStatusAddress" href="#opt-providers-kubernetesIngressNGINX-publishStatusAddress" title="#opt-providers-kubernetesIngressNGINX-publishStatusAddress">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`publishStatusAddress`</a> | Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies.                                                                                                                                                                                                                                                                                                                                                                                                                          | ""     | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-reportNodeInternalIPAddress" href="#opt-providers-kubernetesIngressNGINX-reportNodeInternalIPAddress" title="#opt-providers-kubernetesIngressNGINX-reportNodeInternalIPAddress">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`reportNodeInternalIPAddress`</a> | Set the load-balancer status of Ingress objects to the internal Node addresses instead of the external ones. Only applies when neither `publishService` nor `publishStatusAddress` is set. More information [here](#reportnodeinternalipaddress). | false | No |
 | <a id="opt-providers-kubernetesIngressNGINX-defaultBackendService" href="#opt-providers-kubernetesIngressNGINX-defaultBackendService" title="#opt-providers-kubernetesIngressNGINX-defaultBackendService">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`defaultBackendService`</a> | Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'.                                                                                                                                                                                                                                                                                                                                                                                                                                            | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-disableSvcExternalName" href="#opt-providers-kubernetesIngressNGINX-disableSvcExternalName" title="#opt-providers-kubernetesIngressNGINX-disableSvcExternalName">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`disableSvcExternalName`</a> | Disable support for Services of type ExternalName.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | false  | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-proxyConnectTimeout" href="#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout" title="#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyConnectTimeout`</a> | Amount of time to wait until a connection to a server can be established. The value is unitless and in seconds. This is used as the global connection timeout when no ingress-specific timeout is configured. An ingress-specific timeout can be configured using [`nginx.ingress.kubernetes.io/proxy-connect-timeout`](../../../../routing-configuration/kubernetes/ingress-nginx/#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout) annotation.                                                                                                           | 60     | No       |
@@ -270,6 +271,40 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesingressnginx.endpoint=http://localhost:8080
 ```
+
+### `reportNodeInternalIPAddress`
+
+When neither `publishService` nor `publishStatusAddress` is set,
+Traefik sets the `status.loadBalancer.ingress` field of the Ingresses it serves
+to the addresses of the nodes running a ready controller pod,
+as the ingress-nginx controller does.
+The external addresses of these nodes are used,
+falling back to their internal addresses when they have none.
+
+Set `reportNodeInternalIPAddress` to `true` to always use the internal addresses.
+This is the equivalent of the ingress-nginx `--report-node-internal-ip-address` flag,
+and is the recommended setting for bare-metal clusters
+where Traefik runs as a DaemonSet without a cloud load balancer.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngressNGINX:
+    reportNodeInternalIPAddress: true
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngressNGINX]
+  reportNodeInternalIPAddress = true
+```
+
+```bash tab="CLI"
+--providers.kubernetesingressnginx.reportnodeinternalipaddress=true
+```
+
+Discovering the controller pods requires Traefik to run inside the cluster,
+with the `pods` and `nodes` list permissions.
+When they are missing, the Ingress status is left untouched
+unless `publishService` or `publishStatusAddress` is set.
 
 ## Routing Configuration
 
