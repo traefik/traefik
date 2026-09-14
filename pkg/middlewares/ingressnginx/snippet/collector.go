@@ -499,7 +499,11 @@ func buildLocationMatcher(pathPattern string) (locationMatcher, error) {
 		}, nil
 	}
 
-	// Prefix match
+	// The ^~ modifier still uses a literal prefix; it is not part of the request path.
+	if prefix, ok := strings.CutPrefix(pathPattern, "^~"); ok {
+		pathPattern = strings.TrimSpace(prefix)
+	}
+
 	return func(req *http.Request) bool {
 		return strings.HasPrefix(req.URL.Path, pathPattern)
 	}, nil

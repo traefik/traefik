@@ -1925,6 +1925,48 @@ if ($http_x_block_auth = "yes") {
 	}
 }
 
+func Test_LocationPrefixModifier(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		path       string
+		wantStatus int
+	}{
+		{desc: "matching path", path: "/internal", wantStatus: http.StatusNotFound},
+		{desc: "matching subpath", path: "/internal/status", wantStatus: http.StatusNotFound},
+		{desc: "matching path with query", path: "/internal?check=true", wantStatus: http.StatusNotFound},
+		{desc: "prefix within path segment", path: "/internality", wantStatus: http.StatusNotFound},
+		{desc: "unrelated path", path: "/public", wantStatus: http.StatusOK},
+		{desc: "partial prefix", path: "/intern", wantStatus: http.StatusOK},
+		{desc: "case mismatch", path: "/Internal", wantStatus: http.StatusOK},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			nextCalled := false
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCalled = true
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			handler, err := New(t.Context(), next, &dynamic.Snippet{
+				ServerSnippet: `
+location ^~ /internal {
+	return 404;
+}
+`,
+			}, "test-snippet")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://example.com"+test.path, nil)
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.wantStatus, rw.Code)
+			assert.Equal(t, test.wantStatus == http.StatusOK, nextCalled)
+		})
+	}
+}
+
 func Test_ForwardAuth_New_Validation(t *testing.T) {
 	testCases := []struct {
 		desc        string
