@@ -72,7 +72,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routerConfs, condition := p.loadTCPRoute(match.GatewayName, match.GatewayNamespace, listener, route)
+				routerConfs, condition := p.loadTCPRoute(listener, route)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -120,7 +120,7 @@ type tcpRouteRouter struct {
 	Conf *dynamic.Configuration
 }
 
-func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TCPRoute) ([]tcpRouteRouter, metav1.Condition) {
+func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1.TCPRoute) ([]tcpRouteRouter, metav1.Condition) {
 	var routers []tcpRouteRouter
 
 	condition := metav1.Condition{
@@ -151,7 +151,7 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 		}
 
 		// Routing criteria should be introduced at some point.
-		routerName := makeRouterName(strings.ToLower(kindTCPRoute), "", route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
+		routerName := makeRouterName(strings.ToLower(kindTCPRoute), "", route.Namespace, route.Name, listener, ri)
 
 		routerConf := &dynamic.Configuration{
 			TCP: &dynamic.TCPConfiguration{
