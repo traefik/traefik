@@ -3772,6 +3772,113 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "HTTPRoute attached to a ListenerSet HTTPS listener",
+			paths: []string{"services.yml", "httproute/with_listenerset.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web":       {Address: ":80"},
+				"websecure": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66": {
+							Service: "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-wrr",
+							Rule:    `Host("foo.example.com") && Path("/bar")`,
+							ParentRefs: []string{
+								"listener-websecure-https-439feda8e3f1dbdca529",
+							},
+							RuleSyntax: "default",
+							Priority:   100016,
+						},
+						"listener-websecure-https-439feda8e3f1dbdca529": {
+							EntryPoints: []string{
+								"websecure",
+							},
+							Rule: `Host("*")`,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "listener-websecure-https-439feda8e3f1dbdca529",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       dynamic.BalancerStrategy("wrr"),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100000000),
+								},
+							},
+						},
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"listener-websecure-https-439feda8e3f1dbdca529": {
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -6529,6 +6636,67 @@ func TestLoadTCPRoutes(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "TCPRoute attached to a ListenerSet listener",
+			paths: []string{"services.yml", "tcproute/with_listenerset.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web": {Address: ":80"},
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Services:          map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcproute-default-tcp-app-1-ls-default-my-listenerset-ep-tcp-0-bdb01f4329407b107239": {
+							EntryPoints: []string{
+								"tcp",
+							},
+							Service:    "tcproute-default-tcp-app-1-ls-default-my-listenerset-ep-tcp-0-bdb01f4329407b107239-wrr",
+							Rule:       `HostSNI("*")`,
+							RuleSyntax: "default",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"tcproute-default-tcp-app-1-ls-default-my-listenerset-ep-tcp-0-bdb01f4329407b107239-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+						"tcproute-default-tcp-app-1-ls-default-my-listenerset-ep-tcp-0-bdb01f4329407b107239-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tcproute-default-tcp-app-1-ls-default-my-listenerset-ep-tcp-0-bdb01f4329407b107239-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -8394,6 +8562,80 @@ func TestLoadTLSRoutes(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "TLSRoute attached to a ListenerSet Passthrough listener",
+			paths: []string{"services.yml", "tlsroute/with_listenerset.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web": {Address: ":80"},
+				"tls": {Address: ":9001"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Services:          map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Service:  "deny-unknown-host",
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-ls-default-my-listenerset-ep-tls-0-ad7fdb1a0ec35e35d183": {
+							EntryPoints: []string{
+								"tls",
+							},
+							Service:    "tlsroute-default-tls-app-1-ls-default-my-listenerset-ep-tls-0-ad7fdb1a0ec35e35d183-wrr",
+							Rule:       `HostSNI("foo.example.com")`,
+							RuleSyntax: "default",
+							Priority:   15,
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-ls-default-my-listenerset-ep-tls-0-ad7fdb1a0ec35e35d183-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-ls-default-my-listenerset-ep-tls-0-ad7fdb1a0ec35e35d183-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-1-ls-default-my-listenerset-ep-tls-0-ad7fdb1a0ec35e35d183-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -9725,6 +9967,332 @@ func TestLoadMixedRoutes(t *testing.T) {
 				},
 			},
 		},
+		{
+			// The TCP and TLS listeners claim the ports of the Gateway HTTP and HTTPS listeners
+			// with another protocol, and the duplicate HTTPS listener has the same hostname as
+			// the Gateway one: their routes are not loaded.
+			desc:  "Only the ListenerSet listener conflicting with no Gateway listener is loaded",
+			paths: []string{"services.yml", "mixed/with_listenerset_conflicts.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web":       {Address: ":80"},
+				"websecure": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-1b8100aab73b32331ce0": {
+							Service: "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-1b8100aab73b32331ce0-wrr",
+							Rule:    `Host("baz.example.com") && Path("/bar")`,
+							ParentRefs: []string{
+								"listener-websecure-https-baz-example-com-dd68422a9ac9bfc6c47e",
+							},
+							RuleSyntax: "default",
+							Priority:   100016,
+						},
+						"listener-websecure-https-baz-example-com-dd68422a9ac9bfc6c47e": {
+							EntryPoints: []string{
+								"websecure",
+							},
+							Rule: `Host("baz.example.com")`,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "listener-websecure-https-baz-example-com-dd68422a9ac9bfc6c47e",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-1b8100aab73b32331ce0-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       dynamic.BalancerStrategy("wrr"),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100000000),
+								},
+							},
+						},
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-1b8100aab73b32331ce0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-1b8100aab73b32331ce0-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"listener-websecure-https-baz-example-com-dd68422a9ac9bfc6c47e": {
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Older ListenerSet wins the listener conflict with its sibling",
+			paths: []string{"services.yml", "mixed/with_listenerset_precedence.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web":  {Address: ":80"},
+				"web2": {Address: ":8080"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-older-ls-default-ls-z-older-ep-web2-0-ab9bf399992ae5addd94": {
+							Service: "httproute-default-http-app-older-ls-default-ls-z-older-ep-web2-0-ab9bf399992ae5addd94-wrr",
+							Rule:    `Host("older.example.com") && Path("/bar")`,
+							ParentRefs: []string{
+								"listener-web2-http-4b299c63a1fd0bffdf3d",
+							},
+							RuleSyntax: "default",
+							Priority:   100018,
+						},
+						"listener-web2-http-4b299c63a1fd0bffdf3d": {
+							EntryPoints: []string{
+								"web2",
+							},
+							Rule: `Host("*")`,
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-older-ls-default-ls-z-older-ep-web2-0-ab9bf399992ae5addd94-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       dynamic.BalancerStrategy("wrr"),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100000000),
+								},
+							},
+						},
+						"httproute-default-http-app-older-ls-default-ls-z-older-ep-web2-0-ab9bf399992ae5addd94-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-older-ls-default-ls-z-older-ep-web2-0-ab9bf399992ae5addd94-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:  "Empty because the ListenerSet is not allowed by the Gateway",
+			paths: []string{"services.yml", "mixed/with_listenerset_not_allowed.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web":  {Address: ":80"},
+				"web2": {Address: ":8080"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Services:          map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			// The Gateway declares no valid listener of its own, so it is accepted through
+			// the listener its ListenerSet delegates, which serves the route.
+			desc:  "ListenerSet serving a Gateway without a valid listener of its own",
+			paths: []string{"services.yml", "mixed/with_listenerset_delegation.yml"},
+			entryPoints: map[string]Entrypoint{
+				"websecure": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66": {
+							Service: "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-wrr",
+							Rule:    `Host("foo.example.com") && Path("/bar")`,
+							ParentRefs: []string{
+								"listener-websecure-https-439feda8e3f1dbdca529",
+							},
+							RuleSyntax: "default",
+							Priority:   100016,
+						},
+						"listener-websecure-https-439feda8e3f1dbdca529": {
+							EntryPoints: []string{
+								"websecure",
+							},
+							Rule: `Host("*")`,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "listener-websecure-https-439feda8e3f1dbdca529",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       dynamic.BalancerStrategy("wrr"),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100000000),
+								},
+							},
+						},
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"listener-websecure-https-439feda8e3f1dbdca529": {
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -10084,6 +10652,142 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:  "For Secret from ListenerSet",
+			paths: []string{"services.yml", "referencegrant/for_secret_from_listenerset.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web":       {Address: ":80"},
+				"websecure": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66": {
+							Service: "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-wrr",
+							Rule:    `Host("foo.example.com") && Path("/bar")`,
+							ParentRefs: []string{
+								"listener-websecure-https-439feda8e3f1dbdca529",
+							},
+							RuleSyntax: "default",
+							Priority:   100016,
+						},
+						"listener-websecure-https-439feda8e3f1dbdca529": {
+							EntryPoints: []string{
+								"websecure",
+							},
+							Rule: `Host("*")`,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "listener-websecure-https-439feda8e3f1dbdca529",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       dynamic.BalancerStrategy("wrr"),
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100000000),
+								},
+							},
+						},
+						"httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-ls-default-my-listenerset-ep-websecure-0-e5d13bf72345a718db66-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"listener-websecure-https-439feda8e3f1dbdca529": {
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Empty because ReferenceGrant spec.from does not match ListenerSet",
+			paths: []string{"services.yml", "referencegrant/for_secret_not_matching_from_listenerset.yml"},
+			entryPoints: map[string]Entrypoint{
+				"web":       {Address: ":80"},
+				"websecure": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Services:          map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Services:          map[string]*dynamic.TCPService{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{},
@@ -11274,7 +11978,7 @@ func Test_allowedRouteKinds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got, conditions := allowedRouteKinds(&gatev1.Gateway{}, test.listener, test.supportedRouteKinds)
+			got, conditions := allowedRouteKinds(0, test.listener, test.supportedRouteKinds)
 			if test.wantErr {
 				require.NotEmpty(t, conditions, "no conditions")
 				return
@@ -11747,7 +12451,7 @@ func Test_makeGatewayStatus(t *testing.T) {
 			p := Provider{}
 			gateway := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Infrastructure: test.infrastructure}}
 
-			status, _ := p.makeGatewayStatus(gateway, test.listeners, nil)
+			status, _ := p.makeGatewayStatus(gateway, test.listeners, nil, isGatewayAccepted(test.listeners))
 
 			condition := meta.FindStatusCondition(status.Conditions, string(gatev1.GatewayConditionAccepted))
 			require.NotNil(t, condition)
@@ -12172,4 +12876,687 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	}
 
 	return k8sObjects, gwObjects
+}
+
+func Test_listenerSetRefsGateway(t *testing.T) {
+	gw := &gatev1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-gw",
+			Namespace: "default",
+		},
+	}
+
+	testCases := []struct {
+		desc     string
+		ls       *gatev1.ListenerSet
+		expected bool
+	}{
+		{
+			desc: "Matching reference",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name: "my-gw",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "Wrong name",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name: "other-gw",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "Wrong namespace",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name:      "my-gw",
+						Namespace: new(gatev1.Namespace("other")),
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "Cross-namespace matching",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "other",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Name:      "my-gw",
+						Namespace: new(gatev1.Namespace("default")),
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "Wrong group",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Group: new(gatev1.Group("wrong.group")),
+						Name:  "my-gw",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "Wrong kind",
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-ls",
+					Namespace: "default",
+				},
+				Spec: gatev1.ListenerSetSpec{
+					ParentRef: gatev1.ParentGatewayReference{
+						Kind: new(gatev1.Kind("NotAGateway")),
+						Name: "my-gw",
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, listenerSetRefsGateway(test.ls, gw))
+		})
+	}
+}
+
+func Test_isListenerSetAllowed(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		gw         *gatev1.Gateway
+		ls         *gatev1.ListenerSet
+		namespaces []*corev1.Namespace
+		expected   bool
+	}{
+		{
+			desc: "Nil AllowedListeners",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec:       gatev1.GatewaySpec{},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: false,
+		},
+		{
+			desc: "Nil From",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: false,
+		},
+		{
+			desc: "FromNone",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: new(gatev1.NamespacesFromNone),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: false,
+		},
+		{
+			desc: "FromSame - same namespace",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: new(gatev1.NamespacesFromSame),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			},
+			expected: true,
+		},
+		{
+			desc: "FromSame - different namespace",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: new(gatev1.NamespacesFromSame),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "other"},
+			},
+			expected: false,
+		},
+		{
+			desc: "FromAll",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: new(gatev1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "any-namespace"},
+			},
+			expected: true,
+		},
+		{
+			desc: "FromSelector - matching namespace labels",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: new(gatev1.NamespacesFromSelector),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"env": "prod"},
+							},
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ls",
+					Namespace: "default",
+				},
+			},
+			namespaces: []*corev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "default",
+						Labels: map[string]string{"env": "prod"},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "FromSelector - non-matching namespace labels",
+			gw: &gatev1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatev1.GatewaySpec{
+					AllowedListeners: &gatev1.AllowedListeners{
+						Namespaces: &gatev1.ListenerNamespaces{
+							From: new(gatev1.NamespacesFromSelector),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"env": "prod"},
+							},
+						},
+					},
+				},
+			},
+			ls: &gatev1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ls",
+					Namespace: "default",
+				},
+			},
+			namespaces: []*corev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "default",
+						Labels: map[string]string{"env": "staging"},
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var k8sObjects []runtime.Object
+			for _, ns := range test.namespaces {
+				k8sObjects = append(k8sObjects, ns)
+			}
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 {
+				<-eventCh
+			}
+
+			p := Provider{client: client}
+
+			assert.Equal(t, test.expected, p.isListenerSetAllowed(t.Context(), test.gw, test.ls))
+		})
+	}
+}
+
+func Test_makeListenerSetStatus(t *testing.T) {
+	testCases := []struct {
+		desc                   string
+		info                   *listenerSetInfo
+		allListeners           []gatewayListener
+		parentAccepted         bool
+		wantAccepted           bool
+		wantAcceptedStatus     metav1.ConditionStatus
+		wantAcceptedReason     string
+		wantProgrammedStatus   metav1.ConditionStatus
+		wantProgrammedReason   string
+		wantListenerEntryCount int
+		// wantEntryName, when set, asserts the first listener entry's name and its
+		// entry-level Programmed condition, so the per-listener status is verified and
+		// not only the entry count.
+		wantEntryName             gatev1.SectionName
+		wantEntryProgrammedStatus metav1.ConditionStatus
+		wantEntryProgrammedReason string
+	}{
+		{
+			desc: "All listeners valid, Gateway accepted",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				allowed: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:  "http",
+					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Status: &gatev1.ListenerStatus{
+						Name:           "http",
+						SupportedKinds: []gatev1.RouteGroupKind{{Kind: "HTTPRoute", Group: new(gatev1.Group(gatev1.GroupName))}},
+						Conditions:     []metav1.Condition{}, // No errors.
+					},
+				},
+			},
+			parentAccepted:            true,
+			wantAccepted:              true,
+			wantAcceptedStatus:        metav1.ConditionTrue,
+			wantAcceptedReason:        string(gatev1.ListenerSetReasonAccepted),
+			wantProgrammedStatus:      metav1.ConditionTrue,
+			wantProgrammedReason:      string(gatev1.ListenerSetReasonProgrammed),
+			wantListenerEntryCount:    1,
+			wantEntryName:             "http",
+			wantEntryProgrammedStatus: metav1.ConditionTrue,
+			wantEntryProgrammedReason: string(gatev1.ListenerEntryReasonProgrammed),
+		},
+		{
+			desc: "Gateway not accepted",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				allowed: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:  "http",
+					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Status: &gatev1.ListenerStatus{
+						Name:       "http",
+						Conditions: []metav1.Condition{},
+					},
+				},
+			},
+			parentAccepted:            false,
+			wantAcceptedStatus:        metav1.ConditionFalse,
+			wantAcceptedReason:        string(gatev1.ListenerSetReasonParentNotAccepted),
+			wantProgrammedStatus:      metav1.ConditionFalse,
+			wantProgrammedReason:      "ParentNotProgrammed",
+			wantListenerEntryCount:    1,
+			wantEntryName:             "http",
+			wantEntryProgrammedStatus: metav1.ConditionFalse,
+			wantEntryProgrammedReason: string(gatev1.ListenerEntryReasonPending),
+		},
+		{
+			desc: "No valid listener",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				allowed: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:  "http",
+					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Status: &gatev1.ListenerStatus{
+						Name: "http",
+						Conditions: []metav1.Condition{
+							{
+								Type:   string(gatev1.ListenerConditionAccepted),
+								Status: metav1.ConditionFalse,
+								Reason: string(gatev1.ListenerReasonPortUnavailable),
+							},
+						},
+					},
+				},
+			},
+			parentAccepted:         true,
+			wantAcceptedStatus:     metav1.ConditionFalse,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonListenersNotValid),
+			wantProgrammedStatus:   metav1.ConditionFalse,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonListenersNotValid),
+			wantListenerEntryCount: 1,
+		},
+		{
+			desc: "At least one valid listener",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				allowed: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:  "http",
+					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Status: &gatev1.ListenerStatus{
+						Name:       "http",
+						Conditions: []metav1.Condition{},
+					},
+				},
+				{
+					Name:  "invalid",
+					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Status: &gatev1.ListenerStatus{
+						Name: "invalid",
+						Conditions: []metav1.Condition{
+							{
+								Type:   string(gatev1.ListenerConditionAccepted),
+								Status: metav1.ConditionFalse,
+								Reason: string(gatev1.ListenerReasonPortUnavailable),
+							},
+						},
+					},
+				},
+			},
+			parentAccepted:         true,
+			wantAccepted:           true,
+			wantAcceptedStatus:     metav1.ConditionTrue,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonListenersNotValid),
+			wantProgrammedStatus:   metav1.ConditionTrue,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
+			wantListenerEntryCount: 2,
+		},
+		{
+			desc: "Filters out listeners from other ListenerSets",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "default",
+						Generation: 1,
+					},
+				},
+				allowed: true,
+			},
+			allListeners: []gatewayListener{
+				{
+					Name:  "http",
+					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "other-ls"},
+					Status: &gatev1.ListenerStatus{
+						Name:       "http",
+						Conditions: []metav1.Condition{},
+					},
+				},
+				{
+					Name:  "http-gw",
+					Owner: listenerOwner{Kind: kindGateway, Namespace: "default", Name: "my-gw"},
+					Status: &gatev1.ListenerStatus{
+						Name:       "http-gw",
+						Conditions: []metav1.Condition{},
+					},
+				},
+			},
+			parentAccepted:         true,
+			wantAccepted:           true,
+			wantAcceptedStatus:     metav1.ConditionTrue,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonAccepted),
+			wantProgrammedStatus:   metav1.ConditionTrue,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
+			wantListenerEntryCount: 0, // No listeners belong to this ListenerSet.
+		},
+		{
+			desc: "ListenerSet not allowed by Gateway",
+			info: &listenerSetInfo{
+				listenerSet: &gatev1.ListenerSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "my-ls",
+						Namespace:  "other-ns",
+						Generation: 2,
+					},
+				},
+				allowed: false,
+			},
+			allListeners:           nil,
+			wantAcceptedStatus:     metav1.ConditionFalse,
+			wantAcceptedReason:     string(gatev1.ListenerSetReasonNotAllowed),
+			wantProgrammedStatus:   metav1.ConditionFalse,
+			wantProgrammedReason:   string(gatev1.ListenerSetReasonNotAllowed),
+			wantListenerEntryCount: 0,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			status, accepted := makeListenerSetStatus(test.info, test.allListeners, test.parentAccepted)
+
+			assert.Equal(t, test.wantAccepted, accepted)
+			assert.Len(t, status.Listeners, test.wantListenerEntryCount)
+
+			var acceptedCond, programmedCond *metav1.Condition
+			for _, c := range status.Conditions {
+				switch c.Type {
+				case string(gatev1.ListenerSetConditionAccepted):
+					acceptedCond = &c
+				case string(gatev1.ListenerSetConditionProgrammed):
+					programmedCond = &c
+				}
+			}
+
+			require.NotNil(t, acceptedCond)
+			assert.Equal(t, test.wantAcceptedStatus, acceptedCond.Status)
+			assert.Equal(t, test.wantAcceptedReason, acceptedCond.Reason)
+
+			require.NotNil(t, programmedCond)
+			assert.Equal(t, test.wantProgrammedStatus, programmedCond.Status)
+			assert.Equal(t, test.wantProgrammedReason, programmedCond.Reason)
+
+			if test.wantEntryName != "" {
+				require.NotEmpty(t, status.Listeners)
+				entry := status.Listeners[0]
+				assert.Equal(t, test.wantEntryName, entry.Name)
+
+				var entryProgrammed *metav1.Condition
+				for _, c := range entry.Conditions {
+					if c.Type == string(gatev1.ListenerEntryConditionProgrammed) {
+						entryProgrammed = &c
+					}
+				}
+				require.NotNil(t, entryProgrammed)
+				assert.Equal(t, test.wantEntryProgrammedStatus, entryProgrammed.Status)
+				assert.Equal(t, test.wantEntryProgrammedReason, entryProgrammed.Reason)
+			}
+		})
+	}
+}
+
+// Test_loadListenerSetListeners covers the listener-level outcomes of merging the
+// ListenerSet listeners into the Gateway ones: the conflict conditions, the precedence
+// between siblings, and the programming gate of the parent Gateway.
+func Test_loadListenerSetListeners(t *testing.T) {
+	gateway := &gatev1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default"},
+		Spec: gatev1.GatewaySpec{
+			AllowedListeners: &gatev1.AllowedListeners{
+				Namespaces: &gatev1.ListenerNamespaces{From: new(gatev1.NamespacesFromAll)},
+			},
+		},
+	}
+
+	listenerSet := func(name string, created time.Time, listeners ...gatev1.ListenerEntry) *gatev1.ListenerSet {
+		return &gatev1.ListenerSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              name,
+				Namespace:         "default",
+				CreationTimestamp: metav1.NewTime(created),
+			},
+			Spec: gatev1.ListenerSetSpec{
+				ParentRef: gatev1.ParentGatewayReference{Name: "my-gateway"},
+				Listeners: listeners,
+			},
+		}
+	}
+
+	type wantListener struct {
+		name     string
+		attached bool
+		reason   string
+	}
+
+	testCases := []struct {
+		desc            string
+		gatewayListener *gatev1.Listener
+		listenerSets    []*gatev1.ListenerSet
+		wantListeners   []wantListener
+	}{
+		{
+			desc:            "Protocol conflict with a Gateway listener",
+			gatewayListener: &gatev1.Listener{Name: "web", Protocol: gatev1.HTTPProtocolType, Port: 80},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{Name: "tcp", Protocol: gatev1.TCPProtocolType, Port: 80}),
+			},
+			wantListeners: []wantListener{{name: "tcp", reason: string(gatev1.ListenerReasonProtocolConflict)}},
+		},
+		{
+			desc:            "Hostname conflict with a Gateway listener",
+			gatewayListener: &gatev1.Listener{Name: "web", Protocol: gatev1.HTTPProtocolType, Port: 80},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+			},
+			wantListeners: []wantListener{{name: "http", reason: string(gatev1.ListenerReasonHostnameConflict)}},
+		},
+		{
+			// The newer ListenerSet sorts first by name: only the creation timestamp
+			// makes the older one win the conflict.
+			desc: "Older ListenerSet wins the conflict with its sibling",
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("ls-a-newer", time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+				listenerSet("ls-z-older", time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC), gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+			},
+			wantListeners: []wantListener{
+				{name: "http", attached: true},
+				{name: "http", reason: string(gatev1.ListenerReasonHostnameConflict)},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{EntryPoints: map[string]Entrypoint{"web": {Address: ":80"}}}
+
+			allocation := newListenerAllocation()
+			if test.gatewayListener != nil {
+				allocation.claim(*test.gatewayListener)
+			}
+
+			listeners, _ := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocation, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
+			require.Len(t, listeners, len(test.wantListeners))
+
+			for i, want := range test.wantListeners {
+				assert.Equal(t, want.name, listeners[i].Name)
+				assert.Equal(t, want.attached, listeners[i].Attached)
+
+				if want.reason == "" {
+					assert.Empty(t, listeners[i].Status.Conditions)
+					continue
+				}
+
+				require.NotEmpty(t, listeners[i].Status.Conditions)
+				for _, condition := range listeners[i].Status.Conditions {
+					assert.Equal(t, want.reason, condition.Reason)
+				}
+			}
+		})
+	}
 }
