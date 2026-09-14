@@ -93,7 +93,8 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	if err := setupLogger(ctx, staticConfiguration); err != nil {
+	rotateTraefikLog, err := setupLogger(ctx, staticConfiguration)
+	if err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
@@ -130,7 +131,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	stats(staticConfiguration)
 
-	svr, err := setupServer(staticConfiguration)
+	svr, err := setupServer(staticConfiguration, rotateTraefikLog)
 	if err != nil {
 		return err
 	}
@@ -178,7 +179,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	return nil
 }
 
-func setupServer(staticConfiguration *static.Configuration) (*server.Server, error) {
+func setupServer(staticConfiguration *static.Configuration, rotateTraefikLog func() error) (*server.Server, error) {
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
 	ctx := context.Background()
@@ -222,7 +223,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(ctx, staticConfiguration.AccessLog)
 	tracer, tracerCloser := setupTracing(ctx, staticConfiguration.Tracing)
-	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser)
+	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser, rotateTraefikLog)
 
 	// Entrypoints
 
