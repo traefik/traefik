@@ -3,6 +3,7 @@ package ratelimiter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -42,7 +43,10 @@ type rateLimiter struct {
 }
 
 // New returns a rate limiter middleware.
-func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string) (http.Handler, error) {
+//
+// The registry holds the token buckets shared by the routers referencing the same
+// middleware. It may be nil, in which case this middleware always gets its own buckets.
+func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string, registry *BucketRegistry) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
 
@@ -99,16 +103,49 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
-	var limiter limiter
+	var bucket limiter
 	if config.Redis != nil {
-		limiter, err = newRedisLimiter(ctx, rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
-		if err != nil {
-			return nil, fmt.Errorf("creating redis limiter: %w", err)
+		// The Redis buckets live in the store and are keyed by middleware name, so the
+		// routers referencing a middleware already share them whatever this setting says.
+		// Sharing the limiter as well is therefore not a behavior change; it means one
+		// client connection pool per middleware rather than one per referencing router.
+		switch config.Scope {
+		// The empty value is handled here to comply with providers that do not apply
+		// defaults (e.g. the REST provider).
+		case dynamic.RateLimitScopeMiddleware, "":
+			bucket, err = sharedLimiter(registry, name, func() (limiter, error) {
+				return newRedisLimiter(ctx, rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("creating redis limiter: %w", err)
+			}
+
+		case dynamic.RateLimitScopeRouter:
+			return nil, errors.New("rate limit scope router is not supported with the Redis bucket, as its keys do not carry the router")
+
+		default:
+			return nil, fmt.Errorf("unsupported rate limit scope %q", config.Scope)
 		}
 	} else {
-		limiter, err = newInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
-		if err != nil {
-			return nil, fmt.Errorf("creating in-memory limiter: %w", err)
+		switch config.Scope {
+		// The empty value is handled here to comply with providers that do not apply
+		// defaults (e.g. the REST provider).
+		case dynamic.RateLimitScopeRouter, "":
+			bucket, err = newInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
+			if err != nil {
+				return nil, fmt.Errorf("creating in-memory limiter: %w", err)
+			}
+
+		case dynamic.RateLimitScopeMiddleware:
+			bucket, err = sharedLimiter(registry, name, func() (limiter, error) {
+				return newInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("creating in-memory limiter: %w", err)
+			}
+
+		default:
+			return nil, fmt.Errorf("unsupported rate limit scope %q", config.Scope)
 		}
 	}
 
@@ -119,7 +156,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		maxDelay:      maxDelay,
 		next:          next,
 		sourceMatcher: sourceMatcher,
-		limiter:       limiter,
+		limiter:       bucket,
 	}, nil
 }
 
