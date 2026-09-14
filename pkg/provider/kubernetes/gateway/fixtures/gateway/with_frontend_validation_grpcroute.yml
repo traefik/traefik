@@ -1,0 +1,19 @@
+---
+kind: GRPCRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: grpc-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+      sectionName: https
+  hostnames:
+    - foo.com
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
