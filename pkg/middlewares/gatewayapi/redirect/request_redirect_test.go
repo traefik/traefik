@@ -122,6 +122,24 @@ func TestRequestRedirectHandler(t *testing.T) {
 			wantStatus: http.StatusFound,
 		},
 		{
+			desc: "replace path of a request carrying an encoded slash",
+			config: dynamic.RequestRedirect{
+				Path: new("/a/b"),
+			},
+			url:        "http://foo.com:80/a%2Fb",
+			wantURL:    "http://foo.com:80/a/b",
+			wantStatus: http.StatusFound,
+		},
+		{
+			desc: "replace path of a request carrying the same path unencoded",
+			config: dynamic.RequestRedirect{
+				Path: new("/a/b"),
+			},
+			url:        "http://foo.com:80/a/b",
+			wantURL:    "http://foo.com:80/a/b",
+			wantStatus: http.StatusFound,
+		},
+		{
 			desc: "only hostname",
 			config: dynamic.RequestRedirect{
 				Hostname: new("bar.com"),
