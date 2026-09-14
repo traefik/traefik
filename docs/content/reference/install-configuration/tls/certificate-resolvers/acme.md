@@ -78,7 +78,7 @@ ACME certificate resolvers have the following configuration options:
 | <a id="opt-acme-email" href="#opt-acme-email" title="#opt-acme-email">`acme.email`</a> | Email address used for registration. | "" | Yes |
 | <a id="opt-acme-caServer" href="#opt-acme-caServer" title="#opt-acme-caServer">`acme.caServer`</a> | CA server to use. | https://acme-v02.api.letsencrypt.org/directory | No |
 | <a id="opt-acme-preferredChain" href="#opt-acme-preferredChain" title="#opt-acme-preferredChain">`acme.preferredChain`</a> | Preferred chain to use. If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used. | "" | No |
-| <a id="opt-acme-keyType" href="#opt-acme-keyType" title="#opt-acme-keyType">`acme.keyType`</a> | KeyType to use. | "RSA4096" | No |
+| <a id="opt-acme-keyType" href="#opt-acme-keyType" title="#opt-acme-keyType">`acme.keyType`</a> | KeyType to use. | "EC256" | No |
 | <a id="opt-acme-disableCommonName" href="#opt-acme-disableCommonName" title="#opt-acme-disableCommonName">`acme.disableCommonName`</a> | Disable the common name in the CSR.                                                                                                                                                                                                                        | false                                          | No       |
 | <a id="opt-acme-profile" href="#opt-acme-profile" title="#opt-acme-profile">`acme.profile`</a> | Certificate profile to use. | "" | No |
 | <a id="opt-acme-caCertificates" href="#opt-acme-caCertificates" title="#opt-acme-caCertificates">`acme.caCertificates`</a> | Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list. | [] | No |
@@ -145,7 +145,7 @@ with instructions about which environment variables need to be setup.
 ??? info "`delayBeforeChecks`"
     By default, the `provider` verifies the TXT record _before_ letting ACME verify.
     You can delay this operation by specifying a delay (in seconds) with `delayBeforeChecks` (value must be greater than zero).
-    This option is useful when internal networks block external DNS queries.      
+    This option is useful when internal networks block external DNS queries.
 
 ### `tlsChallenge`
 
@@ -300,24 +300,24 @@ without additional configuration.
 For this reason, users can run multiple instances of Traefik at the same time to
 achieve HA, as is a common pattern in the kubernetes ecosystem.
 
-When using a single instance of Traefik Proxy with Let's Encrypt, 
+When using a single instance of Traefik Proxy with Let's Encrypt,
 you should encounter no issues. However, this could be a single point of failure.
-Unfortunately, it is not possible to run multiple instances of Traefik 2.0 
-with Let's Encrypt enabled, because there is no way to ensure that the correct 
+Unfortunately, it is not possible to run multiple instances of Traefik 2.0
+with Let's Encrypt enabled, because there is no way to ensure that the correct
 instance of Traefik receives the challenge request, and subsequent responses.
-Early versions (v1.x) of Traefik used a 
-[KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) 
-to attempt to achieve this, but due to sub-optimal performance that feature 
+Early versions (v1.x) of Traefik used a
+[KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage)
+to attempt to achieve this, but due to sub-optimal performance that feature
 was dropped in 2.0.
 
 If you need Let's Encrypt with high availability in a Kubernetes environment,
-we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/) 
+we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/)
 which includes distributed Let's Encrypt as a supported feature.
 
 If you want to keep using Traefik Proxy,
 LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://cert-manager.io/docs/).
 When using Cert-Manager to manage certificates,
-it creates secrets in your namespaces that can be referenced as TLS secrets in 
+it creates secrets in your namespaces that can be referenced as TLS secrets in
 your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls)
 .
 

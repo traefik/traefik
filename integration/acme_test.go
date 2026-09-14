@@ -141,7 +141,7 @@ func (s *AcmeSuite) TestHTTP01Domains() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Domains: []types.Domain{{
@@ -164,7 +164,7 @@ func (s *AcmeSuite) TestHTTP01StoreDomains() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Domain: types.Domain{
@@ -187,7 +187,7 @@ func (s *AcmeSuite) TestHTTP01DomainsInSAN() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    "acme.wtf",
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Domains: []types.Domain{{
@@ -211,7 +211,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRule() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Acme: map[string]static.CertificateResolver{
@@ -232,12 +232,12 @@ func (s *AcmeSuite) TestMultipleResolver() {
 			{
 				host:              acmeDomain,
 				expectedDomain:    acmeDomain,
-				expectedAlgorithm: x509.RSA,
+				expectedAlgorithm: x509.ECDSA,
 			},
 			{
 				host:              "tchouk.acme.wtf",
 				expectedDomain:    "tchouk.acme.wtf",
-				expectedAlgorithm: x509.ECDSA,
+				expectedAlgorithm: x509.RSA,
 			},
 		},
 		template: templateModel{
@@ -247,7 +247,7 @@ func (s *AcmeSuite) TestMultipleResolver() {
 				}},
 				"tchouk": {ACME: &acme.Configuration{
 					TLSChallenge: &acme.TLSChallenge{},
-					KeyType:      "EC256",
+					KeyType:      "RSA4096",
 				}},
 			},
 		},
@@ -283,7 +283,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleInvalidAlgo() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Acme: map[string]static.CertificateResolver{
@@ -346,7 +346,7 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRuleTCP() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Acme: map[string]static.CertificateResolver{
@@ -366,7 +366,7 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRule() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Acme: map[string]static.CertificateResolver{
@@ -386,7 +386,7 @@ func (s *AcmeSuite) TestTLSALPN01Domains() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Domains: []types.Domain{{
@@ -409,7 +409,7 @@ func (s *AcmeSuite) TestTLSALPN01DomainsInSAN() {
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    "acme.wtf",
-			expectedAlgorithm: x509.RSA,
+			expectedAlgorithm: x509.ECDSA,
 		}},
 		template: templateModel{
 			Domains: []types.Domain{{
