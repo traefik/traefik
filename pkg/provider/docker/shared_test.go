@@ -1,15 +1,33 @@
 package docker
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
 	containertypes "github.com/moby/moby/api/types/container"
 	networktypes "github.com/moby/moby/api/types/network"
 	swarmtypes "github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type fakeContainersClient struct {
+	client.APIClient
+
+	containers []containertypes.Summary
+	inspect    containertypes.InspectResponse
+	inspectErr error
+}
+
+func (c *fakeContainersClient) ContainerList(_ context.Context, _ client.ContainerListOptions) (client.ContainerListResult, error) {
+	return client.ContainerListResult{Items: c.containers}, nil
+}
+
+func (c *fakeContainersClient) ContainerInspect(_ context.Context, _ string, _ client.ContainerInspectOptions) (client.ContainerInspectResult, error) {
+	return client.ContainerInspectResult{Container: c.inspect}, c.inspectErr
+}
 
 func Test_getPort_docker(t *testing.T) {
 	testCases := []struct {
@@ -72,6 +90,52 @@ func Test_getPort_docker(t *testing.T) {
 
 			actual := getPort(dData, test.serverPort)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func Test_listContainers_inspectFallback(t *testing.T) {
+	labels := map[string]string{"traefik.http.services.foo.loadbalancer.server.port": "8080"}
+
+	testCases := []struct {
+		desc       string
+		summary    containertypes.Summary
+		expectKeep bool
+	}{
+		{
+			desc:       "inspect error without labels is skipped",
+			summary:    containertypes.Summary{ID: "abc", Names: []string{"/foo"}},
+			expectKeep: false,
+		},
+		{
+			desc:       "inspect error with labels falls back to summary",
+			summary:    containertypes.Summary{ID: "abc", Names: []string{"/foo"}, Labels: labels},
+			expectKeep: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			fake := &fakeContainersClient{
+				containers: []containertypes.Summary{test.summary},
+				inspectErr: assert.AnError,
+			}
+
+			p := &Provider{Shared: Shared{ExposedByDefault: true}}
+			got, err := p.listContainers(t.Context(), fake)
+			require.NoError(t, err)
+
+			if !test.expectKeep {
+				assert.Empty(t, got)
+				return
+			}
+
+			require.Len(t, got, 1)
+			assert.Equal(t, "abc", got[0].ID)
+			assert.Equal(t, "/foo", got[0].Name)
+			assert.Equal(t, labels, got[0].Labels)
 		})
 	}
 }
