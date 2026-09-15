@@ -1,0 +1,4 @@
+Goal: Run as non root user in container 
+Per issue #11679
+
+
