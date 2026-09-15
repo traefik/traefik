@@ -195,6 +195,62 @@ entryPoints:
 --entryPoints.web.allowACMEByPass=true
 ```
 
+### http.redirections
+
+- `http.redirections.entryPoint` redirects every request received on the entryPoint
+to another entryPoint or to an explicit port.
+- The router created for the redirection matches **any host**: it is attached to a
+catch-all rule, and the request `Host` header is not checked against the routers
+configured on the target entryPoint.
+- The `Location` header of the response is built from the `Host` header of the
+request, so the client chooses the host it is redirected to.
+
+!!! warning "The redirection does not constrain the host"
+
+    Because the redirection matches any host, the value a client sends in the `Host`
+    header is reflected back in the `Location` response header. If that is a concern
+    for your deployment, do not rely on the entryPoint redirection: declare a router
+    with an explicit [`Host` rule](../routing-configuration/http/routing/router.md)
+    and attach a
+    [RedirectScheme](../routing-configuration/http/middlewares/redirectscheme.md)
+    middleware to it, so that only the hosts you list are redirected.
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  routers:
+    redirect-to-https:
+      entryPoints:
+        - web
+      rule: Host(`example.com`) || Host(`www.example.com`)
+      service: noop@internal
+      middlewares:
+        - redirect-to-https
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.redirect-to-https.redirectScheme]
+    scheme = "https"
+    permanent = true
+
+[http.routers]
+  [http.routers.redirect-to-https]
+    entryPoints = ["web"]
+    rule = "Host(`example.com`) || Host(`www.example.com`)"
+    service = "noop@internal"
+    middlewares = ["redirect-to-https"]
+```
+
+To attach the middleware to every router of an entryPoint instead of listing the
+hosts explicitly, use the [`http.middlewares`](#httpmiddlewares) option of the
+entryPoint.
+
 ### http.middlewares
 
 - You can attach a list of [middlewares](../../reference/routing-configuration/http/middlewares/overview.md)
