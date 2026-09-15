@@ -125,6 +125,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0
 )
 
+require go.opentelemetry.io/contrib/instrumentation/runtime v0.69.0
+
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
