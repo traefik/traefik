@@ -87,6 +87,20 @@ spec:
                 description: DisableSessionTickets disables TLS session resumption
                   via session tickets.
                 type: boolean
+              echDecryptOnlyKeys:
+                description: |-
+                  ECHDecryptOnlyKeys defines the names of the referenced Kubernetes Secrets storing rotated-out Encrypted Client Hello keys,
+                  still accepted for decryption but no longer advertised to clients.
+                items:
+                  type: string
+                type: array
+              echKeys:
+                description: ECHKeys defines the names of the referenced Kubernetes
+                  Secrets storing RFC 9934 PEM-encoded Encrypted Client Hello keys
+                  under the tls.ech key.
+                items:
+                  type: string
+                type: array
               maxVersion:
                 description: |-
                   MaxVersion defines the maximum TLS version that Traefik will accept.

@@ -2009,6 +2009,16 @@ func (in *TLSOptionSpec) DeepCopyInto(out *TLSOptionSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.ECHKeys != nil {
+		in, out := &in.ECHKeys, &out.ECHKeys
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.ECHDecryptOnlyKeys != nil {
+		in, out := &in.ECHDecryptOnlyKeys, &out.ECHDecryptOnlyKeys
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.PreferServerCipherSuites != nil {
 		in, out := &in.PreferServerCipherSuites, &out.PreferServerCipherSuites
 		*out = new(bool)
