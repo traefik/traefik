@@ -51,6 +51,7 @@ type Configuration struct {
 	DisableCommonName    bool     `description:"Disable the common name in the CSR." json:"disableCommonName,omitempty" toml:"disableCommonName,omitempty" yaml:"disableCommonName,omitempty" export:"true"`
 	Storage              string   `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
 	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	RenewKey             bool     `description:"Renew the private key when renewing certificates." json:"renewKey,omitempty" toml:"renewKey,omitempty" yaml:"renewKey,omitempty" export:"true"`
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
@@ -936,8 +937,12 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		res := certificate.Resource{
 			ID:          cert.Domain.Main,
 			Domains:     cert.Domain.ToStrArray(),
-			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
+		}
+		if p.RenewKey {
+			res.KeyType = GetKeyType(ctx, p.KeyType)
+		} else {
+			res.PrivateKey = cert.Key
 		}
 
 		opts := &certificate.RenewOptions{
