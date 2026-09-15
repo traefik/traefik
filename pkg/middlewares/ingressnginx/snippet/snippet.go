@@ -620,7 +620,11 @@ func writeHeader(req, forwardReq *http.Request) {
 	}
 
 	forwardReq.Header.Del(xForwardedURI)
-	if req.URL.RequestURI() != "" {
-		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
+	uri := ingressnginx.OriginalURI(req)
+	if uri == "" {
+		uri = req.URL.RequestURI()
+	}
+	if uri != "" {
+		forwardReq.Header.Set(xForwardedURI, uri)
 	}
 }
