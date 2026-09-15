@@ -55,7 +55,7 @@ spec:
 
 | Field                                                                                                                                          | Description                                                                                                                                                                                                                                                                 | Default | Required |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address.                                                                                                                                                                                                                                              | "" | Yes      |
+| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address. <br /> Supports the `http`, `https`, and `h2c` schemes. <br /> More information [here](#address).                                                                                                                                            | "" | Yes      |
 | <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers.                                                                                                                                                                                                                                          <br/>The trustForwardHeader option is deprecated and will be removed in the next major version. <br/>More information [here](#trustforwardheader)| - | No      |
 | <a id="opt-authResponseHeaders" href="#opt-authResponseHeaders" title="#opt-authResponseHeaders">`authResponseHeaders`</a> | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.                                                                                                                                   | [] | No      |
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex).                                                     | "" | No      |
@@ -74,6 +74,46 @@ spec:
 | <a id="opt-tls-caSecret" href="#opt-tls-caSecret" title="#opt-tls-caSecret">`tls.caSecret`</a> | Defines the secret that contains the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. **This option is only available for the Kubernetes CRD**.                                                        | | No |
 | <a id="opt-tls-certSecret" href="#opt-tls-certSecret" title="#opt-tls-certSecret">`tls.certSecret`</a> | Defines the secret that contains both the private and public certificates used for the secure connection to the authentication server. **This option is only available for the Kubernetes CRD**.                                                                            |  | No |
 | <a id="opt-tls-insecureSkipVerify" href="#opt-tls-insecureSkipVerify" title="#opt-tls-insecureSkipVerify">`tls.insecureSkipVerify`</a> | During TLS connections, if this option is set to `true`, the authentication server will accept any certificate presented by the server regardless of the host names it covers.                                                                                              | false | No |
+
+### address
+
+The `address` option accepts the `http`, `https`, and `h2c` schemes.
+
+Use the `h2c` scheme to reach an authentication server that only speaks unencrypted HTTP/2 (cleartext, prior knowledge):
+
+```yaml tab="Structured (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "h2c://auth-server:8080/auth"
+```
+
+```toml tab="Structured (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "h2c://auth-server:8080/auth"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.address=h2c://auth-server:8080/auth"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: h2c://auth-server:8080/auth
+```
+
+Using `h2c` only makes sense when the authentication server itself is reachable over cleartext HTTP/2 on an internal network where TLS termination is not required.
+For authentication servers reachable over regular cleartext HTTP/1.1, or over TLS, use the `http` or `https` schemes instead.
+
+At high request rates, `h2c` can also reduce connection overhead compared to `http`: HTTP/1.1 request are limited to two idle connections reused per host by default, so a request burst to the same authentication server opens additional short-lived connections, whereas HTTP/2 multiplexes many concurrent requests over a single connection.
 
 ### authResponseHeadersRegex
 

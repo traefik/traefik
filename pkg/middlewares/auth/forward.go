@@ -134,6 +134,22 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.client.Transport = tr
 	}
 
+	// The h2c scheme is not natively supported by the HTTP client
+	if addr, err := url.Parse(config.Address); err == nil && addr.Scheme == "h2c" {
+		addr.Scheme = "http"
+		fa.address = addr.String()
+
+		tr, ok := fa.client.Transport.(*http.Transport)
+		if !ok {
+			tr = http.DefaultTransport.(*http.Transport).Clone()
+		}
+		tr.Protocols = new(http.Protocols)
+		tr.Protocols.SetHTTP1(false)
+		tr.Protocols.SetUnencryptedHTTP2(true)
+		tr.ForceAttemptHTTP2 = true
+		fa.client.Transport = tr
+	}
+
 	if config.AuthResponseHeadersRegex != "" {
 		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
 		if err != nil {
