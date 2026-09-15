@@ -1,6 +1,7 @@
 package fast
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -587,8 +588,61 @@ func TestXForwardedFor(t *testing.T) {
 	}
 }
 
+// TestStickyConnPool ensures that a connection-bound NTLM/Negotiate authentication is isolated to the frontend
+// connection that carried the credential, and never leaks the authenticated backend connection to another one.
+func TestStickyConnPool(t *testing.T) {
+	const backendConnHeader = "X-Backend-Conn"
+
+	// RemoteAddr identifies the backend connection, so the test can observe which backend connection serves a request.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set(backendConnHeader, req.RemoteAddr)
+	}))
+	t.Cleanup(backend.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{serversTransport: &dynamic.ServersTransport{MaxIdleConnsPerHost: 10}}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("default@internal", testhelpers.MustParseURL(backend.URL), false, false)
+	require.NoError(t, err)
+
+	// Each context stands for a distinct frontend connection, as the entrypoint would set it up.
+	backendConnFor := func(ctx context.Context, authorization string) string {
+		t.Helper()
+
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody).WithContext(ctx)
+		if authorization != "" {
+			req.Header.Set("Authorization", authorization)
+		}
+
+		res := httptest.NewRecorder()
+		proxyHandler.ServeHTTP(res, req)
+		require.Equal(t, http.StatusOK, res.Code)
+
+		return res.Header().Get(backendConnHeader)
+	}
+
+	firstConn := AddConnPoolsOnContext(context.Background())
+	secondConn := AddConnPoolsOnContext(context.Background())
+
+	// Credential-less requests are served from the shared pool, so they reuse the same backend connection.
+	sharedConn := backendConnFor(firstConn, "")
+	assert.Equal(t, sharedConn, backendConnFor(secondConn, ""))
+
+	// A request carrying an NTLM credential is moved onto a pool dedicated to its frontend connection.
+	firstStickyConn := backendConnFor(firstConn, "NTLM TlRMTVNTUAAB")
+	assert.NotEqual(t, sharedConn, firstStickyConn)
+	// That dedicated connection is then reused even by a later credential-less request, which is what a
+	// connection-bound authentication relies on.
+	assert.Equal(t, firstStickyConn, backendConnFor(firstConn, ""))
+
+	// A client must never be served by the connection another one authenticated on.
+	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, ""))
+	// Authenticated clients each get their own dedicated connection, never shared with one another.
+	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "NTLM TlRMTVNTUAAB"))
+}
+
 type transportManagerMock struct {
-	tlsConfig *tls.Config
+	tlsConfig        *tls.Config
+	serversTransport *dynamic.ServersTransport
 }
 
 func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
@@ -596,5 +650,8 @@ func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
 }
 
 func (r *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
+	if r.serversTransport != nil {
+		return r.serversTransport, nil
+	}
 	return &dynamic.ServersTransport{}, nil
 }

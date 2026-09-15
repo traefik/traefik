@@ -260,6 +260,20 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	ctx := req.Context()
 	trace := httptrace.ContextClientTrace(ctx)
 
+	// NTLM and Kerberos (Negotiate) are connection-bound authentication schemes: the backend keeps the connection
+	// carrying the credential bound to the authenticated identity. Such a request must not be dispatched through the
+	// shared pool, otherwise an unrelated frontend connection could later be handed the same socket and inherit the
+	// identity. It is dispatched through a pool dedicated to its frontend connection instead, and every subsequent
+	// request on that connection to the same backend reuses that pool to keep relying on the authenticated connection.
+	connPool := p.connPool
+	if stickyPools, ok := ctx.Value(connPoolsKey).(*stickyConnPools); ok {
+		if dedicated := stickyPools.get(p.connPool); dedicated != nil {
+			connPool = dedicated
+		} else if containsNTLMorNegotiate(req.Header.Values("Authorization")) {
+			connPool = stickyPools.stick(p.connPool)
+		}
+	}
+
 	var co *conn
 	for {
 		select {
@@ -270,7 +284,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		}
 
 		var err error
-		co, err = p.connPool.AcquireConn()
+		co, err = connPool.AcquireConn()
 		if err != nil {
 			return fmt.Errorf("acquire connection: %w", err)
 		}
@@ -313,7 +327,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		return err
 	}
 
-	p.connPool.ReleaseConn(co)
+	connPool.ReleaseConn(co)
 	return nil
 }
 
