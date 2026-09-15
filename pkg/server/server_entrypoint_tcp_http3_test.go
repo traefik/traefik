@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -318,13 +319,15 @@ func TestHTTP3ReadTimeout(t *testing.T) {
 func TestHTTP3StickyBackendTransport(t *testing.T) {
 	const backendConnHeader = "X-Backend-Conn"
 
-	// RemoteAddr identifies the backend connection, the challenge making Traefik stick to it as an NTLM backend would.
+	// RemoteAddr identifies the backend connection, so the test can observe Traefik sticking a client
+	// carrying an NTLM credential to a dedicated connection.
 	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("WWW-Authenticate", "NTLM")
 		rw.Header().Set(backendConnHeader, req.RemoteAddr)
-		rw.WriteHeader(http.StatusUnauthorized)
 	}))
 	t.Cleanup(backend.Close)
+
+	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
 
 	rtManager := service.NewRoundTripperManager()
 	rtManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
@@ -356,17 +359,15 @@ func TestHTTP3StickyBackendTransport(t *testing.T) {
 	router, err := tcprouter.NewRouter()
 	require.NoError(t, err)
 
-	router.AddHTTPTLSConfig("example.com", &tls.Config{
-		Certificates: []tls.Certificate{tlsCert},
-	}, traefiktls.DefaultTLSConfigName)
+	router.AddHTTPTLSConfig("example.com", &tls.Config{Certificates: []tls.Certificate{tlsCert}}, traefiktls.DefaultTLSConfigName)
 	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		outReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, backend.URL, http.NoBody)
-		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		// Reverse proxy the received request to the backend, keeping its Authorization header so the
+		// round tripper sticks the connection as it would for a real NTLM/Kerberos backend.
+		req.URL.Scheme = backendURL.Scheme
+		req.URL.Host = backendURL.Host
+		req.RequestURI = ""
 
-		resp, err := roundTripper.RoundTrip(outReq)
+		resp, err := roundTripper.RoundTrip(req)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadGateway)
 			return
@@ -406,11 +407,16 @@ func TestHTTP3StickyBackendTransport(t *testing.T) {
 		return transport
 	}
 
-	backendConnFor := func(transport *http3.Transport) string {
+	backendConnFor := func(transport *http3.Transport, withCredential bool) string {
 		t.Helper()
 
 		req, err := http.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
 		require.NoError(t, err)
+
+		// A request carrying an NTLM/Negotiate credential is what makes the round tripper stick the connection.
+		if withCredential {
+			req.Header.Set("Authorization", "NTLM TlRMTVNTUA==")
+		}
 
 		resp, err := transport.RoundTrip(req)
 		require.NoError(t, err)
@@ -421,21 +427,26 @@ func TestHTTP3StickyBackendTransport(t *testing.T) {
 		return resp.Header.Get(backendConnHeader)
 	}
 
-	firstClient, secondClient := newClient(), newClient()
+	firstClient, secondClient, thirdClient := newClient(), newClient(), newClient()
 
-	firstConn := backendConnFor(firstClient)
-	firstStickyConn := backendConnFor(firstClient)
-	firstReusedConn := backendConnFor(firstClient)
-	secondConn := backendConnFor(secondClient)
-	secondStickyConn := backendConnFor(secondClient)
+	firstConn := backendConnFor(firstClient, false)
+	firstStickyConn := backendConnFor(firstClient, true)
+	firstReusedConn := backendConnFor(firstClient, false)
+	secondConn := backendConnFor(secondClient, false)
+	secondStickyConn := backendConnFor(secondClient, true)
+	thirdStickyConn := backendConnFor(thirdClient, true)
 
-	// The challenge on the first call moves the following ones to a connection dedicated to that client.
+	// The credential-carrying call moves the client onto a connection dedicated to it.
 	assert.NotEqual(t, firstConn, firstStickyConn)
-	// That dedicated connection is then reused, which is what a connection-bound authentication relies on.
+	// That dedicated connection is then reused even by a later credential-less call, which is what a
+	// connection-bound authentication relies on.
 	assert.Equal(t, firstStickyConn, firstReusedConn)
 	// A client must never be served by the connection another one is stuck to.
 	assert.NotEqual(t, firstStickyConn, secondConn)
+	// Authenticated clients each get their own dedicated connection, never shared with one another.
 	assert.NotEqual(t, firstStickyConn, secondStickyConn)
+	assert.NotEqual(t, firstStickyConn, thirdStickyConn)
+	assert.NotEqual(t, secondStickyConn, thirdStickyConn)
 }
 
 func TestNewHTTP3ServerTimeouts(t *testing.T) {
