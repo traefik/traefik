@@ -4,7 +4,7 @@ set -e -o pipefail
 
 PROJECT_MODULE="github.com/traefik/traefik"
 MODULE_VERSION="v3"
-KUBE_VERSION=v0.36.3
+KUBE_VERSION=v0.37.1
 CURRENT_DIR="$(pwd)"
 
 go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
