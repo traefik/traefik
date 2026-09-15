@@ -8,7 +8,7 @@ KUBE_VERSION=v0.37.1
 CURRENT_DIR="$(pwd)"
 
 go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
-go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.21.0
+go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.22.0
 
 CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
 # shellcheck disable=SC1091 # Cannot check source of this file
