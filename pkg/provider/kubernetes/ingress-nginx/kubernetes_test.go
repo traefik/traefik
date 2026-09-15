@@ -14717,6 +14717,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme",
+								// Attached to the plaintext router too, so that a client cannot supply the
+								// Ssl-Client-* headers itself when this router reaches the backend.
+								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream",
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry",
 							},
 							Service: "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
@@ -14739,6 +14742,12 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+								CAFiles:        nil,
+							},
+						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -14798,6 +14807,177 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			// Without the redirect, the plaintext router reaches the backend, so it is the router that
+			// has to carry the middleware owning the Ssl-Client-* headers. Attaching it to the TLS
+			// router only would let a client send its own Ssl-Client-Verify: SUCCESS to the backend.
+			desc: "Auth TLS pass certificate to upstream with ssl-redirect disabled",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-pass-cert-ssl-redirect-disabled.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-pass-cert-ssl-redirect-disabled.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-tls-retry"},
+							Service:     "default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-auth-tls-pass-cert-ssl-redirect-disabled",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+							},
+						},
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-pass-cert-ssl-redirect-disabled.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								// Attached to the plaintext router too, so that a client cannot supply the
+								// Ssl-Client-* headers itself when this router reaches the backend.
+								"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-pass-certificate-to-upstream",
+								"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-retry",
+							},
+							Service: "default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-auth-tls-pass-cert-ssl-redirect-disabled",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+								CAFiles:        nil,
+							},
+						},
+
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+								CAFiles:        nil,
+							},
+						},
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -20473,6 +20653,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-redirect-scheme",
+								"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-pass-certificate-to-upstream",
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-retry",
 							},
 							Service: "default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-whoami-80",
@@ -20507,6 +20688,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
