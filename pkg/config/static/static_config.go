@@ -505,6 +505,10 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
+	if c.AccessLog != nil && (c.AccessLog.SampleRate < 0 || c.AccessLog.SampleRate > 1) {
+		return errors.New("access logs: sampleRate must be between 0.0 and 1.0")
+	}
+
 	if c.Log != nil && c.Log.OTLP != nil {
 		if c.Experimental == nil || !c.Experimental.OTLPLogs {
 			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
