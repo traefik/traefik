@@ -119,6 +119,15 @@ func (c *conn) readLoop() {
 
 		c.expectedResponse.Store(false)
 		c.ErrCh <- nil
+
+		// An upgraded connection belongs to the protocol copiers, and one of
+		// them can still be reading through the same bufio.Reader once the
+		// upgrade handler has returned. Peeking it again from here would be a
+		// concurrent use of that reader. The connection is not going back to
+		// the pool either, so there is nothing left to watch for.
+		if c.isUpgraded() {
+			return
+		}
 	}
 }
 
