@@ -14717,8 +14717,6 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme",
-								// Attached to the plaintext router too, so that a client cannot supply the
-								// Ssl-Client-* headers itself when this router reaches the backend.
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream",
 								"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry",
 							},
@@ -14853,9 +14851,6 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			// Without the redirect, the plaintext router reaches the backend, so it is the router that
-			// has to carry the middleware owning the Ssl-Client-* headers. Attaching it to the TLS
-			// router only would let a client send its own Ssl-Client-Verify: SUCCESS to the backend.
 			desc: "Auth TLS pass certificate to upstream with ssl-redirect disabled",
 			paths: []string{
 				"services.yml",
@@ -14894,8 +14889,6 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("auth-tls-pass-cert-ssl-redirect-disabled.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{
-								// Attached to the plaintext router too, so that a client cannot supply the
-								// Ssl-Client-* headers itself when this router reaches the backend.
 								"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-pass-certificate-to-upstream",
 								"default-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-rule-0-path-0-retry",
 							},
