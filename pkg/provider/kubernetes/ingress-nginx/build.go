@@ -267,15 +267,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Logger()
 		ctxIng := logger.WithContext(ctx)
 
-		// ssl-passthrough: handled per-rule.
-		if ptr.Deref(ing.config.SSLPassthrough, false) {
-			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
-			hasTLS := len(ing.Spec.TLS) > 0
-			if hasTLS {
-				if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
-					logger.Warn().Err(err).Msg("Error loading TLS certificates for ssl-passthrough ingress")
-				}
-			}
+		// ssl-passthrough only adds the TCP router forwarding the connection to the backend without decrypting it.
+		// The HTTP side of the ingress is built below like any other, ingress-nginx serving that host on the HTTP port from the regular location.
+		sslPassthrough := ptr.Deref(ing.config.SSLPassthrough, false)
+		if sslPassthrough {
 			for _, rule := range ing.Spec.Rules {
 				if rule.Host == "" {
 					logger.Error().Msg("Cannot process ssl-passthrough: rule has no host")
@@ -316,48 +311,30 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 				}
 
-				routerKey := ing.Namespace + "-" + ing.Name + "-" + provider.Normalize(rule.Host)
-				ptBackend := &sslPassthroughBackend{
+				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
 					BackendName: ptBackendName,
 					Hostname:    rule.Host,
-					RouterKey:   routerKey,
-					SSLRedirect: sslRedirectEnabled(ing.config, hasTLS),
-					Config:      ing.config,
-				}
-
-				// The serversTransport only shapes the HTTP router: when it cannot be built,
-				// the TCP passthrough router must still be created.
-				nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
-				if err != nil {
-					logger.Error().Err(err).Msgf("Cannot build serversTransport for ssl-passthrough on host %q, skipping its HTTP router", rule.Host)
-				} else {
-					ptBackend.HTTPServiceName = ing.Namespace + "-" + ing.Name + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port)
-					ptBackend.ServersTransportName = nst.name
-					ptBackend.ServersTransport = nst.ServersTransport
-				}
-
-				mc.PassthroughBackends = append(mc.PassthroughBackends, ptBackend)
+					RouterKey:   ing.Namespace + "-" + ing.Name + "-" + provider.Normalize(rule.Host),
+				})
 				markProcessedIngress(ing.Ingress)
 			}
-			continue
 		}
 
-		// Normal ingress: build serversTransport, TLS options, TLS certs, and Locations.
-		nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
-		if err != nil {
-			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
-			continue
-		}
-		// Load TLS certificates into the shared mc.Certs map first. They are kept
-		// even when the rest of the ingress is later skipped (e.g. when an
-		// auth-tls-secret fails to resolve), so the default certificate pool stays
-		// consistent. When loading fails, hasTLS still signals that the ingress has
-		// a TLS section so the translator can fall back to the default cert.
+		// Load TLS certificates into the shared mc.Certs map first.
+		// They are kept even when the rest of the ingress is later skipped (e.g. when the serversTransport cannot be built, or when an auth-tls-secret fails to resolve), so the default certificate pool stays consistent.
+		// When loading fails, hasTLS still signals that the ingress has a TLS section so the translator can fall back to the default cert.
 		hasTLS := len(ing.Spec.TLS) > 0
 		if hasTLS {
 			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
 				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
 			}
+		}
+
+		// Normal ingress: build serversTransport, TLS options, and Locations.
+		nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
+		if err != nil {
+			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
+			continue
 		}
 
 		// Resolve TLS option (auth-tls-secret).
@@ -443,6 +420,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					IngressName:          ing.Name,
 					ServiceName:          pa.Backend.Service.Name,
 					ServicePort:          portString(pa.Backend.Service.Port),
+					SSLPassthrough:       sslPassthrough,
 				}
 
 				// Attach canary config if one exists for this primary backend.
