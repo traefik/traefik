@@ -599,7 +599,9 @@ func TestStickyConnPool(t *testing.T) {
 	}))
 	t.Cleanup(backend.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{serversTransport: &dynamic.ServersTransport{MaxIdleConnsPerHost: 10}}, static.FastProxyConfig{})
+	// Requests are issued serially, so at most one connection is ever in flight and a pool never holds more than
+	// one idle connection: a single idle slot makes the reused backend connection deterministic to compare.
+	builder := NewProxyBuilder(&transportManagerMock{serversTransport: &dynamic.ServersTransport{MaxIdleConnsPerHost: 1}}, static.FastProxyConfig{})
 
 	proxyHandler, err := builder.Build("default@internal", testhelpers.MustParseURL(backend.URL), false, false)
 	require.NoError(t, err)
