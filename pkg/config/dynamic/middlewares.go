@@ -15,6 +15,8 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
+	// RedisDefaultDenyOnError is the Redis.DenyOnError option default value.
+	RedisDefaultDenyOnError = true
 )
 
 // +k8s:deepcopy-gen=true
@@ -679,13 +681,15 @@ type Redis struct {
 	// DenyOnError controls the middleware behavior when Redis is unavailable or returns an error.
 	// When true (the default), the request is rejected with a 500 status code.
 	// When false, the error is logged and the request is forwarded to the next handler (fail-open).
-	DenyOnError bool `json:"denyOnError,omitempty" toml:"denyOnError,omitempty" yaml:"denyOnError,omitempty" export:"true"`
+	// It is a pointer so that an unset value keeps the default even for providers that do not
+	// apply defaults, such as the REST provider, instead of silently turning into false.
+	DenyOnError *bool `json:"denyOnError,omitempty" toml:"denyOnError,omitempty" yaml:"denyOnError,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a Redis.
 func (r *Redis) SetDefaults() {
 	r.Endpoints = []string{"localhost:6379"}
-	r.DenyOnError = true
+	r.DenyOnError = new(RedisDefaultDenyOnError)
 
 	defaultReadTimeout := ptypes.Duration(3 * time.Second)
 	r.ReadTimeout = &defaultReadTimeout

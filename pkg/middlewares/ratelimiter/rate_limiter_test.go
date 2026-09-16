@@ -110,7 +110,7 @@ func TestNewRateLimiter(t *testing.T) {
 				Burst:   10,
 				Redis: &dynamic.Redis{
 					Endpoints:   []string{"localhost:6379"},
-					DenyOnError: true,
+					DenyOnError: new(true),
 				},
 			},
 			expectedDenyOnError: new(true),
@@ -122,10 +122,29 @@ func TestNewRateLimiter(t *testing.T) {
 				Burst:   10,
 				Redis: &dynamic.Redis{
 					Endpoints:   []string{"localhost:6379"},
-					DenyOnError: false,
+					DenyOnError: new(false),
 				},
 			},
 			expectedDenyOnError: new(false),
+		},
+		{
+			desc: "denyOnError defaults to true for Redis when unset",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				Redis: &dynamic.Redis{
+					Endpoints: []string{"localhost:6379"},
+				},
+			},
+			expectedDenyOnError: new(true),
+		},
+		{
+			desc: "denyOnError is true for the in-memory limiter",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+			},
+			expectedDenyOnError: new(true),
 		},
 	}
 
@@ -582,18 +601,53 @@ func TestRedisRateLimit(t *testing.T) {
 func TestRateLimiterDenyOnError(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		denyOnError    bool
+		config         dynamic.RateLimit
 		expectedStatus int
 	}{
 		{
-			desc:           "deny on error true returns 500",
-			denyOnError:    true,
+			desc: "deny on error true returns 500",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+				Redis: &dynamic.Redis{
+					Endpoints:   []string{"localhost:6379"},
+					DenyOnError: new(true),
+				},
+			},
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
-			desc:           "deny on error false passes request through",
-			denyOnError:    false,
+			desc: "deny on error false passes request through",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+				Redis: &dynamic.Redis{
+					Endpoints:   []string{"localhost:6379"},
+					DenyOnError: new(false),
+				},
+			},
 			expectedStatus: http.StatusOK,
+		},
+		{
+			// A provider that does not apply defaults, such as the REST provider, leaves the
+			// option unset. That must keep the existing fail-closed behavior.
+			desc: "deny on error unset returns 500",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+				Redis: &dynamic.Redis{
+					Endpoints: []string{"localhost:6379"},
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			desc: "in-memory limiter returns 500",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+			},
+			expectedStatus: http.StatusInternalServerError,
 		},
 	}
 
@@ -605,16 +659,7 @@ func TestRateLimiterDenyOnError(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			})
 
-			config := dynamic.RateLimit{
-				Average: 100,
-				Burst:   1,
-				Redis: &dynamic.Redis{
-					Endpoints:   []string{"localhost:6379"},
-					DenyOnError: test.denyOnError,
-				},
-			}
-
-			h, err := New(t.Context(), next, config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
 			// Swap the limiter for one that always returns an error (simulates Redis being unavailable).
