@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
@@ -696,6 +697,54 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			}
 
 			err := cfg.ValidateConfiguration()
+			if test.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestValidateConfiguration_AccessLogSampleRate(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      *Configuration
+		expectError bool
+	}{
+		{
+			desc:        "sample rate below zero",
+			config:      &Configuration{AccessLog: &types.AccessLog{SampleRate: -0.1}},
+			expectError: true,
+		},
+		{
+			desc:        "sample rate above one",
+			config:      &Configuration{AccessLog: &types.AccessLog{SampleRate: 1.1}},
+			expectError: true,
+		},
+		{
+			desc:        "sample rate at zero",
+			config:      &Configuration{AccessLog: &types.AccessLog{SampleRate: 0}},
+			expectError: false,
+		},
+		{
+			desc:        "sample rate at one",
+			config:      &Configuration{AccessLog: &types.AccessLog{SampleRate: 1}},
+			expectError: false,
+		},
+		{
+			desc:        "sample rate within range",
+			config:      &Configuration{AccessLog: &types.AccessLog{SampleRate: 0.5}},
+			expectError: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			err := test.config.ValidateConfiguration()
 			if test.expectError {
 				assert.Error(t, err)
 				return

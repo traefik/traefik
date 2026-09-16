@@ -187,6 +187,7 @@ func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 				Format:     test.format,
 				DualOutput: test.dualOutput,
 				FilePath:   test.filePath,
+				SampleRate: 1.0,
 				OTLP: &otypes.OTelLog{
 					ServiceName:        "test",
 					ResourceAttributes: map[string]string{"resource": "attribute"},
@@ -250,6 +251,85 @@ func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 
 				// Run OUT logger checks
 				test.outLoggerCheckFn(t, logHandler.logger)
+			}
+		})
+	}
+}
+
+func TestAccessLogSampling(t *testing.T) {
+	tests := []struct {
+		desc       string
+		sampleRate float64
+		wantExport bool
+	}{
+		{
+			desc:       "sample rate zero drops all access logs",
+			sampleRate: 0,
+			wantExport: false,
+		},
+		{
+			desc:       "sample rate one exports all access logs",
+			sampleRate: 1,
+			wantExport: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			logCh := make(chan string, 1)
+			collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				logCh <- "exported"
+			}))
+			t.Cleanup(collector.Close)
+
+			config := &otypes.AccessLog{
+				Format:     CommonFormat,
+				SampleRate: test.sampleRate,
+				OTLP: &otypes.OTelLog{
+					ServiceName: "test",
+					HTTP: &otypes.OTelHTTP{
+						Endpoint: collector.URL,
+					},
+				},
+			}
+			logHandler, err := NewHandler(t.Context(), config)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, logHandler.Close())
+			})
+
+			req := &http.Request{
+				Header: map[string][]string{},
+				URL:    &url.URL{Path: "/health"},
+			}
+
+			chain := alice.New()
+			chain = chain.Append(capture.Wrap)
+
+			// Injection of the observability variables in the request context.
+			chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+				return observability.WithObservabilityHandler(next, observability.Observability{
+					AccessLogsEnabled: true,
+				}), nil
+			})
+
+			chain = chain.Append(logHandler.AliceConstructor())
+			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+			require.NoError(t, err)
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			select {
+			case <-logCh:
+				if !test.wantExport {
+					t.Fatal("Access log exported despite a zero sample rate")
+				}
+
+			case <-time.After(2 * time.Second):
+				if test.wantExport {
+					t.Fatal("Access log not exported")
+				}
 			}
 		})
 	}

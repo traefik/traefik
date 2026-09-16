@@ -22,7 +22,7 @@ func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.O
 	if err := observability.EnsureUserEnvVar(); err != nil {
 		return zerolog.Logger{}, err
 	}
-	provider, err := config.NewLoggerProvider(ctx)
+	provider, err := config.NewLoggerProvider(ctx, 1.0)
 	if err != nil {
 		return zerolog.Logger{}, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 	}
