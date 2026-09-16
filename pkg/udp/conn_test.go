@@ -160,12 +160,89 @@ func TestListenWithZeroTimeout(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestTimeoutDoesNotCloseBeforeFirstRead(t *testing.T) {
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", time.Millisecond)
+	require.NoError(t, err)
+	defer func() {
+		err := ln.Close()
+		require.NoError(t, err)
+	}()
+
+	accepted := make(chan *Conn)
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+		accepted <- conn
+	}()
+
+	udpConn, err := net.Dial("udp", ln.Addr().String())
+	require.NoError(t, err)
+
+	_, err = udpConn.Write([]byte("TEST"))
+	require.NoError(t, err)
+
+	conn := <-accepted
+	time.Sleep(20 * time.Millisecond)
+
+	type readResult struct {
+		n   int
+		err error
+	}
+	resultCh := make(chan readResult)
+	go func() {
+		buf := make([]byte, 2048)
+		n, err := conn.Read(buf)
+		if err == nil {
+			assert.Equal(t, "TEST", string(buf[:n]))
+		}
+		resultCh <- readResult{n: n, err: err}
+	}()
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.Equal(t, 4, result.n)
+	case <-time.Tick(time.Second):
+		t.Fatal("Timeout during first read")
+	}
+}
+
 func TestTimeoutWithRead(t *testing.T) {
 	testTimeout(t, true)
 }
 
-func TestTimeoutWithoutRead(t *testing.T) {
-	testTimeout(t, false)
+func TestTimeoutAfterFirstRead(t *testing.T) {
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 50*time.Millisecond)
+	require.NoError(t, err)
+	defer func() {
+		err := ln.Close()
+		require.NoError(t, err)
+	}()
+
+	accepted := make(chan *Conn)
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+		accepted <- conn
+	}()
+
+	udpConn, err := net.Dial("udp", ln.Addr().String())
+	require.NoError(t, err)
+
+	_, err = udpConn.Write([]byte("TEST"))
+	require.NoError(t, err)
+
+	conn := <-accepted
+	time.Sleep(2 * ln.timeout)
+	assert.Len(t, ln.conns, 1)
+
+	buf := make([]byte, 2048)
+	n, err := conn.Read(buf)
+	require.NoError(t, err)
+	require.Equal(t, "TEST", string(buf[:n]))
+
+	time.Sleep(2 * ln.timeout)
+	assert.Empty(t, ln.conns)
 }
 
 func testTimeout(t *testing.T, withRead bool) {
