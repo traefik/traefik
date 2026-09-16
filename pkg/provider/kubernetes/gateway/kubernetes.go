@@ -1387,10 +1387,8 @@ func getTLS(k8sClient Client, secretName gatev1alpha2.ObjectName, namespace stri
 	}
 
 	return &tls.CertAndStores{
-		Certificate: tls.Certificate{
-			CertFile: tls.FileOrContent(cert),
-			KeyFile:  tls.FileOrContent(key),
-		},
+		CertFile: tls.FileOrContent(cert),
+		KeyFile:  tls.FileOrContent(key),
 	}, nil
 }
 

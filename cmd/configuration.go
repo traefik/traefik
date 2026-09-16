@@ -18,17 +18,15 @@ type TraefikCmdConfiguration struct {
 // NewTraefikConfiguration creates a TraefikCmdConfiguration with default values.
 func NewTraefikConfiguration() *TraefikCmdConfiguration {
 	return &TraefikCmdConfiguration{
-		Configuration: static.Configuration{
-			Global: &static.Global{
-				CheckNewVersion: true,
-			},
-			EntryPoints: make(static.EntryPoints),
-			Providers: &static.Providers{
-				ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),
-			},
-			ServersTransport: &static.ServersTransport{
-				MaxIdleConnsPerHost: 200,
-			},
+		Global: &static.Global{
+			CheckNewVersion: true,
+		},
+		EntryPoints: make(static.EntryPoints),
+		Providers: &static.Providers{
+			ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),
+		},
+		ServersTransport: &static.ServersTransport{
+			MaxIdleConnsPerHost: 200,
 		},
 		ConfigFile: "",
 	}
