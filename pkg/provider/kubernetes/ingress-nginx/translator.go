@@ -573,7 +573,9 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
-	if loc.AuthTLSPassCert != nil && rt.TLS != nil {
+	// The middleware is attached to the plaintext router as well, and not only to the TLS one:
+	// it owns the Ssl-Client-* headers, and is what removes the values a client supplied for them.
+	if loc.AuthTLSPassCert != nil {
 		name := routerKey + "-pass-certificate-to-upstream"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert}
 		rt.Middlewares = append(rt.Middlewares, name)
