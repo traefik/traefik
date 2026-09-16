@@ -39,6 +39,7 @@ http:
           readTimeout: 3s
           writeTimeout: 3s
           dialTimeout: 5s
+          denyOnError: true
           tls:
             ca: "/etc/ssl/redis-ca.crt"
             cert: "/etc/ssl/redis-client.crt"
@@ -66,6 +67,7 @@ http:
       readTimeout = "3s"
       writeTimeout = "3s"
       dialTimeout = "5s"
+      denyOnError = true
       [http.middlewares.test-ratelimit.rateLimit.redis.tls]
         ca = "/etc/ssl/redis-ca.crt"
         cert = "/etc/ssl/redis-client.crt"
@@ -91,6 +93,7 @@ labels:
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.denyOnError=true"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key"
@@ -116,6 +119,7 @@ labels:
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s",
+    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.denyOnError=true",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt",
     "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key",
@@ -149,6 +153,7 @@ spec:
       readTimeout: 3s
       writeTimeout: 3s
       dialTimeout: 5s
+      denyOnError: true
       tls:
         caSecret: redis-ca
         certSecret: redis-client-cert
@@ -207,6 +212,7 @@ data:
 | <a id="opt-redis-readTimeout" href="#opt-redis-readTimeout" title="#opt-redis-readTimeout">`redis.readTimeout`</a> | Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
 | <a id="opt-redis-writeTimeout" href="#opt-redis-writeTimeout" title="#opt-redis-writeTimeout">`redis.writeTimeout`</a> | Timeout for socket writes. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
 | <a id="opt-redis-dialTimeout" href="#opt-redis-dialTimeout" title="#opt-redis-dialTimeout">`redis.dialTimeout`</a> | Timeout for establishing new connections. Zero means no timeout. | 5s | No |
+| <a id="opt-redis-denyOnError" href="#opt-redis-denyOnError" title="#opt-redis-denyOnError">`redis.denyOnError`</a> | What to do when Redis cannot be reached or returns an error. When `true`, the request is rejected with a 500 status code. When `false`, the error is logged and the request is passed to the next handler without rate limiting. | true | No |
 | <a id="opt-redis-tls-ca" href="#opt-redis-tls-ca" title="#opt-redis-tls-ca">`redis.tls.ca`</a> | Path to the certificate authority used for the secure connection to Redis, it defaults to the system bundle. | "" | No |
 | <a id="opt-redis-tls-cert" href="#opt-redis-tls-cert" title="#opt-redis-tls-cert">`redis.tls.cert`</a> | Path to the public certificate used for the secure connection to Redis. When this option is set, the `key` option is required. | "" | No |
 | <a id="opt-redis-tls-key" href="#opt-redis-tls-key" title="#opt-redis-tls-key">`redis.tls.key`</a> | Path to the private key used for the secure connection to Redis. When this option is set, the `cert` option is required. | "" | No |

@@ -135,6 +135,7 @@
 - "traefik.http.middlewares.middleware18.ratelimit.burst=42"
 - "traefik.http.middlewares.middleware18.ratelimit.period=42s"
 - "traefik.http.middlewares.middleware18.ratelimit.redis.db=42"
+- "traefik.http.middlewares.middleware18.ratelimit.redis.denyonerror=true"
 - "traefik.http.middlewares.middleware18.ratelimit.redis.dialtimeout=42s"
 - "traefik.http.middlewares.middleware18.ratelimit.redis.endpoints=foobar, foobar"
 - "traefik.http.middlewares.middleware18.ratelimit.redis.maxactiveconns=42"
