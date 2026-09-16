@@ -271,6 +271,10 @@ The middlewares managing request headers (e.g. the ForwardAuth `authResponseHead
 form of the headers they set, and rely on this option to not be spoofed with an aliasing name.
 Traefik logs a warning at startup for every entry point left without this option configured.
 
+A default for every entry point can be set once with the
+[`global.aliasHeadersStrategy`](./configuration-options.md#opt-global-aliasheadersstrategy) option.
+An explicit per-entry-point value always takes precedence, and when neither is set the behavior is unchanged (`keep`).
+
 !!! warning "Security"
 
     Backends normalizing the header names can be spoofed with an aliasing name of a header they trust.
