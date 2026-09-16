@@ -630,6 +630,60 @@ func TestDisableHTTP2(t *testing.T) {
 	}
 }
 
+// A reused keep-alive connection must get the whole readTimeout for its response: the transport
+// read loop is already blocked in Read while the connection sits idle, so without re-arming on
+// write the response inherits the deadline anchored to the start of the idle period.
+func TestConnectionReadTimeoutIsArmedOnWrite(t *testing.T) {
+	const (
+		readTimeout   = 300 * time.Millisecond
+		idleBeforeUse = 200 * time.Millisecond
+		serverDelay   = 200 * time.Millisecond
+	)
+
+	client, server := net.Pipe()
+	t.Cleanup(func() { client.Close() })
+	t.Cleanup(func() { server.Close() })
+
+	conn := &connWithTimeouts{Conn: client, readTimeout: readTimeout}
+
+	readBuf := make([]byte, 4)
+	readErr := make(chan error, 1)
+	go func() {
+		// Mirrors the transport read loop, already blocked in Read while the connection is idle.
+		_, err := conn.Read(readBuf)
+		readErr <- err
+	}()
+
+	serverDone := make(chan struct{})
+	go func() {
+		defer close(serverDone)
+		req := make([]byte, 3)
+		if _, err := server.Read(req); err != nil {
+			return
+		}
+		// Respond after the deadline anchored to the start of the idle period would have fired,
+		// but before the deadline re-armed when the request was written.
+		time.Sleep(serverDelay)
+		_, _ = server.Write([]byte("RESP"))
+	}()
+
+	// Spend most of the idle budget before the connection is reused.
+	time.Sleep(idleBeforeUse)
+
+	_, err := conn.Write([]byte("REQ"))
+	require.NoError(t, err)
+
+	select {
+	case err := <-readErr:
+		require.NoError(t, err)
+		assert.Equal(t, "RESP", string(readBuf))
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for the response read")
+	}
+
+	<-serverDone
+}
+
 // fakeSpiffePKI simulates a SPIFFE aware PKI and allows generating multiple valid SVIDs.
 type fakeSpiffePKI struct {
 	caPrivateKey *rsa.PrivateKey
