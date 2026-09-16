@@ -30,6 +30,7 @@ type Middleware struct {
 	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 	IPAllowList       *IPAllowList       `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
+	IPAllowGroup      *IPAllowGroup      `json:"ipAllowGroup,omitempty" toml:"ipAllowGroup,omitempty" yaml:"ipAllowGroup,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	EncodedCharacters *EncodedCharacters `json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
@@ -552,6 +553,18 @@ type IPAllowList struct {
 	// RejectStatusCode defines the HTTP status code used for refused requests.
 	// If not set, the default is 403 (Forbidden).
 	RejectStatusCode int `json:"rejectStatusCode,omitempty" toml:"rejectStatusCode,omitempty" yaml:"rejectStatusCode,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// IPAllowGroup holds the IP allow group middleware configuration.
+// This middleware grants access if the client IP matches ANY of the provided IPAllowList rules (OR logic).
+// It is useful for combining multiple IP allowlists (e.g., a shared management list and a service-specific list)
+// without duplicating entries across separate middleware definitions.
+type IPAllowGroup struct {
+	// Rules is the list of IPAllowList configurations to evaluate.
+	// Access is granted as soon as the client IP matches any one rule (short-circuit OR).
+	Rules []IPAllowList `json:"rules,omitempty" toml:"rules,omitempty" yaml:"rules,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
