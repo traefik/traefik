@@ -233,9 +233,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				canaryBackendName := provider.Normalize(canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[canaryBackendName]; !exists {
 					mc.Backends[canaryBackendName] = &backend{
-						Name:      canaryBackendName,
-						Namespace: canaryIngress.Namespace,
-						Endpoints: endpoints,
+						Name:        canaryBackendName,
+						Namespace:   canaryIngress.Namespace,
+						ServiceName: pa.Backend.Service.Name,
+						ServicePort: portString(pa.Backend.Service.Port),
+						Endpoints:   endpoints,
 					}
 				}
 
@@ -265,10 +267,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Logger()
 		ctxIng := logger.WithContext(ctx)
 
-		// ssl-passthrough: handled per-rule. serversTransport is not needed for passthrough.
+		// ssl-passthrough: handled per-rule.
 		if ptr.Deref(ing.config.SSLPassthrough, false) {
 			// Even with ssl-passthrough, the Spec.TLS section's certificates are still loaded so they remain available as the default certificate.
-			if len(ing.Spec.TLS) > 0 {
+			hasTLS := len(ing.Spec.TLS) > 0
+			if hasTLS {
 				if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
 					logger.Warn().Err(err).Msg("Error loading TLS certificates for ssl-passthrough ingress")
 				}
@@ -305,18 +308,35 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				ptBackendName := provider.Normalize(ing.Namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
 				if _, exists := mc.Backends[ptBackendName]; !exists {
 					mc.Backends[ptBackendName] = &backend{
-						Name:      ptBackendName,
-						Namespace: ing.Namespace,
-						Endpoints: endpoints,
+						Name:        ptBackendName,
+						Namespace:   ing.Namespace,
+						ServiceName: ingBackend.Service.Name,
+						ServicePort: portString(ingBackend.Service.Port),
+						Endpoints:   endpoints,
 					}
 				}
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ing.Namespace+"-"+ing.Name+"-"+rule.Host), "-")
-				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
+				ptBackend := &sslPassthroughBackend{
 					BackendName: ptBackendName,
 					Hostname:    rule.Host,
 					RouterKey:   routerKey,
-				})
+					SSLRedirect: sslRedirectEnabled(ing.config, hasTLS),
+					Config:      ing.config,
+				}
+
+				// The serversTransport only shapes the HTTP router: when it cannot be built,
+				// the TCP passthrough router must still be created.
+				nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
+				if err != nil {
+					logger.Error().Err(err).Msgf("Cannot build serversTransport for ssl-passthrough on host %q, skipping its HTTP router", rule.Host)
+				} else {
+					ptBackend.HTTPServiceName = provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
+					ptBackend.ServersTransportName = nst.name
+					ptBackend.ServersTransport = nst.ServersTransport
+				}
+
+				mc.PassthroughBackends = append(mc.PassthroughBackends, ptBackend)
 				markProcessedIngress(ing.Ingress)
 			}
 			continue
@@ -346,12 +366,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		if ing.config.AuthTLSSecret != nil {
 			// The option name must be a pure function of what determines the TLSOption's content, so that multiple Ingresses
 			// sharing one mTLS policy on the same host resolve to the same TLS option.
-			// Prefixed by the secretName length so the key unambiguously encodes the secret name and namespace pair
-			// to avoid distinct pairs colliding.
+			// The namespace and the secret name are suffixed by their own length so that the key unambiguously
+			// encodes the pair.
 			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
 			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
-			optName := provider.Normalize(secretNamespace + "-" + strconv.Itoa(len(secretName)) + "-" + secretName + "-" + clientAuthTypeKey)
+			optName := provider.Normalize(secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey)
+
 			if cached, exists := tlsOptionCache[optName]; exists {
 				tlsOptionName = optName
 				tlsOption = cached
@@ -397,9 +418,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				backendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[backendName]; !exists {
 					mc.Backends[backendName] = &backend{
-						Name:      backendName,
-						Namespace: ing.Namespace,
-						Endpoints: endpoints,
+						Name:        backendName,
+						Namespace:   ing.Namespace,
+						ServiceName: pa.Backend.Service.Name,
+						ServicePort: portString(pa.Backend.Service.Port),
+						Endpoints:   endpoints,
 					}
 				}
 
@@ -469,9 +492,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 									ing.config)
 								if err == nil {
 									mc.Backends[errBackendName] = &backend{
-										Name:      errBackendName,
-										Namespace: ing.Namespace,
-										Endpoints: endpoints,
+										Name:        errBackendName,
+										Namespace:   ing.Namespace,
+										ServiceName: defaultSvcName,
+										ServicePort: "0",
+										Endpoints:   endpoints,
 									}
 								}
 							}
@@ -538,6 +563,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						Name:        defaultBackendName,
 						Namespace:   ing.Namespace,
 						ServiceName: db.Service.Name,
+						ServicePort: portString(db.Service.Port),
 						Endpoints:   endpoints,
 					}
 					mc.Backends[defaultBackendName] = bk
@@ -553,9 +579,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			ingDefaultBackendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-default-backend")
 			if _, exists := mc.Backends[ingDefaultBackendName]; !exists {
 				mc.Backends[ingDefaultBackendName] = &backend{
-					Name:      ingDefaultBackendName,
-					Namespace: ing.Namespace,
-					Endpoints: endpoints,
+					Name:        ingDefaultBackendName,
+					Namespace:   ing.Namespace,
+					ServiceName: db.Service.Name,
+					ServicePort: portString(db.Service.Port),
+					Endpoints:   endpoints,
 				}
 			}
 
@@ -776,6 +804,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		Name:        name,
 		Namespace:   namespace,
 		ServiceName: ingBackend.Service.Name,
+		ServicePort: portString(ingBackend.Service.Port),
 		Endpoints:   endpoints,
 	}, nil
 }

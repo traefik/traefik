@@ -1,3 +1,79 @@
+## [v3.7.13](https://github.com/traefik/traefik/tree/v3.7.13) (2026-09-04)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.12...v3.7.13)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 to v5.4.1 ([#13759](https://github.com/traefik/traefik/pull/13759) @ldez)
+- **[acme]** Disable recursive nss propagation by default for DNS challenge ([#13830](https://github.com/traefik/traefik/pull/13830) @rtribotte)
+- **[acme]** Do not require recursive nameservers propagation by default for the DNS-01 challenge ([#13710](https://github.com/traefik/traefik/pull/13710) @amazon7737)
+- **[acme, tls]** Ignore negated matchers when parsing rule domains ([#13725](https://github.com/traefik/traefik/pull/13725) @rtribotte)
+- **[consulcatalog, nomad]** Build a collision-free item key in the Consul Catalog and Nomad providers ([#13741](https://github.com/traefik/traefik/pull/13741) @rtribotte)
+- **[http3]** Dedicate a transport per HTTP/3 client connection ([#13812](https://github.com/traefik/traefik/pull/13812) @sdelicata)
+- **[k8s/ingress-nginx]** Fix sticky cookie expiration per request ([#13496](https://github.com/traefik/traefik/pull/13496) @makaiver)
+- **[k8s/ingress-nginx]** Create HTTP redirect router for ssl-passthrough with force-ssl-redirect ([#13457](https://github.com/traefik/traefik/pull/13457) @mmatur)
+- **[k8s/ingress-nginx]** Preserve leading dot in sticky session cookie Domain attribute ([#13456](https://github.com/traefik/traefik/pull/13456) @mmatur)
+- **[logs, middleware]** Set access log entry level and time before formatting the OTLP body ([#13767](https://github.com/traefik/traefik/pull/13767) @emilevauge)
+- **[logs, tls, k8s/crd]** Downgrade default TLS resources namespace mismatch log to warning ([#13780](https://github.com/traefik/traefik/pull/13780) @lazerg)
+- **[middleware]** Fix {url} placeholder in customErrors middleware now includes correct scheme ([#13320](https://github.com/traefik/traefik/pull/13320) @AnouarMohamed)
+- **[middleware, authentication]** Prevent user enumeration through the basic auth singleflight key ([#13816](https://github.com/traefik/traefik/pull/13816) @sdelicata)
+- **[server]** Build the configuration copy once per change ([#13746](https://github.com/traefik/traefik/pull/13746) @jspdown)
+- **[server]** Do not forward h2c upgrade headers to the backend ([#13797](https://github.com/traefik/traefik/pull/13797) @sdelicata)
+- **[server]** Deny request with an opaque request target ([#13796](https://github.com/traefik/traefik/pull/13796) @sdelicata)
+- **[server]** Do not forward request trailer values to the backend ([#13822](https://github.com/traefik/traefik/pull/13822) @rtribotte)
+- **[server]** Bump github.com/quic-go/quic-go to v0.62.0 ([#13807](https://github.com/traefik/traefik/pull/13807) @Nelwhix)
+- **[tls]** Redact duplicate TLS certificates in provider merge logs ([#13548](https://github.com/traefik/traefik/pull/13548) @xsergos)
+- **[webui]** Fix displayed number on details pages ([#13779](https://github.com/traefik/traefik/pull/13779) @gndz07)
+
+**Documentation:**
+- **[k8s]** Add warning about Ingress API frozen state ([#13783](https://github.com/traefik/traefik/pull/13783) @jnoordsij)
+- **[k8s]** Remove namespace reference for providers.kubernetesGateway.labelSelector ([#13790](https://github.com/traefik/traefik/pull/13790) @jnoordsij)
+- **[k8s/crd]** Fix broken redirect for the Kubernetes CRD reference docs ([#13811](https://github.com/traefik/traefik/pull/13811) @thev1ndu)
+- Tell scanning agents to read the security policy and decisions pages ([#13753](https://github.com/traefik/traefik/pull/13753) @emilevauge)
+
+## [v2.11.57](https://github.com/traefik/traefik/tree/v2.11.57) (2026-09-04)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.56...v2.11.57)
+
+**Bug fixes:**
+- **[acme]** Disable recursive nss propagation by default for DNS challenge ([#13830](https://github.com/traefik/traefik/pull/13830) @rtribotte)
+- **[http3]** Dedicate a transport per HTTP/3 client connection ([#13812](https://github.com/traefik/traefik/pull/13812) @sdelicata)
+- **[server]** Deny request with an opaque request target ([#13796](https://github.com/traefik/traefik/pull/13796) @sdelicata)
+- **[server]** Do not forward h2c upgrade headers to the backend ([#13797](https://github.com/traefik/traefik/pull/13797) @sdelicata)
+
+## [v3.7.12](https://github.com/traefik/traefik/tree/v3.7.12) (2026-08-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.11...v3.7.12)
+
+**Bug fixes:**
+- **[fastproxy]** Bump github.com/valyala/fasthttp to v1.73.0 ([#13769](https://github.com/traefik/traefik/pull/13769) @mmatur)
+- **[file]** Include the filename in file provider configuration errors ([#13527](https://github.com/traefik/traefik/pull/13527) @lazerg)
+- **[http3]** Apply read timeout, idle timeout, and max header bytes for HTTP/3 ([#13717](https://github.com/traefik/traefik/pull/13717) @gndz07)
+- **[k8s]** Fix typos in docs and an OCSP log message ([#13722](https://github.com/traefik/traefik/pull/13722) @MsfPablo)
+- **[k8s, k8s/ingress-nginx]** Fix redirect www host with a non-numeric port ([#13708](https://github.com/traefik/traefik/pull/13708) @mmatur)
+- **[k8s/ingress-nginx]** Fix TLS option name collision across namespaces in the ingress-nginx provider ([#13721](https://github.com/traefik/traefik/pull/13721) @gndz07)
+- **[server]** Add an entry point option to handle request headers with aliasing names ([#13720](https://github.com/traefik/traefik/pull/13720) @rtribotte)
+- **[tcp, udp]** Reject negative weights in TCP and UDP weighted services ([#13749](https://github.com/traefik/traefik/pull/13749) @rtribotte)
+- Bump etcd client modules to v3.5.33 ([#13756](https://github.com/traefik/traefik/pull/13756) @mmatur)
+
+**Documentation:**
+- **[k8s]** Update redirections block reference in basic.md ([#13723](https://github.com/traefik/traefik/pull/13723) @Larzenegger)
+- **[k8s]** Fix formatting in Kubernetes setup guide ([#13742](https://github.com/traefik/traefik/pull/13742) @stefkiourk)
+- **[security]** Document the security threat model and settled security decisions ([#13740](https://github.com/traefik/traefik/pull/13740) @emilevauge)
+- **[service]** Clarify ServersTransport behavior for the errors middleware in Kubernetes ([#13531](https://github.com/traefik/traefik/pull/13531) @lazerg)
+- Fix v3.7.11 migration guide ([#13730](https://github.com/traefik/traefik/pull/13730) @gndz07)
+- Move Jean-Baptiste Doumenjou and Mathieu Lonjaret to past maintainers ([#13736](https://github.com/traefik/traefik/pull/13736) @emilevauge)
+- Reduce SECURITY.md to a pointer to the security documentation ([#13732](https://github.com/traefik/traefik/pull/13732) @emilevauge)
+- Update end of support dates ([#13712](https://github.com/traefik/traefik/pull/13712) @nmengin)
+
+## [v2.11.56](https://github.com/traefik/traefik/tree/v2.11.56) (2026-08-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.55...v2.11.56)
+
+**Bug fixes:**
+- **[http3]** Apply read timeout, idle timeout, and max header bytes for HTTP/3 ([#13717](https://github.com/traefik/traefik/pull/13717) @gndz07)
+- **[server]** Add an entry point option to handle request headers with aliasing names ([#13720](https://github.com/traefik/traefik/pull/13720) @rtribotte)
+- **[tcp, udp]** Reject negative weights in TCP and UDP weighted services ([#13749](https://github.com/traefik/traefik/pull/13749) @rtribotte)
+- Bump etcd client modules to v3.5.33 ([#13756](https://github.com/traefik/traefik/pull/13756) @mmatur)
+
+**Documentation:**
+- Update end of support dates ([#13712](https://github.com/traefik/traefik/pull/13712) @nmengin)
+
 ## [v3.7.11](https://github.com/traefik/traefik/tree/v3.7.11) (2026-08-18)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.10...v3.7.11)
 
