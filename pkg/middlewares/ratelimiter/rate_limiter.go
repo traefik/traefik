@@ -113,7 +113,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		}
 	}
 
-	denyOnError := config.Redis != nil && config.Redis.DenyOnError
+	// The in-memory limiter keeps failing closed, as it did before this option existed.
+	denyOnError := dynamic.RedisDefaultDenyOnError
+	if config.Redis != nil && config.Redis.DenyOnError != nil {
+		denyOnError = *config.Redis.DenyOnError
+	}
 
 	return &rateLimiter{
 		logger:        logger,
