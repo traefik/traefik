@@ -230,7 +230,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				weight := min(max(ptr.Deref(canaryIngress.config.CanaryWeight, 0), 0), weightTotal)
 
 				// Resolve canary backend.
-				canaryBackendName := provider.Normalize(canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
+				canaryBackendName := canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port)
 				if _, exists := mc.Backends[canaryBackendName]; !exists {
 					mc.Backends[canaryBackendName] = &backend{
 						Name:        canaryBackendName,
@@ -305,7 +305,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					continue
 				}
 
-				ptBackendName := provider.Normalize(ing.Namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
+				ptBackendName := ing.Namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port)
 				if _, exists := mc.Backends[ptBackendName]; !exists {
 					mc.Backends[ptBackendName] = &backend{
 						Name:        ptBackendName,
@@ -316,7 +316,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 				}
 
-				routerKey := strings.TrimPrefix(provider.Normalize(ing.Namespace+"-"+ing.Name+"-"+rule.Host), "-")
+				routerKey := ing.Namespace + "-" + ing.Name + "-" + provider.Normalize(rule.Host)
 				ptBackend := &sslPassthroughBackend{
 					BackendName: ptBackendName,
 					Hostname:    rule.Host,
@@ -331,7 +331,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				if err != nil {
 					logger.Error().Err(err).Msgf("Cannot build serversTransport for ssl-passthrough on host %q, skipping its HTTP router", rule.Host)
 				} else {
-					ptBackend.HTTPServiceName = provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
+					ptBackend.HTTPServiceName = ing.Namespace + "-" + ing.Name + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port)
 					ptBackend.ServersTransportName = nst.name
 					ptBackend.ServersTransport = nst.ServersTransport
 				}
@@ -371,7 +371,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
 			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
-			optName := provider.Normalize(secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey)
+			optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
 
 			if cached, exists := tlsOptionCache[optName]; exists {
 				tlsOptionName = optName
@@ -415,7 +415,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					endpoints = nil
 				}
 
-				backendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
+				backendName := ing.Namespace + "-" + ing.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port)
 				if _, exists := mc.Backends[backendName]; !exists {
 					mc.Backends[backendName] = &backend{
 						Name:        backendName,
@@ -576,7 +576,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				continue
 			}
 
-			ingDefaultBackendName := provider.Normalize(ing.Namespace + "-" + ing.Name + "-default-backend")
+			ingDefaultBackendName := ing.Namespace + "-" + ing.Name + "-default-backend"
 			if _, exists := mc.Backends[ingDefaultBackendName]; !exists {
 				mc.Backends[ingDefaultBackendName] = &backend{
 					Name:        ingDefaultBackendName,
@@ -641,7 +641,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
 	nst := namedServersTransport{
-		name: provider.Normalize(namespace + "-" + name),
+		name: namespace + "-" + name,
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
@@ -799,7 +799,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		return nil, err
 	}
 
-	name := provider.Normalize(namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port))
+	name := namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port)
 	return &backend{
 		Name:        name,
 		Namespace:   namespace,
