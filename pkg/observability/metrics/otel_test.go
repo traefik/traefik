@@ -15,10 +15,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	th "github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"go.opentelemetry.io/otel/attribute"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
 func TestOpenTelemetry_labels(t *testing.T) {
@@ -278,6 +282,276 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 			assert.Equal(t, test.expect, test.gc.values)
 		})
 	}
+}
+
+func TestOpenTelemetry_GaugeCollectorIsStale(t *testing.T) {
+	tests := []struct {
+		desc       string
+		oldConfig  *dynamicConfig
+		newConfig  *dynamicConfig
+		attributes otelLabelNamesValues
+		expect     bool
+	}{
+		{
+			desc:       "value never declared in any configuration is not stale",
+			oldConfig:  newDynamicConfig(),
+			newConfig:  newDynamicConfig(),
+			attributes: otelLabelNamesValues{"entrypoint", "foo"},
+			expect:     false,
+		},
+		{
+			desc: "known entrypoint",
+			oldConfig: &dynamicConfig{
+				entryPoints: map[string]bool{"foo": true},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{},
+			},
+			newConfig: &dynamicConfig{
+				entryPoints: map[string]bool{"foo": true},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{},
+			},
+			attributes: otelLabelNamesValues{"entrypoint", "foo"},
+			expect:     false,
+		},
+		{
+			desc: "entrypoint removed since previous configuration",
+			oldConfig: &dynamicConfig{
+				entryPoints: map[string]bool{"foo": true},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{},
+			},
+			newConfig:  newDynamicConfig(),
+			attributes: otelLabelNamesValues{"entrypoint", "foo"},
+			expect:     true,
+		},
+		{
+			desc: "router removed since previous configuration",
+			oldConfig: &dynamicConfig{
+				entryPoints: map[string]bool{},
+				routers:     map[string]bool{"foo": true},
+				services:    map[string]map[string]bool{},
+			},
+			newConfig:  newDynamicConfig(),
+			attributes: otelLabelNamesValues{"router", "foo"},
+			expect:     true,
+		},
+		{
+			desc: "service removed since previous configuration",
+			oldConfig: &dynamicConfig{
+				entryPoints: map[string]bool{},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{"foo": {"http://127.0.0.1": true}},
+			},
+			newConfig:  newDynamicConfig(),
+			attributes: otelLabelNamesValues{"service", "foo"},
+			expect:     true,
+		},
+		{
+			desc: "server URL removed since previous configuration, service kept",
+			oldConfig: &dynamicConfig{
+				entryPoints: map[string]bool{},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{"foo": {"http://127.0.0.1": true, "http://127.0.0.2": true}},
+			},
+			newConfig: &dynamicConfig{
+				entryPoints: map[string]bool{},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{"foo": {"http://127.0.0.1": true}},
+			},
+			attributes: otelLabelNamesValues{"service", "foo", "url", "http://127.0.0.2"},
+			expect:     true,
+		},
+		{
+			desc: "known service, known server URL",
+			oldConfig: &dynamicConfig{
+				entryPoints: map[string]bool{},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{"foo": {"http://127.0.0.1": true}},
+			},
+			newConfig: &dynamicConfig{
+				entryPoints: map[string]bool{},
+				routers:     map[string]bool{},
+				services:    map[string]map[string]bool{"foo": {"http://127.0.0.1": true}},
+			},
+			attributes: otelLabelNamesValues{"service", "foo", "url", "http://127.0.0.1"},
+			expect:     false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			gc := newOpenTelemetryGaugeCollector()
+			gc.dynConfig = test.oldConfig
+			gc.setDynamicConfig(test.newConfig)
+
+			assert.Equal(t, test.expect, gc.isStale(test.attributes))
+		})
+	}
+}
+
+// TestOpenTelemetry_GaugeCollectorIsStale_ReAddedServiceNotStale ensures that
+// a service that gets removed and then declared again before the deleted
+// marker has been cleared is not mistakenly pruned, the same way promState
+// re-checks the current configuration before deleting in prometheus.go.
+func TestOpenTelemetry_GaugeCollectorIsStale_ReAddedServiceNotStale(t *testing.T) {
+	t.Parallel()
+
+	withService := &dynamicConfig{
+		entryPoints: map[string]bool{},
+		routers:     map[string]bool{},
+		services:    map[string]map[string]bool{"foo": {"http://127.0.0.1": true}},
+	}
+
+	gc := newOpenTelemetryGaugeCollector()
+	gc.dynConfig = withService
+
+	gc.setDynamicConfig(newDynamicConfig())
+	gc.setDynamicConfig(withService)
+
+	assert.False(t, gc.isStale(otelLabelNamesValues{"service", "foo", "url", "http://127.0.0.1"}))
+}
+
+// TestOpenTelemetry_GaugeCollectorEndCallback ensures that the deleted
+// markers set by setDynamicConfig are only cleared once every registered
+// gauge has had a chance to observe (and prune) them, since each gauge
+// collects independently instead of sharing a single Collect call like
+// promState's Prometheus metrics do.
+func TestOpenTelemetry_GaugeCollectorEndCallback(t *testing.T) {
+	t.Parallel()
+
+	gc := newOpenTelemetryGaugeCollector()
+	gc.values = map[string]map[string]gaugeValue{
+		"gauge-a": {},
+		"gauge-b": {},
+	}
+	gc.dynConfig = &dynamicConfig{
+		entryPoints: map[string]bool{"foo": true},
+		routers:     map[string]bool{},
+		services:    map[string]map[string]bool{},
+	}
+
+	gc.setDynamicConfig(newDynamicConfig())
+	assert.True(t, gc.isStale(otelLabelNamesValues{"entrypoint", "foo"}))
+
+	// Only one of the two registered gauges has collected so far: the
+	// deleted marker must still be there for the other one.
+	gc.endCallback()
+	assert.True(t, gc.isStale(otelLabelNamesValues{"entrypoint", "foo"}))
+
+	// The second (and last) gauge has now collected: the deleted marker
+	// is cleared, but that no longer matters since "foo" is also absent
+	// from the current configuration.
+	gc.endCallback()
+	assert.False(t, gc.isStale(otelLabelNamesValues{"entrypoint", "foo"}))
+}
+
+// TestOpenTelemetry_StaleGaugeValuesArePruned ensures that gauge values
+// belonging to entryPoints/routers/services/servers that get removed from
+// the dynamic configuration are eventually pruned, instead of accumulating
+// forever, which would otherwise lead to unbounded memory growth (see
+// https://github.com/traefik/traefik/issues/12232).
+func TestOpenTelemetry_StaleGaugeValuesArePruned(t *testing.T) {
+	reader := sdkmetric.NewManualReader()
+	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader))
+
+	SetMeterProvider(meterProvider)
+	t.Cleanup(StopOpenTelemetry)
+
+	var cfg otypes.OTLP
+	(&cfg).SetDefaults()
+	cfg.AddServicesLabels = true
+
+	registry := RegisterOpenTelemetry(t.Context(), &cfg)
+	require.NotNil(t, registry)
+
+	// Declare the service as part of the current dynamic configuration.
+	conf := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithServices(
+				th.WithService("stale-service", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer("http://127.0.0.1")))),
+			),
+		),
+	}
+	OnConfigurationUpdate(conf, nil)
+
+	registry.ServiceServerUpGauge().With("service", "stale-service", "url", "http://127.0.0.1").Set(1)
+
+	var rm metricdata.ResourceMetrics
+	require.NoError(t, reader.Collect(t.Context(), &rm))
+	assert.True(t, hasServiceServerUpValue(rm, "stale-service"))
+
+	// Remove the service from the dynamic configuration.
+	OnConfigurationUpdate(dynamic.Configuration{}, nil)
+
+	// The value must still be reported once more right after the removal...
+	rm = metricdata.ResourceMetrics{}
+	require.NoError(t, reader.Collect(t.Context(), &rm))
+	assert.True(t, hasServiceServerUpValue(rm, "stale-service"))
+
+	// ...but must not leak forever: it must be gone on the next collect.
+	rm = metricdata.ResourceMetrics{}
+	require.NoError(t, reader.Collect(t.Context(), &rm))
+	assert.False(t, hasServiceServerUpValue(rm, "stale-service"))
+}
+
+// TestOpenTelemetry_GaugeNotYetDeclaredIsNotPruned ensures that a gauge value
+// observed before OnConfigurationUpdate has ever been called is not mistaken
+// for stale. A plain "is this in the current configuration" check would
+// prune it on the very first collect, since nothing is known yet; only a
+// value that was previously known and has since been removed must be
+// pruned, the same way promState behaves for Prometheus.
+func TestOpenTelemetry_GaugeNotYetDeclaredIsNotPruned(t *testing.T) {
+	reader := sdkmetric.NewManualReader()
+	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader))
+
+	SetMeterProvider(meterProvider)
+	t.Cleanup(StopOpenTelemetry)
+
+	var cfg otypes.OTLP
+	(&cfg).SetDefaults()
+	cfg.AddServicesLabels = true
+
+	registry := RegisterOpenTelemetry(t.Context(), &cfg)
+	require.NotNil(t, registry)
+
+	// No call to OnConfigurationUpdate happened yet: the service below is
+	// unknown to the collector's dynamic configuration.
+	registry.ServiceServerUpGauge().With("service", "not-yet-declared", "url", "http://127.0.0.1").Set(1)
+
+	var rm metricdata.ResourceMetrics
+	require.NoError(t, reader.Collect(t.Context(), &rm))
+	assert.True(t, hasServiceServerUpValue(rm, "not-yet-declared"))
+
+	// It must still be there on a second collect, since it was never
+	// removed from a previous configuration.
+	rm = metricdata.ResourceMetrics{}
+	require.NoError(t, reader.Collect(t.Context(), &rm))
+	assert.True(t, hasServiceServerUpValue(rm, "not-yet-declared"))
+}
+
+func hasServiceServerUpValue(rm metricdata.ResourceMetrics, serviceName string) bool {
+	for _, sm := range rm.ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if m.Name != serviceServerUpName {
+				continue
+			}
+
+			gauge, ok := m.Data.(metricdata.Gauge[float64])
+			if !ok {
+				continue
+			}
+
+			for _, dp := range gauge.DataPoints {
+				if v, ok := dp.Attributes.Value(attribute.Key("service")); ok && v.AsString() == serviceName {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func TestOpenTelemetry(t *testing.T) {
