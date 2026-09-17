@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -79,11 +80,7 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if token != "" {
-		domain, _, err := net.SplitHostPort(req.Host)
-		if err != nil {
-			logger.Debug().Err(err).Msg("Unable to split host and port. Fallback to request host.")
-			domain = req.Host
-		}
+		domain := parseHTTPChallengeHost(req.Host)
 
 		tokenValue := c.getTokenValue(logger.WithContext(req.Context()), token, domain)
 		if len(tokenValue) > 0 {
@@ -97,6 +94,23 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusNotFound)
+}
+
+func parseHTTPChallengeHost(addr string) string {
+	if !strings.Contains(addr, ":") {
+		return addr
+	}
+
+	host, _, err := net.SplitHostPort(addr)
+	if err == nil {
+		return host
+	}
+
+	if addr[0] == '[' && addr[len(addr)-1] == ']' {
+		return addr[1 : len(addr)-1]
+	}
+
+	return addr
 }
 
 func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string) []byte {
