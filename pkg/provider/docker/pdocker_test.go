@@ -16,6 +16,8 @@ import (
 )
 
 func TestProviderReconnectsAfterEventRefreshError(t *testing.T) {
+	t.Parallel()
+
 	var versionCalls atomic.Int32
 	var containerListCalls atomic.Int32
 	var eventCalls atomic.Int32
