@@ -1,0 +1,37 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-digestauth
+  namespace: default
+  annotations:
+    # Configuration digest authentication for the Ingress
+    nginx.ingress.kubernetes.io/auth-type: "digest"
+    nginx.ingress.kubernetes.io/auth-secret-type: "auth-file"
+    nginx.ingress.kubernetes.io/auth-secret: "default/digest-auth"
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /digestauth
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: digest-auth
+  namespace: default
+type: Opaque
+data:
+  # user:Authentication Required:password
+  auth: dXNlcjpBdXRoZW50aWNhdGlvbiBSZXF1aXJlZDowYTEzMmQ4ZmE0MTM4YzU2YzFjMmI1MGU5YzlkMWExZg==
