@@ -176,7 +176,7 @@ func TestBuildCORS(t *testing.T) {
 	}
 }
 
-func Test_buildLimitAllowlist(t *testing.T) {
+func TestBuildLimitAllowlist(t *testing.T) {
 	tests := []struct {
 		desc     string
 		config   IngressConfig

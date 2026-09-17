@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -113,10 +114,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			if registered {
 				p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
-				p.applyLimitAllowlist(mc, loc, defaultBackendName, rt, conf)
 			}
 			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
-			p.applyLimitAllowlist(mc, loc, defaultBackendTLSName, rtTLS, conf)
 		}
 	}
 
@@ -278,11 +277,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			if !loc.Error {
 				if registered {
 					p.applyMiddlewares(mc, loc, routerKey, rt, conf)
-					p.applyLimitAllowlist(mc, loc, routerKey, rt, conf)
 					applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
 				}
 				p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
-				p.applyLimitAllowlist(mc, loc, routerKey+"-tls", rtTLS, conf)
 				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 			}
 
@@ -297,7 +294,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 				if p.addNonTLSRouter(conf, canaryKey, canaryRouter) {
 					p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
-					p.applyLimitAllowlist(mc, loc, canaryKey, canaryRouter, conf)
 				}
 
 				canaryKeyTLS := canaryKey + "-tls"
@@ -311,7 +307,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 				conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
 				p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
-				p.applyLimitAllowlist(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
@@ -325,7 +320,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 				if p.addNonTLSRouter(conf, nonCanaryKey, nonCanaryRouter) {
 					p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
-					p.applyLimitAllowlist(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
 				}
 
 				nonCanaryKeyTLS := nonCanaryKey + "-tls"
@@ -339,7 +333,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 				conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
 				p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
-				p.applyLimitAllowlist(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
 			}
 		}
 	}
@@ -493,6 +486,9 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 
 func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, rt *dynamic.Router, conf *dynamic.Configuration) {
 	p.buildMiddlewareChain(mc, loc, routerKey, rt, conf, true)
+
+	// Every router carrying the location middlewares needs its own limit exemption.
+	p.applyLimitAllowlist(mc, loc, routerKey, rt, conf)
 }
 
 // applyLimitAllowlist adds a router matching the allowlisted client IPs, carrying the
@@ -514,12 +510,14 @@ func (p *Provider) applyLimitAllowlist(mc *model, loc *location, routerKey strin
 		Observability: rt.Observability,
 	}
 
-	// The default backend routers pin an explicit lowest priority: their allowlist
-	// router has to stay below every other router, while still winning over its own
-	// base router. Elsewhere the default priority (the rule length) already does it.
-	if rt.Priority != 0 {
-		allowlistRouter.Priority = rt.Priority + 1
+	// The rule wrapping makes the allowlist rule longer than the rule it exempts, and
+	// the default priority is the rule length: left implicit, the allowlist router
+	// outranks unrelated routers of the same host and steals their traffic.
+	priority := rt.Priority
+	if priority == 0 {
+		priority = httpmuxer.GetRulePriority(rt.Rule)
 	}
+	allowlistRouter.Priority = priority + 1
 
 	conf.HTTP.Routers[allowlistKey] = allowlistRouter
 

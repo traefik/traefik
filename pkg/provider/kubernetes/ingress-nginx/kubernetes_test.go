@@ -17985,6 +17985,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `(Host("production.localhost") && PathPrefix("/")) && ClientIP("10.0.0.0/24")`,
 							RuleSyntax:  "default",
+							Priority:    48,
 							Service:     "default-ingress-with-canary-and-limit-allowlist-whoami-80-wrr",
 							Middlewares: []string{"default-ingress-with-canary-and-limit-allowlist-rule-0-path-0-limit-allowlist-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -18001,6 +18002,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `(Host("production.localhost") && PathPrefix("/")) && ClientIP("10.0.0.0/24")`,
 							RuleSyntax:  "default",
+							Priority:    48,
 							Service:     "default-ingress-with-canary-and-limit-allowlist-whoami-80-wrr",
 							Middlewares: []string{"default-ingress-with-canary-and-limit-allowlist-rule-0-path-0-tls-limit-allowlist-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -18051,6 +18053,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `((Host("production.localhost") && PathPrefix("/")) && (HeaderRegexp("Cookie", "(^|;\\s*)foo\\.bar=always(;|$)"))) && ClientIP("10.0.0.0/24")`,
 							RuleSyntax:  "default",
+							Priority:    112,
 							Service:     "default-ingress-with-canary-and-limit-allowlist-whoami-80-canary",
 							Middlewares: []string{"default-ingress-with-canary-and-limit-allowlist-rule-0-path-0-canary-limit-allowlist-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -18067,6 +18070,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `((Host("production.localhost") && PathPrefix("/")) && (HeaderRegexp("Cookie", "(^|;\\s*)foo\\.bar=always(;|$)"))) && ClientIP("10.0.0.0/24")`,
 							RuleSyntax:  "default",
+							Priority:    112,
 							Service:     "default-ingress-with-canary-and-limit-allowlist-whoami-80-canary",
 							Middlewares: []string{"default-ingress-with-canary-and-limit-allowlist-rule-0-path-0-canary-tls-limit-allowlist-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -19288,6 +19292,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `(Host("whoami.localhost") && Path("/")) && ClientIP("10.0.0.0/24", "192.168.1.1")`,
 							RuleSyntax:  "default",
+							Priority:    38,
 							Middlewares: []string{"default-ingress-with-limit-whitelist-rule-0-path-0-limit-allowlist-retry"},
 							Service:     "default-ingress-with-limit-whitelist-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -19304,6 +19309,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `(Host("whoami.localhost") && Path("/")) && ClientIP("10.0.0.0/24", "192.168.1.1")`,
 							RuleSyntax:  "default",
+							Priority:    38,
 							Middlewares: []string{"default-ingress-with-limit-whitelist-rule-0-path-0-tls-limit-allowlist-retry"},
 							Service:     "default-ingress-with-limit-whitelist-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -19445,6 +19451,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `(Host("whoami.localhost") && Path("/")) && ClientIP("10.0.0.0/24", "192.168.1.1")`,
 							RuleSyntax:  "default",
+							Priority:    38,
 							Middlewares: []string{"default-ingress-with-limit-allowlist-rule-0-path-0-limit-allowlist-retry"},
 							Service:     "default-ingress-with-limit-allowlist-whoami-80",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -19461,6 +19468,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `(Host("whoami.localhost") && Path("/")) && ClientIP("10.0.0.0/24", "192.168.1.1")`,
 							RuleSyntax:  "default",
+							Priority:    38,
 							Middlewares: []string{"default-ingress-with-limit-allowlist-rule-0-path-0-tls-limit-allowlist-retry"},
 							Service:     "default-ingress-with-limit-allowlist-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -19659,6 +19667,179 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-limit-allowlist-no-limit": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Limit allowlist on an ingress default backend without rules",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-no-rules-limit-allowlist.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							Service:     "default-backend",
+							Middlewares: []string{"default-backend-limit-rps", "default-backend-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-no-rules-limit-allowlist",
+									},
+								},
+							},
+						},
+						"default-backend-limit-allowlist": {
+							EntryPoints: []string{"http"},
+							Rule:        `(PathPrefix("/")) && ClientIP("10.0.0.0/24")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32 + 1,
+							Service:     "default-backend",
+							Middlewares: []string{"default-backend-limit-allowlist-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-no-rules-limit-allowlist",
+									},
+								},
+							},
+						},
+						"default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							Service:     "default-backend",
+							Middlewares: []string{"default-backend-tls-limit-rps", "default-backend-tls-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-no-rules-limit-allowlist",
+									},
+								},
+							},
+						},
+						"default-backend-tls-limit-allowlist": {
+							EntryPoints: []string{"https"},
+							Rule:        `(PathPrefix("/")) && ClientIP("10.0.0.0/24")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32 + 1,
+							Service:     "default-backend",
+							Middlewares: []string{"default-backend-tls-limit-allowlist-retry"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-no-rules-limit-allowlist",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-backend-limit-rps": {
+							RateLimit: &dynamic.RateLimit{
+								Average: 10,
+								Burst:   50,
+								Period:  ptypes.Duration(time.Second),
+							},
+						},
+						"default-backend-tls-limit-rps": {
+							RateLimit: &dynamic.RateLimit{
+								Average: 10,
+								Burst:   50,
+								Period:  ptypes.Duration(time.Second),
+							},
+						},
+						"default-backend-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-backend-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-backend-limit-allowlist-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-backend-tls-limit-allowlist-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-ingress-with-default-backend-no-rules-limit-allowlist",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-default-backend-no-rules-limit-allowlist": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -21693,6 +21874,122 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-disable-http-entrypoint": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Disable non-TLS routers with limit allowlist",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-disable-http-entrypoint-limit-allowlist.yml",
+				"secrets.yml",
+			},
+			disableNonTLSRouters: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-disable-http-entrypoint-limit-allowlist-service1-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Middlewares: []string{"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-limit-rps", "default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-disable-http-entrypoint-limit-allowlist",
+									},
+								},
+							},
+						},
+						"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-limit-allowlist": {
+							EntryPoints: []string{"https"},
+							Rule:        `(Host("whoami.localhost") && PathPrefix("/")) && ClientIP("10.0.0.0/24")`,
+							RuleSyntax:  "default",
+							Priority:    44,
+							Service:     "default-ingress-disable-http-entrypoint-limit-allowlist-service1-80",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Middlewares: []string{"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-limit-allowlist-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-disable-http-entrypoint-limit-allowlist",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-limit-rps": {
+							RateLimit: &dynamic.RateLimit{
+								Average: 10,
+								Burst:   50,
+								Period:  ptypes.Duration(time.Second),
+							},
+						},
+						"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-disable-http-entrypoint-limit-allowlist-rule-0-path-0-tls-limit-allowlist-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-disable-http-entrypoint-limit-allowlist-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "service1",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-disable-http-entrypoint-limit-allowlist": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
