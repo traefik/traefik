@@ -634,10 +634,15 @@ func TestDisableHTTP2(t *testing.T) {
 // read loop is already blocked in Read while the connection sits idle, so without re-arming on
 // write the response inherits the deadline anchored to the start of the idle period.
 func TestConnectionReadTimeoutIsArmedOnWrite(t *testing.T) {
+	// These values leave a 500ms margin on each of the three timing constraints the test relies on,
+	// so that scheduling jitter on a loaded runner cannot flip the result: the write must land before
+	// the idle-anchored deadline (readTimeout-idleBeforeUse), the response must arrive before the
+	// re-armed deadline (readTimeout-serverDelay), and it must arrive after the idle-anchored one
+	// (idleBeforeUse+serverDelay-readTimeout) or the test would pass without the fix.
 	const (
-		readTimeout   = 300 * time.Millisecond
-		idleBeforeUse = 200 * time.Millisecond
-		serverDelay   = 200 * time.Millisecond
+		readTimeout   = 1500 * time.Millisecond
+		idleBeforeUse = 1000 * time.Millisecond
+		serverDelay   = 1000 * time.Millisecond
 	)
 
 	client, server := net.Pipe()
