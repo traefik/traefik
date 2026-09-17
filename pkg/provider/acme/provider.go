@@ -941,6 +941,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			ID:          cert.Domain.Main,
 			Domains:     cert.Domain.ToStrArray(),
 			Certificate: cert.Certificate.Certificate,
+			KeyType:     GetKeyType(ctx, p.KeyType),
 		}
 
 		if ptr.Deref(p.ReusePrivateKey, true) {
