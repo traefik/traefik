@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v5/acme"
+	"github.com/go-acme/lego/v5/certcrypto"
 	"github.com/go-acme/lego/v5/certificate"
 	"github.com/go-acme/lego/v5/challenge"
 	"github.com/go-acme/lego/v5/challenge/dns01"
@@ -944,8 +945,15 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			KeyType:     GetKeyType(ctx, p.KeyType),
 		}
 
-		if ptr.Deref(p.ReusePrivateKey, true) {
-			res.PrivateKey = cert.Key
+		if ptr.Deref(p.ReusePrivateKey, true) && len(cert.Key) > 0 {
+			keyType, err := getPrivateKeyType(cert)
+			if err != nil {
+				logger.Info().Err(err).Msgf("Error renewing ACME certificate: %+v", cert.Domain)
+
+				res.PrivateKey = cert.Key
+			} else if keyType == GetKeyType(ctx, p.KeyType) {
+				res.PrivateKey = cert.Key
+			}
 		}
 
 		opts := &certificate.RenewOptions{
@@ -1102,6 +1110,20 @@ func (p *Provider) certExists(validDomains []string) bool {
 	}
 
 	return false
+}
+
+func getPrivateKeyType(cert *CertAndStore) (certcrypto.KeyType, error) {
+	key, err := certcrypto.ParsePEMPrivateKey(cert.Key)
+	if err != nil {
+		return certcrypto.RSA4096, err
+	}
+
+	keyType, err := certcrypto.GetPrivateKeyType(key)
+	if err != nil {
+		return certcrypto.RSA4096, err
+	}
+
+	return keyType, nil
 }
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
