@@ -73,7 +73,7 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	token, err := getPathParam(req.URL)
 	if err != nil {
-		logger.Error().Err(err).Msg("Unable to get token")
+		logger.Debug().Err(err).Msg("Unable to get token")
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -107,13 +107,13 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 	defer c.lock.RUnlock()
 
 	if _, ok := c.httpChallenges[token]; !ok {
-		logger.Error().Msgf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
+		logger.Debug().Msgf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
 		return nil
 	}
 
 	result, ok := c.httpChallenges[token][domain]
 	if !ok {
-		logger.Error().Msgf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
+		logger.Debug().Msgf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
 		return nil
 	}
 
