@@ -11,8 +11,8 @@ vi.mock('utils/workers/scriptVerification', () => ({
   default: vi.fn(),
 }))
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router')
   return {
     ...actual,
     useParams: vi.fn(() => ({ id: 'test-id' })),
@@ -30,13 +30,11 @@ vi.mock('hooks/use-theme', () => ({
 
 describe('HubDashboard demo', () => {
   const mockVerifyScriptSignature = vi.mocked(verifySignature)
-  let mockCreateObjectURL: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
-    globalThis.URL.createObjectURL = mockCreateObjectURL
+    vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:mock-url')
   })
 
   afterEach(() => {

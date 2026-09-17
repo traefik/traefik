@@ -6,6 +6,7 @@ import (
 	"maps"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -52,24 +53,25 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	if mc.DefaultBackend != nil {
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesIngressMetadata{
-					Namespace:   mc.DefaultBackend.Namespace,
-					ServiceName: mc.DefaultBackend.ServiceName,
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: mc.DefaultBackend.Namespace,
 				},
 			},
 		}
 
 		var serversTransportName string
 		if loc := mc.DefaultBackendLocation; loc != nil {
-			obs.Metadata.Ingress.IngressName = loc.IngressName
-			obs.Metadata.Ingress.ServicePort = loc.ServicePort
+			obs.Metadata.Ingress.Name = loc.IngressName
 			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
 				serversTransportName = loc.ServersTransportName
 				conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
 			}
 		}
 
-		conf.HTTP.Services[defaultBackendName] = buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc := buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc.Observability = buildServiceObservability(mc.DefaultBackend)
+		conf.HTTP.Services[defaultBackendName] = defaultBackendSvc
 
 		rt := &dynamic.Router{
 			EntryPoints:   p.NonTLSEntryPoints,
@@ -196,15 +198,16 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			primarySvcName := loc.BackendName
-			conf.HTTP.Services[primarySvcName] = buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc := buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc.Observability = buildServiceObservability(backend)
+			conf.HTTP.Services[primarySvcName] = primarySvc
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
-					Ingress: &dynamic.KubernetesIngressMetadata{
-						Namespace:   loc.Namespace,
-						IngressName: loc.IngressName,
-						ServiceName: loc.ServiceName,
-						ServicePort: loc.ServicePort,
+					Ingress: &dynamic.KubernetesMetadata{
+						Kind:      "Ingress",
+						Namespace: loc.Namespace,
+						Name:      loc.IngressName,
 					},
 				},
 			}
@@ -217,6 +220,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canaryWRRName := primarySvcName + "-wrr"
 
 					canarySvc := buildServiceWithLocConfig(canaryBackend, loc.ServersTransportName, loc.Config)
+					canarySvc.Observability = buildServiceObservability(canaryBackend)
 					conf.HTTP.Services[canarySvcName] = canarySvc
 
 					conf.HTTP.Services[canaryWRRName] = &dynamic.Service{
@@ -343,6 +347,21 @@ func (p *Provider) addNonTLSRouter(conf *dynamic.Configuration, key string, rt *
 	}
 	conf.HTTP.Routers[key] = rt
 	return true
+}
+
+func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
+	if b == nil {
+		return nil
+	}
+	return &dynamic.ServiceObservabilityConfig{
+		Metadata: &dynamic.ServiceObservabilityMetadata{
+			Kubernetes: &dynamic.KubernetesServiceMetadata{
+				Namespace: b.Namespace,
+				Name:      b.ServiceName,
+				Port:      b.ServicePort,
+			},
+		},
+	}
 }
 
 func buildService(backend *backend, serversTransportName string) *dynamic.Service {
@@ -477,7 +496,9 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		if e.ErrorBackendName != "" {
 			errorSvcName = "default-backend-" + routerKey
 			if errBackend, ok := mc.Backends[e.ErrorBackendName]; ok {
-				conf.HTTP.Services[errorSvcName] = buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc := buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc.Observability = buildServiceObservability(errBackend)
+				conf.HTTP.Services[errorSvcName] = errSvc
 			}
 		}
 		headers := http.Header{
@@ -655,8 +676,13 @@ func buildRule(host string, loc *location) string {
 
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
+
+		regexPath := loc.Path
 		if pathType == netv1.PathTypeImplementationSpecific {
 			pathType = netv1.PathTypePrefix
+			if hasAbsoluteRewriteTarget(loc) {
+				regexPath = makeTrailingGroupOptional(loc.Path)
+			}
 		}
 
 		switch pathType {
@@ -664,7 +690,7 @@ func buildRule(host string, loc *location) string {
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
 		case netv1.PathTypePrefix:
 			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+loc.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
 			} else {
 				rules = append(rules, buildPrefixRule(loc.Path))
 			}
@@ -686,4 +712,55 @@ func buildPrefixRule(path string) string {
 	}
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, path+"/")
+}
+
+// hasAbsoluteRewriteTarget reports whether the location's rewrite-target
+// annotation is an absolute URL (e.g. https://bar.example.org/$1).
+// With an absolute rewrite-target, requests that do not match the nginx
+// location fall through to the implicit catch-all whose rewrite still issues
+// the redirect, so nginx answers 302 for any path on the host. Traefik has no
+// such catch-all: widening the route regex with makeTrailingGroupOptional
+// approximates it for paths sharing the location prefix. With a non-absolute
+// rewrite-target, the catch-all proxies to the default backend (404), so the
+// route must not be widened.
+func hasAbsoluteRewriteTarget(loc *location) bool {
+	rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
+	if rewrite == "" {
+		return false
+	}
+	parsed, err := url.Parse(rewrite)
+	return err == nil && parsed.Scheme != ""
+}
+
+// makeTrailingGroupOptional converts an ImplementationSpecific regex path like /foo/(.*)
+// into /foo(?:/(.*))? so it also matches the bare /foo (without trailing slash).
+// Only applies when the path starts with a literal prefix (not a capture group),
+// and the group opened after the last "/(" closes at the very end of the path:
+// otherwise trailing literals (e.g. /foo/(.*)/bar) would become optional too.
+func makeTrailingGroupOptional(path string) string {
+	if strings.HasPrefix(path, "/(") {
+		return path
+	}
+	idx := strings.LastIndex(path, "/(")
+	if idx < 0 {
+		return path
+	}
+
+	depth := 0
+	for i := idx + 1; i < len(path); i++ {
+		switch path[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 && i != len(path)-1 {
+				return path
+			}
+		}
+	}
+	if depth != 0 {
+		return path
+	}
+
+	return path[:idx] + "(?:" + path[idx:] + ")?"
 }

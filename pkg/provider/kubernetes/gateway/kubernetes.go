@@ -1,10 +1,12 @@
 package gateway
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"slices"
 	"sort"
@@ -60,7 +62,17 @@ const (
 	schemeHTTP  = "http"
 	schemeHTTPS = "https"
 	schemeH2C   = "h2c"
+
+	// routeReasonHostnameConflict is raised when an HTTP and a GRPC route are
+	// attached to the same listener with intersecting hostnames.
+	routeReasonHostnameConflict gatev1.RouteConditionReason = "HostnameConflict"
 )
+
+// NamespacedName holds a Kubernetes resource reference with namespace and name.
+type NamespacedName struct {
+	Namespace string `description:"Defines the resource namespace." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Name      string `description:"Defines the resource name." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+}
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -72,6 +84,7 @@ type Provider struct {
 	Namespaces              []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	NamespaceSelector       string                `description:"Kubernetes namespace label selector to watch for updates to Kubernetes objects." json:"namespaceSelector,omitempty" toml:"namespaceSelector,omitempty" yaml:"namespaceSelector,omitempty" export:"true"`
 	LabelSelector           string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	Gateways                []NamespacedName      `description:"Scopes the provider to specific Gateways." json:"gateways,omitempty" toml:"gateways,omitempty" yaml:"gateways,omitempty" export:"true"`
 	ThrottleDuration        ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	ExperimentalChannel     bool                  `description:"Toggles Experimental Channel resources support. Requires the Experimental Channel CRDs." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress           *StatusAddress        `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
@@ -103,7 +116,7 @@ type Entrypoint struct {
 type StatusAddress struct {
 	IP       string     `description:"IP used to set Kubernetes Gateway status address." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
 	Hostname string     `description:"Hostname used for Kubernetes Gateway status address." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	Service  ServiceRef `description:"Published Kubernetes Service to copy status addresses from." json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	Service  ServiceRef `description:"Published Kubernetes Service to copy status addresses from." json:"service" toml:"service,omitempty" yaml:"service,omitempty"`
 }
 
 // ServiceRef holds a Kubernetes service reference.
@@ -137,6 +150,10 @@ type gatewayListener struct {
 	Attached bool
 
 	EPName string
+
+	// RouterNames holds one parent router per entry point hostname
+	// the listener is the most specific match for.
+	RouterNames []string
 }
 
 type gatewayWithListeners struct {
@@ -276,6 +293,22 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 	}
 }
 
+// managesGateway reports whether the provider should reconcile the given Gateways.
+// When the Gateways scoping option is set, only the referenced namespace/name entries are managed.
+func (p *Provider) managesGateway(gateway *gatev1.Gateway) bool {
+	if len(p.Gateways) == 0 {
+		return true
+	}
+
+	for _, g := range p.Gateways {
+		if gateway.Namespace == g.Namespace && gateway.Name == g.Name {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	// Label selector validation
 	_, err := labels.Parse(p.LabelSelector)
@@ -336,7 +369,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Routers:  map[string]*dynamic.UDPRouter{},
 			Services: map[string]*dynamic.UDPService{},
 		},
-		TLS: &dynamic.TLSConfiguration{},
+		TLS: &dynamic.TLSConfiguration{
+			Options: map[string]tls.Options{},
+		},
 	}
 
 	addresses, err := p.gatewayAddresses()
@@ -385,6 +420,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
 			continue
 		}
+		if !p.managesGateway(gateway) {
+			continue
+		}
 		gateways = append(gateways, gateway)
 	}
 
@@ -404,13 +442,18 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 	statusReport.gatewayListeners = selectedGateways
 
-	p.loadHTTPRoutes(ctx, selectedGateways, conf, statusReport)
+	// The isolation of a listener depends on the other listeners of its entry point.
+	listenerRouters := p.buildListenerRouters(selectedGateways, conf)
 
-	p.loadGRPCRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadHTTPAndGRPCRoutes(ctx, selectedGateways, conf, statusReport)
 
 	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
 
 	p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
+
+	// A listener with no route attached gives a parent router with no child,
+	// which the router manager reports in error as it has no service either.
+	dropChildlessListenerRouters(conf, listenerRouters)
 
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
@@ -444,6 +487,47 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	}
 
 	return conf, statusReport, nil
+}
+
+// loadHTTPAndGRPCRoutes loads the HTTPRoutes and the GRPCRoutes together, ordered by
+// creation timestamp then by "{namespace}/{name}".
+// As stated in the specification, when an HTTPRoute and a GRPCRoute attached to the same
+// listener have intersecting hostnames, only the first one in that order is accepted.
+func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
+	routes := make([]metav1.Object, 0)
+
+	httpRoutes, err := p.client.ListHTTPRoutes()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Unable to list HTTPRoutes")
+	}
+	for _, route := range httpRoutes {
+		routes = append(routes, route)
+	}
+
+	grpcRoutes, err := p.client.ListGRPCRoutes()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GRPCRoutes")
+	}
+	for _, route := range grpcRoutes {
+		routes = append(routes, route)
+	}
+
+	slices.SortStableFunc(routes, func(a, b metav1.Object) int {
+		if c := a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.GetNamespace()+"/"+a.GetName(), b.GetNamespace()+"/"+b.GetName())
+	})
+
+	attached := make(attachedRoutes)
+	for _, route := range routes {
+		switch route := route.(type) {
+		case *gatev1.HTTPRoute:
+			p.loadHTTPRoute(ctx, gateways, route, conf, attached, statusReport)
+		case *gatev1.GRPCRoute:
+			p.loadGRPCRoute(ctx, gateways, route, conf, attached, statusReport)
+		}
+	}
 }
 
 func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) []gatewayListener {
@@ -672,6 +756,166 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	}
 
 	return gatewayListeners
+}
+
+// uniqListener identifies a unique listener configuration.
+// The protocol is part of it because a TLS parent router and a plain one are built on the two
+// distinct handlers of an entry point, and because merging them would put the routes of an HTTP
+// listener behind the TLS configuration of an HTTPS one.
+//
+// TODO: The Gateway frontend TLS configuration (client certificate validation) has to be part of it once supported.
+// TODO: The listener TLS options (listener.TLS.Options) have to be part of it once supported.
+type uniqListener struct {
+	epName   string
+	protocol gatev1.ProtocolType
+}
+
+// buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
+// is the most specific match for. Electing the listener per Gateway isolates the listeners of a
+// Gateway without hiding the routes of the other Gateways sharing the entry point.
+func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) []string {
+	var listenerRouterNames []string
+
+	hostnamesByListener := map[uniqListener][]string{}
+	for _, gateway := range gateways {
+		for _, listener := range gateway.listeners {
+			if !listener.Attached ||
+				listener.Protocol != gatev1.HTTPProtocolType && listener.Protocol != gatev1.HTTPSProtocolType {
+				continue
+			}
+
+			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
+
+			hostname := string(ptr.Deref(listener.Hostname, ""))
+			if !slices.Contains(hostnamesByListener[uniq], hostname) {
+				hostnamesByListener[uniq] = append(hostnamesByListener[uniq], hostname)
+			}
+		}
+	}
+
+	uniqListeners := slices.SortedFunc(maps.Keys(hostnamesByListener), func(a, b uniqListener) int {
+		return cmp.Or(cmp.Compare(a.epName, b.epName), cmp.Compare(a.protocol, b.protocol))
+	})
+
+	for _, uniq := range uniqListeners {
+		hostnames := hostnamesByListener[uniq]
+		slices.Sort(hostnames)
+
+		for _, hostname := range hostnames {
+			listenerRouterName := makeListenerRouterName(uniq, hostname)
+
+			listenerRouter := &dynamic.Router{
+				Rule:        buildListenerRule(hostname, hostnames),
+				EntryPoints: []string{uniq.epName},
+			}
+
+			for _, gateway := range gateways {
+				listener := mostSpecificListener(gateway.listeners, uniq, hostname)
+				if listener == nil {
+					continue
+				}
+
+				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
+			}
+
+			if uniq.protocol == gatev1.HTTPSProtocolType {
+				listenerTLSOptions := tls.Options{}
+				listenerTLSOptions.SetDefaults()
+
+				conf.TLS.Options[listenerRouterName] = listenerTLSOptions
+
+				listenerRouter.TLS = &dynamic.RouterTLSConfig{
+					Options: listenerRouterName,
+				}
+			}
+
+			conf.HTTP.Routers[listenerRouterName] = listenerRouter
+			listenerRouterNames = append(listenerRouterNames, listenerRouterName)
+		}
+	}
+
+	return listenerRouterNames
+}
+
+// dropChildlessListenerRouters removes the parent routers no route is attached to.
+func dropChildlessListenerRouters(conf *dynamic.Configuration, listenerRouterNames []string) {
+	parents := map[string]struct{}{}
+	for _, router := range conf.HTTP.Routers {
+		for _, parent := range router.ParentRefs {
+			parents[parent] = struct{}{}
+		}
+	}
+
+	for _, name := range listenerRouterNames {
+		if _, ok := parents[name]; ok {
+			continue
+		}
+
+		delete(conf.HTTP.Routers, name)
+		delete(conf.TLS.Options, name)
+	}
+}
+
+func mostSpecificListener(listeners []gatewayListener, uniq uniqListener, hostname string) *gatewayListener {
+	var elected *gatewayListener
+	for i, listener := range listeners {
+		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol || !listener.Attached {
+			continue
+		}
+
+		listenerHostname := string(ptr.Deref(listener.Hostname, ""))
+		if !hostnameCovers(listenerHostname, hostname) {
+			continue
+		}
+
+		// A hostname covered by the elected one is a more specific match.
+		if elected == nil || hostnameCovers(string(ptr.Deref(elected.Hostname, "")), listenerHostname) {
+			elected = &listeners[i]
+		}
+	}
+
+	return elected
+}
+
+// hostnameCovers reports whether every request matching hostname also matches listenerHostname.
+func hostnameCovers(listenerHostname, hostname string) bool {
+	if listenerHostname == "" {
+		return true
+	}
+
+	return findMatchingHostname(gatev1.Hostname(listenerHostname), gatev1.Hostname(hostname)) != ""
+}
+
+func buildListenerRule(hostname string, entryPointHostnames []string) string {
+	rule := `Host("*")`
+	if hostname != "" {
+		rule = fmt.Sprintf("Host(%q)", hostnameMatcherValue(hostname))
+	}
+
+	var exclusions []string
+	for _, entryPointHostname := range entryPointHostnames {
+		if entryPointHostname == hostname || !hostnameCovers(hostname, entryPointHostname) {
+			continue
+		}
+
+		exclusions = append(exclusions, fmt.Sprintf("Host(%q)", hostnameMatcherValue(entryPointHostname)))
+	}
+
+	if len(exclusions) == 0 {
+		return rule
+	}
+
+	return fmt.Sprintf("(%s) && !(%s)", rule, strings.Join(exclusions, " || "))
+}
+
+// hostnameMatcherValue returns the Host matcher value for a Gateway API hostname,
+// whose wildcard spans one or more labels, unlike the Traefik single one.
+func hostnameMatcherValue(hostname string) string {
+	if suffix, ok := strings.CutPrefix(hostname, "*."); ok {
+		return "**." + suffix
+	}
+
+	return hostname
 }
 
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
@@ -1096,20 +1340,20 @@ func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []g
 		return []gatev1.Hostname{*listenerHostname}, true
 	}
 
-	var matches []gatev1.Hostname
+	matches := map[gatev1.Hostname]struct{}{}
 	for _, routeHostname := range routeHostnames {
 		if match := findMatchingHostname(*listenerHostname, routeHostname); match != "" {
-			matches = append(matches, match)
+			matches[match] = struct{}{}
 			continue
 		}
 
 		if match := findMatchingHostname(routeHostname, *listenerHostname); match != "" {
-			matches = append(matches, match)
+			matches[match] = struct{}{}
 			continue
 		}
 	}
 
-	return matches, len(matches) > 0
+	return slices.Sorted(maps.Keys(matches)), len(matches) > 0
 }
 
 func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
@@ -1142,15 +1386,65 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	})
 }
 
-// gatewayListenersForParentRef associates a route parentRef with the listeners of
+// listenerRef identifies a listener of a Gateway.
+type listenerRef struct {
+	Name             string
+	GatewayNamespace string
+	GatewayName      string
+}
+
+// attachedRoutes holds, for each listener, the kind of the route already attached to a hostname.
+// It allows detecting the hostname Conflicts between the HTTPRoutes and the GRPCRoutes attached to the same listener.
+type attachedRoutes map[listenerRef]map[gatev1.Hostname]string
+
+func (ar attachedRoutes) Record(ref listenerRef, kind string, hostnames []gatev1.Hostname) {
+	if ar[ref] == nil {
+		ar[ref] = make(map[gatev1.Hostname]string)
+	}
+
+	// A route without hostname matches all of them.
+	if len(hostnames) == 0 {
+		ar[ref][""] = kind
+		return
+	}
+
+	for _, hostname := range hostnames {
+		ar[ref][hostname] = kind
+	}
+}
+
+// Conflicts returns whether one of the given hostnames is already attached to the listener by a route of another kind.
+func (ar attachedRoutes) Conflicts(ref listenerRef, kind string, hostnames []gatev1.Hostname) bool {
+	for attachedHostname, attachedKind := range ar[ref] {
+		if attachedKind == kind {
+			continue
+		}
+
+		// The empty hostname stands for all the hostnames,
+		// so an empty hostname on either side means they intersect.
+		if attachedHostname == "" || len(hostnames) == 0 {
+			return true
+		}
+
+		for _, hostname := range hostnames {
+			if findMatchingHostname(attachedHostname, hostname) != "" || findMatchingHostname(hostname, attachedHostname) != "" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// gatewayListenersForParentRef associates a route ParentRef with the Listeners of
 // the Gateway it refers to, among the Gateways managed by this controller.
 type gatewayListenersForParentRef struct {
-	parentRef gatev1.ParentReference
+	ParentRef gatev1.ParentReference
 
-	gatewayName      string
-	gatewayNamespace string
+	GatewayName      string
+	GatewayNamespace string
 
-	listeners []gatewayListener
+	Listeners []gatewayListener
 }
 
 // matchingGatewayListenersForParentRef returns, for each parentRef referring to a
@@ -1190,10 +1484,10 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			// Port) is decided when loading the route, so that ResolvedRefs is reported
 			// even for parentRefs that match no listener.
 			matches = append(matches, gatewayListenersForParentRef{
-				parentRef:        parentRef,
-				gatewayName:      matchingGateway.Name,
-				gatewayNamespace: matchingGateway.Namespace,
-				listeners:        matchingGateway.listeners,
+				ParentRef:        parentRef,
+				GatewayName:      matchingGateway.Name,
+				GatewayNamespace: matchingGateway.Namespace,
+				Listeners:        matchingGateway.listeners,
 			})
 		}
 	}
@@ -1227,6 +1521,24 @@ func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName, 
 	// As explained in https://pkg.go.dev/hash#Hash,
 	// Write never returns an error.
 	h.Write([]byte(rule))
+
+	return fmt.Sprintf("%s-%.10x", label, h.Sum(nil))
+}
+
+// makeListenerRouterName hashes the hostname, as provider.Normalize drops the characters
+// telling two of them apart: the "*.example.com" and "example.com" hostnames of an entry
+// point both normalize to the "listener-web-http-example-com" label.
+func makeListenerRouterName(uniq uniqListener, hostname string) string {
+	protocol := strings.ToLower(string(uniq.protocol))
+
+	label := provider.Normalize(fmt.Sprintf("listener-%s-%s-%s", uniq.epName, protocol, hostname))
+
+	h := sha256.New()
+
+	for _, c := range []string{uniq.epName, protocol, hostname} {
+		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
+		fmt.Fprintf(h, "%d:%s", len(c), c)
+	}
 
 	return fmt.Sprintf("%s-%.10x", label, h.Sum(nil))
 }

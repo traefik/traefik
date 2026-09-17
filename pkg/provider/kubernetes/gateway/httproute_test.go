@@ -45,7 +45,7 @@ func Test_buildHostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule:     `(HostRegexp("^[a-z0-9-\\.]+\\.bar\\.foo$") || Host("bar.foo") || Host("foo.foo"))`,
+			expectedRule:     `(Host("**.bar.foo") || Host("bar.foo") || Host("foo.foo"))`,
 			expectedPriority: 9,
 		},
 		{
@@ -53,7 +53,7 @@ func Test_buildHostRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{
 				"*.bar.foo",
 			},
-			expectedRule:     `HostRegexp("^[a-z0-9-\\.]+\\.bar\\.foo$")`,
+			expectedRule:     `Host("**.bar.foo")`,
 			expectedPriority: 9,
 		},
 	}
