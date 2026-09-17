@@ -107,6 +107,14 @@ type location struct {
 	// across all ingresses sharing the host).
 	UseRegex bool
 
+	// PathKeep and PathExclude hold the two halves of a negative lookahead the
+	// builder was able to translate into RE2: PathKeep matches what the assertion
+	// let through, PathExclude matches what it rejected. Both are empty when Path
+	// carries no lookahead, or carries one this provider cannot translate, and the
+	// path is then compiled verbatim. Path itself is never rewritten.
+	PathKeep    string
+	PathExclude string
+
 	// BackendName is the key into Configuration.Backends for the primary backend.
 	BackendName string
 
