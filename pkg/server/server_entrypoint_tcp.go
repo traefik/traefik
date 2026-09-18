@@ -30,6 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
@@ -725,6 +726,10 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// hence the wrapping has to be done last so that it is the first handler executed.
 	handler = denyOpaque(handler)
 
+	if readTimeout := configuration.Transport.RespondingTimeouts.ReadTimeout; readTimeout > 0 {
+		handler = withReadTimeoutDeadline(handler, time.Duration(readTimeout))
+	}
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
@@ -833,6 +838,18 @@ func denyOpaque(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(rw, req)
+	})
+}
+
+// withReadTimeoutDeadline makes the entrypoint read timeout deadline
+// (respondingTimeouts.readTimeout) available to the handlers through the request
+// context. When that deadline fires while the request body is still being
+// transferred, the request context is canceled by the HTTP server, which is
+// indistinguishable from a client disconnect unless the deadline is known.
+func withReadTimeoutDeadline(next http.Handler, readTimeout time.Duration) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		req = req.WithContext(httputil.WithReadDeadline(req.Context(), time.Now().Add(readTimeout)))
+		next.ServeHTTP(rw, req)
 	})
 }
 

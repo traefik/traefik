@@ -49,7 +49,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var headers http.Header
 	response, err := t.rt.RoundTrip(req)
 	if err != nil {
-		statusCode = ComputeStatusCode(err)
+		statusCode = ComputeStatusCode(req.Context(), err)
 	}
 	if response != nil {
 		statusCode = response.StatusCode
