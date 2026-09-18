@@ -648,6 +648,7 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 		desc        string
 		underscore  string
 		alias       string
+		global      string
 		expectError bool
 	}{
 		{
@@ -676,6 +677,25 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			alias:       AliasHeadersStrategyReject,
 			expectError: true,
 		},
+		{
+			desc:   "only the global default configured",
+			global: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:   "global default with an explicit per-entry-point override",
+			global: AliasHeadersStrategyDelete,
+			alias:  AliasHeadersStrategyKeep,
+		},
+		{
+			desc:        "invalid global default",
+			global:      "foobar",
+			expectError: true,
+		},
+		{
+			desc:        "invalid per-entry-point value",
+			alias:       "foobar",
+			expectError: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -695,6 +715,10 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 				},
 			}
 
+			if test.global != "" {
+				cfg.Global = &Global{AliasHeadersStrategy: test.global}
+			}
+
 			err := cfg.ValidateConfiguration()
 			if test.expectError {
 				assert.Error(t, err)
@@ -702,6 +726,76 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestSetEffectiveConfiguration_aliasHeadersStrategyDefault(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		global     string
+		entry      map[string]string
+		underscore map[string]string
+		expected   map[string]string
+	}{
+		{
+			desc:     "no global default leaves entry points untouched",
+			entry:    map[string]string{"web": "", "websecure": ""},
+			expected: map[string]string{"web": "", "websecure": ""},
+		},
+		{
+			desc:     "global default fills entry points without an explicit value",
+			global:   AliasHeadersStrategyDelete,
+			entry:    map[string]string{"web": "", "websecure": ""},
+			expected: map[string]string{"web": AliasHeadersStrategyDelete, "websecure": AliasHeadersStrategyDelete},
+		},
+		{
+			desc:     "explicit per-entry-point value wins over the global default",
+			global:   AliasHeadersStrategyDelete,
+			entry:    map[string]string{"web": AliasHeadersStrategyKeep, "websecure": ""},
+			expected: map[string]string{"web": AliasHeadersStrategyKeep, "websecure": AliasHeadersStrategyDelete},
+		},
+		{
+			desc:       "global default skips entry points using the deprecated option",
+			global:     AliasHeadersStrategyKeep,
+			entry:      map[string]string{"web": ""},
+			underscore: map[string]string{"web": UnderscoreHeadersStrategyDelete},
+			expected:   map[string]string{"web": ""},
+		},
+		{
+			desc:       "global default skips entry points using the deprecated option, even with a matching value",
+			global:     AliasHeadersStrategyDelete,
+			entry:      map[string]string{"web": ""},
+			underscore: map[string]string{"web": UnderscoreHeadersStrategyDelete},
+			expected:   map[string]string{"web": ""},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{Providers: &Providers{}, EntryPoints: EntryPoints{}}
+			for epName, strategy := range test.entry {
+				cfg.EntryPoints[epName] = &EntryPoint{
+					Address: ":80",
+					HTTP: HTTPConfig{
+						AliasHeadersStrategy:      strategy,
+						UnderscoreHeadersStrategy: test.underscore[epName],
+					},
+				}
+			}
+
+			if test.global != "" {
+				cfg.Global = &Global{AliasHeadersStrategy: test.global}
+			}
+
+			cfg.SetEffectiveConfiguration()
+			require.NoError(t, cfg.ValidateConfiguration())
+
+			for epName, want := range test.expected {
+				assert.Equal(t, want, cfg.EntryPoints[epName].HTTP.AliasHeadersStrategy)
+			}
 		})
 	}
 }

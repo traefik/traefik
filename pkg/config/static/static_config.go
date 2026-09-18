@@ -138,9 +138,10 @@ type CertificateResolver struct {
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion        bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	SendAnonymousUsage     bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	NotAppendXForwardedFor bool `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CheckNewVersion        bool   `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	SendAnonymousUsage     bool   `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	NotAppendXForwardedFor bool   `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	AliasHeadersStrategy   string `description:"Defines the default strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject). It applies to every entry point that does not set http.aliasHeadersStrategy explicitly and does not use the deprecated http.underscoreHeadersStrategy." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -315,6 +316,21 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	// Propagate the global aliasHeadersStrategy default to the entry points
+	// left without an explicit value, so internal entry points are covered too.
+	// An explicit per-entry-point value always wins, and leaving both unset
+	// keeps the historical behavior unchanged.
+	// Entry points that still set the deprecated underscoreHeadersStrategy are
+	// skipped: aliasing covers more than underscores, so inheriting the global
+	// default would silently widen or reject their configuration.
+	if c.Global != nil && c.Global.AliasHeadersStrategy != "" {
+		for _, ep := range c.EntryPoints {
+			if ep.HTTP.AliasHeadersStrategy == "" && ep.HTTP.UnderscoreHeadersStrategy == "" {
+				ep.HTTP.AliasHeadersStrategy = c.Global.AliasHeadersStrategy
+			}
+		}
+	}
+
 	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
 	}
@@ -470,6 +486,20 @@ func (c *Configuration) ValidateConfiguration() error {
 		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
 			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
 			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
+		}
+
+		switch ep.HTTP.AliasHeadersStrategy {
+		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
+		default:
+			return fmt.Errorf("entry point %q has an invalid aliasHeadersStrategy value %q", epName, ep.HTTP.AliasHeadersStrategy)
+		}
+	}
+
+	if c.Global != nil {
+		switch c.Global.AliasHeadersStrategy {
+		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
+		default:
+			return fmt.Errorf("invalid global aliasHeadersStrategy value %q", c.Global.AliasHeadersStrategy)
 		}
 	}
 
