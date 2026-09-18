@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -201,4 +204,105 @@ func Test_buildMatchRule(t *testing.T) {
 			assert.Equal(t, test.expectedPriority, priority)
 		})
 	}
+}
+
+func TestGetHTTPServiceProtocol(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		port        corev1.ServicePort
+		expected    string
+		expectedErr bool
+	}{
+		{
+			desc:     "TCP port without appProtocol",
+			port:     corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolTCP, Port: 80},
+			expected: "http",
+		},
+		{
+			desc:     "Port 443 without appProtocol serves plain HTTP",
+			port:     corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolTCP, Port: 443},
+			expected: "http",
+		},
+		{
+			desc:     "HTTPS named port without appProtocol serves plain HTTP",
+			port:     corev1.ServicePort{Name: "https", Protocol: corev1.ProtocolTCP, Port: 8443},
+			expected: "http",
+		},
+		{
+			desc:     "HTTP appProtocol",
+			port:     corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolTCP, Port: 443, AppProtocol: new("http")},
+			expected: "http",
+		},
+		{
+			desc:     "HTTPS appProtocol",
+			port:     corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolTCP, Port: 443, AppProtocol: new("https")},
+			expected: "https",
+		},
+		{
+			desc:     "H2C appProtocol",
+			port:     corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolTCP, Port: 80, AppProtocol: new("kubernetes.io/h2c")},
+			expected: "h2c",
+		},
+		{
+			desc:        "Non TCP protocol",
+			port:        corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolUDP, Port: 80},
+			expectedErr: true,
+		},
+		{
+			desc:        "Unsupported appProtocol",
+			port:        corev1.ServicePort{Name: "web", Protocol: corev1.ProtocolTCP, Port: 80, AppProtocol: new("gopher")},
+			expectedErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			protocol, err := getHTTPServiceProtocol(test.port)
+			if test.expectedErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, protocol)
+		})
+	}
+}
+
+func TestLoadHTTPRoutes_plainHTTPServiceOnPort443(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"httproute/with_plain_http_service_on_port_443.yml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
+		client:      client,
+	}
+
+	conf := p.loadConfigurationFromGateways(t.Context())
+
+	var urls []string
+	for _, svc := range conf.HTTP.Services {
+		if svc.LoadBalancer == nil {
+			continue
+		}
+		for _, server := range svc.LoadBalancer.Servers {
+			urls = append(urls, server.URL)
+		}
+	}
+
+	assert.ElementsMatch(t, []string{"http://10.10.0.20:8080", "http://10.10.0.21:8080"}, urls)
 }

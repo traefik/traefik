@@ -1,0 +1,86 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-plain-443
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "foo.com"
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /bar
+      backendRefs:
+        - name: whoami-plain-443
+          port: 443
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-plain-443
+  namespace: default
+spec:
+  ports:
+    - name: web
+      protocol: TCP
+      port: 443
+      targetPort: 8080
+  selector:
+    app: containous
+    task: whoami-plain-443
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-plain-443-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-plain-443
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.20
+      - 10.10.0.21
+    conditions:
+      ready: true
