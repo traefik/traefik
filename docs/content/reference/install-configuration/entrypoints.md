@@ -274,6 +274,7 @@ Traefik logs a warning at startup for every entry point left without this option
 A default for every entry point can be set once with the
 [`global.aliasHeadersStrategy`](./configuration-options.md#opt-global-aliasheadersstrategy) option.
 An explicit per-entry-point value always takes precedence, and when neither is set the behavior is unchanged (`keep`).
+Entry points that still use the deprecated `underscoreHeadersStrategy` option are left alone, so their behavior is unchanged as well.
 
 !!! warning "Security"
 
