@@ -732,10 +732,11 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 
 func TestSetEffectiveConfiguration_aliasHeadersStrategyDefault(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		global   string
-		entry    map[string]string
-		expected map[string]string
+		desc       string
+		global     string
+		entry      map[string]string
+		underscore map[string]string
+		expected   map[string]string
 	}{
 		{
 			desc:     "no global default leaves entry points untouched",
@@ -754,6 +755,20 @@ func TestSetEffectiveConfiguration_aliasHeadersStrategyDefault(t *testing.T) {
 			entry:    map[string]string{"web": AliasHeadersStrategyKeep, "websecure": ""},
 			expected: map[string]string{"web": AliasHeadersStrategyKeep, "websecure": AliasHeadersStrategyDelete},
 		},
+		{
+			desc:       "global default skips entry points using the deprecated option",
+			global:     AliasHeadersStrategyKeep,
+			entry:      map[string]string{"web": ""},
+			underscore: map[string]string{"web": UnderscoreHeadersStrategyDelete},
+			expected:   map[string]string{"web": ""},
+		},
+		{
+			desc:       "global default skips entry points using the deprecated option, even with a matching value",
+			global:     AliasHeadersStrategyDelete,
+			entry:      map[string]string{"web": ""},
+			underscore: map[string]string{"web": UnderscoreHeadersStrategyDelete},
+			expected:   map[string]string{"web": ""},
+		},
 	}
 
 	for _, test := range testCases {
@@ -764,7 +779,10 @@ func TestSetEffectiveConfiguration_aliasHeadersStrategyDefault(t *testing.T) {
 			for epName, strategy := range test.entry {
 				cfg.EntryPoints[epName] = &EntryPoint{
 					Address: ":80",
-					HTTP:    HTTPConfig{AliasHeadersStrategy: strategy},
+					HTTP: HTTPConfig{
+						AliasHeadersStrategy:      strategy,
+						UnderscoreHeadersStrategy: test.underscore[epName],
+					},
 				}
 			}
 
