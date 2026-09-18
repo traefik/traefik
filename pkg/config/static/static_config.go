@@ -141,7 +141,7 @@ type Global struct {
 	CheckNewVersion        bool   `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	SendAnonymousUsage     bool   `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	NotAppendXForwardedFor bool   `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	AliasHeadersStrategy   string `description:"Defines the default strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject). It applies to every entry point that does not set http.aliasHeadersStrategy explicitly." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
+	AliasHeadersStrategy   string `description:"Defines the default strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject). It applies to every entry point that does not set http.aliasHeadersStrategy explicitly and does not use the deprecated http.underscoreHeadersStrategy." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -320,9 +320,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	// left without an explicit value, so internal entry points are covered too.
 	// An explicit per-entry-point value always wins, and leaving both unset
 	// keeps the historical behavior unchanged.
+	// Entry points that still set the deprecated underscoreHeadersStrategy are
+	// skipped: aliasing covers more than underscores, so inheriting the global
+	// default would silently widen or reject their configuration.
 	if c.Global != nil && c.Global.AliasHeadersStrategy != "" {
 		for _, ep := range c.EntryPoints {
-			if ep.HTTP.AliasHeadersStrategy == "" {
+			if ep.HTTP.AliasHeadersStrategy == "" && ep.HTTP.UnderscoreHeadersStrategy == "" {
 				ep.HTTP.AliasHeadersStrategy = c.Global.AliasHeadersStrategy
 			}
 		}
