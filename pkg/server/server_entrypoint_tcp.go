@@ -30,6 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
@@ -729,6 +730,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
+		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
+		ctx = fast.AddConnPoolsOnContext(ctx)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
 			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
