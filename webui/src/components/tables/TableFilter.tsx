@@ -41,7 +41,15 @@ const statuses: Status[] = [
   { id: 'disabled', value: 'disabled', name: 'Errors' },
 ]
 
-export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }) => {
+export const TableFilter = ({
+  hideStatusFilter,
+  errorStatusValue = 'disabled',
+  errorStatusLabel = 'Errors',
+}: {
+  hideStatusFilter?: boolean
+  errorStatusValue?: string
+  errorStatusLabel?: string
+}) => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [state, setState] = useState(searchParamsToState(searchParams))
@@ -66,17 +74,21 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
     <Flex css={{ alignItems: 'center', justifyContent: 'space-between', mb: '$5' }}>
       <Flex>
         {!hideStatusFilter &&
-          statuses.map(({ id, value, name }) => (
+          statuses.map(({ id, value, name }) => {
+            const statusValue = id === 'disabled' ? errorStatusValue : value
+            const usedName = id === 'disabled' ? errorStatusLabel : name
+
+            return (
             <Button
               key={id}
               css={{ marginRight: '$3', boxShadow: 'none' }}
-              ghost={state.status !== value}
-              variant={state.status !== value ? 'secondary' : 'primary'}
-              onClick={() => onStatusClick(value)}
+              ghost={state.status !== statusValue}
+              variant={state.status !== statusValue ? 'secondary' : 'primary'}
+              onClick={() => onStatusClick(statusValue)}
             >
-              {name}
+              {usedName}
             </Button>
-          ))}
+          )})}
       </Flex>
       <Box css={{ maxWidth: 200, position: 'relative' }}>
         <TextField
