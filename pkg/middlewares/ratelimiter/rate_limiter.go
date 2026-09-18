@@ -3,6 +3,7 @@ package ratelimiter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/vulcand/oxy/v2/utils"
 	"golang.org/x/time/rate"
 )
@@ -169,7 +171,11 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	select {
 	case <-ctx.Done():
 		observability.SetStatusErrorf(ctx, "Context canceled")
-		http.Error(rw, "context canceled", http.StatusInternalServerError)
+		statusCode := http.StatusInternalServerError
+		if errors.Is(ctx.Err(), context.Canceled) {
+			statusCode = httputil.StatusClientClosedRequest
+		}
+		http.Error(rw, "context canceled", statusCode)
 		return
 
 	case <-time.After(*delay):
