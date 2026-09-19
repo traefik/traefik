@@ -86,6 +86,13 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 			// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
 			ctx = fast.AddConnPoolsOnContext(ctx)
 
+			// Unlike HTTP/1.1 and HTTP/2, a "Connection: close" response header has no
+			// effect on HTTP/3, so handlers that need to force-close a stale connection
+			// (e.g. snicheck) are given direct access to the QUIC connection instead.
+			ctx = tcp.AddConnCloserInContext(ctx, func() {
+				_ = c.CloseWithError(quic.ApplicationErrorCode(http3.ErrCodeNoError), "stale TLS options")
+			})
+
 			tlsOptionsName, err := h3.getTLSOptionsName(c)
 			if err != nil {
 				log.Error().Msgf("Error getting TLS options name for client: %v", err)
