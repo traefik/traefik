@@ -538,11 +538,30 @@ func TestInitAccount(t *testing.T) {
 			},
 		},
 		{
-			desc:    "Existing account with no email",
-			account: &Account{},
-			email:   "foo@foo.net",
+			desc: "Account nil no email",
 			expectedAccount: &Account{
+				Email: "",
+			},
+		},
+		{
+			desc: "Existing account with no email",
+			account: &Account{
+				PrivateKey: rsaKeyString,
+			},
+			email: "foo@foo.net",
+			expectedAccount: &Account{
+				Email:      "",
+				PrivateKey: rsaKeyString,
+			},
+		},
+		{
+			desc: "Existing account with no private key",
+			account: &Account{
 				Email: "foo@foo.net",
+			},
+			email: "bar@foo.net",
+			expectedAccount: &Account{
+				Email: "bar@foo.net",
 			},
 		},
 		{
