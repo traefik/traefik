@@ -1,7 +1,10 @@
 package acme
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
 	"testing"
 	"time"
 
@@ -503,6 +506,12 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 }
 
 func TestInitAccount(t *testing.T) {
+	rsaKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		t.Fail()
+	}
+	rsaKeyString := x509.MarshalPKCS1PrivateKey(rsaKey)
+
 	testCases := []struct {
 		desc            string
 		account         *Account
@@ -513,16 +522,17 @@ func TestInitAccount(t *testing.T) {
 		{
 			desc: "Existing account with all information",
 			account: &Account{
-				Email: "foo@foo.net",
+				Email:      "foo@foo.net",
+				PrivateKey: rsaKeyString,
 			},
 			expectedAccount: &Account{
-				Email: "foo@foo.net",
+				Email:      "foo@foo.net",
+				PrivateKey: rsaKeyString,
 			},
 		},
 		{
-			desc:    "Account nil",
-			email:   "foo@foo.net",
-			keyType: "EC256",
+			desc:  "Account nil",
+			email: "foo@foo.net",
 			expectedAccount: &Account{
 				Email: "foo@foo.net",
 			},
@@ -531,30 +541,20 @@ func TestInitAccount(t *testing.T) {
 			desc:    "Existing account with no email",
 			account: &Account{},
 			email:   "foo@foo.net",
-			keyType: "4096",
 			expectedAccount: &Account{
 				Email: "foo@foo.net",
 			},
 		},
 		{
-			desc: "Existing account with no key type",
+			desc: "Existing account with different email",
 			account: &Account{
-				Email: "foo@foo.net",
-			},
-			email:   "bar@foo.net",
-			keyType: "EC256",
-			expectedAccount: &Account{
-				Email: "foo@foo.net",
-			},
-		},
-		{
-			desc: "Existing account and provider with no key type",
-			account: &Account{
-				Email: "foo@foo.net",
+				Email:      "foo@foo.net",
+				PrivateKey: rsaKeyString,
 			},
 			email: "bar@foo.net",
 			expectedAccount: &Account{
-				Email: "foo@foo.net",
+				Email:      "foo@foo.net",
+				PrivateKey: rsaKeyString,
 			},
 		},
 	}
@@ -562,11 +562,15 @@ func TestInitAccount(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
+			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email}}
 
 			actualAccount, err := acmeProvider.initAccount()
 			assert.NoError(t, err, "Init account in error")
-			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
+			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected account email")
+			assert.NotEmpty(t, actualAccount.PrivateKey, "empty account private key")
+			if len(test.expectedAccount.PrivateKey) > 0 {
+				assert.Equal(t, test.expectedAccount.PrivateKey, actualAccount.PrivateKey, "unexpected account private key")
+			}
 		})
 	}
 }
