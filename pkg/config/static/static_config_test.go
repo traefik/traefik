@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/paerser/env"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
@@ -702,6 +703,33 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestConfiguration_InternalEntryPointAddressFromEnv(t *testing.T) {
+	for _, strategy := range []string{AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject} {
+		t.Run(strategy, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{Providers: &Providers{}}
+			err := env.Decode([]string{
+				"TRAEFIK_PING=true",
+				"TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80",
+				"TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443",
+				"TRAEFIK_ENTRYPOINTS_TRAEFIK_HTTP_ALIASHEADERSSTRATEGY=" + strategy,
+			}, env.DefaultNamePrefix, cfg)
+			require.NoError(t, err)
+
+			cfg.SetEffectiveConfiguration()
+
+			require.NotNil(t, cfg.Ping)
+			assert.Equal(t, DefaultInternalEntryPointName, cfg.Ping.EntryPoint)
+			require.NotNil(t, cfg.EntryPoints[DefaultInternalEntryPointName])
+			assert.Equal(t, ":8080", cfg.EntryPoints[DefaultInternalEntryPointName].Address)
+			assert.Equal(t, strategy, cfg.EntryPoints[DefaultInternalEntryPointName].HTTP.AliasHeadersStrategy)
+			assert.Equal(t, ":80", cfg.EntryPoints["web"].Address)
+			assert.Equal(t, ":443", cfg.EntryPoints["websecure"].Address)
 		})
 	}
 }
