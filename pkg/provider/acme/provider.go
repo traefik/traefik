@@ -948,9 +948,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		if ptr.Deref(p.ReusePrivateKey, true) && len(cert.Key) > 0 {
 			keyType, err := getPrivateKeyType(cert)
 			if err != nil {
-				logger.Warn().Err(err).Msgf("Error getting ACME certificate private key type: %+v", cert.Domain)
-
-				res.PrivateKey = cert.Key
+				logger.Error().Err(err).Msgf("Error getting ACME private certificate key type: %+v, fallback to %s key type", cert.Domain, res.KeyType)
 			} else if keyType == GetKeyType(ctx, p.KeyType) {
 				res.PrivateKey = cert.Key
 			}
