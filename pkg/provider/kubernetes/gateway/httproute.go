@@ -979,11 +979,10 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	}
 
 	if portSpec.AppProtocol == nil {
-		protocol := schemeHTTP
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
-			protocol = schemeHTTPS
-		}
-		return protocol, nil
+		// Without an appProtocol or a BackendTLSPolicy selecting the service,
+		// the backend is assumed to serve plain HTTP.
+		// Neither the Service port number nor its name imply TLS.
+		return schemeHTTP, nil
 	}
 
 	switch ap := strings.ToLower(*portSpec.AppProtocol); ap {
