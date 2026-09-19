@@ -2,12 +2,17 @@ package static
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/paerser/env"
+	ptypes "github.com/traefik/paerser/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
+	"github.com/traefik/traefik/v3/pkg/provider/rest"
 )
 
 func TestHasEntrypoint(t *testing.T) {
@@ -730,6 +735,61 @@ func TestConfiguration_InternalEntryPointAddressFromEnv(t *testing.T) {
 			assert.Equal(t, strategy, cfg.EntryPoints[DefaultInternalEntryPointName].HTTP.AliasHeadersStrategy)
 			assert.Equal(t, ":80", cfg.EntryPoints["web"].Address)
 			assert.Equal(t, ":443", cfg.EntryPoints["websecure"].Address)
+		})
+	}
+}
+
+func TestConfiguration_InternalEntryPointAddressPreservesOptions(t *testing.T) {
+	tests := []struct {
+		desc string
+		conf Configuration
+	}{
+		{
+			desc: "ping",
+			conf: Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+		},
+		{
+			desc: "insecure API",
+			conf: Configuration{API: &API{Insecure: true}},
+		},
+		{
+			desc: "Prometheus",
+			conf: Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName}}},
+		},
+		{
+			desc: "insecure REST",
+			conf: Configuration{Providers: &Providers{Rest: &rest.Provider{Insecure: true}}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ep := &EntryPoint{}
+			ep.SetDefaults()
+			ep.HTTP.AliasHeadersStrategy = AliasHeadersStrategyReject
+			ep.HTTP.Middlewares = []string{"auth@file"}
+			ep.HTTP.MaxHeaderBytes = 4096
+			ep.Transport.RespondingTimeouts.ReadTimeout = ptypes.Duration(7 * time.Second)
+			ep.ForwardedHeaders.TrustedIPs = []string{"192.0.2.0/24"}
+			expected := *ep
+			expected.Address = ":8080"
+
+			cfg := test.conf
+			if cfg.Providers == nil {
+				cfg.Providers = &Providers{}
+			}
+			cfg.EntryPoints = EntryPoints{DefaultInternalEntryPointName: ep}
+			cfg.SetEffectiveConfiguration()
+
+			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
+			assert.Equal(t, &expected, ep)
+
+			cfg.SetEffectiveConfiguration()
+
+			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
+			assert.Equal(t, &expected, ep)
 		})
 	}
 }
