@@ -27,7 +27,7 @@ type Resource struct {
 
 // NewAccount creates an account.
 func NewAccount(email string) (*Account, error) {
-	// Create a user. New accounts need an email and private key to start
+	// Create a user. New accounts need a private key and optionally an email to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, err

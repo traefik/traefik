@@ -2,7 +2,8 @@
 
 # Email address used for registration.
 #
-# Required
+# Optional
+# Default: ""
 #
 --certificatesresolvers.myresolver.acme.email=test@example.com
 
