@@ -1019,17 +1019,45 @@ func TestRequestTargetForms(t *testing.T) {
 	}
 }
 
-func Test_removeAliasingHeaders(t *testing.T) {
+func Test_removeAliasingHeadersAndTrailers(t *testing.T) {
 	tests := []struct {
-		name        string
-		headers     http.Header
-		trailers    http.Header
-		wantHeaders http.Header
+		name         string
+		headers      http.Header
+		trailers     http.Header
+		wantHeaders  http.Header
+		wantTrailers http.Header
 	}{
 		{
-			name:        "keeps headers without underscores",
+			name:        "keeps valid headers",
 			headers:     http.Header{"X-Auth-User": {"foo", "bar"}},
 			wantHeaders: http.Header{"X-Auth-User": {"foo", "bar"}},
+		},
+		{
+			name:         "keeps valid trailers",
+			trailers:     http.Header{"X-Auth-User": {"foo", "bar"}},
+			wantTrailers: http.Header{"X-Auth-User": {"foo", "bar"}},
+		},
+		{
+			name:        "removes aliasing headers",
+			headers:     http.Header{"X.Auth.User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantHeaders: http.Header{"X-Auth-User": {"bar"}},
+		},
+		{
+			name:         "removes aliasing trailers",
+			trailers:     http.Header{"X.Auth.User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantTrailers: http.Header{"X-Auth-User": {"bar"}},
+		},
+		{
+			name:         "combination removes aliasing from both sections",
+			headers:      http.Header{"X!Auth!User": {"spoof-h"}, "X-Auth-User": {"legit-h"}},
+			trailers:     http.Header{"X|Auth|User": {"spoof-t"}, "X-Auth-User": {"legit-t"}},
+			wantHeaders:  http.Header{"X-Auth-User": {"legit-h"}},
+			wantTrailers: http.Header{"X-Auth-User": {"legit-t"}},
+		},
+		{
+			name:        "removes every other token character variant",
+			headers:     http.Header{"X!Auth#User": {"foo"}, "X$Auth%User": {"foo"}, "X&Auth'User": {"foo"}, "X*Auth+User": {"foo"}, "X^Auth`User": {"foo"}, "X|Auth~User": {"foo"}},
+			wantHeaders: http.Header{},
 		},
 		{
 			name:        "removes underscore variant",
@@ -1044,21 +1072,6 @@ func Test_removeAliasingHeaders(t *testing.T) {
 		{
 			name:        "removes non-canonical underscore variant",
 			headers:     http.Header{"x_auth_user": {"foo"}},
-			wantHeaders: http.Header{},
-		},
-		{
-			name:        "removes header named with a single underscore",
-			headers:     http.Header{"_": {"foo"}},
-			wantHeaders: http.Header{},
-		},
-		{
-			name:        "removes dot variant",
-			headers:     http.Header{"X.Auth.User": {"foo"}, "X-Auth-User": {"bar"}},
-			wantHeaders: http.Header{"X-Auth-User": {"bar"}},
-		},
-		{
-			name:        "removes every other token character variant",
-			headers:     http.Header{"X!Auth#User": {"foo"}, "X$Auth%User": {"foo"}, "X&Auth'User": {"foo"}, "X*Auth+User": {"foo"}, "X^Auth`User": {"foo"}, "X|Auth~User": {"foo"}},
 			wantHeaders: http.Header{},
 		},
 		{
@@ -1076,11 +1089,12 @@ func Test_removeAliasingHeaders(t *testing.T) {
 			handler := removeAliasingHeaders(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				callCount++
 				assert.Equal(t, test.wantHeaders, req.Header)
+				assert.Equal(t, test.wantTrailers, req.Trailer)
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
-			req.Header = test.headers
-			req.Trailer = test.trailers
+			req.Header = test.headers.Clone()
+			req.Trailer = test.trailers.Clone()
 
 			handler.ServeHTTP(httptest.NewRecorder(), req)
 
@@ -1089,40 +1103,40 @@ func Test_removeAliasingHeaders(t *testing.T) {
 	}
 }
 
-func Test_rejectAliasingHeaders(t *testing.T) {
+func Test_rejectAliasingHeadersAndTrailers(t *testing.T) {
 	tests := []struct {
 		name       string
 		headers    http.Header
+		trailers   http.Header
 		wantReject bool
 	}{
 		{
-			name:       "passes headers without underscores",
-			headers:    http.Header{"X-Auth-User": {"foo", "bar"}},
+			name:       "accepts when header and trailer are valid",
+			headers:    http.Header{"X-Auth-User": {"foo-h"}},
+			trailers:   http.Header{"X-Auth-User": {"foo-t"}},
 			wantReject: false,
 		},
 		{
-			name:       "rejects underscore variant",
-			headers:    http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
+			name:       "rejects when header is aliasing and trailer is valid",
+			headers:    http.Header{"X.Auth.User": {"spoof"}},
+			trailers:   http.Header{"X-Auth-User": {"legit"}},
 			wantReject: true,
 		},
 		{
-			name:       "rejects mixed underscore and dash variant",
-			headers:    http.Header{"X_Auth-User": {"foo"}},
+			name:       "rejects when trailer is aliasing and header is valid",
+			headers:    http.Header{"X-Auth-User": {"legit"}},
+			trailers:   http.Header{"X.Auth.User": {"spoof"}},
 			wantReject: true,
 		},
 		{
-			name:       "rejects header named with a single underscore",
-			headers:    http.Header{"_": {"foo"}},
+			name:       "rejects when both sections are aliasing",
+			headers:    http.Header{"X!Auth!User": {"spoof-h"}},
+			trailers:   http.Header{"X~Auth~User": {"spoof-t"}},
 			wantReject: true,
 		},
 		{
-			name:       "rejects dot variant",
-			headers:    http.Header{"X.Auth.User": {"foo"}, "X-Auth-User": {"bar"}},
-			wantReject: true,
-		},
-		{
-			name:       "rejects tilde variant",
-			headers:    http.Header{"X~Auth~User": {"foo"}},
+			name:       "rejects underscore in header too",
+			headers:    http.Header{"X_Auth_User": {"spoof"}},
 			wantReject: true,
 		},
 	}
@@ -1137,7 +1151,8 @@ func Test_rejectAliasingHeaders(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
-			req.Header = test.headers
+			req.Header = test.headers.Clone()
+			req.Trailer = test.trailers.Clone()
 
 			rw := httptest.NewRecorder()
 			handler.ServeHTTP(rw, req)
@@ -1153,41 +1168,40 @@ func Test_rejectAliasingHeaders(t *testing.T) {
 	}
 }
 
-func Test_removeHeadersWithUnderscores(t *testing.T) {
+func Test_removeHeadersWithUnderscoresAndTrailers(t *testing.T) {
 	tests := []struct {
-		name        string
-		headers     http.Header
-		wantHeaders http.Header
+		name         string
+		headers      http.Header
+		trailers     http.Header
+		wantHeaders  http.Header
+		wantTrailers http.Header
 	}{
 		{
-			name:        "keeps headers without underscores",
+			name:        "keeps valid headers",
 			headers:     http.Header{"X-Auth-User": {"foo", "bar"}},
 			wantHeaders: http.Header{"X-Auth-User": {"foo", "bar"}},
 		},
 		{
-			name:        "removes underscore variant",
+			name:         "keeps valid trailers",
+			trailers:     http.Header{"X-Auth-User": {"foo", "bar"}},
+			wantTrailers: http.Header{"X-Auth-User": {"foo", "bar"}},
+		},
+		{
+			name:        "removes underscore headers",
 			headers:     http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
 			wantHeaders: http.Header{"X-Auth-User": {"bar"}},
 		},
 		{
-			name:        "removes mixed underscore and dash variant",
-			headers:     http.Header{"X_Auth-User": {"foo"}},
-			wantHeaders: http.Header{},
+			name:         "removes underscore trailers",
+			trailers:     http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantTrailers: http.Header{"X-Auth-User": {"bar"}},
 		},
 		{
-			name:        "removes non-canonical underscore variant",
-			headers:     http.Header{"x_auth_user": {"foo"}},
-			wantHeaders: http.Header{},
-		},
-		{
-			name:        "removes header named with a single underscore",
-			headers:     http.Header{"_": {"foo"}},
-			wantHeaders: http.Header{},
-		},
-		{
-			name:        "keeps the other aliasing variants",
-			headers:     http.Header{"X.Auth.User": {"foo"}, "X!Auth!User": {"bar"}},
-			wantHeaders: http.Header{"X.Auth.User": {"foo"}, "X!Auth!User": {"bar"}},
+			name:         "combination removes underscore from both sections",
+			headers:      http.Header{"X_Auth_User": {"spoof-h"}, "X-Auth-User": {"legit-h"}},
+			trailers:     http.Header{"X_Auth_User": {"spoof-t"}, "X-Auth-User": {"legit-t"}},
+			wantHeaders:  http.Header{"X-Auth-User": {"legit-h"}},
+			wantTrailers: http.Header{"X-Auth-User": {"legit-t"}},
 		},
 	}
 
@@ -1199,10 +1213,12 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 			handler := removeHeadersWithUnderscores(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				callCount++
 				assert.Equal(t, test.wantHeaders, req.Header)
+				assert.Equal(t, test.wantTrailers, req.Trailer)
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
-			req.Header = test.headers
+			req.Header = test.headers.Clone()
+			req.Trailer = test.trailers.Clone()
 
 			handler.ServeHTTP(httptest.NewRecorder(), req)
 
@@ -1211,36 +1227,41 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 	}
 }
 
-func Test_rejectHeadersWithUnderscores(t *testing.T) {
+func Test_rejectHeadersWithUnderscoresAndTrailers(t *testing.T) {
 	tests := []struct {
 		name       string
 		headers    http.Header
+		trailers   http.Header
 		wantReject bool
 	}{
 		{
-			name:       "passes headers without underscores",
-			headers:    http.Header{"X-Auth-User": {"foo", "bar"}},
+			name:       "accepts when header and trailer are valid",
+			headers:    http.Header{"X-Auth-User": {"foo-h"}},
+			trailers:   http.Header{"X-Auth-User": {"foo-t"}},
 			wantReject: false,
 		},
 		{
-			name:       "rejects underscore variant",
-			headers:    http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
+			name:       "rejects when header has underscore and trailer is valid",
+			headers:    http.Header{"X_Auth_User": {"spoof"}},
+			trailers:   http.Header{"X-Auth-User": {"legit"}},
 			wantReject: true,
 		},
 		{
-			name:       "rejects mixed underscore and dash variant",
-			headers:    http.Header{"X_Auth-User": {"foo"}},
+			name:       "rejects when trailer has underscore and header is valid",
+			headers:    http.Header{"X-Auth-User": {"legit"}},
+			trailers:   http.Header{"X_Auth_User": {"spoof"}},
 			wantReject: true,
 		},
 		{
-			name:       "rejects header named with a single underscore",
-			headers:    http.Header{"_": {"foo"}},
+			name:       "rejects when both sections contain underscore",
+			headers:    http.Header{"X_Auth_User": {"spoof-h"}},
+			trailers:   http.Header{"X_Auth_User": {"spoof-t"}},
 			wantReject: true,
 		},
 		{
-			name:       "passes the other aliasing variants",
-			headers:    http.Header{"X.Auth.User": {"foo"}},
-			wantReject: false,
+			name:       "rejects single underscore header name",
+			headers:    http.Header{"_": {"spoof"}},
+			wantReject: true,
 		},
 	}
 
@@ -1254,7 +1275,8 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
-			req.Header = test.headers
+			req.Header = test.headers.Clone()
+			req.Trailer = test.trailers.Clone()
 
 			rw := httptest.NewRecorder()
 			handler.ServeHTTP(rw, req)
