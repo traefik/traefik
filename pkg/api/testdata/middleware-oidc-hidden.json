@@ -1,0 +1,16 @@
+{
+	"name": "oidc@myprovider",
+	"plugin": {
+		"traefik-oidc-auth": {
+			"ClientId": {},
+			"Scopes": {},
+			"Secret": {}
+		}
+	},
+	"provider": "myprovider",
+	"status": "enabled",
+	"type": "traefik-oidc-auth",
+	"usedBy": [
+		"test@myprovider"
+	]
+}

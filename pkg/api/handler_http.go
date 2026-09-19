@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
@@ -209,11 +210,7 @@ func (h *Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) 
 
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
-		writeError(rw, err.Error(), http.StatusInternalServerError)
-	}
+	h.writeMiddlewaresJSON(rw, request, results[pageInfo.startIndex:pageInfo.endIndex])
 }
 
 func (h *Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
@@ -235,8 +232,25 @@ func (h *Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
 
 	result := newMiddlewareRepresentation(middlewareID, middleware)
 
-	err = json.NewEncoder(rw).Encode(result)
-	if err != nil {
+	h.writeMiddlewaresJSON(rw, request, result)
+}
+
+func (h *Handler) writeMiddlewaresJSON(rw http.ResponseWriter, request *http.Request, data any) {
+	if h.staticConfig.API != nil && h.staticConfig.API.HideMiddlewareParameters {
+		redacted, err := redactor.RemoveCredentials(data)
+		if err != nil {
+			log.Ctx(request.Context()).Error().Err(err).Send()
+			writeError(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, err := rw.Write([]byte(redacted)); err != nil {
+			log.Ctx(request.Context()).Error().Err(err).Send()
+		}
+		return
+	}
+
+	if err := json.NewEncoder(rw).Encode(data); err != nil {
 		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}

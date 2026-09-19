@@ -204,11 +204,7 @@ func (h *Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Reques
 
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
-		writeError(rw, err.Error(), http.StatusInternalServerError)
-	}
+	h.writeMiddlewaresJSON(rw, request, results[pageInfo.startIndex:pageInfo.endIndex])
 }
 
 func (h *Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request) {
@@ -230,11 +226,7 @@ func (h *Handler) getTCPMiddleware(rw http.ResponseWriter, request *http.Request
 
 	result := newTCPMiddlewareRepresentation(middlewareID, middleware)
 
-	err = json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.Ctx(request.Context()).Error().Err(err).Send()
-		writeError(rw, err.Error(), http.StatusInternalServerError)
-	}
+	h.writeMiddlewaresJSON(rw, request, result)
 }
 
 func keepTCPRouter(name string, item *runtime.TCPRouterInfo, criterion *searchCriterion) bool {

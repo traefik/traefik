@@ -1,0 +1,20 @@
+{
+	"name": "oidc@myprovider",
+	"plugin": {
+		"traefik-oidc-auth": {
+			"ClientId": "abcd-12345",
+			"Scopes": [
+				"openid",
+				"profile",
+				"email"
+			],
+			"Secret": "urn:k8s:secret:oidc-secret:pluginSecret"
+		}
+	},
+	"provider": "myprovider",
+	"status": "enabled",
+	"type": "traefik-oidc-auth",
+	"usedBy": [
+		"test@myprovider"
+	]
+}
