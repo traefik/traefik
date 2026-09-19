@@ -42,11 +42,39 @@ import (
 )
 
 // ServersTransportTCPInformer provides access to a shared informer and lister for
-// ServersTransportTCPs.
+// ServersTransportTCPs. Prefer using the type-safe variant (see [TypedServersTransportTCPInformer]).
 type ServersTransportTCPInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() traefikiov1alpha1.ServersTransportTCPLister
 }
+
+// TypedServersTransportTCPInformer provides access to a shared informer and lister for
+// ServersTransportTCPs, including the type-safe TypedInformer variant.
+// It is a superset of ServersTransportTCPInformer.
+type TypedServersTransportTCPInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() ServersTransportTCPIndexInformer
+	Lister() traefikiov1alpha1.ServersTransportTCPLister
+}
+
+// ServersTransportTCPIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type ServersTransportTCPIndexInformer cache.TypedSharedIndexInformer[*crdtraefikiov1alpha1.ServersTransportTCP]
+
+// ServersTransportTCPHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for ServersTransportTCP.
+type ServersTransportTCPHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*crdtraefikiov1alpha1.ServersTransportTCP]
+
+// ServersTransportTCPDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for ServersTransportTCP.
+type ServersTransportTCPDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*crdtraefikiov1alpha1.ServersTransportTCP]
+
+// ServersTransportTCPFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for ServersTransportTCP.
+type ServersTransportTCPFilteringHandler = cache.TypedFilteringResourceEventHandler[*crdtraefikiov1alpha1.ServersTransportTCP]
+
+// ServersTransportTCPIndexers is a specialization of [cache.TypedIndexers] for ServersTransportTCP.
+type ServersTransportTCPIndexers = cache.TypedIndexers[*crdtraefikiov1alpha1.ServersTransportTCP]
+
+// DeletedServersTransportTCP is a specialization of [cache.DeletedObject] for ServersTransportTCP.
+type DeletedServersTransportTCP = cache.DeletedObject[*crdtraefikiov1alpha1.ServersTransportTCP]
 
 type serversTransportTCPInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -57,25 +85,49 @@ type serversTransportTCPInformer struct {
 // NewServersTransportTCPInformer constructs a new informer for ServersTransportTCP type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedServersTransportTCPInformer]).
 func NewServersTransportTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewServersTransportTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedServersTransportTCPInformer constructs a new informer for ServersTransportTCP type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedServersTransportTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers ServersTransportTCPIndexers) ServersTransportTCPIndexInformer {
+	return NewTypedServersTransportTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredServersTransportTCPInformer constructs a new informer for ServersTransportTCP type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredServersTransportTCPInformer]).
 func NewFilteredServersTransportTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return NewServersTransportTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+	return NewTypedServersTransportTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredServersTransportTCPInformer constructs a new informer for ServersTransportTCP type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredServersTransportTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers ServersTransportTCPIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) ServersTransportTCPIndexInformer {
+	return NewTypedServersTransportTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
 }
 
 // NewServersTransportTCPInformerWithOptions constructs a new informer for ServersTransportTCP type with additional options.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedServersTransportTCPInformerWithOptions]).
 func NewServersTransportTCPInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedServersTransportTCPInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedServersTransportTCPInformerWithOptions constructs a new informer for ServersTransportTCP type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedServersTransportTCPInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) ServersTransportTCPIndexInformer {
 	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "serverstransporttcps"}
 	identifier := options.InformerName.WithResource(gvr)
 	tweakListOptions := options.TweakListOptions
-	return cache.NewSharedIndexInformerWithOptions(
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.ServersTransportTCP](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
@@ -108,17 +160,57 @@ func NewServersTransportTCPInformerWithOptions(client versioned.Interface, names
 			Indexers:     options.Indexers,
 			Identifier:   identifier,
 		},
-	)
+	))
 }
 
 func (f *serversTransportTCPInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewServersTransportTCPInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
+	return NewTypedServersTransportTCPInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *serversTransportTCPInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&crdtraefikiov1alpha1.ServersTransportTCP{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *serversTransportTCPInformer) TypedInformer() ServersTransportTCPIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.ServersTransportTCP](f.factory.InformerFor(&crdtraefikiov1alpha1.ServersTransportTCP{}, f.defaultInformer))
 }
 
 func (f *serversTransportTCPInformer) Lister() traefikiov1alpha1.ServersTransportTCPLister {
 	return traefikiov1alpha1.NewServersTransportTCPLister(f.Informer().GetIndexer())
+}
+
+// ToTypedServersTransportTCPInformer converts an untyped informer into a TypedServersTransportTCPInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *ServersTransportTCP. If that is not the case, calling type-safe methods of the returned
+// TypedServersTransportTCPInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedServersTransportTCPInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedServersTransportTCPInformer(informer ServersTransportTCPInformer) TypedServersTransportTCPInformer {
+	if informer, ok := informer.(TypedServersTransportTCPInformer); ok {
+		return informer
+	}
+	return &serversTransportTCPTypedInformerAdapter{informer}
+}
+
+type serversTransportTCPTypedInformerAdapter struct {
+	ServersTransportTCPInformer
+}
+
+func (a *serversTransportTCPTypedInformerAdapter) TypedInformer() ServersTransportTCPIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.ServersTransportTCP](a.Informer())
+}
+
+// ToServersTransportTCPIndexInformer converts an untyped informer into a ServersTransportTCPIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *ServersTransportTCP. If that is not the case, calling type-safe methods of the returned
+// ServersTransportTCPIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a ServersTransportTCPIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToServersTransportTCPIndexInformer(informer cache.SharedIndexInformer) ServersTransportTCPIndexInformer {
+	if informer, ok := informer.(ServersTransportTCPIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.ServersTransportTCP](informer)
 }
