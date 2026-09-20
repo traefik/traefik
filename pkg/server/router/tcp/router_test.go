@@ -192,8 +192,8 @@ func Test_Routing(t *testing.T) {
 			},
 		},
 		[]*traefiktls.CertAndStores{{
-			Certificate: traefiktls.Certificate{CertFile: traefiktls.FileOrContent(certPEM), KeyFile: traefiktls.FileOrContent(keyPEM)},
-			Stores:      []string{tlsalpn01.ACMETLS1Protocol},
+			CertFile: traefiktls.FileOrContent(certPEM), KeyFile: traefiktls.FileOrContent(keyPEM),
+			Stores: []string{tlsalpn01.ACMETLS1Protocol},
 		}})
 
 	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
