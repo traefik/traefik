@@ -537,7 +537,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 
 	tcpListener, ok := listener.(*net.TCPListener)
 	if !ok {
-		return nil, fmt.Errorf("socket activation listener for entrypoint %q has unexpected type %T, want *net.TCPListener", name, listener)
+		return nil, fmt.Errorf("unsupported listener type %T", listener)
 	}
 	listener = tcpKeepAliveListener{tcpListener}
 

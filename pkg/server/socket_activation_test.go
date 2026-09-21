@@ -45,9 +45,7 @@ func TestBuildListenerSocketActivationUnix(t *testing.T) {
 	})
 
 	_, err = buildListener(context.Background(), "web", &static.EntryPoint{Address: ":0"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "socket activation listener for entrypoint \"web\"")
-	assert.Contains(t, err.Error(), "*net.UnixListener")
+	require.EqualError(t, err, "unsupported listener type *net.UnixListener")
 }
 
 // TestBuildListenerSocketActivationTCP confirms the happy path: a
