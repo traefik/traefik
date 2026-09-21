@@ -8,6 +8,7 @@ In this advanced guide, you'll learn how to enhance your Traefik deployment with
 - **Let's Encrypt** for automated certificate management
 - **Sticky sessions** for stateful applications
 - **Multi-layer routing** for complex authentication scenarios
+- **Service middlewares** for applying middleware at the service level
 
 ## Prerequisites
 
@@ -382,6 +383,73 @@ You should see the response from the admin-backend service when authenticating a
 
 For more details about multi-layer routing, see the [Multi-Layer Routing documentation](../../reference/routing-configuration/http/routing/multi-layer-routing.md).
 
+## Service Middlewares
+
+Service middlewares allow you to apply middleware to a service rather than to individual routers. This means the middleware takes effect for all requests handled by the service, regardless of which router forwards the request.
+
+This is useful when you want to apply the same middleware (like headers, rate limiting, or authentication) to all traffic reaching a service without having to configure it on each router.
+
+### When to Use Service Middlewares
+
+Use service middlewares when:
+
+- Multiple routers forward traffic to the same service, and all should have the same middleware applied
+- You want to ensure a middleware is always applied to a service regardless of how traffic reaches it
+- You're centralizing middleware configuration at the service level for easier management
+
+### Add Service Middleware Labels
+
+Add the following labels to your whoami service deployment section in `docker-compose.yml`:
+
+```yaml
+services:
+  whoami:
+    image: traefik/whoami
+    networks:
+      - traefik_proxy
+    deploy:
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
+        - "traefik.http.routers.whoami.entrypoints=websecure"
+        - "traefik.http.routers.whoami.tls=true"
+        # Define the middleware
+        - "traefik.http.middlewares.service-headers.headers.customRequestHeaders.X-Service-Middleware=applied"
+        # Attach middleware at the SERVICE level (not the router level)
+        - "traefik.http.services.whoami.middlewares=service-headers"
+        - "traefik.http.services.whoami.loadbalancer.server.port=80"
+```
+
+!!! info "Service-Level vs Router-Level Middlewares"
+
+    - **Router-level middleware** (`traefik.http.routers.<name>.middlewares`): Applied only when traffic matches that specific router's rule
+    - **Service-level middleware** (`traefik.http.services.<name>.middlewares`): Applied to all traffic reaching the service, regardless of which router forwarded it
+
+    When both are configured, router middlewares execute first, followed by service middlewares.
+
+Deploy the stack:
+
+```bash
+docker stack deploy -c docker-compose.yml traefik
+```
+
+### Test Service Middleware
+
+Verify the service middleware is working:
+
+```bash
+curl -k -H "Host: whoami.swarm.localhost" https://localhost/
+```
+
+In the response from whoami, you should see the custom header that was added by the service middleware:
+
+```text
+X-Service-Middleware: applied
+```
+
+For more details on service middlewares, see the [reference documentation](../../reference/routing-configuration/http/load-balancing/service.md#middlewares).
+
 ## Conclusion
 
 In this advanced guide, you've learned how to:
@@ -390,6 +458,7 @@ In this advanced guide, you've learned how to:
 - Automate certificate management with Let's Encrypt
 - Implement sticky sessions for stateful applications
 - Setup multi-layer routing for authentication-based routing
+- Apply middlewares at the service level for centralized middleware management
 
 These advanced capabilities allow you to build production-ready Traefik deployments with Docker Swarm. Each of these can be further customized to meet your specific requirements.
 

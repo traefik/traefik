@@ -8,7 +8,6 @@ import (
 	"math"
 	"net"
 	"os"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -52,6 +51,7 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool                `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	CrossProviderNamespaces   []string            `description:"List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	// Deprecated: please use DisableClusterScopeResources.
 	DisableIngressClassLookup    bool `description:"Disables the lookup of IngressClasses (Deprecated, please use DisableClusterScopeResources)." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	DisableClusterScopeResources bool `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
@@ -75,10 +75,13 @@ func (p *Provider) Init() error {
 	return nil
 }
 
+// ProviderName is the Kubernetes Ingress provider name.
+const ProviderName = "kubernetes"
+
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, "kubernetes").Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
 	k8sClient, err := p.newK8sClient(ctxLog)
@@ -88,6 +91,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	if p.AllowExternalNameServices {
 		logger.Info().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+	}
+
+	if p.CrossProviderNamespaces != nil {
+		logger.Warn().Msgf("Cross-provider Middleware, TLSOption and ServersTransport references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -131,7 +138,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  "kubernetes",
+							ProviderName:  ProviderName,
 							Configuration: conf,
 						}
 					}
@@ -258,6 +265,19 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
+		// Middlewares and TLS options always contain cross-provider references.
+		if rtConfig != nil && rtConfig.Router != nil && p.CrossProviderNamespaces != nil && !slices.Contains(p.CrossProviderNamespaces, ingress.Namespace) {
+			if len(rtConfig.Router.Middlewares) > 0 {
+				logger.Error().Msgf("Skipping Ingress: cross-provider middleware reference is not allowed from namespace %q", ingress.Namespace)
+				continue
+			}
+
+			if rtConfig.Router.TLS != nil && rtConfig.Router.TLS.Options != "" {
+				logger.Error().Msgf("Skipping Ingress: cross-provider TLS option reference is not allowed from namespace %q", ingress.Namespace)
+				continue
+			}
+		}
+
 		err = getCertificates(ctxIngress, ingress, client, certConfigs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error configuring TLS")
@@ -304,13 +324,28 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    "default-backend",
+				Observability: &dynamic.RouterObservabilityConfig{
+					Metadata: &dynamic.ObservabilityMetadata{
+						Ingress: &dynamic.KubernetesMetadata{
+							Kind:      "Ingress",
+							Namespace: ingress.Namespace,
+							Name:      ingress.Name,
+						},
+					},
+				},
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
-				rt.Observability = rtConfig.Router.Observability
+
+				if rtConfig.Router.Observability != nil {
+					rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
+					rt.Observability.Metrics = rtConfig.Router.Observability.Metrics
+					rt.Observability.Tracing = rtConfig.Router.Observability.Tracing
+					rt.Observability.TraceVerbosity = rtConfig.Router.Observability.TraceVerbosity
+				}
 			}
 
 			p.applyRouterTransform(ctxIngress, rt, ingress)
@@ -356,16 +391,17 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				portString := pa.Backend.Service.Port.Name
-
-				if len(pa.Backend.Service.Port.Name) == 0 {
-					portString = strconv.Itoa(int(pa.Backend.Service.Port.Number))
-				}
-
-				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 				conf.HTTP.Services[serviceName] = service
 
-				rt := p.loadRouter(rule, pa, rtConfig, serviceName)
+				rt, err := p.loadRouter(ingress, rule, pa, rtConfig, serviceName)
+				if err != nil {
+					logger.Error().Err(err).
+						Str("serviceName", pa.Backend.Service.Name).
+						Str("path", pa.Path).
+						Msg("Skipping path.")
+					continue
+				}
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
@@ -552,7 +588,18 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	svc := &dynamic.Service{LoadBalancer: lb}
+	svc := &dynamic.Service{
+		LoadBalancer: lb,
+		Observability: &dynamic.ServiceObservabilityConfig{
+			Metadata: &dynamic.ServiceObservabilityMetadata{
+				Kubernetes: &dynamic.KubernetesServiceMetadata{
+					Namespace: namespace,
+					Name:      backend.Service.Name,
+					Port:      portString(backend.Service.Port),
+				},
+			},
+		},
+	}
 
 	svcConfig, err := parseServiceConfig(service.Annotations)
 	if err != nil {
@@ -564,11 +611,23 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
 
+		if len(svcConfig.Service.Middlewares) > 0 {
+			if p.CrossProviderNamespaces != nil && !slices.Contains(p.CrossProviderNamespaces, namespace) {
+				return nil, fmt.Errorf("cross-provider middleware reference is not allowed from namespace %q", namespace)
+			}
+
+			svc.Middlewares = svcConfig.Service.Middlewares
+		}
+
 		if svcConfig.Service.PassHostHeader != nil {
 			svc.LoadBalancer.PassHostHeader = svcConfig.Service.PassHostHeader
 		}
 
 		if svcConfig.Service.ServersTransport != "" {
+			if p.CrossProviderNamespaces != nil && !slices.Contains(p.CrossProviderNamespaces, namespace) {
+				return nil, fmt.Errorf("cross-provider serversTransport reference is not allowed from namespace %q", namespace)
+			}
+
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
 
@@ -650,8 +709,8 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	for _, endpointSlice := range endpointSlices {
 		var port int32
 		for _, p := range endpointSlice.Ports {
-			if portName == *p.Name {
-				port = *p.Port
+			if p.Name != nil && portName == *p.Name {
+				port = ptr.Deref(p.Port, 0)
 				break
 			}
 		}
@@ -686,9 +745,18 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	return svc, nil
 }
 
-func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) (*dynamic.Router, error) {
 	rt := &dynamic.Router{
 		Service: serviceName,
+		Observability: &dynamic.RouterObservabilityConfig{
+			Metadata: &dynamic.ObservabilityMetadata{
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: ingress.Namespace,
+					Name:      ingress.Name,
+				},
+			},
+		},
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {
@@ -697,7 +765,13 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
 		rt.TLS = rtConfig.Router.TLS
-		rt.Observability = rtConfig.Router.Observability
+
+		if rtConfig.Router.Observability != nil {
+			rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
+			rt.Observability.Metrics = rtConfig.Router.Observability.Metrics
+			rt.Observability.Tracing = rtConfig.Router.Observability.Tracing
+			rt.Observability.TraceVerbosity = rtConfig.Router.Observability.TraceVerbosity
+		}
 	}
 
 	var rules []string
@@ -705,7 +779,7 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 		if rt.RuleSyntax == "v2" || (rt.RuleSyntax == "" && p.DefaultRuleSyntax == "v2") {
 			rules = append(rules, buildHostRuleV2(rule.Host))
 		} else {
-			rules = append(rules, buildHostRule(rule.Host))
+			rules = append(rules, fmt.Sprintf("Host(%q)", rule.Host))
 		}
 	}
 
@@ -714,6 +788,12 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 
 		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == netv1.PathTypeImplementationSpecific {
 			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
+				switch rtConfig.Router.PathMatcher {
+				case "Path", "PathPrefix", "PathRegexp":
+				default:
+					return nil, fmt.Errorf("invalid router path matcher %q: must be one of Path, PathPrefix, PathRegexp", rtConfig.Router.PathMatcher)
+				}
+
 				matcher = rtConfig.Router.PathMatcher
 			}
 		} else if *pa.PathType == netv1.PathTypeExact {
@@ -724,22 +804,13 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 	}
 
 	rt.Rule = strings.Join(rules, " && ")
-	return rt
+	return rt, nil
 }
 
 func buildHostRuleV2(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)
 		return fmt.Sprintf("HostRegexp(%q)", host)
-	}
-
-	return fmt.Sprintf("Host(%q)", host)
-}
-
-func buildHostRule(host string) string {
-	if strings.HasPrefix(host, "*.") {
-		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return fmt.Sprintf("HostRegexp(%q)", fmt.Sprintf("^%s$", host))
 	}
 
 	return fmt.Sprintf("Host(%q)", host)
@@ -933,4 +1004,11 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func portString(port netv1.ServiceBackendPort) string {
+	if port.Name == "" {
+		return strconv.Itoa(int(port.Number))
+	}
+	return port.Name
 }

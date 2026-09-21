@@ -64,6 +64,7 @@ type AccessLog struct {
 	Fields        *AccessLogFields  `description:"AccessLogFields." json:"fields,omitempty" toml:"fields,omitempty" yaml:"fields,omitempty" export:"true"`
 	BufferingSize int64             `description:"Number of access log lines to process in a buffered way." json:"bufferingSize,omitempty" toml:"bufferingSize,omitempty" yaml:"bufferingSize,omitempty" export:"true"`
 	AddInternals  bool              `description:"Enables access log for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+	DualOutput    bool              `description:"Enables access log output alongside OTLP. By default, this output is disabled when OTLP is configured." json:"dualOutput,omitempty" toml:"dualOutput,omitempty" yaml:"dualOutput,omitempty" export:"true"`
 
 	OTLP *OTelLog `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
@@ -92,9 +93,15 @@ type FieldHeaders struct {
 
 // AccessLogFields holds configuration for access log fields.
 type AccessLogFields struct {
-	DefaultMode string            `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
-	Names       map[string]string `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
-	Headers     *FieldHeaders     `description:"Headers to keep, drop or redact" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	DefaultMode     string                `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
+	Names           map[string]string     `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
+	Headers         *FieldHeaders         `description:"Headers to keep, drop or redact" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	QueryParameters *FieldQueryParameters `description:"Keep or drop all query parameters" json:"queryParameters,omitempty" toml:"queryParameters,omitempty" yaml:"queryParameters,omitempty" export:"true"`
+}
+
+// FieldQueryParameters holds configuration for access log query parameters.
+type FieldQueryParameters struct {
+	DefaultMode string `description:"Default mode for query parameters: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -102,6 +109,9 @@ func (f *AccessLogFields) SetDefaults() {
 	f.DefaultMode = AccessLogKeep
 	f.Headers = &FieldHeaders{
 		DefaultMode: AccessLogDrop,
+	}
+	f.QueryParameters = &FieldQueryParameters{
+		DefaultMode: AccessLogKeep,
 	}
 }
 
@@ -129,6 +139,15 @@ func (f *AccessLogFields) KeepHeader(header string) string {
 		}
 	}
 	return defaultValue
+}
+
+// KeepQueryParameters checks if the query parameters need to be kept or dropped.
+func (f *AccessLogFields) KeepQueryParameters() bool {
+	defaultKeep := true
+	if f == nil || f.QueryParameters == nil {
+		return defaultKeep
+	}
+	return checkFieldValue(f.QueryParameters.DefaultMode, defaultKeep)
 }
 
 func checkFieldValue(value string, defaultKeep bool) bool {
