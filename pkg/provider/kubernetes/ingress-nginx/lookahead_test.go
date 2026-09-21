@@ -136,6 +136,31 @@ func Test_splitNegativeLookahead(t *testing.T) {
 			path:       `/a/((?!b`,
 			expectedOK: false,
 		},
+		{
+			desc:       "wildcard in the prefix is not a literal",
+			path:       `/a.b/((?!c).*)`,
+			expectedOK: false,
+		},
+		{
+			desc:       "wildcard in the alternation is not a literal",
+			path:       `/a/((?!b.c).*)`,
+			expectedOK: false,
+		},
+		{
+			desc:       "escaped dot is outside the supported grammar",
+			path:       `/a/((?!b\.c).*)`,
+			expectedOK: false,
+		},
+		{
+			desc:       "escaped closing parenthesis is unsupported",
+			path:       `/a/((?!b\)c).*)`,
+			expectedOK: false,
+		},
+		{
+			desc:       "character class containing a closing parenthesis is unsupported",
+			path:       `/a/((?![)]).*)`,
+			expectedOK: false,
+		},
 	}
 
 	for _, test := range testCases {
@@ -257,57 +282,6 @@ func Test_splitNegativeLookahead_matchesNGINXSemantics(t *testing.T) {
 	}
 }
 
-func Test_matchingParen(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		desc     string
-		expr     string
-		start    int
-		expected int
-	}{
-		{
-			desc:     "adjacent parentheses",
-			expr:     `(ab)`,
-			expected: 3,
-		},
-		{
-			desc:     "nested parentheses are counted",
-			expr:     `(a(b)c)`,
-			expected: 6,
-		},
-		{
-			desc:     "escaped parenthesis does not change the depth",
-			expr:     `(a\)b)`,
-			expected: 5,
-		},
-		{
-			desc:     "parenthesis inside a character class is literal",
-			expr:     `(a[)]b)`,
-			expected: 6,
-		},
-		{
-			desc:     "unbalanced",
-			expr:     `(ab`,
-			expected: -1,
-		},
-		{
-			desc:     "scan starts at the given index",
-			expr:     `xx(ab)`,
-			start:    2,
-			expected: 5,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, test.expected, matchingParen(test.expr, test.start))
-		})
-	}
-}
-
 func Test_buildRule_negativeLookahead(t *testing.T) {
 	t.Parallel()
 
@@ -412,13 +386,8 @@ func Test_buildRedirect_negativeLookahead(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// Test_resolveNegativeLookahead_absoluteRewriteTarget pins the one shape that carries
-// a translatable lookahead and is still deliberately left alone. An absolute
-// rewrite-target on an ImplementationSpecific path widens the path before the
-// translation sees it, which replaces the literal prefix the exclusion arm would have
-// anchored to, so the translation declines. Go's regexp then cannot compile the path
-// and the location is dropped, which is the safe outcome: the alternative would be
-// serving the prefixes the assertion excluded.
+// Test_resolveNegativeLookahead_absoluteRewriteTarget checks that a widened path
+// remains unsupported rather than losing its exclusion.
 func Test_resolveNegativeLookahead_absoluteRewriteTarget(t *testing.T) {
 	t.Parallel()
 
@@ -456,4 +425,34 @@ func Test_resolveNegativeLookahead_absoluteRewriteTarget(t *testing.T) {
 	// Neither compiles under RE2, which is what makes the combination unsupported.
 	_, err := regexp.Compile(nginxRegexPrefix + pathRegexp(loc))
 	require.Error(t, err)
+}
+
+func Test_resolveNegativeLookahead_absoluteRewriteTargetRootPrefix(t *testing.T) {
+	t.Parallel()
+
+	loc := &location{
+		Path:     `/((?!_internal).*)`,
+		PathType: new(netv1.PathTypeImplementationSpecific),
+		UseRegex: true,
+		Config: IngressConfig{
+			RewriteTarget: new("https://backend.localhost/$1"),
+		},
+	}
+
+	// Root-prefix paths are not widened, so they remain translatable.
+	require.Equal(t, loc.Path, pathRegexp(loc))
+	resolveNegativeLookahead(loc)
+
+	assert.Equal(t, `/((?!_internal).*)`, loc.Path)
+	assert.Equal(t, `/(.*)`, loc.PathKeep)
+	assert.Equal(t, `/(?:_internal)`, loc.PathExclude)
+
+	rule, _ := buildRule("example.localhost", loc)
+	assert.Equal(t, `Host("example.localhost") && PathRegexp("(?i)^/(.*)") && !PathRegexp("(?i)^/(?:_internal)")`, rule)
+
+	(&Provider{}).buildRewriteTarget(loc)
+	require.NotNil(t, loc.RewriteTarget)
+	assert.Equal(t, `/(.*)`, loc.RewriteTarget.Regex)
+	_, err := regexp.Compile(loc.RewriteTarget.Regex)
+	require.NoError(t, err)
 }
