@@ -238,6 +238,12 @@ func (p *DynConfBuilder) addServerTCP(ctx context.Context, container dockerData,
 		return errors.New("load-balancer is not defined")
 	}
 
+	// Keep an empty load-balancer for Swarm services without tasks or a VIP.
+	if p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0 {
+		loadBalancer.Servers = nil
+		return nil
+	}
+
 	if len(loadBalancer.Servers) == 0 {
 		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
@@ -264,6 +270,12 @@ func (p *DynConfBuilder) addServerUDP(ctx context.Context, container dockerData,
 		return errors.New("load-balancer is not defined")
 	}
 
+	// Keep an empty load-balancer for Swarm services without tasks or a VIP.
+	if p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0 {
+		loadBalancer.Servers = nil
+		return nil
+	}
+
 	if len(loadBalancer.Servers) == 0 {
 		loadBalancer.Servers = []dynamic.UDPServer{{}}
 	}
@@ -288,6 +300,12 @@ func (p *DynConfBuilder) addServerUDP(ctx context.Context, container dockerData,
 func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
+	}
+
+	// Keep an empty load-balancer for Swarm services without tasks or a VIP.
+	if p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0 {
+		loadBalancer.Servers = nil
+		return nil
 	}
 
 	if len(loadBalancer.Servers) == 0 {

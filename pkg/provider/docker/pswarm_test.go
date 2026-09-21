@@ -9,6 +9,7 @@ import (
 	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 func TestListTasks(t *testing.T) {
@@ -111,6 +112,178 @@ func TestListTasks(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSwarmProvider_buildConfiguration(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc               string
+		allowEmptyServices bool
+		lbSwarm            bool
+		global             bool
+		disabled           bool
+		constraints        string
+		tasks              []swarmtypes.Task
+		virtualIP          string
+		wantService        bool
+		wantAddress        string
+	}{
+		{
+			desc: "empty service is excluded by default",
+		},
+		{
+			desc:               "empty service is retained without using its VIP",
+			allowEmptyServices: true,
+			virtualIP:          "10.0.0.10/24",
+			wantService:        true,
+		},
+		{
+			desc:               "empty global service is retained",
+			allowEmptyServices: true,
+			global:             true,
+			wantService:        true,
+		},
+		{
+			desc:               "pending tasks leave the service empty",
+			allowEmptyServices: true,
+			tasks: []swarmtypes.Task{
+				swarmTask("pending", taskStatus(taskState(swarmtypes.TaskStatePending))),
+			},
+			wantService: true,
+		},
+		{
+			desc:               "running task is retained",
+			allowEmptyServices: true,
+			tasks: []swarmtypes.Task{
+				swarmTask("running",
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
+					taskNetworkAttachment("network", "overlay", "overlay", []string{"10.0.0.20/24"}),
+				),
+			},
+			wantService: true,
+			wantAddress: "10.0.0.20:8080",
+		},
+		{
+			desc:    "LBSwarm without a VIP is excluded by default",
+			lbSwarm: true,
+		},
+		{
+			desc:               "LBSwarm without a VIP is retained as empty",
+			allowEmptyServices: true,
+			lbSwarm:            true,
+			wantService:        true,
+		},
+		{
+			desc:               "LBSwarm keeps its VIP without tasks",
+			allowEmptyServices: true,
+			lbSwarm:            true,
+			virtualIP:          "10.0.0.10/24",
+			wantService:        true,
+			wantAddress:        "10.0.0.10:8080",
+		},
+		{
+			desc:               "disabled empty service is excluded",
+			allowEmptyServices: true,
+			disabled:           true,
+		},
+		{
+			desc:               "empty service is excluded by constraints",
+			allowEmptyServices: true,
+			constraints:        "Label(`app`, `other`)",
+		},
+	}
+
+	for _, protocol := range []string{"http", "tcp", "udp"} {
+		for _, test := range testCases {
+			t.Run(protocol+"/"+test.desc, func(t *testing.T) {
+				t.Parallel()
+
+				p := &SwarmProvider{}
+				p.SetDefaults()
+				p.AllowEmptyServices = test.allowEmptyServices
+				p.Constraints = test.constraints
+				require.NoError(t, p.Init())
+
+				labels := map[string]string{
+					"traefik.enable":                                strconv.FormatBool(!test.disabled),
+					"traefik.swarm.lbswarm":                         strconv.FormatBool(test.lbSwarm),
+					"traefik.swarm.network":                         "overlay",
+					"traefik." + protocol + ".routers.test.service": "test",
+					"traefik." + protocol + ".services.test.loadbalancer.server.port": "8080",
+				}
+				switch protocol {
+				case "http":
+					labels["traefik.http.routers.test.rule"] = "Host(`test.example`)"
+					labels["traefik.http.routers.test.middlewares"] = "headers"
+					labels["traefik.http.middlewares.headers.headers.customresponseheaders.X-Test"] = "retained"
+				case "tcp":
+					labels["traefik.tcp.routers.test.rule"] = "HostSNI(`*`)"
+				}
+
+				service := swarmService(serviceName("test"), serviceLabels(labels), withEndpointSpec(modeVIP))
+				if test.global {
+					service.Spec.Mode.Global = &swarmtypes.GlobalService{}
+				}
+				if test.virtualIP != "" {
+					service.Endpoint.VirtualIPs = []swarmtypes.EndpointVirtualIP{{NetworkID: "network", Addr: test.virtualIP}}
+				}
+				dockerClient := &fakeServicesClient{
+					dockerVersion: "1.43",
+					services:      []swarmtypes.Service{service},
+					tasks:         test.tasks,
+					networks:      []networktypes.Summary{{ID: "network", Name: "overlay"}},
+				}
+
+				data, err := p.listServices(t.Context(), dockerClient)
+				require.NoError(t, err)
+				config := NewDynConfBuilder(p.Shared, dockerClient, true).build(t.Context(), data)
+				if !test.wantService {
+					assert.Empty(t, config.HTTP.Routers)
+					assert.Empty(t, config.HTTP.Services)
+					assert.Empty(t, config.HTTP.Middlewares)
+					assert.Empty(t, config.TCP.Routers)
+					assert.Empty(t, config.TCP.Services)
+					assert.Empty(t, config.UDP.Routers)
+					assert.Empty(t, config.UDP.Services)
+					return
+				}
+
+				switch protocol {
+				case "http":
+					require.Contains(t, config.HTTP.Routers, "test")
+					assert.Equal(t, "test", config.HTTP.Routers["test"].Service)
+					assert.Equal(t, []string{"headers"}, config.HTTP.Routers["test"].Middlewares)
+					require.Contains(t, config.HTTP.Middlewares, "headers")
+					assert.Equal(t, "retained", config.HTTP.Middlewares["headers"].Headers.CustomResponseHeaders["X-Test"])
+					require.Contains(t, config.HTTP.Services, "test")
+					if test.wantAddress == "" {
+						assert.Empty(t, config.HTTP.Services["test"].LoadBalancer.Servers)
+					} else {
+						assert.Equal(t, []dynamic.Server{{URL: "http://" + test.wantAddress}}, config.HTTP.Services["test"].LoadBalancer.Servers)
+					}
+				case "tcp":
+					require.Contains(t, config.TCP.Routers, "test")
+					assert.Equal(t, "test", config.TCP.Routers["test"].Service)
+					require.Contains(t, config.TCP.Services, "test")
+					if test.wantAddress == "" {
+						assert.Empty(t, config.TCP.Services["test"].LoadBalancer.Servers)
+					} else {
+						assert.Equal(t, []dynamic.TCPServer{{Address: test.wantAddress}}, config.TCP.Services["test"].LoadBalancer.Servers)
+					}
+				case "udp":
+					require.Contains(t, config.UDP.Routers, "test")
+					assert.Equal(t, "test", config.UDP.Routers["test"].Service)
+					require.Contains(t, config.UDP.Services, "test")
+					if test.wantAddress == "" {
+						assert.Empty(t, config.UDP.Services["test"].LoadBalancer.Servers)
+					} else {
+						assert.Equal(t, []dynamic.UDPServer{{Address: test.wantAddress}}, config.UDP.Services["test"].LoadBalancer.Servers)
+					}
+				}
+			})
+		}
 	}
 }
 
