@@ -84,7 +84,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		configurations[svcName] = config
 	}
 
-	return provider.Merge(ctx, configurations)
+	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
 }
 
 func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguration) error {

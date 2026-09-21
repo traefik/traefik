@@ -40,7 +40,13 @@ func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.Redi
 
 	rs := &redirectScheme{name: name}
 
-	handler, err := newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, conf.ForcePermanentRedirect, rs.clientRequestURL, name)
+	var permanentRedirectCode *int
+	if conf.ForcePermanentRedirect {
+		status := http.StatusPermanentRedirect
+		permanentRedirectCode = &status
+	}
+
+	handler, err := newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, permanentRedirectCode, rs.clientRequestURL, name)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,6 @@
 services:
   whoami1:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
 
   redis:
     image: redis:5.0

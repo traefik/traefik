@@ -318,6 +318,7 @@ nav:
               - 'ContentType': 'reference/routing-configuration/http/middlewares/contenttype.md'
               - 'DigestAuth': 'reference/routing-configuration/http/middlewares/digestauth.md'
               - '<span class="nav-link-with-icon">Distributed RateLimit <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/distributed-ratelimit.md'
+              - 'EncodedCharacters': 'reference/routing-configuration/http/middlewares/encodedcharacters.md'
               - 'Errors': 'reference/routing-configuration/http/middlewares/errorpages.md'
               - 'ForwardAuth': 'reference/routing-configuration/http/middlewares/forwardauth.md'
               - 'GrpcWeb': 'reference/routing-configuration/http/middlewares/grpcweb.md'
@@ -390,6 +391,8 @@ nav:
     - 'Security':
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
+        - 'HTTP/2 Header Memory': 'security/http2-header-memory.md'
+        - 'Headers with Aliasing Names': 'security/header-aliases.md'
         - 'Multi-Tenant Kubernetes': 'security/multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
@@ -399,6 +402,7 @@ nav:
       - 'Submitting Issues': 'contributing/submitting-issues.md'
       - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
       - 'Security': 'contributing/submitting-security-issues.md'
+      - 'Security Decisions': 'contributing/security-decisions.md'
       - 'Building and Testing': 'contributing/building-testing.md'
       - 'Documentation': 'contributing/documentation.md'
       - 'Data Collection': 'contributing/data-collection.md'

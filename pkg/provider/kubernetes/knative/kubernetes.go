@@ -25,14 +25,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/ptr"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	"knative.dev/pkg/network"
 )
 
 const (
-	providerName            = "knative"
+	// ProviderName is the Knative provider name.
+	ProviderName            = "knative"
 	traefikIngressClassName = "traefik.ingress.networking.knative.dev"
 )
 
@@ -61,7 +61,7 @@ type Provider struct {
 
 // Init the provider.
 func (p *Provider) Init() error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 
 	// Initializes Kubernetes client.
 	var err error
@@ -75,7 +75,7 @@ func (p *Provider) Init() error {
 
 // Provide allows the knative provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -117,7 +117,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  providerName,
+							ProviderName:  ProviderName,
 							Configuration: conf,
 						}
 					}
@@ -368,7 +368,7 @@ func (p *Provider) buildWeightedRoundRobin(routerKey string, splits []knativenet
 
 		wrr.Services = append(wrr.Services, dynamic.WRRService{
 			Name:    serviceKey,
-			Weight:  ptr.To(percent),
+			Weight:  new(percent),
 			Headers: split.AppendHeaders,
 		})
 	}
