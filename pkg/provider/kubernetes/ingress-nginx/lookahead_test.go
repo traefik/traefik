@@ -1,11 +1,14 @@
 package ingressnginx
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	netv1 "k8s.io/api/networking/v1"
 )
@@ -455,4 +458,56 @@ func Test_resolveNegativeLookahead_absoluteRewriteTargetRootPrefix(t *testing.T)
 	assert.Equal(t, `/(.*)`, loc.RewriteTarget.Regex)
 	_, err := regexp.Compile(loc.RewriteTarget.Regex)
 	require.NoError(t, err)
+}
+
+func TestBuildRuleLookaheadRequests(t *testing.T) {
+	t.Parallel()
+
+	loc := &location{
+		Path:     "/a/((?!internal).*)",
+		UseRegex: true,
+		Aliases:  []string{"alias.localhost"},
+	}
+	resolveNegativeLookahead(loc)
+	rule, originalRule := buildRule("example.localhost", loc)
+
+	parser, err := httpmuxer.NewSyntaxParser()
+	require.NoError(t, err)
+	mux := httpmuxer.NewMuxer(parser, nil)
+	err = mux.AddRoute(rule, "v3", pinnedPriority(rule, originalRule), "kubernetes", http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		path         string
+		expectedCode int
+	}{
+		{path: "/a/public", expectedCode: http.StatusNoContent},
+		{path: "/A/PUBLIC", expectedCode: http.StatusNoContent},
+		{path: "/a/", expectedCode: http.StatusNoContent},
+		{path: "/a/internal", expectedCode: http.StatusNotFound},
+		{path: "/a/internalMore", expectedCode: http.StatusNotFound},
+		{path: "/A/INTERNAL", expectedCode: http.StatusNotFound},
+		{path: "/a/x/internal", expectedCode: http.StatusNoContent},
+		{path: "/b/public", expectedCode: http.StatusNotFound},
+	}
+	for _, host := range []string{"example.localhost", "alias.localhost", "other.localhost"} {
+		for _, test := range testCases {
+			t.Run(host+test.path, func(t *testing.T) {
+				t.Parallel()
+
+				expectedCode := test.expectedCode
+				if host == "other.localhost" {
+					expectedCode = http.StatusNotFound
+				}
+
+				recorder := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, "http://"+host+test.path, nil)
+				requestdecorator.New(nil).ServeHTTP(recorder, req, mux.ServeHTTP)
+
+				assert.Equal(t, expectedCode, recorder.Code)
+			})
+		}
+	}
 }
