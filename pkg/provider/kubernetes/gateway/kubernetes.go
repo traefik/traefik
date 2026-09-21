@@ -420,8 +420,8 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 	slices.SortStableFunc(gateways, func(a, b *gatev1.Gateway) int {
 		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
-			strings.Compare(a.Namespace, b.Namespace),
-			strings.Compare(a.Name, b.Name))
+			strings.Compare(a.GetNamespace(), b.GetNamespace()),
+			strings.Compare(a.GetName(), b.GetName()))
 	})
 
 	var selectedGateways []gatewayWithListeners
