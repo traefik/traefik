@@ -233,13 +233,17 @@ func (p *DynConfBuilder) keepContainer(ctx context.Context, container dockerData
 	return true
 }
 
+// shouldKeepEmptyService reports whether a Swarm service without tasks or a VIP should retain an empty load-balancer.
+func (p *DynConfBuilder) shouldKeepEmptyService(container dockerData) bool {
+	return p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0
+}
+
 func (p *DynConfBuilder) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
 	}
 
-	// Keep an empty load-balancer for Swarm services without tasks or a VIP.
-	if p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0 {
+	if p.shouldKeepEmptyService(container) {
 		loadBalancer.Servers = nil
 		return nil
 	}
@@ -270,8 +274,7 @@ func (p *DynConfBuilder) addServerUDP(ctx context.Context, container dockerData,
 		return errors.New("load-balancer is not defined")
 	}
 
-	// Keep an empty load-balancer for Swarm services without tasks or a VIP.
-	if p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0 {
+	if p.shouldKeepEmptyService(container) {
 		loadBalancer.Servers = nil
 		return nil
 	}
@@ -302,8 +305,7 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 		return errors.New("load-balancer is not defined")
 	}
 
-	// Keep an empty load-balancer for Swarm services without tasks or a VIP.
-	if p.swarm && p.AllowEmptyServices && len(container.NetworkSettings.Networks) == 0 {
+	if p.shouldKeepEmptyService(container) {
 		loadBalancer.Servers = nil
 		return nil
 	}
