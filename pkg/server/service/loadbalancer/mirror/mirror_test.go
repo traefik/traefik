@@ -247,6 +247,45 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 	assert.Equal(t, numMirrors, int(val))
 }
 
+func TestMirroringWithIgnoredChunkedBody(t *testing.T) {
+	body := []byte(`body`)
+	pool := safe.NewPool(t.Context())
+
+	handler := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		bb, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, body, bb)
+		assert.Equal(t, int64(-1), r.ContentLength)
+		assert.Equal(t, []string{"chunked"}, r.TransferEncoding)
+		assert.NoError(t, r.Body.Close())
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	mirror := New(handler, pool, false, defaultMaxBodySize, nil)
+	var mirrored bool
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		bb, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.Empty(t, bb)
+		assert.Equal(t, int64(0), r.ContentLength)
+		assert.Empty(t, r.Header.Get("Content-Length"))
+		assert.Empty(t, r.TransferEncoding)
+		mirrored = true
+	}), 100)
+	assert.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/", &serverRequestBody{reader: bytes.NewReader(body)})
+	req.ContentLength = -1
+	req.TransferEncoding = []string{"chunked"}
+
+	mirror.ServeHTTP(httptest.NewRecorder(), req)
+	pool.Stop()
+
+	assert.True(t, mirrored)
+	assert.Equal(t, int64(-1), req.ContentLength)
+	assert.Equal(t, []string{"chunked"}, req.TransferEncoding)
+}
+
 func TestCloneRequest(t *testing.T) {
 	t.Run("http request body is nil", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", nil)
