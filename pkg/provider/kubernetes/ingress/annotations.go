@@ -46,6 +46,7 @@ type ServiceIng struct {
 	ServersScheme    string          `json:"serversScheme,omitempty"`
 	ServersTransport string          `json:"serversTransport,omitempty"`
 	PassHostHeader   *bool           `json:"passHostHeader"`
+	Middlewares      []string        `json:"middlewares,omitempty"`
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 	NativeLB         *bool           `json:"nativeLB,omitempty"`
 	NodePortLB       bool            `json:"nodePortLB,omitempty"`

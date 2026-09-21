@@ -32,12 +32,19 @@ import (
 
 // ForwardingTimeoutsApplyConfiguration represents a declarative configuration of the ForwardingTimeouts type for use
 // with apply.
+//
+// ForwardingTimeouts holds the timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeoutsApplyConfiguration struct {
-	DialTimeout           *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// ResponseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
 	ResponseHeaderTimeout *intstr.IntOrString `json:"responseHeaderTimeout,omitempty"`
-	IdleConnTimeout       *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
-	ReadIdleTimeout       *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
-	PingTimeout           *intstr.IntOrString `json:"pingTimeout,omitempty"`
+	// IdleConnTimeout is the maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
+	IdleConnTimeout *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
+	// ReadIdleTimeout is the timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection.
+	ReadIdleTimeout *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
+	// PingTimeout is the timeout after which the HTTP/2 connection will be closed if a response to ping is not received.
+	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
 }
 
 // ForwardingTimeoutsApplyConfiguration constructs a declarative configuration of the ForwardingTimeouts type for use with

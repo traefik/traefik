@@ -75,7 +75,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.Hook) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -107,6 +107,10 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		Level:     logrus.InfoLevel,
 	}
 
+	for _, hook := range hooks {
+		logger.Hooks.Add(hook)
+	}
+
 	if config.OTLP != nil {
 		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
 		if err != nil {
@@ -114,7 +118,9 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		logger.Out = io.Discard
+		if !config.DualOutput {
+			logger.Out = io.Discard
+		}
 	}
 
 	// Transform header names to a canonical form, to be used as is without further transformations,
@@ -202,6 +208,15 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
+	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
+		if metadata.Ingress != nil {
+			logDataTable.Core[KubernetesIngressNamespace] = metadata.Ingress.Namespace
+			logDataTable.Core[KubernetesIngressName] = metadata.Ingress.IngressName
+			logDataTable.Core[KubernetesServiceName] = metadata.Ingress.ServiceName
+			logDataTable.Core[KubernetesServicePort] = metadata.Ingress.ServicePort
+		}
+	}
+
 	if span := trace.SpanFromContext(req.Context()); span != nil {
 		spanContext := span.SpanContext()
 		if spanContext.HasTraceID() && spanContext.HasSpanID() {
@@ -219,12 +234,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestAddr] = req.Host
 		core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
 	}
+
+	queryParameters := ""
+	if h.config.Fields.KeepQueryParameters() {
+		queryParameters = req.URL.RawQuery
+	}
+
 	// copy the URL without the scheme, hostname etc
 	urlCopy := &url.URL{
 		Path:       req.URL.Path,
 		RawPath:    req.URL.RawPath,
-		RawQuery:   req.URL.RawQuery,
-		ForceQuery: req.URL.ForceQuery,
+		RawQuery:   queryParameters,
+		ForceQuery: req.URL.ForceQuery && h.config.Fields.KeepQueryParameters(),
 		Fragment:   req.URL.Fragment,
 	}
 	urlCopyString := urlCopy.String()

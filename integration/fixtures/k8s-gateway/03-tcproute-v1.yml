@@ -1,0 +1,19 @@
+---
+# Same TCPRoute authored under the GA v1 API (available since Gateway API
+# v1.6.0). Traefik keeps watching the v1alpha2 version: the apiserver serves
+# this v1-stored object on the v1alpha2 endpoint (no-op conversion), so the
+# produced dynamic configuration is identical to the v1alpha2-authored route.
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tcp-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+    - name: my-tls-gateway
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 8080
+          weight: 1

@@ -2,17 +2,18 @@ name: Build Web UI
 on:
   workflow_call: {}
 env:
-  SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS: 360  # 15 days
+  SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS: 48  # 2 days
 jobs:
 
   build-webui:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Check out code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Enable corepack
         run: corepack enable

@@ -1,4 +1,4 @@
-import { Box, Flex, Image, Link, Text } from '@traefiklabs/faency'
+import { Box, Flex, Image, Link, Text } from '@traefik-labs/faency'
 import { useMemo, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
@@ -9,7 +9,7 @@ import { PUBLIC_KEY } from './constants'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
-import { TopNav } from 'layout/Navigation'
+import { TopNav } from 'layout/navigation'
 
 const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
 

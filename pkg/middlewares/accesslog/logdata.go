@@ -87,6 +87,17 @@ const (
 	OTelTraceID = "trace_id"
 	// OTelSpanID is the OTel-conformant log attribute for the span identifier.
 	OTelSpanID = "span_id"
+
+	// Kubernetes Ingress fields.
+
+	// KubernetesIngressNamespace is the namespace of the Kubernetes Ingress resource the router handles.
+	KubernetesIngressNamespace = "KubernetesIngressNamespace"
+	// KubernetesIngressName is the name of the Kubernetes Ingress resource the router handles.
+	KubernetesIngressName = "KubernetesIngressName"
+	// KubernetesServiceName is the name of the Kubernetes service associated with Ingress the router handles.
+	KubernetesServiceName = "KubernetesServiceName"
+	// KubernetesServicePort is the port of the Kubernetes service associated with Ingress the router handles.
+	KubernetesServicePort = "KubernetesServicePort"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
@@ -94,11 +105,21 @@ var defaultCoreKeys = [...]string{
 	StartUTC,
 	Duration,
 	RouterName,
+	ServiceAddr,
 	ServiceName,
 	ServiceURL,
+	ClientAddr,
 	ClientHost,
 	ClientPort,
 	ClientUsername,
+	GzipRatio,
+	StartLocal,
+	Overhead,
+	RetryAttempts,
+	TLSVersion,
+	TLSCipher,
+	TLSClientSubject,
+	RequestAddr,
 	RequestHost,
 	RequestPort,
 	RequestMethod,
@@ -121,18 +142,6 @@ func init() {
 	for _, k := range defaultCoreKeys {
 		allCoreKeys[k] = struct{}{}
 	}
-	allCoreKeys[ServiceAddr] = struct{}{}
-	allCoreKeys[ClientAddr] = struct{}{}
-	allCoreKeys[RequestAddr] = struct{}{}
-	allCoreKeys[GzipRatio] = struct{}{}
-	allCoreKeys[StartLocal] = struct{}{}
-	allCoreKeys[Overhead] = struct{}{}
-	allCoreKeys[RetryAttempts] = struct{}{}
-	allCoreKeys[TLSVersion] = struct{}{}
-	allCoreKeys[TLSCipher] = struct{}{}
-	allCoreKeys[TLSClientSubject] = struct{}{}
-	allCoreKeys[OTelTraceID] = struct{}{}
-	allCoreKeys[OTelSpanID] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.

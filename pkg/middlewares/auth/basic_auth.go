@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
@@ -41,6 +42,10 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(users) == 0 {
+		return nil, fmt.Errorf("no users found in %s", authConfig.UsersFile)
 	}
 
 	// To prevent timing attacks, we need to compute a hash even if the user is not found.
@@ -99,6 +104,8 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
+		// Note: the header names aliasing the header field (e.g. X_Auth_User) are not handled here,
+		// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 		// TODO Deprecated we should add the header with canonical key.
 		req.Header.Del(b.headerField)
 		req.Header[b.headerField] = []string{user}
@@ -114,7 +121,9 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (b *basicAuth) checkPassword(user, password string) bool {
 	secret := b.auth.Secrets(user, b.auth.Realm)
 
-	key := password + secret
+	// Prefix the password length so the key unambiguously encodes the
+	// (password, secret) pair and distinct pairs cannot collide.
+	key := strconv.Itoa(len(password)) + ":" + password + secret
 	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
 		if secret == "" {
 			_ = b.checkSecret(password, b.notFoundSecret)

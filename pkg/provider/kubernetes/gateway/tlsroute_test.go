@@ -29,7 +29,7 @@ func Test_hostSNIRule(t *testing.T) {
 		{
 			desc:             "Supported wildcard",
 			hostnames:        []gatev1.Hostname{"*.foo"},
-			expectedRule:     `HostSNIRegexp("^[a-z0-9-\\.]+\\.foo$")`,
+			expectedRule:     `HostSNIRegexp("^[a-z0-9-]+\\.foo$")`,
 			expectedPriority: 4,
 		},
 		{
@@ -53,7 +53,7 @@ func Test_hostSNIRule(t *testing.T) {
 		{
 			desc:             "Multiple valid hostnames with wildcard",
 			hostnames:        []gatev1.Hostname{"bar.foo", "foo.foo", "*.foo"},
-			expectedRule:     `HostSNI("bar.foo") || HostSNI("foo.foo") || HostSNIRegexp("^[a-z0-9-\\.]+\\.foo$")`,
+			expectedRule:     `HostSNI("bar.foo") || HostSNI("foo.foo") || HostSNIRegexp("^[a-z0-9-]+\\.foo$")`,
 			expectedPriority: 7,
 		},
 		{

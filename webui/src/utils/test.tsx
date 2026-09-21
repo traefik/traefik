@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react'
-import { FaencyProvider } from '@traefiklabs/faency'
+import { FaencyProvider } from '@traefik-labs/faency'
 import { HelmetProvider } from 'react-helmet-async'
 import { MemoryRouter } from 'react-router-dom'
 import { SWRConfig } from 'swr'

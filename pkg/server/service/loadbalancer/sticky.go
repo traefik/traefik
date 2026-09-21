@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
@@ -28,6 +29,7 @@ type stickyCookie struct {
 	httpOnly bool
 	sameSite http.SameSite
 	maxAge   int
+	expires  time.Time
 	path     string
 	domain   string
 }
@@ -59,6 +61,9 @@ func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
+	}
+	if cookieConfig.Expires > 0 {
+		cookie.expires = time.Now().Add(time.Duration(cookieConfig.Expires) * time.Second)
 	}
 
 	return &Sticky{
@@ -138,6 +143,7 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 		Secure:   s.cookie.secure,
 		SameSite: s.cookie.sameSite,
 		MaxAge:   s.cookie.maxAge,
+		Expires:  s.cookie.expires,
 	}
 	http.SetCookie(rw, cookie)
 
@@ -166,7 +172,7 @@ func fnvHash(input string) string {
 	return strconv.FormatUint(hasher.Sum64(), 16)
 }
 
-// sha256 returns the SHA-256 hash, truncated to 16 characters, of the input string.
+// sha256Hash returns the SHA-256 hash, truncated to 16 characters, of the input string.
 func sha256Hash(input string) string {
 	hash := sha256.New()
 	// We purposely ignore the error because the implementation always returns nil.

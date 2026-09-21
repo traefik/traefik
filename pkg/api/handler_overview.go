@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type schemeOverview struct {
@@ -30,14 +31,15 @@ type features struct {
 }
 
 type overview struct {
-	HTTP      schemeOverview `json:"http"`
-	TCP       schemeOverview `json:"tcp"`
-	UDP       schemeOverview `json:"udp"`
-	Features  features       `json:"features,omitempty"`
-	Providers []string       `json:"providers,omitempty"`
+	HTTP         schemeOverview `json:"http"`
+	TCP          schemeOverview `json:"tcp"`
+	UDP          schemeOverview `json:"udp"`
+	Certificates *section       `json:"certificates,omitempty"`
+	Features     features       `json:"features,omitempty"`
+	Providers    []string       `json:"providers,omitempty"`
 }
 
-func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 	result := overview{
 		HTTP: schemeOverview{
 			Routers:     getHTTPRouterSection(h.runtimeConfiguration.Routers),
@@ -53,8 +55,9 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 			Routers:  getUDPRouterSection(h.runtimeConfiguration.UDPRouters),
 			Services: getUDPServiceSection(h.runtimeConfiguration.UDPServices),
 		},
-		Features:  getFeatures(h.staticConfig),
-		Providers: getProviders(h.staticConfig),
+		Certificates: getCertificatesSection(h.tlsManager),
+		Features:     getFeatures(h.staticConfig),
+		Providers:    getProviders(h.staticConfig),
 	}
 
 	rw.Header().Set("Content-Type", "application/json")
@@ -228,7 +231,7 @@ func getProviders(conf static.Configuration) []string {
 	v := reflect.ValueOf(conf.Providers).Elem()
 	for i := range v.NumField() {
 		field := v.Field(i)
-		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+		if field.Kind() == reflect.Pointer && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
 				providers = append(providers, v.Type().Field(i).Name)
 			}
@@ -258,7 +261,7 @@ func getMetrics(conf static.Configuration) string {
 	v := reflect.ValueOf(conf.Metrics).Elem()
 	for i := range v.NumField() {
 		field := v.Field(i)
-		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+		if field.Kind() == reflect.Pointer && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
 				return v.Type().Field(i).Name
 			}
@@ -276,7 +279,7 @@ func getTracing(conf static.Configuration) string {
 	v := reflect.ValueOf(conf.Tracing).Elem()
 	for i := range v.NumField() {
 		field := v.Field(i)
-		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+		if field.Kind() == reflect.Pointer && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
 				return v.Type().Field(i).Name
 			}
@@ -284,4 +287,30 @@ func getTracing(conf static.Configuration) string {
 	}
 
 	return ""
+}
+
+func getCertificatesSection(tlsManager *tls.Manager) *section {
+	if tlsManager == nil {
+		return nil
+	}
+
+	x509Certs := tlsManager.GetServerCertificates()
+	var countWarnings int
+	var countErrors int
+
+	for _, cert := range x509Certs {
+		status := getCertificateStatus(cert.NotAfter)
+		switch status {
+		case certStatusExpired:
+			countErrors++
+		case certStatusWarning:
+			countWarnings++
+		}
+	}
+
+	return &section{
+		Total:    len(x509Certs),
+		Warnings: countWarnings,
+		Errors:   countErrors,
+	}
 }

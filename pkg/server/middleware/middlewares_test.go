@@ -19,7 +19,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil, nil)
 
-	chain := middlewaresBuilder.BuildChain(t.Context(), []string{"empty"})
+	chain := middlewaresBuilder.BuildMiddlewareChain(t.Context(), []string{"empty"})
 	_, err := chain.Then(nil)
 	require.Error(t, err)
 }
@@ -30,7 +30,7 @@ func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil, nil)
 
-	chain := middlewaresBuilder.BuildChain(t.Context(), []string{"empty"})
+	chain := middlewaresBuilder.BuildMiddlewareChain(t.Context(), []string{"empty"})
 	_, err := chain.Then(nil)
 	require.Error(t, err)
 }
@@ -271,7 +271,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 			})
 			builder := NewBuilder(rtConf.Middlewares, nil, nil)
 
-			result := builder.BuildChain(ctx, test.buildChain)
+			result := builder.BuildMiddlewareChain(ctx, test.buildChain)
 
 			handlers, err := result.Then(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 			if test.expectedError != nil {

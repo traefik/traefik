@@ -28,10 +28,17 @@ package v1alpha1
 
 // TraefikServiceSpecApplyConfiguration represents a declarative configuration of the TraefikServiceSpec type for use
 // with apply.
+//
+// TraefikServiceSpec defines the desired state of a TraefikService.
 type TraefikServiceSpecApplyConfiguration struct {
-	Weighted            *WeightedRoundRobinApplyConfiguration  `json:"weighted,omitempty"`
-	Mirroring           *MirroringApplyConfiguration           `json:"mirroring,omitempty"`
+	// Weighted defines the Weighted Round Robin configuration.
+	Weighted *WeightedRoundRobinApplyConfiguration `json:"weighted,omitempty"`
+	// Mirroring defines the Mirroring service configuration.
+	Mirroring *MirroringApplyConfiguration `json:"mirroring,omitempty"`
+	// HighestRandomWeight defines the highest random weight service configuration.
 	HighestRandomWeight *HighestRandomWeightApplyConfiguration `json:"highestRandomWeight,omitempty"`
+	// Failover defines the Failover service configuration.
+	Failover *FailoverApplyConfiguration `json:"failover,omitempty"`
 }
 
 // TraefikServiceSpecApplyConfiguration constructs a declarative configuration of the TraefikServiceSpec type for use with
@@ -61,5 +68,13 @@ func (b *TraefikServiceSpecApplyConfiguration) WithMirroring(value *MirroringApp
 // If called multiple times, the HighestRandomWeight field is set to the value of the last call.
 func (b *TraefikServiceSpecApplyConfiguration) WithHighestRandomWeight(value *HighestRandomWeightApplyConfiguration) *TraefikServiceSpecApplyConfiguration {
 	b.HighestRandomWeight = value
+	return b
+}
+
+// WithFailover sets the Failover field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Failover field is set to the value of the last call.
+func (b *TraefikServiceSpecApplyConfiguration) WithFailover(value *FailoverApplyConfiguration) *TraefikServiceSpecApplyConfiguration {
+	b.Failover = value
 	return b
 }

@@ -5,6 +5,12 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 # Traefik & Redis
 
+!!! tip "Routing configuration updates"
+
+    Updates to the routing configuration require Redis [keyspace notifications](https://redis.io/docs/latest/develop/use/keyspace-notifications/) to be enabled.
+    Cloud-managed Redis services (e.g., GCP Memorystore, AWS ElastiCache) may disable this by default due to CPU performance concerns.
+    For more information, see the [Redis documentation](https://redis.io/docs/latest/develop/use/keyspace-notifications/) or your cloud provider's documentation for configuration steps.
+
 ## Configuration Example
 
 You can enable the Redis provider as detailed below:
@@ -19,7 +25,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.redis.endpoints=true
+--providers.redis.endpoints=127.0.0.1:6379
 ```
 
 ## Configuration Options
@@ -43,7 +49,7 @@ providers:
 | <a id="opt-providers-redis-sentinel-password" href="#opt-providers-redis-sentinel-password" title="#opt-providers-redis-sentinel-password">`providers.redis.sentinel.password`</a> | Defines the password for Sentinel authentication. | "" | No   |
 | <a id="opt-providers-redis-sentinel-latencyStrategy" href="#opt-providers-redis-sentinel-latencyStrategy" title="#opt-providers-redis-sentinel-latencyStrategy">`providers.redis.sentinel.latencyStrategy`</a> | Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy). | false   | No   |
 | <a id="opt-providers-redis-sentinel-randomStrategy" href="#opt-providers-redis-sentinel-randomStrategy" title="#opt-providers-redis-sentinel-randomStrategy">`providers.redis.sentinel.randomStrategy`</a> | Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). | false   | No   |
-| <a id="opt-providers-redis-sentinel-replicaStrategy" href="#opt-providers-redis-sentinel-replicaStrategy" title="#opt-providers-redis-sentinel-replicaStrategy">`providers.redis.sentinel.replicaStrategy`</a> | Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy). | false   | No   |
+| <a id="opt-providers-redis-sentinel-replicaStrategy" href="#opt-providers-redis-sentinel-replicaStrategy" title="#opt-providers-redis-sentinel-replicaStrategy">`providers.redis.sentinel.replicaStrategy`</a> | Routes all commands exclusively to replica nodes (mutually exclusive with LatencyStrategy and RandomStrategy). | false   | No   |
 | <a id="opt-providers-redis-sentinel-useDisconnectedReplicas" href="#opt-providers-redis-sentinel-useDisconnectedReplicas" title="#opt-providers-redis-sentinel-useDisconnectedReplicas">`providers.redis.sentinel.useDisconnectedReplicas`</a> | Defines whether to use replicas disconnected with master when cannot get connected replicas. | false   | false   |
 
 ## Routing Configuration
