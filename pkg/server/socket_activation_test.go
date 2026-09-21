@@ -28,7 +28,7 @@ func withSocketActivation(t *testing.T, sa *SocketActivation) {
 func TestBuildListenerSocketActivationUnix(t *testing.T) {
 	// Unix sockets have a per-platform sun_path length limit (104 bytes on
 	// Darwin) so t.TempDir is too long; place the socket under /tmp.
-	dir, err := os.MkdirTemp("/tmp", "traefik-sa-test")
+	dir, err := os.MkdirTemp("/tmp", "traefik-sa-test") //nolint:usetesting // Keep the socket path below the Unix socket path length limit.
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 
@@ -66,4 +66,9 @@ func TestBuildListenerSocketActivationTCP(t *testing.T) {
 	ln, err := buildListener(context.Background(), "web", &static.EntryPoint{Address: ":0"})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = ln.Close() })
+
+	require.IsType(t, &onceCloseListener{}, ln)
+	listener := ln.(*onceCloseListener).Listener
+	require.IsType(t, tcpKeepAliveListener{}, listener)
+	assert.Same(t, tcpLn, listener.(tcpKeepAliveListener).TCPListener)
 }
