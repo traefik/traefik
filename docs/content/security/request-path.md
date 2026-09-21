@@ -50,7 +50,7 @@ Traefik provides two main mechanisms for path security that work together to pro
 ### Path Sanitization
 
 Path sanitization is enabled by default and helps prevent directory traversal attacks by normalizing request paths.
-Configure it in the [EntryPoints](../routing/entrypoints.md#sanitizepath) HTTP section:
+Configure it in the [EntryPoints](../reference/install-configuration/entrypoints.md#sanitizepath) HTTP section:
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -83,7 +83,7 @@ entryPoints:
 ### Encoded Character Filtering
 
 Encoded character filtering provides an additional security layer by rejecting potentially dangerous URL-encoded characters.
-Configure it in the [EntryPoints](../routing/entrypoints.md#encoded-characters) HTTP section.
+Configure it in the [EntryPoints](../reference/install-configuration/entrypoints.md#encoded-characters) HTTP section.
 
 This filtering occurs before path sanitization and catches attack attempts that use encoding to bypass other security controls.
 
@@ -133,3 +133,8 @@ entryPoints:
 --entryPoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=false
 --entryPoints.websecure.http.encodedCharacters.allowEncodedHash=false
 ```
+
+!!! info "Encoded Characters filtering on a per-route basis"
+
+    If you need to configure encoded character filtering on a per-route basis, you can use the `EncodedCharacters` middleware.
+    Refer to the documentation for the [`EncodedCharacter` middleware](../reference/routing-configuration/http/middlewares/encodedcharacters.md) for detailed implementation instructions and configuration options.

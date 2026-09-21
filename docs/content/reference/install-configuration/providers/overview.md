@@ -55,6 +55,7 @@ Below is the list of the currently supported providers in Traefik.
 | <a id="opt-Docker-Swarm" href="#opt-Docker-Swarm" title="#opt-Docker-Swarm">[Docker Swarm](./swarm.md)</a> | Orchestrator | Label                | `swarm`             |
 | <a id="opt-Kubernetes-IngressRoute" href="#opt-Kubernetes-IngressRoute" title="#opt-Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
 | <a id="opt-Kubernetes-Ingress" href="#opt-Kubernetes-Ingress" title="#opt-Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
+| <a id="opt-Kubernetes-Ingress-NGINX" href="#opt-Kubernetes-Ingress-NGINX" title="#opt-Kubernetes-Ingress-NGINX">[Kubernetes Ingress NGINX](./kubernetes/kubernetes-ingress-nginx.md)</a> | Orchestrator | Ingress-NGINX              | `kubernetesIngressNGINX`        |
 | <a id="opt-Kubernetes-Gateway-API" href="#opt-Kubernetes-Gateway-API" title="#opt-Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
 | <a id="opt-Consul-Catalog" href="#opt-Consul-Catalog" title="#opt-Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
 | <a id="opt-Nomad" href="#opt-Nomad" title="#opt-Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
@@ -133,31 +134,94 @@ metadata:
 spec:
 ```
 
+## Restrict the Scope of Service Discovery
+
 By default, Traefik creates routes for all detected containers.
 
 If you want to limit the scope of the Traefik service discovery,
 i.e. disallow route creation for some containers,
 you can do so in two different ways:
 
-- the generic configuration option `exposedByDefault`,
-- a finer granularity mechanism based on constraints.
+1. With [Consul Catalog](./hashicorp/consul-catalog.md#opt-providers-consulCatalog-exposedByDefault),
+ [Docker](./docker.md#opt-providers-docker-exposedByDefault),
+ [ECS](./others/ecs.md#opt-providers-ecs-exposedByDefault),
+ [Nomad](./hashicorp/nomad.md#opt-providers-nomad-exposedByDefault) and
+ [Swarm](./swarm.md#opt-providers-swarm-exposedByDefault)
+ providers, you can set `exposedByDefault` to `false` and add a label `traefik.enable=true`
+ on containers you want to expose
 
-### `exposedByDefault` and `traefik.enable`
+2. Use a finer-grained mechanism based on label selector or constraints.
 
-List of providers that support these features:
+!!! info "The following providers support constraints"
 
-- [Docker](./docker.md#configuration-options)
-- [ECS](./others/ecs.md#configuration-options)
-- [Consul Catalog](./hashicorp/consul-catalog.md#configuration-options)
-- [Nomad](./hashicorp/nomad.md#configuration-options)
+    - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
+    - [Docker](./docker.md#constraints)
+    - [ECS](./others/ecs.md#constraints)
+    - [Nomad](./hashicorp/nomad.md#constraints)
+    - [Swarm](./swarm.md#constraints)
 
-### Constraints
+!!! info "The following providers support label selectors"
 
-List of providers that support constraints:
+    - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelselector)
+    - [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-labelselector)
+    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
 
-- [Docker](./docker.md#constraints)
-- [ECS](./others/ecs.md#constraints)
-- [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
-- [Nomad](./hashicorp/nomad.md#constraints)
+## Providers Precedence
+
+### `providers.precedence`
+
+_Optional_
+
+When two routers from **different providers** define the same rule with equal numeric [priority](../../routing-configuration/http/routing/rules-and-priority.md#priority-calculation),
+the `precedence` option determines which provider's route takes precedence.
+
+The list is ordered from highest to lowest precedence: a provider listed first wins over providers listed later.
+
+```yaml tab="File (YAML)"
+providers:
+  precedence:
+    - kubernetescrd
+    - kubernetes
+    - file
+```
+
+```toml tab="File (TOML)"
+[providers]
+  precedence = ["kubernetescrd", "kubernetes", "file"]
+```
+
+```bash tab="CLI"
+--providers.precedence=kubernetescrd,kubernetes,file
+```
+
+#### Default precedence
+
+When `precedence` is not set, Traefik uses the following default order (highest precedence first):
+
+| Position | Provider name            |
+|----------|--------------------------|
+| <a id="opt-1" href="#opt-1" title="#opt-1">1</a> | `kubernetesgateway`      |
+| <a id="opt-2" href="#opt-2" title="#opt-2">2</a> | `kubernetescrd`          |
+| <a id="opt-3" href="#opt-3" title="#opt-3">3</a> | `kubernetes`             |
+| <a id="opt-4" href="#opt-4" title="#opt-4">4</a> | `kubernetesingressnginx` |
+| <a id="opt-5" href="#opt-5" title="#opt-5">5</a> | `swarm`                  |
+| <a id="opt-6" href="#opt-6" title="#opt-6">6</a> | `docker`                 |
+| <a id="opt-7" href="#opt-7" title="#opt-7">7</a> | `file`                   |
+| <a id="opt-8" href="#opt-8" title="#opt-8">8</a> | `redis`                  |
+| <a id="opt-9" href="#opt-9" title="#opt-9">9</a> | `knative`                |
+| <a id="opt-10" href="#opt-10" title="#opt-10">10</a> | `consul`                 |
+| <a id="opt-11" href="#opt-11" title="#opt-11">11</a> | `consulcatalog`          |
+| <a id="opt-12" href="#opt-12" title="#opt-12">12</a> | `nomad`                  |
+| <a id="opt-13" href="#opt-13" title="#opt-13">13</a> | `etcd`                   |
+| <a id="opt-14" href="#opt-14" title="#opt-14">14</a> | `ecs`                    |
+| <a id="opt-15" href="#opt-15" title="#opt-15">15</a> | `http`                   |
+| <a id="opt-16" href="#opt-16" title="#opt-16">16</a> | `zookeeper`              |
+| <a id="opt-17" href="#opt-17" title="#opt-17">17</a> | `rest`                   |
+
+!!! note
+
+    - `precedence` only acts as a **tiebreaker**: it is applied only when two routes from different providers share the same numeric `priority` value. An explicit router priority always takes precedence.
+    - A provider absent from `precedence` loses to any listed provider.
+    - Provider names are case-insensitive.
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}

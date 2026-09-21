@@ -30,6 +30,7 @@
 - "traefik.http.middlewares.middleware08.digestauth.removeheader=true"
 - "traefik.http.middlewares.middleware08.digestauth.users=foobar, foobar"
 - "traefik.http.middlewares.middleware08.digestauth.usersfile=foobar"
+- "traefik.http.middlewares.middleware09.errors.errorrequestheaders=foobar, foobar"
 - "traefik.http.middlewares.middleware09.errors.query=foobar"
 - "traefik.http.middlewares.middleware09.errors.service=foobar"
 - "traefik.http.middlewares.middleware09.errors.status=foobar, foobar"
