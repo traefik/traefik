@@ -107,11 +107,8 @@ type location struct {
 	// across all ingresses sharing the host).
 	UseRegex bool
 
-	// PathKeep and PathExclude hold the two halves of a negative lookahead the
-	// builder was able to translate into RE2: PathKeep matches what the assertion
-	// let through, PathExclude matches what it rejected. Both are empty when Path
-	// carries no lookahead, or carries one this provider cannot translate, and the
-	// path is then compiled verbatim. Path itself is never rewritten.
+	// PathKeep and PathExclude are combined as keep && !exclude for translated lookaheads.
+	// Both are empty when no translation is applied. Path is never rewritten.
 	PathKeep    string
 	PathExclude string
 

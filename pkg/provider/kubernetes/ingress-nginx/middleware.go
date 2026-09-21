@@ -310,7 +310,7 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 		return
 	}
 
-	regex := nginxRegexPath(loc)
+	regex := pathRegexp(loc)
 	if loc.PathKeep != "" {
 		regex = loc.PathKeep
 	}

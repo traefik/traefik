@@ -648,13 +648,8 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	}
 }
 
-// buildRule builds the router rule for loc.
-//
-// preNegation is the same rule as it would read without negative-lookahead
-// translation. Traefik derives router priority from rule length, so the negated
-// arm would otherwise inflate the priority of every translated router; callers
-// pin priority from preNegation instead. It equals rule when nothing was
-// translated.
+// buildRule returns the router rule and its form before lookahead translation.
+// The latter preserves the original rule-length priority.
 func buildRule(host string, loc *location) (rule, preNegation string) {
 	var base []string
 
@@ -676,7 +671,7 @@ func buildRule(host string, loc *location) (rule, preNegation string) {
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
 
-		regexPath := nginxRegexPath(loc)
+		regexPath := pathRegexp(loc)
 		if pathType == netv1.PathTypeImplementationSpecific {
 			pathType = netv1.PathTypePrefix
 		}
@@ -730,6 +725,16 @@ func buildPrefixRule(path string) string {
 	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, path+"/")
 }
 
+// pathRegexp returns the path expression, widening it for absolute rewrite targets
+// on ImplementationSpecific paths before lookahead translation.
+func pathRegexp(loc *location) string {
+	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
+		return makeTrailingGroupOptional(loc.Path)
+	}
+
+	return loc.Path
+}
+
 // hasAbsoluteRewriteTarget reports whether the location's rewrite-target
 // annotation is an absolute URL (e.g. https://bar.example.org/$1).
 // With an absolute rewrite-target, requests that do not match the nginx
@@ -739,19 +744,6 @@ func buildPrefixRule(path string) string {
 // approximates it for paths sharing the location prefix. With a non-absolute
 // rewrite-target, the catch-all proxies to the default backend (404), so the
 // route must not be widened.
-// nginxRegexPath returns the path as this location must compile it. An
-// ImplementationSpecific path whose rewrite-target is an absolute URL is widened so
-// it also matches without its trailing segment; every other path compiles as written.
-// Widening runs first because the lookahead translation has to split the value that
-// is actually compiled, not the one the ingress declared.
-func nginxRegexPath(loc *location) string {
-	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
-		return makeTrailingGroupOptional(loc.Path)
-	}
-
-	return loc.Path
-}
-
 func hasAbsoluteRewriteTarget(loc *location) bool {
 	rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
 	if rewrite == "" {
@@ -794,13 +786,8 @@ func makeTrailingGroupOptional(path string) string {
 	return path[:idx] + "(?:" + path[idx:] + ")?"
 }
 
-// pinnedPriority returns the priority a router must be pinned to, or zero to
-// leave Traefik's own length-based fallback in place. Traefik derives router
-// priority from rule length, so the negated arm that lookahead translation adds
-// would otherwise promote a translated router over its neighbors on the same
-// host. scored is the rule whose length supplies the priority and is always a
-// pre-negation form; rule and preNegation are compared to detect whether any
-// translation happened at all.
+// pinnedPriority uses scored's pre-translation rule length to preserve priority.
+// It returns zero for unchanged rules, leaving the default priority calculation in place.
 func pinnedPriority(rule, preNegation, scored string) int {
 	if rule == preNegation {
 		return 0

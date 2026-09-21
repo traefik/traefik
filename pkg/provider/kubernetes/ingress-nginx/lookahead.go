@@ -185,7 +185,7 @@ func resolveNegativeLookahead(loc *location) {
 		return
 	}
 
-	keep, exclude, ok := splitNegativeLookahead(nginxRegexPath(loc))
+	keep, exclude, ok := splitNegativeLookahead(pathRegexp(loc))
 	if !ok {
 		if strings.Contains(loc.Path, "(?!") {
 			log.Warn().Msgf("Unsupported negative lookahead in path %q of ingress %s/%s, the path is used as-is and Go's regexp cannot compile it.", loc.Path, loc.Namespace, loc.IngressName)

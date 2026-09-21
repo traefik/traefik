@@ -433,7 +433,7 @@ func Test_resolveNegativeLookahead_absoluteRewriteTarget(t *testing.T) {
 
 	// Widening runs first, so what the translation is offered is no longer the path
 	// the ingress declared, and its prefix is no longer a literal.
-	require.Equal(t, `/api/licensing(?:/((?!_internal).*))?`, nginxRegexPath(loc))
+	require.Equal(t, `/api/licensing(?:/((?!_internal).*))?`, pathRegexp(loc))
 
 	resolveNegativeLookahead(loc)
 
@@ -454,6 +454,6 @@ func Test_resolveNegativeLookahead_absoluteRewriteTarget(t *testing.T) {
 	assert.Contains(t, loc.RewriteTarget.Regex, `(?!_internal)`)
 
 	// Neither compiles under RE2, which is what makes the combination unsupported.
-	_, err := regexp.Compile(nginxRegexPrefix + nginxRegexPath(loc))
+	_, err := regexp.Compile(nginxRegexPrefix + pathRegexp(loc))
 	require.Error(t, err)
 }
