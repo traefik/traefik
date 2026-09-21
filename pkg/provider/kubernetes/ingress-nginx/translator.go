@@ -235,7 +235,10 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 			}
 
-			rule, preNegationRule := buildRule(srv.Hostname, loc)
+			var (
+				rule, originalRule = buildRule(srv.Hostname, loc)
+				priority           = pinnedPriority(rule, originalRule)
+			)
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -247,7 +250,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			rt := &dynamic.Router{
 				EntryPoints:   p.NonTLSEntryPoints,
 				Rule:          rule,
-				Priority:      pinnedPriority(rule, preNegationRule, preNegationRule),
+				Priority:      priority,
 				RuleSyntax:    "default",
 				Service:       routerSvcName,
 				Observability: obs,
@@ -256,7 +259,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			rtTLS := &dynamic.Router{
 				EntryPoints: p.TLSEntryPoints,
 				Rule:        rule,
-				Priority:    pinnedPriority(rule, preNegationRule, preNegationRule),
+				Priority:    priority,
 				RuleSyntax:  "default",
 				Service:     routerSvcName,
 				TLS: &dynamic.RouterTLSConfig{
@@ -282,11 +285,15 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
+				var (
+					canaryRule     = appendCanaryRule(rule, loc.Canary)
+					canaryPriority = pinnedPriority(canaryRule, appendCanaryRule(originalRule, loc.Canary))
+				)
 				canaryKey := routerKey + "-canary"
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
-					Priority:      pinnedPriority(rule, preNegationRule, appendCanaryRule(preNegationRule, loc.Canary)),
+					Rule:          canaryRule,
+					Priority:      canaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       canarySvcName,
 					Observability: obs,
@@ -297,8 +304,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				canaryKeyTLS := canaryKey + "-tls"
 				canaryRouterTLS := &dynamic.Router{
 					EntryPoints:   rtTLS.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
-					Priority:      pinnedPriority(rule, preNegationRule, appendCanaryRule(preNegationRule, loc.Canary)),
+					Rule:          canaryRule,
+					Priority:      canaryPriority,
 					RuleSyntax:    rtTLS.RuleSyntax,
 					Service:       canarySvcName,
 					TLS:           rtTLS.TLS,
@@ -309,11 +316,15 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
+				var (
+					nonCanaryRule     = appendNonCanaryRule(rule, loc.Canary)
+					nonCanaryPriority = pinnedPriority(nonCanaryRule, appendNonCanaryRule(originalRule, loc.Canary))
+				)
 				nonCanaryKey := routerKey + "-non-canary"
 				nonCanaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
-					Priority:      pinnedPriority(rule, preNegationRule, appendNonCanaryRule(preNegationRule, loc.Canary)),
+					Rule:          nonCanaryRule,
+					Priority:      nonCanaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       primarySvcName,
 					Observability: obs,
@@ -324,8 +335,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				nonCanaryKeyTLS := nonCanaryKey + "-tls"
 				nonCanaryRouterTLS := &dynamic.Router{
 					EntryPoints:   rtTLS.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
-					Priority:      pinnedPriority(rule, preNegationRule, appendNonCanaryRule(preNegationRule, loc.Canary)),
+					Rule:          nonCanaryRule,
+					Priority:      nonCanaryPriority,
 					RuleSyntax:    rtTLS.RuleSyntax,
 					Service:       primarySvcName,
 					TLS:           rtTLS.TLS,
@@ -649,8 +660,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 }
 
 // buildRule returns the router rule and its form before lookahead translation.
-// The latter preserves the original rule-length priority.
-func buildRule(host string, loc *location) (rule, preNegation string) {
+func buildRule(host string, loc *location) (rule, originalRule string) {
 	var base []string
 
 	if host != "" {
@@ -666,7 +676,7 @@ func buildRule(host string, loc *location) (rule, preNegation string) {
 		}
 	}
 
-	var pathRules, prePathRules []string
+	var pathRules, originalPathRules []string
 
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
@@ -687,7 +697,7 @@ func buildRule(host string, loc *location) (rule, preNegation string) {
 						fmt.Sprintf("PathRegexp(%q)", nginxRegexPrefix+loc.PathKeep),
 						fmt.Sprintf("!PathRegexp(%q)", nginxRegexPrefix+loc.PathExclude),
 					}
-					prePathRules = []string{verbatim}
+					originalPathRules = []string{verbatim}
 				} else {
 					pathRules = []string{verbatim}
 				}
@@ -697,18 +707,18 @@ func buildRule(host string, loc *location) (rule, preNegation string) {
 		}
 	}
 
-	if prePathRules == nil {
-		prePathRules = pathRules
+	if originalPathRules == nil {
+		originalPathRules = pathRules
 	}
 
-	join := func(path []string) string {
-		all := make([]string, 0, len(base)+len(path))
-		all = append(all, base...)
-		all = append(all, path...)
-		return strings.Join(all, " && ")
+	joinRule := func(pathMatchers []string) string {
+		matchers := make([]string, 0, len(base)+len(pathMatchers))
+		matchers = append(matchers, base...)
+		matchers = append(matchers, pathMatchers...)
+		return strings.Join(matchers, " && ")
 	}
 
-	return join(pathRules), join(prePathRules)
+	return joinRule(pathRules), joinRule(originalPathRules)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
@@ -786,12 +796,12 @@ func makeTrailingGroupOptional(path string) string {
 	return path[:idx] + "(?:" + path[idx:] + ")?"
 }
 
-// pinnedPriority uses scored's pre-translation rule length to preserve priority.
+// pinnedPriority uses the original rule length so lookahead translation does not increase priority.
 // It returns zero for unchanged rules, leaving the default priority calculation in place.
-func pinnedPriority(rule, preNegation, scored string) int {
-	if rule == preNegation {
+func pinnedPriority(rule, originalRule string) int {
+	if rule == originalRule {
 		return 0
 	}
 
-	return httpmuxer.GetRulePriority(scored)
+	return httpmuxer.GetRulePriority(originalRule)
 }

@@ -312,34 +312,34 @@ func Test_buildRule_negativeLookahead(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		desc                string
-		path                string
-		expectedRule        string
-		expectedPreNegation string
+		desc                 string
+		path                 string
+		expectedRule         string
+		expectedOriginalRule string
 	}{
 		{
-			desc:                "path without a lookahead is left verbatim",
-			path:                `/api/example/(.*)`,
-			expectedRule:        `Host("example.localhost") && PathRegexp("(?i)^/api/example/(.*)")`,
-			expectedPreNegation: `Host("example.localhost") && PathRegexp("(?i)^/api/example/(.*)")`,
+			desc:                 "path without a lookahead is left verbatim",
+			path:                 `/api/example/(.*)`,
+			expectedRule:         `Host("example.localhost") && PathRegexp("(?i)^/api/example/(.*)")`,
+			expectedOriginalRule: `Host("example.localhost") && PathRegexp("(?i)^/api/example/(.*)")`,
 		},
 		{
-			desc:                "lookahead becomes a keep arm and a negated exclude arm",
-			path:                `/api/licensing/((?!_internal).*)`,
-			expectedRule:        `Host("example.localhost") && PathRegexp("(?i)^/api/licensing/(.*)") && !PathRegexp("(?i)^/api/licensing/(?:_internal)")`,
-			expectedPreNegation: `Host("example.localhost") && PathRegexp("(?i)^/api/licensing/((?!_internal).*)")`,
+			desc:                 "lookahead becomes a keep arm and a negated exclude arm",
+			path:                 `/api/licensing/((?!_internal).*)`,
+			expectedRule:         `Host("example.localhost") && PathRegexp("(?i)^/api/licensing/(.*)") && !PathRegexp("(?i)^/api/licensing/(?:_internal)")`,
+			expectedOriginalRule: `Host("example.localhost") && PathRegexp("(?i)^/api/licensing/((?!_internal).*)")`,
 		},
 		{
-			desc:                "several excluded prefixes stay in a single negated arm",
-			path:                `/api/example/v1/((?!invitations|session|self-registration).*)`,
-			expectedRule:        `Host("example.localhost") && PathRegexp("(?i)^/api/example/v1/(.*)") && !PathRegexp("(?i)^/api/example/v1/(?:invitations|session|self-registration)")`,
-			expectedPreNegation: `Host("example.localhost") && PathRegexp("(?i)^/api/example/v1/((?!invitations|session|self-registration).*)")`,
+			desc:                 "several excluded prefixes stay in a single negated arm",
+			path:                 `/api/example/v1/((?!invitations|session|self-registration).*)`,
+			expectedRule:         `Host("example.localhost") && PathRegexp("(?i)^/api/example/v1/(.*)") && !PathRegexp("(?i)^/api/example/v1/(?:invitations|session|self-registration)")`,
+			expectedOriginalRule: `Host("example.localhost") && PathRegexp("(?i)^/api/example/v1/((?!invitations|session|self-registration).*)")`,
 		},
 		{
-			desc:                "unsupported shape is left verbatim",
-			path:                `/a/((?!b).*)/((?!c).*)`,
-			expectedRule:        `Host("example.localhost") && PathRegexp("(?i)^/a/((?!b).*)/((?!c).*)")`,
-			expectedPreNegation: `Host("example.localhost") && PathRegexp("(?i)^/a/((?!b).*)/((?!c).*)")`,
+			desc:                 "unsupported shape is left verbatim",
+			path:                 `/a/((?!b).*)/((?!c).*)`,
+			expectedRule:         `Host("example.localhost") && PathRegexp("(?i)^/a/((?!b).*)/((?!c).*)")`,
+			expectedOriginalRule: `Host("example.localhost") && PathRegexp("(?i)^/a/((?!b).*)/((?!c).*)")`,
 		},
 	}
 
@@ -353,10 +353,10 @@ func Test_buildRule_negativeLookahead(t *testing.T) {
 			}
 			resolveNegativeLookahead(loc)
 
-			rule, preNegation := buildRule("example.localhost", loc)
+			rule, originalRule := buildRule("example.localhost", loc)
 
 			assert.Equal(t, test.expectedRule, rule)
-			assert.Equal(t, test.expectedPreNegation, preNegation)
+			assert.Equal(t, test.expectedOriginalRule, originalRule)
 		})
 	}
 }
@@ -373,17 +373,17 @@ func Test_buildRule_priorityPinning(t *testing.T) {
 	}
 	resolveNegativeLookahead(loc)
 
-	rule, preNegation := buildRule("example.localhost", loc)
+	rule, originalRule := buildRule("example.localhost", loc)
 
 	// The negated arm lengthens the rule, which is the inflation being avoided.
-	require.Greater(t, httpmuxer.GetRulePriority(rule), httpmuxer.GetRulePriority(preNegation))
+	require.Greater(t, httpmuxer.GetRulePriority(rule), httpmuxer.GetRulePriority(originalRule))
 
 	// Deriving each router's priority from its own pre-negation rule keeps a canary
 	// router ranked above the base router it was built from.
 	canary := &canaryConfig{Header: "X-Canary"}
 	assert.Greater(t,
-		httpmuxer.GetRulePriority(appendCanaryRule(preNegation, canary)),
-		httpmuxer.GetRulePriority(preNegation))
+		httpmuxer.GetRulePriority(appendCanaryRule(originalRule, canary)),
+		httpmuxer.GetRulePriority(originalRule))
 }
 
 // Test_buildRedirect_negativeLookahead covers the third compile site. The
@@ -442,9 +442,9 @@ func Test_resolveNegativeLookahead_absoluteRewriteTarget(t *testing.T) {
 
 	// The router rule keeps the assertion, so it is scored as its own pre-negation
 	// rule and has nothing to negate.
-	rule, preNegation := buildRule("example.localhost", loc)
+	rule, originalRule := buildRule("example.localhost", loc)
 
-	assert.Equal(t, preNegation, rule)
+	assert.Equal(t, originalRule, rule)
 	assert.Contains(t, rule, `(?!_internal)`)
 
 	// So does the rewrite-target regex, which is the other half of the combination.
