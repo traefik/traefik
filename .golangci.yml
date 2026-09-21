@@ -320,7 +320,11 @@ linters:
       - path: (.+)\.go$
         text: 'SA1019: net/http.CloseNotifier has been deprecated' # FIXME must be fixed
       - path: (.+)\.go$
-        text: 'SA1019: \(golang.org/x/net/http2.Transport\).DialTLS is deprecated' # FIXME must be fixed
+        text: 'SA1019: golang.org/x/net/http2.(Transport|ConfigureTransports) is deprecated' # FIXME must be fixed
+      - path: (.+)\.go$
+        text: 'SA1019: \(\*?golang.org/x/net/http2.Transport\).(AllowHTTP|DialTLS|DialTLSContext|RoundTrip|ReadIdleTimeout|PingTimeout) is deprecated' # FIXME must be fixed
+      - path: pkg/server/service/smart_roundtripper.go
+        text: 'SA1019: \(github.com/traefik/traefik/v2/pkg/server/service.h2cTransportWrapper\).(ReadIdleTimeout|PingTimeout) is deprecated' # FIXME must be fixed
       - path: (.+)\.go$
         text: 'SA1019: github.com/traefik/traefik/v2/pkg/config/dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
       - path: (.+)\.go$
