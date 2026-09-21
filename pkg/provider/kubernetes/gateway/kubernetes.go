@@ -419,10 +419,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	}
 
 	slices.SortStableFunc(gateways, func(a, b *gatev1.Gateway) int {
-		if c := a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.GetNamespace()+"/"+a.GetName(), b.GetNamespace()+"/"+b.GetName())
+		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
+			strings.Compare(a.Namespace, b.Namespace),
+			strings.Compare(a.Name, b.Name))
 	})
 
 	var selectedGateways []gatewayWithListeners
@@ -509,10 +508,9 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	}
 
 	slices.SortStableFunc(routes, func(a, b metav1.Object) int {
-		if c := a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.GetNamespace()+"/"+a.GetName(), b.GetNamespace()+"/"+b.GetName())
+		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
+			strings.Compare(a.GetNamespace(), b.GetNamespace()),
+			strings.Compare(a.GetName(), b.GetName()))
 	})
 
 	attached := make(attachedRoutes)
