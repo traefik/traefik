@@ -30,6 +30,7 @@ var resourceLogFields = map[reflect.Type]resourceMeta{
 	reflect.TypeFor[dynamic.TCPServersTransport](): {logs.ServersTransportName, "TCP servers transport"},
 	reflect.TypeFor[dynamic.UDPRouter]():           {logs.RouterName, "UDP router"},
 	reflect.TypeFor[dynamic.UDPService]():          {logs.ServiceName, "UDP service"},
+	reflect.TypeFor[tls.Certificate]():             {logs.CertificateName, "TLS certificate"},
 }
 
 // ResourceStrategy defines how the merge should handle resources.
@@ -175,7 +176,7 @@ func mergeResourceMap(ctx context.Context, dst, src reflect.Value, origin string
 // tryMerge attempts to merge two resources.
 // Returns true if the merge succeeds, false if values conflict.
 func tryMerge(dst, src reflect.Value) bool {
-	if dst.Kind() != reflect.Ptr {
+	if dst.Kind() != reflect.Pointer {
 		return reflect.DeepEqual(dst.Interface(), src.Interface())
 	}
 
@@ -229,9 +230,7 @@ func mergeCertificates(ctx context.Context, certificates []*tls.CertAndStores, n
 				case ResourceStrategyMerge:
 					existingCertificate.Stores = mergeStores(existingCertificate.Stores, certificate.Stores)
 				case ResourceStrategySkipDuplicates:
-					log.Ctx(ctx).Warn().
-						Str("origin", origin).
-						Msgf("TLS certificate %v already configured, skipping", certificate.Certificate)
+					logSkippedDuplicate(ctx, reflect.TypeFor[tls.Certificate](), certificate.Certificate.GetTruncatedCertificateName(), origin)
 				}
 
 				break
@@ -275,7 +274,7 @@ func logSkippedDuplicate(ctx context.Context, resourceType reflect.Type, resourc
 
 // resourceLogMeta returns the log field name and human-readable type description for the given resource element type.
 func resourceLogMeta(resourceType reflect.Type) (resourceNameField, resourceTypeWords string) {
-	if resourceType.Kind() == reflect.Ptr {
+	if resourceType.Kind() == reflect.Pointer {
 		resourceType = resourceType.Elem()
 	}
 

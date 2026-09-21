@@ -360,6 +360,26 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 	}
 }
 
+func TestAuthTLSNoMTLSClearsCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.VerifyClientCertIfGiven,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Set(sslClientCert, "client-cert")
+	req.Header.Set(sslClientSubjectDN, "CN=client")
+	req.Header.Set(sslClientIssuerDN, "CN=client-CA")
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, "NONE", req.Header.Get(sslClientVerify))
+	assert.Empty(t, req.Header.Get(sslClientCert))
+	assert.Empty(t, req.Header.Get(sslClientSubjectDN))
+	assert.Empty(t, req.Header.Get(sslClientIssuerDN))
+}
+
 func buildTLSWith(certContents []string) *cryptoTLS.ConnectionState {
 	var peerCertificates []*x509.Certificate
 

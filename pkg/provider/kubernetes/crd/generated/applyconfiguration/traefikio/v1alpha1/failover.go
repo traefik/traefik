@@ -28,10 +28,15 @@ package v1alpha1
 
 // FailoverApplyConfiguration represents a declarative configuration of the Failover type for use
 // with apply.
+//
+// Failover holds the Failover configuration.
 type FailoverApplyConfiguration struct {
-	Service  *LoadBalancerSpecApplyConfiguration `json:"service,omitempty"`
+	// Service defines the main service to use.
+	Service *LoadBalancerSpecApplyConfiguration `json:"service,omitempty"`
+	// Fallback defines the fallback service to use when the main service returns an error.
 	Fallback *LoadBalancerSpecApplyConfiguration `json:"fallback,omitempty"`
-	Errors   *FailoverErrorApplyConfiguration    `json:"errors,omitempty"`
+	// Errors defines which errors should trigger the use of the fallback service.
+	Errors *FailoverErrorApplyConfiguration `json:"errors,omitempty"`
 }
 
 // FailoverApplyConfiguration constructs a declarative configuration of the Failover type for use with

@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: middlewares.traefik.io
 spec:
   group: traefik.io
@@ -299,6 +299,14 @@ spec:
                   This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
                   More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/errorpages/
                 properties:
+                  errorRequestHeaders:
+                    description: |-
+                      ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+                      When nil (not set), all original request headers are forwarded.
+                      Set to an empty list to forward no headers, or list specific headers to forward only those.
+                    items:
+                      type: string
+                    type: array
                   forwardHeaders:
                     description: |-
                       ForwardHeaders defines an optional list of HTTP response header names from the original
@@ -533,6 +541,9 @@ spec:
                                 - none
                                 - lax
                                 - strict
+                                - None
+                                - Lax
+                                - Strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -672,8 +683,10 @@ spec:
                         type: boolean
                     type: object
                   trustForwardHeader:
-                    description: 'TrustForwardHeader defines whether to trust (ie:
-                      forward) all X-Forwarded-* headers.'
+                    description: |-
+                      TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+
+                      Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
                     type: boolean
                 type: object
               grpcWeb:

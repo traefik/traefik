@@ -17,7 +17,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
-const defaultInternalEntryPointName = "traefik"
+const (
+	// ProviderName is the internal Traefik provider name.
+	ProviderName = "internal"
+
+	defaultInternalEntryPointName = "traefik"
+)
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -38,10 +43,10 @@ func (i *Provider) ThrottleDuration() time.Duration {
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
-	ctx := log.With().Str(logs.ProviderName, "internal").Logger().WithContext(context.Background())
+	ctx := log.With().Str(logs.ProviderName, ProviderName).Logger().WithContext(context.Background())
 
 	configurationChan <- dynamic.Message{
-		ProviderName:  "internal",
+		ProviderName:  ProviderName,
 		Configuration: i.createConfiguration(ctx),
 	}
 
@@ -415,6 +420,8 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 			DialTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.DialTimeout,
 			ResponseHeaderTimeout: i.staticCfg.ServersTransport.ForwardingTimeouts.ResponseHeaderTimeout,
 			IdleConnTimeout:       i.staticCfg.ServersTransport.ForwardingTimeouts.IdleConnTimeout,
+			ReadTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.ReadTimeout,
+			WriteTimeout:          i.staticCfg.ServersTransport.ForwardingTimeouts.WriteTimeout,
 		}
 	}
 

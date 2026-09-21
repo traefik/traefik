@@ -949,7 +949,7 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	s.traefikCmd(withConfigFile(file))
 
 	// All errors
-	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"]`))
 	require.NoError(s.T(), err)
 
 	// router3 has an error because it uses an unknown entrypoint
@@ -957,11 +957,11 @@ func (s *SimpleSuite) TestRouterConfigErrors() {
 	require.NoError(s.T(), err)
 
 	// router4 is enabled, but in warning state because its tls options conf was messed up
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
 	require.NoError(s.T(), err)
 
 	// router5 is disabled because its middleware conf is broken
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router5@file", 1000*time.Millisecond, try.BodyContains())
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/websecure-conflicted-router5@file", 1000*time.Millisecond, try.BodyContains())
 	require.NoError(s.T(), err)
 }
 
@@ -2089,17 +2089,15 @@ func (s *SimpleSuite) TestSimpleOCSP() {
 }
 
 func (s *SimpleSuite) TestSanitizePath() {
-	s.createComposeProject("base")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(rw, req.RequestURI)
+	}))
+	defer backend.Close()
 
 	file := s.adaptFile("fixtures/simple_sanitize_path.toml", struct {
 		Server1           string
 		DefaultRuleSyntax string
-	}{whoami1URL, "v3"})
+	}{backend.URL, "v3"})
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -2107,62 +2105,58 @@ func (s *SimpleSuite) TestSanitizePath() {
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
-		desc     string
-		request  string
-		target   string
-		body     string
-		expected int
+		desc         string
+		request      string
+		target       string
+		expectedBody string
 	}{
 		{
-			desc:     "Explicit call to the route with a middleware",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/without",
 		},
 		{
-			desc:     "Implicit call to the route with a middleware",
-			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit call to the route with a middleware",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit encoded dot dots call to the route with a middleware",
-			request:  "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit encoded dot dots call to the route with a middleware",
+			request:      "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit with encoded unreserved character call to the route with a middleware",
-			request:  "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit with encoded unreserved character call to the route with a middleware",
+			request:      "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware, and disable path sanitization",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without",
 		},
 		{
-			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
-			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:  "127.0.0.1:8001",
-			// The whoami is redirecting to /with, but the path is not sanitized.
-			expected: http.StatusMovedPermanently,
+			desc:         "Implicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without/../with",
 		},
 	}
 
@@ -2174,30 +2168,25 @@ func (s *SimpleSuite) TestSanitizePath() {
 		require.NoError(s.T(), err)
 
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		s.T().Cleanup(func() { _ = resp.Body.Close() })
 		require.NoError(s.T(), err)
 
-		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-
-		if test.body != "" {
-			body, err := io.ReadAll(resp.Body)
-			require.NoError(s.T(), err)
-			assert.Contains(s.T(), string(body), test.body)
-		}
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), test.expectedBody, string(body))
 	}
 }
 
 func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
-	s.createComposeProject("base")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		fmt.Fprint(rw, req.RequestURI)
+	}))
+	defer backend.Close()
 
 	file := s.adaptFile("fixtures/simple_sanitize_path.toml", struct {
 		Server1           string
 		DefaultRuleSyntax string
-	}{whoami1URL, "v2"})
+	}{backend.URL, "v2"})
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -2205,62 +2194,58 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
 	require.NoError(s.T(), err)
 
 	testCases := []struct {
-		desc     string
-		request  string
-		target   string
-		body     string
-		expected int
+		desc         string
+		request      string
+		target       string
+		expectedBody string
 	}{
 		{
-			desc:     "Explicit call to the route with a middleware",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/without",
 		},
 		{
-			desc:     "Implicit call to the route with a middleware",
-			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit call to the route with a middleware",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit encoded dot dots call to the route with a middleware",
-			request:  "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit encoded dot dots call to the route with a middleware",
+			request:      "GET /without/%2E%2E/with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Implicit with encoded unreserved character call to the route with a middleware",
-			request:  "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8000",
-			expected: http.StatusFound,
+			desc:         "Implicit with encoded unreserved character call to the route with a middleware",
+			request:      "GET /%77ith HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8000",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
-			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusFound,
+			desc:         "Explicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/with",
 		},
 		{
-			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
-			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:   "127.0.0.1:8001",
-			expected: http.StatusOK,
-			body:     "GET /without HTTP/1.1",
+			desc:         "Explicit call to the route without a middleware, and disable path sanitization",
+			request:      "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without",
 		},
 		{
-			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
-			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
-			target:  "127.0.0.1:8001",
-			// The whoami is redirecting to /with, but the path is not sanitized.
-			expected: http.StatusMovedPermanently,
+			desc:         "Implicit call to the route with a middleware, and disable path sanitization",
+			request:      "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:       "127.0.0.1:8001",
+			expectedBody: "/without/../with",
 		},
 	}
 
@@ -2272,15 +2257,12 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
 		require.NoError(s.T(), err)
 
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		s.T().Cleanup(func() { _ = resp.Body.Close() })
 		require.NoError(s.T(), err)
 
-		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-
-		if test.body != "" {
-			body, err := io.ReadAll(resp.Body)
-			require.NoError(s.T(), err)
-			assert.Contains(s.T(), string(body), test.body)
-		}
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), test.expectedBody, string(body))
 	}
 }
 
@@ -2454,6 +2436,125 @@ func (s *SimpleSuite) TestAllowACMEByPassRedirect() {
 	resp, err = noRedirectClient.Get("http://127.0.0.1:8888/other-path")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusMovedPermanently, resp.StatusCode)
+}
+
+func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		// The deprecated option only handles the names containing an underscore character.
+		if _, ok := r.Header["X.auth.user"]; !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_underscore_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the aliasing variants directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+			req.Header["X.auth.user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
+}
+
+func (s *SimpleSuite) TestAliasHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		if _, ok := r.Header["X.auth.user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_alias_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the aliasing variants directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+			req.Header["X.auth.user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
 }
 
 func (s *SimpleSuite) TestFailoverService() {
@@ -2655,4 +2756,89 @@ func (s *SimpleSuite) TestServiceMiddleware() {
 
 	// The whoami service should have received the X-Custom-Header that was added by the service middleware
 	assert.Contains(s.T(), string(body), "X-Custom-Header: service-middleware-test")
+}
+
+// TestProviderPrecedenceFileWins verifies that, when two providers define
+// routes with the same rule and auto-computed priority, the provider listed
+// first in providers.precedence takes precedence (lower index = higher
+// provider priority).
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - precedence     = ["file", "docker"]  → file is index 0 → wins
+func (s *SimpleSuite) TestProviderPrecedenceFileWins() {
+	s.createComposeProject("providers-precedence")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
+	}{
+		Precedence:         `["file", "docker"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The file provider has higher priority → requests must reach the file backend.
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("from-file"))
+	require.NoError(s.T(), err)
+}
+
+// TestProviderPrecedenceDockerWins mirrors TestProviderPrecedenceFileWins
+// but reverses the precedence so that the Docker provider wins instead.
+//
+// Setup:
+//   - providers.file   → file-router   → fileBackend  (body: "from-file")
+//   - providers.docker → docker-router → whoami container
+//   - precedence     = ["docker", "file"]  → docker is index 0 → wins
+func (s *SimpleSuite) TestProviderPrecedenceDockerWins() {
+	s.createComposeProject("providers-precedence")
+	s.composeUp("whoami")
+	defer s.composeDown()
+
+	fileBackend := startTestServer("9042", http.StatusOK, "from-file")
+	defer fileBackend.Close()
+
+	file := s.adaptFile("fixtures/providers-precedence.toml", struct {
+		Precedence         string
+		FileBackendAddress string
+		DockerHost         string
+	}{
+		Precedence:         `["docker", "file"]`,
+		FileBackendAddress: "127.0.0.1:9042",
+		DockerHost:         s.getDockerHost(),
+	})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for both providers to have loaded their routers.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second,
+		try.BodyContains("file-router@file"),
+		try.BodyContains("docker-router@docker"))
+	require.NoError(s.T(), err)
+
+	// The Docker provider has higher priority → requests must reach the whoami container.
+	err = try.GetRequest("http://127.0.0.1:8000/http", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
+
+	// This request should be handled by the TCP route.
+	err = try.GetRequest("http://127.0.0.1:8000/tcp", 5*time.Second, try.BodyContains("Hostname:"))
+	require.NoError(s.T(), err)
 }

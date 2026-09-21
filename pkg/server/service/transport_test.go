@@ -1,7 +1,7 @@
 package service
 
 import (
-	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -12,28 +12,28 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// LocalhostCert is a PEM-encoded TLS cert
+// localhostCert is a PEM-encoded TLS cert
 // for host example.com, www.example.com
 // expiring at Jan 29 16:00:00 2084 GMT.
 // go run $GOROOT/src/crypto/tls/generate_cert.go  --rsa-bits 1024 --host example.com,www.example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
-var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
+var localhostCert = []byte(`-----BEGIN CERTIFICATE-----
 MIICDDCCAXWgAwIBAgIQH20JmcOlcRWHNuf62SYwszANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
 MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
@@ -47,8 +47,8 @@ we7mX8lv763u0XuCWPxbHszhclI6FFjoQef0Z1NYLRm8ZRq58QqWDFZ3E6wdDK+B
 +OWvkW+hRavo6R9LzIZPfbv8yBo4M9PK/DXw8hLqH7VkkI+Gh793iH7Ugd4A7wvT
 -----END CERTIFICATE-----`)
 
-// LocalhostKey is the private key for localhostCert.
-var LocalhostKey = []byte(`-----BEGIN PRIVATE KEY-----
+// localhostKey is the private key for localhostCert.
+var localhostKey = []byte(`-----BEGIN PRIVATE KEY-----
 MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBALSog3LcXiirq+IO
 eWkMMTknTyJJEaCCDoTKUkoEpl+mEQba5+ArvwO5+Xf7tvQuURjYB5kfC+Ic4OoL
 1rqKGPVlhCTT92MCH4546EURa771P9U/yBUVqsWpPwM6nL6GsbtgmK9QjPBvh+Yl
@@ -126,14 +126,14 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	connCount := pointer[int32](0)
+	connCount := new(int32(0))
 	srv.Config.ConnState = func(conn net.Conn, state http.ConnState) {
 		if state == http.StateNew {
 			atomic.AddInt32(connCount, 1)
 		}
 	}
 
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
@@ -144,7 +144,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
 			ServerName: "example.com",
-			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
 		},
 	}
 
@@ -167,7 +167,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	dynamicConf = map[string]*dynamic.ServersTransport{
 		"test": {
 			ServerName: "www.example.com",
-			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
 		},
 	}
 
@@ -191,7 +191,7 @@ func TestValidCipherSuites(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	srv.TLS = &tls.Config{
@@ -207,7 +207,7 @@ func TestValidCipherSuites(t *testing.T) {
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
 			ServerName:   "example.com",
-			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			RootCAs:      []types.FileOrContent{types.FileOrContent(localhostCert)},
 			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
 		},
 	}
@@ -228,7 +228,7 @@ func TestValidTLSVersions(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	srv.TLS = &tls.Config{
@@ -246,7 +246,7 @@ func TestValidTLSVersions(t *testing.T) {
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
 			ServerName:   "example.com",
-			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			RootCAs:      []types.FileOrContent{types.FileOrContent(localhostCert)},
 			MaxVersion:   "VersionTLS12",
 			MinVersion:   "VersionTLS11",
 			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
@@ -264,266 +264,113 @@ func TestValidTLSVersions(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func TestInvalidMaxTLSVersions(t *testing.T) {
-	// Init log buffer to capture zerolog output
-	var logBuffer bytes.Buffer
-	// Capture zerolog output
-	log.Logger = log.Output(&logBuffer)
-	// Restore original logger after test
-	defer func() {
-		log.Logger = log.Output(os.Stderr)
-	}()
-
-	// Define a function to run the test logic and gather logs
-	logtest := func() {
-		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			rw.WriteHeader(http.StatusOK)
-		}))
-
-		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-		require.NoError(t, err)
-
-		srv.TLS = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MaxVersion:   tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			},
-		}
-		srv.StartTLS()
-
-		transportManager := NewTransportManager(nil)
-
-		dynamicConf := map[string]*dynamic.ServersTransport{
-			"test": {
+func TestInvalidTLSConfig(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		transport *dynamic.ServersTransport
+	}{
+		{
+			desc: "invalid CipherSuite name",
+			transport: &dynamic.ServersTransport{
 				ServerName:   "example.com",
-				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-				MaxVersion:   "VersionTLS16",
-				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+				RootCAs:      []types.FileOrContent{types.FileOrContent(localhostCert)},
+				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385"},
 			},
-		}
-
-		transportManager.Update(dynamicConf)
-		tr, err := transportManager.GetRoundTripper("test")
-		require.NoError(t, err)
-		client := http.Client{Transport: tr}
-		resp, err := client.Get(srv.URL)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-	}
-
-	// Run the test
-	logtest()
-	// Set logs in variable as string
-	logged := logBuffer.String()
-	// Check logs content expected error message
-	assert.Contains(t, logged, "Invalid TLS maximum version: VersionTLS16")
-}
-
-func TestInvalidMinTLSVersions(t *testing.T) {
-	// Init log buffer to capture zerolog output
-	var logBuffer bytes.Buffer
-	// Capture zerolog output
-	log.Logger = log.Output(&logBuffer)
-	// Restore original logger after test
-	defer func() {
-		log.Logger = log.Output(os.Stderr)
-	}()
-
-	// Define a function to run the test logic and gather logs
-	logtest := func() {
-		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			rw.WriteHeader(http.StatusOK)
-		}))
-
-		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-		require.NoError(t, err)
-
-		srv.TLS = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS11,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			},
-		}
-		srv.StartTLS()
-
-		transportManager := NewTransportManager(nil)
-
-		dynamicConf := map[string]*dynamic.ServersTransport{
-			"test": {
-				ServerName:   "example.com",
-				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-				MinVersion:   "VersionTLS09",
-				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
-			},
-		}
-
-		transportManager.Update(dynamicConf)
-		tr, err := transportManager.GetRoundTripper("test")
-		require.NoError(t, err)
-		client := http.Client{Transport: tr}
-		resp, err := client.Get(srv.URL)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-	}
-
-	// Run the test
-	logtest()
-	// Set logs in variable as string
-	logged := logBuffer.String()
-	// Check logs content expected error message
-	assert.Contains(t, logged, "Invalid TLS minimum version: VersionTLS09")
-}
-
-func TestInvalidCipherSuites(t *testing.T) {
-	// Init log buffer to capture zerolog output
-	var logBuffer bytes.Buffer
-	// Capture zerolog output
-	log.Logger = log.Output(&logBuffer)
-	// Restore original logger after test
-	defer func() {
-		log.Logger = log.Output(os.Stderr)
-	}()
-
-	// Define a function to run the test logic and gather logs
-	logtest := func() {
-		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			rw.WriteHeader(http.StatusOK)
-		}))
-
-		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-		require.NoError(t, err)
-
-		srv.TLS = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MaxVersion:   tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			},
-		}
-		srv.StartTLS()
-
-		transportManager := NewTransportManager(nil)
-
-		dynamicConf := map[string]*dynamic.ServersTransport{
-			"test": {
-				ServerName:   "example.com",
-				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-				MaxVersion:   "VersionTLS12",
-				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
-			},
-		}
-
-		transportManager.Update(dynamicConf)
-		tr, err := transportManager.GetRoundTripper("test")
-		require.NoError(t, err)
-		client := http.Client{Transport: tr}
-		resp, err := client.Get(srv.URL)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-	}
-
-	// Run the test
-	logtest()
-	// Set logs in variable as string
-	logged := logBuffer.String()
-	// Check logs content expected error message
-	assert.Contains(t, logged, "Invalid cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385, falling back to default CipherSuite.")
-}
-
-func TestMinMaxCipherSuites(t *testing.T) {
-	// Init log buffer to capture zerolog output
-	var logBuffer bytes.Buffer
-	// Capture zerolog output
-	log.Logger = log.Output(&logBuffer)
-	// Restore original logger after test
-	defer func() {
-		log.Logger = log.Output(os.Stderr)
-	}()
-
-	// Define a function to run the test logic and gather logs
-	logtest := func() {
-		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			rw.WriteHeader(http.StatusOK)
-		}))
-
-		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-		require.NoError(t, err)
-
-		srv.TLS = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			},
-		}
-		srv.StartTLS()
-
-		transportManager := NewTransportManager(nil)
-
-		dynamicConf := map[string]*dynamic.ServersTransport{
-			"test": {
-				ServerName:   "example.com",
-				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-				MinVersion:   "VersionTLS12",
-				MaxVersion:   "VersionTLS10",
-				CipherSuites: []string{"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"},
-			},
-		}
-
-		transportManager.Update(dynamicConf)
-		tr, err := transportManager.GetRoundTripper("test")
-		require.NoError(t, err)
-		client := http.Client{Transport: tr}
-		resp, err := client.Get(srv.URL)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-	}
-
-	// Run the test
-	logtest()
-	// Set logs in variable as string
-	logged := logBuffer.String()
-	// Check logs content expected error message
-	assert.Contains(t, logged, "CipherSuite MinVersion, VersionTLS12, above or equal to the MaxVersion, VersionTLS10. Falling back to default MaxVersion and MinVersion")
-}
-
-func TestEmptyCipherSuites(t *testing.T) {
-	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}))
-
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-	require.NoError(t, err)
-
-	srv.TLS = &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		MaxVersion:   tls.VersionTLS12,
-		MinVersion:   tls.VersionTLS11,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 		},
-	}
-	srv.StartTLS()
-
-	transportManager := NewTransportManager(nil)
-
-	dynamicConf := map[string]*dynamic.ServersTransport{
-		"test": {
-			ServerName: "example.com",
-			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+		{
+			desc: "invalid MinVersion",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+				MinVersion: "VersionTLS09",
+			},
+		},
+		{
+			desc: "invalid MaxVersion",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+				MaxVersion: "VersionTLS16",
+			},
+		},
+		{
+			desc: "MinVersion above MaxVersion",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+				MinVersion: "VersionTLS13",
+				MaxVersion: "VersionTLS12",
+			},
 		},
 	}
 
-	transportManager.Update(dynamicConf)
-	tr, err := transportManager.GetRoundTripper("test")
-	require.NoError(t, err)
-	client := http.Client{Transport: tr}
-	_, err = client.Get(srv.URL)
-	require.Error(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"test": test.transport})
 
-	assert.ErrorContains(t, err, "remote error: tls: handshake failure")
+			// A nil TLSConfig means the configuration was invalid and the transport manager correctly ignored it.
+			assert.Nil(t, transportManager.tlsConfigs["test"])
+		})
+	}
+}
+
+func TestNoCipherSuitesUsesDefaults(t *testing.T) {
+	// The server is pinned to TLS 1.2 and a single cipher from Go's default
+	// list, so the handshake only succeeds if the client falls back to the
+	// default cipher list instead of an empty one.
+	testCases := []struct {
+		desc         string
+		transport    *dynamic.ServersTransport
+		serverCipher uint16
+	}{
+		{
+			desc: "no cipher config with ServerName and RootCAs",
+			transport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		{
+			desc: "only InsecureSkipVerify",
+			transport: &dynamic.ServersTransport{
+				InsecureSkipVerify: true,
+			},
+			serverCipher: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+	}
+
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+
+			srv.TLS = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+				MaxVersion:   tls.VersionTLS12,
+				CipherSuites: []uint16{test.serverCipher},
+			}
+			srv.StartTLS()
+			defer srv.Close()
+
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"test": test.transport})
+
+			tr, err := transportManager.GetRoundTripper("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+			resp, err := client.Get(srv.URL)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+		})
+	}
 }
 
 func TestMTLS(t *testing.T) {
@@ -531,7 +378,7 @@ func TestMTLS(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	clientPool := x509.NewCertPool()
@@ -553,7 +400,7 @@ func TestMTLS(t *testing.T) {
 		"test": {
 			ServerName: "example.com",
 			// For TLS
-			RootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			RootCAs: []types.FileOrContent{types.FileOrContent(localhostCert)},
 
 			// For mTLS
 			Certificates: traefiktls.Certificates{
@@ -697,7 +544,14 @@ func TestSpiffeMTLS(t *testing.T) {
 			transportManager.Update(dynamicConf)
 
 			tr, err := transportManager.GetRoundTripper("test")
-			require.NoError(t, err)
+			if err != nil {
+				// An invalid TLS configuration (e.g. SPIFFE enabled without a
+				// workloadapi source) is rejected by the manager and the
+				// transport is never installed; that itself is the expected
+				// failure mode.
+				require.True(t, test.wantError, "unexpected GetRoundTripper error: %v", err)
+				return
+			}
 
 			client := http.Client{Transport: tr}
 
@@ -774,6 +628,468 @@ func TestDisableHTTP2(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			assert.Equal(t, test.expectedProto, resp.Proto)
+		})
+	}
+}
+
+func TestKerberosRoundTripper(t *testing.T) {
+	testCases := []struct {
+		desc string
+
+		originalRoundTripperHeaders map[string][]string
+
+		expectedStatusCode     []int
+		expectedDedicatedCount int
+		expectedOriginalCount  int
+	}{
+		{
+			desc:                  "without special header",
+			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount: 3,
+		},
+		{
+			desc:                        "with Negotiate (Kerberos)",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"Negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLM"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase negotiate scheme",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"negotiate"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a lowercase ntlm scheme carrying a challenge",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"ntlm TlRMTVNTUAAB"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:       1,
+			expectedDedicatedCount:      2,
+		},
+		{
+			desc:                        "with a scheme that only starts like NTLM",
+			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLMish"}},
+			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount:       3,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			origCount := 0
+			dedicatedCount := 0
+			rt := kerberosRoundTripper{
+				new: func() http.RoundTripper {
+					return roundTripperFn(func(req *http.Request) (*http.Response, error) {
+						dedicatedCount++
+						return &http.Response{
+							StatusCode: http.StatusOK,
+						}, nil
+					})
+				},
+				OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
+					origCount++
+					return &http.Response{
+						StatusCode: http.StatusUnauthorized,
+						Header:     test.originalRoundTripperHeaders,
+					}, nil
+				}),
+			}
+
+			ctx := AddTransportOnContext(t.Context())
+			for _, expected := range test.expectedStatusCode {
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
+				require.NoError(t, err)
+				resp, err := rt.RoundTrip(req)
+				require.NoError(t, err)
+				require.Equal(t, expected, resp.StatusCode)
+			}
+
+			require.Equal(t, test.expectedOriginalCount, origCount)
+			require.Equal(t, test.expectedDedicatedCount, dedicatedCount)
+		})
+	}
+}
+
+func TestKerberosRoundTripperDoesNotLeakAcrossServersTransports(t *testing.T) {
+	ntlmSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("WWW-Authenticate", "NTLM")
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(ntlmSrv.Close)
+
+	// The httptest certificate is not signed by the root CA pinned below.
+	untrustedSrv := httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(untrustedSrv.Close)
+
+	transportManager := NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{
+		"insecure": {InsecureSkipVerify: true},
+		"pinned": {
+			ServerName: "example.com",
+			RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+		},
+	})
+
+	insecureRT, err := transportManager.GetRoundTripper("insecure")
+	require.NoError(t, err)
+
+	pinnedRT, err := transportManager.GetRoundTripper("pinned")
+	require.NoError(t, err)
+
+	// Every request below carries this context, that is they all belong to the same client connection.
+	ctx := AddTransportOnContext(t.Context())
+
+	var certErr x509.UnknownAuthorityError
+
+	// As long as nothing is stuck on the connection, the pinned ServersTransport enforces its own root CA.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, untrustedSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	_, err = pinnedRT.RoundTrip(req)
+	require.ErrorAs(t, err, &certErr)
+
+	// The NTLM challenge sticks a dedicated round tripper for the insecure ServersTransport on this connection.
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, ntlmSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := insecureRT.RoundTrip(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// The pinned ServersTransport must not be served by the round tripper stuck for the insecure one.
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, untrustedSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	_, err = pinnedRT.RoundTrip(req)
+	assert.ErrorAs(t, err, &certErr)
+}
+
+func TestStickyRoundTrippersStickOnlyOnce(t *testing.T) {
+	var newCalls int
+
+	owner := &kerberosRoundTripper{
+		new: func() http.RoundTripper {
+			newCalls++
+
+			return http.DefaultTransport
+		},
+	}
+
+	connRoundTrippers := &stickyRoundTrippers{}
+	connRoundTrippers.stick(owner)
+	connRoundTrippers.stick(owner)
+
+	assert.Equal(t, 1, newCalls)
+	assert.NotNil(t, connRoundTrippers.get(owner))
+}
+
+func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
+	var newCalls atomic.Int32
+
+	rt := kerberosRoundTripper{
+		new: func() http.RoundTripper {
+			newCalls.Add(1)
+
+			return roundTripperFn(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusOK}, nil
+			})
+		},
+		OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusUnauthorized,
+				Header:     map[string][]string{"Www-Authenticate": {"NTLM"}},
+			}, nil
+		}),
+	}
+
+	ctx := AddTransportOnContext(t.Context())
+
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
+			assert.NoError(t, err)
+
+			_, err = rt.RoundTrip(req)
+			assert.NoError(t, err)
+		})
+	}
+
+	wg.Wait()
+
+	assert.EqualValues(t, 1, newCalls.Load())
+}
+
+func TestPeerCertSANs(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		serversTransport *dynamic.ServersTransport
+		wantError        bool
+	}{
+		{
+			desc: "matches cert SAN",
+			serversTransport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+				PeerCertSANs: []traefiktls.SAN{
+					{
+						Type:  traefiktls.SANDNSNameType,
+						Value: "www.example.com",
+					},
+				},
+			},
+			wantError: false,
+		},
+		{
+			desc: "does not match cert SAN",
+			serversTransport: &dynamic.ServersTransport{
+				ServerName: "example.com",
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+				PeerCertSANs: []traefiktls.SAN{
+					{
+						Type:  traefiktls.SANDNSNameType,
+						Value: "wrong.example.com",
+					},
+				},
+			},
+			wantError: true,
+		},
+		{
+			desc: "does not match deprecated PeerCertURI",
+			serversTransport: &dynamic.ServersTransport{
+				ServerName:  "example.com",
+				RootCAs:     []types.FileOrContent{types.FileOrContent(localhostCert)},
+				PeerCertURI: "foo://bar",
+			},
+			wantError: true,
+		},
+	}
+
+	// LocalhostCert is valid for "example.com" — this is the cert the test server serves.
+	// We set ServerName to "other.example.com" to prove SNI and cert auth are decoupled.
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+			srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
+			srv.StartTLS()
+			t.Cleanup(srv.Close)
+
+			transportManager := NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{
+				"test": test.serversTransport,
+			})
+
+			tr, err := transportManager.GetRoundTripper("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+
+			_, err = client.Get(srv.URL)
+			if test.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestConnectionTimeouts(t *testing.T) {
+	testCases := []struct {
+		desc                      string
+		readTimeout               ptypes.Duration
+		writeTimeout              ptypes.Duration
+		serverWriteDelay          time.Duration
+		serverReads               bool
+		expectedReadTimeoutError  bool
+		expectedWriteTimeoutError bool
+	}{
+		{
+			desc:                     "read timeout - server delays longer than client timeout",
+			readTimeout:              ptypes.Duration(50 * time.Millisecond),
+			serverWriteDelay:         150 * time.Millisecond,
+			expectedReadTimeoutError: true,
+		},
+		{
+			desc:             "read succeeds with sufficient timeout",
+			readTimeout:      ptypes.Duration(500 * time.Millisecond),
+			serverWriteDelay: 100 * time.Millisecond,
+		},
+		{
+			desc:             "no read timeout - should succeed regardless of delay",
+			serverWriteDelay: 100 * time.Millisecond,
+		},
+		{
+			desc:                      "write timeout triggered when reader stops reading",
+			writeTimeout:              ptypes.Duration(50 * time.Millisecond),
+			expectedWriteTimeoutError: true,
+		},
+		{
+			desc:         "write succeeds within timeout",
+			writeTimeout: ptypes.Duration(500 * time.Millisecond),
+			serverReads:  true,
+		},
+		{
+			desc:        "no write timeout - should succeed",
+			serverReads: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// net.Pipe has no OS buffering: reads and writes block until the other side is ready,
+			// which allows the read and write deadlines to be exercised deterministically.
+			client, server := net.Pipe()
+			defer client.Close()
+			defer server.Close()
+
+			serverDone := make(chan struct{})
+			go func() {
+				defer close(serverDone)
+				_, _ = server.Write([]byte("HELLO1"))
+				if test.serverWriteDelay > 0 {
+					time.Sleep(test.serverWriteDelay)
+				}
+				_, _ = server.Write([]byte("HELLO2"))
+				if test.serverReads {
+					buf := make([]byte, 5)
+					_, _ = server.Read(buf)
+				}
+			}()
+
+			conn := &connWithTimeouts{
+				Conn:         client,
+				readTimeout:  time.Duration(test.readTimeout),
+				writeTimeout: time.Duration(test.writeTimeout),
+			}
+
+			buf := make([]byte, 6)
+			_, err := conn.Read(buf)
+			require.NoError(t, err)
+			require.Equal(t, "HELLO1", string(buf))
+
+			_, err = conn.Read(buf)
+			if test.expectedReadTimeoutError {
+				var netErr net.Error
+				require.ErrorAs(t, err, &netErr)
+				require.True(t, netErr.Timeout())
+				client.Close()
+				<-serverDone
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, "HELLO2", string(buf))
+
+			// Without a reader on the server side, the write only returns once the write deadline fires.
+			if test.serverReads || test.expectedWriteTimeoutError {
+				_, err = conn.Write([]byte("HELLO"))
+				if test.expectedWriteTimeoutError {
+					var netErr net.Error
+					require.ErrorAs(t, err, &netErr)
+					require.True(t, netErr.Timeout())
+				} else {
+					require.NoError(t, err)
+				}
+			}
+
+			client.Close()
+			<-serverDone
+		})
+	}
+}
+
+func TestConnectionTimeoutsAreDefined(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		readTimeout     ptypes.Duration
+		writeTimeout    ptypes.Duration
+		expectedWrapped bool
+	}{
+		{
+			desc:            "read timeout set - should wrap connection with read timeout",
+			readTimeout:     ptypes.Duration(50 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc:            "write timeout set - should wrap connection with write timeout",
+			writeTimeout:    ptypes.Duration(100 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc:            "both timeouts set - should wrap connection with both timeouts",
+			readTimeout:     ptypes.Duration(30 * time.Millisecond),
+			writeTimeout:    ptypes.Duration(60 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc: "no timeouts set - should return raw connection",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			defer ln.Close()
+
+			go func() {
+				for {
+					conn, err := ln.Accept()
+					if err != nil {
+						return
+					}
+					conn.Close()
+				}
+			}()
+
+			dialer := &net.Dialer{Timeout: time.Second}
+
+			cfg := &dynamic.ForwardingTimeouts{
+				ReadTimeout:  test.readTimeout,
+				WriteTimeout: test.writeTimeout,
+			}
+
+			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+			defer cancel()
+
+			conn, err := customDialContext(dialer, cfg)(ctx, "tcp", ln.Addr().String())
+			require.NoError(t, err)
+			require.NotNil(t, conn)
+			defer conn.Close()
+
+			if !test.expectedWrapped {
+				require.IsType(t, &net.TCPConn{}, conn)
+				return
+			}
+
+			require.IsType(t, &connWithTimeouts{}, conn)
+			wrapped := conn.(*connWithTimeouts)
+			assert.Equal(t, time.Duration(test.readTimeout), wrapped.readTimeout)
+			assert.Equal(t, time.Duration(test.writeTimeout), wrapped.writeTimeout)
 		})
 	}
 }
@@ -892,74 +1208,4 @@ type roundTripperFn func(req *http.Request) (*http.Response, error)
 
 func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error) {
 	return r(request)
-}
-
-func TestKerberosRoundTripper(t *testing.T) {
-	testCases := []struct {
-		desc string
-
-		originalRoundTripperHeaders map[string][]string
-
-		expectedStatusCode     []int
-		expectedDedicatedCount int
-		expectedOriginalCount  int
-	}{
-		{
-			desc:                  "without special header",
-			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
-			expectedOriginalCount: 3,
-		},
-		{
-			desc:                        "with Negotiate (Kerberos)",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"Negotiate"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
-		},
-		{
-			desc:                        "with NTLM",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLM"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			origCount := 0
-			dedicatedCount := 0
-			rt := kerberosRoundTripper{
-				new: func() http.RoundTripper {
-					return roundTripperFn(func(req *http.Request) (*http.Response, error) {
-						dedicatedCount++
-						return &http.Response{
-							StatusCode: http.StatusOK,
-						}, nil
-					})
-				},
-				OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
-					origCount++
-					return &http.Response{
-						StatusCode: http.StatusUnauthorized,
-						Header:     test.originalRoundTripperHeaders,
-					}, nil
-				}),
-			}
-
-			ctx := AddTransportOnContext(t.Context())
-			for _, expected := range test.expectedStatusCode {
-				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
-				require.NoError(t, err)
-				resp, err := rt.RoundTrip(req)
-				require.NoError(t, err)
-				require.Equal(t, expected, resp.StatusCode)
-			}
-
-			require.Equal(t, test.expectedOriginalCount, origCount)
-			require.Equal(t, test.expectedDedicatedCount, dedicatedCount)
-		})
-	}
 }

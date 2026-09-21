@@ -5,7 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -43,6 +45,11 @@ var (
 		`X25519`:         tls.X25519,
 		`x25519mlkem768`: tls.X25519MLKEM768,
 		`X25519MLKEM768`: tls.X25519MLKEM768,
+		// Post-quantum hybrid key exchanges enabled by default since Go 1.26.
+		`secp256r1mlkem768`:  tls.SecP256r1MLKEM768,
+		`SecP256r1MLKEM768`:  tls.SecP256r1MLKEM768,
+		`secp384r1mlkem1024`: tls.SecP384r1MLKEM1024,
+		`SecP384r1MLKEM1024`: tls.SecP384r1MLKEM1024,
 	}
 )
 
@@ -105,16 +112,20 @@ func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
 	return cert, nil
 }
 
-// GetTruncatedCertificateName truncates the certificate name.
+// GetTruncatedCertificateName returns an identifier for the certificate, to be used in logs and error messages.
 func (c *Certificate) GetTruncatedCertificateName() string {
 	certName := c.CertFile.String()
-
-	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters
-	if !c.CertFile.IsPath() && strings.HasPrefix(certName, certificateHeader) && len(certName) > len(certificateHeader)+50 {
-		certName = strings.TrimPrefix(c.CertFile.String(), certificateHeader)[:50]
+	if c.CertFile.IsPath() {
+		return certName
 	}
 
-	return certName
+	// The content is of unknown nature: providers inline the CertFile before it reaches the TLS manager, a missing
+	// path is indistinguishable from inlined content, and the content may be a bundle carrying the private key.
+	// Both ends are excerpted, 16 characters being what it takes to read a PEM block type, and never more than half
+	// of the content, to keep a short one from being printed in full.
+	edge := min(len(certName)/4, 16)
+
+	return certName[:edge] + "[...]" + certName[len(certName)-edge:]
 }
 
 // FileOrContent hold a file path or content.
@@ -144,34 +155,50 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// VerifyPeerCertificate verifies the chain certificates and their URI.
-func VerifyPeerCertificate(uri string, cfg *tls.Config, rawCerts [][]byte) error {
-	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
-	cert, err := verifyChain(cfg.RootCAs, rawCerts)
-	if err != nil {
-		return err
-	}
+// SANType is the type of the Subject Alternative Name.
+type SANType string
 
-	if len(uri) > 0 {
-		return verifyServerCertMatchesURI(uri, cert)
-	}
+const (
+	// SANDNSNameType specifies hostname-based SAN.
+	SANDNSNameType SANType = "DNSName"
 
-	return nil
+	// SANURIType specifies URI-based SAN, e.g. SPIFFE id.
+	SANURIType SANType = "URI"
+)
+
+// +k8s:deepcopy-gen=true
+
+// SAN represents a Subject Alternative Name.
+type SAN struct {
+	Type  SANType `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty"`
+	Value string  `json:"value,omitempty" toml:"value,omitempty" yaml:"value,omitempty"`
 }
 
-// verifyServerCertMatchesURI verifies that the given certificate contains the specified URI in its SANs.
-func verifyServerCertMatchesURI(uri string, cert *x509.Certificate) error {
-	if cert == nil {
-		return errors.New("peer certificate mismatch: no peer certificate presented")
+// VerifyPeerCertificate verifies the chain certificates and their URI.
+func VerifyPeerCertificate(sans []SAN, rootCAs *x509.CertPool, rawCerts [][]byte) error {
+	// TODO: Refactor to avoid useless verifyChain (ex: when insecureskipverify is false)
+	cert, err := verifyChain(rootCAs, rawCerts)
+	if err != nil {
+		return fmt.Errorf("verifying chain: %w", err)
 	}
 
-	for _, certURI := range cert.URIs {
-		if strings.EqualFold(certURI.String(), uri) {
-			return nil
+	for _, san := range sans {
+		switch san.Type {
+		case SANURIType:
+			if slices.ContainsFunc(cert.URIs, func(uri *url.URL) bool {
+				return strings.EqualFold(san.Value, uri.String())
+			}) {
+				return nil
+			}
+
+		case SANDNSNameType:
+			if err := cert.VerifyHostname(san.Value); err == nil {
+				return nil
+			}
 		}
 	}
 
-	return fmt.Errorf("peer certificate mismatch: no SAN URI in peer certificate matches %s", uri)
+	return errors.New("no matching SAN in peer certificate")
 }
 
 // verifyChain performs standard TLS verification without enforcing remote hostname matching.

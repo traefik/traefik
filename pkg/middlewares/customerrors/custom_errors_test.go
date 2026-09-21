@@ -24,6 +24,7 @@ func TestHandler(t *testing.T) {
 		backendHeaders      map[string]string
 		backendErrorHandler http.HandlerFunc
 		validate            func(t *testing.T, recorder *httptest.ResponseRecorder)
+		requestHeaders      map[string]string
 	}{
 		{
 			desc:        "no error",
@@ -153,6 +154,60 @@ func TestHandler(t *testing.T) {
 				t.Helper()
 				assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status")
 				assert.Contains(t, recorder.Body.String(), "My 503 page.")
+			},
+		},
+		{
+			desc:      "forward all headers by default",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), "trace-abc")
+				assert.Contains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc:      "forward only allowlisted headers",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{"X-Request-Id"}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), "trace-abc")
+				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
+			},
+		},
+		{
+			desc:      "forward no headers",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, ErrorRequestHeaders: []string{}},
+			requestHeaders: map[string]string{
+				"X-Request-Id":  "trace-abc",
+				"Authorization": "Bearer secret",
+			},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, r.Header.Get("X-Request-Id"))
+				fmt.Fprintln(w, r.Header.Get("Authorization"))
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.NotContains(t, recorder.Body.String(), "trace-abc")
+				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
 			},
 		},
 		{
@@ -377,6 +432,9 @@ func TestHandler(t *testing.T) {
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
+			for k, v := range test.requestHeaders {
+				req.Header.Set(k, v)
+			}
 
 			// Client like browser and curl will issue a relative HTTP request, which not have a host and scheme in the URL. But the http.NewRequest will set them automatically.
 			req.URL.Host = ""
@@ -478,4 +536,90 @@ type mockServiceBuilder struct {
 
 func (m *mockServiceBuilder) BuildHTTP(_ context.Context, _ string) (http.Handler, error) {
 	return m.handler, nil
+}
+
+func TestHandlerURLPlaceholder(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		target         string
+		forwardedProto string
+		expected       string
+	}{
+		{
+			desc:     "uses https for TLS requests",
+			target:   "https://whoami.domain.com/api",
+			expected: "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "uses forwarded https scheme",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "https",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "normalizes forwarded websocket scheme to http",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "ws",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "normalizes forwarded websocket TLS scheme to https",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "wss",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "ignores invalid forwarded scheme",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "ftp",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "ignores invalid forwarded scheme for TLS requests",
+			target:         "https://whoami.domain.com/api",
+			forwardedProto: "ftp",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "uses forwarded http scheme for TLS requests",
+			target:         "https://whoami.domain.com/api",
+			forwardedProto: "http",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var gotRequestURI string
+			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotRequestURI = r.RequestURI
+				w.WriteHeader(http.StatusOK)
+			})}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			})
+
+			errorPage := dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/?url={url}",
+				Status:  []string{"500"},
+			}
+
+			handler, err := New(t.Context(), next, errorPage, serviceBuilderMock, "test")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, test.target, nil)
+			if test.forwardedProto != "" {
+				req.Header.Set(xForwardedProto, test.forwardedProto)
+			}
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expected, gotRequestURI)
+		})
+	}
 }

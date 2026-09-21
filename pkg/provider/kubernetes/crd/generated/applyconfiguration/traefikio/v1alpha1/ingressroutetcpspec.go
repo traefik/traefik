@@ -28,11 +28,21 @@ package v1alpha1
 
 // IngressRouteTCPSpecApplyConfiguration represents a declarative configuration of the IngressRouteTCPSpec type for use
 // with apply.
+//
+// IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
 type IngressRouteTCPSpecApplyConfiguration struct {
-	IngressClassName *string                      `json:"ingressClassName,omitempty"`
-	EntryPoints      []string                     `json:"entryPoints,omitempty"`
-	Routes           []RouteTCPApplyConfiguration `json:"routes,omitempty"`
-	TLS              *TLSTCPApplyConfiguration    `json:"tls,omitempty"`
+	// IngressClassName defines the name of the IngressClass cluster resource.
+	IngressClassName *string `json:"ingressClassName,omitempty"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteTCPApplyConfiguration `json:"routes,omitempty"`
+	// TLS defines the TLS configuration on a layer 4 / TCP Route.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/routing/router/#tls
+	TLS *TLSTCPApplyConfiguration `json:"tls,omitempty"`
 }
 
 // IngressRouteTCPSpecApplyConfiguration constructs a declarative configuration of the IngressRouteTCPSpec type for use with

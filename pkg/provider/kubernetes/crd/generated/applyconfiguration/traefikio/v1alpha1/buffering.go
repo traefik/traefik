@@ -28,12 +28,29 @@ package v1alpha1
 
 // BufferingApplyConfiguration represents a declarative configuration of the Buffering type for use
 // with apply.
+//
+// Buffering holds the buffering middleware configuration.
+// This middleware retries or limits the size of requests that can be forwarded to backends.
+// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#maxrequestbodybytes
 type BufferingApplyConfiguration struct {
-	MaxRequestBodyBytes  *int64  `json:"maxRequestBodyBytes,omitempty"`
-	MemRequestBodyBytes  *int64  `json:"memRequestBodyBytes,omitempty"`
-	MaxResponseBodyBytes *int64  `json:"maxResponseBodyBytes,omitempty"`
-	MemResponseBodyBytes *int64  `json:"memResponseBodyBytes,omitempty"`
-	RetryExpression      *string `json:"retryExpression,omitempty"`
+	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
+	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
+	// Default: 0 (no maximum).
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
+	// MemRequestBodyBytes defines the threshold (in bytes) from which the request will be buffered on disk instead of in memory.
+	// Default: 1048576 (1Mi).
+	MemRequestBodyBytes *int64 `json:"memRequestBodyBytes,omitempty"`
+	// MaxResponseBodyBytes defines the maximum allowed response size from the service (in bytes).
+	// If the response exceeds the allowed size, it is not forwarded to the client. The client gets a 500 (Internal Server Error) response instead.
+	// Default: 0 (no maximum).
+	MaxResponseBodyBytes *int64 `json:"maxResponseBodyBytes,omitempty"`
+	// MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
+	// Default: 1048576 (1Mi).
+	MemResponseBodyBytes *int64 `json:"memResponseBodyBytes,omitempty"`
+	// RetryExpression defines the retry conditions.
+	// It is a logical combination of functions with operators AND (&&) and OR (||).
+	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
+	RetryExpression *string `json:"retryExpression,omitempty"`
 }
 
 // BufferingApplyConfiguration constructs a declarative configuration of the Buffering type for use with

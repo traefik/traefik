@@ -32,12 +32,23 @@ import (
 
 // ForwardingTimeoutsApplyConfiguration represents a declarative configuration of the ForwardingTimeouts type for use
 // with apply.
+//
+// ForwardingTimeouts holds the timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeoutsApplyConfiguration struct {
-	DialTimeout           *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// ResponseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
 	ResponseHeaderTimeout *intstr.IntOrString `json:"responseHeaderTimeout,omitempty"`
-	IdleConnTimeout       *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
-	ReadIdleTimeout       *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
-	PingTimeout           *intstr.IntOrString `json:"pingTimeout,omitempty"`
+	// IdleConnTimeout is the maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
+	IdleConnTimeout *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
+	// ReadIdleTimeout is the timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection.
+	ReadIdleTimeout *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
+	// PingTimeout is the timeout after which the HTTP/2 connection will be closed if a response to ping is not received.
+	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
+	// ReadTimeout is the timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time.
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout is the timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time.
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
 }
 
 // ForwardingTimeoutsApplyConfiguration constructs a declarative configuration of the ForwardingTimeouts type for use with
@@ -83,5 +94,21 @@ func (b *ForwardingTimeoutsApplyConfiguration) WithReadIdleTimeout(value intstr.
 // If called multiple times, the PingTimeout field is set to the value of the last call.
 func (b *ForwardingTimeoutsApplyConfiguration) WithPingTimeout(value intstr.IntOrString) *ForwardingTimeoutsApplyConfiguration {
 	b.PingTimeout = &value
+	return b
+}
+
+// WithReadTimeout sets the ReadTimeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ReadTimeout field is set to the value of the last call.
+func (b *ForwardingTimeoutsApplyConfiguration) WithReadTimeout(value intstr.IntOrString) *ForwardingTimeoutsApplyConfiguration {
+	b.ReadTimeout = &value
+	return b
+}
+
+// WithWriteTimeout sets the WriteTimeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the WriteTimeout field is set to the value of the last call.
+func (b *ForwardingTimeoutsApplyConfiguration) WithWriteTimeout(value intstr.IntOrString) *ForwardingTimeoutsApplyConfiguration {
+	b.WriteTimeout = &value
 	return b
 }

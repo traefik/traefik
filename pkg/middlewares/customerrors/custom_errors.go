@@ -26,7 +26,12 @@ var (
 	_ middlewares.Stateful = &codeCatcher{}
 )
 
-const typeName = "CustomError"
+const (
+	typeName        = "CustomError"
+	schemeHTTP      = "http"
+	schemeHTTPS     = "https"
+	xForwardedProto = "X-Forwarded-Proto"
+)
 
 // hopHeaders are hop-by-hop headers that must not be forwarded to the client,
 // even if explicitly listed in forwardHeaders.
@@ -51,6 +56,7 @@ type customErrors struct {
 	backendHandler      http.Handler
 	httpCodeRanges      types.HTTPCodeRanges
 	backendQuery        string
+	requestHeaders      []string
 	statusRewrites      []statusRewrite
 	forwardNginxHeaders http.Header
 	forwardHeaders      []string
@@ -116,6 +122,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendHandler:      backend,
 		httpCodeRanges:      httpCodeRanges,
 		backendQuery:        config.Query,
+		requestHeaders:      config.ErrorRequestHeaders,
 		statusRewrites:      statusRewrites,
 		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
 		forwardHeaders:      forwardHeaders,
@@ -163,10 +170,24 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var query string
 
-	scheme := "http"
+	scheme := schemeHTTP
 	if req.TLS != nil {
-		scheme = "https"
+		scheme = schemeHTTPS
 	}
+
+	if proto := req.Header.Get(xForwardedProto); proto != "" {
+		// A previous hop may have set ws(s) for connection upgrade requests,
+		// but only http(s) is valid in an HTTP context.
+		switch {
+		case strings.EqualFold(proto, schemeHTTP), strings.EqualFold(proto, "ws"):
+			scheme = schemeHTTP
+		case strings.EqualFold(proto, schemeHTTPS), strings.EqualFold(proto, "wss"):
+			scheme = schemeHTTPS
+		default:
+			logger.Debug().Msgf("Invalid X-Forwarded-Proto: %s", proto)
+		}
+	}
+
 	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
 
 	if len(c.backendQuery) > 0 {
@@ -184,13 +205,11 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if len(c.forwardNginxHeaders) > 0 {
-		utils.CopyHeaders(pageReq.Header, c.forwardNginxHeaders)
-		pageReq.Header.Set("X-Code", strconv.Itoa(code))
-		pageReq.Header.Set("X-Format", req.Header.Get("Accept"))
-		pageReq.Header.Set("X-Original-Uri", req.URL.RequestURI())
-		if requestID := req.Header.Get("X-Request-ID"); requestID != "" {
-			pageReq.Header.Set("X-Request-ID", requestID)
+	if c.requestHeaders != nil {
+		for _, header := range c.requestHeaders {
+			if values := req.Header.Values(header); len(values) > 0 {
+				pageReq.Header[http.CanonicalHeaderKey(header)] = values
+			}
 		}
 	} else {
 		utils.CopyHeaders(pageReq.Header, req.Header)
@@ -209,6 +228,14 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if len(c.forwardNginxHeaders) > 0 {
+		utils.CopyHeaders(pageReq.Header, c.forwardNginxHeaders)
+		pageReq.Header.Set("X-Code", strconv.Itoa(code))
+		pageReq.Header.Set("X-Format", req.Header.Get("Accept"))
+		pageReq.Header.Set("X-Original-Uri", req.URL.RequestURI())
+		if requestID := req.Header.Get("X-Request-ID"); requestID != "" {
+			pageReq.Header.Set("X-Request-ID", requestID)
+		}
+
 		c.backendHandler.ServeHTTP(rw, pageReq.WithContext(req.Context()))
 	} else {
 		c.backendHandler.ServeHTTP(newCodeModifier(rw, code),

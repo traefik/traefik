@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
-	"k8s.io/utils/ptr"
 )
 
 func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
@@ -19,7 +18,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr.To("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -36,7 +35,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    ptr.To("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -53,7 +52,7 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    ptr.To("test"),
+				Error:    new("test"),
 			},
 		},
 	}
@@ -68,7 +67,7 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    ptr.To("test"),
+				Error:    new("test"),
 			},
 		},
 	}

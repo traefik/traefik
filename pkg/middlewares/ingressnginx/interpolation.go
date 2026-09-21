@@ -13,26 +13,27 @@ import (
 )
 
 // This the list of supported NGINX variables for interpolation.
-// It is not exhaustive, but covers the most commonly used ones in Ingress NGINX annotations.
+// It is not exhaustive but covers the most commonly used ones in Ingress NGINX annotations.
 const (
-	scheme        = "scheme"
-	host          = "host"
-	httpHeaders   = "http_"
-	hostname      = "hostname"
-	requestURI    = "request_uri"
-	requestMethod = "request_method"
-	queryString   = "query_string"
-	args          = "args"
-	arg           = "arg_"
-	remoteAddress = "remote_addr"
-	uri           = "uri"
-	documentURI   = "document_uri"
-	serverName    = "server_name"
-	serverPort    = "server_port"
-	contentType   = "content_type"
-	contentLength = "content_length"
-	cookie        = "cookie_"
-	isArgs        = "is_args"
+	scheme              = "scheme"
+	host                = "host"
+	httpHeaders         = "http_"
+	upstreamHTTPHeaders = "upstream_http_"
+	hostname            = "hostname"
+	requestURI          = "request_uri"
+	requestMethod       = "request_method"
+	queryString         = "query_string"
+	args                = "args"
+	arg                 = "arg_"
+	remoteAddress       = "remote_addr"
+	uri                 = "uri"
+	documentURI         = "document_uri"
+	serverName          = "server_name"
+	serverPort          = "server_port"
+	contentType         = "content_type"
+	contentLength       = "content_length"
+	cookie              = "cookie_"
+	isArgs              = "is_args"
 
 	// Variables set by ingress-nginx template.
 	bestHTTPHost          = "best_http_host"
@@ -50,10 +51,10 @@ var varRegexp = regexp.MustCompile(`(\$\{?([a-zA-Z_][a-zA-Z0-9_]*|[1-9])}?)`)
 // `$uri`, `$document_uri`, `$server_name`, `$server_port`, `$content_type`, `$content_length`,
 // `$cookie_*`, `$is_args`, and `$proxy_add_x_forwarded_for` variables.
 // Custom variables can be passed through the vars param.
-func ReplaceVariables(str string, req *http.Request, vars map[string]string) string {
+func ReplaceVariables(str string, req *http.Request, responseHeaders http.Header, vars map[string]string) string {
 	return varRegexp.ReplaceAllStringFunc(str, func(variable string) string {
 		groups := varRegexp.FindStringSubmatch(variable)
-		val, err := variableValue(groups[1], groups[2], req, vars)
+		val, err := variableValue(groups[1], groups[2], req, responseHeaders, vars)
 		if err != nil {
 			log.Ctx(req.Context()).Debug().Err(err).Msgf("Error replacing variable: %s", variable)
 			return variable
@@ -63,7 +64,11 @@ func ReplaceVariables(str string, req *http.Request, vars map[string]string) str
 }
 
 // variableValue returns the value of the given NGINX variable based on the HTTP request and the custom vars map.
-func variableValue(rawVariable, variable string, req *http.Request, vars map[string]string) (string, error) {
+func variableValue(rawVariable, variable string, req *http.Request, responseHeaders http.Header, vars map[string]string) (string, error) {
+	// $upstream_http_name variables are used to access HTTP headers in the response.
+	if header, ok := strings.CutPrefix(variable, upstreamHTTPHeaders); ok {
+		return strings.Join(responseHeaders.Values(strings.ReplaceAll(header, "_", "-")), ","), nil
+	}
 	// $http_name variables are used to access HTTP headers in the request.
 	if header, ok := strings.CutPrefix(variable, httpHeaders); ok {
 		return strings.Join(req.Header.Values(strings.ReplaceAll(header, "_", "-")), ","), nil

@@ -10,7 +10,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -23,8 +22,8 @@ import (
 )
 
 const (
-	// providerName is the name of this provider.
-	providerName = "nomad"
+	// ProviderName is the Nomad provider name.
+	ProviderName = "nomad"
 
 	// defaultTemplateRule is the default template for the default rule.
 	defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
@@ -68,7 +67,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
-			name:          providerName,
+			name:          ProviderName,
 		}}
 	}
 
@@ -76,7 +75,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	for _, namespace := range p.Namespaces {
 		providers = append(providers, &Provider{
 			Configuration: p.Configuration,
-			name:          providerName + "-" + namespace,
+			name:          ProviderName + "-" + namespace,
 			namespace:     namespace,
 		})
 	}
@@ -142,8 +141,6 @@ type Provider struct {
 	namespace      string
 	client         *api.Client        // client for Nomad API
 	defaultRuleTpl *template.Template // default routing rule
-
-	lastConfiguration safe.Safe
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider.
@@ -169,7 +166,7 @@ func (p *Provider) Init() error {
 
 	// In case they didn't initialize Provider with BuildProviders
 	if p.name == "" {
-		p.name = providerName
+		p.name = ProviderName
 	}
 
 	return nil
@@ -207,9 +204,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if err != nil {
 				return fmt.Errorf("loading configuration: %w", err)
 			}
-			if _, err := p.updateLastConfiguration(conf); err != nil {
-				return fmt.Errorf("updating last configuration: %w", err)
-			}
 
 			configurationChan <- dynamic.Message{
 				ProviderName:  p.name,
@@ -220,18 +214,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctx.Done():
 					return nil
-				case event := <-serviceEventsChan:
+				case <-serviceEventsChan:
 					conf, err = p.loadConfiguration(ctx)
 					if err != nil {
 						return fmt.Errorf("loading configuration: %w", err)
-					}
-					updated, err := p.updateLastConfiguration(conf)
-					if err != nil {
-						return fmt.Errorf("updating last configuration: %w", err)
-					}
-					if !updated {
-						logger.Debug().Msgf("Skipping Nomad event %d with no changes", event.Index)
-						continue
 					}
 
 					configurationChan <- dynamic.Message{
@@ -318,20 +304,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 	}
 
 	return p.buildConfig(ctx, items), nil
-}
-
-func (p *Provider) updateLastConfiguration(conf *dynamic.Configuration) (bool, error) {
-	confHash, err := hashstructure.Hash(conf, nil)
-	if err != nil {
-		return false, fmt.Errorf("hashing the configuration: %w", err)
-	}
-
-	if p.lastConfiguration.Get() == confHash {
-		return false, nil
-	}
-
-	p.lastConfiguration.Set(confHash)
-	return true, nil
 }
 
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {

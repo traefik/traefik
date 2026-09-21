@@ -10,11 +10,10 @@ import {
   Text,
   Tooltip,
   VisuallyHidden,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
-import { matchPath, useHref } from 'react-router'
-import { useLocation } from 'react-router-dom'
+import { matchPath, useHref, useLocation } from 'react-router'
 import { useWindowSize } from 'usehooks-ts'
 
 import Container from '../Container'
@@ -135,7 +134,7 @@ export const SideNav = ({
   const windowSize = useWindowSize()
   const { version } = useContext(VersionContext)
 
-  const { http, tcp, udp } = useTotals()
+  const { http, tcp, udp, certificates } = useTotals()
 
   const [isSmallScreen, setIsSmallScreen] = useState(false)
 
@@ -155,8 +154,9 @@ export const SideNav = ({
       '/tcp/middlewares': tcp?.middlewares as number,
       '/udp/routers': udp?.routers,
       '/udp/services': udp?.services,
+      '/certificates': certificates,
     }),
-    [http, tcp, udp],
+    [http, tcp, udp, certificates],
   )
 
   return (

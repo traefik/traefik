@@ -27,7 +27,7 @@ metadata:
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/canary: "true"
-    nginx.ingress.kubernetes.io/canary-by-cookie: "foo"
+    nginx.ingress.kubernetes.io/canary-by-cookie: "foo.bar"
 
 spec:
   ingressClassName: nginx

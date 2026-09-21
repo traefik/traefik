@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: traefikservices.traefik.io
 spec:
   group: traefik.io
@@ -283,6 +283,9 @@ spec:
                                 - none
                                 - lax
                                 - strict
+                                - None
+                                - Lax
+                                - Strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -530,6 +533,9 @@ spec:
                                 - none
                                 - lax
                                 - strict
+                                - None
+                                - Lax
+                                - Strict
                                 type: string
                               secure:
                                 description: Secure defines whether the cookie can
@@ -790,6 +796,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -1156,6 +1165,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -1305,6 +1317,9 @@ spec:
                             - none
                             - lax
                             - strict
+                            - None
+                            - Lax
+                            - Strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only
@@ -1558,6 +1573,9 @@ spec:
                                   - none
                                   - lax
                                   - strict
+                                  - None
+                                  - Lax
+                                  - Strict
                                   type: string
                                 secure:
                                   description: Secure defines whether the cookie can
@@ -1628,6 +1646,9 @@ spec:
                             - none
                             - lax
                             - strict
+                            - None
+                            - Lax
+                            - Strict
                             type: string
                           secure:
                             description: Secure defines whether the cookie can only

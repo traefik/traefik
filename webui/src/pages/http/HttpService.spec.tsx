@@ -89,9 +89,10 @@ describe('<HttpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('Pass host header')
     expect(serviceDetails.innerHTML).toContain('True')
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('http-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
+    expect(serversList.innerHTML).toContain('1')
 
     const routersTable = getByTestId('routers-table')
     expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(2)
@@ -105,6 +106,47 @@ describe('<HttpServicePage />', () => {
     expect(() => {
       getByTestId('mirror-services')
     }).toThrow('Unable to find an element by: [data-testid="mirror-services"]')
+  })
+
+  it('should render a service with server weights', async () => {
+    const mockData = {
+      loadBalancer: {
+        servers: [
+          {
+            url: 'http://10.0.1.12:80',
+            weight: 3,
+          },
+          {
+            url: 'http://10.0.1.13:80',
+            weight: 5,
+          },
+        ],
+        passHostHeader: true,
+      },
+      status: 'enabled',
+      usedBy: [],
+      serverStatus: {
+        'http://10.0.1.12:80': 'UP',
+        'http://10.0.1.13:80': 'UP',
+      },
+      name: 'service-weighted',
+      provider: 'docker',
+      type: 'loadbalancer',
+      routers: [],
+    }
+
+    const { getByTestId } = renderWithProviders(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
+      { route: '/http/services/mock-service', withPage: true },
+    )
+
+    const serversList = getByTestId('http-servers-list')
+    expect(serversList.childNodes.length).toBe(2)
+    expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
+    expect(serversList.innerHTML).toContain('http://10.0.1.13:80')
+    expect(serversList.innerHTML).toContain('3')
+    expect(serversList.innerHTML).toContain('5')
   })
 
   it('should render a service with health check', async () => {
@@ -217,7 +259,7 @@ describe('<HttpServicePage />', () => {
     }).toThrow('Unable to find an element by: [data-testid="health-check"]')
 
     expect(() => {
-      getByTestId('servers-list')
-    }).toThrow('Unable to find an element by: [data-testid="servers-list"]')
+      getByTestId('http-servers-list')
+    }).toThrow('Unable to find an element by: [data-testid="http-servers-list"]')
   })
 })

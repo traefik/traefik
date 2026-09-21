@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -219,7 +218,21 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			desc:            "unauthorized wildcard with SAN",
 			domains:         types.Domain{Main: "*.*.traefik.wtf", SANs: []string{"foo.traefik.wtf"}},
 			dnsChallenge:    &DNSChallenge{},
-			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domain \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domains \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unauthorized double wildcard with SAN",
+			domains:         types.Domain{Main: "**.traefik.wtf", SANs: []string{"traefik.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domains \"**.traefik.wtf,traefik.wtf\" : ACME does not allow '**.' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unauthorized double wildcard as SAN",
+			domains:         types.Domain{Main: "traefik.wtf", SANs: []string{"**.traefik.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domains \"traefik.wtf,**.traefik.wtf\" : ACME does not allow '**.' wildcard domain",
 			expectedDomains: nil,
 		},
 		{
@@ -249,7 +262,8 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
 			} else {
-				assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedDomains, domains, "Unexpected domains.")
 			}
 		})
 	}
@@ -514,12 +528,10 @@ func TestInitAccount(t *testing.T) {
 		{
 			desc: "Existing account with all information",
 			account: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -527,20 +539,16 @@ func TestInitAccount(t *testing.T) {
 			email:   "foo@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
-			desc: "Existing account with no email",
-			account: &Account{
-				KeyType: certcrypto.RSA4096,
-			},
+			desc:    "Existing account with no email",
+			account: &Account{},
 			email:   "foo@foo.net",
-			keyType: "EC256",
+			keyType: "4096",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -551,8 +559,7 @@ func TestInitAccount(t *testing.T) {
 			email:   "bar@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.EC256,
+				Email: "foo@foo.net",
 			},
 		},
 		{
@@ -562,8 +569,7 @@ func TestInitAccount(t *testing.T) {
 			},
 			email: "bar@foo.net",
 			expectedAccount: &Account{
-				Email:   "foo@foo.net",
-				KeyType: certcrypto.RSA4096,
+				Email: "foo@foo.net",
 			},
 		},
 	}
@@ -573,10 +579,9 @@ func TestInitAccount(t *testing.T) {
 
 			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
 
-			actualAccount, err := acmeProvider.initAccount(t.Context())
+			actualAccount, err := acmeProvider.initAccount()
 			assert.NoError(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
-			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
 }

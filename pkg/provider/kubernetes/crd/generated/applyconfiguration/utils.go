@@ -118,6 +118,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.RootCAApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Route"):
 		return &traefikiov1alpha1.RouteApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RouterObservabilityConfig"):
+		return &traefikiov1alpha1.RouterObservabilityConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteTCP"):
 		return &traefikiov1alpha1.RouteTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteUDP"):

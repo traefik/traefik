@@ -1,4 +1,4 @@
-import { Badge, CSS, Flex, styled, Text } from '@traefiklabs/faency'
+import { Badge, CSS, Flex, styled, Text } from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 import { BsToggleOff, BsToggleOn } from 'react-icons/bs'
 

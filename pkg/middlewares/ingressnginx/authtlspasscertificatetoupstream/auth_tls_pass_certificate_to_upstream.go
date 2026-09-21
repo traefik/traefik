@@ -65,6 +65,10 @@ func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req
 	if req.TLS == nil || len(req.TLS.PeerCertificates) == 0 {
 		logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
 		req.Header.Set(sslClientVerify, "NONE")
+		// Prevent client-supplied values from reaching the upstream on the no-mTLS path.
+		req.Header.Del(sslClientCert)
+		req.Header.Del(sslClientSubjectDN)
+		req.Header.Del(sslClientIssuerDN)
 		p.next.ServeHTTP(rw, req)
 		return
 	}
