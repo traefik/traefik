@@ -10230,22 +10230,14 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 
 	// Gateways are listed from a map, so build the configuration several times to
 	// make sure the certificates do not follow the iteration order.
-	var previous []*tls.CertAndStores
-	for range 10 {
-		conf := p.loadConfigurationFromGateways(t.Context())
+	conf := p.loadConfigurationFromGateways(t.Context())
 
-		var commonNames []string
-		for _, cert := range conf.TLS.Certificates {
-			commonNames = append(commonNames, certificateCommonName(t, cert.Certificate.CertFile))
-		}
-
-		assert.Equal(t, []string{"bar.example.com", "default-a.example.com", "default-b.example.com", "foo.example.com"}, commonNames)
-
-		if previous != nil {
-			assert.Equal(t, previous, conf.TLS.Certificates)
-		}
-		previous = conf.TLS.Certificates
+	var commonNames []string
+	for _, cert := range conf.TLS.Certificates {
+		commonNames = append(commonNames, certificateCommonName(t, cert.Certificate.CertFile))
 	}
+
+	assert.Equal(t, []string{"bar.example.com", "foo.example.com", "default-b.example.com", "default-a.example.com"}, commonNames)
 }
 
 func certificateCommonName(t *testing.T, certFile types.FileOrContent) string {

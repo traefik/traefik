@@ -418,15 +418,11 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		gateways = append(gateways, gateway)
 	}
 
-	// ListGateways ranges over a map, so sort to keep the generated configuration
-	// stable across rebuilds. Without this the TLS certificates, which are appended
-	// per Gateway, come back in a different order and the configuration compares as
-	// changed on every event.
-	slices.SortFunc(gateways, func(a, b *gatev1.Gateway) int {
-		if c := strings.Compare(a.Namespace, b.Namespace); c != 0 {
+	slices.SortStableFunc(gateways, func(a, b *gatev1.Gateway) int {
+		if c := a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time); c != 0 {
 			return c
 		}
-		return strings.Compare(a.Name, b.Name)
+		return cmp.Compare(a.GetNamespace()+"/"+a.GetName(), b.GetNamespace()+"/"+b.GetName())
 	})
 
 	var selectedGateways []gatewayWithListeners

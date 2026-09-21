@@ -23,6 +23,7 @@ apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: gw
   namespace: bar
+  creationTimestamp: "2024-01-01T00:00:01Z"
 spec:
   gatewayClassName: my-gateway-class
   listeners:
@@ -55,6 +56,7 @@ apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: gw-a
   namespace: default
+  creationTimestamp: "2024-01-01T00:00:04Z"
 spec:
   gatewayClassName: my-gateway-class
   listeners:
@@ -87,6 +89,7 @@ apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: gw-b
   namespace: default
+  creationTimestamp: "2024-01-01T00:00:03Z"
 spec:
   gatewayClassName: my-gateway-class
   listeners:
@@ -119,6 +122,7 @@ apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: gw
   namespace: foo
+  creationTimestamp: "2024-01-01T00:00:02Z"
 spec:
   gatewayClassName: my-gateway-class
   listeners:
