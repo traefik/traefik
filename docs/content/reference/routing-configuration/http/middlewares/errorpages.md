@@ -169,6 +169,9 @@ An optional list of HTTP response header names from the **original backend error
 When the errors middleware intercepts an error status code and replaces the response body with a custom error page, the original backend's response headers are normally discarded.
 The `forwardHeaders` option allows specific headers to be preserved and sent to the client alongside the error page.
 
+If the error page service returns a header with the same name, its values replace the values forwarded from the original backend.
+Otherwise, the forwarded header values are preserved in the client response.
+
 This is useful when headers like `WWW-Authenticate` need to reach the browser so that it can display a login dialog, even when the error page body is replaced.
 
 !!! note "Security"

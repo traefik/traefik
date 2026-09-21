@@ -313,6 +313,33 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
+			desc: "forwardHeaders: error service headers take precedence",
+			errorPage: &dynamic.ErrorPage{
+				Service:        "error",
+				Query:          "/{status}",
+				Status:         []string{"401"},
+				ForwardHeaders: []string{"WWW-Authenticate", "Content-Language"},
+			},
+			backendCode: http.StatusUnauthorized,
+			backendHeaders: map[string]string{
+				"WWW-Authenticate": `Basic realm="backend"`,
+				"Content-Language": "en",
+			},
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("WWW-Authenticate", `Basic realm="error service"`)
+				w.Header().Add("WWW-Authenticate", `Bearer realm="error service"`)
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprintln(w, "Error page body.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+				assert.Equal(t, []string{`Basic realm="error service"`, `Bearer realm="error service"`}, recorder.Result().Header.Values("WWW-Authenticate"))
+				assert.Equal(t, "en", recorder.Result().Header.Get("Content-Language"))
+				assert.Contains(t, recorder.Body.String(), "Error page body.")
+			},
+		},
+		{
 			desc: "forwardHeaders: headers not in list are not forwarded",
 			errorPage: &dynamic.ErrorPage{
 				Service:        "error",
