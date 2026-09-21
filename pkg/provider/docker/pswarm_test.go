@@ -67,11 +67,6 @@ func TestListTasks(t *testing.T) {
 			isGlobalSVC:        false,
 			allowEmptyServices: false,
 			expectedTasks:      []string{},
-			networks: map[string]*networktypes.Summary{
-				"1": {
-					Name: "foo",
-				},
-			},
 		},
 		{
 			service:            swarmService(serviceName("empty-service")),
@@ -80,11 +75,6 @@ func TestListTasks(t *testing.T) {
 			allowEmptyServices: true,
 			expectedTasks: []string{
 				"empty-service",
-			},
-			networks: map[string]*networktypes.Summary{
-				"1": {
-					Name: "foo",
-				},
 			},
 		},
 	}
@@ -227,13 +217,16 @@ func TestSwarmProvider_buildConfiguration(t *testing.T) {
 					service.Spec.Mode.Global = &swarmtypes.GlobalService{}
 				}
 				if test.virtualIP != "" {
-					service.Endpoint.VirtualIPs = []swarmtypes.EndpointVirtualIP{{NetworkID: "network", Addr: test.virtualIP}}
+					withEndpoint(virtualIP("network", test.virtualIP))(&service)
 				}
+				var network networktypes.Summary
+				network.ID = "network"
+				network.Name = "overlay"
 				dockerClient := &fakeServicesClient{
 					dockerVersion: "1.43",
 					services:      []swarmtypes.Service{service},
 					tasks:         test.tasks,
-					networks:      []networktypes.Summary{{ID: "network", Name: "overlay"}},
+					networks:      []networktypes.Summary{network},
 				}
 
 				data, err := p.listServices(t.Context(), dockerClient)
