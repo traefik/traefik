@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,16 +17,39 @@ func TestLoadConfigFilesReturnsErrorForMissingExplicitConfigFile(t *testing.T) {
 	// Ensure an explicit missing file is not silently replaced by a default file.
 	require.NoError(t, os.WriteFile("traefik.toml", []byte("[log]\nlevel = \"DEBUG\"\n"), 0o600))
 
-	var config map[string]any
+	testCases := []struct {
+		desc       string
+		configFile string
+	}{
+		{desc: "missing file", configFile: "fixtures/missing-traefik.toml"},
+		{desc: "spaces", configFile: "   "},
+		{desc: "tabs and newlines", configFile: "\t\n"},
+	}
 
-	configFile, err := loadConfigFiles("fixtures/missing-traefik.toml", &config)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var config map[string]any
 
-	require.Error(t, err)
-	require.Empty(t, configFile)
-	require.Contains(t, err.Error(), "fixtures/missing-traefik.toml")
+			configFile, err := loadConfigFiles(test.configFile, &config)
+
+			require.EqualError(t, err, fmt.Sprintf("configuration file %q not found", test.configFile))
+			require.Empty(t, configFile)
+		})
+	}
 }
 
 func TestLoadConfigFilesUsesDefaultConfigSearchWhenNoConfigFileProvided(t *testing.T) {
+	// System configuration takes precedence over the temporary search paths below.
+	for _, extension := range []string{"toml", "yaml", "yml"} {
+		path := "/etc/traefik/traefik." + extension
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			continue
+		}
+		require.NoError(t, err)
+		t.Skipf("system configuration %s prevents isolating the default search", path)
+	}
+
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	tmpDir := t.TempDir()
@@ -40,4 +64,5 @@ func TestLoadConfigFilesUsesDefaultConfigSearchWhenNoConfigFileProvided(t *testi
 
 	require.NoError(t, err)
 	require.Equal(t, defaultConfig, configFile)
+	require.Equal(t, map[string]any{"log": map[string]any{"level": "DEBUG"}}, config)
 }

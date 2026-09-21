@@ -69,7 +69,7 @@ func loadConfigFiles(configFile string, element any) (string, error) {
 		Extensions: []string{"toml", "yaml", "yml"},
 	}
 
-	if strings.TrimSpace(configFile) != "" {
+	if configFile != "" {
 		filePath, err := cli.Finder{}.Find(configFile)
 		if err != nil {
 			return "", err
