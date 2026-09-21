@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
+	"net/http/httputil"
 	"net/textproto"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -649,4 +652,141 @@ func TestHandlerURLPlaceholder(t *testing.T) {
 			assert.Equal(t, test.expected, gotRequestURI)
 		})
 	}
+}
+
+func TestErrorResponseHeaders(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc            string
+		responseHeaders []string
+		requestHeaders  []string
+		backendCode     int
+		want            http.Header
+	}{
+		{
+			desc:        "disabled by default",
+			backendCode: 401,
+			want:        http.Header{"Www-Authenticate": {"client"}, "X-Other": {"client"}, "X-Missing": {"client"}},
+		},
+		{
+			desc:            "empty list",
+			responseHeaders: []string{},
+			backendCode:     401,
+			want:            http.Header{"Www-Authenticate": {"client"}, "X-Other": {"client"}, "X-Missing": {"client"}},
+		},
+		{
+			desc:            "replaces client values and removes absent response headers",
+			responseHeaders: []string{"WWW-Authenticate", "X-Missing"},
+			backendCode:     401,
+			want:            http.Header{"Www-Authenticate": {`Basic realm="backend"`, `Bearer realm="backend"`}, "X-Other": {"client"}},
+		},
+		{
+			desc:            "independent of request allowlist",
+			responseHeaders: []string{"WWW-Authenticate"},
+			requestHeaders:  []string{},
+			backendCode:     401,
+			want:            http.Header{"Www-Authenticate": {`Basic realm="backend"`, `Bearer realm="backend"`}},
+		},
+		{
+			desc:            "normalizes names and ignores hop headers",
+			responseHeaders: []string{" www-authenticate ", "WWW-AUTHENTICATE", "", "Connection", "Transfer-Encoding", "Upgrade"},
+			requestHeaders:  []string{},
+			backendCode:     401,
+			want:            http.Header{"Www-Authenticate": {`Basic realm="backend"`, `Bearer realm="backend"`}},
+		},
+		{
+			desc:            "unfiltered response",
+			responseHeaders: []string{"WWW-Authenticate"},
+			backendCode:     200,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			backendHeaders := http.Header{
+				"Www-Authenticate":  {`Basic realm="backend"`, `Bearer realm="backend"`},
+				"X-Other":           {"backend"},
+				"Connection":        {"upgrade"},
+				"Upgrade":           {"websocket"},
+				"Transfer-Encoding": {"chunked"},
+			}
+			original := backendHeaders.Clone()
+			called := false
+			service := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+				assert.Equal(t, test.want, r.Header)
+				if values := r.Header.Values("WWW-Authenticate"); len(values) > 0 {
+					values[0] = "changed by error service"
+				}
+				w.WriteHeader(http.StatusOK)
+			})}
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				maps.Copy(w.Header(), backendHeaders)
+				w.WriteHeader(test.backendCode)
+			})
+			handler, err := New(t.Context(), next, dynamic.ErrorPage{
+				Status: []string{"401"}, Service: "error", Query: "/{status}",
+				ErrorRequestHeaders: test.requestHeaders, ErrorResponseHeaders: test.responseHeaders,
+			}, service, "test")
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
+			req.Header = http.Header{"Www-Authenticate": {"client"}, "X-Other": {"client"}, "X-Missing": {"client"}}
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+			assert.Equal(t, test.backendCode == 401, called)
+			assert.Equal(t, test.backendCode, recorder.Code)
+			assert.Equal(t, original, backendHeaders)
+			if called {
+				assert.Empty(t, recorder.Header().Values("WWW-Authenticate"))
+			}
+		})
+	}
+}
+
+func TestErrorResponseHeadersThroughErrorService(t *testing.T) {
+	t.Parallel()
+
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("WWW-Authenticate", `Basic realm="backend"`)
+		w.Header().Add("WWW-Authenticate", `Bearer realm="backend"`)
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(backend.Close)
+
+	errorService := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for _, value := range r.Header.Values("WWW-Authenticate") {
+			w.Header().Add("WWW-Authenticate", value)
+		}
+		_, _ = io.WriteString(w, "custom error page")
+	}))
+	t.Cleanup(errorService.Close)
+
+	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+	errorURL, err := url.Parse(errorService.URL)
+	require.NoError(t, err)
+	handler, err := New(t.Context(), httputil.NewSingleHostReverseProxy(backendURL), dynamic.ErrorPage{
+		Status:               []string{"401"},
+		Service:              "error",
+		Query:                "/{status}",
+		ErrorRequestHeaders:  []string{},
+		ErrorResponseHeaders: []string{"WWW-Authenticate"},
+	}, &mockServiceBuilder{handler: httputil.NewSingleHostReverseProxy(errorURL)}, "test")
+	require.NoError(t, err)
+
+	proxy := httptest.NewServer(handler)
+	t.Cleanup(proxy.Close)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, proxy.URL, nil)
+	require.NoError(t, err)
+	req.Header.Set("WWW-Authenticate", "client")
+	resp, err := proxy.Client().Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	assert.Equal(t, []string{`Basic realm="backend"`, `Bearer realm="backend"`}, resp.Header.Values("WWW-Authenticate"))
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.Equal(t, "custom error page", string(body))
 }

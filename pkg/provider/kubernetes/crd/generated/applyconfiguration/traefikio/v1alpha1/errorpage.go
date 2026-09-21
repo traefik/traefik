@@ -54,6 +54,9 @@ type ErrorPageApplyConfiguration struct {
 	// When nil (not set), all original request headers are forwarded.
 	// Set to an empty list to forward no headers, or list specific headers to forward only those.
 	ErrorRequestHeaders []string `json:"errorRequestHeaders,omitempty"`
+	// ErrorResponseHeaders defines the original backend response headers forwarded to the error page service request.
+	// These headers replace matching request headers. If not set, no response headers are forwarded to the service.
+	ErrorResponseHeaders []string `json:"errorResponseHeaders,omitempty"`
 	// ForwardHeaders defines an optional list of HTTP response header names from the original
 	// backend error response that should be forwarded to the final client response.
 	ForwardHeaders []string `json:"forwardHeaders,omitempty"`
@@ -111,6 +114,16 @@ func (b *ErrorPageApplyConfiguration) WithQuery(value string) *ErrorPageApplyCon
 func (b *ErrorPageApplyConfiguration) WithErrorRequestHeaders(values ...string) *ErrorPageApplyConfiguration {
 	for i := range values {
 		b.ErrorRequestHeaders = append(b.ErrorRequestHeaders, values[i])
+	}
+	return b
+}
+
+// WithErrorResponseHeaders adds the given value to the ErrorResponseHeaders field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ErrorResponseHeaders field.
+func (b *ErrorPageApplyConfiguration) WithErrorResponseHeaders(values ...string) *ErrorPageApplyConfiguration {
+	for i := range values {
+		b.ErrorResponseHeaders = append(b.ErrorResponseHeaders, values[i])
 	}
 	return b
 }

@@ -1174,6 +1174,13 @@ spec:
                     items:
                       type: string
                     type: array
+                  errorResponseHeaders:
+                    description: |-
+                      ErrorResponseHeaders defines the original backend response headers forwarded to the error page service request.
+                      These headers replace matching request headers. If not set, no response headers are forwarded to the service.
+                    items:
+                      type: string
+                    type: array
                   forwardHeaders:
                     description: |-
                       ForwardHeaders defines an optional list of HTTP response header names from the original

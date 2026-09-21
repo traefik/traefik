@@ -33,8 +33,7 @@ const (
 	xForwardedProto = "X-Forwarded-Proto"
 )
 
-// hopHeaders are hop-by-hop headers that must not be forwarded to the client,
-// even if explicitly listed in forwardHeaders.
+// hopHeaders are hop-by-hop headers that must not be forwarded from the backend response.
 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
 var hopHeaders = map[string]struct{}{
 	forward.Connection:       {},
@@ -51,15 +50,16 @@ type serviceBuilder interface {
 
 // customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
-	name                string
-	next                http.Handler
-	backendHandler      http.Handler
-	httpCodeRanges      types.HTTPCodeRanges
-	backendQuery        string
-	requestHeaders      []string
-	statusRewrites      []statusRewrite
-	forwardNginxHeaders http.Header
-	forwardHeaders      []string
+	name                 string
+	next                 http.Handler
+	backendHandler       http.Handler
+	httpCodeRanges       types.HTTPCodeRanges
+	backendQuery         string
+	requestHeaders       []string
+	statusRewrites       []statusRewrite
+	forwardNginxHeaders  http.Header
+	forwardHeaders       []string
+	errorResponseHeaders []string
 }
 
 type statusRewrite struct {
@@ -95,38 +95,39 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		})
 	}
 
-	// Normalize and deduplicate forwardHeaders: trim whitespace, canonicalize,
-	// and remove hop-by-hop headers that must not be forwarded to clients.
-	var forwardHeaders []string
-	if len(config.ForwardHeaders) > 0 {
-		seen := make(map[string]struct{}, len(config.ForwardHeaders))
-		for _, h := range config.ForwardHeaders {
-			canonical := http.CanonicalHeaderKey(strings.TrimSpace(h))
-			if canonical == "" {
-				continue
-			}
-			if _, isHop := hopHeaders[canonical]; isHop {
-				continue
-			}
-			if _, dup := seen[canonical]; dup {
-				continue
-			}
-			seen[canonical] = struct{}{}
-			forwardHeaders = append(forwardHeaders, canonical)
-		}
-	}
-
 	return &customErrors{
-		name:                name,
-		next:                next,
-		backendHandler:      backend,
-		httpCodeRanges:      httpCodeRanges,
-		backendQuery:        config.Query,
-		requestHeaders:      config.ErrorRequestHeaders,
-		statusRewrites:      statusRewrites,
-		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
-		forwardHeaders:      forwardHeaders,
+		name:                 name,
+		next:                 next,
+		backendHandler:       backend,
+		httpCodeRanges:       httpCodeRanges,
+		backendQuery:         config.Query,
+		requestHeaders:       config.ErrorRequestHeaders,
+		statusRewrites:       statusRewrites,
+		forwardNginxHeaders:  ptr.Deref(config.NginxHeaders, nil),
+		forwardHeaders:       normalizeResponseHeaders(config.ForwardHeaders),
+		errorResponseHeaders: normalizeResponseHeaders(config.ErrorResponseHeaders),
 	}, nil
+}
+
+// normalizeResponseHeaders canonicalizes and deduplicates names, excluding hop-by-hop headers.
+func normalizeResponseHeaders(headers []string) []string {
+	var names []string
+	seen := make(map[string]struct{}, len(headers))
+	for _, name := range headers {
+		canonical := http.CanonicalHeaderKey(strings.TrimSpace(name))
+		if canonical == "" {
+			continue
+		}
+		if _, isHop := hopHeaders[canonical]; isHop {
+			continue
+		}
+		if _, duplicate := seen[canonical]; duplicate {
+			continue
+		}
+		seen[canonical] = struct{}{}
+		names = append(names, canonical)
+	}
+	return names
 }
 
 func (c *customErrors) GetTracingInformation() (string, string) {
@@ -213,6 +214,14 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
+	// Listed response headers replace client-supplied values, including when absent from the response.
+	for _, name := range c.errorResponseHeaders {
+		pageReq.Header.Del(name)
+		if values := catcher.getHeaders().Values(name); len(values) > 0 {
+			pageReq.Header[name] = append([]string(nil), values...)
+		}
 	}
 
 	// Forward whitelisted response headers from the original backend error response to the client.
