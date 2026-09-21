@@ -767,14 +767,15 @@ func TestConfiguration_InternalEntryPointAddressPreservesOptions(t *testing.T) {
 			t.Parallel()
 
 			ep := &EntryPoint{}
-			ep.SetDefaults()
-			ep.HTTP.AliasHeadersStrategy = AliasHeadersStrategyReject
-			ep.HTTP.Middlewares = []string{"auth@file"}
-			ep.HTTP.MaxHeaderBytes = 4096
-			ep.Transport.RespondingTimeouts.ReadTimeout = ptypes.Duration(7 * time.Second)
-			ep.ForwardedHeaders.TrustedIPs = []string{"192.0.2.0/24"}
-			expected := *ep
-			expected.Address = ":8080"
+			expected := &EntryPoint{Address: ":8080"}
+			for _, entryPoint := range []*EntryPoint{ep, expected} {
+				entryPoint.SetDefaults()
+				entryPoint.HTTP.AliasHeadersStrategy = AliasHeadersStrategyReject
+				entryPoint.HTTP.Middlewares = []string{"auth@file"}
+				entryPoint.HTTP.MaxHeaderBytes = 4096
+				entryPoint.Transport.RespondingTimeouts.ReadTimeout = ptypes.Duration(7 * time.Second)
+				entryPoint.ForwardedHeaders.TrustedIPs = []string{"192.0.2.0/24"}
+			}
 
 			cfg := test.conf
 			if cfg.Providers == nil {
@@ -784,12 +785,12 @@ func TestConfiguration_InternalEntryPointAddressPreservesOptions(t *testing.T) {
 			cfg.SetEffectiveConfiguration()
 
 			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
-			assert.Equal(t, &expected, ep)
+			assert.Equal(t, expected, ep)
 
 			cfg.SetEffectiveConfiguration()
 
 			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
-			assert.Equal(t, &expected, ep)
+			assert.Equal(t, expected, ep)
 		})
 	}
 }
