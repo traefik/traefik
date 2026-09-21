@@ -661,7 +661,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 
 // buildRule returns the router rule and its form before lookahead translation.
 func buildRule(host string, loc *location) (rule, originalRule string) {
-	var base []string
+	var rules []string
 
 	if host != "" {
 		hosts := append([]string{host}, loc.Aliases...)
@@ -670,9 +670,9 @@ func buildRule(host string, loc *location) (rule, originalRule string) {
 			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
 		}
 		if len(hostRules) > 1 {
-			base = append(base, "("+strings.Join(hostRules, " || ")+")")
+			rules = append(rules, "("+strings.Join(hostRules, " || ")+")")
 		} else {
-			base = append(base, hostRules[0])
+			rules = append(rules, hostRules[0])
 		}
 	}
 
@@ -712,8 +712,8 @@ func buildRule(host string, loc *location) (rule, originalRule string) {
 	}
 
 	joinRule := func(pathMatchers []string) string {
-		matchers := make([]string, 0, len(base)+len(pathMatchers))
-		matchers = append(matchers, base...)
+		matchers := make([]string, 0, len(rules)+len(pathMatchers))
+		matchers = append(matchers, rules...)
 		matchers = append(matchers, pathMatchers...)
 		return strings.Join(matchers, " && ")
 	}
