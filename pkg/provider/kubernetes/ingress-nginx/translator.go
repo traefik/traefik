@@ -694,10 +694,7 @@ func buildRule(host string, loc *location) (rule, originalRule string) {
 	}
 
 	joinRule := func(pathMatchers []string) string {
-		matchers := make([]string, 0, len(rules)+len(pathMatchers))
-		matchers = append(matchers, rules...)
-		matchers = append(matchers, pathMatchers...)
-		return strings.Join(matchers, " && ")
+		return strings.Join(slices.Concat(rules, pathMatchers), " && ")
 	}
 
 	return joinRule(pathRules), joinRule(originalPathRules)
