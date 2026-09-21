@@ -234,15 +234,70 @@ func TestTimeoutAfterFirstRead(t *testing.T) {
 
 	conn := <-accepted
 	time.Sleep(2 * ln.timeout)
+	ln.mu.RLock()
 	assert.Len(t, ln.conns, 1)
+	ln.mu.RUnlock()
 
 	buf := make([]byte, 2048)
 	n, err := conn.Read(buf)
 	require.NoError(t, err)
 	require.Equal(t, "TEST", string(buf[:n]))
 
-	time.Sleep(2 * ln.timeout)
-	assert.Empty(t, ln.conns)
+	require.Eventually(t, func() bool {
+		ln.mu.RLock()
+		defer ln.mu.RUnlock()
+		return len(ln.conns) == 0
+	}, time.Second, time.Millisecond)
+}
+
+func TestCloseBeforeFirstActivity(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		queued        bool
+		closeListener bool
+	}{
+		{desc: "connection close with empty queue"},
+		{desc: "connection close with queued packet", queued: true},
+		{desc: "listener close with empty queue", closeListener: true},
+		{desc: "listener close with queued packet", queued: true, closeListener: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			ln, err := Listen(net.ListenConfig{}, "udp", ":0", 10*time.Millisecond)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, ln.Close())
+			})
+
+			conn := ln.newConn(&net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 1234})
+			ln.mu.Lock()
+			ln.conns[conn.rAddr.String()] = conn
+			ln.mu.Unlock()
+
+			if test.queued {
+				conn.msgs = [][]byte{[]byte("TEST")}
+			}
+
+			done := make(chan struct{})
+			go func() {
+				conn.readLoop()
+				close(done)
+			}()
+
+			if test.closeListener {
+				require.NoError(t, ln.Close())
+			} else {
+				require.NoError(t, conn.Close())
+			}
+
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+				t.Fatal("readLoop did not stop after close")
+			}
+		})
+	}
 }
 
 func testTimeout(t *testing.T, withRead bool) {

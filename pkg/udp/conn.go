@@ -270,6 +270,8 @@ func (c *Conn) readLoop() {
 	for {
 		if len(c.msgs) == 0 {
 			select {
+			case <-c.doneCh:
+				return
 			case msg := <-c.receiveCh:
 				c.msgs = append(c.msgs, msg)
 			case <-ticker.C:
@@ -282,6 +284,8 @@ func (c *Conn) readLoop() {
 		}
 
 		select {
+		case <-c.doneCh:
+			return
 		case cBuf := <-c.readCh:
 			msg := c.msgs[0]
 			c.msgs = c.msgs[1:]
