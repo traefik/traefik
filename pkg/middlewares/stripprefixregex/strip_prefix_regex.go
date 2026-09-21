@@ -47,6 +47,8 @@ func (s *stripPrefixRegex) GetTracingInformation() (string, string) {
 }
 
 func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), s.name, typeName)
+
 	for _, exp := range s.expressions {
 		parts := exp.FindStringSubmatch(req.URL.Path)
 		if len(parts) > 0 && len(parts[0]) > 0 {
@@ -55,6 +57,8 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 				continue
 			}
 
+			// Note: the header names aliasing the ForwardedPrefixHeader (e.g. X_Forwarded_Prefix) are not handled here,
+			// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 			req.Header.Add(stripprefix.ForwardedPrefixHeader, prefix)
 
 			req.URL.Path = ensureLeadingSlash(strings.Replace(req.URL.Path, prefix, "", 1))
@@ -62,9 +66,23 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[encodedPrefixLen(req.URL.RawPath, prefix):])
 			}
 
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			path := req.URL.Path
+			if path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
+			// Stop here if the normalization of the path produces a different path.
+			if path != req.URL.Path {
+				logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
+				http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+
 			req.RequestURI = req.URL.RequestURI()
-			s.next.ServeHTTP(rw, req)
-			return
+			break
 		}
 	}
 

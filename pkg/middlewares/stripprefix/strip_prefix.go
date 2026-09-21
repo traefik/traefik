@@ -36,8 +36,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, nam
 	// Handle default value (here because of deprecation and the removal of setDefault).
 	forceSlash := config.ForceSlash != nil && *config.ForceSlash
 
+	prefixes := make([]string, len(config.Prefixes))
+	for i, p := range config.Prefixes {
+		prefixes[i] = strings.TrimSpace(p)
+	}
+
 	return &stripPrefix{
-		prefixes:   config.Prefixes,
+		prefixes:   prefixes,
 		next:       next,
 		name:       name,
 		forceSlash: forceSlash,
@@ -49,22 +54,37 @@ func (s *stripPrefix) GetTracingInformation() (string, string) {
 }
 
 func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), s.name, typeName)
+
 	for _, prefix := range s.prefixes {
 		if strings.HasPrefix(req.URL.Path, prefix) {
 			req.URL.Path = s.getPathStripped(req.URL.Path, prefix)
 			if req.URL.RawPath != "" {
 				req.URL.RawPath = s.getRawPathStripped(req.URL.RawPath, prefix)
 			}
-			s.serveRequest(rw, req, strings.TrimSpace(prefix))
-			return
+
+			// Here we are sanitizing the URL when the path is not empty,
+			// as the JoinPath method is adding a leading slash if the path is empty
+			// to be aligned with ensureLeadingSlash behavior.
+			path := req.URL.Path
+			if path != "" {
+				req.URL = req.URL.JoinPath()
+			}
+
+			// Stop here if the normalization of the path produces a different path.
+			if path != req.URL.Path {
+				logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
+				http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+
+			// Note: the header names aliasing the ForwardedPrefixHeader (e.g. X_Forwarded_Prefix) are not handled here,
+			// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
+			req.Header.Add(ForwardedPrefixHeader, prefix)
+			req.RequestURI = req.URL.RequestURI()
+			break
 		}
 	}
-	s.next.ServeHTTP(rw, req)
-}
-
-func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, prefix string) {
-	req.Header.Add(ForwardedPrefixHeader, prefix)
-	req.RequestURI = req.URL.RequestURI()
 	s.next.ServeHTTP(rw, req)
 }
 

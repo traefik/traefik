@@ -33,8 +33,10 @@ import (
 // PassiveServerHealthCheckApplyConfiguration represents a declarative configuration of the PassiveServerHealthCheck type for use
 // with apply.
 type PassiveServerHealthCheckApplyConfiguration struct {
-	FailureWindow     *intstr.IntOrString `json:"failureWindow,omitempty"`
-	MaxFailedAttempts *int                `json:"maxFailedAttempts,omitempty"`
+	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
+	FailureWindow *intstr.IntOrString `json:"failureWindow,omitempty"`
+	// MaxFailedAttempts is the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.
+	MaxFailedAttempts *int `json:"maxFailedAttempts,omitempty"`
 }
 
 // PassiveServerHealthCheckApplyConfiguration constructs a declarative configuration of the PassiveServerHealthCheck type for use with
