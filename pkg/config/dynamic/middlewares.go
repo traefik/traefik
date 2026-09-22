@@ -579,6 +579,8 @@ type InFlightReq struct {
 type PassTLSClientCert struct {
 	// PEM sets the X-Forwarded-Tls-Client-Cert header with the certificate.
 	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
+	// OnlyLeaf controls wether the full certificate chain is sent or only the leaf certificate.
+	OnlyLeaf bool `json:"onlyLeaf,omitempty" toml:"onlyLeaf,omitempty" yaml:"onlyLeaf,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
 }

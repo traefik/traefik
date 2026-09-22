@@ -206,6 +206,7 @@ spec:
 
 | Field      | Description        | Default | Required |
 |:-----------|:------------------------------------------------------------|:--------|:---------|
+| <a id="opt-onlyLeaf" href="#opt-onlyLeaf" title="#opt-onlyLeaf">`onlyLeaf`</a> | Controls wether the middleware sends all the provided certificates or sends a lone leaf certificate.<br /> More information [here](#onlyleaf). | false      | No      |
 | <a id="opt-pem" href="#opt-pem" title="#opt-pem">`pem`</a> | Fills the `X-Forwarded-Tls-Client-Cert` header with the certificate information.<br /> More information [here](#pem). | false      | No      |
 | <a id="opt-info-serialNumber" href="#opt-info-serialNumber" title="#opt-info-serialNumber">`info.serialNumber`</a> | Add the `Serial Number` of the certificate.<br /> More information about `info` [here](#info). | false | No |
 | <a id="opt-info-notAfter" href="#opt-info-notAfter" title="#opt-info-notAfter">`info.notAfter`</a> | Add the `Not After` information from the `Validity` part. <br /> More information about `info` [here](#info). | false | No |
@@ -228,6 +229,13 @@ spec:
 | <a id="opt-info-issuer-commonName" href="#opt-info-issuer-commonName" title="#opt-info-issuer-commonName">`info.issuer.commonName`</a> |Add the `commonName` information into the issuer.<br /> The data is taken from the issuer part with the `CN` key. <br />More information about `info` [here](#info). | false      | No      |
 | <a id="opt-info-issuer-serialNumber" href="#opt-info-issuer-serialNumber" title="#opt-info-issuer-serialNumber">`info.issuer.serialNumber`</a> |Add the `serialNumber` information into the issuer.<br /> The data is taken from the issuer part with the `SN` key. <br />More information about `info` [here](#info). | false      | No      |
 | <a id="opt-info-issuer-domainComponent" href="#opt-info-issuer-domainComponent" title="#opt-info-issuer-domainComponent">`info.issuer.domainComponent`</a> | Add the `domainComponent` information into the issuer.<br /> The data is taken from the issuer part with the `DC` key. <br />More information about `info` [here](#info). | false      | No      |
+
+### onlyLeaf
+
+The `onlyLeaf` options controls wether this middleware will concatenate all the certificate with `,` or will only send the leaf certificate info/pem to the backend.
+
+If `true`, only sends the leaf certificate.
+If `false`, sends all the provided certificates separated by a `,` (default).
 
 ### pem
 
