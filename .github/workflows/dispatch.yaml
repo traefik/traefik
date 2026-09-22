@@ -1,0 +1,72 @@
+name: Dispatch
+
+on:
+  # The pull_request_target event defaults to opened, synchronize and reopened:
+  # list every type to relay all the pull request activity.
+  pull_request_target:
+    types:
+      - assigned
+      - unassigned
+      - labeled
+      - unlabeled
+      - opened
+      - edited
+      - closed
+      - reopened
+      - synchronize
+      - converted_to_draft
+      - ready_for_review
+      - locked
+      - unlocked
+      - review_requested
+      - review_request_removed
+      - auto_merge_enabled
+      - auto_merge_disabled
+      - milestoned
+      - demilestoned
+      - enqueued
+      - dequeued
+  pull_request_review:
+  issue_comment:
+
+permissions: {}
+
+jobs:
+
+  dispatch:
+    name: Dispatch to Traefik Workflow
+    runs-on: ubuntu-slim
+
+    # The issue_comment event also fires on issues: keep only the pull request comments.
+    if: ${{ github.event_name != 'issue_comment' || github.event.issue.pull_request }}
+
+    steps:
+      # This workflow never checks out the pull request, and never runs code from it.
+      - name: Generate a token for traefik/ai
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.AW_DISPATCH_APP_ID }}
+          private-key: ${{ secrets.AW_DISPATCH_PRIVATE_KEY }}
+          owner: traefik
+          repositories: ai
+
+      - name: Dispatch the workflow
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SOURCE_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+
+          gh workflow run dispatch.yaml --repo traefik/ai \
+            -f "source_repo=$SOURCE_REPO" \
+            -f "pr_number=$PR_NUMBER" \
+            -f "event_name=$EVENT_NAME" \
+            -f "action=$EVENT_ACTION" \
+            -f "label=$LABEL" \
+            -f "actor=$ACTOR"
