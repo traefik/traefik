@@ -174,7 +174,7 @@ enabling the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | true      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disableDashboardAd" href="#opt-api-disableDashboardAd" title="#opt-api-disableDashboardAd">`api.disableDashboardAd`</a> | Disable the advertisement from the dashboard. | false      | No      |
-| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basepath).| false      | No      |
+| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basePath).| false      | No      |
 
 ## Endpoints
 
