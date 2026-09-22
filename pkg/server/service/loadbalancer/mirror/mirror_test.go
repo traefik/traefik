@@ -212,9 +212,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, body, bb)
 
-		// Closing the body stands in for the net/http server,
-		// which closes the request body once the handler chain has returned,
-		// before the mirror requests are sent from the goroutine pool.
+		// Simulate the server closing the request body after the handler returns.
 		assert.NoError(t, r.Body.Close())
 
 		rw.WriteHeader(http.StatusOK)

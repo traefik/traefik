@@ -92,10 +92,8 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			r := rr.clone(req.Context())
 
 			if !m.mirrorBody {
-				// As the body has not been buffered,
-				// the clone shares the original body,
-				// which has already been consumed (and closed) by the main handler.
-				// The mirrored request must neither carry nor advertise a body.
+				// The main handler has consumed the shared body.
+				// The mirrored request must not carry or advertise it.
 				r.Body = http.NoBody
 				r.ContentLength = 0
 				r.TransferEncoding = nil
