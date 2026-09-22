@@ -76,6 +76,14 @@ func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
 
 // GetBestCertificate returns the best match certificate, and caches the response.
 func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	return getBestCertificate(c, clientHello, matchDomain)
+}
+
+func getBestCertificateForIPReverseAddress(c *CertificateStore, clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	return getBestCertificate(c, clientHello, matchDomainWithIPReverseAddress)
+}
+
+func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matcher func(string, string) bool) *tls.Certificate {
 	if c == nil {
 		return nil
 	}
@@ -112,7 +120,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		})
 
 		for _, certDomains := range sorted {
-			if matchDomain(serverName, certDomains) {
+			if matcher(serverName, certDomains) {
 				// cache best match
 				certificateData := certs[certDomains]
 				c.CertCache.SetDefault(serverName, certificateData)
@@ -274,10 +282,6 @@ func matchDomain(serverName, certDomains string) bool {
 			return true
 		}
 
-		if matchIPReverseAddress(serverName, certDomain) {
-			return true
-		}
-
 		for len(certDomain) > 0 && certDomain[len(certDomain)-1] == '.' {
 			certDomain = certDomain[:len(certDomain)-1]
 		}
@@ -288,6 +292,20 @@ func matchDomain(serverName, certDomains string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func matchDomainWithIPReverseAddress(serverName, certDomains string) bool {
+	if matchDomain(serverName, certDomains) {
+		return true
+	}
+
+	for certDomain := range strings.SplitSeq(certDomains, ",") {
+		if matchIPReverseAddress(serverName, certDomain) {
+			return true
+		}
+	}
+
 	return false
 }
 

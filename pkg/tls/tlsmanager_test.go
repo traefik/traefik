@@ -9,9 +9,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
+	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -181,6 +184,80 @@ func TestManager_Get(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, test.expectedMinVersion, config.MinVersion)
+		})
+	}
+}
+
+func TestManager_GetCertificateIPReverseAddress(t *testing.T) {
+	testCases := []struct {
+		desc string
+		ip   string
+	}{
+		{
+			desc: "IPv4",
+			ip:   "192.0.2.1",
+		},
+		{
+			desc: "IPv6",
+			ip:   "2001:db8::1",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			reverseAddr, err := dns.ReverseAddr(test.ip)
+			require.NoError(t, err)
+			reverseAddr = strings.TrimSuffix(reverseAddr, ".")
+
+			dnsCert := new(tls.Certificate)
+			ipCert := new(tls.Certificate)
+			acmeCert := new(tls.Certificate)
+
+			defaultStore := NewCertificateStore(nil)
+			defaultStore.DynamicCerts.Set(map[string]*CertificateData{
+				reverseAddr: {Hash: "", Certificate: dnsCert},
+				test.ip:     {Hash: "", Certificate: ipCert},
+			})
+
+			acmeStore := NewCertificateStore(nil)
+			acmeStore.DynamicCerts.Set(map[string]*CertificateData{
+				test.ip: {Hash: "", Certificate: acmeCert},
+			})
+
+			tlsManager := NewManager(nil)
+			tlsOption := DefaultTLSOptions
+			tlsOption.SniStrict = true
+			tlsManager.configs[DefaultTLSConfigName] = tlsOption
+			tlsManager.stores = map[string]*CertificateStore{
+				DefaultTLSStoreName:        defaultStore,
+				tlsalpn01.ACMETLS1Protocol: acmeStore,
+			}
+
+			config, err := tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
+			require.NoError(t, err)
+
+			clientHello := new(tls.ClientHelloInfo)
+			clientHello.ServerName = reverseAddr
+			clientHello.SupportedProtos = []string{"h2", "http/1.1"}
+			certificate, err := config.GetCertificate(clientHello)
+			require.NoError(t, err)
+			assert.Same(t, dnsCert, certificate)
+
+			defaultStore.DynamicCerts.Set(map[string]*CertificateData{
+				test.ip: {Hash: "", Certificate: ipCert},
+			})
+			defaultStore.ResetCache()
+
+			certificate, err = config.GetCertificate(clientHello)
+			require.NoError(t, err)
+			assert.Nil(t, certificate)
+
+			clientHello.SupportedProtos = []string{tlsalpn01.ACMETLS1Protocol}
+			certificate, err = config.GetCertificate(clientHello)
+			require.NoError(t, err)
+			assert.Same(t, acmeCert, certificate)
 		})
 	}
 }

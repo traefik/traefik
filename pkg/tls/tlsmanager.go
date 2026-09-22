@@ -253,7 +253,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 		if slices.Contains(clientHello.SupportedProtos, tlsalpn01.ACMETLS1Protocol) {
-			certificate := acmeTLSStore.GetBestCertificate(clientHello)
+			certificate := getBestCertificateForIPReverseAddress(acmeTLSStore, clientHello)
 			if certificate == nil {
 				log.Debug().Msgf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
 				// We want the user to eventually get the (alertUnrecognizedName) "unrecognized name" error.

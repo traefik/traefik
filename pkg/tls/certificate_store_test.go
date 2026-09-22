@@ -113,7 +113,7 @@ func TestGetBestCertificate_SharedSAN(t *testing.T) {
 	}
 }
 
-func TestGetBestCertificateIPReverseAddress(t *testing.T) {
+func TestGetBestCertificateForIPReverseAddress(t *testing.T) {
 	cert := &tls.Certificate{}
 
 	dynamicMap := map[string]*CertificateData{
@@ -129,7 +129,8 @@ func TestGetBestCertificateIPReverseAddress(t *testing.T) {
 	require.NoError(t, err)
 
 	clientHello := &tls.ClientHelloInfo{ServerName: reverseAddr}
-	assert.Same(t, cert, store.GetBestCertificate(clientHello))
+	assert.Nil(t, store.GetBestCertificate(clientHello))
+	assert.Same(t, cert, getBestCertificateForIPReverseAddress(store, clientHello))
 }
 
 func TestMatchDomainIPReverseAddress(t *testing.T) {
@@ -166,7 +167,7 @@ func TestMatchDomainIPReverseAddress(t *testing.T) {
 			reverseAddr, err := dns.ReverseAddr(test.serverIP)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expected, matchDomain(reverseAddr, test.certDomain))
+			assert.Equal(t, test.expected, matchDomainWithIPReverseAddress(reverseAddr, test.certDomain))
 		})
 	}
 }
