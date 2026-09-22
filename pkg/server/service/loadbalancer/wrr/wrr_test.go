@@ -260,6 +260,44 @@ func TestBalancerAllHealthyServersFenced(t *testing.T) {
 	}
 }
 
+func TestBalancerHealthyZeroWeightServer(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		fenced bool
+	}{
+		{desc: "no handlers"},
+		{desc: "all handlers fenced", fenced: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			balancer := New(nil, false)
+			handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+			if test.fenced {
+				balancer.Add("fenced", handler, new(1), true)
+			}
+			balancer.Add("disabled", handler, new(0), false)
+
+			// Health checks can report a server as up even when its weight excludes it from the pool.
+			balancer.SetStatus(t.Context(), "disabled", true)
+
+			done := make(chan int, 1)
+			go func() {
+				recorder := httptest.NewRecorder()
+				balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+				done <- recorder.Result().StatusCode
+			}()
+
+			select {
+			case code := <-done:
+				assert.Equal(t, http.StatusServiceUnavailable, code)
+			case <-time.After(time.Second):
+				t.Fatal("balancer.ServeHTTP did not return: no eligible handler in the pool")
+			}
+		})
+	}
+}
+
 func TestSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{

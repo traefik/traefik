@@ -232,8 +232,11 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	// fenced (e.g. a draining server kept for sticky sessions) while the
 	// non-fenced servers are down.
 	var hasAvailable bool
-	for name := range b.status {
-		if _, fenced := b.fenced[name]; !fenced {
+	for _, handler := range b.handlers {
+		if _, ok := b.status[handler.name]; !ok {
+			continue
+		}
+		if _, fenced := b.fenced[handler.name]; !fenced {
 			hasAvailable = true
 			break
 		}
