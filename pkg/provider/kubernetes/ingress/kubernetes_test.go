@@ -3597,6 +3597,24 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Published Service ClusterIP IPv6",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					IP: "2001:db8::99",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+			},
+		},
+		{
+			desc: "Published Service ClusterIP Headless",
+		},
+		{
+			desc: "Published Service ClusterIP Empty",
+		},
 	}
 
 	for _, test := range testCases {
