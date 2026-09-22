@@ -20,6 +20,9 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -943,4 +946,38 @@ func TestRetryWebsocketDelayedFlush(t *testing.T) {
 	time.Sleep(time.Second)
 
 	assert.Equal(t, int32(1), backendCallCount.Load(), "an upgraded request must not be replayed")
+}
+
+func TestMirrorRequestStripsRetryContext(t *testing.T) {
+	pool := safe.NewPool(t.Context())
+	defer pool.Stop()
+
+	mainSawRetryContext := false
+	mirroring := mirror.New(WrapHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		mainSawRetryContext = req.Context().Value(middlewares.RetryResponseWriterContextKey{}) != nil
+		if trace := httptrace.ContextClientTrace(req.Context()); trace != nil {
+			trace.WroteHeaders()
+		}
+		rw.WriteHeader(http.StatusOK)
+	})), pool, true, -1, nil)
+
+	mirrorSawRetryContext := make(chan bool, 1)
+	err := mirroring.AddMirror(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+		mirrorSawRetryContext <- req.Context().Value(middlewares.RetryResponseWriterContextKey{}) != nil
+	}), 100)
+	require.NoError(t, err)
+
+	retryHandler, err := New(t.Context(), mirroring, dynamic.Retry{Attempts: 2}, Listeners{}, "traefikTest")
+	require.NoError(t, err)
+	recorder := httptest.NewRecorder()
+	retryHandler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.True(t, mainSawRetryContext)
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	select {
+	case sawRetryContext := <-mirrorSawRetryContext:
+		assert.False(t, sawRetryContext)
+	case <-time.After(time.Second):
+		t.Fatal("mirror handler was not called")
+	}
 }

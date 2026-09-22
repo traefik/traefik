@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -110,6 +111,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			// Especially since it would result in unguarded concurrent reads/writes on the datatable.
 			// Therefore, we reset any potential datatable key in the new context that we pass around.
 			ctx := context.WithValue(r.Context(), accesslog.DataTableKey, nil)
+			ctx = context.WithValue(ctx, middlewares.RetryResponseWriterContextKey{}, nil)
 
 			// For the same reason, the mirrored services must not publish their metadata
 			// into the state container seeded for the mirrored request, as the access log

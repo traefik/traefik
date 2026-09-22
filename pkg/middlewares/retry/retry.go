@@ -49,13 +49,11 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 	}
 }
 
-type retryResponseWriterContextKey struct{}
-
 // WrapHandler wraps a given http.Handler to inject the httptrace.ClientTrace in the request context when it is needed
 // by the retry middleware.
 func WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if retryResponseWriter, _ := req.Context().Value(retryResponseWriterContextKey{}).(*responseWriter); retryResponseWriter != nil {
+		if retryResponseWriter, _ := req.Context().Value(middlewares.RetryResponseWriterContextKey{}).(*responseWriter); retryResponseWriter != nil {
 			// Reaching this handler means the request reached the proxy layer,
 			// which arms the network-error retry (a dial failure still reaches here and writes
 			// a 502 without sending bytes). Responses produced earlier in the chain
@@ -225,7 +223,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		retryReq := req
 		if !r.disableRetryOnNetworkError {
-			retryReq = req.Clone(context.WithValue(req.Context(), retryResponseWriterContextKey{}, retryResponseWriter))
+			retryReq = req.Clone(context.WithValue(req.Context(), middlewares.RetryResponseWriterContextKey{}, retryResponseWriter))
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
