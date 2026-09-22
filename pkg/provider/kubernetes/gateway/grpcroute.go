@@ -19,7 +19,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes) {
+func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules) {
 	logger := log.Ctx(ctx).With().
 		Str("grpc_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -81,12 +81,18 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 
 			// The ResolvedRefs condition must be reported for every parentRef,
 			// even when the route does not attach to the listener.
-			routeConf, condition := p.loadGRPCRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
+			routeConf, routerNames, condition := p.loadGRPCRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
 			if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 				resolvedRefCondition = new(condition)
 			}
 
 			if accepted && listener.Attached {
+				shadowedRouters := servedRules.registerHTTPRouters(routeConf, routerNames)
+				for _, shadowed := range shadowedRouters {
+					logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", shadowed.Name, shadowed.ServedBy, shadowed.Rule)
+				}
+				dropHTTPRouters(routeConf, shadowedRouters)
+
 				mergeHTTPConfiguration(routeConf, conf)
 
 				// Only consider the route attached if the listener is in an "attached" state.
@@ -119,7 +125,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
+func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, []string, metav1.Condition) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -136,6 +142,10 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 		LastTransitionTime: metav1.Now(),
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
+
+	// The names are kept in the order the routers are created,
+	// because a route serves its rules in the order of the specification.
+	var routerNames []string
 
 	for ri, routeRule := range route.Spec.Rules {
 		matches := routeRule.Matches
@@ -189,11 +199,14 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 				}
 			}
 
+			if _, exists := conf.HTTP.Routers[routerName]; !exists {
+				routerNames = append(routerNames, routerName)
+			}
 			conf.HTTP.Routers[routerName] = &router
 		}
 	}
 
-	return conf, condition
+	return conf, routerNames, condition
 }
 
 func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
