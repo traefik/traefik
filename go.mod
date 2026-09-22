@@ -424,6 +424,10 @@ replace (
 // The pinned commit precedes the retag and leaves the imported packages byte-identical to the notarized v0.7.0.
 replace github.com/liquidweb/liquidweb-cli => github.com/liquidweb/liquidweb-cli v0.6.11-0.20231013174031-ea0acb475a1d
 
+// The canonical software.sslmate.com host serves the repository over dumb HTTP with a stale objects/info/packs, so GOPROXY=direct cannot fetch the objects behind the v0.7.3 tag.
+// The SSLMate GitHub mirror carries the same commit and the same go.mod bytes.
+replace software.sslmate.com/src/go-pkcs12 => github.com/SSLMate/go-pkcs12 v0.7.3
+
 // ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
 // tencentcloud uses monorepo with multimodule but the go.mod files are incomplete.
 exclude github.com/tencentcloud/tencentcloud-sdk-go v3.0.83+incompatible
