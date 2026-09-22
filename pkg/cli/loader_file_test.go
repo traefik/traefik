@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/paerser/cli"
 )
 
 func TestLoadConfigFilesReturnsErrorForMissingExplicitConfigFile(t *testing.T) {
@@ -38,7 +39,7 @@ func TestLoadConfigFilesReturnsErrorForMissingExplicitConfigFile(t *testing.T) {
 	}
 }
 
-func TestLoadConfigFilesUsesDefaultConfigSearchWhenNoConfigFileProvided(t *testing.T) {
+func TestFileLoaderLoadUsesDefaultConfigSearchWhenNoConfigFileProvided(t *testing.T) {
 	// System configuration takes precedence over the temporary search paths below.
 	for _, extension := range []string{"toml", "yaml", "yml"} {
 		path := "/etc/traefik/traefik." + extension
@@ -60,9 +61,45 @@ func TestLoadConfigFilesUsesDefaultConfigSearchWhenNoConfigFileProvided(t *testi
 
 	var config map[string]any
 
-	configFile, err := loadConfigFiles("", &config)
+	loader := &FileLoader{}
+	loaded, err := loader.Load(nil, &cli.Command{Configuration: &config})
 
 	require.NoError(t, err)
-	require.Equal(t, defaultConfig, configFile)
+	require.True(t, loaded)
+	require.Equal(t, defaultConfig, loader.GetFilename())
 	require.Equal(t, map[string]any{"log": map[string]any{"level": "DEBUG"}}, config)
+}
+
+func TestFileLoaderLoadReturnsErrorForEmptyExplicitConfigFile(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Chdir(t.TempDir())
+
+	require.NoError(t, os.WriteFile("traefik.toml", []byte("[log]\nlevel = \"DEBUG\"\n"), 0o600))
+
+	testCases := []struct {
+		desc           string
+		args           []string
+		configFileFlag string
+	}{
+		{desc: "equals", args: []string{"--configfile="}},
+		{desc: "separate value", args: []string{"--configfile", ""}},
+		{desc: "camel case", args: []string{"--configFile="}},
+		{desc: "custom flag", args: []string{"--settingsFile="}, configFileFlag: "settingsFile"},
+		{desc: "lowercase custom flag", args: []string{"--settingsfile="}, configFileFlag: "settingsFile"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var config map[string]any
+			loader := &FileLoader{ConfigFileFlag: test.configFileFlag}
+
+			loaded, err := loader.Load(test.args, &cli.Command{Configuration: &config})
+
+			require.EqualError(t, err, "configuration file path is empty")
+			require.False(t, loaded)
+			require.Empty(t, loader.GetFilename())
+			require.Empty(t, config)
+		})
+	}
 }

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -42,7 +43,12 @@ func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		}
 	}
 
-	configFile, err := loadConfigFiles(ref[configFileFlag], cmd.Configuration)
+	configFile, ok := ref[configFileFlag]
+	if ok && configFile == "" {
+		return false, errors.New("configuration file path is empty")
+	}
+
+	configFile, err = loadConfigFiles(configFile, cmd.Configuration)
 	if err != nil {
 		return false, err
 	}
