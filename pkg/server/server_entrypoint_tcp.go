@@ -30,6 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
@@ -725,10 +726,16 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		return nil, fmt.Errorf("invalid aliasHeadersStrategy value %q", configuration.HTTP.AliasHeadersStrategy)
 	}
 
+	// An opaque URL has to be rejected before any handler deriving the path or the request URI from it,
+	// hence the wrapping has to be done last so that it is the first handler executed.
+	handler = denyOpaque(handler)
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
+		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
+		ctx = fast.AddConnPoolsOnContext(ctx)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
 			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
@@ -815,6 +822,25 @@ type trackedConnection struct {
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// denyOpaque rejects the request if the URL is opaque.
+// Go only populates URL.Opaque for a request target which is none of the four forms allowed by RFC 9112 section 3.2:
+// origin-form and absolute-form both leave a rest starting with a slash after the scheme,
+// and asterisk-form and authority-form are special-cased.
+// Such a target leaves Path, RawPath and Host empty, hence going unnoticed by the path handling and the routing,
+// while URL.RequestURI gives Opaque precedence over the path, which reinstates the target when forwarding to the backend.
+func denyOpaque(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.Opaque != "" {
+			log.Debug().Msgf("Rejecting request because it has an opaque URL: %s", req.URL.Opaque)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
 }
 
 // denyFragment rejects the request if the URL path contains a fragment (hash character).

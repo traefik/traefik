@@ -2,6 +2,8 @@ package consulcatalog
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 	"time"
 
@@ -4122,4 +4124,41 @@ func TestFilterHealthStatuses(t *testing.T) {
 			assert.Equal(t, test.expected, configuration)
 		})
 	}
+}
+
+func Test_buildConfigurationItemKeyCollision(t *testing.T) {
+	var config Configuration
+
+	config.SetDefaults()
+	config.DefaultRule = "Host(`{{ normalize .Name }}.traefik.wtf`)"
+
+	p := Provider{Configuration: config}
+	require.NoError(t, p.Init())
+
+	// Normalize("n1"+"-"+"web"+"-"+"a-b") and Normalize("n1"+"-"+"web-a"+"-"+"b") are both "n1-web-a-b".
+	items := []itemData{
+		{
+			ID:        "a-b",
+			Node:      "n1",
+			Name:      "web",
+			Address:   "127.0.0.1",
+			Port:      "80",
+			Status:    api.HealthPassing,
+			ExtraConf: configuration{Enable: true},
+		},
+		{
+			ID:        "b",
+			Node:      "n1",
+			Name:      "web-a",
+			Address:   "127.0.0.2",
+			Port:      "80",
+			Status:    api.HealthPassing,
+			ExtraConf: configuration{Enable: true},
+		},
+	}
+
+	conf := p.buildConfiguration(t.Context(), items, &connectCert{})
+
+	assert.Equal(t, []string{"web", "web-a"}, slices.Sorted(maps.Keys(conf.HTTP.Routers)))
+	assert.Equal(t, []string{"web", "web-a"}, slices.Sorted(maps.Keys(conf.HTTP.Services)))
 }
