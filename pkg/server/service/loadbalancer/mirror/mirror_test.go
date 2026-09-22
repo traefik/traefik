@@ -177,8 +177,7 @@ func TestMirroringWithBody(t *testing.T) {
 	assert.Equal(t, numMirrors, int(val))
 }
 
-// serverRequestBody mimics the net/http server request body,
-// whose reads fail with http.ErrBodyReadAfterClose once it has been closed.
+// serverRequestBody mimics a server request body that rejects reads after close.
 type serverRequestBody struct {
 	reader *bytes.Reader
 	closed bool
