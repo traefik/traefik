@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11710,6 +11712,47 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 	}
 
 	return client
+}
+
+func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"multiple_gateways_tls_certificates.yml"})
+
+	client := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	// just wait for the first event
+	<-eventCh
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
+		client:      client,
+	}
+
+	// Gateways are listed from a map, so build the configuration several times to
+	// make sure the certificates do not follow the iteration order.
+	conf, _, err := p.loadConfigurationFromGateways(t.Context())
+	require.NoError(t, err)
+
+	var commonNames []string
+	for _, cert := range conf.TLS.Certificates {
+		commonNames = append(commonNames, certificateCommonName(t, cert.Certificate.CertFile))
+	}
+
+	assert.Equal(t, []string{"bar.example.com", "foo.example.com", "default-b.example.com", "default-a.example.com"}, commonNames)
+}
+
+func certificateCommonName(t *testing.T, certFile types.FileOrContent) string {
+	t.Helper()
+
+	block, _ := pem.Decode([]byte(certFile))
+	require.NotNil(t, block)
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+
+	return cert.Subject.CommonName
 }
 
 func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {

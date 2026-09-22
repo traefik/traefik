@@ -13,7 +13,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -138,40 +137,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:     pt.BackendName,
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
 		}
-
-		// The HTTP part is skipped when the serversTransport could not be built,
-		// the TCP passthrough router above being unaffected by it.
-		if pt.HTTPServiceName == "" {
-			continue
-		}
-
-		// Like ingress-nginx, the host also gets an HTTP router proxying to the backend
-		// (honoring backend-protocol), so plain HTTP requests and requests bypassing the
-		// SSL redirect (e.g. X-Forwarded-Proto: https) behave like nginx instead of
-		// hitting an internal service.
-		if pt.ServersTransport != nil && pt.ServersTransportName != "" {
-			if _, exists := conf.HTTP.ServersTransports[pt.ServersTransportName]; !exists {
-				conf.HTTP.ServersTransports[pt.ServersTransportName] = pt.ServersTransport
-			}
-		}
-		conf.HTTP.Services[pt.HTTPServiceName] = buildServiceWithLocConfig(backend, pt.ServersTransportName, pt.Config)
-
-		rt := &dynamic.Router{
-			EntryPoints: p.NonTLSEntryPoints,
-			Rule:        fmt.Sprintf("Host(%q)", pt.Hostname),
-			RuleSyntax:  "default",
-			Service:     pt.HTTPServiceName,
-		}
-
-		if pt.SSLRedirect {
-			redirectMWName := pt.RouterKey + "-redirect-scheme"
-			conf.HTTP.Middlewares[redirectMWName] = &dynamic.Middleware{
-				RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
-			}
-			rt.Middlewares = []string{redirectMWName}
-		}
-
-		conf.HTTP.Routers[pt.RouterKey+"-http"] = rt
 	}
 
 	for _, srv := range mc.Servers {
@@ -240,9 +205,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
-				routerKey = provider.Normalize(fmt.Sprintf("%s-%s-default-backend", loc.Namespace, loc.IngressName))
+				routerKey = fmt.Sprintf("%s-%s-default-backend", loc.Namespace, loc.IngressName)
 			} else {
-				routerKey = provider.Normalize(fmt.Sprintf("%s-%s-rule-%d-path-%d", loc.Namespace, loc.IngressName, loc.RuleIndex, loc.LocationIndex))
+				routerKey = fmt.Sprintf("%s-%s-rule-%d-path-%d", loc.Namespace, loc.IngressName, loc.RuleIndex, loc.LocationIndex)
 			}
 
 			rt := &dynamic.Router{
@@ -253,33 +218,42 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				Observability: obs,
 			}
 
-			rtTLS := &dynamic.Router{
-				EntryPoints: p.TLSEntryPoints,
-				Rule:        rule,
-				RuleSyntax:  "default",
-				Service:     routerSvcName,
-				TLS: &dynamic.RouterTLSConfig{
-					Options: loc.TLSOptionName,
-				},
-				Observability: obs,
-			}
-
 			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
 			if loc.Error {
 				rt.Service = unavailableServiceName
-				rtTLS.Service = unavailableServiceName
 			}
 
 			registered := p.addNonTLSRouter(conf, routerKey, rt)
-			conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
 
-			if !loc.Error {
-				if registered {
-					p.applyMiddlewares(mc, loc, routerKey, rt, conf)
-					applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
+			if !loc.Error && registered {
+				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
+				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
+			}
+
+			// An ssl-passthrough host is served over TCP on the TLS entryPoints, so it gets no TLS router at all.
+			var rtTLS *dynamic.Router
+			if !loc.SSLPassthrough {
+				rtTLS = &dynamic.Router{
+					EntryPoints: p.TLSEntryPoints,
+					Rule:        rule,
+					RuleSyntax:  "default",
+					Service:     routerSvcName,
+					TLS: &dynamic.RouterTLSConfig{
+						Options: loc.TLSOptionName,
+					},
+					Observability: obs,
 				}
-				p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
-				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+
+				if loc.Error {
+					rtTLS.Service = unavailableServiceName
+				}
+
+				conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
+
+				if !loc.Error {
+					p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
+					applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+				}
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
@@ -295,17 +269,19 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
 				}
 
-				canaryKeyTLS := canaryKey + "-tls"
-				canaryRouterTLS := &dynamic.Router{
-					EntryPoints:   rtTLS.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
-					RuleSyntax:    rtTLS.RuleSyntax,
-					Service:       canarySvcName,
-					TLS:           rtTLS.TLS,
-					Observability: obs,
+				if rtTLS != nil {
+					canaryKeyTLS := canaryKey + "-tls"
+					canaryRouterTLS := &dynamic.Router{
+						EntryPoints:   rtTLS.EntryPoints,
+						Rule:          appendCanaryRule(rule, loc.Canary),
+						RuleSyntax:    rtTLS.RuleSyntax,
+						Service:       canarySvcName,
+						TLS:           rtTLS.TLS,
+						Observability: obs,
+					}
+					conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
+					p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
 				}
-				conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
-				p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
@@ -321,17 +297,19 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
 				}
 
-				nonCanaryKeyTLS := nonCanaryKey + "-tls"
-				nonCanaryRouterTLS := &dynamic.Router{
-					EntryPoints:   rtTLS.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
-					RuleSyntax:    rtTLS.RuleSyntax,
-					Service:       primarySvcName,
-					TLS:           rtTLS.TLS,
-					Observability: obs,
+				if rtTLS != nil {
+					nonCanaryKeyTLS := nonCanaryKey + "-tls"
+					nonCanaryRouterTLS := &dynamic.Router{
+						EntryPoints:   rtTLS.EntryPoints,
+						Rule:          appendNonCanaryRule(rule, loc.Canary),
+						RuleSyntax:    rtTLS.RuleSyntax,
+						Service:       primarySvcName,
+						TLS:           rtTLS.TLS,
+						Observability: obs,
+					}
+					conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
+					p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
 				}
-				conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
-				p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
 			}
 		}
 	}
@@ -589,7 +567,9 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
-	if loc.AuthTLSPassCert != nil && rt.TLS != nil {
+	// The middleware is attached to the plaintext router as well, and not only to the TLS one:
+	// it owns the Ssl-Client-* headers, and is what removes the values a client supplied for them.
+	if loc.AuthTLSPassCert != nil {
 		name := routerKey + "-pass-certificate-to-upstream"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert}
 		rt.Middlewares = append(rt.Middlewares, name)
