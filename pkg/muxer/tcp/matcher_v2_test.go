@@ -470,10 +470,10 @@ func Test_addTCPRouteV2(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			router, err := NewMuxer()
+			router, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = router.AddRoute(test.rule, "v2", 0, handler)
+			err = router.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.routeErr {
 				require.Error(t, err)
 				return
@@ -606,10 +606,10 @@ func Test_HostSNICatchAllV2(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "v2", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{

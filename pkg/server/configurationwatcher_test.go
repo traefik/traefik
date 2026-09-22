@@ -74,7 +74,7 @@ func TestNewConfigurationWatcher(t *testing.T) {
 		}},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	run := make(chan struct{})
 
@@ -147,7 +147,7 @@ func TestWaitForRequiredProvider(t *testing.T) {
 		Configuration: config,
 	})
 
-	watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, []string{}, "required")
+	watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, []string{}, "required", false)
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -249,7 +249,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			),
 		),
 	}
-	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "", false)
 
 	// To be able to "block" the writes, we change the chan to remove buffering.
 	watcher.allProvidersConfigs = make(chan dynamic.Message)
@@ -342,7 +342,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	err := providerAggregator.AddProvider(pvd)
 	assert.NoError(t, err)
 
-	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -370,7 +370,7 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 		messages: []dynamic.Message{{ProviderName: "mock"}},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 	watcher.AddListener(func(_ dynamic.Configuration) {
 		t.Error("An empty configuration was published but it should not")
 	})
@@ -403,7 +403,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 		messages: []dynamic.Message{message, message},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	var configurationReloads int
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -451,7 +451,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	var lastConfig dynamic.Configuration
 	watcher.AddListener(func(conf dynamic.Configuration) {
@@ -538,7 +538,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	err := providerAggregator.AddProvider(pvd)
 	assert.NoError(t, err)
 
-	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -598,7 +598,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 func TestApplyConfigUnderStress(t *testing.T) {
 	routinesPool := safe.NewPool(t.Context())
 
-	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "", false)
 
 	routinesPool.GoCtx(func(ctx context.Context) {
 		i := 0
@@ -694,7 +694,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	err := providerAggregator.AddProvider(pvd)
 	assert.NoError(t, err)
 
-	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -762,7 +762,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	var publishedProviderConfig dynamic.Configuration
 
@@ -837,7 +837,7 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(configuration dynamic.Configuration) {
@@ -887,7 +887,7 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(configuration dynamic.Configuration) {
@@ -907,6 +907,90 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	assert.Equal(t, 1, publishedConfigCount)
+}
+
+func TestConfigurationWatcher_MultipleTransformers(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+	t.Cleanup(routinesPool.Stop)
+
+	pvd := &mockProvider{
+		messages: []dynamic.Message{{
+			ProviderName: "mock",
+			Configuration: &dynamic.Configuration{
+				HTTP: th.BuildConfiguration(
+					th.WithRouters(
+						th.WithRouter("original",
+							th.WithEntryPoints("e"),
+							th.WithServiceName("scv"))),
+				),
+			},
+		}},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
+
+	var callOrder []string
+
+	var callCount1, callCount2 int
+
+	watcher.AddTransformer(func(_ context.Context, configs dynamic.Configurations) dynamic.Configurations {
+		callCount1++
+
+		callOrder = append(callOrder, "transformer1")
+
+		for _, config := range configs {
+			if config != nil && config.HTTP != nil {
+				config.HTTP.Routers["from-transformer1"] = &dynamic.Router{
+					EntryPoints: []string{"e"},
+					Service:     "svc1",
+				}
+			}
+		}
+
+		return configs
+	})
+
+	watcher.AddTransformer(func(_ context.Context, configs dynamic.Configurations) dynamic.Configurations {
+		callCount2++
+
+		callOrder = append(callOrder, "transformer2")
+
+		// Verify that transformer1's changes are visible.
+		for _, config := range configs {
+			if config != nil && config.HTTP != nil {
+				assert.Contains(t, config.HTTP.Routers, "from-transformer1")
+				config.HTTP.Routers["from-transformer2"] = &dynamic.Router{
+					EntryPoints: []string{"e"},
+					Service:     "svc2",
+				}
+			}
+		}
+
+		return configs
+	})
+
+	run := make(chan struct{})
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		assert.NotNil(t, conf.HTTP)
+		assert.Contains(t, conf.HTTP.Routers, "original@mock")
+		assert.Contains(t, conf.HTTP.Routers, "from-transformer1@mock")
+		assert.Contains(t, conf.HTTP.Routers, "from-transformer2@mock")
+		close(run)
+	})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+
+	select {
+	case <-run:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Timeout waiting for configuration")
+	}
+
+	assert.Equal(t, []string{"transformer1", "transformer2"}, callOrder)
+	assert.Equal(t, 1, callCount1)
+	assert.Equal(t, 1, callCount2)
 }
 
 // TestEntryPointTLSResolvedOptions is a regression test for
@@ -939,7 +1023,7 @@ func TestEntryPointTLSResolvedOptions(t *testing.T) {
 		}},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	run := make(chan struct{})
 	watcher.AddListener(func(conf dynamic.Configuration) {

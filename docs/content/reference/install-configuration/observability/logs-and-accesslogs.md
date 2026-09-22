@@ -141,6 +141,9 @@ Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the 
 
 Access logs concern everything that happens to the requests handled by Traefik.
 
+!!! note "Stdio logs are not enabled by default alongside OTLP exports"
+    If you would like Stdio access logs to be available, use [accessLog.dualOutput](#opt-accesslog-dualOutput) option.
+
 ### Configuration Example
 
 ```yaml tab="File (YAML)"
@@ -201,6 +204,7 @@ accessLog:
 
 ```sh tab="CLI"
 --accesslog=true
+--accesslog.dualoutput=true
 --accesslog.format=json
 --accesslog.filters.statuscodes=200,300-302
 --accesslog.filters.retryattempts
@@ -220,6 +224,7 @@ The section below describes how to configure Traefik access logs using the stati
 | Field      | Description    | Default | Required |
 |:-----------|:--------------------------|:--------|:---------|
 | <a id="opt-accesslog-filePath" href="#opt-accesslog-filePath" title="#opt-accesslog-filePath">`accesslog.filePath`</a> | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
+| <a id="opt-accesslog-dualOutput" href="#opt-accesslog-dualOutput" title="#opt-accesslog-dualOutput">`accesslog.dualOutput`</a> | Force Stdio logging, even if OTLP is configured. By default, Stdio logging is disabled when OTLP is enabled for performance reasons. | false      | No      |
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">`accesslog.format`</a> | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: [`common`](#traefik-clf-format-fields) (Traefik extended CLF), [`genericCLF`](#generic-clf-format-fields) (standard CLF compatible with analyzers), or [`json`](#json-format-fields).<br />If the given format is unsupported, the default (`common`) is used instead. | "common" | No      |
 | <a id="opt-accesslog-bufferingSize" href="#opt-accesslog-bufferingSize" title="#opt-accesslog-bufferingSize">`accesslog.bufferingSize`</a> | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
 | <a id="opt-accesslog-addInternals" href="#opt-accesslog-addInternals" title="#opt-accesslog-addInternals">`accesslog.addInternals`</a> | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
@@ -260,6 +265,8 @@ experimental:
   otlpLogs: true
 
 accesslog:
+  # Keep Stdio logs alongside OTEL logging
+  dualOutput: true
   otlp:
     http:
       endpoint: https://collector:4318/v1/logs
@@ -270,6 +277,9 @@ accesslog:
 ```toml tab="File (TOML)"
 [experimental]
   otlpLogs = true
+
+[accessLog]
+  dualOutput = true
 
 [accesslog.otlp]
   http.endpoint = "https://collector:4318/v1/logs"
@@ -334,6 +344,11 @@ Below the fields displayed with the Traefik CLF format:
 "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
 ```
 
+!!! info "`<HTTP_status>` is the downstream status"
+
+    In both CLF formats, `<HTTP_status>` is the `DownstreamStatus`, the status sent to the client.
+    The backend status (`OriginStatus`) is only available with the `json` format.
+
 ### Generic CLF format fields
 
 Below the fields displayed with the generic CLF format:
@@ -346,42 +361,49 @@ Below the fields displayed with the generic CLF format:
 
 ### JSON format fields
 
-| Field                   | Description   |
-|-------------------------|------------------|
-| <a id="opt-StartUTC" href="#opt-StartUTC" title="#opt-StartUTC">`StartUTC`</a> | The time at which request processing started.                                                                                                                       |
-| <a id="opt-StartLocal" href="#opt-StartLocal" title="#opt-StartLocal">`StartLocal`</a> | The local time at which request processing started.                                                                                                                 |
-| <a id="opt-Duration" href="#opt-Duration" title="#opt-Duration">`Duration`</a> | The total time taken (in nanoseconds) by processing the response, including the origin server's time but not the log writing time.                                  |
-| <a id="opt-RouterName" href="#opt-RouterName" title="#opt-RouterName">`RouterName`</a> | The name of the Traefik  router.                                                                                                                                    |
-| <a id="opt-ServiceName" href="#opt-ServiceName" title="#opt-ServiceName">`ServiceName`</a> | The name of the Traefik backend.          |
-| <a id="opt-ServiceURL" href="#opt-ServiceURL" title="#opt-ServiceURL">`ServiceURL`</a> | The URL of the Traefik backend.       |
-| <a id="opt-ServiceAddr" href="#opt-ServiceAddr" title="#opt-ServiceAddr">`ServiceAddr`</a> | The IP:port of the Traefik backend (extracted from `ServiceURL`). |
-| <a id="opt-ClientAddr" href="#opt-ClientAddr" title="#opt-ClientAddr">`ClientAddr`</a> | The remote address in its original form (usually IP:port).     |
-| <a id="opt-ClientHost" href="#opt-ClientHost" title="#opt-ClientHost">`ClientHost`</a> | The remote IP address from which the client request was received.     |
-| <a id="opt-ClientPort" href="#opt-ClientPort" title="#opt-ClientPort">`ClientPort`</a> | The remote TCP port from which the client request was received.   |
-| <a id="opt-ClientUsername" href="#opt-ClientUsername" title="#opt-ClientUsername">`ClientUsername`</a> | The username provided in the URL, if present.   |
-| <a id="opt-RequestAddr" href="#opt-RequestAddr" title="#opt-RequestAddr">`RequestAddr`</a> | The HTTP Host header (usually IP:port). This is treated as not a header by the Go API.   |
-| <a id="opt-RequestHost" href="#opt-RequestHost" title="#opt-RequestHost">`RequestHost`</a> | The HTTP Host server name (not including port).     |
-| <a id="opt-RequestPort" href="#opt-RequestPort" title="#opt-RequestPort">`RequestPort`</a> | The TCP port from the HTTP Host.    |
-| <a id="opt-RequestMethod" href="#opt-RequestMethod" title="#opt-RequestMethod">`RequestMethod`</a> | The HTTP method. |
-| <a id="opt-RequestPath" href="#opt-RequestPath" title="#opt-RequestPath">`RequestPath`</a> | The HTTP request URI, not including the scheme, host or port.   |
-| <a id="opt-RequestProtocol" href="#opt-RequestProtocol" title="#opt-RequestProtocol">`RequestProtocol`</a> | The version of HTTP requested.       |
-| <a id="opt-RequestScheme" href="#opt-RequestScheme" title="#opt-RequestScheme">`RequestScheme`</a> | The HTTP scheme requested `http` or `https`.   |
-| <a id="opt-RequestLine" href="#opt-RequestLine" title="#opt-RequestLine">`RequestLine`</a> | The `RequestMethod`, + `RequestPath` and `RequestProtocol`.   |
-| <a id="opt-RequestContentSize" href="#opt-RequestContentSize" title="#opt-RequestContentSize">`RequestContentSize`</a> | The number of bytes in the request entity (a.k.a. body) sent by the client.   |
-| <a id="opt-OriginDuration" href="#opt-OriginDuration" title="#opt-OriginDuration">`OriginDuration`</a> | The time taken (in nanoseconds) by the origin server ('upstream') to return its response. |
-| <a id="opt-OriginContentSize" href="#opt-OriginContentSize" title="#opt-OriginContentSize">`OriginContentSize`</a> | The content length specified by the origin server, or 0 if unspecified.    |
-| <a id="opt-OriginStatus" href="#opt-OriginStatus" title="#opt-OriginStatus">`OriginStatus`</a> | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent (0). |
-| <a id="opt-OriginStatusLine" href="#opt-OriginStatusLine" title="#opt-OriginStatusLine">`OriginStatusLine`</a> | `OriginStatus` + Status code explanation   |
-| <a id="opt-DownstreamStatus" href="#opt-DownstreamStatus" title="#opt-DownstreamStatus">`DownstreamStatus`</a> | The HTTP status code returned to the client.    |
-| <a id="opt-DownstreamStatusLine" href="#opt-DownstreamStatusLine" title="#opt-DownstreamStatusLine">`DownstreamStatusLine`</a> | The `DownstreamStatus` and status code explanation.     |
-| <a id="opt-DownstreamContentSize" href="#opt-DownstreamContentSize" title="#opt-DownstreamContentSize">`DownstreamContentSize`</a> | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |
-| <a id="opt-RequestCount" href="#opt-RequestCount" title="#opt-RequestCount">`RequestCount`</a> | The number of requests received since the Traefik instance started.    |
-| <a id="opt-GzipRatio" href="#opt-GzipRatio" title="#opt-GzipRatio">`GzipRatio`</a> | The response body compression ratio achieved.   |
-| <a id="opt-Overhead" href="#opt-Overhead" title="#opt-Overhead">`Overhead`</a> | The processing time overhead (in nanoseconds) caused by Traefik.    |
-| <a id="opt-RetryAttempts" href="#opt-RetryAttempts" title="#opt-RetryAttempts">`RetryAttempts`</a> | The amount of attempts the request was retried.   |
-| <a id="opt-TLSVersion" href="#opt-TLSVersion" title="#opt-TLSVersion">`TLSVersion`</a> | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).   |
-| <a id="opt-TLSCipher" href="#opt-TLSCipher" title="#opt-TLSCipher">`TLSCipher`</a> | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS).      |
-| <a id="opt-TLSClientSubject" href="#opt-TLSClientSubject" title="#opt-TLSClientSubject">`TLSClientSubject`</a> | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`).  |
+| Field                   | Description                                                                                                                                                                                                                                                                                                                                                                           |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a id="opt-StartUTC" href="#opt-StartUTC" title="#opt-StartUTC">`StartUTC`</a> | The time at which request processing started.                                                                                                                                                                                                                                                                                                                                         |
+| <a id="opt-StartLocal" href="#opt-StartLocal" title="#opt-StartLocal">`StartLocal`</a> | The local time at which request processing started.                                                                                                                                                                                                                                                                                                                                   |
+| <a id="opt-Duration" href="#opt-Duration" title="#opt-Duration">`Duration`</a> | The total time taken (in nanoseconds) by processing the response, including the origin server's time but not the log writing time.                                                                                                                                                                                                                                                    |
+| <a id="opt-RouterName" href="#opt-RouterName" title="#opt-RouterName">`RouterName`</a> | The name of the Traefik  router.                                                                                                                                                                                                                                                                                                                                                      |
+| <a id="opt-ServiceName" href="#opt-ServiceName" title="#opt-ServiceName">`ServiceName`</a> | The name of the Traefik backend.                                                                                                                                                                                                                                                                                                                                                      |
+| <a id="opt-ServiceURL" href="#opt-ServiceURL" title="#opt-ServiceURL">`ServiceURL`</a> | The URL of the Traefik backend.                                                                                                                                                                                                                                                                                                                                                       |
+| <a id="opt-ServiceAddr" href="#opt-ServiceAddr" title="#opt-ServiceAddr">`ServiceAddr`</a> | The IP:port of the Traefik backend (extracted from `ServiceURL`).                                                                                                                                                                                                                                                                                                                     |
+| <a id="opt-ClientAddr" href="#opt-ClientAddr" title="#opt-ClientAddr">`ClientAddr`</a> | The remote address in its original form (usually IP:port).                                                                                                                                                                                                                                                                                                                            |
+| <a id="opt-ClientHost" href="#opt-ClientHost" title="#opt-ClientHost">`ClientHost`</a> | The remote IP address from which the client request was received.                                                                                                                                                                                                                                                                                                                     |
+| <a id="opt-ClientPort" href="#opt-ClientPort" title="#opt-ClientPort">`ClientPort`</a> | The remote TCP port from which the client request was received.                                                                                                                                                                                                                                                                                                                       |
+| <a id="opt-ClientUsername" href="#opt-ClientUsername" title="#opt-ClientUsername">`ClientUsername`</a> | The username provided in the URL, if present.                                                                                                                                                                                                                                                                                                                                         |
+| <a id="opt-RequestAddr" href="#opt-RequestAddr" title="#opt-RequestAddr">`RequestAddr`</a> | The HTTP Host header (usually IP:port). This is treated as not a header by the Go API.                                                                                                                                                                                                                                                                                                |
+| <a id="opt-RequestHost" href="#opt-RequestHost" title="#opt-RequestHost">`RequestHost`</a> | The HTTP Host server name (not including port).                                                                                                                                                                                                                                                                                                                                       |
+| <a id="opt-RequestPort" href="#opt-RequestPort" title="#opt-RequestPort">`RequestPort`</a> | The TCP port from the HTTP Host.                                                                                                                                                                                                                                                                                                                                                      |
+| <a id="opt-RequestMethod" href="#opt-RequestMethod" title="#opt-RequestMethod">`RequestMethod`</a> | The HTTP method.                                                                                                                                                                                                                                                                                                                                                                      |
+| <a id="opt-RequestPath" href="#opt-RequestPath" title="#opt-RequestPath">`RequestPath`</a> | The HTTP request URI, not including the scheme, host or port.                                                                                                                                                                                                                                                                                                                         |
+| <a id="opt-RequestProtocol" href="#opt-RequestProtocol" title="#opt-RequestProtocol">`RequestProtocol`</a> | The version of HTTP requested.                                                                                                                                                                                                                                                                                                                                                        |
+| <a id="opt-RequestScheme" href="#opt-RequestScheme" title="#opt-RequestScheme">`RequestScheme`</a> | The HTTP scheme requested `http` or `https`.                                                                                                                                                                                                                                                                                                                                          |
+| <a id="opt-RequestLine" href="#opt-RequestLine" title="#opt-RequestLine">`RequestLine`</a> | The `RequestMethod`, + `RequestPath` and `RequestProtocol`.                                                                                                                                                                                                                                                                                                                           |
+| <a id="opt-RequestContentSize" href="#opt-RequestContentSize" title="#opt-RequestContentSize">`RequestContentSize`</a> | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                                                                                                                                                                                                                                           |
+| <a id="opt-OriginDuration" href="#opt-OriginDuration" title="#opt-OriginDuration">`OriginDuration`</a> | The time taken (in nanoseconds) by the origin server ('upstream') to return its response.                                                                                                                                                                                                                                                                                             |
+| <a id="opt-OriginContentSize" href="#opt-OriginContentSize" title="#opt-OriginContentSize">`OriginContentSize`</a> | The content length specified by the origin server, or 0 if unspecified.                                                                                                                                                                                                                                                                                                               |
+| <a id="opt-OriginStatus" href="#opt-OriginStatus" title="#opt-OriginStatus">`OriginStatus`</a> | The HTTP status code resulting from proxying the request to a backend: either the one returned by that backend, or the one computed when the server could not be reached (`502`, `504`, ...). See [Origin vs. Downstream Status](../../../observe/logs-and-access-logs.md#origin-vs-downstream-status). |
+| <a id="opt-OriginStatusLine" href="#opt-OriginStatusLine" title="#opt-OriginStatusLine">`OriginStatusLine`</a> | `OriginStatus` + Status code explanation                                                                                                                                                                                                                                                                                                                                              |
+| <a id="opt-DownstreamStatus" href="#opt-DownstreamStatus" title="#opt-DownstreamStatus">`DownstreamStatus`</a> | The HTTP status code sent **to the client**, after the middleware chain has run. See [Origin vs. Downstream Status](../../../observe/logs-and-access-logs.md#origin-vs-downstream-status).                                                                                                                                                                         |
+| <a id="opt-DownstreamStatusLine" href="#opt-DownstreamStatusLine" title="#opt-DownstreamStatusLine">`DownstreamStatusLine`</a> | The `DownstreamStatus` and status code explanation.                                                                                                                                                                                                                                                                                                                                   |
+| <a id="opt-DownstreamContentSize" href="#opt-DownstreamContentSize" title="#opt-DownstreamContentSize">`DownstreamContentSize`</a> | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response.                                                                                                                                                                                                                   |
+| <a id="opt-RequestCount" href="#opt-RequestCount" title="#opt-RequestCount">`RequestCount`</a> | The number of requests received since the Traefik instance started.                                                                                                                                                                                                                                                                                                                   |
+| <a id="opt-GzipRatio" href="#opt-GzipRatio" title="#opt-GzipRatio">`GzipRatio`</a> | The response body compression ratio achieved.                                                                                                                                                                                                                                                                                                                                         |
+| <a id="opt-Overhead" href="#opt-Overhead" title="#opt-Overhead">`Overhead`</a> | The processing time overhead (in nanoseconds) caused by Traefik.                                                                                                                                                                                                                                                                                                                      |
+| <a id="opt-RetryAttempts" href="#opt-RetryAttempts" title="#opt-RetryAttempts">`RetryAttempts`</a> | The amount of attempts the request was retried.                                                                                                                                                                                                                                                                                                                                       |
+| <a id="opt-TLSVersion" href="#opt-TLSVersion" title="#opt-TLSVersion">`TLSVersion`</a> | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).                                                                                                                                                                                                                                                                                                           |
+| <a id="opt-TLSCipher" href="#opt-TLSCipher" title="#opt-TLSCipher">`TLSCipher`</a> | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS).                                                                                                                                                                                                                                                                            |
+| <a id="opt-TLSClientSubject" href="#opt-TLSClientSubject" title="#opt-TLSClientSubject">`TLSClientSubject`</a> | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`).                                                                                                                                                                                                                                                                                |
+| <a id="opt-KubernetesIngressNamespace" href="#opt-KubernetesIngressNamespace" title="#opt-KubernetesIngressNamespace">`KubernetesIngressNamespace`</a> | The namespace of the Kubernetes Ingress resource the router handles. Emitted when the router originates from the Kubernetes Ingress or Kubernetes Ingress Nginx provider. |
+| <a id="opt-KubernetesIngressName" href="#opt-KubernetesIngressName" title="#opt-KubernetesIngressName">`KubernetesIngressName`</a> | The name of the Kubernetes Ingress resource the router handles. Emitted when the router originates from the Kubernetes Ingress or Kubernetes Ingress Nginx provider. |
+| <a id="opt-KubernetesIngressRouteNamespace" href="#opt-KubernetesIngressRouteNamespace" title="#opt-KubernetesIngressRouteNamespace">`KubernetesIngressRouteNamespace`</a> | The namespace of the Kubernetes IngressRoute (CRD) the router handles. Emitted when the router originates from the Kubernetes CRD provider. |
+| <a id="opt-KubernetesIngressRouteName" href="#opt-KubernetesIngressRouteName" title="#opt-KubernetesIngressRouteName">`KubernetesIngressRouteName`</a> | The name of the Kubernetes IngressRoute (CRD) the router handles. Emitted when the router originates from the Kubernetes CRD provider. |
+| <a id="opt-KubernetesServiceNamespace" href="#opt-KubernetesServiceNamespace" title="#opt-KubernetesServiceNamespace">`KubernetesServiceNamespace`</a> | The namespace of the Kubernetes Service that handled the request. Available with all Kubernetes providers. Stamped per request from the actual backend chosen by the load balancing strategy, so it reflects the real target even under multi-service routes, TraefikService weighted/mirroring, or cross-namespace references. |
+| <a id="opt-KubernetesServiceName" href="#opt-KubernetesServiceName" title="#opt-KubernetesServiceName">`KubernetesServiceName`</a> | The name of the Kubernetes Service that handled the request. See `KubernetesServiceNamespace` for the per-request semantics. |
+| <a id="opt-KubernetesServicePort" href="#opt-KubernetesServicePort" title="#opt-KubernetesServicePort">`KubernetesServicePort`</a> | The port of the Kubernetes Service that handled the request. See `KubernetesServiceNamespace` for the per-request semantics. |
 
 ### Log Rotation
 
@@ -405,7 +427,7 @@ Example utilizing Docker Compose:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.6
+    image: traefik:v3.7
     environment:
       - TZ=US/Alaska
     command:

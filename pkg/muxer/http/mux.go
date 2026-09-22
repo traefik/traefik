@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -24,15 +25,20 @@ type MatcherFunc func(*http.Request) bool
 type Muxer struct {
 	routes routes
 
-	parser         SyntaxParser
-	defaultHandler http.Handler
+	parser              SyntaxParser
+	defaultHandler      http.Handler
+	providersPrecedence []string
 }
 
 // NewMuxer returns a new muxer instance.
-func NewMuxer(parser SyntaxParser) *Muxer {
+func NewMuxer(parser SyntaxParser, providersPrecedence []string) *Muxer {
+	providersPrecedence = slices.Clone(providersPrecedence)
+	slices.Reverse(providersPrecedence)
+
 	return &Muxer{
-		parser:         parser,
-		defaultHandler: http.NotFoundHandler(),
+		parser:              parser,
+		defaultHandler:      http.NotFoundHandler(),
+		providersPrecedence: providersPrecedence,
 	}
 }
 
@@ -71,16 +77,17 @@ func GetRulePriority(rule string) int {
 }
 
 // AddRoute add a new route to the router.
-func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.Handler) error {
+func (m *Muxer) AddRoute(rule string, syntax string, priority int, providerName string, handler http.Handler) error {
 	matchers, err := m.parser.parse(syntax, rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	m.routes = append(m.routes, &route{
-		handler:  handler,
-		matchers: matchers,
-		priority: priority,
+		handler:          handler,
+		matchers:         matchers,
+		priority:         priority,
+		providerPriority: slices.Index(m.providersPrecedence, providerName),
 	})
 
 	sort.Sort(m.routes)
@@ -168,7 +175,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 	), nil
 }
 
-// ParseDomains extract domains from rule.
+// ParseDomains extract the domains from positive Host matchers (not negated) in a rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
 	for matcher := range httpFuncs {
@@ -193,7 +200,7 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParseMatchers([]string{"Host"}), nil
+	return buildTree().ParsePositiveMatchers([]string{"Host"}), nil
 }
 
 // routes implements sort.Interface.
@@ -206,7 +213,10 @@ func (r routes) Len() int { return len(r) }
 func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 
 // Less implements sort.Interface.
-func (r routes) Less(i, j int) bool { return r[i].priority > r[j].priority }
+func (r routes) Less(i, j int) bool {
+	return r[i].priority > r[j].priority ||
+		(r[i].priority == r[j].priority && r[i].providerPriority > r[j].providerPriority)
+}
 
 // route holds the matchers to match HTTP route,
 // and the handler that will serve the request.
@@ -218,6 +228,8 @@ type route struct {
 	// priority is used to disambiguate between two (or more) rules that would all match for a given request.
 	// Computed from the matching rule length, if not user-set.
 	priority int
+	// providerPriority is used to disambiguate between two (or more) rules that would all match for a given request and have the same priority.
+	providerPriority int
 }
 
 // matchersTree represents the matchers tree structure.

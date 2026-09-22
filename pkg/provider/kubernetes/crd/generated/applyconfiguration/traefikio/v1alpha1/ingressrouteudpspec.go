@@ -28,15 +28,42 @@ package v1alpha1
 
 // IngressRouteUDPSpecApplyConfiguration represents a declarative configuration of the IngressRouteUDPSpec type for use
 // with apply.
+//
+// IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
 type IngressRouteUDPSpecApplyConfiguration struct {
-	Routes      []RouteUDPApplyConfiguration `json:"routes,omitempty"`
-	EntryPoints []string                     `json:"entryPoints,omitempty"`
+	// IngressClassName defines the name of the IngressClass cluster resource.
+	IngressClassName *string `json:"ingressClassName,omitempty"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteUDPApplyConfiguration `json:"routes,omitempty"`
 }
 
 // IngressRouteUDPSpecApplyConfiguration constructs a declarative configuration of the IngressRouteUDPSpec type for use with
 // apply.
 func IngressRouteUDPSpec() *IngressRouteUDPSpecApplyConfiguration {
 	return &IngressRouteUDPSpecApplyConfiguration{}
+}
+
+// WithIngressClassName sets the IngressClassName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the IngressClassName field is set to the value of the last call.
+func (b *IngressRouteUDPSpecApplyConfiguration) WithIngressClassName(value string) *IngressRouteUDPSpecApplyConfiguration {
+	b.IngressClassName = &value
+	return b
+}
+
+// WithEntryPoints adds the given value to the EntryPoints field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the EntryPoints field.
+func (b *IngressRouteUDPSpecApplyConfiguration) WithEntryPoints(values ...string) *IngressRouteUDPSpecApplyConfiguration {
+	for i := range values {
+		b.EntryPoints = append(b.EntryPoints, values[i])
+	}
+	return b
 }
 
 // WithRoutes adds the given value to the Routes field in the declarative configuration
@@ -48,16 +75,6 @@ func (b *IngressRouteUDPSpecApplyConfiguration) WithRoutes(values ...*RouteUDPAp
 			panic("nil value passed to WithRoutes")
 		}
 		b.Routes = append(b.Routes, *values[i])
-	}
-	return b
-}
-
-// WithEntryPoints adds the given value to the EntryPoints field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the EntryPoints field.
-func (b *IngressRouteUDPSpecApplyConfiguration) WithEntryPoints(values ...string) *IngressRouteUDPSpecApplyConfiguration {
-	for i := range values {
-		b.EntryPoints = append(b.EntryPoints, values[i])
 	}
 	return b
 }

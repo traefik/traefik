@@ -4,5 +4,6 @@ namespace API {
     Version: string
     disableDashboardAd: boolean
     startDate: string
+    dashboardName?: string
   }
 }

@@ -209,6 +209,85 @@ func TestHandler(t *testing.T) {
 				assert.NotContains(t, recorder.Body.String(), "Bearer secret")
 			},
 		},
+		{
+			desc: "nginx headers: backend status code preserved",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+				NginxHeaders: &http.Header{
+					"X-Namespaces":   {"default"},
+					"X-Ingress-Name": {"my-ingress"},
+					"X-Service-Name": {"my-service"},
+					"X-Service-Port": {"80"},
+				},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Error page backend returns 200 (the default when no WriteHeader is called).
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// In nginx mode, the error page backend's status code (200) is preserved,
+				// NOT overridden to the original error code (500).
+				assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
+		{
+			desc: "nginx headers: X-Code and nginx headers forwarded",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+				NginxHeaders: &http.Header{
+					"X-Namespaces":   {"default"},
+					"X-Ingress-Name": {"my-ingress"},
+					"X-Service-Name": {"my-service"},
+					"X-Service-Port": {"80"},
+				},
+			},
+			backendCode: http.StatusBadGateway,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Verify that nginx-specific headers are set on the request.
+				assert.Equal(t, "502", r.Header.Get("X-Code"))
+				assert.Equal(t, "default", r.Header.Get("X-Namespaces"))
+				assert.Equal(t, "my-ingress", r.Header.Get("X-Ingress-Name"))
+				assert.Equal(t, "my-service", r.Header.Get("X-Service-Name"))
+				assert.Equal(t, "80", r.Header.Get("X-Service-Port"))
+				assert.Equal(t, "/test?foo=bar&baz=buz", r.Header.Get("X-Original-Uri"))
+				// Return a custom status code.
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = fmt.Fprintln(w, "Custom 404 page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// Backend's chosen status code (404) is preserved in nginx mode.
+				assert.Equal(t, http.StatusNotFound, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom 404 page.")
+			},
+		},
+		{
+			desc: "non-nginx: code modifier enforces original error code",
+			errorPage: &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-599"},
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Error page backend returns 200 (the default).
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				// Without nginx headers, newCodeModifier enforces the original error code (500),
+				// even though the error page backend returned 200.
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -333,4 +412,90 @@ type mockServiceBuilder struct {
 
 func (m *mockServiceBuilder) BuildHTTP(_ context.Context, _ string) (http.Handler, error) {
 	return m.handler, nil
+}
+
+func TestHandlerURLPlaceholder(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		target         string
+		forwardedProto string
+		expected       string
+	}{
+		{
+			desc:     "uses https for TLS requests",
+			target:   "https://whoami.domain.com/api",
+			expected: "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "uses forwarded https scheme",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "https",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "normalizes forwarded websocket scheme to http",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "ws",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "normalizes forwarded websocket TLS scheme to https",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "wss",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "ignores invalid forwarded scheme",
+			target:         "http://whoami.domain.com/api",
+			forwardedProto: "ftp",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "ignores invalid forwarded scheme for TLS requests",
+			target:         "https://whoami.domain.com/api",
+			forwardedProto: "ftp",
+			expected:       "/?url=https%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+		{
+			desc:           "uses forwarded http scheme for TLS requests",
+			target:         "https://whoami.domain.com/api",
+			forwardedProto: "http",
+			expected:       "/?url=http%3A%2F%2Fwhoami.domain.com%2Fapi",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var gotRequestURI string
+			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotRequestURI = r.RequestURI
+				w.WriteHeader(http.StatusOK)
+			})}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			})
+
+			errorPage := dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/?url={url}",
+				Status:  []string{"500"},
+			}
+
+			handler, err := New(t.Context(), next, errorPage, serviceBuilderMock, "test")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, test.target, nil)
+			if test.forwardedProto != "" {
+				req.Header.Set(xForwardedProto, test.forwardedProto)
+			}
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expected, gotRequestURI)
+		})
+	}
 }

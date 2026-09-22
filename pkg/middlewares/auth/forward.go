@@ -62,6 +62,7 @@ type forwardAuth struct {
 	maxBodySize              int64
 	preserveLocationHeader   bool
 	preserveRequestMethod    bool
+	authSigninURL            string
 }
 
 // NewForward creates a forward auth middleware.
@@ -87,6 +88,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
 		preserveLocationHeader:   config.PreserveLocationHeader,
 		preserveRequestMethod:    config.PreserveRequestMethod,
+		authSigninURL:            config.AuthSigninURL,
 	}
 
 	if config.MaxBodySize != nil {
@@ -269,6 +271,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL.
+	if fa.authSigninURL != "" && forwardResponse.StatusCode == http.StatusUnauthorized {
+		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
+
+		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
+		http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
+		return
+	}
+
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
@@ -300,6 +311,14 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Only the operator-listed authResponseHeaders are stripped and replaced with
+	// the auth server's verified values. Any other header the client sends is
+	// forwarded to the backend unchanged, mirroring ingress-nginx's
+	// auth-response-headers semantics. By design, Traefik asserts no identity the
+	// operator did not opt into: trusting unlisted client headers downstream is a
+	// backend misconfiguration, not a spoofing flaw here.
+	// Note: the header names aliasing the authResponseHeaders (e.g. X_Auth_User or X.Auth.User) are not handled here,
+	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 	for _, headerName := range fa.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
