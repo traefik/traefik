@@ -22,7 +22,7 @@ func EnsureUserEnvVar() error {
 	return nil
 }
 
-// We only derive the base resource once so as to not repeatedly bug the OS, runtime, and k8s.
+// We only detect the base resource once.
 var detectedResource = sync.OnceValues(func() (*resource.Resource, error) {
 	return resource.New(context.Background(),
 		resource.WithContainer(),
@@ -34,9 +34,9 @@ var detectedResource = sync.OnceValues(func() (*resource.Resource, error) {
 	)
 })
 
-// NewOTelResource builds the OpenTelemetry resource. Detection runs once per process.
-// serviceName, then attrs, then the OTEL_ environment variables override the detected
-// resource attributes.
+// NewOTelResource builds the OpenTelemetry resource.
+// Detection runs once per process.
+// serviceName, then attrs, then the OTEL_ environment variables override the detected resource attributes.
 func NewOTelResource(ctx context.Context, serviceName string, attrs map[string]string) (*resource.Resource, error) {
 	var resAttrs []attribute.KeyValue
 	for k, v := range attrs {

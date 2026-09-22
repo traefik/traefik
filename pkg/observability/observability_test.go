@@ -12,19 +12,13 @@ import (
 )
 
 func TestNewOTelResource(t *testing.T) {
-	res, err := NewOTelResource(context.Background(), "traefik", map[string]string{"foo": "bar"})
+	res, err := NewOTelResource(context.Background(), "traefik", map[string]string{"foo": "bar", "host.name": "custom"})
 	require.NoError(t, err)
 
 	attrs := res.Attributes()
 	assert.Contains(t, attrs, semconv.ServiceName("traefik"))
 	assert.Contains(t, attrs, semconv.ServiceVersion(version.Version))
 	assert.Contains(t, attrs, attribute.String("foo", "bar"))
-}
-
-func TestNewOTelResource_attributesOverrideDetectors(t *testing.T) {
-	res, err := NewOTelResource(context.Background(), "traefik", map[string]string{"host.name": "custom"})
-	require.NoError(t, err)
-
 	assert.Contains(t, res.Attributes(), semconv.HostName("custom"))
 }
 
