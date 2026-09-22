@@ -1,16 +1,97 @@
 package metrics
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	metricsregistry "github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"google.golang.org/grpc/codes"
 )
+
+func TestMetricsMiddleware_ResponseAborted(t *testing.T) {
+	for _, abort := range []bool{false, true} {
+		name := "completed"
+		if abort {
+			name = "aborted"
+		}
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			requests := &CollectingCounter{}
+			requestBytes := &CollectingCounter{}
+			responseBytes := &CollectingCounter{}
+			duration := &collectingHistogram{}
+			middleware := &metricsMiddleware{
+				next: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					_, err := io.Copy(io.Discard, req.Body)
+					require.NoError(t, err)
+					rw.WriteHeader(http.StatusOK)
+					_, err = io.WriteString(rw, "chunk")
+					require.NoError(t, err)
+					if abort {
+						panic(http.ErrAbortHandler)
+					}
+				}),
+				reqsCounter:          metricsregistry.NewCounterWithNoopHeaders(requests),
+				reqDurationHistogram: duration,
+				reqsBytesCounter:     requestBytes,
+				respsBytesCounter:    responseBytes,
+				baseLabels:           []string{"service", "test"},
+			}
+			handler, err := capture.Wrap(middleware)
+			require.NoError(t, err)
+			ctx := observability.WithObservability(t.Context(), observability.Observability{MetricsEnabled: true})
+			req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/", strings.NewReader("request"))
+			rw := httptest.NewRecorder()
+
+			if abort {
+				assert.PanicsWithValue(t, http.ErrAbortHandler, func() { handler.ServeHTTP(rw, req) })
+			} else {
+				assert.NotPanics(t, func() { handler.ServeHTTP(rw, req) })
+			}
+
+			labels := []string{"service", "test", "method", "POST", "protocol", "http", "code", "200"}
+			assert.InDelta(t, 1, requests.CounterValue, 0.001)
+			assert.Equal(t, labels, requests.LastLabelValues)
+			assert.InDelta(t, 7, requestBytes.CounterValue, 0.001)
+			assert.Equal(t, labels, requestBytes.LastLabelValues)
+			assert.InDelta(t, 5, responseBytes.CounterValue, 0.001)
+			assert.Equal(t, labels, responseBytes.LastLabelValues)
+			assert.Equal(t, 1, duration.observations)
+			assert.Equal(t, labels, duration.labels)
+			assert.Equal(t, http.StatusOK, rw.Code)
+			assert.Equal(t, "chunk", rw.Body.String())
+		})
+	}
+}
+
+type collectingHistogram struct {
+	observations int
+	labels       []string
+}
+
+func (h *collectingHistogram) With(labels ...string) metricsregistry.ScalableHistogram {
+	h.labels = labels
+	return h
+}
+
+func (h *collectingHistogram) Observe(float64) {
+	h.observations++
+}
+
+func (h *collectingHistogram) ObserveFromStart(start time.Time) {
+	h.Observe(time.Since(start).Seconds())
+}
 
 // CollectingCounter is a metrics.Counter implementation that enables access to the CounterValue and LastLabelValues.
 type CollectingCounter struct {

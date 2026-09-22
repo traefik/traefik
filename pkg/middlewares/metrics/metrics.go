@@ -171,18 +171,21 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	start := time.Now()
+	// Proxies abort incomplete responses with a panic, which must not skip metrics.
+	defer func() {
+		code := capt.StatusCode()
+		if proto == protoGRPC || proto == protoGRPCWeb {
+			code = grpcStatusCode(rw)
+		}
+
+		labels = append(labels, "code", strconv.Itoa(code))
+		m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
+		m.reqsCounter.With(req.Header, labels...).Add(1)
+		m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
+		m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
+	}()
+
 	next.ServeHTTP(rw, req)
-
-	code := capt.StatusCode()
-	if proto == protoGRPC || proto == protoGRPCWeb {
-		code = grpcStatusCode(rw)
-	}
-
-	labels = append(labels, "code", strconv.Itoa(code))
-	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
-	m.reqsCounter.With(req.Header, labels...).Add(1)
-	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
-	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
