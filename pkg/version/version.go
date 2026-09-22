@@ -3,10 +3,9 @@ package version
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"time"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v90/github"
 	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/rs/zerolog/log"
@@ -24,6 +23,8 @@ var (
 	StartDate = time.Now()
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
+	// DashboardName holds the custom name for the dashboard.
+	DashboardName = ""
 )
 
 // Handler expose version routes.
@@ -43,11 +44,13 @@ func (v Handler) Append(router *mux.Router) {
 				StartDate          time.Time `json:"startDate"`
 				UUID               string    `json:"uuid,omitempty"`
 				DisableDashboardAd bool      `json:"disableDashboardAd,omitempty"`
+				DashboardName      string    `json:"dashboardName,omitempty"`
 			}{
 				Version:            Version,
 				Codename:           Codename,
 				StartDate:          StartDate,
 				DisableDashboardAd: DisableDashboardAd,
+				DashboardName:      DashboardName,
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {
@@ -62,14 +65,13 @@ func CheckNewVersion() {
 		return
 	}
 
-	client := github.NewClient(nil)
+	updateURL := "https://update.traefik.io/"
 
-	updateURL, err := url.Parse("https://update.traefik.io/")
+	client, err := github.NewClient(github.WithURLs(&updateURL, nil))
 	if err != nil {
 		log.Warn().Err(err).Msg("Error checking new version")
 		return
 	}
-	client.BaseURL = updateURL
 
 	releases, resp, err := client.Repositories.ListReleases(context.Background(), "traefik", "traefik", nil)
 	if err != nil {
@@ -89,7 +91,7 @@ func CheckNewVersion() {
 	}
 
 	for _, release := range releases {
-		releaseVersion, err := goversion.NewVersion(*release.TagName)
+		releaseVersion, err := goversion.NewVersion(release.TagName)
 		if err != nil {
 			log.Warn().Err(err).Msg("Error checking new version")
 			return

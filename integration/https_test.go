@@ -31,6 +31,41 @@ func TestHTTPSSuite(t *testing.T) {
 	suite.Run(t, &HTTPSSuite{})
 }
 
+// TestWithWildcardHost verifies that a wildcard Host rule Host(`*.snitest.com`)
+// routes HTTPS requests for any matching subdomain to the configured service.
+func (s *SimpleSuite) TestWithWildcardHost() {
+	backend := startTestServer("9040", http.StatusOK, "")
+	defer backend.Close()
+
+	file := s.adaptFile("fixtures/https/https_wildcard_host.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to load the wildcard router.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
+		try.BodyContains("Host(`*.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	// foo.snitest.com matches the wildcard and must be routed to the backend.
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "foo.snitest.com"
+	err = try.RequestWithTransport(req, 5*time.Second, tr, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+
+	// bar.snitest.com also matches the wildcard and must be routed to the backend.
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "bar.snitest.com"
+	err = try.RequestWithTransport(req, 3*time.Second, tr, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+}
+
 // TestWithSNIConfigHandshake involves a client sending a SNI hostname of
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
@@ -258,8 +293,71 @@ func (s *HTTPSSuite) TestWithTLSOptions() {
 	require.NoError(s.T(), err)
 }
 
-// TestWithConflictingTLSOptions checks that routers with same SNI but different TLS options get fallbacked to the default TLS options.
+func (s *HTTPSSuite) TestWithTLSOptionsAndWildcard() {
+	backend := startTestServer("0", http.StatusNoContent, "")
+	defer backend.Close()
 
+	err := try.GetRequest(backend.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	file := s.adaptFile("fixtures/https/https_wildcard_tls_options.toml", struct{ BackendURL string }{backend.URL})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`*.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	tr1 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS12,
+			MinVersion:         tls.VersionTLS12,
+			ServerName:         "bar.snitest.com",
+		},
+	}
+
+	tr2 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS13,
+			MinVersion:         tls.VersionTLS13,
+			ServerName:         "foo.snitest.com",
+		},
+	}
+
+	tr3 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS11,
+			MinVersion:         tls.VersionTLS11,
+			ServerName:         "other.snitest.com",
+		},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr1.TLSClientConfig.ServerName
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr2.TLSClientConfig.ServerName
+
+	err = try.RequestWithTransport(req, 3*time.Second, tr2, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	require.NoError(s.T(), err)
+	req.Host = tr3.TLSClientConfig.ServerName
+
+	err = try.RequestWithTransport(req, 3*time.Second, tr3, try.StatusCodeIs(http.StatusNoContent))
+	require.NoError(s.T(), err)
+}
+
+// TestWithConflictingTLSOptions checks that routers with same SNI but different TLS options get fallbacked to the
+// default TLS options.
 func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	file := s.adaptFile("fixtures/https/https_tls_options.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -317,14 +415,13 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions() {
 	assert.ErrorContains(s.T(), err, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	// with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("found different TLS options for routers on the same host, so using the default TLS options instead"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host, default TLS options will be used instead"))
 	require.NoError(s.T(), err)
 }
 
 // TestWithSNIStrictNotMatchedRequest involves a client sending a SNI hostname of
 // "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik closes the connection.
-
 func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest() {
 	file := s.adaptFile("fixtures/https/https_sni_strict.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -346,7 +443,6 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest() {
 // TestWithDefaultCertificate involves a client sending a SNI hostname of
 // "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik returns the default certificate.
-
 func (s *HTTPSSuite) TestWithDefaultCertificate() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -378,7 +474,6 @@ func (s *HTTPSSuite) TestWithDefaultCertificate() {
 // TestWithDefaultCertificateNoSNI involves a client sending a request with no ServerName
 // which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik returns the default certificate.
-
 func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -406,11 +501,10 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI() {
 	assert.Equal(s.T(), "h2", proto)
 }
 
-// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// TestWithOverlappingStaticCertificate involves a client sending a SNI hostname of
 // "www.snitest.com", which matches the CN of two static certificates:
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
 // verifies that traefik returns the non-wildcard certificate.
-
 func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 	file := s.adaptFile("fixtures/https/https_sni_default_cert.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -439,11 +533,10 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate() {
 	assert.Equal(s.T(), "h2", proto)
 }
 
-// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// TestWithOverlappingDynamicCertificate involves a client sending a SNI hostname of
 // "www.snitest.com", which matches the CN of two dynamic certificates:
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
 // verifies that traefik returns the non-wildcard certificate.
-
 func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 	file := s.adaptFile("fixtures/https/dynamic_https_sni_default_cert.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -472,9 +565,8 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate() {
 	assert.Equal(s.T(), "h2", proto)
 }
 
-// TestWithClientCertificateAuthentication
-// The client can send a certificate signed by a CA trusted by the server but it's optional.
-
+// TestWithClientCertificateAuthentication tests that a client can send a certificate signed by a CA trusted by the server
+// but it's optional.
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication() {
 	file := s.adaptFile("fixtures/https/clientca/https_1ca1config.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -526,9 +618,8 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication() {
 	assert.NoError(s.T(), err, "should be allowed to connect to server")
 }
 
-// TestWithClientCertificateAuthentication
-// Use two CA:s and test that clients with client signed by either of them can connect.
-
+// TestWithClientCertificateAuthenticationMultipleCAs uses two CA:s
+// and test that clients with client signed by either of them can connect.
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
 	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
@@ -619,9 +710,8 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 	assert.Error(s.T(), err)
 }
 
-// TestWithClientCertificateAuthentication
-// Use two CA:s in two different files and test that clients with client signed by either of them can connect.
-
+// TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles uses two CA:s in two different files
+// and test that clients with client signed by either of them can connect.
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles() {
 	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
 	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
@@ -830,7 +920,6 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange() {
 // that traefik updates its configuration when the HTTPS configuration is modified and
 // it routes the requests to the expected backends thanks to given certificate if possible
 // otherwise thanks to the default one.
-
 func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange() {
 	dynamicConfFileName := s.adaptFile("fixtures/https/dynamic_https.toml", struct{}{})
 	confFileName := s.adaptFile("fixtures/https/dynamic_https_sni.toml", struct {
@@ -895,7 +984,6 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange() {
 // that traefik updates its configuration when the HTTPS configuration is modified, even if it totally deleted, and
 // it routes the requests to the expected backends thanks to given certificate if possible
 // otherwise thanks to the default one.
-
 func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion() {
 	dynamicConfFileName := s.adaptFile("fixtures/https/dynamic_https.toml", struct{}{})
 	confFileName := s.adaptFile("fixtures/https/dynamic_https_sni.toml", struct {
@@ -1174,6 +1262,153 @@ func (s *HTTPSSuite) TestWithDomainFronting() {
 	}
 }
 
+// TestWithTLSOptionsConflict checks how TLS options are resolved when several routers
+// target the same host (SNI), across the different conflict situations:
+//   - same options on the same entryPoint: no conflict, the options are applied;
+//   - different options on the same entryPoint: conflict, fallback to the default options;
+//   - different options on different entryPoints: no conflict, each entryPoint keeps its
+//     own options (they are selected independently on each listener);
+//   - domain fronting (Host header != SNI): allowed when both resolve to the same options,
+//     rejected with a 421 otherwise.
+//
+// The effective TLS options are probed through the negotiated TLS version: the "tls12"
+// options cap the version to TLS 1.2, while the "tls13" options require at least TLS 1.3.
+func (s *HTTPSSuite) TestWithTLSOptionsConflict() {
+	backend := startTestServer("9010", http.StatusOK, "server1")
+	defer backend.Close()
+
+	file := s.adaptFile("fixtures/https/https_tls_options_conflict.toml", struct{}{})
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for Traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`cross.www.snitest.com`)"))
+	require.NoError(s.T(), err)
+
+	testCases := []struct {
+		desc       string
+		addr       string // entryPoint address to reach
+		hostHeader string
+		serverName string // SNI
+		minVersion uint16 // 0 means the crypto/tls library default
+		maxVersion uint16 // 0 means the crypto/tls library default
+		// expectHandshakeError is set when the TLS handshake itself is expected to fail
+		// (i.e. the probed options reject the client's TLS version). Otherwise
+		// expectedStatusCode is asserted on the HTTP response.
+		expectHandshakeError bool
+		expectedStatusCode   int
+	}{
+		// Same host, same options, same entryPoint: no conflict, the "tls12" options are applied.
+		{
+			desc:               "same options / same entryPoint: TLS 1.2 client is accepted",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "same.www.snitest.com",
+			serverName:         "same.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:                 "same options / same entryPoint: TLS 1.3 client is rejected (maxVersion TLS1.2 enforced)",
+			addr:                 "127.0.0.1:4443",
+			hostHeader:           "same.www.snitest.com",
+			serverName:           "same.www.snitest.com",
+			minVersion:           tls.VersionTLS13,
+			expectHandshakeError: true,
+		},
+
+		// Same host, different options, same entryPoint: conflict, both routers fall back to the default options.
+		{
+			desc:               "conflicting options / same entryPoint: TLS 1.3 client is accepted (default options used)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "conflict.www.snitest.com",
+			serverName:         "conflict.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "conflicting options / same entryPoint: TLS 1.2 client is accepted (default options used)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "conflict.www.snitest.com",
+			serverName:         "conflict.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+
+		// Same host, different options, different entryPoints: no conflict, each entryPoint keeps its own options.
+		{
+			desc:               "different entryPoints: websecure keeps tls12, TLS 1.2 client is accepted",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "cross.www.snitest.com",
+			serverName:         "cross.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:                 "different entryPoints: websecure keeps tls12, TLS 1.3 client is rejected",
+			addr:                 "127.0.0.1:4443",
+			hostHeader:           "cross.www.snitest.com",
+			serverName:           "cross.www.snitest.com",
+			minVersion:           tls.VersionTLS13,
+			expectHandshakeError: true,
+		},
+		{
+			desc:               "different entryPoints: websecure2 keeps tls13, TLS 1.3 client is accepted",
+			addr:               "127.0.0.1:4444",
+			hostHeader:         "cross.www.snitest.com",
+			serverName:         "cross.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:                 "different entryPoints: websecure2 keeps tls13, TLS 1.2 client is rejected",
+			addr:                 "127.0.0.1:4444",
+			hostHeader:           "cross.www.snitest.com",
+			serverName:           "cross.www.snitest.com",
+			maxVersion:           tls.VersionTLS12,
+			expectHandshakeError: true,
+		},
+
+		// Domain fronting (Host header != SNI) on the same entryPoint.
+		{
+			desc:               "domain fronting / same options: request follows the Host header (200)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "df-a.www.snitest.com",
+			serverName:         "df-b.www.snitest.com",
+			maxVersion:         tls.VersionTLS12,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "domain fronting / different options: request is misdirected (421)",
+			addr:               "127.0.0.1:4443",
+			hostHeader:         "df-a.www.snitest.com",
+			serverName:         "df-c.www.snitest.com",
+			minVersion:         tls.VersionTLS13,
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         test.serverName,
+			MinVersion:         test.minVersion,
+			MaxVersion:         test.maxVersion,
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "https://"+test.addr+"/", nil)
+		require.NoError(s.T(), err)
+		req.Host = test.hostHeader
+
+		if test.expectHandshakeError {
+			_, err = (&http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}).Do(req)
+			assert.ErrorContains(s.T(), err, "tls:", "test %q should fail the TLS handshake", test.desc)
+			continue
+		}
+
+		err = try.RequestWithTransport(req, 2*time.Second, &http.Transport{TLSClientConfig: tlsConfig}, try.StatusCodeIs(test.expectedStatusCode))
+		assert.NoError(s.T(), err, "test %q failed with: %v", test.desc, err)
+	}
+}
+
 // TestWithInvalidTLSOption verifies the behavior when using an invalid tlsOption configuration.
 func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 	backend := startTestServer("9010", http.StatusOK, "server1")
@@ -1217,7 +1452,7 @@ func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 	}
 }
 
-// modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
+// modifyCertificateConfFileContent replaces the content of an HTTPS configuration file.
 func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName string) {
 	file, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
 	require.NoError(s.T(), err)

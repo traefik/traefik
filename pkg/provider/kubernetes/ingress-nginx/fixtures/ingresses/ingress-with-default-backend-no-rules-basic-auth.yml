@@ -1,0 +1,30 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-default-backend-no-rules-basic-auth
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret-type: "auth-file"
+    nginx.ingress.kubernetes.io/auth-secret: "default/basic-auth"
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: whoami
+      port:
+        number: 80
+
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: basic-auth
+  namespace: default
+type: Opaque
+data:
+  # user:password
+  auth: dXNlcjp7U0hBfVc2cGg1TW01UHo4R2dpVUxiUGd6RzM3bWo5Zz0=

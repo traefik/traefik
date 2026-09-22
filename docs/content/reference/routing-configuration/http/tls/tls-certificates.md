@@ -64,6 +64,13 @@ In Traefik, certificates are grouped together in certificates stores.
     Any store definition other than the default one (named `default`) will be ignored,
     and there is therefore only one globally available TLS store.
 
+!!! important "TLSStore in Kubernetes"
+
+    With the [TLSStore resource](../../kubernetes/crd/tls/tlsstore.md), the store named `default` applies to every entry point,
+    whatever the namespace it is defined in.
+    The [`defaultTLSResourcesNamespace`](../../../install-configuration/providers/kubernetes/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide store can be defined in.
+
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
 
 ```yaml tab="Structured (YAML)"

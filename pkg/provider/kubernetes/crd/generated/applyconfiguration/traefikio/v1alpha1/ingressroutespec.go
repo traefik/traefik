@@ -28,17 +28,49 @@ package v1alpha1
 
 // IngressRouteSpecApplyConfiguration represents a declarative configuration of the IngressRouteSpec type for use
 // with apply.
+//
+// IngressRouteSpec defines the desired state of IngressRoute.
 type IngressRouteSpecApplyConfiguration struct {
-	Routes      []RouteApplyConfiguration           `json:"routes,omitempty"`
-	EntryPoints []string                            `json:"entryPoints,omitempty"`
-	TLS         *TLSApplyConfiguration              `json:"tls,omitempty"`
-	ParentRefs  []IngressRouteRefApplyConfiguration `json:"parentRefs,omitempty"`
+	// IngressClassName defines the name of the IngressClass cluster resource.
+	IngressClassName *string `json:"ingressClassName,omitempty"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteApplyConfiguration `json:"routes,omitempty"`
+	// TLS defines the TLS configuration.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#tls
+	TLS *TLSApplyConfiguration `json:"tls,omitempty"`
+	// ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
+	// When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
+	// More info: https://doc.traefik.io/traefik/v3.7/routing/routers/#parentrefs
+	ParentRefs []IngressRouteRefApplyConfiguration `json:"parentRefs,omitempty"`
 }
 
 // IngressRouteSpecApplyConfiguration constructs a declarative configuration of the IngressRouteSpec type for use with
 // apply.
 func IngressRouteSpec() *IngressRouteSpecApplyConfiguration {
 	return &IngressRouteSpecApplyConfiguration{}
+}
+
+// WithIngressClassName sets the IngressClassName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the IngressClassName field is set to the value of the last call.
+func (b *IngressRouteSpecApplyConfiguration) WithIngressClassName(value string) *IngressRouteSpecApplyConfiguration {
+	b.IngressClassName = &value
+	return b
+}
+
+// WithEntryPoints adds the given value to the EntryPoints field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the EntryPoints field.
+func (b *IngressRouteSpecApplyConfiguration) WithEntryPoints(values ...string) *IngressRouteSpecApplyConfiguration {
+	for i := range values {
+		b.EntryPoints = append(b.EntryPoints, values[i])
+	}
+	return b
 }
 
 // WithRoutes adds the given value to the Routes field in the declarative configuration
@@ -50,16 +82,6 @@ func (b *IngressRouteSpecApplyConfiguration) WithRoutes(values ...*RouteApplyCon
 			panic("nil value passed to WithRoutes")
 		}
 		b.Routes = append(b.Routes, *values[i])
-	}
-	return b
-}
-
-// WithEntryPoints adds the given value to the EntryPoints field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the EntryPoints field.
-func (b *IngressRouteSpecApplyConfiguration) WithEntryPoints(values ...string) *IngressRouteSpecApplyConfiguration {
-	for i := range values {
-		b.EntryPoints = append(b.EntryPoints, values[i])
 	}
 	return b
 }

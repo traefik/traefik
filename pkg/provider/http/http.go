@@ -25,6 +25,9 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
+// ProviderName is the http provider name.
+const ProviderName = "http"
+
 const defaultMaxResponseBodySize = -1
 
 // Provider is a provider.Provider implementation that queries an HTTP(s) endpoint for a configuration.
@@ -78,7 +81,7 @@ func (p *Provider) Init() error {
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, "http").Logger()
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, ProviderName).Logger()
 		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {

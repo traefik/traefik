@@ -5,11 +5,11 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/dynamic/ext"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -28,12 +28,16 @@ const (
 	MirroringDefaultMirrorBody = true
 	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
 	MirroringDefaultMaxBodySize int64 = -1
+	// FailoverErrorsDefaultMaxRequestBodyBytes is the Failover.Errors.MaxBodySize option default value.
+	FailoverErrorsDefaultMaxRequestBodyBytes int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
 
 // HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
+	ext.HTTP `yaml:",inline"`
+
 	Routers           map[string]*Router           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
 	Services          map[string]*Service          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	Middlewares       map[string]*Middleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
@@ -56,17 +60,34 @@ type Model struct {
 
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
+	Middlewares         []string             `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	LoadBalancer        *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
 	HighestRandomWeight *HighestRandomWeight `json:"highestRandomWeight,omitempty" toml:"highestRandomWeight,omitempty" yaml:"highestRandomWeight,omitempty" label:"-" export:"true"`
 	Weighted            *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 	Mirroring           *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
 	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
+	// Observability carries provider-populated metadata surfaced per request
+	// in access logs and future metric labels. Mirrors the Router.Observability
+	// shape. Not user-configurable.
+	Observability *ServiceObservabilityConfig `json:"observability,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// Merge merges another Service into this one.
+// Returns true if the merge succeeds, false if configurations conflict.
+func (s *Service) Merge(other *Service) bool {
+	if s.LoadBalancer == nil || other.LoadBalancer == nil {
+		return reflect.DeepEqual(s, other)
+	}
+
+	return s.LoadBalancer.Merge(other.LoadBalancer)
 }
 
 // +k8s:deepcopy-gen=true
 
 // Router holds the router configuration.
 type Router struct {
+	ext.Router `yaml:",inline"`
+
 	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
 	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
@@ -131,10 +152,12 @@ func (r *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
 
 // RouterTLSConfig holds the TLS configuration for a router.
 type RouterTLSConfig struct {
-	Options         string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
-	ResolvedOptions string         `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
-	CertResolver    string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
-	Domains         []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
+	Options         string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
+	ResolvedOptions string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	// ConflictingOptions is set when the router conflicts with another router configured with different TLS options for the same host.
+	ConflictingOptions bool           `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	CertResolver       string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
+	Domains            []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -151,11 +174,57 @@ type RouterObservabilityConfig struct {
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
 	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+
+	// Metadata holds the metadata for this router.
+	// Metadata cannot be user-defined for now.
+	Metadata *ObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
 	r.TraceVerbosity = otypes.MinimalVerbosity
+}
+
+// +k8s:deepcopy-gen=true
+
+// ObservabilityMetadata holds the observability metadata configuration.
+type ObservabilityMetadata struct {
+	Ingress *KubernetesMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// KubernetesMetadata holds the Kubernetes Ingress metadata.
+type KubernetesMetadata struct {
+	Namespace string `json:"namespace,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Kind      string `json:"kind,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ServiceObservabilityConfig holds the observability configuration of a service.
+type ServiceObservabilityConfig struct {
+	// Metadata carries provider-populated identity for the leaf service.
+	Metadata *ServiceObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ServiceObservabilityMetadata carries provider-populated identity for a leaf service.
+type ServiceObservabilityMetadata struct {
+	Kubernetes *KubernetesServiceMetadata `json:"kubernetes,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// KubernetesServiceMetadata holds the Kubernetes Service identity backing a
+// leaf load balancer (name, namespace and port after cross-namespace resolution).
+// Populated by Kubernetes providers.
+type KubernetesServiceMetadata struct {
+	Namespace string `json:"namespace,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Port      string `json:"port,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -181,9 +250,23 @@ func (m *Mirroring) SetDefaults() {
 
 // Failover holds the Failover configuration.
 type Failover struct {
-	Service     string       `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Fallback    string       `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
-	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Service     string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Fallback    string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	HealthCheck *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// FailoverError holds errors configuration.
+type FailoverError struct {
+	MaxRequestBodyBytes *int64   `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	Status              []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (m *FailoverError) SetDefaults() {
+	m.MaxRequestBodyBytes = new(FailoverErrorsDefaultMaxRequestBodyBytes)
 }
 
 // +k8s:deepcopy-gen=true
@@ -300,6 +383,15 @@ type Cookie struct {
 	// Domain defines the host to which the cookie will be sent.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
 	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
+
+	// Expires defines the number of seconds to add to the current time to calculate the expiration date of the cookie.
+	// This option is exposed only for the Ingress NGINX provider.
+	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// PreserveLeadingDot defines whether a leading dot in the Domain attribute is written as-is in the Set-Cookie header,
+	// instead of being stripped as mandated by RFC 6265.
+	// This option is exposed only for the Ingress NGINX provider.
+	PreserveLeadingDot bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // SetDefaults set the default values for a Cookie.
@@ -338,10 +430,44 @@ type ServersLoadBalancer struct {
 	PassHostHeader     *bool                     `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
 	ResponseForwarding *ResponseForwarding       `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
+	// NginxUpstreamHashBy enables the customization of the hashing key.
+	// It can be set to a specific text value, a NGINX variable or a combination of both.
+	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
-// Mergeable tells if the given service is mergeable.
-func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool {
+// Merge merges the other load balancer into this one.
+// Returns true if merge succeeded, false if configurations conflict.
+func (l *ServersLoadBalancer) Merge(other *ServersLoadBalancer) bool {
+	if !l.mergeable(other) {
+		return false
+	}
+
+	// Deduplicate and append servers.
+	uniq := make(map[string]struct{}, len(l.Servers))
+	for _, server := range l.Servers {
+		uniq[server.URL] = struct{}{}
+	}
+	for _, server := range other.Servers {
+		if _, ok := uniq[server.URL]; !ok {
+			l.Servers = append(l.Servers, server)
+		}
+	}
+
+	return true
+}
+
+// SetDefaults Default values for a ServersLoadBalancer.
+func (l *ServersLoadBalancer) SetDefaults() {
+	l.PassHostHeader = new(DefaultPassHostHeader)
+
+	l.Strategy = BalancerStrategyWRR
+	l.ResponseForwarding = &ResponseForwarding{}
+	l.ResponseForwarding.SetDefaults()
+}
+
+// mergeable tells if the given service is mergeable.
+func (l *ServersLoadBalancer) mergeable(loadBalancer *ServersLoadBalancer) bool {
 	savedServers := l.Servers
 	defer func() {
 		l.Servers = savedServers
@@ -355,15 +481,6 @@ func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool 
 	loadBalancer.Servers = nil
 
 	return reflect.DeepEqual(l, loadBalancer)
-}
-
-// SetDefaults Default values for a ServersLoadBalancer.
-func (l *ServersLoadBalancer) SetDefaults() {
-	l.PassHostHeader = ptr.To(DefaultPassHostHeader)
-
-	l.Strategy = BalancerStrategyWRR
-	l.ResponseForwarding = &ResponseForwarding{}
-	l.ResponseForwarding.SetDefaults()
 }
 
 // +k8s:deepcopy-gen=true
@@ -416,7 +533,7 @@ type ServerHealthCheck struct {
 
 // SetDefaults Default values for a HealthCheck.
 func (h *ServerHealthCheck) SetDefaults() {
-	h.FollowRedirects = ptr.To(true)
+	h.FollowRedirects = new(true)
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
@@ -449,6 +566,9 @@ type ServersTransport struct {
 	InsecureSkipVerify  bool                    `description:"Disables SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
 	RootCAs             []types.FileOrContent   `description:"Defines a list of CA certificates used to validate server certificates." json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
 	Certificates        traefiktls.Certificates `description:"Defines a list of client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
+	CipherSuites        []string                `description:"Defines the cipher suites to use when contacting backend servers." json:"cipherSuites,omitempty" toml:"cipherSuites,omitempty" yaml:"cipherSuites,omitempty" export:"true"`
+	MinVersion          string                  `description:"Defines the minimum TLS version to use when contacting backend servers." json:"minVersion,omitempty" toml:"minVersion,omitempty" yaml:"minVersion,omitempty" export:"true"`
+	MaxVersion          string                  `description:"Defines the maximum TLS version to use when contacting backend servers." json:"maxVersion,omitempty" toml:"maxVersion,omitempty" yaml:"maxVersion,omitempty" export:"true"`
 	MaxIdleConnsPerHost int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used. If negative, disables connection reuse." json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts     `description:"Defines the timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2        bool                    `description:"Disables HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
@@ -475,6 +595,10 @@ type ForwardingTimeouts struct {
 	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself." json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
 	ReadIdleTimeout       ptypes.Duration `description:"The timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection. If zero, no health check is performed." json:"readIdleTimeout,omitempty" toml:"readIdleTimeout,omitempty" yaml:"readIdleTimeout,omitempty" export:"true"`
 	PingTimeout           ptypes.Duration `description:"The timeout after which the HTTP/2 connection will be closed if a response to ping is not received." json:"pingTimeout,omitempty" toml:"pingTimeout,omitempty" yaml:"pingTimeout,omitempty" export:"true"`
+
+	// related to NGINX provider
+	ReadTimeout  ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
+	WriteTimeout ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
 }
 
 // SetDefaults sets the default values.

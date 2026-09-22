@@ -14,7 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"k8s.io/utils/ptr"
 )
 
 func TestProvider_Init(t *testing.T) {
@@ -103,19 +102,19 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 		{
 			desc:                "should return an error response body is too long when maxResponseBodySize is 0",
 			statusCode:          http.StatusOK,
-			maxResponseBodySize: ptr.To(int64(0)),
+			maxResponseBodySize: new(int64(0)),
 			expErr:              require.Error,
 		},
 		{
 			desc:                "should return an error response body is too long when response is longer than maxResponseBodySize",
 			statusCode:          http.StatusOK,
-			maxResponseBodySize: ptr.To(int64(1)),
+			maxResponseBodySize: new(int64(1)),
 			expErr:              require.Error,
 		},
 		{
 			desc:                "should return the fetched configuration data when response is the same length with maxResponseBodySize",
 			statusCode:          http.StatusOK,
-			maxResponseBodySize: ptr.To(int64(2)),
+			maxResponseBodySize: new(int64(2)),
 			expData:             []byte("{}"),
 			expErr:              require.NoError,
 		},
