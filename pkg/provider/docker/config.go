@@ -245,7 +245,7 @@ func (p *DynConfBuilder) addServerTCP(ctx context.Context, container dockerData,
 	serverPort := loadBalancer.Servers[0].Port
 	loadBalancer.Servers[0].Port = ""
 
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	ip, port, err := p.getIPPort(ctx, container, serverPort, networktypes.TCP)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (p *DynConfBuilder) addServerUDP(ctx context.Context, container dockerData,
 	serverPort := loadBalancer.Servers[0].Port
 	loadBalancer.Servers[0].Port = ""
 
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	ip, port, err := p.getIPPort(ctx, container, serverPort, networktypes.UDP)
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 	serverPort := loadBalancer.Servers[0].Port
 	loadBalancer.Servers[0].Port = ""
 
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	ip, port, err := p.getIPPort(ctx, container, serverPort, networktypes.TCP)
 	if err != nil {
 		return err
 	}
@@ -324,14 +324,14 @@ func (p *DynConfBuilder) addServer(ctx context.Context, container dockerData, lo
 	return nil
 }
 
-func (p *DynConfBuilder) getIPPort(ctx context.Context, container dockerData, serverPort string) (string, string, error) {
+func (p *DynConfBuilder) getIPPort(ctx context.Context, container dockerData, serverPort string, protocol networktypes.IPProtocol) (string, string, error) {
 	logger := log.Ctx(ctx)
 
 	var ip, port string
 	usedBound := false
 
 	if p.UseBindPortIP {
-		portBinding, err := p.getPortBinding(container, serverPort)
+		portBinding, err := p.getPortBinding(container, serverPort, protocol)
 		switch {
 		case err != nil:
 			logger.Info().Msgf("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
@@ -424,11 +424,11 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 	return ""
 }
 
-func (p *DynConfBuilder) getPortBinding(container dockerData, serverPort string) (*networktypes.PortBinding, error) {
+func (p *DynConfBuilder) getPortBinding(container dockerData, serverPort string, protocol networktypes.IPProtocol) (*networktypes.PortBinding, error) {
 	port := getPort(container, serverPort)
 
 	for netPort, portBindings := range container.NetworkSettings.Ports {
-		if netPort.Port() == port && (netPort.Proto() == networktypes.TCP || netPort.Proto() == networktypes.UDP) {
+		if netPort.Port() == port && netPort.Proto() == protocol {
 			for _, p := range portBindings {
 				return &p, nil
 			}

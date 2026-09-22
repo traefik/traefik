@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	networktypes "github.com/moby/moby/api/types/network"
 	swarmtypes "github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -52,10 +54,23 @@ func (s *SwarmSuite) SetupSuite() {
 	dockerClient, err := testcontainers.NewDockerClientWithOpts(s.T().Context())
 	require.NoError(s.T(), err)
 	s.dockerClient = dockerClient
+	t := s.T()
+	t.Cleanup(func() {
+		assert.NoError(t, dockerClient.Close())
+	})
 
 	_, err = dockerClient.SwarmInit(s.T().Context(), client.SwarmInitOptions{})
-	if err != nil && !strings.Contains(err.Error(), "already part of a swarm") {
-		require.NoError(s.T(), err)
+	if err == nil {
+		// Only leave a swarm created by this suite, including when setup fails.
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			_, err := dockerClient.SwarmLeave(ctx, client.SwarmLeaveOptions{Force: true})
+			assert.NoError(t, err)
+		})
+	} else if !strings.Contains(err.Error(), "already part of a swarm") {
+		require.NoError(t, err)
 	}
 
 	// Host-mode published ports are only reported on the task, and Swarm only attaches
@@ -68,6 +83,16 @@ func (s *SwarmSuite) SetupSuite() {
 	})
 	require.NoError(s.T(), err)
 	s.overlayNetwork = networkCreated.ID
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		err := try.Do(10*time.Second, func() error {
+			_, err := dockerClient.NetworkRemove(ctx, networkCreated.ID, client.NetworkRemoveOptions{})
+			return err
+		})
+		assert.NoError(t, err)
+	})
 
 	for _, svc := range whoamiServices {
 		s.createWhoamiService(svc.name, svc.publishMode, svc.publishedPort)
@@ -79,17 +104,6 @@ func (s *SwarmSuite) SetupSuite() {
 }
 
 func (s *SwarmSuite) TearDownSuite() {
-	for _, svc := range whoamiServices {
-		_, _ = s.dockerClient.ServiceRemove(s.T().Context(), svc.name, client.ServiceRemoveOptions{})
-	}
-
-	if s.overlayNetwork != "" {
-		_ = try.Do(10*time.Second, func() error {
-			_, err := s.dockerClient.NetworkRemove(s.T().Context(), s.overlayNetwork, client.NetworkRemoveOptions{})
-			return err
-		})
-	}
-
 	s.BaseSuite.TearDownSuite()
 }
 
@@ -124,7 +138,7 @@ func (s *SwarmSuite) TestUseBindPortIP() {
 // createWhoamiService deploys a single-replica traefik/whoami service publishing
 // container port 80 in the given mode, with a Traefik router keyed on the service name.
 func (s *SwarmSuite) createWhoamiService(name string, publishMode swarmtypes.PortConfigPublishMode, publishedPort uint32) {
-	_, err := s.dockerClient.ServiceCreate(s.T().Context(), client.ServiceCreateOptions{
+	created, err := s.dockerClient.ServiceCreate(s.T().Context(), client.ServiceCreateOptions{
 		Spec: swarmtypes.ServiceSpec{
 			Annotations: swarmtypes.Annotations{
 				Name: name,
@@ -154,6 +168,14 @@ func (s *SwarmSuite) createWhoamiService(name string, publishMode swarmtypes.Por
 		},
 	})
 	require.NoError(s.T(), err)
+	t := s.T()
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		_, err := s.dockerClient.ServiceRemove(ctx, created.ID, client.ServiceRemoveOptions{})
+		assert.NoError(t, err)
+	})
 }
 
 func (s *SwarmSuite) waitServiceRunning(name string) {

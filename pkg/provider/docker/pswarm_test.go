@@ -10,6 +10,7 @@ import (
 	swarmtypes "github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 func TestListTasks(t *testing.T) {
@@ -575,5 +576,86 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 				assert.Equal(t, expected.NetworkSettings.Ports, taskDockerData.NetworkSettings.Ports)
 			}
 		})
+	}
+}
+
+func TestSwarmProvider_publishedPortProtocol(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		protocols     []networktypes.IPProtocol
+		useBindPortIP bool
+		tcpAddress    string
+		udpAddress    string
+	}{
+		{
+			desc:          "TCP and UDP published on the same target port",
+			protocols:     []networktypes.IPProtocol{networktypes.TCP, networktypes.UDP},
+			useBindPortIP: true,
+			tcpAddress:    "192.0.2.1:30080",
+			udpAddress:    "192.0.2.1:30081",
+		},
+		{
+			desc:          "only TCP published",
+			protocols:     []networktypes.IPProtocol{networktypes.TCP},
+			useBindPortIP: true,
+			tcpAddress:    "192.0.2.1:30080",
+			udpAddress:    "10.0.0.2:80",
+		},
+		{
+			desc:          "only UDP published",
+			protocols:     []networktypes.IPProtocol{networktypes.UDP},
+			useBindPortIP: true,
+			tcpAddress:    "10.0.0.2:80",
+			udpAddress:    "192.0.2.1:30081",
+		},
+		{
+			desc:       "useBindPortIP disabled",
+			protocols:  []networktypes.IPProtocol{networktypes.TCP, networktypes.UDP},
+			tcpAddress: "10.0.0.2:80",
+			udpAddress: "10.0.0.2:80",
+		},
+	}
+
+	for _, mode := range []swarmtypes.PortConfigPublishMode{swarmtypes.PortConfigPublishModeIngress, swarmtypes.PortConfigPublishModeHost} {
+		for _, test := range testCases {
+			t.Run(string(mode)+"/"+test.desc, func(t *testing.T) {
+				t.Parallel()
+
+				var publishedPorts []swarmtypes.PortConfig
+				for _, protocol := range test.protocols {
+					publishedPort := uint32(30080)
+					if protocol == networktypes.UDP {
+						publishedPort = 30081
+					}
+					publishedPorts = append(publishedPorts, swarmtypes.PortConfig{
+						Protocol: protocol, TargetPort: 80, PublishedPort: publishedPort, PublishMode: mode,
+					})
+				}
+
+				var endpointPorts, taskPorts []swarmtypes.PortConfig
+				if mode == swarmtypes.PortConfigPublishModeIngress {
+					endpointPorts = publishedPorts
+				} else {
+					taskPorts = publishedPorts
+				}
+				container := dockerData{NetworkSettings: networkSettings{
+					Ports:    bindPortsFromEndpoint(t.Context(), "192.0.2.1", endpointPorts, taskPorts),
+					Networks: map[string]*networkData{"overlay": {Addr: "10.0.0.2"}},
+				}}
+				builder := NewDynConfBuilder(Shared{UseBindPortIP: test.useBindPortIP}, nil, true)
+
+				httpLB := &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{Port: "80"}}}
+				require.NoError(t, builder.addServer(t.Context(), container, httpLB))
+				assert.Equal(t, "http://"+test.tcpAddress, httpLB.Servers[0].URL)
+
+				tcpLB := &dynamic.TCPServersLoadBalancer{Servers: []dynamic.TCPServer{{Port: "80"}}}
+				require.NoError(t, builder.addServerTCP(t.Context(), container, tcpLB))
+				assert.Equal(t, test.tcpAddress, tcpLB.Servers[0].Address)
+
+				udpLB := &dynamic.UDPServersLoadBalancer{Servers: []dynamic.UDPServer{{Port: "80"}}}
+				require.NoError(t, builder.addServerUDP(t.Context(), container, udpLB))
+				assert.Equal(t, test.udpAddress, udpLB.Servers[0].Address)
+			})
+		}
 	}
 }

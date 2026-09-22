@@ -199,6 +199,7 @@ but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that 
     in both `ingress` and `host` publish mode, using the IP of the Swarm node the task is running on.
     This includes ports whose host port is dynamically assigned (published port `0`), whether the assignment is
     brokered by the Swarm manager (`ingress` mode) or by the kernel of the node the task landed on (`host` mode).
+    Host-mode services must be attached to an overlay network to be discovered, even when Traefik connects through a published port.
     `useBindPortIP` only applies to per-task routing (the default); it has no effect when `traefik.swarm.lbswarm=true`,
     since a Swarm service in that mode is routed through its virtual IP, which isn't tied to a single node.
 
