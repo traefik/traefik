@@ -55,7 +55,9 @@ func TestConnPool_ConnReuse(t *testing.T) {
 			var connAlloc int
 			dialer := func() (net.Conn, error) {
 				connAlloc++
-				return &net.TCPConn{}, nil
+				// The connection Read blocks so the readLoop stays parked in Peek, as it would on a real idle
+				// connection, instead of erroring immediately and marking the connection broken before it is reused.
+				return &mockConn{doneCh: make(chan struct{})}, nil
 			}
 
 			pool := newConnPool(2, 0, 0, dialer)

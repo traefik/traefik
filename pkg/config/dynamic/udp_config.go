@@ -20,6 +20,16 @@ type UDPService struct {
 	Weighted     *UDPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 }
 
+// Merge merges another UDPService into this one.
+// Returns true if the merge succeeds, false if configurations conflict.
+func (s *UDPService) Merge(other *UDPService) bool {
+	if s.LoadBalancer == nil || other.LoadBalancer == nil {
+		return reflect.DeepEqual(s, other)
+	}
+
+	return s.LoadBalancer.Merge(other.LoadBalancer)
+}
+
 // +k8s:deepcopy-gen=true
 
 // UDPWeightedRoundRobin is a weighted round robin UDP load-balancer of services.
@@ -56,8 +66,29 @@ type UDPServersLoadBalancer struct {
 	Servers []UDPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 }
 
-// Mergeable reports whether the given load-balancer can be merged with the receiver.
-func (l *UDPServersLoadBalancer) Mergeable(loadBalancer *UDPServersLoadBalancer) bool {
+// Merge merges the other load balancer into this one.
+// Returns true if merge succeeded, false if configurations conflict.
+func (l *UDPServersLoadBalancer) Merge(other *UDPServersLoadBalancer) bool {
+	if !l.mergeable(other) {
+		return false
+	}
+
+	// Deduplicate and append servers.
+	uniq := make(map[string]struct{}, len(l.Servers))
+	for _, server := range l.Servers {
+		uniq[server.Address] = struct{}{}
+	}
+	for _, server := range other.Servers {
+		if _, ok := uniq[server.Address]; !ok {
+			l.Servers = append(l.Servers, server)
+		}
+	}
+
+	return true
+}
+
+// mergeable reports whether the given load-balancer can be merged with the receiver.
+func (l *UDPServersLoadBalancer) mergeable(loadBalancer *UDPServersLoadBalancer) bool {
 	savedServers := l.Servers
 	defer func() {
 		l.Servers = savedServers

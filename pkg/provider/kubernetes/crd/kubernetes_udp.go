@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
@@ -22,7 +23,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
 		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteUDP.Name).Str("namespace", ingressRouteUDP.Namespace).Logger()
 
-		if !shouldProcessIngress(p.IngressClass, ingressRouteUDP.Annotations[annotationKubernetesIngressClass]) {
+		ingressClassName, usingDeprecatedAnnotation := getIngressClassName(ingressRouteUDP.Spec.IngressClassName, ingressRouteUDP.Annotations)
+		if usingDeprecatedAnnotation {
+			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
+		}
+		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue
 		}
 
@@ -32,10 +37,18 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		}
 
 		for i, route := range ingressRouteUDP.Spec.Routes {
-			key := fmt.Sprintf("%s-%d", ingressName, i)
-			serviceName := makeID(ingressRouteUDP.Namespace, key)
+			routeIndex := strconv.Itoa(i)
 
-			for _, service := range route.Services {
+			routerName := p.nameBuilder.udpRouter(ingressRouteUDP.Namespace, ingressName, i)
+
+			serviceName := routerName
+
+			var wrrName string
+			if p.nameBuilder.safe && len(route.Services) > 1 {
+				wrrName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
+			}
+
+			for si, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
 					logger.Error().
@@ -49,12 +62,22 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
-					conf.Services[serviceName] = balancerServerUDP
+					if p.nameBuilder.safe {
+						serviceName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleLB)
+					}
+					addToConfig(&logger, "service", serviceName, conf.Services, balancerServerUDP)
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
-				conf.Services[serviceKey] = balancerServerUDP
+				var serviceKey string
+				if p.nameBuilder.safe {
+					serviceName = wrrName
+					serviceKey = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR, strconv.Itoa(si), namespaceOrParentNamespace(service.Namespace, ingressRouteUDP.Namespace), service.Name, service.Port.String())
+				} else {
+					serviceKey = fmt.Sprintf("%s-%s-%s", serviceName, service.Name, service.Port.String())
+				}
+
+				addToConfig(&logger, "service", serviceKey, conf.Services, balancerServerUDP)
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}
 				srv.SetDefaults()
@@ -68,10 +91,10 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			conf.Routers[serviceName] = &dynamic.UDPRouter{
+			addToConfig(&logger, "router", routerName, conf.Routers, &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
 				Service:     serviceName,
-			}
+			})
 		}
 	}
 
@@ -180,8 +203,8 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 		for _, endpointSlice := range endpointSlices {
 			var port int32
 			for _, p := range endpointSlice.Ports {
-				if svcPort.Name == *p.Name {
-					port = *p.Port
+				if p.Name != nil && svcPort.Name == *p.Name {
+					port = ptr.Deref(p.Port, 0)
 					break
 				}
 			}

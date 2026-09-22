@@ -193,6 +193,7 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        errorRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.errors.statusRewrites]
           name0 = 42
           name1 = 42
@@ -379,6 +380,9 @@
       serverName = "foobar"
       insecureSkipVerify = true
       rootCAs = ["foobar", "foobar"]
+      cipherSuites = ["foobar", "foobar"]
+      minVersion = "foobar"
+      maxVersion = "foobar"
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
@@ -403,6 +407,9 @@
       serverName = "foobar"
       insecureSkipVerify = true
       rootCAs = ["foobar", "foobar"]
+      cipherSuites = ["foobar", "foobar"]
+      minVersion = "foobar"
+      maxVersion = "foobar"
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"

@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"slices"
 	"strings"
 )
 
@@ -78,8 +79,8 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 	xff := req.Header.Get(xForwardedFor)
 	xffs := strings.Split(xff, ",")
 
-	for i := len(xffs) - 1; i >= 0; i-- {
-		xffTrimmed := strings.TrimSpace(xffs[i])
+	for _, v := range slices.Backward(xffs) {
+		xffTrimmed := strings.TrimSpace(v)
 		if len(xffTrimmed) == 0 {
 			continue
 		}
