@@ -440,12 +440,10 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 	p.loadHTTPAndGRPCRoutes(ctx, selectedGateways, conf)
 
-	servedTCPRules := make(servedRules)
-
-	p.loadTLSRoutes(ctx, selectedGateways, conf, servedTCPRules)
+	p.loadTLSRoutes(ctx, selectedGateways, conf)
 
 	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, selectedGateways, conf, servedTCPRules)
+		p.loadTCPRoutes(ctx, selectedGateways, conf)
 	}
 
 	for _, gateway := range gateways {

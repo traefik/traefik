@@ -20,7 +20,7 @@ import (
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
-func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, servedRules servedRules) {
+func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTCPRoutes()
 	if err != nil {
@@ -31,6 +31,8 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 	// The provider loads the routes in the order that the specification gives,
 	// to make a decision between the routes that match a connection equally well.
 	slices.SortStableFunc(routes, func(a, b *gatev1alpha2.TCPRoute) int { return compareRoutes(a, b) })
+
+	served := make(servedRules)
 
 	for _, route := range routes {
 		logger := log.Ctx(ctx).With().
@@ -79,7 +81,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 				if accepted && listener.Attached {
 					for _, rc := range routerConfs {
 						router := rc.Conf.TCP.Routers[rc.Name]
-						if servedBy, alreadyServed := servedRules.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
+						if servedBy, alreadyServed := served.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
 							logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", rc.Name, servedBy, router.Rule)
 							continue
 						}
