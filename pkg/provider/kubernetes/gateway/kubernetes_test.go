@@ -9968,10 +9968,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 			},
 		},
 		{
-			// The TCP and TLS listeners claim the ports of the Gateway HTTP and HTTPS listeners
-			// with another protocol, and the duplicate HTTPS listener has the same hostname as
-			// the Gateway one: their routes are not loaded.
-			desc:  "Only the ListenerSet listener conflicting with no Gateway listener is loaded",
+			// The TCP listener joins the port of the Gateway HTTP listener, the first TLS listener
+			// and the duplicate HTTPS listener take the hostname of the Gateway HTTPS listener:
+			// their routes are not loaded, unlike the ones of the listeners of other hostnames.
+			desc:  "Only the ListenerSet listeners conflicting with no Gateway listener are loaded",
 			paths: []string{"services.yml", "mixed/with_listenerset_conflicts.yml"},
 			entryPoints: map[string]Entrypoint{
 				"web":       {Address: ":80"},
@@ -10032,8 +10032,53 @@ func TestLoadMixedRoutes(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Services:          map[string]*dynamic.TCPService{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Service:  "deny-unknown-host",
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-2-ls-default-my-listenerset-ep-websecure-0-ef777be2ae45c7153981": {
+							EntryPoints: []string{
+								"websecure",
+							},
+							Service:    "tlsroute-default-tls-app-2-ls-default-my-listenerset-ep-websecure-0-ef777be2ae45c7153981-wrr",
+							Rule:       `HostSNI("bar.example.com")`,
+							RuleSyntax: "default",
+							Priority:   15,
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-2-ls-default-my-listenerset-ep-websecure-0-ef777be2ae45c7153981-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-2-ls-default-my-listenerset-ep-websecure-0-ef777be2ae45c7153981-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-2-ls-default-my-listenerset-ep-websecure-0-ef777be2ae45c7153981-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
 					Middlewares:       map[string]*dynamic.TCPMiddleware{},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
@@ -13513,6 +13558,42 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
 			},
 			wantListeners: []wantListener{{name: "http", reason: string(gatev1.ListenerReasonHostnameConflict)}},
+		},
+		{
+			desc:            "Protocol conflict with a Gateway TCP listener",
+			gatewayListener: &gatev1.Listener{Name: "tcp", Protocol: gatev1.TCPProtocolType, Port: 80},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+			},
+			wantListeners: []wantListener{{name: "http", reason: string(gatev1.ListenerReasonProtocolConflict)}},
+		},
+		{
+			desc:            "Protocol conflict with a Gateway HTTPS listener of the same hostname",
+			gatewayListener: &gatev1.Listener{Name: "https", Protocol: gatev1.HTTPSProtocolType, Port: 80, Hostname: new(gatev1.Hostname("foo.example.com"))},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{
+					Name:     "tls",
+					Protocol: gatev1.TLSProtocolType,
+					Port:     80,
+					Hostname: new(gatev1.Hostname("foo.example.com")),
+					TLS:      &gatev1.ListenerTLSConfig{Mode: new(gatev1.TLSModePassthrough)},
+				}),
+			},
+			wantListeners: []wantListener{{name: "tls", reason: string(gatev1.ListenerReasonProtocolConflict)}},
+		},
+		{
+			desc:            "TLS listener sharing the port of a Gateway HTTPS listener of another hostname",
+			gatewayListener: &gatev1.Listener{Name: "https", Protocol: gatev1.HTTPSProtocolType, Port: 80, Hostname: new(gatev1.Hostname("foo.example.com"))},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{
+					Name:     "tls",
+					Protocol: gatev1.TLSProtocolType,
+					Port:     80,
+					Hostname: new(gatev1.Hostname("bar.example.com")),
+					TLS:      &gatev1.ListenerTLSConfig{Mode: new(gatev1.TLSModePassthrough)},
+				}),
+			},
+			wantListeners: []wantListener{{name: "tls", attached: true}},
 		},
 		{
 			// The newer ListenerSet sorts first by name: only the creation timestamp
