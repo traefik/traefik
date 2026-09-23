@@ -173,15 +173,39 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		}
 	}
 
-	m.stores = make(map[string]*CertificateStore)
+	if m.stores == nil {
+		m.stores = make(map[string]*CertificateStore)
+	}
+
+	// The stores are updated in place instead of being rebuilt: every
+	// CertificateStore owns a go-cache instance which runs a janitor goroutine,
+	// and go-cache stops that goroutine only through a finalizer on the value it
+	// returns. Replacing the whole map on each configuration update therefore
+	// leaves one live janitor per update, each retaining its cache.
+	for storeName := range m.stores {
+		if _, ok := m.storesConfig[storeName]; !ok {
+			delete(m.stores, storeName)
+		}
+	}
 
 	for storeName, storeConfig := range m.storesConfig {
-		st := NewCertificateStore(m.ocspStapler)
-		m.stores[storeName] = st
-
-		if certs, ok := storesCertificates[storeName]; ok {
-			st.DynamicCerts.Set(certs)
+		st, ok := m.stores[storeName]
+		if ok {
+			// The cache keys server names to certificates resolved from the
+			// configuration being replaced, so it must not outlive it.
+			st.CertCache.Flush()
+		} else {
+			st = NewCertificateStore(m.ocspStapler)
+			m.stores[storeName] = st
 		}
+
+		certs := storesCertificates[storeName]
+		if certs == nil {
+			// A reused store must forget the certificates of the previous
+			// configuration, which a freshly created one did implicitly.
+			certs = map[string]*CertificateData{}
+		}
+		st.DynamicCerts.Set(certs)
 
 		// a default cert for the ACME store does not make any sense, so generating one is a waste.
 		if storeName == tlsalpn01.ACMETLS1Protocol {
