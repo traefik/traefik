@@ -139,8 +139,14 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname) ([]routerConfiguration, metav1.Condition) {
-	var routers []routerConfiguration
+// tlsRouteRouter is a router of a TLSRoute, with the configuration of its resources.
+type tlsRouteRouter struct {
+	Name string
+	Conf *dynamic.Configuration
+}
+
+func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname) ([]tlsRouteRouter, metav1.Condition) {
+	var routers []tlsRouteRouter
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -196,7 +202,7 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 
 			router.Service = string(routeRule.BackendRefs[0].Name)
 			routerConf.TCP.Routers[routerName] = &router
-			routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
+			routers = append(routers, tlsRouteRouter{Name: routerName, Conf: routerConf})
 			continue
 		}
 
@@ -207,7 +213,7 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 		}
 
 		routerConf.TCP.Routers[routerName] = &router
-		routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
+		routers = append(routers, tlsRouteRouter{Name: routerName, Conf: routerConf})
 	}
 
 	return routers, condition

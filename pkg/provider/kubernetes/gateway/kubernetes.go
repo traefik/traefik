@@ -1264,13 +1264,6 @@ func (sr servedRules) register(name string, entryPoints []string, rule string) (
 	return "", false
 }
 
-// routerConfiguration is the configuration of one router.
-// It also holds the middlewares and the services of that router.
-type routerConfiguration struct {
-	Name string
-	Conf *dynamic.Configuration
-}
-
 // listenerRef identifies a listener of a Gateway.
 type listenerRef struct {
 	Name             string

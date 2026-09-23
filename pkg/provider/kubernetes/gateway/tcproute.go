@@ -118,8 +118,14 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1alpha2.TCPRoute) ([]routerConfiguration, metav1.Condition) {
-	var routers []routerConfiguration
+// tcpRouteRouter is a router of a TCPRoute, with the configuration of its resources.
+type tcpRouteRouter struct {
+	Name string
+	Conf *dynamic.Configuration
+}
+
+func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1alpha2.TCPRoute) ([]tcpRouteRouter, metav1.Condition) {
+	var routers []tcpRouteRouter
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -176,7 +182,7 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 
 			router.Service = string(rule.BackendRefs[0].Name)
 			routerConf.TCP.Routers[routerName] = &router
-			routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
+			routers = append(routers, tcpRouteRouter{Name: routerName, Conf: routerConf})
 			continue
 		}
 
@@ -187,7 +193,7 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 		}
 
 		routerConf.TCP.Routers[routerName] = &router
-		routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
+		routers = append(routers, tcpRouteRouter{Name: routerName, Conf: routerConf})
 	}
 
 	return routers, condition

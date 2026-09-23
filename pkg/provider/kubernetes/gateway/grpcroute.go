@@ -127,8 +127,14 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) ([]routerConfiguration, metav1.Condition) {
-	var routers []routerConfiguration
+// grpcRouteRouter is a router of a GRPCRoute, with the configuration of its resources.
+type grpcRouteRouter struct {
+	Name string
+	Conf *dynamic.Configuration
+}
+
+func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) ([]grpcRouteRouter, metav1.Condition) {
+	var routers []grpcRouteRouter
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -200,7 +206,7 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 			}
 
 			routerConf.HTTP.Routers[routerName] = &router
-			routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
+			routers = append(routers, grpcRouteRouter{Name: routerName, Conf: routerConf})
 		}
 	}
 

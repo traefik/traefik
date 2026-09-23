@@ -131,8 +131,14 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) ([]routerConfiguration, metav1.Condition) {
-	var routers []routerConfiguration
+// httpRouteRouter is a router of an HTTPRoute, with the configuration of its resources.
+type httpRouteRouter struct {
+	Name string
+	Conf *dynamic.Configuration
+}
+
+func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) ([]httpRouteRouter, metav1.Condition) {
+	var routers []httpRouteRouter
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -213,7 +219,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			p.applyRouterTransform(ctx, &router, route)
 
 			routerConf.HTTP.Routers[routerName] = &router
-			routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
+			routers = append(routers, httpRouteRouter{Name: routerName, Conf: routerConf})
 		}
 	}
 
