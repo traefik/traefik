@@ -6,13 +6,13 @@ import (
 	"maps"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -52,24 +52,25 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	if mc.DefaultBackend != nil {
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesIngressMetadata{
-					Namespace:   mc.DefaultBackend.Namespace,
-					ServiceName: mc.DefaultBackend.ServiceName,
+				Ingress: &dynamic.KubernetesMetadata{
+					Kind:      "Ingress",
+					Namespace: mc.DefaultBackend.Namespace,
 				},
 			},
 		}
 
 		var serversTransportName string
 		if loc := mc.DefaultBackendLocation; loc != nil {
-			obs.Metadata.Ingress.IngressName = loc.IngressName
-			obs.Metadata.Ingress.ServicePort = loc.ServicePort
+			obs.Metadata.Ingress.Name = loc.IngressName
 			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
 				serversTransportName = loc.ServersTransportName
 				conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
 			}
 		}
 
-		conf.HTTP.Services[defaultBackendName] = buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc := buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc.Observability = buildServiceObservability(mc.DefaultBackend)
+		conf.HTTP.Services[defaultBackendName] = defaultBackendSvc
 
 		rt := &dynamic.Router{
 			EntryPoints:   p.NonTLSEntryPoints,
@@ -160,15 +161,16 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			primarySvcName := loc.BackendName
-			conf.HTTP.Services[primarySvcName] = buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc := buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc.Observability = buildServiceObservability(backend)
+			conf.HTTP.Services[primarySvcName] = primarySvc
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
-					Ingress: &dynamic.KubernetesIngressMetadata{
-						Namespace:   loc.Namespace,
-						IngressName: loc.IngressName,
-						ServiceName: loc.ServiceName,
-						ServicePort: loc.ServicePort,
+					Ingress: &dynamic.KubernetesMetadata{
+						Kind:      "Ingress",
+						Namespace: loc.Namespace,
+						Name:      loc.IngressName,
 					},
 				},
 			}
@@ -181,6 +183,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canaryWRRName := primarySvcName + "-wrr"
 
 					canarySvc := buildServiceWithLocConfig(canaryBackend, loc.ServersTransportName, loc.Config)
+					canarySvc.Observability = buildServiceObservability(canaryBackend)
 					conf.HTTP.Services[canarySvcName] = canarySvc
 
 					conf.HTTP.Services[canaryWRRName] = &dynamic.Service{
@@ -200,9 +203,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
-				routerKey = provider.Normalize(fmt.Sprintf("%s-%s-default-backend", loc.Namespace, loc.IngressName))
+				routerKey = fmt.Sprintf("%s-%s-default-backend", loc.Namespace, loc.IngressName)
 			} else {
-				routerKey = provider.Normalize(fmt.Sprintf("%s-%s-rule-%d-path-%d", loc.Namespace, loc.IngressName, loc.RuleIndex, loc.LocationIndex))
+				routerKey = fmt.Sprintf("%s-%s-rule-%d-path-%d", loc.Namespace, loc.IngressName, loc.RuleIndex, loc.LocationIndex)
 			}
 
 			rt := &dynamic.Router{
@@ -213,31 +216,42 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				Observability: obs,
 			}
 
-			rtTLS := &dynamic.Router{
-				EntryPoints: p.TLSEntryPoints,
-				Rule:        rule,
-				RuleSyntax:  "default",
-				Service:     routerSvcName,
-				TLS: &dynamic.RouterTLSConfig{
-					Options: loc.TLSOptionName,
-				},
-				Observability: obs,
-			}
-
 			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
 			if loc.Error {
 				rt.Service = unavailableServiceName
-				rtTLS.Service = unavailableServiceName
 			}
 
 			conf.HTTP.Routers[routerKey] = rt
-			conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
 
 			if !loc.Error {
 				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
-				p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
 				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
-				applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+			}
+
+			// An ssl-passthrough host is served over TCP on the TLS entryPoints, so it gets no TLS router at all.
+			var rtTLS *dynamic.Router
+			if !loc.SSLPassthrough {
+				rtTLS = &dynamic.Router{
+					EntryPoints: p.TLSEntryPoints,
+					Rule:        rule,
+					RuleSyntax:  "default",
+					Service:     routerSvcName,
+					TLS: &dynamic.RouterTLSConfig{
+						Options: loc.TLSOptionName,
+					},
+					Observability: obs,
+				}
+
+				if loc.Error {
+					rtTLS.Service = unavailableServiceName
+				}
+
+				conf.HTTP.Routers[routerKey+"-tls"] = rtTLS
+
+				if !loc.Error {
+					p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
+					applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+				}
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
@@ -252,17 +266,19 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				conf.HTTP.Routers[canaryKey] = canaryRouter
 				p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
 
-				canaryKeyTLS := canaryKey + "-tls"
-				canaryRouterTLS := &dynamic.Router{
-					EntryPoints:   rtTLS.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
-					RuleSyntax:    rtTLS.RuleSyntax,
-					Service:       canarySvcName,
-					TLS:           rtTLS.TLS,
-					Observability: obs,
+				if rtTLS != nil {
+					canaryKeyTLS := canaryKey + "-tls"
+					canaryRouterTLS := &dynamic.Router{
+						EntryPoints:   rtTLS.EntryPoints,
+						Rule:          appendCanaryRule(rule, loc.Canary),
+						RuleSyntax:    rtTLS.RuleSyntax,
+						Service:       canarySvcName,
+						TLS:           rtTLS.TLS,
+						Observability: obs,
+					}
+					conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
+					p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
 				}
-				conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
-				p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
@@ -277,22 +293,39 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				conf.HTTP.Routers[nonCanaryKey] = nonCanaryRouter
 				p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
 
-				nonCanaryKeyTLS := nonCanaryKey + "-tls"
-				nonCanaryRouterTLS := &dynamic.Router{
-					EntryPoints:   rtTLS.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
-					RuleSyntax:    rtTLS.RuleSyntax,
-					Service:       primarySvcName,
-					TLS:           rtTLS.TLS,
-					Observability: obs,
+				if rtTLS != nil {
+					nonCanaryKeyTLS := nonCanaryKey + "-tls"
+					nonCanaryRouterTLS := &dynamic.Router{
+						EntryPoints:   rtTLS.EntryPoints,
+						Rule:          appendNonCanaryRule(rule, loc.Canary),
+						RuleSyntax:    rtTLS.RuleSyntax,
+						Service:       primarySvcName,
+						TLS:           rtTLS.TLS,
+						Observability: obs,
+					}
+					conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
+					p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
 				}
-				conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
-				p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
 			}
 		}
 	}
 
 	return conf
+}
+
+func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
+	if b == nil {
+		return nil
+	}
+	return &dynamic.ServiceObservabilityConfig{
+		Metadata: &dynamic.ServiceObservabilityMetadata{
+			Kubernetes: &dynamic.KubernetesServiceMetadata{
+				Namespace: b.Namespace,
+				Name:      b.ServiceName,
+				Port:      b.ServicePort,
+			},
+		},
+	}
 }
 
 func buildService(backend *backend, serversTransportName string) *dynamic.Service {
@@ -392,14 +425,15 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 
 	return &dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
-			Name:     name,
-			Secure:   ptr.Deref(cfg.SessionCookieSecure, false),
-			HTTPOnly: true,
-			SameSite: strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
-			MaxAge:   ptr.Deref(cfg.SessionCookieMaxAge, 0),
-			Expires:  ptr.Deref(cfg.SessionCookieExpires, 0),
-			Path:     new(ptr.Deref(cfg.SessionCookiePath, "/")),
-			Domain:   ptr.Deref(cfg.SessionCookieDomain, ""),
+			Name:               name,
+			Secure:             ptr.Deref(cfg.SessionCookieSecure, false),
+			HTTPOnly:           true,
+			SameSite:           strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
+			MaxAge:             ptr.Deref(cfg.SessionCookieMaxAge, 0),
+			Expires:            ptr.Deref(cfg.SessionCookieExpires, 0),
+			Path:               new(ptr.Deref(cfg.SessionCookiePath, "/")),
+			Domain:             ptr.Deref(cfg.SessionCookieDomain, ""),
+			PreserveLeadingDot: true,
 		},
 	}
 }
@@ -426,7 +460,9 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		if e.ErrorBackendName != "" {
 			errorSvcName = "default-backend-" + routerKey
 			if errBackend, ok := mc.Backends[e.ErrorBackendName]; ok {
-				conf.HTTP.Services[errorSvcName] = buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc := buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc.Observability = buildServiceObservability(errBackend)
+				conf.HTTP.Services[errorSvcName] = errSvc
 			}
 		}
 		headers := http.Header{
@@ -517,7 +553,9 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
-	if loc.AuthTLSPassCert != nil && rt.TLS != nil {
+	// The middleware is attached to the plaintext router as well, and not only to the TLS one:
+	// it owns the Ssl-Client-* headers, and is what removes the values a client supplied for them.
+	if loc.AuthTLSPassCert != nil {
 		name := routerKey + "-pass-certificate-to-upstream"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert}
 		rt.Middlewares = append(rt.Middlewares, name)
@@ -564,19 +602,23 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	mwName := routerKey + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[mwName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+			// Anchored to prevent ReplaceAllString from rewriting past the leading URL.
+			// The trailing slash is dropped to mirror ingress-nginx ngx_srv_redirect.lua.
+			Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 			Replacement: fmt.Sprintf("$1://%s$2/$3", f.TargetHostname),
 			StatusCode:  new(http.StatusPermanentRedirect),
 		},
 	}
 
+	// The redirect router does not carry the location middlewares (auth included),
+	// so it must never reach the backend.
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
 		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
-		Service:       rt.Service,
+		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
 	}
@@ -600,8 +642,13 @@ func buildRule(host string, loc *location) string {
 
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
+
+		regexPath := loc.Path
 		if pathType == netv1.PathTypeImplementationSpecific {
 			pathType = netv1.PathTypePrefix
+			if hasAbsoluteRewriteTarget(loc) {
+				regexPath = makeTrailingGroupOptional(loc.Path)
+			}
 		}
 
 		switch pathType {
@@ -609,7 +656,7 @@ func buildRule(host string, loc *location) string {
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
 		case netv1.PathTypePrefix:
 			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+loc.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
 			} else {
 				rules = append(rules, buildPrefixRule(loc.Path))
 			}
@@ -631,4 +678,55 @@ func buildPrefixRule(path string) string {
 	}
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, path+"/")
+}
+
+// hasAbsoluteRewriteTarget reports whether the location's rewrite-target
+// annotation is an absolute URL (e.g. https://bar.example.org/$1).
+// With an absolute rewrite-target, requests that do not match the nginx
+// location fall through to the implicit catch-all whose rewrite still issues
+// the redirect, so nginx answers 302 for any path on the host. Traefik has no
+// such catch-all: widening the route regex with makeTrailingGroupOptional
+// approximates it for paths sharing the location prefix. With a non-absolute
+// rewrite-target, the catch-all proxies to the default backend (404), so the
+// route must not be widened.
+func hasAbsoluteRewriteTarget(loc *location) bool {
+	rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
+	if rewrite == "" {
+		return false
+	}
+	parsed, err := url.Parse(rewrite)
+	return err == nil && parsed.Scheme != ""
+}
+
+// makeTrailingGroupOptional converts an ImplementationSpecific regex path like /foo/(.*)
+// into /foo(?:/(.*))? so it also matches the bare /foo (without trailing slash).
+// Only applies when the path starts with a literal prefix (not a capture group),
+// and the group opened after the last "/(" closes at the very end of the path:
+// otherwise trailing literals (e.g. /foo/(.*)/bar) would become optional too.
+func makeTrailingGroupOptional(path string) string {
+	if strings.HasPrefix(path, "/(") {
+		return path
+	}
+	idx := strings.LastIndex(path, "/(")
+	if idx < 0 {
+		return path
+	}
+
+	depth := 0
+	for i := idx + 1; i < len(path); i++ {
+		switch path[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 && i != len(path)-1 {
+				return path
+			}
+		}
+	}
+	if depth != 0 {
+		return path
+	}
+
+	return path[:idx] + "(?:" + path[idx:] + ")?"
 }

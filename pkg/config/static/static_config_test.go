@@ -41,6 +41,157 @@ func TestHasEntrypoint(t *testing.T) {
 	}
 }
 
+func TestHasTCPEntryPoint(t *testing.T) {
+	tests := []struct {
+		desc        string
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint",
+			want: true,
+		},
+		{
+			desc: "entryPoint without an explicit protocol",
+			entryPoints: map[string]*EntryPoint{
+				"web": {Address: ":80"},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP-only entryPoint",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+			},
+			want: false,
+		},
+		{
+			desc: "UDP and TCP entryPoints",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+				"web": {Address: ":80/tcp"},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			assert.Equal(t, test.want, cfg.HasTCPEntryPoint())
+		})
+	}
+}
+
+func TestHasDeniedEncodedCharacters(t *testing.T) {
+	allowAll := &EncodedCharacters{}
+	allowAll.SetDefaults()
+
+	denySlash := &EncodedCharacters{}
+	denySlash.SetDefaults()
+	denySlash.AllowEncodedSlash = false
+
+	denyHash := &EncodedCharacters{}
+	denyHash.SetDefaults()
+	denyHash.AllowEncodedHash = false
+
+	tests := []struct {
+		desc        string
+		api         *API
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint without encoded characters configuration",
+			want: false,
+		},
+		{
+			desc: "TCP entryPoint allowing all encoded characters",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "TCP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "one TCP entryPoint among others disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+				"websecure": {
+					Address: ":443/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {
+					Address: ":53/udp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "insecure API adds an internal TCP entryPoint without encoded characters configuration",
+			api:  &API{Insecure: true},
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				API:         test.api,
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			if test.api != nil && test.api.Insecure {
+				assert.Contains(t, cfg.EntryPoints, DefaultInternalEntryPointName)
+			}
+			assert.Equal(t, test.want, cfg.HasDeniedEncodedCharacters())
+		})
+	}
+}
+
 func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -70,9 +221,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -119,9 +269,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -179,9 +328,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -201,7 +349,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DelayBeforeChecks: 123,
 								},
 							},
@@ -243,9 +391,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:              new(true),
-						MaxHeaderBytes:            1048576,
-						UnderscoreHeadersStrategy: UnderscoreHeadersStrategyKeep,
+						SanitizePath:   new(true),
+						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -265,7 +412,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:                "bar",
 								DisablePropagationCheck: true,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DisableChecks: true,
 								},
 							},
@@ -492,6 +639,69 @@ func TestProvidersPrecedence(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
 			}
+		})
+	}
+}
+
+func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		underscore  string
+		alias       string
+		expectError bool
+	}{
+		{
+			desc: "no strategy configured",
+		},
+		{
+			desc:  "only the new option configured",
+			alias: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured",
+			underscore: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured, set to keep",
+			underscore: AliasHeadersStrategyKeep,
+		},
+		{
+			desc:       "both options configured with the same value",
+			underscore: AliasHeadersStrategyDelete,
+			alias:      AliasHeadersStrategyDelete,
+		},
+		{
+			desc:        "both options configured with different values",
+			underscore:  AliasHeadersStrategyDelete,
+			alias:       AliasHeadersStrategyReject,
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					"web": &EntryPoint{
+						Address: ":80",
+						HTTP: HTTPConfig{
+							AliasHeadersStrategy:      test.alias,
+							UnderscoreHeadersStrategy: test.underscore,
+						},
+					},
+				},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
 		})
 	}
 }

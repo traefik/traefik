@@ -407,19 +407,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
 			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
-
 			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
 			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
-
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
 
 			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
@@ -471,6 +463,13 @@ func (c *Configuration) ValidateConfiguration() error {
 			log.Warn().Msgf("v2 rules syntax is now deprecated, please use v3 instead...")
 		default:
 			return fmt.Errorf("unsupported default rule syntax configuration: %q", c.Core.DefaultRuleSyntax)
+		}
+	}
+
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
 		}
 	}
 
@@ -539,6 +538,50 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+const protocolTCP = "tcp"
+
+// HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
+// and therefore can serve HTTP requests.
+func (c *Configuration) HasTCPEntryPoint() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err == nil && protocol == protocolTCP {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasDeniedEncodedCharacters reports whether an entryPoint serving HTTP requests
+// disallows at least one encoded character in the request path.
+// UDP entryPoints are left out because they never parse a request path.
+func (c *Configuration) HasDeniedEncodedCharacters() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err != nil || protocol != protocolTCP {
+			continue
+		}
+
+		encodedCharacters := ep.HTTP.EncodedCharacters
+		if encodedCharacters == nil {
+			continue
+		}
+
+		if !encodedCharacters.AllowEncodedSlash ||
+			!encodedCharacters.AllowEncodedBackSlash ||
+			!encodedCharacters.AllowEncodedNullCharacter ||
+			!encodedCharacters.AllowEncodedSemicolon ||
+			!encodedCharacters.AllowEncodedPercent ||
+			!encodedCharacters.AllowEncodedQuestionMark ||
+			!encodedCharacters.AllowEncodedHash {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Configuration) hasUserDefinedEntrypoint() bool {
