@@ -85,19 +85,21 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 
 			// The ResolvedRefs condition must be reported for every parentRef,
 			// even when the route does not attach to the listener.
-			routeConf, routerNames, condition := p.loadHTTPRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
+			routerConfs, condition := p.loadHTTPRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
 			if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 				resolvedRefCondition = new(condition)
 			}
 
 			if accepted && listener.Attached {
-				shadowedRouters := servedRules.registerHTTPRouters(routeConf, routerNames)
-				for _, shadowed := range shadowedRouters {
-					logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", shadowed.Name, shadowed.ServedBy, shadowed.Rule)
-				}
-				dropHTTPRouters(routeConf, shadowedRouters)
+				for _, rc := range routerConfs {
+					router := rc.Conf.HTTP.Routers[rc.Name]
+					if servedBy, alreadyServed := servedRules.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
+						logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", rc.Name, servedBy, router.Rule)
+						continue
+					}
 
-				mergeHTTPConfiguration(routeConf, conf)
+					mergeHTTPConfiguration(rc.Conf, conf)
+				}
 
 				// Only consider the route attached if the listener is in an "attached" state.
 				acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
@@ -129,15 +131,8 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, []string, metav1.Condition) {
-	conf := &dynamic.Configuration{
-		HTTP: &dynamic.HTTPConfiguration{
-			Routers:           make(map[string]*dynamic.Router),
-			Middlewares:       make(map[string]*dynamic.Middleware),
-			Services:          make(map[string]*dynamic.Service),
-			ServersTransports: make(map[string]*dynamic.ServersTransport),
-		},
-	}
+func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname) ([]routerConfiguration, metav1.Condition) {
+	var routers []routerConfiguration
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -146,10 +141,6 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 		LastTransitionTime: metav1.Now(),
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
-
-	// The names are kept in the order the routers are created,
-	// because a route serves its rules in the order of the specification.
-	var routerNames []string
 
 	for ri, routeRule := range route.Spec.Rules {
 		for _, match := range routeRule.Matches {
@@ -165,16 +156,26 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				router.TLS = &dynamic.RouterTLSConfig{}
 			}
 
-			var err error
 			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
+
+			routerConf := &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           make(map[string]*dynamic.Router),
+					Middlewares:       make(map[string]*dynamic.Middleware),
+					Services:          make(map[string]*dynamic.Service),
+					ServersTransports: make(map[string]*dynamic.ServersTransport),
+				},
+			}
+
+			var err error
 			// TODO loadMiddlewares errors could change the condition.
-			router.Middlewares, err = p.loadMiddlewares(conf, route.Namespace, routerName, routeRule.Filters, match.Path)
+			router.Middlewares, err = p.loadMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters, match.Path)
 			switch {
 			case err != nil:
 				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
 
 				errWrrName := routerName + "-err-wrr"
-				conf.HTTP.Services[errWrrName] = &dynamic.Service{
+				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{
 					Weighted: &dynamic.WeightedRoundRobin{
 						Services: []dynamic.WRRService{
 							{
@@ -203,7 +204,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, listener, conf, routerName, routeRule, route, match.Path)
+				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, listener, routerConf, routerName, routeRule, route, match.Path)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -211,14 +212,12 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 
 			p.applyRouterTransform(ctx, &router, route)
 
-			if _, exists := conf.HTTP.Routers[routerName]; !exists {
-				routerNames = append(routerNames, routerName)
-			}
-			conf.HTTP.Routers[routerName] = &router
+			routerConf.HTTP.Routers[routerName] = &router
+			routers = append(routers, routerConfiguration{Name: routerName, Conf: routerConf})
 		}
 	}
 
-	return conf, routerNames, condition
+	return routers, condition
 }
 
 func (p *Provider) loadWRRService(ctx context.Context, gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch) (string, *metav1.Condition) {

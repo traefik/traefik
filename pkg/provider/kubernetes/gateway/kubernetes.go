@@ -1238,109 +1238,37 @@ func compareRoutes(a, b metav1.Object) int {
 		strings.Compare(a.GetName(), b.GetName()))
 }
 
-// routerRule identifies a rule of the routers that compete with each other.
-// The scope gives the group of routers that compete, and a muxer evaluates the rules of one group.
-// The scope must agree with the layout of the routers.
-// When the routes become the children of a router for each listener,
-// the scope becomes the parent routers, and not the entry points.
-type routerRule struct {
-	Scope string
-	Rule  string
+// servedRuleKey identifies a rule on a set of entry points.
+// The routers of the same entry points compete in the same muxer.
+type servedRuleKey struct {
+	EntryPoints string
+	Rule        string
 }
 
 // servedRules keeps the router that serves each rule.
 // Two routers that compete and have the same rule match the same requests.
 // Thus only the first router that a muxer evaluates can serve a request.
-type servedRules map[routerRule]string
-
-// shadowedRouter is a router that cannot serve requests,
-// because a different router serves its rule.
-type shadowedRouter struct {
-	Name     string
-	ServedBy string
-	Rule     string
-}
+type servedRules map[servedRuleKey]string
 
 // register keeps the given router as the router that serves its rule.
-// If a different router serves that rule already, register gives its name.
+// If a different router serves that rule already, register gives its name, and true.
 func (sr servedRules) register(name string, entryPoints []string, rule string) (string, bool) {
-	key := routerRule{Scope: strings.Join(entryPoints, ","), Rule: rule}
+	key := servedRuleKey{EntryPoints: strings.Join(entryPoints, ","), Rule: rule}
 
 	if servedBy, served := sr[key]; served {
-		return servedBy, false
+		return servedBy, true
 	}
 
 	sr[key] = name
 
-	return "", true
+	return "", false
 }
 
-// registerHTTPRouters keeps each router that serves a rule that no other router serves.
-// It gives the other routers, which cannot serve requests.
-// The provider loads the routes in the order that the specification gives.
-// Thus the first router that serves a rule is the router to keep.
-func (sr servedRules) registerHTTPRouters(conf *dynamic.Configuration, routerNames []string) []shadowedRouter {
-	var shadowed []shadowedRouter
-
-	// The routers are read in the order of their creation,
-	// because a route serves its rules in the order of the specification.
-	for _, name := range routerNames {
-		router := conf.HTTP.Routers[name]
-
-		servedBy, registered := sr.register(name, router.EntryPoints, router.Rule)
-		if registered {
-			continue
-		}
-
-		shadowed = append(shadowed, shadowedRouter{Name: name, ServedBy: servedBy, Rule: router.Rule})
-	}
-
-	return shadowed
-}
-
-// registerTCPRouters does the same as registerHTTPRouters, but for the TCP routers.
-func (sr servedRules) registerTCPRouters(conf *dynamic.Configuration, routerNames []string) []shadowedRouter {
-	var shadowed []shadowedRouter
-
-	for _, name := range routerNames {
-		router := conf.TCP.Routers[name]
-
-		servedBy, registered := sr.register(name, router.EntryPoints, router.Rule)
-		if registered {
-			continue
-		}
-
-		shadowed = append(shadowed, shadowedRouter{Name: name, ServedBy: servedBy, Rule: router.Rule})
-	}
-
-	return shadowed
-}
-
-// dropHTTPRouters removes the given routers.
-// It also removes their middlewares and their services.
-func dropHTTPRouters(conf *dynamic.Configuration, shadowed []shadowedRouter) {
-	for _, router := range shadowed {
-		delete(conf.HTTP.Routers, router.Name)
-		deleteOwned(conf.HTTP.Middlewares, router.Name)
-		deleteOwned(conf.HTTP.Services, router.Name)
-	}
-}
-
-// dropTCPRouters does the same as dropHTTPRouters, but for the TCP routers.
-func dropTCPRouters(conf *dynamic.Configuration, shadowed []shadowedRouter) {
-	for _, router := range shadowed {
-		delete(conf.TCP.Routers, router.Name)
-		deleteOwned(conf.TCP.Middlewares, router.Name)
-		deleteOwned(conf.TCP.Services, router.Name)
-	}
-}
-
-// deleteOwned removes the entries of the given router.
-// The name of these entries starts with the name of the router.
-func deleteOwned[T any](elements map[string]T, routerName string) {
-	maps.DeleteFunc(elements, func(name string, _ T) bool {
-		return strings.HasPrefix(name, routerName)
-	})
+// routerConfiguration is the configuration of one router.
+// It also holds the middlewares and the services of that router.
+type routerConfiguration struct {
+	Name string
+	Conf *dynamic.Configuration
 }
 
 // listenerRef identifies a listener of a Gateway.
