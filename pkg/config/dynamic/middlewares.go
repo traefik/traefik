@@ -675,11 +675,17 @@ type Redis struct {
 	// DialTimeout sets the timeout for establishing new connections.
 	// Default value is 5 seconds.
 	DialTimeout *ptypes.Duration `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+
+	// DenyOnError controls the middleware behavior when Redis is unavailable or returns an error.
+	// When true (the default), the request is rejected with a 500 status code.
+	// When false, the error is logged and the request is forwarded to the next handler (fail-open).
+	DenyOnError bool `json:"denyOnError,omitempty" toml:"denyOnError,omitempty" yaml:"denyOnError,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values on a RateLimit.
+// SetDefaults sets the default values on a Redis.
 func (r *Redis) SetDefaults() {
 	r.Endpoints = []string{"localhost:6379"}
+	r.DenyOnError = true
 
 	defaultReadTimeout := ptypes.Duration(3 * time.Second)
 	r.ReadTimeout = &defaultReadTimeout

@@ -66,6 +66,10 @@ type RedisApplyConfiguration struct {
 	// DialTimeout sets the timeout for establishing new connections.
 	// Default value is 5 seconds.
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// DenyOnError controls the middleware behavior when Redis is unavailable or returns an error.
+	// When true (the default), the request is rejected with a 500 status code.
+	// When false, the error is logged and the request is forwarded to the next handler (fail-open).
+	DenyOnError *bool `json:"denyOnError,omitempty"`
 }
 
 // RedisApplyConfiguration constructs a declarative configuration of the Redis type for use with
@@ -153,5 +157,13 @@ func (b *RedisApplyConfiguration) WithWriteTimeout(value intstr.IntOrString) *Re
 // If called multiple times, the DialTimeout field is set to the value of the last call.
 func (b *RedisApplyConfiguration) WithDialTimeout(value intstr.IntOrString) *RedisApplyConfiguration {
 	b.DialTimeout = &value
+	return b
+}
+
+// WithDenyOnError sets the DenyOnError field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DenyOnError field is set to the value of the last call.
+func (b *RedisApplyConfiguration) WithDenyOnError(value bool) *RedisApplyConfiguration {
+	b.DenyOnError = &value
 	return b
 }
