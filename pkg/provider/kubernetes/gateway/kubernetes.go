@@ -440,12 +440,10 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 	p.loadHTTPAndGRPCRoutes(ctx, selectedGateways, conf)
 
-	servedTCPRules := make(servedRules)
-
-	p.loadTLSRoutes(ctx, selectedGateways, conf, servedTCPRules)
+	p.loadTLSRoutes(ctx, selectedGateways, conf)
 
 	if p.ExperimentalChannel {
-		p.loadTCPRoutes(ctx, selectedGateways, conf, servedTCPRules)
+		p.loadTCPRoutes(ctx, selectedGateways, conf)
 	}
 
 	for _, gateway := range gateways {
@@ -1248,6 +1246,9 @@ type servedRuleKey struct {
 // servedRules keeps the router that serves each rule.
 // Two routers that compete and have the same rule match the same requests.
 // Thus only the first router that a muxer evaluates can serve a request.
+// The TLSRoute and TCPRoute routers never compete, even with the same HostSNI("*") rule,
+// as the former are evaluated by the TLS muxer and the latter by the non-TLS one.
+// Thus each of them keeps its own servedRules.
 type servedRules map[servedRuleKey]string
 
 // register keeps the given router as the router that serves its rule.

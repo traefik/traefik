@@ -7990,6 +7990,95 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:                "TLSRoute and TCPRoute with the same rule on the same entry point",
+			paths:               []string{"services.yml", "mixed/with_tlsroute_and_tcproute_on_same_entrypoint.yml"},
+			experimentalChannel: true,
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-gw-default-my-tls-gateway-ep-tcp-0-b5a69536e2d72608adeb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tlsroute-default-tls-app-gw-default-my-tls-gateway-ep-tcp-0-b5a69536e2d72608adeb-wrr",
+							Rule:        `HostSNI("*")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+						"tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-0-ada211f39fad8759e161": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-0-ada211f39fad8759e161-wrr",
+							Rule:        `HostSNI("*")`,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-gw-default-my-tls-gateway-ep-tcp-0-b5a69536e2d72608adeb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-gw-default-my-tls-gateway-ep-tcp-0-b5a69536e2d72608adeb-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-gw-default-my-tls-gateway-ep-tcp-0-b5a69536e2d72608adeb-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "10.10.0.9:9000"},
+									{Address: "10.10.0.10:9000"},
+								},
+							},
+						},
+						"tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-0-ada211f39fad8759e161-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-0-ada211f39fad8759e161-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tcproute-default-tcp-app-gw-default-my-tcp-gateway-ep-tcp-0-ada211f39fad8759e161-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "10.10.0.9:9000"},
+									{Address: "10.10.0.10:9000"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
