@@ -93,7 +93,6 @@ linters:
         - github.com/jaguilar/vt100
         - github.com/cucumber/godog
         - github.com/vulcand/oxy/v2
-        - github.com/liquidweb/liquidweb-cli
         - software.sslmate.com/src/go-pkcs12
     govet:
       enable-all: true
