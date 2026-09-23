@@ -508,7 +508,7 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 func TestInitAccount(t *testing.T) {
 	rsaKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		t.Fail()
+		assert.NoError(t, err, "Could not generate account key")
 	}
 	rsaKeyString := x509.MarshalPKCS1PrivateKey(rsaKey)
 
