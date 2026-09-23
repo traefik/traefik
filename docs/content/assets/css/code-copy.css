@@ -1,0 +1,18 @@
+/* Fix positioning of the built-in clipboard button for code blocks.
+ * In this theme, the button can end up positioned relative to <body>,
+ * so anchor it to the code block container instead.
+ */
+
+.md-typeset pre.highlight {
+  position: relative;
+}
+
+.md-typeset pre.highlight > button.md-clipboard {
+  position: absolute;
+  top: .25rem;
+  right: .25rem;
+  z-index: 10;
+  opacity: 1;
+  visibility: visible;
+}
+

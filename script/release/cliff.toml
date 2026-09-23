@@ -1,0 +1,77 @@
+############################################
+# git-cliff configuration
+############################################
+
+[changelog]
+header = ""
+body = """
+{%- macro extract_areas(labels) -%}
+{%- set areas = [] -%}
+{%- for label in labels -%}
+  {%- if (label is starting_with("area/") or label is starting_with("platform/")) and label is not ending_with("documentation") -%}
+    {%- set_global areas = areas | concat(with=[label | replace(from="area/provider/", to="") | replace(from="area/middleware/", to="") | replace(from="area/", to="") | replace(from="platform/", to="")]) -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- if areas | length > 0 -%}
+**[{{ areas | join(sep=", ") }}]** {% endif %}
+{%- endmacro -%}
+
+
+
+{%- macro render_entry(commit) -%}
+{%- if commit.remote.pr_number -%}
+- {{ self::extract_areas(labels=commit.remote.pr_labels) }}{{ commit.remote.pr_title | split(pat="\n") | first }} ([#{{ commit.remote.pr_number }}](https://github.com/traefik/traefik/pull/{{ commit.remote.pr_number }}) @{{ commit.remote.username }})
+
+{%- else -%}
+- {{ self::extract_areas(labels=commit.remote.pr_labels) }}{{ commit.message | split(pat="\n") | first }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{%- if version %}
+## [{{ version }}](https://github.com/traefik/traefik/tree/{{ version }}){% if timestamp %} ({{ timestamp | date(format="%Y-%m-%d") }}){% endif %}
+{% if previous and previous.version %}[All Commits](https://github.com/traefik/traefik/compare/{{ previous.version }}...{{ version }}){% endif %}
+{%- endif %}
+
+{% for group, commits in commits | group_by(attribute="group") %}
+    **{{ group | striptags | trim | upper_first }}:**
+    {% for commit in commits %}{{ self::render_entry(commit=commit) }}
+    {% endfor %}
+{% endfor %}\n
+"""
+footer = ""
+trim = true
+
+
+############################################
+# Git configuration
+############################################
+
+[git]
+tag_pattern = "v3\\.7.*"
+ignore_tags = "v2\\..*"
+
+filter_commits = false
+conventional_commits = false
+filter_unconventional = false
+commit_parsers = [
+    { field="remote.pr_labels", pattern="area/infrastructure", skip=true },
+    { field="message", pattern="^Prepare release.*", skip=true },
+    { field="merge_commit", pattern="true", skip=true },
+    { field="message", pattern="Merge branch", skip=true },
+    { field="remote.pr_title", pattern="Merge branch", skip=true },
+
+    { field="remote.pr_labels", pattern="area/documentation", group = "<!-- 2 -->Documentation" },
+    { field="remote.pr_labels", pattern="kind/bug/fix", group = "<!-- 0 -->Bug fixes" },
+    { field="remote.pr_labels", pattern="kind/enhancement", group = "<!-- 1 -->Enhancement" },
+    { field="remote.pr_labels", pattern=".*", group = "<!-- 3 -->Misc" },
+]
+############################################
+# GitHub configuration
+############################################
+
+[remote.github]
+owner = "traefik"
+repo = "traefik"
+cache = { path = ".git/cliff-cache" }
+commit_range = true

@@ -1,4 +1,4 @@
-import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefiklabs/faency'
+import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { FiArrowRight, FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 
@@ -112,7 +112,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
     ? data.service
     : `${data.service ?? 'unknown'}@${data.provider ?? 'unknown'}`
 
-  const { data: serviceData, error: serviceDataError } = useResourceDetail(serviceSlug ?? '', 'services')
+  const { data: serviceData, error: serviceDataError } = useResourceDetail(serviceSlug ?? '', 'services', protocol)
 
   return (
     <Flex gap={2} data-testid="router-structure">
@@ -151,12 +151,12 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
               <ScrollableCard>
                 <Flex direction="column" gap={3}>
                   {data.middlewares.map((mw, idx) => {
-                    const data = {
+                    const mwData = {
                       name: mw.name,
                       status: mw.status,
                       href: `/${protocol}/middlewares/${mw.name}`,
                     }
-                    return <LinkedNameAndStatus key={`mw-${idx}`} data={data} />
+                    return <LinkedNameAndStatus key={`mw-${idx}`} data={mwData} />
                   })}
                 </Flex>
               </ScrollableCard>

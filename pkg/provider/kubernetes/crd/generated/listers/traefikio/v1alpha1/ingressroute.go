@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // IngressRouteLister helps list IngressRoutes.
@@ -38,7 +38,7 @@ import (
 type IngressRouteLister interface {
 	// List lists all IngressRoutes in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.IngressRoute, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.IngressRoute, err error)
 	// IngressRoutes returns an object that can list and get IngressRoutes.
 	IngressRoutes(namespace string) IngressRouteNamespaceLister
 	IngressRouteListerExpansion
@@ -46,25 +46,17 @@ type IngressRouteLister interface {
 
 // ingressRouteLister implements the IngressRouteLister interface.
 type ingressRouteLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.IngressRoute]
 }
 
 // NewIngressRouteLister returns a new IngressRouteLister.
 func NewIngressRouteLister(indexer cache.Indexer) IngressRouteLister {
-	return &ingressRouteLister{indexer: indexer}
-}
-
-// List lists all IngressRoutes in the indexer.
-func (s *ingressRouteLister) List(selector labels.Selector) (ret []*v1alpha1.IngressRoute, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.IngressRoute))
-	})
-	return ret, err
+	return &ingressRouteLister{listers.New[*traefikiov1alpha1.IngressRoute](indexer, traefikiov1alpha1.Resource("ingressroute"))}
 }
 
 // IngressRoutes returns an object that can list and get IngressRoutes.
 func (s *ingressRouteLister) IngressRoutes(namespace string) IngressRouteNamespaceLister {
-	return ingressRouteNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return ingressRouteNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.IngressRoute](s.ResourceIndexer, namespace)}
 }
 
 // IngressRouteNamespaceLister helps list and get IngressRoutes.
@@ -72,36 +64,15 @@ func (s *ingressRouteLister) IngressRoutes(namespace string) IngressRouteNamespa
 type IngressRouteNamespaceLister interface {
 	// List lists all IngressRoutes in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.IngressRoute, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.IngressRoute, err error)
 	// Get retrieves the IngressRoute from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.IngressRoute, error)
+	Get(name string) (*traefikiov1alpha1.IngressRoute, error)
 	IngressRouteNamespaceListerExpansion
 }
 
 // ingressRouteNamespaceLister implements the IngressRouteNamespaceLister
 // interface.
 type ingressRouteNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all IngressRoutes in the indexer for a given namespace.
-func (s ingressRouteNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.IngressRoute, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.IngressRoute))
-	})
-	return ret, err
-}
-
-// Get retrieves the IngressRoute from the indexer for a given namespace and name.
-func (s ingressRouteNamespaceLister) Get(name string) (*v1alpha1.IngressRoute, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("ingressroute"), name)
-	}
-	return obj.(*v1alpha1.IngressRoute), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.IngressRoute]
 }

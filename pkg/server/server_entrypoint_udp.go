@@ -50,16 +50,12 @@ func (eps UDPEntryPoints) Stop() {
 	var wg sync.WaitGroup
 
 	for epn, ep := range eps {
-		wg.Add(1)
-
-		go func(entryPointName string, entryPoint *UDPEntryPoint) {
-			defer wg.Done()
-
-			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
-			entryPoint.Shutdown(logger.WithContext(context.Background()))
+		wg.Go(func() {
+			logger := log.With().Str(logs.EntryPointName, epn).Logger()
+			ep.Shutdown(logger.WithContext(context.Background()))
 
 			logger.Debug().Msg("Entry point closed")
-		}(epn, ep)
+		})
 	}
 
 	wg.Wait()

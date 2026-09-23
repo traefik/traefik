@@ -13,16 +13,16 @@ const typeName = "Plugin"
 
 // PluginsBuilder the plugin's builder interface.
 type PluginsBuilder interface {
-	Build(pName string, config map[string]interface{}, middlewareName string) (plugins.Constructor, error)
+	Build(pName string, config map[string]any, middlewareName string) (plugins.Constructor, error)
 }
 
-func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]interface{}, error) {
+func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]any, error) {
 	if len(rawConfig) != 1 {
 		return "", nil, errors.New("invalid configuration: no configuration or too many plugin definition")
 	}
 
 	var pluginType string
-	var rawPluginConfig map[string]interface{}
+	var rawPluginConfig map[string]any
 
 	for pType, pConfig := range rawConfig {
 		pluginType = pType

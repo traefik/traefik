@@ -187,4 +187,4 @@ spec:
 
     The WAF middleware supports extensive customization through Coraza directives. You can create custom rules, tune detection thresholds, configure logging levels, and integrate with external threat intelligence feeds. For comprehensive rule writing guidance, consult the [Coraza documentation](https://coraza.io/docs/tutorials/introduction/) and [OWASP CRS documentation](https://coreruleset.org/docs/).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -12,11 +12,11 @@ import {
   Link,
   Text,
   Tooltip,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { useContext, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiBookOpen, FiChevronLeft, FiGithub, FiHeart, FiHelpCircle } from 'react-icons/fi'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 
 import { DARK_PRIMARY_COLOR, LIGHT_PRIMARY_COLOR } from '../Page'
 

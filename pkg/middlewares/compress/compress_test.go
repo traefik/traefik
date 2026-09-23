@@ -93,9 +93,9 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     gzipName,
 		},
 		{
-			desc:            "multi accept header list, prefer gzip",
+			desc:            "multi accept header list, prefer best",
 			acceptEncHeader: "gzip, br, zstd",
-			expEncoding:     gzipName,
+			expEncoding:     "gzip",
 		},
 	}
 

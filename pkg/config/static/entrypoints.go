@@ -11,6 +11,36 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
+// Strategies for handling request headers whose name aliases another header name.
+const (
+	// AliasHeadersStrategyKeep is the strategy to forward the request headers with an aliasing name as is.
+	AliasHeadersStrategyKeep = "keep"
+	// AliasHeadersStrategyDelete is the strategy to delete the request headers with an aliasing name before routing.
+	AliasHeadersStrategyDelete = "delete"
+	// AliasHeadersStrategyReject is the strategy to reject the requests carrying a header with an aliasing name.
+	AliasHeadersStrategyReject = "reject"
+)
+
+// Strategies for handling request headers with underscores in their names.
+//
+// Deprecated: please use the AliasHeadersStrategy* constants instead.
+const (
+	// UnderscoreHeadersStrategyKeep is the strategy to forward the request headers with underscores as is.
+	//
+	// Deprecated: please use AliasHeadersStrategyKeep instead.
+	UnderscoreHeadersStrategyKeep = "keep"
+
+	// UnderscoreHeadersStrategyDelete is the strategy to delete headers with underscores from the request before routing.
+	//
+	// Deprecated: please use AliasHeadersStrategyDelete instead.
+	UnderscoreHeadersStrategyDelete = "delete"
+
+	// UnderscoreHeadersStrategyReject is the strategy to reject request with headers with underscores.
+	//
+	// Deprecated: please use AliasHeadersStrategyReject instead.
+	UnderscoreHeadersStrategyReject = "reject"
+)
+
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -72,13 +102,18 @@ type HTTPConfig struct {
 	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
 	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
 	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	AliasHeadersStrategy  string             `description:"Defines the strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject)." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
+
+	// UnderscoreHeadersStrategy is the strategy to handle request headers with underscores in their names.
+	//
+	// Deprecated: please use AliasHeadersStrategy instead.
+	UnderscoreHeadersStrategy string `description:"Defines the strategy to handle requests with headers with underscores (keep, delete, and reject). (Deprecated: please use aliasHeadersStrategy instead)" json:"underscoreHeadersStrategy,omitempty" toml:"underscoreHeadersStrategy,omitempty" yaml:"underscoreHeadersStrategy,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (c *HTTPConfig) SetDefaults() {
-	sanitizePath := true
-	c.SanitizePath = &sanitizePath
-	c.MaxHeaderBytes = http.DefaultMaxHeaderBytes
+func (h *HTTPConfig) SetDefaults() {
+	h.SanitizePath = new(true)
+	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.
@@ -90,6 +125,16 @@ type EncodedCharacters struct {
 	AllowEncodedPercent       bool `description:"Defines whether requests with encoded percent characters in the path are allowed." json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
 	AllowEncodedQuestionMark  bool `description:"Defines whether requests with encoded question mark characters in the path are allowed." json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
 	AllowEncodedHash          bool `description:"Defines whether requests with encoded hash characters in the path are allowed." json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
+}
+
+func (ec *EncodedCharacters) SetDefaults() {
+	ec.AllowEncodedSlash = true
+	ec.AllowEncodedBackSlash = true
+	ec.AllowEncodedNullCharacter = true
+	ec.AllowEncodedSemicolon = true
+	ec.AllowEncodedPercent = true
+	ec.AllowEncodedQuestionMark = true
+	ec.AllowEncodedHash = true
 }
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
@@ -140,10 +185,11 @@ type TLSConfig struct {
 
 // ForwardedHeaders Trust client forwarding headers.
 type ForwardedHeaders struct {
-	Insecure               bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	TrustedIPs             []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
-	Connection             []string `description:"List of Connection headers that are allowed to pass through the middleware chain before being removed." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
-	NotAppendXForwardedFor bool     `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Insecure                   bool     `description:"Trust all forwarded headers." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	TrustedIPs                 []string `description:"Trust only forwarded headers from selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
+	Connection                 []string `description:"List of Connection headers that are allowed to pass through the middleware chain before being removed." json:"connection,omitempty" toml:"connection,omitempty" yaml:"connection,omitempty"`
+	NotAppendXForwardedFor     bool     `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	AddXForwardedSchemeHeaders bool     `description:"Add the X-Forwarded-Scheme and X-Scheme headers." json:"addXForwardedSchemeHeaders,omitempty" toml:"addXForwardedSchemeHeaders,omitempty" yaml:"addXForwardedSchemeHeaders,omitempty" export:"true"`
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration.
@@ -191,9 +237,8 @@ type ObservabilityConfig struct {
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
-	defaultValue := true
-	o.AccessLogs = &defaultValue
-	o.Metrics = &defaultValue
-	o.Tracing = &defaultValue
+	o.AccessLogs = new(true)
+	o.Metrics = new(true)
+	o.Tracing = new(true)
 	o.TraceVerbosity = otypes.MinimalVerbosity
 }

@@ -22,7 +22,7 @@ func RemoveConnectionHeaders(req *http.Request) {
 	}
 
 	for _, f := range req.Header[connectionHeader] {
-		for _, sf := range strings.Split(f, ",") {
+		for sf := range strings.SplitSeq(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
 				req.Header.Del(sf)
 			}

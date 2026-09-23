@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mailgun/ttlmap"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/ttlmap"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/utils"
 	lua "github.com/yuin/gopher-lua"
@@ -300,11 +300,8 @@ func TestInMemoryRateLimit(t *testing.T) {
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
-			burst := test.config.Burst
-			if burst < 1 {
-				// actual default value
-				burst = 1
-			}
+			// actual default value if burst < 1
+			burst := max(test.config.Burst, 1)
 
 			period := time.Duration(test.config.Period)
 			if period == 0 {
@@ -510,11 +507,8 @@ func TestRedisRateLimit(t *testing.T) {
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
-			burst := test.config.Burst
-			if burst < 1 {
-				// actual default value
-				burst = 1
-			}
+			// actual default value
+			burst := max(test.config.Burst, 1)
 
 			period := time.Duration(test.config.Period)
 			if period == 0 {
@@ -559,18 +553,18 @@ func TestRedisRateLimit(t *testing.T) {
 
 type mockRedisClient struct {
 	ttl  int
-	keys *ttlmap.TtlMap
+	keys *ttlmap.Map[[]string]
 }
 
 func newMockRedisClient(ttl int) Rediser {
-	buckets, _ := ttlmap.NewConcurrent(65536)
+	buckets, _ := ttlmap.New[[]string](65536)
 	return &mockRedisClient{
 		ttl:  ttl,
 		keys: buckets,
 	}
 }
 
-func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, args ...any) *redis.Cmd {
 	state := lua.NewState()
 	defer state.Close()
 
@@ -604,16 +598,10 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 				if !ok {
 					state.Push(table)
 				} else {
-					switch v := value.(type) {
-					case []string:
-						if len(v) != 4 {
-							break
+					if len(value) == 4 {
+						for i := range value {
+							table.Append(lua.LString(value[i]))
 						}
-						for i := range v {
-							table.Append(lua.LString(v[i]))
-						}
-					default:
-						fmt.Printf("Unknown type: %T\n", v)
 					}
 					state.Push(table)
 				}
@@ -641,7 +629,7 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 		return cmd
 	}
 
-	var resultSlice []interface{}
+	var resultSlice []any
 	resultTable.ForEach(func(_ lua.LValue, value lua.LValue) {
 		valueNbr, ok := value.(lua.LNumber)
 		if !ok {
@@ -661,7 +649,7 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 	return cmd
 }
 
-func (m *mockRedisClient) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) Eval(ctx context.Context, script string, keys []string, args ...any) *redis.Cmd {
 	return m.EvalSha(ctx, script, keys, args...)
 }
 
@@ -677,11 +665,11 @@ func (m *mockRedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd
 	return nil
 }
 
-func (m *mockRedisClient) EvalRO(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) EvalRO(ctx context.Context, script string, keys []string, args ...any) *redis.Cmd {
 	return nil
 }
 
-func (m *mockRedisClient) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...any) *redis.Cmd {
 	return nil
 }
 

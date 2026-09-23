@@ -12,8 +12,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// providerName is the Consul provider name.
-const providerName = "consul"
+// ProviderName is the Consul provider name.
+const ProviderName = "consul"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -38,7 +38,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Provider: p.Provider,
-			name:     providerName,
+			name:     ProviderName,
 			token:    p.Token,
 			tls:      p.TLS,
 		}}
@@ -48,7 +48,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	for _, namespace := range p.Namespaces {
 		providers = append(providers, &Provider{
 			Provider:  p.Provider,
-			name:      providerName + "-" + namespace,
+			name:      ProviderName + "-" + namespace,
 			namespace: namespace,
 			token:     p.Token,
 			tls:       p.TLS,
@@ -78,7 +78,7 @@ func (p *Provider) Init() error {
 
 	// In case they didn't initialize with BuildProviders.
 	if p.name == "" {
-		p.name = providerName
+		p.name = ProviderName
 	}
 
 	config := &consul.Config{

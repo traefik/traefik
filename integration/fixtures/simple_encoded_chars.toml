@@ -8,12 +8,18 @@
 [entryPoints]
   [entryPoints.strict]
     address = ":8000"
-    # Default: no encoded characters allowed
+    [entryPoints.strict.http.encodedCharacters]
+        allowEncodedSlash = false
 
   [entryPoints.permissive]
     address = ":8001"
+    # No config, default values should apply
+
+  [entryPoints.permissive2]
+    address = ":8002"
+    # No config for allowEncodedSlash, default value is effectively true
     [entryPoints.permissive.http.encodedCharacters]
-      allowEncodedSlash = true
+        allowEncodedBackSlash = false
 
 [api]
   insecure = true

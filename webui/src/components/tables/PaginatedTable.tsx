@@ -1,4 +1,4 @@
-import { AriaTable, AriaTbody, AriaTd, AriaThead, AriaTr, Box, Button, Flex, Text } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaThead, AriaTr, Box, Button, Flex, Text } from '@traefik-labs/faency'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from 'react-icons/fi'
 

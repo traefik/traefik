@@ -27,111 +27,35 @@ THE SOFTWARE.
 package fake
 
 import (
-	"context"
-
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeIngressRouteTCPs implements IngressRouteTCPInterface
-type FakeIngressRouteTCPs struct {
+// fakeIngressRouteTCPs implements IngressRouteTCPInterface
+type fakeIngressRouteTCPs struct {
+	*gentype.FakeClientWithListAndApply[*v1alpha1.IngressRouteTCP, *v1alpha1.IngressRouteTCPList, *traefikiov1alpha1.IngressRouteTCPApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
-	ns   string
 }
 
-var ingressroutetcpsResource = v1alpha1.SchemeGroupVersion.WithResource("ingressroutetcps")
-
-var ingressroutetcpsKind = v1alpha1.SchemeGroupVersion.WithKind("IngressRouteTCP")
-
-// Get takes name of the ingressRouteTCP, and returns the corresponding ingressRouteTCP object, and an error if there is any.
-func (c *FakeIngressRouteTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.IngressRouteTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(ingressroutetcpsResource, c.ns, name), &v1alpha1.IngressRouteTCP{})
-
-	if obj == nil {
-		return nil, err
+func newFakeIngressRouteTCPs(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.IngressRouteTCPInterface {
+	return &fakeIngressRouteTCPs{
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.IngressRouteTCP, *v1alpha1.IngressRouteTCPList, *traefikiov1alpha1.IngressRouteTCPApplyConfiguration](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("ingressroutetcps"),
+			v1alpha1.SchemeGroupVersion.WithKind("IngressRouteTCP"),
+			func() *v1alpha1.IngressRouteTCP { return &v1alpha1.IngressRouteTCP{} },
+			func() *v1alpha1.IngressRouteTCPList { return &v1alpha1.IngressRouteTCPList{} },
+			func(dst, src *v1alpha1.IngressRouteTCPList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.IngressRouteTCPList) []*v1alpha1.IngressRouteTCP {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.IngressRouteTCPList, items []*v1alpha1.IngressRouteTCP) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.IngressRouteTCP), err
-}
-
-// List takes label and field selectors, and returns the list of IngressRouteTCPs that match those selectors.
-func (c *FakeIngressRouteTCPs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.IngressRouteTCPList, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewListAction(ingressroutetcpsResource, ingressroutetcpsKind, c.ns, opts), &v1alpha1.IngressRouteTCPList{})
-
-	if obj == nil {
-		return nil, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.IngressRouteTCPList{ListMeta: obj.(*v1alpha1.IngressRouteTCPList).ListMeta}
-	for _, item := range obj.(*v1alpha1.IngressRouteTCPList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested ingressRouteTCPs.
-func (c *FakeIngressRouteTCPs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(ingressroutetcpsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a ingressRouteTCP and creates it.  Returns the server's representation of the ingressRouteTCP, and an error, if there is any.
-func (c *FakeIngressRouteTCPs) Create(ctx context.Context, ingressRouteTCP *v1alpha1.IngressRouteTCP, opts v1.CreateOptions) (result *v1alpha1.IngressRouteTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(ingressroutetcpsResource, c.ns, ingressRouteTCP), &v1alpha1.IngressRouteTCP{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.IngressRouteTCP), err
-}
-
-// Update takes the representation of a ingressRouteTCP and updates it. Returns the server's representation of the ingressRouteTCP, and an error, if there is any.
-func (c *FakeIngressRouteTCPs) Update(ctx context.Context, ingressRouteTCP *v1alpha1.IngressRouteTCP, opts v1.UpdateOptions) (result *v1alpha1.IngressRouteTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(ingressroutetcpsResource, c.ns, ingressRouteTCP), &v1alpha1.IngressRouteTCP{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.IngressRouteTCP), err
-}
-
-// Delete takes name of the ingressRouteTCP and deletes it. Returns an error if one occurs.
-func (c *FakeIngressRouteTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(ingressroutetcpsResource, c.ns, name, opts), &v1alpha1.IngressRouteTCP{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeIngressRouteTCPs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(ingressroutetcpsResource, c.ns, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.IngressRouteTCPList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched ingressRouteTCP.
-func (c *FakeIngressRouteTCPs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.IngressRouteTCP, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(ingressroutetcpsResource, c.ns, name, pt, data, subresources...), &v1alpha1.IngressRouteTCP{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1alpha1.IngressRouteTCP), err
 }

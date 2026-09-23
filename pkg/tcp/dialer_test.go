@@ -11,6 +11,8 @@ import (
 	"io"
 	"math/big"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -27,11 +29,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// LocalhostCert is a PEM-encoded TLS cert
+// localhostCert is a PEM-encoded TLS cert
 // for host example.com, www.example.com
 // expiring at Jan 29 16:00:00 2084 GMT.
 // go run $GOROOT/src/crypto/tls/generate_cert.go  --rsa-bits 1024 --host example.com,www.example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
-var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
+var localhostCert = []byte(`-----BEGIN CERTIFICATE-----
 MIICDDCCAXWgAwIBAgIQH20JmcOlcRWHNuf62SYwszANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
 MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
@@ -45,8 +47,8 @@ we7mX8lv763u0XuCWPxbHszhclI6FFjoQef0Z1NYLRm8ZRq58QqWDFZ3E6wdDK+B
 +OWvkW+hRavo6R9LzIZPfbv8yBo4M9PK/DXw8hLqH7VkkI+Gh793iH7Ugd4A7wvT
 -----END CERTIFICATE-----`)
 
-// LocalhostKey is the private key for localhostCert.
-var LocalhostKey = []byte(`-----BEGIN PRIVATE KEY-----
+// localhostKey is the private key for localhostCert.
+var localhostKey = []byte(`-----BEGIN PRIVATE KEY-----
 MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBALSog3LcXiirq+IO
 eWkMMTknTyJJEaCCDoTKUkoEpl+mEQba5+ArvwO5+Xf7tvQuURjYB5kfC+Ic4OoL
 1rqKGPVlhCTT92MCH4546EURa771P9U/yBUVqsWpPwM6nL6GsbtgmK9QjPBvh+Yl
@@ -178,7 +180,7 @@ func TestNoTLS(t *testing.T) {
 }
 
 func TestTLS(t *testing.T) {
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	backendListener, err := net.Listen("tcp", ":0")
@@ -199,7 +201,7 @@ func TestTLS(t *testing.T) {
 		"test": {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
-				RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
 			},
 		},
 	}
@@ -228,7 +230,7 @@ func TestTLS(t *testing.T) {
 }
 
 func TestTLSWithInsecureSkipVerify(t *testing.T) {
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	backendListener, err := net.Listen("tcp", ":0")
@@ -249,7 +251,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 		"test": {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName:         "bad-domain.com",
-				RootCAs:            []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				RootCAs:            []types.FileOrContent{types.FileOrContent(localhostCert)},
 				InsecureSkipVerify: true,
 			},
 		},
@@ -279,7 +281,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 }
 
 func TestMTLS(t *testing.T) {
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	require.NoError(t, err)
 
 	clientPool := x509.NewCertPool()
@@ -311,7 +313,7 @@ func TestMTLS(t *testing.T) {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
 				// For TLS
-				RootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				RootCAs: []types.FileOrContent{types.FileOrContent(localhostCert)},
 
 				// For mTLS
 				Certificates: traefiktls.Certificates{
@@ -595,7 +597,7 @@ func TestProxyProtocolWithTLS(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+			cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 			require.NoError(t, err)
 
 			backendListener, err := net.Listen("tcp", ":0")
@@ -651,7 +653,7 @@ func TestProxyProtocolWithTLS(t *testing.T) {
 				"test": {
 					TLS: &dynamic.TLSClientConfig{
 						ServerName:         "example.com",
-						RootCAs:            []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+						RootCAs:            []types.FileOrContent{types.FileOrContent(localhostCert)},
 						InsecureSkipVerify: true,
 					},
 					ProxyProtocol: &dynamic.ProxyProtocol{
@@ -739,6 +741,88 @@ func TestProxyProtocolDisabled(t *testing.T) {
 
 	assert.Equal(t, 4, n)
 	assert.Equal(t, "PONG", string(buf[:4]))
+}
+
+func TestPeerCertSANs(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		serversTransport *dynamic.TCPServersTransport
+		wantError        bool
+	}{
+		{
+			desc: "matches cert SAN",
+			serversTransport: &dynamic.TCPServersTransport{
+				TLS: &dynamic.TLSClientConfig{
+					ServerName: "example.com",
+					RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+					PeerCertSANs: []traefiktls.SAN{
+						{
+							Type:  traefiktls.SANDNSNameType,
+							Value: "www.example.com",
+						},
+					},
+				},
+			},
+			wantError: false,
+		},
+		{
+			desc: "does not match cert SAN",
+			serversTransport: &dynamic.TCPServersTransport{
+				TLS: &dynamic.TLSClientConfig{
+					ServerName: "example.com",
+					RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+					PeerCertSANs: []traefiktls.SAN{
+						{
+							Type:  traefiktls.SANDNSNameType,
+							Value: "wrong.example.com",
+						},
+					},
+				},
+			},
+			wantError: true,
+		},
+		{
+			desc: "does not match deprecated PeerCertURI",
+			serversTransport: &dynamic.TCPServersTransport{
+				TLS: &dynamic.TLSClientConfig{
+					ServerName:  "example.com",
+					RootCAs:     []types.FileOrContent{types.FileOrContent(localhostCert)},
+					PeerCertURI: "foo://bar",
+				},
+			},
+			wantError: true,
+		},
+	}
+
+	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+			srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
+			srv.StartTLS()
+			t.Cleanup(srv.Close)
+
+			dialerManager := NewDialerManager(nil)
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{
+				"test": test.serversTransport,
+			})
+
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
+			require.NoError(t, err)
+
+			conn, err := dialer.Dial("tcp", srv.Listener.Addr().String(), nil)
+			if test.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				_ = conn.Close()
+			}
+		})
+	}
 }
 
 type fakeClientConn struct {

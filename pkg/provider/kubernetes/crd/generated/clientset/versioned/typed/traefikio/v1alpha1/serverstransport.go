@@ -27,15 +27,15 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
-	"time"
+	context "context"
 
+	applyconfigurationtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
 	scheme "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // ServersTransportsGetter has a method to return a ServersTransportInterface.
@@ -46,141 +46,33 @@ type ServersTransportsGetter interface {
 
 // ServersTransportInterface has methods to work with ServersTransport resources.
 type ServersTransportInterface interface {
-	Create(ctx context.Context, serversTransport *v1alpha1.ServersTransport, opts v1.CreateOptions) (*v1alpha1.ServersTransport, error)
-	Update(ctx context.Context, serversTransport *v1alpha1.ServersTransport, opts v1.UpdateOptions) (*v1alpha1.ServersTransport, error)
+	Create(ctx context.Context, serversTransport *traefikiov1alpha1.ServersTransport, opts v1.CreateOptions) (*traefikiov1alpha1.ServersTransport, error)
+	Update(ctx context.Context, serversTransport *traefikiov1alpha1.ServersTransport, opts v1.UpdateOptions) (*traefikiov1alpha1.ServersTransport, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ServersTransport, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ServersTransportList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*traefikiov1alpha1.ServersTransport, error)
+	List(ctx context.Context, opts v1.ListOptions) (*traefikiov1alpha1.ServersTransportList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServersTransport, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.ServersTransport, err error)
+	Apply(ctx context.Context, serversTransport *applyconfigurationtraefikiov1alpha1.ServersTransportApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.ServersTransport, err error)
 	ServersTransportExpansion
 }
 
 // serversTransports implements ServersTransportInterface
 type serversTransports struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithListAndApply[*traefikiov1alpha1.ServersTransport, *traefikiov1alpha1.ServersTransportList, *applyconfigurationtraefikiov1alpha1.ServersTransportApplyConfiguration]
 }
 
 // newServersTransports returns a ServersTransports
 func newServersTransports(c *TraefikV1alpha1Client, namespace string) *serversTransports {
 	return &serversTransports{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithListAndApply[*traefikiov1alpha1.ServersTransport, *traefikiov1alpha1.ServersTransportList, *applyconfigurationtraefikiov1alpha1.ServersTransportApplyConfiguration](
+			"serverstransports",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *traefikiov1alpha1.ServersTransport { return &traefikiov1alpha1.ServersTransport{} },
+			func() *traefikiov1alpha1.ServersTransportList { return &traefikiov1alpha1.ServersTransportList{} },
+		),
 	}
-}
-
-// Get takes name of the serversTransport, and returns the corresponding serversTransport object, and an error if there is any.
-func (c *serversTransports) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServersTransport, err error) {
-	result = &v1alpha1.ServersTransport{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of ServersTransports that match those selectors.
-func (c *serversTransports) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ServersTransportList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1alpha1.ServersTransportList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested serversTransports.
-func (c *serversTransports) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a serversTransport and creates it.  Returns the server's representation of the serversTransport, and an error, if there is any.
-func (c *serversTransports) Create(ctx context.Context, serversTransport *v1alpha1.ServersTransport, opts v1.CreateOptions) (result *v1alpha1.ServersTransport, err error) {
-	result = &v1alpha1.ServersTransport{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(serversTransport).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a serversTransport and updates it. Returns the server's representation of the serversTransport, and an error, if there is any.
-func (c *serversTransports) Update(ctx context.Context, serversTransport *v1alpha1.ServersTransport, opts v1.UpdateOptions) (result *v1alpha1.ServersTransport, err error) {
-	result = &v1alpha1.ServersTransport{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		Name(serversTransport.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(serversTransport).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the serversTransport and deletes it. Returns an error if one occurs.
-func (c *serversTransports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *serversTransports) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("serverstransports").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched serversTransport.
-func (c *serversTransports) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServersTransport, err error) {
-	result = &v1alpha1.ServersTransport{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("serverstransports").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

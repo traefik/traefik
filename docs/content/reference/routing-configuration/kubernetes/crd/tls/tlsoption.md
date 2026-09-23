@@ -22,6 +22,11 @@ Before creating `TLSOption` objects or referencing TLS options in the [`IngressR
     you'll have to add an annotation to the Ingress in the following form:
     `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
 
+    This `default` TLSOption carries the TLS enforcement policy (client authentication, TLS versions, cipher suites, SNI strictness)
+    of every router that does not reference a TLSOption explicitly.
+    The [`defaultTLSResourcesNamespace`](../../../../install-configuration/providers/kubernetes/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide default can be defined in.
+
 ## Configuration Example
 
 ```yaml tab="TLSOption"
@@ -56,7 +61,7 @@ spec:
 | <a id="opt-clientAuth-clientAuthType" href="#opt-clientAuth-clientAuthType" title="#opt-clientAuth-clientAuthType">`clientAuth.clientAuthType`</a> | Client Authentication (mTLS) option.<br />Client authentication type to apply. Available values [here](#client-authentication-mtls).                                                                                                                                                                                                                                                                     |                            | No       |
 | <a id="opt-sniStrict" href="#opt-sniStrict" title="#opt-sniStrict">`sniStrict`</a> | Allow rejecting connections from clients connections that do not specify a server_name extension.<br />The [default certificate](../../../http/tls/tls-certificates.md#default-certificate) is never served is the option is enabled.                                                                                                                                                                    | false                      | No       |
 | <a id="opt-alpnProtocols" href="#opt-alpnProtocols" title="#opt-alpnProtocols">`alpnProtocols`</a> | List of supported application level protocols for the TLS handshake, in order of preference.<br />If the client supports ALPN, the selected protocol will be one from this list, and the connection will fail if there is no mutually supported protocol.                                                                                                                                                | "h2, http/1.1, acme-tls/1" | No       |
-| <a id="opt-disableSessiontTickets" href="#opt-disableSessiontTickets" title="#opt-disableSessiontTickets">`disableSessiontTickets`</a> | Allow disabling the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.                                                                                                                                                                                                                                                                           | false                      | No       |
+| <a id="opt-disableSessionTickets" href="#opt-disableSessionTickets" title="#opt-disableSessionTickets">`disableSessionTickets`</a> | Allow disabling the use of session tickets, forcing every client to perform a full TLS handshake instead of resuming sessions.                                                                                                                                                                                                                                                                           | false                      | No       |
 
 ### Client Authentication (mTLS)
 

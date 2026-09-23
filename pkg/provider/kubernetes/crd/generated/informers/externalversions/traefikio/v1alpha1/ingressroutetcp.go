@@ -27,15 +27,16 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -44,7 +45,7 @@ import (
 // IngressRouteTCPs.
 type IngressRouteTCPInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.IngressRouteTCPLister
+	Lister() traefikiov1alpha1.IngressRouteTCPLister
 }
 
 type ingressRouteTCPInformer struct {
@@ -57,42 +58,67 @@ type ingressRouteTCPInformer struct {
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewIngressRouteTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredIngressRouteTCPInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewIngressRouteTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
 }
 
 // NewFilteredIngressRouteTCPInformer constructs a new informer for IngressRouteTCP type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredIngressRouteTCPInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewIngressRouteTCPInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewIngressRouteTCPInformerWithOptions constructs a new informer for IngressRouteTCP type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewIngressRouteTCPInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "ingressroutetcps"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().IngressRouteTCPs(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().IngressRouteTCPs(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().IngressRouteTCPs(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().IngressRouteTCPs(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().IngressRouteTCPs(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().IngressRouteTCPs(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&crdtraefikiov1alpha1.IngressRouteTCP{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&traefikiov1alpha1.IngressRouteTCP{},
-		resyncPeriod,
-		indexers,
 	)
 }
 
 func (f *ingressRouteTCPInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredIngressRouteTCPInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewIngressRouteTCPInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *ingressRouteTCPInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.IngressRouteTCP{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.IngressRouteTCP{}, f.defaultInformer)
 }
 
-func (f *ingressRouteTCPInformer) Lister() v1alpha1.IngressRouteTCPLister {
-	return v1alpha1.NewIngressRouteTCPLister(f.Informer().GetIndexer())
+func (f *ingressRouteTCPInformer) Lister() traefikiov1alpha1.IngressRouteTCPLister {
+	return traefikiov1alpha1.NewIngressRouteTCPLister(f.Informer().GetIndexer())
 }

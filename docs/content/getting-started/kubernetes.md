@@ -250,7 +250,7 @@ To use the Gateway API:
 Install the Gateway API CRDs in your cluster:
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
 ```
 
 Create an HTTPRoute. This configuration:
@@ -331,4 +331,4 @@ That's it! You've successfully deployed Traefik and configured routing in a Kube
 - [Learn more about Kubernetes CRD provider](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md)
 - [Learn more about Kubernetes Gateway API provider](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

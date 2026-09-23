@@ -1,6 +1,6 @@
 import qs from 'query-string'
 import { useMemo } from 'react'
-import { useHref, useLocation, useSearchParams } from 'react-router-dom'
+import { useHref, useLocation, useSearchParams } from 'react-router'
 
 import { capitalizeFirstLetter } from '../utils/string'
 

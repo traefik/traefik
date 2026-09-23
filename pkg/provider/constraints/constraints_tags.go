@@ -25,7 +25,7 @@ func MatchTags(tags []string, expr string) (bool, error) {
 			NOT: notTagFunc,
 			OR:  orTagFunc,
 		},
-		Functions: map[string]interface{}{
+		Functions: map[string]any{
 			"Tag":      tagFn,
 			"TagRegex": tagRegexFn,
 		},

@@ -16,6 +16,7 @@ import (
 
 type ConsulCatalogSuite struct {
 	BaseSuite
+
 	consulClient      *api.Client
 	consulAgentClient *api.Client
 	consulURL         string
@@ -51,47 +52,6 @@ func (s *ConsulCatalogSuite) SetupSuite() {
 
 func (s *ConsulCatalogSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
-}
-
-func (s *ConsulCatalogSuite) waitToElectConsulLeader() error {
-	return try.Do(15*time.Second, func() error {
-		leader, err := s.consulClient.Status().Leader()
-
-		if err != nil || len(leader) == 0 {
-			return fmt.Errorf("leader not found. %w", err)
-		}
-
-		return nil
-	})
-}
-
-func (s *ConsulCatalogSuite) waitForConnectCA() error {
-	return try.Do(15*time.Second, func() error {
-		caroots, _, err := s.consulClient.Connect().CARoots(nil)
-
-		if err != nil || len(caroots.Roots) == 0 {
-			return fmt.Errorf("connect CA not fully initialized. %w", err)
-		}
-
-		return nil
-	})
-}
-
-func (s *ConsulCatalogSuite) registerService(reg *api.AgentServiceRegistration, onAgent bool) error {
-	client := s.consulClient
-	if onAgent {
-		client = s.consulAgentClient
-	}
-
-	return client.Agent().ServiceRegister(reg)
-}
-
-func (s *ConsulCatalogSuite) deregisterService(id string, onAgent bool) error {
-	client := s.consulClient
-	if onAgent {
-		client = s.consulAgentClient
-	}
-	return client.Agent().ServiceDeregister(id)
 }
 
 func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
@@ -836,4 +796,45 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 	require.NoError(s.T(), err)
 	err = s.deregisterService("whoami1", false)
 	require.NoError(s.T(), err)
+}
+
+func (s *ConsulCatalogSuite) waitToElectConsulLeader() error {
+	return try.Do(15*time.Second, func() error {
+		leader, err := s.consulClient.Status().Leader()
+
+		if err != nil || len(leader) == 0 {
+			return fmt.Errorf("leader not found. %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (s *ConsulCatalogSuite) waitForConnectCA() error {
+	return try.Do(15*time.Second, func() error {
+		caroots, _, err := s.consulClient.Connect().CARoots(nil)
+
+		if err != nil || len(caroots.Roots) == 0 {
+			return fmt.Errorf("connect CA not fully initialized. %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (s *ConsulCatalogSuite) registerService(reg *api.AgentServiceRegistration, onAgent bool) error {
+	client := s.consulClient
+	if onAgent {
+		client = s.consulAgentClient
+	}
+
+	return client.Agent().ServiceRegister(reg)
+}
+
+func (s *ConsulCatalogSuite) deregisterService(id string, onAgent bool) error {
+	client := s.consulClient
+	if onAgent {
+		client = s.consulAgentClient
+	}
+	return client.Agent().ServiceDeregister(id)
 }

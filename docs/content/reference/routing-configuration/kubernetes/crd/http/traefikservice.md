@@ -3,13 +3,14 @@ title: "Traefik Kubernetes Services Documentation"
 description: "Learn how to configure routing and load balancing in Traefik Proxy to reach Services, which handle incoming requests. Read the technical documentation."
 --- 
 
-A `TraefikService` is a custom resource that sits on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing, a [Highest Random Weight](#highest-random-weight) load balancing, or a [Mirroring](#mirroring) between your Kubernetes Services.
+A `TraefikService` is a custom resource that sits on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing, a [Highest Random Weight](#highest-random-weight) load balancing, a [Mirroring](#mirroring), or a [Failover](#failover) between your Kubernetes Services.
 
 Services configure how to reach the actual endpoints that will eventually handle incoming requests. In Traefik, the target service can be either a standard [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)—which exposes a pod—or a TraefikService. The latter allows you to combine advanced load-balancing options like:
 
 - [Weighted Round Robin load balancing](#weighted-round-robin).
 - [Highest Random Weight load balancing](#highest-random-weight).
-- [Mirroring](#mirroring). 
+- [Mirroring](#mirroring).
+- [Failover](#failover).
 
 ## Weighted Round Robin
 
@@ -156,7 +157,7 @@ data:
 | <a id="opt-sticky-cookie-name" href="#opt-sticky-cookie-name" title="#opt-sticky-cookie-name">`sticky.`<br />`cookie.name`</a> | Name of the cookie used for the stickiness at the WRR service level.<br />When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.<br />On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.<br />If the server pecified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).<br />More information about WRR stickiness [here](#stickiness-on-multiple-levels) | Abbreviation of a sha1<br />(ex: `_1d52e`).                          | No       |
 | <a id="opt-sticky-cookie-httpOnly" href="#opt-sticky-cookie-httpOnly" title="#opt-sticky-cookie-httpOnly">`sticky.`<br />`cookie.httpOnly`</a> | Allow the cookie used for the stickiness at the WRR service level to be accessed by client-side APIs, such as JavaScript.<br />More information about WRR stickiness [here](#stickiness-on-multiple-levels)                                                                                                                                                                                                                                                                                                                                                                                                          | false                                                                | No       |
 | <a id="opt-sticky-cookie-secure" href="#opt-sticky-cookie-secure" title="#opt-sticky-cookie-secure">`sticky.`<br />`cookie.secure`</a> | Allow the cookie used for the stickiness at the WRR service level to be only transmitted over an encrypted connection (i.e. HTTPS).<br />More information about WRR stickiness [here](#stickiness-on-multiple-levels)                                                                                                                                                                                                                                                                                                                                                                                                | false                                                                | No       |
-| <a id="opt-sticky-cookie-sameSite" href="#opt-sticky-cookie-sameSite" title="#opt-sticky-cookie-sameSite">`sticky.`<br />`cookie.sameSite`</a> | [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite) policy for the cookie used for the stickiness at the WRR service level.<br />Allowed values:<br />-`none`<br />-`lax`<br />`strict`<br />More information about WRR stickiness [here](#stickiness-on-multiple-levels)                                                                                                                                                                                                                                                                                                      | ""                                                                   | No       |
+| <a id="opt-sticky-cookie-sameSite" href="#opt-sticky-cookie-sameSite" title="#opt-sticky-cookie-sameSite">`sticky.`<br />`cookie.sameSite`</a> | [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite) policy for the cookie used for the stickiness at the WRR service level.<br />Allowed values:<br />-`none`<br />-`lax`<br />-`strict`<br />-`None`<br />-`Lax`<br />-`Strict`<br />More information about WRR stickiness [here](#stickiness-on-multiple-levels)                                                                                                                                                                                                                                                                                                      | ""                                                                   | No       |
 | <a id="opt-sticky-cookie-maxAge" href="#opt-sticky-cookie-maxAge" title="#opt-sticky-cookie-maxAge">`sticky.`<br />`cookie.maxAge`</a> | Number of seconds until the cookie used for the stickiness at the WRR service level expires.<br />Negative number, the cookie expires immediately.<br />0, the cookie never expires.                                                                                                                                                                                                                                                                                                                                                                                                                                 | 0                                                                    | No       |
 
 #### Stickiness on multiple levels
@@ -332,8 +333,8 @@ spec:
 | <a id="opt-servicesm-healthCheck-scheme" href="#opt-servicesm-healthCheck-scheme" title="#opt-servicesm-healthCheck-scheme">`services[m].`<br />`healthCheck.scheme`</a> | Server URL scheme for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                        | ""                                                                   | No       |
 | <a id="opt-servicesm-healthCheck-mode" href="#opt-servicesm-healthCheck-mode" title="#opt-servicesm-healthCheck-mode">`services[m].`<br />`healthCheck.mode`</a> | Health check mode.<br /> If defined to grpc, will use the gRPC health check protocol to probe the server.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                               | "http"                                                               | No       |
 | <a id="opt-servicesm-healthCheck-path" href="#opt-servicesm-healthCheck-path" title="#opt-servicesm-healthCheck-path">`services[m].`<br />`healthCheck.path`</a> | Server URL path for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                          | ""                                                                   | No       |
-| <a id="opt-servicesm-healthCheck-interval" href="#opt-servicesm-healthCheck-interval" title="#opt-servicesm-healthCheck-interval">`services[m].`<br />`healthCheck.interval`</a> | Frequency of the health check calls for healthy targets.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                  | "100ms"                                                              | No       |
-| <a id="opt-servicesm-healthCheck-unhealthyInterval" href="#opt-servicesm-healthCheck-unhealthyInterval" title="#opt-servicesm-healthCheck-unhealthyInterval">`services[m].`<br />`healthCheck.unhealthyInterval`</a> | Frequency of the health check calls for unhealthy targets.<br />When not defined, it defaults to the `interval` value.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                    | "100ms"                                                              | No       |
+| <a id="opt-servicesm-healthCheck-interval" href="#opt-servicesm-healthCheck-interval" title="#opt-servicesm-healthCheck-interval">`services[m].`<br />`healthCheck.interval`</a> | Frequency of the health check calls for healthy targets.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                  | "30s"                                                                | No       |
+| <a id="opt-servicesm-healthCheck-unhealthyInterval" href="#opt-servicesm-healthCheck-unhealthyInterval" title="#opt-servicesm-healthCheck-unhealthyInterval">`services[m].`<br />`healthCheck.unhealthyInterval`</a> | Frequency of the health check calls for unhealthy targets.<br />When not defined, it defaults to the `interval` value.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                    | "30s"                                                              | No       |
 | <a id="opt-servicesm-healthCheck-method" href="#opt-servicesm-healthCheck-method" title="#opt-servicesm-healthCheck-method">`services[m].`<br />`healthCheck.method`</a> | HTTP method for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                              | "GET"                                                                | No       |
 | <a id="opt-servicesm-healthCheck-status" href="#opt-servicesm-healthCheck-status" title="#opt-servicesm-healthCheck-status">`services[m].`<br />`healthCheck.status`</a> | Expected HTTP status code of the response to the health check request.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.<br />If not set, expect a status between 200 and 399.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                              |                                                                      | No       |
 | <a id="opt-servicesm-healthCheck-port" href="#opt-servicesm-healthCheck-port" title="#opt-servicesm-healthCheck-port">`services[m].`<br />`healthCheck.port`</a> | URL port for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                                 |                                                                      | No       |
@@ -344,9 +345,9 @@ spec:
 | <a id="opt-servicesm-sticky-cookie-name" href="#opt-servicesm-sticky-cookie-name" title="#opt-servicesm-sticky-cookie-name">`services[m].`<br />`sticky.`<br />`cookie.name`</a> | Name of the cookie used for the stickiness.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Abbreviation of a sha1<br />(ex: `_1d52e`).                          | No       |
 | <a id="opt-servicesm-sticky-cookie-httpOnly" href="#opt-servicesm-sticky-cookie-httpOnly" title="#opt-servicesm-sticky-cookie-httpOnly">`services[m].`<br />`sticky.`<br />`cookie.httpOnly`</a> | Allow the cookie can be accessed by client-side APIs, such as JavaScript.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | false                                                                | No       |
 | <a id="opt-servicesm-sticky-cookie-secure" href="#opt-servicesm-sticky-cookie-secure" title="#opt-servicesm-sticky-cookie-secure">`services[m].`<br />`sticky.`<br />`cookie.secure`</a> | Allow the cookie can only be transmitted over an encrypted connection (i.e. HTTPS).<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | false                                                                | No       |
-| <a id="opt-servicesm-sticky-cookie-sameSite" href="#opt-servicesm-sticky-cookie-sameSite" title="#opt-servicesm-sticky-cookie-sameSite">`services[m].`<br />`sticky.`<br />`cookie.sameSite`</a> | [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite) policy.<br />Allowed values:<br />-`none`<br />-`lax`<br />`strict`<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                        | ""                                                                   | No       |
+| <a id="opt-servicesm-sticky-cookie-sameSite" href="#opt-servicesm-sticky-cookie-sameSite" title="#opt-servicesm-sticky-cookie-sameSite">`services[m].`<br />`sticky.`<br />`cookie.sameSite`</a> | [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite) policy.<br />Allowed values (case-insensitive):<br />-`none`<br />-`lax`<br />-`strict`<br />-`None`<br />-`Lax`<br />-`Strict`<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                        | ""                                                                   | No       |
 | <a id="opt-servicesm-sticky-cookie-maxAge" href="#opt-servicesm-sticky-cookie-maxAge" title="#opt-servicesm-sticky-cookie-maxAge">`services[m].`<br />`sticky.`<br />`cookie.maxAge`</a> | Number of seconds until the cookie expires.<br />Negative number, the cookie expires immediately.<br />0, the cookie never expires.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                  | 0                                                                    | No       |
-| <a id="opt-servicesm-strategy" href="#opt-servicesm-strategy" title="#opt-servicesm-strategy">`services[m].`<br />`strategy`</a> | Load balancing strategy between the servers.<br />RoundRobin is the only supported value yet.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | "RoundRobin"                                                         | No       |
+| <a id="opt-servicesm-strategy" href="#opt-servicesm-strategy" title="#opt-servicesm-strategy">`services[m].`<br />`strategy`</a> | Load balancing strategy between the servers.<br />Supported values: `wrr`, `p2c`, `hrw`, `leasttime`.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | "wrr"                                                         | No       |
 | <a id="opt-servicesm-nativeLB" href="#opt-servicesm-nativeLB" title="#opt-servicesm-nativeLB">`services[m].`<br />`nativeLB`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                           | false                                                                | No       |
 | <a id="opt-servicesm-nodePortLB" href="#opt-servicesm-nodePortLB" title="#opt-servicesm-nodePortLB">`services[m].`<br />`nodePortLB`</a> | Use the nodePort IP address when the service type is NodePort.<br />It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                            | false                                                                | No       |
 
@@ -415,8 +416,8 @@ spec:
   mirroring:
     name: svc1                      # svc1 receives 100% of the traffic
     port: 80
-    mirrorBody: true                # Set to false by default
-    maxBodySize: 1M
+    mirrorBody: true                # Default: true
+    maxBodySize: 1048576
     mirrors:
       - name: svc2                  # svc2 receives a copy of 20% of this traffic
         port: 80
@@ -507,3 +508,143 @@ The mirrorerd service dedicated option are described below.
 | Field                                                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Default                                                              | Required |
 |:--------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|:---------|
 | <a id="opt-mirrorsm-percent" href="#opt-mirrorsm-percent" title="#opt-mirrorsm-percent">`mirrors[m].percent`</a> | Traffic percentage to route to the service.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 0                                                                   | No       |
+
+## Failover
+
+The failover service forwards all requests to a fallback service when the main service responds with specific HTTP status codes defined in the `errors` configuration.
+
+!!! Failover on Heathcheck Status
+
+    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../../install-configuration/providers/others/file.md).
+
+### Configuration Examples
+
+```yaml tab="IngressRoute"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test-name
+  namespace: apps
+
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`example.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    services:
+    # Set a Failover TraefikService
+    - name: failover1
+      namespace: apps
+      kind: TraefikService
+```
+
+```yaml tab="Failover from Kubernetes Services"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: failover1
+  namespace: apps
+
+spec:
+  failover:
+    service:
+      name: svc1
+      port: 80
+    fallback:
+      name: svc2
+      port: 80
+    errors:
+      status:
+        - "500-503"
+        - "429"
+```
+
+```yaml tab="Failover from TraefikService (WRR)"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: failover1
+  namespace: apps
+
+spec:
+  failover:
+    service:
+      name: wrr1
+      kind: TraefikService
+    fallback:
+      name: wrr2
+      kind: TraefikService
+    errors:
+      status:
+        - "500-503"
+```
+
+```yaml tab="Failover with maxRequestBodyBytes"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: failover1
+  namespace: apps
+
+spec:
+  failover:
+    service:
+      name: svc1
+      port: 80
+    fallback:
+      name: svc2
+      port: 80
+    errors:
+      status:
+        - "500-503"
+        - "429"
+      maxRequestBodyBytes: 1048576
+```
+
+```yaml tab="Kubernetes Services"
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc1
+  namespace: apps
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: traefiklabs
+    task: app1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc2
+  namespace: apps
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: traefiklabs
+    task: app2
+```
+
+### Configuration Options
+
+#### Main Service and Fallback Options
+
+The `service` and `fallback` fields each define a target service using the same options as a [`Service`](./service.md).
+
+The exhaustive list of the service options is described in the [`Service`](./service.md#configuration-options) documentation.
+
+#### Failover Dedicated Options
+
+| Field                                                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Default                                                              | Required |
+|:---------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|:---------|
+| <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | Main service to forward requests to. Provides the same options as a [`Service`](./service.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                      | Yes      |
+| <a id="opt-fallback" href="#opt-fallback" title="#opt-fallback">`fallback`</a> | Fallback service to use when the main service returns matching error status codes. Provides the same options as a [`Service`](./service.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                                                                      | Yes      |
+| <a id="opt-errors-status" href="#opt-errors-status" title="#opt-errors-status">`errors.status`</a> | List of HTTP status code ranges for which the fallback service should be used.<br />Each entry can be a single code (e.g. `"429"`) or a range (e.g. `"500-503"`).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                      | No       |
+| <a id="opt-errors-maxRequestBodyBytes" href="#opt-errors-maxRequestBodyBytes" title="#opt-errors-maxRequestBodyBytes">`errors.`<br />`maxRequestBodyBytes`</a> | Maximum size allowed for the body of the request.<br />If the body is larger, the request is not replayed to the fallback service.<br />-1 means unlimited size.                                                                                                                                                                                                                                                                                                                                                                                                                                                    | -1                                                                   | No       |

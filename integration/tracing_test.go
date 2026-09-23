@@ -21,6 +21,7 @@ import (
 
 type TracingSuite struct {
 	BaseSuite
+
 	whoamiIP        string
 	whoamiPort      int
 	tempoIP         string

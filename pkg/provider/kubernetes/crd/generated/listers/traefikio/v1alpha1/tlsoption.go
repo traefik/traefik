@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // TLSOptionLister helps list TLSOptions.
@@ -38,7 +38,7 @@ import (
 type TLSOptionLister interface {
 	// List lists all TLSOptions in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TLSOption, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.TLSOption, err error)
 	// TLSOptions returns an object that can list and get TLSOptions.
 	TLSOptions(namespace string) TLSOptionNamespaceLister
 	TLSOptionListerExpansion
@@ -46,25 +46,17 @@ type TLSOptionLister interface {
 
 // tLSOptionLister implements the TLSOptionLister interface.
 type tLSOptionLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.TLSOption]
 }
 
 // NewTLSOptionLister returns a new TLSOptionLister.
 func NewTLSOptionLister(indexer cache.Indexer) TLSOptionLister {
-	return &tLSOptionLister{indexer: indexer}
-}
-
-// List lists all TLSOptions in the indexer.
-func (s *tLSOptionLister) List(selector labels.Selector) (ret []*v1alpha1.TLSOption, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TLSOption))
-	})
-	return ret, err
+	return &tLSOptionLister{listers.New[*traefikiov1alpha1.TLSOption](indexer, traefikiov1alpha1.Resource("tlsoption"))}
 }
 
 // TLSOptions returns an object that can list and get TLSOptions.
 func (s *tLSOptionLister) TLSOptions(namespace string) TLSOptionNamespaceLister {
-	return tLSOptionNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return tLSOptionNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.TLSOption](s.ResourceIndexer, namespace)}
 }
 
 // TLSOptionNamespaceLister helps list and get TLSOptions.
@@ -72,36 +64,15 @@ func (s *tLSOptionLister) TLSOptions(namespace string) TLSOptionNamespaceLister 
 type TLSOptionNamespaceLister interface {
 	// List lists all TLSOptions in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TLSOption, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.TLSOption, err error)
 	// Get retrieves the TLSOption from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.TLSOption, error)
+	Get(name string) (*traefikiov1alpha1.TLSOption, error)
 	TLSOptionNamespaceListerExpansion
 }
 
 // tLSOptionNamespaceLister implements the TLSOptionNamespaceLister
 // interface.
 type tLSOptionNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all TLSOptions in the indexer for a given namespace.
-func (s tLSOptionNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.TLSOption, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TLSOption))
-	})
-	return ret, err
-}
-
-// Get retrieves the TLSOption from the indexer for a given namespace and name.
-func (s tLSOptionNamespaceLister) Get(name string) (*v1alpha1.TLSOption, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("tlsoption"), name)
-	}
-	return obj.(*v1alpha1.TLSOption), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.TLSOption]
 }

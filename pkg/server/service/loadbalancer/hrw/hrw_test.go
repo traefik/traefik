@@ -12,11 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// newTestRand creates a deterministic random source for reproducible tests.
+func newTestRand() *rand.Rand {
+	return rand.New(rand.NewSource(12345))
+}
+
 // genIPAddress generate randomly an IP address as a string.
-func genIPAddress() string {
+func genIPAddress(rng *rand.Rand) string {
 	buf := make([]byte, 4)
 
-	ip := rand.Uint32()
+	ip := rng.Uint32()
 
 	binary.LittleEndian.PutUint32(buf, ip)
 	ipStr := net.IP(buf)
@@ -37,22 +42,23 @@ func initStatusArray(size int, value int) []int {
 // The tests validate repartition using a margin of 10% of the number of requests
 
 func TestBalancer(t *testing.T) {
-	balancer := New(false)
+	rng := newTestRand()
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(4), false)
+	}), new(4), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		balancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 80, recorder.save["first"], 10)
@@ -60,7 +66,7 @@ func TestBalancer(t *testing.T) {
 }
 
 func TestBalancerNoService(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -69,14 +75,14 @@ func TestBalancerNoService(t *testing.T) {
 }
 
 func TestBalancerOneServerZeroWeight(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(0), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for range 3 {
@@ -91,15 +97,15 @@ type key string
 const serviceName key = "serviceName"
 
 func TestBalancerNoServiceUp(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), Int(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), Int(1), false)
+	}), new(1), false)
 
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "first", false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
@@ -111,16 +117,16 @@ func TestBalancerNoServiceUp(t *testing.T) {
 }
 
 func TestBalancerOneServerDown(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), Int(1), false)
+	}), new(1), false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -132,17 +138,18 @@ func TestBalancerOneServerDown(t *testing.T) {
 }
 
 func TestBalancerDownThenUp(t *testing.T) {
-	balancer := New(false)
+	rng := newTestRand()
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -155,7 +162,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		balancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 50, recorder.save["first"], 10)
@@ -163,35 +170,34 @@ func TestBalancerDownThenUp(t *testing.T) {
 }
 
 func TestBalancerPropagate(t *testing.T) {
-	balancer1 := New(true)
+	rng := newTestRand()
+	balancer1 := New(true, "")
 
 	balancer1.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 	balancer1.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
-	balancer2 := New(true)
+	balancer2 := New(true, "")
 	balancer2.Add("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "third")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 	balancer2.Add("fourth", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "fourth")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
-	topBalancer := New(true)
-	topBalancer.Add("balancer1", balancer1, Int(1), false)
+	topBalancer := New(true, "")
+	topBalancer.Add("balancer1", balancer1, new(1), false)
 	_ = balancer1.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
-		// TODO(mpl): if test gets flaky, add channel or something here to signal that
-		// propagation is done, and wait on it before sending request.
 	})
-	topBalancer.Add("balancer2", balancer2, Int(1), false)
+	topBalancer.Add("balancer2", balancer2, new(1), false)
 	_ = balancer2.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer2", up)
 	})
@@ -199,7 +205,7 @@ func TestBalancerPropagate(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		topBalancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 25, recorder.save["first"], 10)
@@ -214,7 +220,7 @@ func TestBalancerPropagate(t *testing.T) {
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		topBalancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 25, recorder.save["first"], 10)
@@ -230,7 +236,7 @@ func TestBalancerPropagate(t *testing.T) {
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		topBalancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 50, recorder.save["first"], 10)
@@ -242,10 +248,10 @@ func TestBalancerPropagate(t *testing.T) {
 }
 
 func TestBalancerAllServersZeroWeight(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
-	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
-	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
+	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(0), false)
+	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), new(0), false)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -254,26 +260,24 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 }
 
 func TestSticky(t *testing.T) {
-	balancer := New(false)
+	rng := newTestRand()
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), new(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(2), false)
+	}), new(2), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.RemoteAddr = genIPAddress()
+	req.RemoteAddr = genIPAddress(rng)
 	for range 10 {
-		for _, cookie := range recorder.Result().Cookies() {
-			req.AddCookie(cookie)
-		}
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
 		balancer.ServeHTTP(recorder, req)
@@ -285,10 +289,71 @@ func TestSticky(t *testing.T) {
 	// weight does not impose what would be chosen from 1 client
 }
 
-func Int(v int) *int { return &v }
+func TestSticky_nginxUpstreamHashBy(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		nginxUpstreamHashBy string
+	}{
+		{
+			desc:                "variable interpolation",
+			nginxUpstreamHashBy: "$request_uri",
+		},
+		{
+			desc:                "multiple variables",
+			nginxUpstreamHashBy: "$request_uri$host",
+		},
+		{
+			desc:                "variable + text",
+			nginxUpstreamHashBy: "${request_uri}-text-value",
+		},
+		{
+			desc:                "variable + text",
+			nginxUpstreamHashBy: "$request_uri-text-value",
+		},
+		{
+			desc:                "no key configured - fallback to ip",
+			nginxUpstreamHashBy: "",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rng := newTestRand()
+			balancer := New(false, test.nginxUpstreamHashBy)
+
+			balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set("server", "first")
+				rw.WriteHeader(http.StatusOK)
+			}), new(1), false)
+
+			balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set("server", "second")
+				rw.WriteHeader(http.StatusOK)
+			}), new(2), false)
+
+			recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.RemoteAddr = genIPAddress(rng)
+			for range 10 {
+				recorder.ResponseRecorder = httptest.NewRecorder()
+
+				balancer.ServeHTTP(recorder, req)
+			}
+
+			assert.True(t, recorder.save["first"] == 0 || recorder.save["first"] == 10)
+			assert.True(t, recorder.save["second"] == 0 || recorder.save["second"] == 10)
+			// from one IP, the choice between server must be the same for the 10 requests
+			// weight does not impose what would be chosen from 1 client
+		})
+	}
+}
 
 type responseRecorder struct {
 	*httptest.ResponseRecorder
+
 	save     map[string]int
 	sequence []string
 	status   []int

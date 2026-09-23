@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
+	"k8s.io/utils/ptr"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -23,7 +25,12 @@ var (
 	_ middlewares.Stateful = &codeCatcher{}
 )
 
-const typeName = "CustomError"
+const (
+	typeName        = "CustomError"
+	schemeHTTP      = "http"
+	schemeHTTPS     = "https"
+	xForwardedProto = "X-Forwarded-Proto"
+)
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -31,12 +38,14 @@ type serviceBuilder interface {
 
 // customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
-	name           string
-	next           http.Handler
-	backendHandler http.Handler
-	httpCodeRanges types.HTTPCodeRanges
-	backendQuery   string
-	statusRewrites []statusRewrite
+	name                string
+	next                http.Handler
+	backendHandler      http.Handler
+	httpCodeRanges      types.HTTPCodeRanges
+	backendQuery        string
+	requestHeaders      []string
+	statusRewrites      []statusRewrite
+	forwardNginxHeaders http.Header
 }
 
 type statusRewrite struct {
@@ -73,12 +82,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}
 
 	return &customErrors{
-		name:           name,
-		next:           next,
-		backendHandler: backend,
-		httpCodeRanges: httpCodeRanges,
-		backendQuery:   config.Query,
-		statusRewrites: statusRewrites,
+		name:                name,
+		next:                next,
+		backendHandler:      backend,
+		httpCodeRanges:      httpCodeRanges,
+		backendQuery:        config.Query,
+		requestHeaders:      config.ErrorRequestHeaders,
+		statusRewrites:      statusRewrites,
+		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
 	}, nil
 }
 
@@ -123,10 +134,24 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var query string
 
-	scheme := "http"
+	scheme := schemeHTTP
 	if req.TLS != nil {
-		scheme = "https"
+		scheme = schemeHTTPS
 	}
+
+	if proto := req.Header.Get(xForwardedProto); proto != "" {
+		// A previous hop may have set ws(s) for connection upgrade requests,
+		// but only http(s) is valid in an HTTP context.
+		switch {
+		case strings.EqualFold(proto, schemeHTTP), strings.EqualFold(proto, "ws"):
+			scheme = schemeHTTP
+		case strings.EqualFold(proto, schemeHTTPS), strings.EqualFold(proto, "wss"):
+			scheme = schemeHTTPS
+		default:
+			logger.Debug().Msgf("Invalid X-Forwarded-Proto: %s", proto)
+		}
+	}
+
 	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
 
 	if len(c.backendQuery) > 0 {
@@ -144,9 +169,30 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	utils.CopyHeaders(pageReq.Header, req.Header)
-	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
-		pageReq.WithContext(req.Context()))
+	if c.requestHeaders != nil {
+		for _, header := range c.requestHeaders {
+			if values := req.Header.Values(header); len(values) > 0 {
+				pageReq.Header[http.CanonicalHeaderKey(header)] = values
+			}
+		}
+	} else {
+		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
+	if len(c.forwardNginxHeaders) > 0 {
+		utils.CopyHeaders(pageReq.Header, c.forwardNginxHeaders)
+		pageReq.Header.Set("X-Code", strconv.Itoa(code))
+		pageReq.Header.Set("X-Format", req.Header.Get("Accept"))
+		pageReq.Header.Set("X-Original-Uri", req.URL.RequestURI())
+		if requestID := req.Header.Get("X-Request-ID"); requestID != "" {
+			pageReq.Header.Set("X-Request-ID", requestID)
+		}
+
+		c.backendHandler.ServeHTTP(rw, pageReq.WithContext(req.Context()))
+	} else {
+		c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
+			pageReq.WithContext(req.Context()))
+	}
 }
 
 func newRequest(baseURL string) (*http.Request, error) {
@@ -198,16 +244,6 @@ func (cc *codeCatcher) Header() http.Header {
 	return cc.headerMap
 }
 
-func (cc *codeCatcher) getCode() int {
-	return cc.code
-}
-
-// isFilteredCode returns whether the codeCatcher received a response code among the ones it is watching,
-// and for which the response should be deferred to the error handler.
-func (cc *codeCatcher) isFilteredCode() bool {
-	return cc.caughtFilteredCode
-}
-
 func (cc *codeCatcher) Write(buf []byte) (int, error) {
 	// If WriteHeader was already called from the caller, this is a NOOP.
 	// Otherwise, cc.code is actually a 200 here.
@@ -233,9 +269,7 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	if code >= 100 && code <= 199 {
 		// Multiple informational status codes can be used,
 		// so here the copy is not appending the values to not repeat them.
-		for k, v := range cc.Header() {
-			cc.responseWriter.Header()[k] = v
-		}
+		maps.Copy(cc.responseWriter.Header(), cc.Header())
 
 		cc.responseWriter.WriteHeader(code)
 		return
@@ -253,9 +287,8 @@ func (cc *codeCatcher) WriteHeader(code int) {
 
 	// The copy is not appending the values,
 	// to not repeat them in case any informational status code has been written.
-	for k, v := range cc.Header() {
-		cc.responseWriter.Header()[k] = v
-	}
+	maps.Copy(cc.responseWriter.Header(), cc.Header())
+
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
 }
@@ -286,6 +319,16 @@ func (cc *codeCatcher) Flush() {
 	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+func (cc *codeCatcher) getCode() int {
+	return cc.code
+}
+
+// isFilteredCode returns whether the codeCatcher received a response code among the ones it is watching,
+// and for which the response should be deferred to the error handler.
+func (cc *codeCatcher) isFilteredCode() bool {
+	return cc.caughtFilteredCode
 }
 
 // codeModifier forwards a response back to the client,
@@ -343,17 +386,14 @@ func (r *codeModifier) WriteHeader(code int) {
 	if code >= 100 && code <= 199 {
 		// Multiple informational status codes can be used,
 		// so here the copy is not appending the values to not repeat them.
-		for k, v := range r.headerMap {
-			r.responseWriter.Header()[k] = v
-		}
+		maps.Copy(r.responseWriter.Header(), r.headerMap)
 
 		r.responseWriter.WriteHeader(code)
 		return
 	}
 
-	for k, v := range r.headerMap {
-		r.responseWriter.Header()[k] = v
-	}
+	maps.Copy(r.responseWriter.Header(), r.headerMap)
+
 	r.responseWriter.WriteHeader(r.code)
 	r.headerSent = true
 }

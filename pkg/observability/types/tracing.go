@@ -9,16 +9,12 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	ttypes "github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/observability"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
@@ -67,37 +63,16 @@ func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate 
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
-	var resAttrs []attribute.KeyValue
-	for k, v := range resourceAttributes {
-		resAttrs = append(resAttrs, attribute.String(k, v))
-	}
-
-	res, err := resource.New(ctx,
-		resource.WithContainer(),
-		resource.WithHost(),
-		resource.WithOS(),
-		resource.WithProcess(),
-		resource.WithTelemetrySDK(),
-		resource.WithDetectors(ttypes.K8sAttributesDetector{}),
-		// The following order allows the user to override the service name and version,
-		// as well as any other attributes set by the above detectors.
-		resource.WithAttributes(
-			semconv.ServiceName(serviceName),
-			semconv.ServiceVersion(version.Version),
-		),
-		resource.WithAttributes(resAttrs...),
-		// Use the environment variables to allow overriding above resource attributes.
-		resource.WithFromEnv(),
-	)
+	res, err := observability.NewOTelResource(ctx, serviceName, resourceAttributes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("building resource: %w", err)
+		return nil, nil, err
 	}
 
 	// Register the trace exporter with a TracerProvider, using a batch
 	// span processor to aggregate spans before export.
 	bsp := sdktrace.NewBatchSpanProcessor(exporter)
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(sampleRate)),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sampleRate))),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
 	)

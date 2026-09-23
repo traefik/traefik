@@ -15,7 +15,7 @@ func init() {
 	expvar.Publish("Goroutines2", expvar.Func(goroutines))
 }
 
-func goroutines() interface{} {
+func goroutines() any {
 	return runtime.NumGoroutine()
 }
 

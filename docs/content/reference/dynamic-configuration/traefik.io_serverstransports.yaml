@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: serverstransports.traefik.io
 spec:
   group: traefik.io
@@ -21,7 +21,7 @@ spec:
           ServersTransport is the CRD implementation of a ServersTransport.
           If no serversTransport is specified, the default@internal will be used.
           The default@internal serversTransport is created from the static configuration.
-          More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/serverstransport/
+          More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/load-balancing/serverstransport/
         properties:
           apiVersion:
             description: |-
@@ -46,6 +46,12 @@ spec:
               certificatesSecrets:
                 description: CertificatesSecrets defines a list of secret storing
                   client certificates for mTLS.
+                items:
+                  type: string
+                type: array
+              cipherSuites:
+                description: CipherSuites defines the cipher suites to use when contacting
+                  backend servers.
                 items:
                   type: string
                 type: array
@@ -91,6 +97,16 @@ spec:
                       on the HTTP/2 connection.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
+                  readTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ReadTimeout is the timeout for reading a response
+                      from the proxied server. The timeout between two successive
+                      read operations. The connection is closed if nothing is transmitted
+                      within this time.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
                     - type: integer
@@ -98,6 +114,16 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
+                  writeTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: WriteTimeout is the timeout for transmitting a request
+                      to the proxied server. The timeout between two successive write
+                      operations. The connection is closed if nothing is transmitted
+                      within this time.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                 type: object
@@ -109,9 +135,33 @@ spec:
                   to keep per-host.
                 minimum: -1
                 type: integer
+              maxVersion:
+                description: MaxVersion defines the maximum TLS version to use when
+                  contacting backend servers.
+                type: string
+              minVersion:
+                description: MinVersion defines the minimum TLS version to use when
+                  contacting backend servers.
+                type: string
+              peerCertSANs:
+                description: PeerCertSANs defines the peer cert Subject Alternative
+                  Names used to match against SAN during the peer certificate verification.
+                items:
+                  description: SAN represents a Subject Alternative Name.
+                  properties:
+                    type:
+                      description: SANType is the type of the Subject Alternative
+                        Name.
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               peerCertURI:
-                description: PeerCertURI defines the peer cert URI used to match against
-                  SAN URI during the peer certificate verification.
+                description: |-
+                  PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+
+                  Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
                 type: string
               rootCAs:
                 description: RootCAs defines a list of CA certificate Secrets or ConfigMaps
@@ -139,6 +189,7 @@ spec:
               rootCAsSecrets:
                 description: |-
                   RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+
                   Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                 items:
                   type: string

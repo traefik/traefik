@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // IngressRouteTCPLister helps list IngressRouteTCPs.
@@ -38,7 +38,7 @@ import (
 type IngressRouteTCPLister interface {
 	// List lists all IngressRouteTCPs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.IngressRouteTCP, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.IngressRouteTCP, err error)
 	// IngressRouteTCPs returns an object that can list and get IngressRouteTCPs.
 	IngressRouteTCPs(namespace string) IngressRouteTCPNamespaceLister
 	IngressRouteTCPListerExpansion
@@ -46,25 +46,17 @@ type IngressRouteTCPLister interface {
 
 // ingressRouteTCPLister implements the IngressRouteTCPLister interface.
 type ingressRouteTCPLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.IngressRouteTCP]
 }
 
 // NewIngressRouteTCPLister returns a new IngressRouteTCPLister.
 func NewIngressRouteTCPLister(indexer cache.Indexer) IngressRouteTCPLister {
-	return &ingressRouteTCPLister{indexer: indexer}
-}
-
-// List lists all IngressRouteTCPs in the indexer.
-func (s *ingressRouteTCPLister) List(selector labels.Selector) (ret []*v1alpha1.IngressRouteTCP, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.IngressRouteTCP))
-	})
-	return ret, err
+	return &ingressRouteTCPLister{listers.New[*traefikiov1alpha1.IngressRouteTCP](indexer, traefikiov1alpha1.Resource("ingressroutetcp"))}
 }
 
 // IngressRouteTCPs returns an object that can list and get IngressRouteTCPs.
 func (s *ingressRouteTCPLister) IngressRouteTCPs(namespace string) IngressRouteTCPNamespaceLister {
-	return ingressRouteTCPNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return ingressRouteTCPNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.IngressRouteTCP](s.ResourceIndexer, namespace)}
 }
 
 // IngressRouteTCPNamespaceLister helps list and get IngressRouteTCPs.
@@ -72,36 +64,15 @@ func (s *ingressRouteTCPLister) IngressRouteTCPs(namespace string) IngressRouteT
 type IngressRouteTCPNamespaceLister interface {
 	// List lists all IngressRouteTCPs in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.IngressRouteTCP, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.IngressRouteTCP, err error)
 	// Get retrieves the IngressRouteTCP from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.IngressRouteTCP, error)
+	Get(name string) (*traefikiov1alpha1.IngressRouteTCP, error)
 	IngressRouteTCPNamespaceListerExpansion
 }
 
 // ingressRouteTCPNamespaceLister implements the IngressRouteTCPNamespaceLister
 // interface.
 type ingressRouteTCPNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all IngressRouteTCPs in the indexer for a given namespace.
-func (s ingressRouteTCPNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.IngressRouteTCP, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.IngressRouteTCP))
-	})
-	return ret, err
-}
-
-// Get retrieves the IngressRouteTCP from the indexer for a given namespace and name.
-func (s ingressRouteTCPNamespaceLister) Get(name string) (*v1alpha1.IngressRouteTCP, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("ingressroutetcp"), name)
-	}
-	return obj.(*v1alpha1.IngressRouteTCP), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.IngressRouteTCP]
 }

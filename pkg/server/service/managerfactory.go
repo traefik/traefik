@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // ManagerFactory a factory of service manager.
@@ -32,7 +33,7 @@ type ManagerFactory struct {
 }
 
 // NewManagerFactory creates a new ManagerFactory.
-func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, observabilityMgr *middleware.ObservabilityMgr, transportManager *TransportManager, proxyBuilder ProxyBuilder, acmeHTTPHandler http.Handler) *ManagerFactory {
+func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, observabilityMgr *middleware.ObservabilityMgr, transportManager *TransportManager, proxyBuilder ProxyBuilder, acmeHTTPHandler http.Handler, tlsManager *tls.Manager) *ManagerFactory {
 	factory := &ManagerFactory{
 		observabilityMgr: observabilityMgr,
 		routinesPool:     routinesPool,
@@ -42,7 +43,7 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 	}
 
 	if staticConfiguration.API != nil {
-		apiRouterBuilder := api.NewBuilder(staticConfiguration)
+		apiRouterBuilder := api.NewBuilder(staticConfiguration, tlsManager)
 
 		if staticConfiguration.API.Dashboard {
 			factory.dashboardHandler = dashboard.Handler{BasePath: staticConfiguration.API.BasePath}

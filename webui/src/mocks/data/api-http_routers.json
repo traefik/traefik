@@ -98,7 +98,8 @@
     "status": "enabled",
     "name": "server-redirect@docker",
     "using": ["web-redirect"],
-    "priority": 9223372036854776000,
+    "priority": 9223372036854775806,
+    "priorityStr": "9223372036854775806",
     "provider": "docker"
   },
   {

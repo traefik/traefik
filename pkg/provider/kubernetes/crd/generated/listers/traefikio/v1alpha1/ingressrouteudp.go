@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // IngressRouteUDPLister helps list IngressRouteUDPs.
@@ -38,7 +38,7 @@ import (
 type IngressRouteUDPLister interface {
 	// List lists all IngressRouteUDPs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.IngressRouteUDP, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.IngressRouteUDP, err error)
 	// IngressRouteUDPs returns an object that can list and get IngressRouteUDPs.
 	IngressRouteUDPs(namespace string) IngressRouteUDPNamespaceLister
 	IngressRouteUDPListerExpansion
@@ -46,25 +46,17 @@ type IngressRouteUDPLister interface {
 
 // ingressRouteUDPLister implements the IngressRouteUDPLister interface.
 type ingressRouteUDPLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.IngressRouteUDP]
 }
 
 // NewIngressRouteUDPLister returns a new IngressRouteUDPLister.
 func NewIngressRouteUDPLister(indexer cache.Indexer) IngressRouteUDPLister {
-	return &ingressRouteUDPLister{indexer: indexer}
-}
-
-// List lists all IngressRouteUDPs in the indexer.
-func (s *ingressRouteUDPLister) List(selector labels.Selector) (ret []*v1alpha1.IngressRouteUDP, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.IngressRouteUDP))
-	})
-	return ret, err
+	return &ingressRouteUDPLister{listers.New[*traefikiov1alpha1.IngressRouteUDP](indexer, traefikiov1alpha1.Resource("ingressrouteudp"))}
 }
 
 // IngressRouteUDPs returns an object that can list and get IngressRouteUDPs.
 func (s *ingressRouteUDPLister) IngressRouteUDPs(namespace string) IngressRouteUDPNamespaceLister {
-	return ingressRouteUDPNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return ingressRouteUDPNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.IngressRouteUDP](s.ResourceIndexer, namespace)}
 }
 
 // IngressRouteUDPNamespaceLister helps list and get IngressRouteUDPs.
@@ -72,36 +64,15 @@ func (s *ingressRouteUDPLister) IngressRouteUDPs(namespace string) IngressRouteU
 type IngressRouteUDPNamespaceLister interface {
 	// List lists all IngressRouteUDPs in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.IngressRouteUDP, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.IngressRouteUDP, err error)
 	// Get retrieves the IngressRouteUDP from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.IngressRouteUDP, error)
+	Get(name string) (*traefikiov1alpha1.IngressRouteUDP, error)
 	IngressRouteUDPNamespaceListerExpansion
 }
 
 // ingressRouteUDPNamespaceLister implements the IngressRouteUDPNamespaceLister
 // interface.
 type ingressRouteUDPNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all IngressRouteUDPs in the indexer for a given namespace.
-func (s ingressRouteUDPNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.IngressRouteUDP, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.IngressRouteUDP))
-	})
-	return ret, err
-}
-
-// Get retrieves the IngressRouteUDP from the indexer for a given namespace and name.
-func (s ingressRouteUDPNamespaceLister) Get(name string) (*v1alpha1.IngressRouteUDP, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("ingressrouteudp"), name)
-	}
-	return obj.(*v1alpha1.IngressRouteUDP), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.IngressRouteUDP]
 }

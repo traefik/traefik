@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"maps"
 	"os"
 	"sync"
 
@@ -28,6 +29,52 @@ func NewLocalStore(filename string, routinesPool *safe.Pool) *LocalStore {
 	store := &LocalStore{filename: filename, saveDataChan: make(chan map[string]*StoredData)}
 	store.listenSaveAction(routinesPool)
 	return store
+}
+
+// GetAccount returns ACME Account.
+func (s *LocalStore) GetAccount(resolverName string) (*Account, error) {
+	storedData, err := s.get(resolverName)
+	if err != nil {
+		return nil, err
+	}
+
+	return storedData.Account, nil
+}
+
+// SaveAccount stores ACME Account.
+func (s *LocalStore) SaveAccount(resolverName string, account *Account) error {
+	storedData, err := s.get(resolverName)
+	if err != nil {
+		return err
+	}
+
+	storedData.Account = account
+	s.save(resolverName, storedData)
+
+	return nil
+}
+
+// GetCertificates returns ACME Certificates list.
+func (s *LocalStore) GetCertificates(resolverName string) ([]*CertAndStore, error) {
+	storedData, err := s.get(resolverName)
+	if err != nil {
+		return nil, err
+	}
+
+	return storedData.Certificates, nil
+}
+
+// SaveCertificates stores ACME Certificates list.
+func (s *LocalStore) SaveCertificates(resolverName string, certificates []*CertAndStore) error {
+	storedData, err := s.get(resolverName)
+	if err != nil {
+		return err
+	}
+
+	storedData.Certificates = certificates
+	s.save(resolverName, storedData)
+
+	return nil
 }
 
 func (s *LocalStore) save(resolverName string, storedData *StoredData) {
@@ -122,8 +169,7 @@ func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
 					logger.Error().Err(err).Send()
 				}
 
-				err = os.WriteFile(s.filename, data, 0o600)
-				if err != nil {
+				if err := os.WriteFile(s.filename, data, 0o600); err != nil {
 					logger.Error().Err(err).Send()
 				}
 			}
@@ -133,55 +179,5 @@ func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
 
 // unSafeCopyOfStoredData creates maps copy of storedData. Is not thread safe, you should use `s.lock`.
 func (s *LocalStore) unSafeCopyOfStoredData() map[string]*StoredData {
-	result := map[string]*StoredData{}
-	for k, v := range s.storedData {
-		result[k] = v
-	}
-	return result
-}
-
-// GetAccount returns ACME Account.
-func (s *LocalStore) GetAccount(resolverName string) (*Account, error) {
-	storedData, err := s.get(resolverName)
-	if err != nil {
-		return nil, err
-	}
-
-	return storedData.Account, nil
-}
-
-// SaveAccount stores ACME Account.
-func (s *LocalStore) SaveAccount(resolverName string, account *Account) error {
-	storedData, err := s.get(resolverName)
-	if err != nil {
-		return err
-	}
-
-	storedData.Account = account
-	s.save(resolverName, storedData)
-
-	return nil
-}
-
-// GetCertificates returns ACME Certificates list.
-func (s *LocalStore) GetCertificates(resolverName string) ([]*CertAndStore, error) {
-	storedData, err := s.get(resolverName)
-	if err != nil {
-		return nil, err
-	}
-
-	return storedData.Certificates, nil
-}
-
-// SaveCertificates stores ACME Certificates list.
-func (s *LocalStore) SaveCertificates(resolverName string, certificates []*CertAndStore) error {
-	storedData, err := s.get(resolverName)
-	if err != nil {
-		return err
-	}
-
-	storedData.Certificates = certificates
-	s.save(resolverName, storedData)
-
-	return nil
+	return maps.Clone(s.storedData)
 }

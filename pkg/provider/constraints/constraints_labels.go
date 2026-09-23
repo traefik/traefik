@@ -24,7 +24,7 @@ func MatchLabels(labels map[string]string, expr string) (bool, error) {
 			NOT: notLabelFunc,
 			OR:  orLabelFunc,
 		},
-		Functions: map[string]interface{}{
+		Functions: map[string]any{
 			"Label":      labelFn,
 			"LabelRegex": labelRegexFn,
 		},

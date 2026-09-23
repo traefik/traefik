@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // TraefikServiceLister helps list TraefikServices.
@@ -38,7 +38,7 @@ import (
 type TraefikServiceLister interface {
 	// List lists all TraefikServices in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.TraefikService, err error)
 	// TraefikServices returns an object that can list and get TraefikServices.
 	TraefikServices(namespace string) TraefikServiceNamespaceLister
 	TraefikServiceListerExpansion
@@ -46,25 +46,17 @@ type TraefikServiceLister interface {
 
 // traefikServiceLister implements the TraefikServiceLister interface.
 type traefikServiceLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.TraefikService]
 }
 
 // NewTraefikServiceLister returns a new TraefikServiceLister.
 func NewTraefikServiceLister(indexer cache.Indexer) TraefikServiceLister {
-	return &traefikServiceLister{indexer: indexer}
-}
-
-// List lists all TraefikServices in the indexer.
-func (s *traefikServiceLister) List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TraefikService))
-	})
-	return ret, err
+	return &traefikServiceLister{listers.New[*traefikiov1alpha1.TraefikService](indexer, traefikiov1alpha1.Resource("traefikservice"))}
 }
 
 // TraefikServices returns an object that can list and get TraefikServices.
 func (s *traefikServiceLister) TraefikServices(namespace string) TraefikServiceNamespaceLister {
-	return traefikServiceNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return traefikServiceNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.TraefikService](s.ResourceIndexer, namespace)}
 }
 
 // TraefikServiceNamespaceLister helps list and get TraefikServices.
@@ -72,36 +64,15 @@ func (s *traefikServiceLister) TraefikServices(namespace string) TraefikServiceN
 type TraefikServiceNamespaceLister interface {
 	// List lists all TraefikServices in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.TraefikService, err error)
 	// Get retrieves the TraefikService from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.TraefikService, error)
+	Get(name string) (*traefikiov1alpha1.TraefikService, error)
 	TraefikServiceNamespaceListerExpansion
 }
 
 // traefikServiceNamespaceLister implements the TraefikServiceNamespaceLister
 // interface.
 type traefikServiceNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all TraefikServices in the indexer for a given namespace.
-func (s traefikServiceNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TraefikService))
-	})
-	return ret, err
-}
-
-// Get retrieves the TraefikService from the indexer for a given namespace and name.
-func (s traefikServiceNamespaceLister) Get(name string) (*v1alpha1.TraefikService, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("traefikservice"), name)
-	}
-	return obj.(*v1alpha1.TraefikService), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.TraefikService]
 }

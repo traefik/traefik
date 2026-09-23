@@ -16,3 +16,15 @@
 
 [pymdown-extensions]: https://facelessuser.github.io/pymdown-extensions "PyMdown Extensions"
 [pymdown-extensions-src]: https://github.com/facelessuser/pymdown-extensions "PyMdown Extensions - Sources"
+
+## Build locally without docker
+
+```sh
+# Pre-requisite: python3, pip and virtualenv
+DOCS="/tmp/traefik-docs"
+mkdir "$DOCS"
+virtualenv "$DOCS"
+source "$DOCS/bin/activate"
+pip install -r requirements.txt
+mkdocs serve # or mkdocs build
+```

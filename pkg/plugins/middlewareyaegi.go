@@ -46,7 +46,7 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 	}, nil
 }
 
-func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
+func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error) {
 	vConfig, err := b.createConfig(config)
 	if err != nil {
 		return nil, err
@@ -64,15 +64,15 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 	results := b.fnNew.Call(args)
 
 	if len(results) > 1 && results[1].Interface() != nil {
-		err, ok := results[1].Interface().(error)
+		err, ok := reflect.TypeAssert[error](results[1])
 		if !ok {
-			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
+			return nil, fmt.Errorf("invalid error type: %T", results[1].Interface())
 		}
 
 		return nil, err
 	}
 
-	handler, ok := results[0].Interface().(http.Handler)
+	handler, ok := reflect.TypeAssert[http.Handler](results[0])
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}
@@ -80,7 +80,7 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 	return handler, nil
 }
 
-func (b yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+func (b yaegiMiddlewareBuilder) createConfig(config map[string]any) (reflect.Value, error) {
 	results := b.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))

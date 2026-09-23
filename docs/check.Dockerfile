@@ -1,4 +1,5 @@
-FROM alpine:3.23
+# syntax=docker/dockerfile:1
+FROM alpine:3.24
 
 RUN apk --no-cache --no-progress add \
     build-base \
@@ -34,6 +35,7 @@ RUN apk --no-cache --no-progress add \
 
 COPY ./scripts/verify.sh /verify.sh
 COPY ./scripts/lint.sh /lint.sh
+COPY ./scripts/lint-yaml.sh /lint-yaml.sh
 
 WORKDIR /app
 VOLUME ["/tmp","/app"]
