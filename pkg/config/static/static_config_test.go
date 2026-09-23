@@ -730,6 +730,20 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 	}
 }
 
+func TestValidateConfiguration_aliasHeadersStrategyInvalidGlobalAfterPropagation(t *testing.T) {
+	cfg := &Configuration{
+		Providers: &Providers{},
+		Global:    &Global{AliasHeadersStrategy: "foobar"},
+		EntryPoints: EntryPoints{
+			"web": {Address: ":80"},
+		},
+	}
+
+	cfg.SetEffectiveConfiguration()
+
+	require.EqualError(t, cfg.ValidateConfiguration(), `invalid global aliasHeadersStrategy value "foobar"`)
+}
+
 func TestSetEffectiveConfiguration_aliasHeadersStrategyDefault(t *testing.T) {
 	testCases := []struct {
 		desc       string

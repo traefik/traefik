@@ -141,7 +141,7 @@ type Global struct {
 	CheckNewVersion        bool   `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	SendAnonymousUsage     bool   `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	NotAppendXForwardedFor bool   `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	AliasHeadersStrategy   string `description:"Defines the default strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject). It applies to every entry point that does not set http.aliasHeadersStrategy explicitly and does not use the deprecated http.underscoreHeadersStrategy." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
+	AliasHeadersStrategy   string `description:"Defines the default strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject). It applies to every entry point that does not set http.aliasHeadersStrategy explicitly and does not use the deprecated http.underscoreHeadersStrategy." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -482,6 +482,14 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
+	if c.Global != nil {
+		switch c.Global.AliasHeadersStrategy {
+		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
+		default:
+			return fmt.Errorf("invalid global aliasHeadersStrategy value %q", c.Global.AliasHeadersStrategy)
+		}
+	}
+
 	for epName, ep := range c.EntryPoints {
 		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
 			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
@@ -492,14 +500,6 @@ func (c *Configuration) ValidateConfiguration() error {
 		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
 		default:
 			return fmt.Errorf("entry point %q has an invalid aliasHeadersStrategy value %q", epName, ep.HTTP.AliasHeadersStrategy)
-		}
-	}
-
-	if c.Global != nil {
-		switch c.Global.AliasHeadersStrategy {
-		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
-		default:
-			return fmt.Errorf("invalid global aliasHeadersStrategy value %q", c.Global.AliasHeadersStrategy)
 		}
 	}
 
