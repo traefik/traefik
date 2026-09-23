@@ -504,9 +504,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		listeners, allocation := p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)
+		listeners, allocatedListeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)
 
-		listenerSetListeners, listenerSetInfos := p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocation, conf)
+		listenerSetListeners, listenerSetInfos := p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf)
 		listeners = append(listeners, listenerSetListeners...)
 
 		// A Gateway is accepted as soon as one of the listeners serving it is valid,
@@ -625,22 +625,22 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 }
 
 // loadGatewayListeners loads the listeners the given Gateway declares itself.
-func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) ([]gatewayListener, *listenerAllocation) {
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) ([]gatewayListener, map[string]struct{}) {
 	gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
 	owner := listenerOwner{Kind: kindGateway, Namespace: gateway.Namespace, Name: gateway.Name}
-	allocation := newListenerAllocation()
+	allocatedListeners := make(map[string]struct{})
 	tlsCerts := make(map[string]*tls.CertAndStores)
 
 	listeners := make([]gatewayListener, 0, len(gateway.Spec.Listeners))
 	for _, listener := range gateway.Spec.Listeners {
-		listeners = append(listeners, p.loadListener(ctx, gwNSN, owner, gateway.Generation, listener, allocation, tlsCerts))
+		listeners = append(listeners, p.loadListener(ctx, gwNSN, owner, gateway.Generation, listener, allocatedListeners, tlsCerts))
 	}
 
 	if len(tlsCerts) > 0 {
 		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsCerts)...)
 	}
 
-	return listeners, allocation
+	return listeners, allocatedListeners
 }
 
 // uniqListener identifies a unique listener configuration.
@@ -804,9 +804,9 @@ func hostnameMatcherValue(hostname string) string {
 }
 
 // loadListenerSetListeners loads the listeners of the ListenerSets referencing the given
-// Gateway, in precedence order: the Gateway listeners already claimed in allocation win
+// Gateway, in precedence order: the Gateway listeners already in allocatedListeners win
 // over them, and the oldest ListenerSet wins over its siblings (GEP-1713).
-func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, allocation *listenerAllocation, conf *dynamic.Configuration) ([]gatewayListener, map[ktypes.NamespacedName]*listenerSetInfo) {
+func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) ([]gatewayListener, map[ktypes.NamespacedName]*listenerSetInfo) {
 	infos := make(map[ktypes.NamespacedName]*listenerSetInfo)
 
 	var allowed []*gatev1.ListenerSet
@@ -846,7 +846,7 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 
 		for _, entry := range listenerSet.Spec.Listeners {
 			// A ListenerEntry mirrors a Gateway Listener field for field.
-			listener := p.loadListener(ctx, gwNSN, owner, listenerSet.Generation, gatev1.Listener(entry), allocation, tlsCerts)
+			listener := p.loadListener(ctx, gwNSN, owner, listenerSet.Generation, gatev1.Listener(entry), allocatedListeners, tlsCerts)
 			listeners = append(listeners, listener)
 		}
 	}
@@ -858,11 +858,11 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 	return listeners, infos
 }
 
-// loadListener validates a listener declared by the given owner, claims it in allocation
+// loadListener validates a listener declared by the given owner, claims it in allocatedListeners
 // when it is valid, and collects its TLS certificates in tlsCerts. The conditions are
 // expressed with the Gateway listener constants, whose string values the ListenerEntry
 // ones mirror, so that they suit both owners.
-func (p *Provider) loadListener(ctx context.Context, gateway ktypes.NamespacedName, owner listenerOwner, generation int64, listener gatev1.Listener, allocation *listenerAllocation, tlsCerts map[string]*tls.CertAndStores) gatewayListener {
+func (p *Provider) loadListener(ctx context.Context, gateway ktypes.NamespacedName, owner listenerOwner, generation int64, listener gatev1.Listener, allocatedListeners map[string]struct{}, tlsCerts map[string]*tls.CertAndStores) gatewayListener {
 	gl := gatewayListener{
 		Name:     string(listener.Name),
 		Port:     listener.Port,
@@ -931,23 +931,15 @@ func (p *Provider) loadListener(ctx context.Context, gateway ktypes.NamespacedNa
 		return gl
 	}
 
-	// Traefik maps a port to a single entryPoint, where the routers of some listeners
-	// shadow each other, so a ListenerSet listener may not join a port where it would.
-	if owner.Kind == kindListenerSet && allocation.hasProtocolConflict(listener) {
-		gl.Status.Conditions = append(gl.Status.Conditions, makeListenerConflictConditions(generation, gatev1.ListenerReasonProtocolConflict,
-			"A listener with an incompatible protocol already uses this port")...)
-
-		return gl
-	}
-
-	if allocation.hasListener(listener) {
+	listenerKey := makeListenerKey(listener)
+	if _, ok := allocatedListeners[listenerKey]; ok {
 		gl.Status.Conditions = append(gl.Status.Conditions, makeListenerConflictConditions(generation, gatev1.ListenerReasonHostnameConflict,
 			"A listener with the same protocol, port and hostname already exists")...)
 
 		return gl
 	}
 
-	allocation.claim(listener)
+	allocatedListeners[listenerKey] = struct{}{}
 
 	if (listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.TCPProtocolType) && listener.TLS != nil {
 		gl.Status.Conditions = append(gl.Status.Conditions, metav1.Condition{
@@ -1859,64 +1851,6 @@ func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool 
 	}
 
 	return slices.Contains(allowList, namespace)
-}
-
-// listenerAllocation records the listeners claimed on a Gateway, by the Gateway
-// listeners first and by the ListenerSet ones afterwards, so that conflicts are
-// detected regardless of the declaration order.
-type listenerAllocation struct {
-	listeners     map[string]struct{}
-	portProtocols map[gatev1.PortNumber]map[gatev1.ProtocolType]struct{}
-}
-
-func newListenerAllocation() *listenerAllocation {
-	return &listenerAllocation{
-		listeners:     make(map[string]struct{}),
-		portProtocols: make(map[gatev1.PortNumber]map[gatev1.ProtocolType]struct{}),
-	}
-}
-
-func (a *listenerAllocation) claim(listener gatev1.Listener) {
-	a.listeners[makeListenerKey(listener)] = struct{}{}
-
-	if a.portProtocols[listener.Port] == nil {
-		a.portProtocols[listener.Port] = map[gatev1.ProtocolType]struct{}{}
-	}
-	a.portProtocols[listener.Port][listener.Protocol] = struct{}{}
-}
-
-// hasListener reports whether a listener with the same protocol, hostname, and port
-// is already claimed.
-func (a *listenerAllocation) hasListener(listener gatev1.Listener) bool {
-	_, ok := a.listeners[makeListenerKey(listener)]
-	return ok
-}
-
-// hasProtocolConflict reports whether the routers of the given listener and of an already
-// claimed one would shadow each other on the entryPoint of their port.
-// A TCP and an HTTP listener always do, as the HostSNI(`*`) router of the TCP one takes
-// every plaintext connection.
-// An HTTPS and a TLS listener only do for the same hostname, as the HTTPS router takes
-// precedence over the TLS one for a given SNI.
-func (a *listenerAllocation) hasProtocolConflict(listener gatev1.Listener) bool {
-	counterpart := listener
-
-	switch listener.Protocol {
-	case gatev1.TCPProtocolType:
-		_, ok := a.portProtocols[listener.Port][gatev1.HTTPProtocolType]
-		return ok
-	case gatev1.HTTPProtocolType:
-		_, ok := a.portProtocols[listener.Port][gatev1.TCPProtocolType]
-		return ok
-	case gatev1.TLSProtocolType:
-		counterpart.Protocol = gatev1.HTTPSProtocolType
-		return a.hasListener(counterpart)
-	case gatev1.HTTPSProtocolType:
-		counterpart.Protocol = gatev1.TLSProtocolType
-		return a.hasListener(counterpart)
-	}
-
-	return false
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.
