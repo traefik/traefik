@@ -424,7 +424,7 @@ replace (
 // The pinned commit precedes the retag and leaves the imported packages byte-identical to the notarized v0.7.0.
 replace github.com/liquidweb/liquidweb-cli => github.com/liquidweb/liquidweb-cli v0.6.11-0.20231013174031-ea0acb475a1d
 
-// The canonical software.sslmate.com host serves the repository over dumb HTTP with a stale objects/info/packs, so GOPROXY=direct cannot fetch the objects behind the v0.7.3 tag.
+// software.sslmate.com serves the repository as static files, and the git shipped with macOS links an old libcurl that mishandles the resulting 404s over HTTP/2, so GOPROXY=direct fetches fail for macOS users.
 // The SSLMate GitHub mirror carries the same commit and the same go.mod bytes.
 replace software.sslmate.com/src/go-pkcs12 => github.com/SSLMate/go-pkcs12 v0.7.3
 
