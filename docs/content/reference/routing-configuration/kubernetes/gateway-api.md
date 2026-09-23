@@ -149,12 +149,17 @@ The parent `Gateway` must allow them through its `spec.allowedListeners` field, 
 
     Please note that `ListenerSet` listener ports must match the configured [EntryPoint ports](../../install-configuration/entrypoints.md) of the Traefik deployment, just like `Gateway` listeners.
 
-!!! info "One protocol per port"
+!!! info "Listeners sharing a port"
 
-    Traefik binds each port to a single EntryPoint, so a `ListenerSet` listener can only use a port that no other protocol has already claimed,
-    whether by the parent `Gateway` or by a sibling `ListenerSet`.
-    For instance, a `TLS` listener on a port already serving an `HTTPS` listener is rejected with a `Conflicted` status condition and the `ProtocolConflict` reason.
-    Several listeners may still share a port when they use the same protocol and differ by hostname.
+    Traefik binds each port to a single EntryPoint,
+    where the routers of some listeners would shadow each other.
+    A `ListenerSet` listener is therefore rejected with a `Conflicted` status condition and the `ProtocolConflict` reason when it joins a port,
+    whether claimed by the parent `Gateway` or by a sibling `ListenerSet`, where:
+
+    - a `TCP` listener meets an `HTTP` one, as the `TCP` router takes every plaintext connection;
+    - a `TLS` listener meets an `HTTPS` one with the same hostname, as the `HTTPS` router takes the TLS connections for that hostname.
+
+    Any other combination of listeners can share a port.
 
     When two listeners compete for the same port, the parent `Gateway` wins, then the oldest `ListenerSet`, then the first in alphabetical `{namespace}/{name}` order.
 

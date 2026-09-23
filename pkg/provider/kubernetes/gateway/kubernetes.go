@@ -931,12 +931,9 @@ func (p *Provider) loadListener(ctx context.Context, gateway ktypes.NamespacedNa
 		return gl
 	}
 
-	// Traefik maps a port to a single entryPoint, so a ListenerSet listener may only join
-	// a port that no other protocol has claimed: an HTTPS and a TLS listener sharing one
-	// would compete for the same SNI, the TCP-SNI router shadowing the HTTP routers.
-	// Keeping the port single-protocol also bounds what a namespace admitted through
-	// AllowedListeners can affect on the parent Gateway ports.
-	if owner.Kind == kindListenerSet && allocation.hasProtocolConflict(listener.Port, listener.Protocol) {
+	// Traefik maps a port to a single entryPoint, where the routers of some listeners
+	// shadow each other, so a ListenerSet listener may not join a port where it would.
+	if owner.Kind == kindListenerSet && allocation.hasProtocolConflict(listener) {
 		gl.Status.Conditions = append(gl.Status.Conditions, makeListenerConflictConditions(generation, gatev1.ListenerReasonProtocolConflict,
 			"A listener with an incompatible protocol already uses this port")...)
 
@@ -1895,13 +1892,30 @@ func (a *listenerAllocation) hasListener(listener gatev1.Listener) bool {
 	return ok
 }
 
-// hasProtocolConflict reports whether another protocol is already claimed on the port.
-func (a *listenerAllocation) hasProtocolConflict(port gatev1.PortNumber, protocol gatev1.ProtocolType) bool {
-	for allocated := range a.portProtocols[port] {
-		if allocated != protocol {
-			return true
-		}
+// hasProtocolConflict reports whether the routers of the given listener and of an already
+// claimed one would shadow each other on the entryPoint of their port.
+// A TCP and an HTTP listener always do, as the HostSNI(`*`) router of the TCP one takes
+// every plaintext connection.
+// An HTTPS and a TLS listener only do for the same hostname, as the HTTPS router takes
+// precedence over the TLS one for a given SNI.
+func (a *listenerAllocation) hasProtocolConflict(listener gatev1.Listener) bool {
+	counterpart := listener
+
+	switch listener.Protocol {
+	case gatev1.TCPProtocolType:
+		_, ok := a.portProtocols[listener.Port][gatev1.HTTPProtocolType]
+		return ok
+	case gatev1.HTTPProtocolType:
+		_, ok := a.portProtocols[listener.Port][gatev1.TCPProtocolType]
+		return ok
+	case gatev1.TLSProtocolType:
+		counterpart.Protocol = gatev1.HTTPSProtocolType
+		return a.hasListener(counterpart)
+	case gatev1.HTTPSProtocolType:
+		counterpart.Protocol = gatev1.TLSProtocolType
+		return a.hasListener(counterpart)
 	}
+
 	return false
 }
 

@@ -61,13 +61,21 @@ spec:
     kind: Gateway
     group: gateway.networking.k8s.io
   listeners:
-    # TCP on port 80 conflicts with the Gateway HTTP listener.
+    # TCP on port 80 conflicts with the Gateway HTTP listener,
+    # as the TCP router would take every plaintext connection.
     - name: tcp
       protocol: TCP
       port: 80
-    # TLS on port 443 conflicts with the Gateway HTTPS listener: a port is bound to a
-    # single entryPoint, so it cannot carry two protocols.
+    # TLS conflicts with the Gateway HTTPS listener of the same hostname,
+    # as the HTTPS router would take its TLS connections.
     - name: tls
+      protocol: TLS
+      port: 443
+      hostname: foo.example.com
+      tls:
+        mode: Passthrough
+    # TLS may share the port of the Gateway HTTPS listener for another hostname.
+    - name: tls-other
       protocol: TLS
       port: 443
       hostname: bar.example.com
@@ -182,6 +190,26 @@ spec:
       backendRefs:
         - name: whoami
           port: 80
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app-2
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-listenerset
+      kind: ListenerSet
+      group: gateway.networking.k8s.io
+      sectionName: tls-other
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
           weight: 1
           kind: Service
           group: ""
