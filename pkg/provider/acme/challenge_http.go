@@ -106,7 +106,7 @@ func parseHTTPChallengeHost(addr string) string {
 		return host
 	}
 
-	if addr[0] == '[' && addr[len(addr)-1] == ']' {
+	if strings.HasPrefix(addr, "[") && strings.HasSuffix(addr, "]") {
 		return addr[1 : len(addr)-1]
 	}
 

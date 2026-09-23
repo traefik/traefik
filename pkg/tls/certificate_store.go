@@ -79,10 +79,6 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	return getBestCertificate(c, clientHello, matchDomain)
 }
 
-func getBestCertificateForIPReverseAddress(c *CertificateStore, clientHello *tls.ClientHelloInfo) *tls.Certificate {
-	return getBestCertificate(c, clientHello, matchDomainWithIPReverseAddress)
-}
-
 func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matcher func(string, string) bool) *tls.Certificate {
 	if c == nil {
 		return nil
@@ -185,6 +181,10 @@ func (c *CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}
+}
+
+func (c *CertificateStore) getBestACMEChallengeCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	return getBestCertificate(c, clientHello, matchDomainWithIPReverseAddress)
 }
 
 func (c *CertificateStore) getDefaultCertificateDomains() []string {
