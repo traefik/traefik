@@ -420,10 +420,6 @@ replace (
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59
 )
 
-// software.sslmate.com serves the repository as static files, and the git shipped with macOS links an old libcurl that mishandles the resulting 404s over HTTP/2, so GOPROXY=direct fetches fail for macOS users.
-// The SSLMate GitHub mirror carries the same commit and the same go.mod bytes.
-replace software.sslmate.com/src/go-pkcs12 => github.com/SSLMate/go-pkcs12 v0.7.3
-
 // ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
 // tencentcloud uses monorepo with multimodule but the go.mod files are incomplete.
 exclude github.com/tencentcloud/tencentcloud-sdk-go v3.0.83+incompatible
