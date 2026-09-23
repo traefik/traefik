@@ -188,7 +188,7 @@ func TestManager_Get(t *testing.T) {
 	}
 }
 
-func TestManager_GetCertificateIPReverseAddress(t *testing.T) {
+func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 	testCases := []struct {
 		desc string
 		ip   string
