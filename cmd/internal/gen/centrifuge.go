@@ -175,7 +175,10 @@ func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, 
 		fType := c.TypeCleaner(field.Type(), rootPkg)
 
 		if field.Embedded() {
-			fmt.Fprintf(&b, "\t%s\n", fType)
+			// An empty cleaned type means the embedded type is excluded from the generation.
+			if fType != "" {
+				fmt.Fprintf(&b, "\t%s\n", fType)
+			}
 			continue
 		}
 
