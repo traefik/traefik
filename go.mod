@@ -23,7 +23,7 @@ require (
 	github.com/docker/go-connections v0.8.1
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/go-acme/lego/v5 v5.5.1
+	github.com/go-acme/lego/v5 v5.5.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang/protobuf v1.5.4
@@ -278,7 +278,7 @@ require (
 	github.com/labbsr0x/goh v1.0.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/linode/linodego v1.69.1 // indirect
-	github.com/liquidweb/liquidweb-cli v0.7.0 // indirect
+	github.com/liquidweb/liquidweb-cli v0.6.10 // indirect
 	github.com/liquidweb/liquidweb-go v1.6.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
@@ -419,10 +419,6 @@ replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20260804094822-b975dcaa8c48
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59
 )
-
-// The upstream v0.7.0 tag was moved after publication, so it no longer matches the checksum database and GOPROXY=direct builds fail.
-// The pinned commit precedes the retag and leaves the imported packages byte-identical to the notarized v0.7.0.
-replace github.com/liquidweb/liquidweb-cli => github.com/liquidweb/liquidweb-cli v0.6.11-0.20231013174031-ea0acb475a1d
 
 // software.sslmate.com serves the repository as static files, and the git shipped with macOS links an old libcurl that mishandles the resulting 404s over HTTP/2, so GOPROXY=direct fetches fail for macOS users.
 // The SSLMate GitHub mirror carries the same commit and the same go.mod bytes.
