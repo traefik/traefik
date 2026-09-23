@@ -506,19 +506,16 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 		routes = append(routes, route)
 	}
 
-	slices.SortStableFunc(routes, func(a, b metav1.Object) int {
-		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
-			strings.Compare(a.GetNamespace(), b.GetNamespace()),
-			strings.Compare(a.GetName(), b.GetName()))
-	})
+	slices.SortStableFunc(routes, compareRoutes)
 
 	attached := make(attachedRoutes)
+	served := make(servedRules)
 	for _, route := range routes {
 		switch route := route.(type) {
 		case *gatev1.HTTPRoute:
-			p.loadHTTPRoute(ctx, gateways, route, conf, attached, statusReport)
+			p.loadHTTPRoute(ctx, gateways, route, conf, attached, served, statusReport)
 		case *gatev1.GRPCRoute:
-			p.loadGRPCRoute(ctx, gateways, route, conf, attached, statusReport)
+			p.loadGRPCRoute(ctx, gateways, route, conf, attached, served, statusReport)
 		}
 	}
 }
@@ -1377,6 +1374,41 @@ func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool
 	return slices.ContainsFunc(listener.AllowedNamespaces, func(allowedNamespace string) bool {
 		return allowedNamespace == corev1.NamespaceAll || allowedNamespace == routeNamespace
 	})
+}
+
+// compareRoutes orders the routes as the specification asks for the ones matching
+// a request equally well to be discriminated.
+func compareRoutes(a, b metav1.Object) int {
+	return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
+		strings.Compare(a.GetNamespace(), b.GetNamespace()),
+		strings.Compare(a.GetName(), b.GetName()))
+}
+
+// servedRuleKey identifies a rule within the scope its router competes in.
+// A TCP router competes in the muxer of its entry points,
+// and an HTTP router in the muxer of its listener parent routers, as it has no entry points of its own.
+type servedRuleKey struct {
+	Scope string
+	Rule  string
+}
+
+// servedRules keeps the router that serves each rule.
+// Two routers that compete and have the same rule match the same requests.
+// Thus only the first router that a muxer evaluates can serve a request.
+type servedRules map[servedRuleKey]string
+
+// register keeps the given router as the router that serves its rule within the given scope.
+// If a different router serves that rule already, register gives its name, and true.
+func (sr servedRules) register(name string, scope []string, rule string) (string, bool) {
+	key := servedRuleKey{Scope: strings.Join(scope, ","), Rule: rule}
+
+	if servedBy, served := sr[key]; served {
+		return servedBy, true
+	}
+
+	sr[key] = name
+
+	return "", false
 }
 
 // listenerRef identifies a listener of a Gateway.
