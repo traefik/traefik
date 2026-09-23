@@ -366,7 +366,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
-				nil, nil, tlsManager)
+				nil, nil, tlsManager, nil)
 
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
 
@@ -460,7 +460,7 @@ func TestConflictingTLSOptions(t *testing.T) {
 
 			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
-			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, nil, tlsManager)
+			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, nil, tlsManager, nil)
 
 			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"})
 

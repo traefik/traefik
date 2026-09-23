@@ -1,12 +1,10 @@
-import { TcpRouterRender } from './TcpRouter'
-
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
+import { RouterDetail } from 'components/routers/RouterDetail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<TcpRouterPage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpRouterRender name="mock-router" data={undefined} error={new Error('Test error')} />,
+      <RouterDetail name="mock-router" data={undefined} error={new Error('Test error')} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +12,7 @@ describe('<TcpRouterPage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpRouterRender name="mock-router" data={undefined} error={undefined} />,
+      <RouterDetail name="mock-router" data={undefined} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +20,7 @@ describe('<TcpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpRouterRender name="mock-router" data={{} as ResourceDetailDataType} error={undefined} />,
+      <RouterDetail name="mock-router" data={{} as Resource.DetailsData} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -68,38 +66,24 @@ describe('<TcpRouterPage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpRouterRender name="mock-router" data={mockData as any} error={undefined} />,
+      <RouterDetail name="mock-router" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/tcp-all@docker', withPage: true },
     )
 
     const routerStructure = getByTestId('router-structure')
     expect(routerStructure.innerHTML).toContain(':443')
     expect(routerStructure.innerHTML).toContain(':8000')
-    expect(routerStructure.innerHTML).toContain('tcp-all@docker')
-    expect(routerStructure.innerHTML).toContain('tcp-all</span>')
     expect(routerStructure.innerHTML).toContain('TCP Router')
     expect(routerStructure.innerHTML).not.toContain('HTTP Router')
 
     const routerDetailsSection = getByTestId('router-details')
-    const routerDetailsPanel = routerDetailsSection.querySelector(':scope > div:nth-child(1)')
 
-    expect(routerDetailsPanel?.innerHTML).toContain('Status')
-    expect(routerDetailsPanel?.innerHTML).toContain('Success')
-    expect(routerDetailsPanel?.innerHTML).toContain('Provider')
-    expect(routerDetailsPanel?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
-    expect(routerDetailsPanel?.innerHTML).toContain('Name')
-    expect(routerDetailsPanel?.innerHTML).toContain('tcp-all@docker')
-    expect(routerDetailsPanel?.innerHTML).toContain('Entrypoints')
-    expect(routerDetailsPanel?.innerHTML).toContain('web</')
-    expect(routerDetailsPanel?.innerHTML).toContain('web-secured')
-    expect(routerDetailsPanel?.innerHTML).toContain('tcp-all</')
-
-    const middlewaresPanel = routerDetailsSection.querySelector(':scope > div:nth-child(3)')
-    const providers = Array.from(middlewaresPanel?.querySelectorAll('svg[data-testid="docker"]') || [])
-    expect(middlewaresPanel?.innerHTML).toContain('middleware00')
-    expect(middlewaresPanel?.innerHTML).toContain('middleware01')
-    expect(middlewaresPanel?.innerHTML).toContain('Success')
-    expect(providers.length).toBe(2)
+    expect(routerDetailsSection?.innerHTML).toContain('Status')
+    expect(routerDetailsSection?.innerHTML).toContain('Success')
+    expect(routerDetailsSection?.innerHTML).toContain('Provider')
+    expect(routerDetailsSection?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
+    expect(routerStructure.innerHTML).toContain('middleware00')
+    expect(routerStructure.innerHTML).toContain('middleware01')
 
     expect(getByTestId('/tcp/services/tcp-all@docker')).toBeInTheDocument()
   })

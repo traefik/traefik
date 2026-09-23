@@ -58,6 +58,7 @@
       encodeQuerySemicolons = true
       sanitizePath = true
       maxHeaderBytes = 42
+      aliasHeadersStrategy = "foobar"
       underscoreHeadersStrategy = "foobar"
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
@@ -185,6 +186,7 @@
     nativeLBByDefault = true
     disableClusterScopeResources = true
     defaultTLSResourcesNamespace = "foobar"
+    safeNaming = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"

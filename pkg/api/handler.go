@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
@@ -58,12 +59,14 @@ type Handler struct {
 
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
+
+	tlsManager *tls.Manager
 }
 
 // NewBuilder returns a http.Handler builder based on runtime.Configuration.
-func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
+func NewBuilder(staticConfig static.Configuration, tlsManager *tls.Manager) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
-		return New(staticConfig, configuration).createRouter()
+		return New(staticConfig, configuration).WithTLSManager(tlsManager).createRouter()
 	}
 }
 
@@ -81,8 +84,14 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	}
 }
 
+// WithTLSManager sets the TLS manager on the handler, enabling the certificate API endpoints.
+func (h *Handler) WithTLSManager(tlsManager *tls.Manager) *Handler {
+	h.tlsManager = tlsManager
+	return h
+}
+
 // createRouter creates API routes and router.
-func (h Handler) createRouter() *mux.Router {
+func (h *Handler) createRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
 
 	apiRouter := router.PathPrefix(h.staticConfig.API.BasePath).Subrouter().UseEncodedPath()
@@ -120,12 +129,15 @@ func (h Handler) createRouter() *mux.Router {
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services").HandlerFunc(h.getUDPServices)
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
 
+	apiRouter.Methods(http.MethodGet).Path("/api/certificates").HandlerFunc(h.getCertificates)
+	apiRouter.Methods(http.MethodGet).Path("/api/certificates/{certificateID}").HandlerFunc(h.getCertificate)
+
 	version.Handler{}.Append(apiRouter)
 
 	return router
 }
 
-func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {
 	siRepr := make(map[string]*serviceInfoRepresentation, len(h.runtimeConfiguration.Services))
 	for k, v := range h.runtimeConfiguration.Services {
 		siRepr[k] = &serviceInfoRepresentation{

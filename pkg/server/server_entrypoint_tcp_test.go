@@ -2,9 +2,11 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -13,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -24,7 +27,7 @@ import (
 )
 
 func TestShutdownHijacked(t *testing.T) {
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -40,7 +43,7 @@ func TestShutdownHijacked(t *testing.T) {
 }
 
 func TestShutdownHTTP(t *testing.T) {
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -52,10 +55,10 @@ func TestShutdownHTTP(t *testing.T) {
 }
 
 func TestShutdownTCP(t *testing.T) {
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
-	err = router.AddTCPRoute("HostSNI(`*`)", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	err = router.AddTCPRoute("HostSNI(`*`)", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		_, err := http.ReadRequest(bufio.NewReader(conn))
 		if err != nil {
 			return
@@ -177,7 +180,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -216,7 +219,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -258,7 +261,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -306,7 +309,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -350,7 +353,7 @@ func TestKeepAliveH2c(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 
-	router, err := tcprouter.NewRouter()
+	router, err := tcprouter.NewRouter(nil)
 	require.NoError(t, err)
 
 	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -385,6 +388,62 @@ func TestKeepAliveH2c(t *testing.T) {
 	// is distinct and specific, we rely on its consistency, assuming it is stable and unlikely
 	// to change.
 	require.Contains(t, err.Error(), "use of closed network connection")
+}
+
+func Test_denyOpaque(t *testing.T) {
+	tests := []struct {
+		name       string
+		target     string
+		wantStatus int
+	}{
+		{
+			name:       "Rejects opaque URL",
+			target:     "http:admin/secret",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Rejects opaque URL embedding an absolute URL",
+			target:     "http:http://evil/admin/secret",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Rejects opaque URL embedding a fragment",
+			target:     "http:#frag",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Allows origin-form",
+			target:     "/admin/secret",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "Allows absolute-form",
+			target:     "http://example.com/admin/secret",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "Allows scheme followed by a single slash",
+			target:     "http:/admin/secret",
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			handler := denyOpaque(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, test.target, http.NoBody)
+			res := httptest.NewRecorder()
+
+			handler.ServeHTTP(res, req)
+
+			assert.Equal(t, test.wantStatus, res.Code)
+		})
+	}
 }
 
 func Test_denyFragment(t *testing.T) {
@@ -464,41 +523,41 @@ func TestSanitizePath(t *testing.T) {
 	}
 }
 
-func TestUnderscoreHeadersStrategy(t *testing.T) {
+func TestAliasHeadersStrategy(t *testing.T) {
 	testCases := []struct {
-		desc                 string
-		strategy             string
-		wantStatus           int
-		wantReachedBackend   bool
-		wantAuthUser         []string
-		wantUnderscoreHeader bool
+		desc               string
+		strategy           string
+		wantStatus         int
+		wantReachedBackend bool
+		wantAuthUser       []string
+		wantAliasHeaders   bool
 	}{
 		{
-			desc:                 "headers are kept when strategy is not set",
-			wantStatus:           http.StatusOK,
-			wantReachedBackend:   true,
-			wantAuthUser:         []string{"legit"},
-			wantUnderscoreHeader: true,
+			desc:               "headers are kept when strategy is not set",
+			wantStatus:         http.StatusOK,
+			wantReachedBackend: true,
+			wantAuthUser:       []string{"legit"},
+			wantAliasHeaders:   true,
 		},
 		{
-			desc:                 "headers are kept with keep strategy",
-			strategy:             static.UnderscoreHeadersStrategyKeep,
-			wantStatus:           http.StatusOK,
-			wantReachedBackend:   true,
-			wantAuthUser:         []string{"legit"},
-			wantUnderscoreHeader: true,
+			desc:               "headers are kept with keep strategy",
+			strategy:           static.AliasHeadersStrategyKeep,
+			wantStatus:         http.StatusOK,
+			wantReachedBackend: true,
+			wantAuthUser:       []string{"legit"},
+			wantAliasHeaders:   true,
 		},
 		{
-			desc:                 "underscore headers are removed with delete strategy",
-			strategy:             static.UnderscoreHeadersStrategyDelete,
-			wantStatus:           http.StatusOK,
-			wantReachedBackend:   true,
-			wantAuthUser:         []string{"legit"},
-			wantUnderscoreHeader: false,
+			desc:               "aliasing headers are removed with delete strategy",
+			strategy:           static.AliasHeadersStrategyDelete,
+			wantStatus:         http.StatusOK,
+			wantReachedBackend: true,
+			wantAuthUser:       []string{"legit"},
+			wantAliasHeaders:   false,
 		},
 		{
 			desc:               "request is rejected with reject strategy",
-			strategy:           static.UnderscoreHeadersStrategyReject,
+			strategy:           static.AliasHeadersStrategyReject,
 			wantStatus:         http.StatusBadRequest,
 			wantReachedBackend: false,
 		},
@@ -515,12 +574,12 @@ func TestUnderscoreHeadersStrategy(t *testing.T) {
 				ForwardedHeaders: &static.ForwardedHeaders{},
 				HTTP2:            &static.HTTP2Config{},
 				HTTP: static.HTTPConfig{
-					UnderscoreHeadersStrategy: test.strategy,
+					AliasHeadersStrategy: test.strategy,
 				},
 			}, nil, nil)
 			require.NoError(t, err)
 
-			router, err := tcprouter.NewRouter()
+			router, err := tcprouter.NewRouter(nil)
 			require.NoError(t, err)
 
 			var reachedBackend bool
@@ -547,6 +606,7 @@ func TestUnderscoreHeadersStrategy(t *testing.T) {
 
 			req.Header.Set("X-Auth-User", "legit")
 			req.Header["X_Auth_User"] = []string{"spoof"}
+			req.Header["X.Auth.User"] = []string{"spoof"}
 
 			resp, err := client.Do(req)
 			require.NoError(t, err)
@@ -561,10 +621,12 @@ func TestUnderscoreHeadersStrategy(t *testing.T) {
 
 			assert.Equal(t, test.wantAuthUser, gotHeaders["X-Auth-User"])
 
-			if test.wantUnderscoreHeader {
+			if test.wantAliasHeaders {
 				assert.Equal(t, []string{"spoof"}, gotHeaders["X_auth_user"])
+				assert.Equal(t, []string{"spoof"}, gotHeaders["X.auth.user"])
 			} else {
 				assert.NotContains(t, gotHeaders, "X_auth_user")
+				assert.NotContains(t, gotHeaders, "X.auth.user")
 			}
 		})
 	}
@@ -828,7 +890,136 @@ func TestHTTP2Config(t *testing.T) {
 	assert.Equal(t, expectedDecoderTableSize, httpServer.HTTP2.MaxDecoderHeaderTableSize)
 }
 
-func Test_removeHeadersWithUnderscores(t *testing.T) {
+// TestRequestTargetForms tests the handling of the request target forms through the whole entrypoint handler chain,
+// built with the newHTTPServer func. It goes through raw TCP connections because the standard library client
+// cannot emit the malformed request targets under test.
+func TestRequestTargetForms(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = ln.Close()
+	})
+
+	configuration := &static.EntryPoint{}
+	configuration.SetDefaults()
+
+	server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+	require.NoError(t, err)
+
+	server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Request-URI", r.RequestURI)
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	go func() {
+		// server is expected to return an error if the listener is closed.
+		_ = server.Server.Serve(ln)
+	}()
+
+	tests := []struct {
+		desc               string
+		requestLine        string
+		expectedStatus     int
+		expectedRequestURI string
+	}{
+		{
+			desc:           "opaque target",
+			requestLine:    "GET http:admin/secret HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target embedding an absolute URL",
+			requestLine:    "GET http:http://evil/admin/secret HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target embedding an absolute URL with a query",
+			requestLine:    "GET http:http://evil/admin/secret?tok=1 HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target with the https scheme",
+			requestLine:    "GET https:admin HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "opaque target embedding a fragment",
+			requestLine:    "GET http:#frag HTTP/1.1",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:               "origin-form",
+			requestLine:        "GET / HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/",
+		},
+		{
+			desc:               "origin-form with a query",
+			requestLine:        "GET /a/b?q=1 HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a/b?q=1",
+		},
+		{
+			desc:               "origin-form with an encoded slash",
+			requestLine:        "GET /a%2Fb HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a%2Fb",
+		},
+		{
+			desc:               "absolute-form",
+			requestLine:        "GET http://front.example/a HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a",
+		},
+		{
+			desc:               "scheme followed by a single slash",
+			requestLine:        "GET http:/a/b HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/a/b",
+		},
+		{
+			// The standard library answers the asterisk-form itself, the entrypoint handler is never reached.
+			desc:           "asterisk-form",
+			requestLine:    "OPTIONS * HTTP/1.1",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:               "authority-form",
+			requestLine:        "CONNECT front.example:443 HTTP/1.1",
+			expectedStatus:     http.StatusOK,
+			expectedRequestURI: "/",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			conn, err := net.Dial("tcp", ln.Addr().String())
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = conn.Close()
+			})
+
+			require.NoError(t, conn.SetDeadline(time.Now().Add(5*time.Second)))
+
+			_, err = fmt.Fprintf(conn, "%s\r\nHost: front.example\r\nConnection: close\r\n\r\n", test.requestLine)
+			require.NoError(t, err)
+
+			// The response is read with GET semantics to avoid the body framing specifics of the methods under test.
+			res, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: http.MethodGet})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = res.Body.Close()
+			})
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+			assert.Equal(t, test.expectedRequestURI, res.Header.Get("Request-URI"))
+		})
+	}
+}
+
+func Test_removeAliasingHeaders(t *testing.T) {
 	tests := []struct {
 		name        string
 		headers     http.Header
@@ -860,6 +1051,144 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 			headers:     http.Header{"_": {"foo"}},
 			wantHeaders: http.Header{},
 		},
+		{
+			name:        "removes dot variant",
+			headers:     http.Header{"X.Auth.User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantHeaders: http.Header{"X-Auth-User": {"bar"}},
+		},
+		{
+			name:        "removes every other token character variant",
+			headers:     http.Header{"X!Auth#User": {"foo"}, "X$Auth%User": {"foo"}, "X&Auth'User": {"foo"}, "X*Auth+User": {"foo"}, "X^Auth`User": {"foo"}, "X|Auth~User": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:        "keeps lower case dash variant",
+			headers:     http.Header{"x-auth-user": {"foo"}},
+			wantHeaders: http.Header{"x-auth-user": {"foo"}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var callCount int
+			handler := removeAliasingHeaders(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+				callCount++
+				assert.Equal(t, test.wantHeaders, req.Header)
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
+			req.Header = test.headers
+			req.Trailer = test.trailers
+
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			assert.Equal(t, 1, callCount)
+		})
+	}
+}
+
+func Test_rejectAliasingHeaders(t *testing.T) {
+	tests := []struct {
+		name       string
+		headers    http.Header
+		wantReject bool
+	}{
+		{
+			name:       "passes headers without underscores",
+			headers:    http.Header{"X-Auth-User": {"foo", "bar"}},
+			wantReject: false,
+		},
+		{
+			name:       "rejects underscore variant",
+			headers:    http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantReject: true,
+		},
+		{
+			name:       "rejects mixed underscore and dash variant",
+			headers:    http.Header{"X_Auth-User": {"foo"}},
+			wantReject: true,
+		},
+		{
+			name:       "rejects header named with a single underscore",
+			headers:    http.Header{"_": {"foo"}},
+			wantReject: true,
+		},
+		{
+			name:       "rejects dot variant",
+			headers:    http.Header{"X.Auth.User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantReject: true,
+		},
+		{
+			name:       "rejects tilde variant",
+			headers:    http.Header{"X~Auth~User": {"foo"}},
+			wantReject: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var reachedBackend bool
+			handler := rejectAliasingHeaders(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+				reachedBackend = true
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
+			req.Header = test.headers
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			if test.wantReject {
+				assert.False(t, reachedBackend)
+				assert.Equal(t, http.StatusBadRequest, rw.Code)
+				return
+			}
+
+			assert.True(t, reachedBackend)
+		})
+	}
+}
+
+func Test_removeHeadersWithUnderscores(t *testing.T) {
+	tests := []struct {
+		name        string
+		headers     http.Header
+		wantHeaders http.Header
+	}{
+		{
+			name:        "keeps headers without underscores",
+			headers:     http.Header{"X-Auth-User": {"foo", "bar"}},
+			wantHeaders: http.Header{"X-Auth-User": {"foo", "bar"}},
+		},
+		{
+			name:        "removes underscore variant",
+			headers:     http.Header{"X_Auth_User": {"foo"}, "X-Auth-User": {"bar"}},
+			wantHeaders: http.Header{"X-Auth-User": {"bar"}},
+		},
+		{
+			name:        "removes mixed underscore and dash variant",
+			headers:     http.Header{"X_Auth-User": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:        "removes non-canonical underscore variant",
+			headers:     http.Header{"x_auth_user": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:        "removes header named with a single underscore",
+			headers:     http.Header{"_": {"foo"}},
+			wantHeaders: http.Header{},
+		},
+		{
+			name:        "keeps the other aliasing variants",
+			headers:     http.Header{"X.Auth.User": {"foo"}, "X!Auth!User": {"bar"}},
+			wantHeaders: http.Header{"X.Auth.User": {"foo"}, "X!Auth!User": {"bar"}},
+		},
 	}
 
 	for _, test := range tests {
@@ -874,7 +1203,6 @@ func Test_removeHeadersWithUnderscores(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://foo/", http.NoBody)
 			req.Header = test.headers
-			req.Trailer = test.trailers
 
 			handler.ServeHTTP(httptest.NewRecorder(), req)
 
@@ -909,6 +1237,11 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 			headers:    http.Header{"_": {"foo"}},
 			wantReject: true,
 		},
+		{
+			name:       "passes the other aliasing variants",
+			headers:    http.Header{"X.Auth.User": {"foo"}},
+			wantReject: false,
+		},
 	}
 
 	for _, test := range tests {
@@ -933,6 +1266,207 @@ func Test_rejectHeadersWithUnderscores(t *testing.T) {
 			}
 
 			assert.True(t, reachedBackend)
+		})
+	}
+}
+
+func TestUnderscoreHeadersStrategy(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		strategy             string
+		wantStatus           int
+		wantReachedBackend   bool
+		wantUnderscoreHeader bool
+	}{
+		{
+			desc:                 "headers are kept when strategy is not set",
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantUnderscoreHeader: true,
+		},
+		{
+			desc:                 "headers are kept with keep strategy",
+			strategy:             static.UnderscoreHeadersStrategyKeep,
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantUnderscoreHeader: true,
+		},
+		{
+			desc:                 "underscore headers are removed with delete strategy",
+			strategy:             static.UnderscoreHeadersStrategyDelete,
+			wantStatus:           http.StatusOK,
+			wantReachedBackend:   true,
+			wantUnderscoreHeader: false,
+		},
+		{
+			desc:               "request is rejected with reject strategy",
+			strategy:           static.UnderscoreHeadersStrategyReject,
+			wantStatus:         http.StatusBadRequest,
+			wantReachedBackend: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			epConfig := &static.EntryPointsTransport{}
+			epConfig.SetDefaults()
+
+			entryPoint, err := NewTCPEntryPoint(t.Context(), "", &static.EntryPoint{
+				Address:          ":0",
+				Transport:        epConfig,
+				ForwardedHeaders: &static.ForwardedHeaders{},
+				HTTP2:            &static.HTTP2Config{},
+				HTTP: static.HTTPConfig{
+					UnderscoreHeadersStrategy: test.strategy,
+				},
+			}, nil, nil)
+			require.NoError(t, err)
+
+			router, err := tcprouter.NewRouter(nil)
+			require.NoError(t, err)
+
+			var reachedBackend bool
+			var gotHeaders http.Header
+			router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				reachedBackend = true
+				gotHeaders = req.Header.Clone()
+				rw.WriteHeader(http.StatusOK)
+			}))
+
+			conn, err := startEntrypoint(t, entryPoint, router)
+			require.NoError(t, err)
+
+			client := &http.Client{
+				Transport: &http.Transport{
+					DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+						return conn, nil
+					},
+				},
+			}
+
+			req, err := http.NewRequest(http.MethodGet, "http://"+entryPoint.listener.Addr().String(), http.NoBody)
+			require.NoError(t, err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			req.Header["X_Auth_User"] = []string{"spoof"}
+			req.Header["X.Auth.User"] = []string{"spoof"}
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			assert.Equal(t, test.wantStatus, resp.StatusCode)
+			assert.Equal(t, test.wantReachedBackend, reachedBackend)
+
+			if !test.wantReachedBackend {
+				return
+			}
+
+			assert.Equal(t, []string{"legit"}, gotHeaders["X-Auth-User"])
+
+			// The deprecated option only handles the names containing an underscore character.
+			assert.Equal(t, []string{"spoof"}, gotHeaders["X.auth.user"])
+
+			if test.wantUnderscoreHeader {
+				assert.Equal(t, []string{"spoof"}, gotHeaders["X_auth_user"])
+			} else {
+				assert.NotContains(t, gotHeaders, "X_auth_user")
+			}
+		})
+	}
+}
+
+func TestHeaderNamesStrategiesWarnings(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		config          static.HTTPConfig
+		wantDeprecation int
+		wantSpoofing    int
+	}{
+		{
+			desc:         "no strategy configured",
+			config:       static.HTTPConfig{},
+			wantSpoofing: 1,
+		},
+		{
+			desc:   "alias strategy explicitly set to keep",
+			config: static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyKeep},
+		},
+		{
+			desc:            "alias strategy explicitly set to keep, with the deprecated one",
+			config:          static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyKeep, UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyKeep},
+			wantDeprecation: 1,
+		},
+		{
+			desc:   "alias strategy set to delete",
+			config: static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyDelete},
+		},
+		{
+			desc:   "alias strategy set to reject",
+			config: static.HTTPConfig{AliasHeadersStrategy: static.AliasHeadersStrategyReject},
+		},
+		{
+			desc:            "deprecated strategy set to delete",
+			config:          static.HTTPConfig{UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyDelete},
+			wantDeprecation: 1,
+		},
+		{
+			desc:            "deprecated strategy explicitly set to keep",
+			config:          static.HTTPConfig{UnderscoreHeadersStrategy: static.UnderscoreHeadersStrategyKeep},
+			wantDeprecation: 1,
+			wantSpoofing:    1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var buf bytes.Buffer
+			ctx := zerolog.New(&buf).Level(zerolog.WarnLevel).WithContext(t.Context())
+
+			epConfig := &static.EntryPointsTransport{}
+			epConfig.SetDefaults()
+
+			_, err := NewTCPEntryPoint(ctx, "", &static.EntryPoint{
+				Address:          ":0",
+				Transport:        epConfig,
+				ForwardedHeaders: &static.ForwardedHeaders{},
+				HTTP2:            &static.HTTP2Config{},
+				HTTP:             test.config,
+			}, nil, nil)
+			require.NoError(t, err)
+
+			// The counts guard against logging the warnings once per HTTP server instead of once per entry point.
+			assert.Equal(t, test.wantDeprecation, strings.Count(buf.String(), "underscoreHeadersStrategy option is deprecated"))
+			assert.Equal(t, test.wantSpoofing, strings.Count(buf.String(), "aliasHeadersStrategy is not configured"))
+		})
+	}
+}
+
+func Test_isAliasingHeaderName(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		expected bool
+	}{
+		{desc: "empty", name: "", expected: false},
+		{desc: "canonical form", name: "X-Auth-User", expected: false},
+		{desc: "lower case form", name: "x-auth-user", expected: false},
+		{desc: "single token", name: "Authorization", expected: false},
+		{desc: "digits", name: "X-Auth-User2", expected: false},
+		{desc: "underscore form", name: "X_Auth_User", expected: true},
+		{desc: "dot form", name: "X.Auth.User", expected: true},
+		{desc: "tilde form", name: "X~Auth~User", expected: true},
+		{desc: "exclamation mark form", name: "X!Auth!User", expected: true},
+		{desc: "back quote form", name: "X`Auth`User", expected: true},
+		{desc: "mixed form", name: "X-Auth_User", expected: true},
+		{desc: "single underscore", name: "_", expected: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, isAliasingHeaderName(test.name))
 		})
 	}
 }

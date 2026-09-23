@@ -96,6 +96,7 @@ entryPoints:
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42
+      aliasHeadersStrategy: foobar
       underscoreHeadersStrategy: foobar
     http2:
       maxConcurrentStreams: 42
@@ -203,6 +204,7 @@ providers:
     nativeLBByDefault: true
     disableClusterScopeResources: true
     defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar

@@ -35,7 +35,13 @@ func NewRequestRedirect(ctx context.Context, next http.Handler, conf dynamic.Req
 	if statusCode == 0 {
 		statusCode = http.StatusFound
 	}
-	if statusCode != http.StatusMovedPermanently && statusCode != http.StatusFound {
+
+	// Comply with HTTPRequestRedirectFilter.StatusCode
+	if statusCode != http.StatusMovedPermanently &&
+		statusCode != http.StatusFound &&
+		statusCode != http.StatusSeeOther &&
+		statusCode != http.StatusTemporaryRedirect &&
+		statusCode != http.StatusPermanentRedirect {
 		return nil, fmt.Errorf("unsupported status code: %d", statusCode)
 	}
 
