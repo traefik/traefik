@@ -4749,3 +4749,80 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 		})
 	}
 }
+
+// TestDynConfBuilder_buildServiceConfiguration_orphanedAutoServicePortFailure
+// covers the fix for the macvlan/no-port-label bug: when a container declares
+// no service label (so a default service gets auto-created from the
+// container name) but every declared router already has an explicit Service
+// set (e.g. a dashboard router pointing at api@internal), a port-resolution
+// failure on that unused auto-created service must not take the router down
+// with it.
+func TestDynConfBuilder_buildServiceConfiguration_orphanedAutoServicePortFailure(t *testing.T) {
+	container := dockerData{
+		ServiceName: "traefik13532",
+		Name:        "traefik13532",
+		NetworkSettings: networkSettings{
+			// Empty Ports mirrors what Docker reports for a macvlan-attached
+			// container even when a port is declared via EXPOSE.
+			Ports: networktypes.PortMap{},
+			Networks: map[string]*networkData{
+				"macvlan01": {
+					Name: "macvlan01",
+					Addr: "192.168.1.231",
+				},
+			},
+		},
+	}
+
+	configuration := &dynamic.HTTPConfiguration{
+		Routers: map[string]*dynamic.Router{
+			"dashboard": {
+				Rule:        "PathPrefix(`/dashboard`)",
+				EntryPoints: []string{"web"},
+				Service:     "api@internal",
+			},
+		},
+	}
+
+	builder := NewDynConfBuilder(Shared{}, nil, false)
+
+	err := builder.buildServiceConfiguration(t.Context(), container, configuration)
+	require.NoError(t, err, "a port failure on an orphaned auto-created service must not error out")
+
+	assert.Empty(t, configuration.Services, "the unusable auto-created service should be dropped")
+
+	require.Contains(t, configuration.Routers, "dashboard")
+	assert.Equal(t, "api@internal", configuration.Routers["dashboard"].Service,
+		"the router pointing at api@internal must survive untouched")
+}
+
+// TestDynConfBuilder_buildServiceConfiguration_requiredAutoServicePortFailure
+// is the regression guard: when there are no router labels at all (so the
+// auto-created service will in fact be the one wired up by
+// provider.BuildRouterConfiguration), a port-resolution failure must still
+// error out exactly as before the fix.
+func TestDynConfBuilder_buildServiceConfiguration_requiredAutoServicePortFailure(t *testing.T) {
+	container := dockerData{
+		ServiceName: "my-app",
+		Name:        "my-app",
+		NetworkSettings: networkSettings{
+			Ports: networktypes.PortMap{},
+			Networks: map[string]*networkData{
+				"macvlan01": {
+					Name: "macvlan01",
+					Addr: "192.168.1.50",
+				},
+			},
+		},
+	}
+
+	// No routers declared via labels: BuildRouterConfiguration would later
+	// create a default router and wire it to this auto-created service.
+	configuration := &dynamic.HTTPConfiguration{}
+
+	builder := NewDynConfBuilder(Shared{}, nil, false)
+
+	err := builder.buildServiceConfiguration(t.Context(), container, configuration)
+	require.Error(t, err, "a port failure on a service that would still be used must fail as before")
+	assert.Contains(t, err.Error(), "port is missing")
+}
