@@ -268,3 +268,283 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 }
+
+func TestClientDynamicNamespaceDiscovery(t *testing.T) {
+	t.Parallel()
+
+	// Start with a namespace that matches the selector.
+	existingNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "existing",
+			Labels: map[string]string{"watch": "true"},
+		},
+	}
+
+	kubeClient := kubefake.NewClientset(existingNs)
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{GitVersion: "v1.19"}
+
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "watch=true")
+	require.NoError(t, err)
+
+	// Drain initial events from the namespace informer seeing the existing namespace.
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	// Verify only "existing" is watched initially.
+	assert.True(t, client.isWatchedNamespace("existing"))
+	assert.False(t, client.isWatchedNamespace("new-ns"))
+
+	// Create a new namespace that matches the selector.
+	newNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "new-ns",
+			Labels: map[string]string{"watch": "true"},
+		},
+	}
+	_, err = kubeClient.CoreV1().Namespaces().Create(t.Context(), newNs, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Wait for the namespace informer to pick up the new namespace.
+	waitForCondition(t, 2*time.Second, func() bool {
+		return client.isWatchedNamespace("new-ns")
+	})
+
+	// Verify we received an event (the ingress informer for the new namespace fires).
+	select {
+	case <-eventCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected event after namespace was added")
+	}
+}
+
+func TestClientDynamicNamespaceRemoval(t *testing.T) {
+	t.Parallel()
+
+	// Start with a namespace that matches the selector.
+	existingNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "removable",
+			Labels: map[string]string{"watch": "true"},
+		},
+	}
+
+	kubeClient := kubefake.NewClientset(existingNs)
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{GitVersion: "v1.19"}
+
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "watch=true")
+	require.NoError(t, err)
+
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	assert.True(t, client.isWatchedNamespace("removable"))
+
+	// Delete the namespace.
+	err = kubeClient.CoreV1().Namespaces().Delete(t.Context(), "removable", metav1.DeleteOptions{})
+	require.NoError(t, err)
+
+	// Wait for the namespace to be removed from watching.
+	waitForCondition(t, 2*time.Second, func() bool {
+		return !client.isWatchedNamespace("removable")
+	})
+}
+
+func TestClientNamespaceLabelUpdateStartsWatching(t *testing.T) {
+	t.Parallel()
+
+	// Start with a namespace that does NOT match the selector.
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "will-match-later",
+			Labels: map[string]string{"watch": "false"},
+		},
+	}
+
+	kubeClient := kubefake.NewClientset(ns)
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{GitVersion: "v1.19"}
+
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "watch=true")
+	require.NoError(t, err)
+
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	assert.False(t, client.isWatchedNamespace("will-match-later"))
+
+	// Update the namespace labels to match.
+	ns.Labels["watch"] = "true"
+	ns.ResourceVersion = "2"
+	_, err = kubeClient.CoreV1().Namespaces().Update(t.Context(), ns, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	waitForCondition(t, 2*time.Second, func() bool {
+		return client.isWatchedNamespace("will-match-later")
+	})
+}
+
+func TestClientNamespaceLabelUpdateStopsWatching(t *testing.T) {
+	t.Parallel()
+
+	// Start with a namespace that matches the selector.
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "will-unmatch",
+			Labels: map[string]string{"watch": "true"},
+		},
+	}
+
+	kubeClient := kubefake.NewClientset(ns)
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{GitVersion: "v1.19"}
+
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "watch=true")
+	require.NoError(t, err)
+
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	assert.True(t, client.isWatchedNamespace("will-unmatch"))
+
+	// Update the namespace labels to stop matching.
+	ns.Labels["watch"] = "false"
+	ns.ResourceVersion = "2"
+	_, err = kubeClient.CoreV1().Namespaces().Update(t.Context(), ns, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	waitForCondition(t, 2*time.Second, func() bool {
+		return !client.isWatchedNamespace("will-unmatch")
+	})
+}
+
+func TestClientNonMatchingNamespaceIgnored(t *testing.T) {
+	t.Parallel()
+
+	kubeClient := kubefake.NewClientset()
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{GitVersion: "v1.19"}
+
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "watch=true")
+	require.NoError(t, err)
+
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	// Create a namespace that does NOT match the selector.
+	nonMatchingNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "non-matching",
+			Labels: map[string]string{"watch": "false"},
+		},
+	}
+	_, err = kubeClient.CoreV1().Namespaces().Create(t.Context(), nonMatchingNs, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Give it time to not be added.
+	time.Sleep(200 * time.Millisecond)
+
+	assert.False(t, client.isWatchedNamespace("non-matching"))
+}
+
+func TestClientIngressDiscoveredInNewNamespace(t *testing.T) {
+	t.Parallel()
+
+	kubeClient := kubefake.NewClientset()
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{GitVersion: "v1.19"}
+
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "watch=true")
+	require.NoError(t, err)
+
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	// Create a matching namespace.
+	newNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "dynamic-ns",
+			Labels: map[string]string{"watch": "true"},
+		},
+	}
+	_, err = kubeClient.CoreV1().Namespaces().Create(t.Context(), newNs, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	waitForCondition(t, 2*time.Second, func() bool {
+		return client.isWatchedNamespace("dynamic-ns")
+	})
+
+	drainEvents(eventCh, 100*time.Millisecond)
+
+	// Create an ingress in the dynamically discovered namespace.
+	ing := &netv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-ingress",
+			Namespace: "dynamic-ns",
+		},
+		Spec: netv1.IngressSpec{
+			Rules: []netv1.IngressRule{
+				{Host: "test.example.com"},
+			},
+		},
+	}
+	_, err = kubeClient.NetworkingV1().Ingresses("dynamic-ns").Create(t.Context(), ing, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Wait for the event from the ingress creation.
+	select {
+	case <-eventCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected event after ingress was created in dynamic namespace")
+	}
+
+	// Verify the ingress is listed.
+	ingresses := client.ListIngresses()
+	var found bool
+	for _, i := range ingresses {
+		if i.Name == "test-ingress" && i.Namespace == "dynamic-ns" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found)
+}
+
+// drainEvents reads all pending events from the channel until no event arrives within the timeout.
+func drainEvents(ch <-chan any, timeout time.Duration) {
+	for {
+		select {
+		case <-ch:
+		case <-time.After(timeout):
+			return
+		}
+	}
+}
+
+// waitForCondition polls the condition function until it returns true or the timeout expires.
+func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool) {
+	t.Helper()
+
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if condition() {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	t.Fatal("condition not met within timeout")
+}
