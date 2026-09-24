@@ -510,14 +510,12 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	dropChildlessListenerRouters(conf, listenerRouters)
 
 	for _, gwl := range gatewaysWithListeners {
-		gateway := gwl.gateway
-
 		logger := log.Ctx(ctx).With().
-			Str("gateway", gateway.Name).
-			Str("namespace", gateway.Namespace).
+			Str("gateway", gwl.Name).
+			Str("namespace", gwl.Namespace).
 			Logger()
 
-		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, gwl.listeners, addresses, gwl.accepted)
+		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, gwl.accepted)
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -542,7 +540,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		}
 		gatewayStatus.AttachedListenerSets = &attachedListenerSets
 
-		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus)
+		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gwl.Name, Namespace: gwl.Namespace}, gatewayStatus)
 	}
 
 	return conf, statusReport, nil
