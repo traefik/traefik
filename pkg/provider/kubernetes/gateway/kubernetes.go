@@ -184,16 +184,6 @@ func (l gatewayListener) fromListenerSet() bool {
 	return l.Owner.Kind == kindListenerSet
 }
 
-// routeKeySegment returns the segment identifying the listener owner in router names:
-// "gw-<namespace>-<name>" for a Gateway listener, "ls-<namespace>-<name>" for a
-// ListenerSet one.
-func (l gatewayListener) routeKeySegment() string {
-	if l.fromListenerSet() {
-		return fmt.Sprintf("ls-%s-%s", l.Owner.Namespace, l.Owner.Name)
-	}
-	return fmt.Sprintf("gw-%s-%s", l.Owner.Namespace, l.Owner.Name)
-}
-
 type gatewayWithListeners struct {
 	Name      string
 	Namespace string
@@ -207,33 +197,6 @@ type gatewayWithListeners struct {
 
 	// accepted gates the programming of the ListenerSet listeners (GEP-1713).
 	accepted bool
-}
-
-// hasListenerSet reports whether the given ListenerSet references this Gateway.
-func (g gatewayWithListeners) hasListenerSet(listenerSet ktypes.NamespacedName) bool {
-	_, ok := g.listenerSets[listenerSet]
-	return ok
-}
-
-// listenersOf returns the listeners declared by the given route parent: the listeners
-// of the Gateway itself when the parent is this Gateway, or the listeners of the given
-// ListenerSet when it is attached to this Gateway.
-func (g gatewayWithListeners) listenersOf(parent listenerOwner) []gatewayListener {
-	var listeners []gatewayListener
-	for _, listener := range g.listeners {
-		switch parent.Kind {
-		case kindGateway:
-			if g.Namespace == parent.Namespace && g.Name == parent.Name && !listener.fromListenerSet() {
-				listeners = append(listeners, listener)
-			}
-		case kindListenerSet:
-			if listener.Owner == parent {
-				listeners = append(listeners, listener)
-			}
-		}
-	}
-
-	return listeners
 }
 
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
@@ -1129,7 +1092,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
 		errorConditions = append(errorConditions, listener.Status.Conditions...)
-		gatewayStatus.Listeners = append(gatewayStatus.Listeners, makeListenerStatus(listener, gateway.Generation, true))
+		gatewayStatus.Listeners = append(gatewayStatus.Listeners, makeListenerStatus(listener, gateway.Generation))
 	}
 
 	// Traefik supports no infrastructure parameters, and the specification requires
@@ -1690,11 +1653,22 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 		// reported even for parentRefs that match no listener. A ListenerSet exposing
 		// none, rejected by AllowedListeners or without any valid entry, is still
 		// reported in the route status.
+		var listeners []gatewayListener
+		for _, listener := range gateway.listeners {
+			// A Gateway parent targets the listeners the Gateway declares itself,
+			// and a ListenerSet parent only the listeners of that ListenerSet.
+			switch {
+			case parent.Kind == kindGateway && !listener.fromListenerSet(),
+				parent.Kind == kindListenerSet && listener.Owner == parent:
+				listeners = append(listeners, listener)
+			}
+		}
+
 		matches = append(matches, gatewayListenersForParentRef{
 			ParentRef:        parentRef,
 			GatewayName:      gateway.Name,
 			GatewayNamespace: gateway.Namespace,
-			Listeners:        gateway.listenersOf(parent),
+			Listeners:        listeners,
 		})
 	}
 
@@ -1707,7 +1681,7 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 func gatewayForParent(gateways []gatewayWithListeners, parent listenerOwner) *gatewayWithListeners {
 	for i, gateway := range gateways {
 		if parent.Kind == kindListenerSet {
-			if gateway.hasListenerSet(ktypes.NamespacedName{Namespace: parent.Namespace, Name: parent.Name}) {
+			if _, ok := gateway.listenerSets[ktypes.NamespacedName{Namespace: parent.Namespace, Name: parent.Name}]; ok {
 				return &gateways[i]
 			}
 			continue
@@ -1735,16 +1709,18 @@ func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) b
 }
 
 func makeRouterName(kind, rule, namespace, name string, listener gatewayListener, ruleIndex int) string {
-	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-ep-%s-%d", kind, namespace, name, listener.routeKeySegment(), listener.EPName, ruleIndex))
-
-	h := sha256.New()
-
+	ownerSegment := fmt.Sprintf("gw-%s-%s", listener.Owner.Namespace, listener.Owner.Name)
 	components := []string{namespace, name, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, strconv.Itoa(ruleIndex)}
 	if listener.fromListenerSet() {
 		// The kind keeps the routers attached through a ListenerSet apart from the ones
 		// attached to a Gateway of the same name.
+		ownerSegment = fmt.Sprintf("ls-%s-%s", listener.Owner.Namespace, listener.Owner.Name)
 		components = slices.Insert(components, 2, kindListenerSet)
 	}
+
+	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-ep-%s-%d", kind, namespace, name, ownerSegment, listener.EPName, ruleIndex))
+
+	h := sha256.New()
 
 	for _, c := range components {
 		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
@@ -1954,59 +1930,56 @@ func (p *Provider) isListenerSetAllowed(ctx context.Context, gw *gatev1.Gateway,
 	return false
 }
 
-// acceptedListenerConditions returns the conditions of a listener that passed every
-// validation step. programmed is false when such a listener still cannot be programmed,
-// i.e. a ListenerSet listener whose parent Gateway is not accepted.
-func acceptedListenerConditions(generation int64, programmed bool) []metav1.Condition {
-	programmedCondition := metav1.Condition{
-		Type:               string(gatev1.ListenerConditionProgrammed),
-		Status:             metav1.ConditionTrue,
-		ObservedGeneration: generation,
-		LastTransitionTime: metav1.Now(),
-		Reason:             string(gatev1.ListenerReasonProgrammed),
-		Message:            messageNoError,
-	}
-	if !programmed {
-		programmedCondition.Status = metav1.ConditionFalse
-		programmedCondition.Reason = string(gatev1.ListenerReasonPending)
-		programmedCondition.Message = "Parent Gateway is not accepted"
-	}
-
-	return []metav1.Condition{
-		{
-			Type:               string(gatev1.ListenerConditionAccepted),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonAccepted),
-			Message:            messageNoError,
-		},
-		{
-			Type:               string(gatev1.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonResolvedRefs),
-			Message:            messageNoError,
-		},
-		programmedCondition,
-	}
-}
-
 // makeListenerStatus builds the status reported for a listener. A listener without any
-// condition passed every validation step and gets the accepted conditions. Otherwise,
-// its conditions are deduplicated by type: a single validation step can report several
-// conditions of the same type (e.g. one InvalidCertificateRef per unresolvable
-// certificateRef), and the apiserver rejects duplicates in this listType=map field.
-func makeListenerStatus(listener gatewayListener, generation int64, programmed bool) gatev1.ListenerStatus {
+// condition passed every validation step. Otherwise, its conditions are deduplicated by
+// type: a single validation step can report several conditions of the same type (e.g.
+// one InvalidCertificateRef per unresolvable certificateRef), and the apiserver rejects
+// duplicates in this listType=map field.
+func makeListenerStatus(listener gatewayListener, generation int64) gatev1.ListenerStatus {
 	status := *listener.Status
 
 	if len(status.Conditions) == 0 {
-		status.Conditions = acceptedListenerConditions(generation, programmed)
+		status.Conditions = []metav1.Condition{
+			{
+				Type:               string(gatev1.ListenerConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonAccepted),
+				Message:            messageNoError,
+			},
+			{
+				Type:               string(gatev1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonResolvedRefs),
+				Message:            messageNoError,
+			},
+			{
+				Type:               string(gatev1.ListenerConditionProgrammed),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonProgrammed),
+				Message:            messageNoError,
+			},
+		}
+
 		return status
 	}
 
-	status.Conditions = dedupeConditionsByType(status.Conditions)
+	seen := make(map[string]struct{}, len(status.Conditions))
+	conditions := make([]metav1.Condition, 0, len(status.Conditions))
+	for _, condition := range status.Conditions {
+		if _, ok := seen[condition.Type]; ok {
+			continue
+		}
+		seen[condition.Type] = struct{}{}
+		conditions = append(conditions, condition)
+	}
+	status.Conditions = conditions
+
 	return status
 }
 
@@ -2037,7 +2010,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 		}
 
 		// A ListenerEntryStatus mirrors a ListenerStatus field for field.
-		status.Listeners = append(status.Listeners, gatev1.ListenerEntryStatus(makeListenerStatus(listener, generation, parentAccepted)))
+		status.Listeners = append(status.Listeners, gatev1.ListenerEntryStatus(makeListenerStatus(listener, generation)))
 	}
 
 	switch {
@@ -2088,22 +2061,6 @@ func makeListenerSetCondition(conditionType gatev1.ListenerSetConditionType, sta
 		Reason:             reason,
 		Message:            message,
 	}
-}
-
-// dedupeConditionsByType keeps the first condition of each type, as the status
-// conditions field is a listType=map keyed by type and the apiserver rejects
-// duplicate entries.
-func dedupeConditionsByType(conditions []metav1.Condition) []metav1.Condition {
-	seen := make(map[string]struct{}, len(conditions))
-	deduped := make([]metav1.Condition, 0, len(conditions))
-	for _, condition := range conditions {
-		if _, ok := seen[condition.Type]; ok {
-			continue
-		}
-		seen[condition.Type] = struct{}{}
-		deduped = append(deduped, condition)
-	}
-	return deduped
 }
 
 func filterReferenceGrantsFrom(referenceGrants []*gatev1.ReferenceGrant, group, kind, namespace string) []*gatev1.ReferenceGrant {
