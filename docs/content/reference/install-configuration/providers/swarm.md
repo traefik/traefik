@@ -13,7 +13,7 @@ This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swar
 
 ## Configuration Example
 
-You can enable the Swarm provider as detailed below:
+The minimal configuration to enable the Swarm provider:
 
 ```yaml tab="File (YAML)"
 providers:
@@ -26,6 +26,37 @@ providers:
 
 ```bash tab="CLI"
 --providers.swarm=true
+```
+
+Using `providers.swarm: {}` (or `--providers.swarm=true`) is sufficient to start the provider.
+The following defaults are applied automatically:
+
+- `endpoint`: `unix:///var/run/docker.sock`
+- `exposedByDefault`: `true`
+- `watch`: `true`
+- `refreshSeconds`: `15s`
+
+!!! warning "Security recommendation"
+
+    For production deployments, it is strongly recommended to set `exposedByDefault` to `false`
+    so that only services with an explicit `traefik.enable=true` label are exposed.
+
+```yaml tab="File (YAML)"
+providers:
+  swarm:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+```
+
+```toml tab="File (TOML)"
+[providers.swarm]
+  endpoint = "unix:///var/run/docker.sock"
+  exposedByDefault = false
+```
+
+```bash tab="CLI"
+--providers.swarm.endpoint=unix:///var/run/docker.sock
+--providers.swarm.exposedByDefault=false
 ```
 
 Attach labels to a single service (not containers) while in Swarm mode (in your Docker compose file).
