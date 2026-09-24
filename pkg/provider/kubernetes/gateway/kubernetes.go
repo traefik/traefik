@@ -68,7 +68,7 @@ const (
 	// attached to the same listener with intersecting hostnames.
 	routeReasonHostnameConflict gatev1.RouteConditionReason = "HostnameConflict"
 
-	messageNoError = "No error found"
+	conditionNoErrorMessage = "No error found"
 )
 
 // NamespacedName holds a Kubernetes resource reference with namespace and name.
@@ -1003,9 +1003,7 @@ func hostnameMatcherValue(hostname string) string {
 	return hostname
 }
 
-// loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway,
-// from listenerSets sorted oldest first:
-// the Gateway listeners already in allocatedListeners win over them, and each ListenerSet over its younger siblings.
+// loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway.
 func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) ([]gatewayListener, map[ktypes.NamespacedName]*listenerSetInfo) {
 	infos := make(map[ktypes.NamespacedName]*listenerSetInfo)
 
@@ -1060,7 +1058,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonAccepted),
-					Message:            messageNoError,
+					Message:            conditionNoErrorMessage,
 				},
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -1068,7 +1066,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonResolvedRefs),
-					Message:            messageNoError,
+					Message:            conditionNoErrorMessage,
 				},
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionProgrammed),
@@ -1076,7 +1074,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonProgrammed),
-					Message:            messageNoError,
+					Message:            conditionNoErrorMessage,
 				},
 			)
 
@@ -1946,7 +1944,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerEntryReasonAccepted),
-					Message:            messageNoError,
+					Message:            conditionNoErrorMessage,
 				},
 				{
 					Type:               string(gatev1.ListenerEntryConditionResolvedRefs),
@@ -1954,7 +1952,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerEntryReasonResolvedRefs),
-					Message:            messageNoError,
+					Message:            conditionNoErrorMessage,
 				},
 				{
 					Type:               string(gatev1.ListenerEntryConditionProgrammed),
@@ -1962,7 +1960,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerEntryReasonProgrammed),
-					Message:            messageNoError,
+					Message:            conditionNoErrorMessage,
 				},
 			}
 		}
