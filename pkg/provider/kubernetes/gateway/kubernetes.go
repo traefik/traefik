@@ -933,8 +933,33 @@ func (p *Provider) loadListener(ctx context.Context, gateway ktypes.NamespacedNa
 
 	listenerKey := makeListenerKey(listener)
 	if _, ok := allocatedListeners[listenerKey]; ok {
-		gl.Status.Conditions = append(gl.Status.Conditions, makeListenerConflictConditions(generation, gatev1.ListenerReasonHostnameConflict,
-			"A listener with the same protocol, port and hostname already exists")...)
+		const message = "A listener with the same protocol, port and hostname already exists"
+		gl.Status.Conditions = append(gl.Status.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.ListenerConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonHostnameConflict),
+				Message:            message,
+			},
+			metav1.Condition{
+				Type:               string(gatev1.ListenerConditionProgrammed),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonHostnameConflict),
+				Message:            message,
+			},
+			metav1.Condition{
+				Type:               string(gatev1.ListenerConditionConflicted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonHostnameConflict),
+				Message:            message,
+			},
+		)
 
 		return gl
 	}
@@ -1861,38 +1886,6 @@ func makeListenerKey(l gatev1.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
-}
-
-// makeListenerConflictConditions returns the conditions the Gateway API spec requires on
-// a conflicted listener: Accepted=False, Programmed=False and Conflicted=True, all
-// sharing the conflict reason.
-func makeListenerConflictConditions(generation int64, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {
-	return []metav1.Condition{
-		{
-			Type:               string(gatev1.ListenerConditionAccepted),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(reason),
-			Message:            message,
-		},
-		{
-			Type:               string(gatev1.ListenerConditionProgrammed),
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(reason),
-			Message:            message,
-		},
-		{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: generation,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(reason),
-			Message:            message,
-		},
-	}
 }
 
 type listenerSetInfo struct {
