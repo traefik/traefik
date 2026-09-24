@@ -13241,6 +13241,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			wantEntryProgrammedReason: string(gatev1.ListenerEntryReasonProgrammed),
 		},
 		{
+			// A parent Gateway is not accepted only when no listener serving it is valid,
+			// the ListenerSet ones included.
 			desc: "Gateway not accepted",
 			info: &listenerSetInfo{
 				listenerSet: &gatev1.ListenerSet{
@@ -13254,11 +13256,14 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:  "http",
+					Name:  "https",
 					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
-						Name:       "http",
-						Conditions: []metav1.Condition{},
+						Name: "https",
+						Conditions: []metav1.Condition{
+							{Type: string(gatev1.ListenerConditionResolvedRefs), Status: metav1.ConditionFalse, Reason: string(gatev1.ListenerReasonInvalidCertificateRef)},
+							{Type: string(gatev1.ListenerConditionProgrammed), Status: metav1.ConditionFalse, Reason: string(gatev1.ListenerReasonInvalid)},
+						},
 					},
 				},
 			},
@@ -13268,9 +13273,9 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			wantProgrammedStatus:      metav1.ConditionFalse,
 			wantProgrammedReason:      "ParentNotProgrammed",
 			wantListenerEntryCount:    1,
-			wantEntryName:             "http",
+			wantEntryName:             "https",
 			wantEntryProgrammedStatus: metav1.ConditionFalse,
-			wantEntryProgrammedReason: string(gatev1.ListenerEntryReasonPending),
+			wantEntryProgrammedReason: string(gatev1.ListenerEntryReasonInvalid),
 		},
 		{
 			desc: "No valid listener",
