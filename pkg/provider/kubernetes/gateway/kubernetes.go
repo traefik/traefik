@@ -167,6 +167,10 @@ type gatewayListener struct {
 	// the listener is the most specific match for.
 	RouterNames []string
 
+	// Gateway is the Gateway serving this listener: the Owner itself for a Gateway
+	// listener, and the parent Gateway for a ListenerSet one.
+	Gateway ktypes.NamespacedName
+
 	Owner listenerOwner
 }
 
@@ -459,10 +463,11 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gateway.Namespace).
 			Logger()
 
+		gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
 		owner := listenerOwner{Kind: kindGateway, Namespace: gateway.Namespace, Name: gateway.Name}
 		allocatedListeners := make(map[string]struct{})
 
-		listeners := p.loadGatewayListeners(logger.WithContext(ctx), owner, gateway.Generation, gateway.Spec.Listeners, allocatedListeners, conf)
+		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gwNSN, owner, gateway.Generation, gateway.Spec.Listeners, allocatedListeners, conf)
 
 		listenerSetListeners, listenerSetInfos := p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf)
 		listeners = append(listeners, listenerSetListeners...)
@@ -584,9 +589,9 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	}
 }
 
-// loadGatewayListeners loads the given listeners, declared by owner,
+// loadGatewayListeners loads the given listeners, declared by owner for the given Gateway,
 // and claims the valid ones in allocatedListeners.
-func (p *Provider) loadGatewayListeners(ctx context.Context, owner listenerOwner, generation int64, listeners []gatev1.Listener, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.NamespacedName, owner listenerOwner, generation int64, listeners []gatev1.Listener, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
 	tlsCerts := make(map[string]*tls.CertAndStores)
 	gatewayListeners := make([]gatewayListener, len(listeners))
 
@@ -597,6 +602,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, owner listenerOwner
 			Protocol: listener.Protocol,
 			TLS:      listener.TLS,
 			Hostname: listener.Hostname,
+			Gateway:  gateway,
 			Owner:    owner,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
@@ -1027,6 +1033,8 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 		)
 	})
 
+	gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
+
 	var listeners []gatewayListener
 	for _, listenerSet := range allowed {
 		owner := listenerOwner{Kind: kindListenerSet, Namespace: listenerSet.Namespace, Name: listenerSet.Name}
@@ -1037,7 +1045,7 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 			entries = append(entries, gatev1.Listener(entry))
 		}
 
-		listeners = append(listeners, p.loadGatewayListeners(ctx, owner, listenerSet.Generation, entries, allocatedListeners, conf)...)
+		listeners = append(listeners, p.loadGatewayListeners(ctx, gwNSN, owner, listenerSet.Generation, entries, allocatedListeners, conf)...)
 	}
 
 	return listeners, infos
