@@ -81,7 +81,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 
 			// The ResolvedRefs condition must be reported for every parentRef,
 			// even when the route does not attach to the listener.
-			routerConfs, condition := p.loadGRPCRouteConfiguration(logger.WithContext(ctx), listener, route, hostnames, statusReport)
+			routerConfs, condition := p.loadGRPCRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames, statusReport)
 			if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 				resolvedRefCondition = new(condition)
 			}
@@ -122,7 +122,7 @@ type grpcRouteRouter struct {
 	Conf *dynamic.Configuration
 }
 
-func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname, statusReport *statusReport) ([]grpcRouteRouter, metav1.Condition) {
+func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname, statusReport *statusReport) ([]grpcRouteRouter, metav1.Condition) {
 	var routers []grpcRouteRouter
 
 	condition := metav1.Condition{
@@ -149,7 +149,7 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, listener gate
 				ParentRefs: listener.RouterNames,
 			}
 
-			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, listener, ri)
+			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener, ri)
 
 			routerConf := &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
