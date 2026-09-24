@@ -1063,8 +1063,41 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
+		if len(listener.Status.Conditions) == 0 {
+			listener.Status.Conditions = append(listener.Status.Conditions,
+				metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonAccepted),
+					Message:            messageNoError,
+				},
+				metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonResolvedRefs),
+					Message:            messageNoError,
+				},
+				metav1.Condition{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonProgrammed),
+					Message:            messageNoError,
+				},
+			)
+
+			// TODO: refactor
+			gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
+			continue
+		}
+
 		errorConditions = append(errorConditions, listener.Status.Conditions...)
-		gatewayStatus.Listeners = append(gatewayStatus.Listeners, makeListenerStatus(listener, gateway.Generation))
+		gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
 	}
 
 	// Traefik supports no infrastructure parameters, and the specification requires
@@ -1900,59 +1933,6 @@ func (p *Provider) isListenerSetAllowed(ctx context.Context, gw *gatev1.Gateway,
 	return false
 }
 
-// makeListenerStatus builds the status reported for a listener. A listener without any
-// condition passed every validation step. Otherwise, its conditions are deduplicated by
-// type: a single validation step can report several conditions of the same type (e.g.
-// one InvalidCertificateRef per unresolvable certificateRef), and the apiserver rejects
-// duplicates in this listType=map field.
-func makeListenerStatus(listener gatewayListener, generation int64) gatev1.ListenerStatus {
-	status := *listener.Status
-
-	if len(status.Conditions) == 0 {
-		status.Conditions = []metav1.Condition{
-			{
-				Type:               string(gatev1.ListenerConditionAccepted),
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.ListenerReasonAccepted),
-				Message:            messageNoError,
-			},
-			{
-				Type:               string(gatev1.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.ListenerReasonResolvedRefs),
-				Message:            messageNoError,
-			},
-			{
-				Type:               string(gatev1.ListenerConditionProgrammed),
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.ListenerReasonProgrammed),
-				Message:            messageNoError,
-			},
-		}
-
-		return status
-	}
-
-	seen := make(map[string]struct{}, len(status.Conditions))
-	conditions := make([]metav1.Condition, 0, len(status.Conditions))
-	for _, condition := range status.Conditions {
-		if _, ok := seen[condition.Type]; ok {
-			continue
-		}
-		seen[condition.Type] = struct{}{}
-		conditions = append(conditions, condition)
-	}
-	status.Conditions = conditions
-
-	return status
-}
-
 func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, parentAccepted bool) (gatev1.ListenerSetStatus, bool) {
 	listenerSet := info.listenerSet
 	generation := listenerSet.Generation
@@ -1975,12 +1955,40 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 			continue
 		}
 
-		if len(listener.Status.Conditions) == 0 {
+		// A ListenerEntryStatus mirrors a ListenerStatus field for field.
+		entryStatus := gatev1.ListenerEntryStatus(*listener.Status)
+		if len(entryStatus.Conditions) == 0 {
 			validListeners++
+
+			entryStatus.Conditions = []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerEntryConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonAccepted),
+					Message:            messageNoError,
+				},
+				{
+					Type:               string(gatev1.ListenerEntryConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonResolvedRefs),
+					Message:            messageNoError,
+				},
+				{
+					Type:               string(gatev1.ListenerEntryConditionProgrammed),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonProgrammed),
+					Message:            messageNoError,
+				},
+			}
 		}
 
-		// A ListenerEntryStatus mirrors a ListenerStatus field for field.
-		status.Listeners = append(status.Listeners, gatev1.ListenerEntryStatus(makeListenerStatus(listener, generation)))
+		status.Listeners = append(status.Listeners, entryStatus)
 	}
 
 	switch {
