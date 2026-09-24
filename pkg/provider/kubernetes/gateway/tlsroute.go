@@ -176,8 +176,9 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 			},
 		}
 
-		// Routing criteria should be introduced at some point.
-		routerName := makeRouterName(strings.ToLower(kindTLSRoute), "", route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
+		// The rule tells apart the routers of the listeners sharing the entry point,
+		// as they differ by the hostnames they match.
+		routerName := makeRouterName(strings.ToLower(kindTLSRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 
 		routerConf := &dynamic.Configuration{
 			TCP: &dynamic.TCPConfiguration{
