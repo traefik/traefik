@@ -92,7 +92,7 @@
       "public"
     ]
   },
-  "packageManager": "yarn@4.13.0",
+  "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e",
   "resolutions": {
     "form-data": "4.0.4",
     "js-yaml": "4.1.1",

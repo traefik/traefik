@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -26,6 +27,12 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 		logger.Error().Err(err).Msgf("Unable to list TCPRoutes")
 		return
 	}
+
+	// The provider loads the routes in the order that the specification gives,
+	// to make a decision between the routes that match a connection equally well.
+	slices.SortStableFunc(routes, func(a, b *gatev1alpha2.TCPRoute) int { return compareRoutes(a, b) })
+
+	served := make(servedRules)
 
 	for _, route := range routes {
 		logger := log.Ctx(ctx).With().
@@ -49,9 +56,9 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 			}
 
 			var resolvedRefCondition *metav1.Condition
-			for _, listener := range match.listeners {
+			for _, listener := range match.Listeners {
 				// A parentRef can target specific listeners through its SectionName or Port.
-				accepted := matchListener(listener, match.parentRef)
+				accepted := matchListener(listener, match.ParentRef)
 
 				if accepted && !allowRoute(listener, route.Namespace, kindTCPRoute) {
 					if acceptedCondition.Status == metav1.ConditionFalse {
@@ -66,13 +73,21 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routeConf, condition := p.loadTCPRoute(match.gatewayName, match.gatewayNamespace, listener, route)
+				routerConfs, condition := p.loadTCPRoute(match.GatewayName, match.GatewayNamespace, listener, route)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
 
 				if accepted && listener.Attached {
-					mergeTCPConfiguration(routeConf, conf)
+					for _, rc := range routerConfs {
+						router := rc.Conf.TCP.Routers[rc.Name]
+						if servedBy, alreadyServed := served.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
+							logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", rc.Name, servedBy, router.Rule)
+							continue
+						}
+
+						mergeTCPConfiguration(rc.Conf, conf)
+					}
 
 					// Only consider the route attached if the listener is in an "attached" state.
 					acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
@@ -86,7 +101,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 			}
 
 			parentStatuses = append(parentStatuses, gatev1alpha2.RouteParentStatus{
-				ParentRef:      match.parentRef,
+				ParentRef:      match.ParentRef,
 				ControllerName: controllerName,
 				Conditions:     parentStatusConditions,
 			})
@@ -105,15 +120,14 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1alpha2.TCPRoute) (*dynamic.Configuration, metav1.Condition) {
-	conf := &dynamic.Configuration{
-		TCP: &dynamic.TCPConfiguration{
-			Routers:           make(map[string]*dynamic.TCPRouter),
-			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
-			Services:          make(map[string]*dynamic.TCPService),
-			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
-		},
-	}
+// tcpRouteRouter is a router of a TCPRoute, with the configuration of its resources.
+type tcpRouteRouter struct {
+	Name string
+	Conf *dynamic.Configuration
+}
+
+func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1alpha2.TCPRoute) ([]tcpRouteRouter, metav1.Condition) {
+	var routers []tcpRouteRouter
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -145,6 +159,15 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 		// Routing criteria should be introduced at some point.
 		routerName := makeRouterName(strings.ToLower(kindTCPRoute), "", route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 
+		routerConf := &dynamic.Configuration{
+			TCP: &dynamic.TCPConfiguration{
+				Routers:           make(map[string]*dynamic.TCPRouter),
+				Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+				Services:          make(map[string]*dynamic.TCPService),
+				ServersTransports: make(map[string]*dynamic.TCPServersTransport),
+			},
+		}
+
 		if len(rule.BackendRefs) == 1 && isInternalService(rule.BackendRefs[0]) {
 			if !isCrossProviderNamespaceAllowed(p.CrossProviderNamespaces, route.Namespace) {
 				condition = metav1.Condition{
@@ -160,20 +183,22 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 			}
 
 			router.Service = string(rule.BackendRefs[0].Name)
-			conf.TCP.Routers[routerName] = &router
+			routerConf.TCP.Routers[routerName] = &router
+			routers = append(routers, tcpRouteRouter{Name: routerName, Conf: routerConf})
 			continue
 		}
 
 		var serviceCondition *metav1.Condition
-		router.Service, serviceCondition = p.loadTCPWRRService(conf, routerName, rule.BackendRefs, route)
+		router.Service, serviceCondition = p.loadTCPWRRService(routerConf, routerName, rule.BackendRefs, route)
 		if serviceCondition != nil {
 			condition = *serviceCondition
 		}
 
-		conf.TCP.Routers[routerName] = &router
+		routerConf.TCP.Routers[routerName] = &router
+		routers = append(routers, tcpRouteRouter{Name: routerName, Conf: routerConf})
 	}
 
-	return conf, condition
+	return routers, condition
 }
 
 // loadTCPWRRService is generating a WRR service, even when there is only one target.
