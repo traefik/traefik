@@ -1386,11 +1386,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	return backendServers, *svcPort, nil
 }
 
-// supportedRouteKinds serves both Gateway listeners and ListenerSet listener entries, so
-// generation is the generation of whichever resource declares the listener. The condition
-// is expressed with the Gateway listener constants, whose string values the ListenerEntry
-// ones mirror.
-func supportedRouteKinds(generation int64, protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func supportedRouteKinds(gatewayGeneration int64, protocol gatev1.ProtocolType) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	group := gatev1.Group(gatev1.GroupName)
 
 	switch protocol {
@@ -1412,15 +1408,13 @@ func supportedRouteKinds(generation int64, protocol gatev1.ProtocolType) ([]gate
 	return nil, []metav1.Condition{{
 		Type:               string(gatev1.ListenerConditionAccepted),
 		Status:             metav1.ConditionFalse,
-		ObservedGeneration: generation,
+		ObservedGeneration: gatewayGeneration,
 		LastTransitionTime: metav1.Now(),
 		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
 	}}
 }
 
-// allowedRouteKinds serves both Gateway listeners and ListenerSet listener entries, so
-// generation is the generation of whichever resource declares the listener.
 func allowedRouteKinds(generation int64, listener gatev1.Listener, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
 		return supportedKinds, nil
