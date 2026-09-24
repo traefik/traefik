@@ -33,7 +33,7 @@ local bucket = {
 
 local rl_source = redis.call('hgetall', key)
 
-if table.maxn(rl_source) == 4 then
+if #rl_source == 4 then
     -- Get bucket state from redis
     bucket.last = tonumber(rl_source[2])
     bucket.tokens = tonumber(rl_source[4])
