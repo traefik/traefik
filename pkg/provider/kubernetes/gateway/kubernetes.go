@@ -141,7 +141,7 @@ type ExtensionBuilderRegistry interface {
 
 // listenerOwner identifies the resource declaring a listener, a Gateway or a ListenerSet.
 // The owner drives the ReferenceGrant checks, the namespace "Same" resolves to in allowedRoutes,
-// the generation observed by the listener conditions, and the status the listener is reported in.
+// and the status the listener is reported in.
 type listenerOwner struct {
 	Kind      string
 	Namespace string
@@ -167,15 +167,14 @@ type gatewayListener struct {
 	// the listener is the most specific match for.
 	RouterNames []string
 
-	// Gateway is the Gateway serving this listener: the Owner itself for a Gateway
-	// listener, and the parent Gateway for a ListenerSet one.
+	// Gateway is the Gateway serving this listener:
+	// the Owner itself for a Gateway listener, and the parent Gateway for a ListenerSet one.
 	Gateway ktypes.NamespacedName
 
 	Owner listenerOwner
 }
 
-// fromListenerSet reports whether the listener is declared by a ListenerSet rather
-// than by the Gateway itself.
+// fromListenerSet reports whether the listener is declared by a ListenerSet rather than by the Gateway itself.
 func (l gatewayListener) fromListenerSet() bool {
 	return l.Owner.Kind == kindListenerSet
 }
@@ -186,12 +185,11 @@ type gatewayWithListeners struct {
 
 	listeners []gatewayListener
 
-	// listenerSets are the ListenerSets referencing this Gateway, allowed by its
-	// AllowedListeners policy or not. They drive route status reporting for
-	// ListenerSet parentRefs that resolve to no listener.
+	// listenerSets are the ListenerSets referencing this Gateway, allowed by its AllowedListeners policy or not.
+	// They drive route status reporting for ListenerSet parentRefs that resolve to no listener.
 	listenerSets map[ktypes.NamespacedName]*listenerSetInfo
 
-	// accepted gates the programming of the ListenerSet listeners (GEP-1713).
+	// accepted reports whether the Gateway is accepted, counting the listeners of its ListenerSets.
 	accepted bool
 }
 
@@ -452,8 +450,8 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			strings.Compare(a.GetName(), b.GetName()))
 	})
 
-	// ListenerSets are listed once and dispatched to their parent Gateway below, oldest
-	// first, as the oldest ListenerSet wins a listener conflict with its siblings (GEP-1713).
+	// ListenerSets are listed once and dispatched to their parent Gateway below,
+	// oldest first, as the oldest ListenerSet wins a listener conflict with its siblings (GEP-1713).
 	listenerSets := p.client.ListListenerSets()
 	slices.SortStableFunc(listenerSets, func(a, b *gatev1.ListenerSet) int {
 		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
@@ -478,9 +476,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		listenerSetListeners, listenerSetInfos := p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf)
 		listeners = append(listeners, listenerSetListeners...)
 
-		// A Gateway is accepted as soon as one of the listeners serving it is valid,
-		// whoever declares it. GEP-1713 forbids programming the listeners of a
-		// ListenerSet whose parent Gateway is not accepted, which holds on its own here:
+		// A Gateway is accepted as soon as one of the listeners serving it is valid, whoever declares it.
+		// GEP-1713 forbids programming the listeners of a ListenerSet whose parent Gateway is not accepted,
+		// which holds on its own here:
 		// only a valid listener is programmed, and a valid one makes the Gateway accepted.
 		accepted := len(listeners) == 0 || slices.ContainsFunc(listeners, func(listener gatewayListener) bool {
 			return len(listener.Status.Conditions) == 0
@@ -1005,9 +1003,9 @@ func hostnameMatcherValue(hostname string) string {
 	return hostname
 }
 
-// loadListenerSetListeners loads the listeners of the ListenerSets referencing the given
-// Gateway, from listenerSets sorted oldest first: the Gateway listeners already in
-// allocatedListeners win over them, and each ListenerSet over its younger siblings.
+// loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway,
+// from listenerSets sorted oldest first:
+// the Gateway listeners already in allocatedListeners win over them, and each ListenerSet over its younger siblings.
 func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) ([]gatewayListener, map[ktypes.NamespacedName]*listenerSetInfo) {
 	infos := make(map[ktypes.NamespacedName]*listenerSetInfo)
 
@@ -1610,12 +1608,9 @@ type gatewayListenersForParentRef struct {
 	Listeners []gatewayListener
 }
 
-// matchingGatewayListenersForParentRef returns, for each parentRef referring to a
-// Gateway or a ListenerSet managed by this controller, the listeners this parent
-// declares: a Gateway parentRef yields the listeners of the Gateway itself, and a
-// ListenerSet parentRef the listeners of that ListenerSet, whatever the Gateway it is
-// attached to. parentRefs that do not refer to one of our Gateways or ListenerSets are
-// omitted.
+// matchingGatewayListenersForParentRef returns, for each parentRef referring to a Gateway or a ListenerSet managed by this controller,
+// the listeners this parent declares.
+// parentRefs that do not refer to one of our Gateways or ListenerSets are omitted.
 func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
 	var matches []gatewayListenersForParentRef
 
@@ -1638,11 +1633,10 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			continue
 		}
 
-		// All the parent listeners are kept: whether each listener is actually targeted
-		// (SectionName, Port) is decided when loading the route, so that ResolvedRefs is
-		// reported even for parentRefs that match no listener. A ListenerSet exposing
-		// none, rejected by AllowedListeners or without any valid entry, is still
-		// reported in the route status.
+		// All the parent listeners are kept:
+		// whether each listener is actually targeted (SectionName, Port) is decided when loading the route,
+		// so that ResolvedRefs is reported even for parentRefs that match no listener.
+		// A ListenerSet exposing none, rejected by AllowedListeners or without any valid entry, is still reported in the route status.
 		var listeners []gatewayListener
 		for _, listener := range gateway.listeners {
 			// A Gateway parent targets the listeners the Gateway declares itself,
@@ -1665,9 +1659,9 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 	return matches
 }
 
-// isManagedParent reports whether the given route parent, a Gateway or a ListenerSet,
-// is managed by this controller: a ListenerSet is managed when it references one of the
-// managed Gateways, allowed by its AllowedListeners policy or not.
+// gatewayForParent returns the managed Gateway serving the given route parent, a Gateway or a ListenerSet,
+// or nil when this controller does not manage that parent.
+// A ListenerSet is served by the Gateway it references, allowed by its AllowedListeners policy or not.
 func gatewayForParent(gateways []gatewayWithListeners, parent listenerOwner) *gatewayWithListeners {
 	for i, gateway := range gateways {
 		if parent.Kind == kindListenerSet {
@@ -1702,8 +1696,8 @@ func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName s
 	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", kind, namespace, name, gatewayNamespace, gatewayName, listener.EPName, ruleIndex))
 	components := []string{namespace, name, gatewayNamespace, gatewayName, listener.EPName, strconv.Itoa(ruleIndex)}
 	if listener.fromListenerSet() {
-		// The routers attached through a ListenerSet are named after it, and the kind keeps
-		// them apart from the ones attached to a Gateway of the same name.
+		// The routers attached through a ListenerSet are named after it,
+		// and the kind keeps them apart from the ones attached to a Gateway of the same name.
 		label = provider.Normalize(fmt.Sprintf("%s-%s-%s-ls-%s-%s-ep-%s-%d", kind, namespace, name, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, ruleIndex))
 		components = []string{namespace, name, kindListenerSet, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, strconv.Itoa(ruleIndex)}
 	}
@@ -1998,8 +1992,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 		return status, false
 
 	case validListeners < len(status.Listeners):
-		// The valid listeners are programmed, so the ListenerSet is accepted and programmed
-		// even though some listeners have errors.
+		// The valid listeners are programmed, so the ListenerSet is accepted and programmed even though some listeners have errors.
 		status.Conditions = []metav1.Condition{
 			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonListenersNotValid), "Some listeners have errors"),
 			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonProgrammed), "Valid listeners programmed"),

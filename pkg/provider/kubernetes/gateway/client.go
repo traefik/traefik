@@ -746,8 +746,7 @@ func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		currentListenerSet, err := c.factoriesGateway[c.lookupNamespace(listenerSet.Namespace)].Gateway().V1().ListenerSets().Lister().ListenerSets(listenerSet.Namespace).Get(listenerSet.Name)
 		if err != nil {
-			// We have to return err itself here (not wrapped inside another error)
-			// so that RetryOnConflict can identify it correctly.
+			// We have to return err itself here (not wrapped inside another error) so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
@@ -759,8 +758,7 @@ func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet
 		currentListenerSet.Status = status
 
 		if _, err = c.csGateway.GatewayV1().ListenerSets(listenerSet.Namespace).UpdateStatus(ctx, currentListenerSet, metav1.UpdateOptions{}); err != nil {
-			// We have to return err itself here (not wrapped inside another error)
-			// so that RetryOnConflict can identify it correctly.
+			// We have to return err itself here (not wrapped inside another error) so that RetryOnConflict can identify it correctly.
 			return err
 		}
 

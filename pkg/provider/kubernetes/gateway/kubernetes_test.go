@@ -10184,8 +10184,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 			},
 		},
 		{
-			// The Gateway declares no valid listener of its own, so it is accepted through
-			// the listener its ListenerSet delegates, which serves the route.
+			// The Gateway declares no valid listener of its own,
+			// so it is accepted through the listener its ListenerSet delegates, which serves the route.
 			desc:  "ListenerSet serving a Gateway without a valid listener of its own",
 			paths: []string{"services.yml", "mixed/with_listenerset_delegation.yml"},
 			entryPoints: map[string]Entrypoint{
@@ -13202,9 +13202,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		wantProgrammedStatus   metav1.ConditionStatus
 		wantProgrammedReason   string
 		wantListenerEntryCount int
-		// wantEntryName, when set, asserts the first listener entry's name and its
-		// entry-level Programmed condition, so the per-listener status is verified and
-		// not only the entry count.
+		// wantEntryName, when set, asserts the first listener entry's name and its entry-level Programmed condition,
+		// so the per-listener status is verified and not only the entry count.
 		wantEntryName             gatev1.SectionName
 		wantEntryProgrammedStatus metav1.ConditionStatus
 		wantEntryProgrammedReason string
@@ -13244,8 +13243,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			wantEntryProgrammedReason: string(gatev1.ListenerEntryReasonProgrammed),
 		},
 		{
-			// A parent Gateway is not accepted only when no listener serving it is valid,
-			// the ListenerSet ones included.
+			// A parent Gateway is not accepted only when no listener serving it is valid, the ListenerSet ones included.
 			desc: "Gateway not accepted",
 			info: &listenerSetInfo{
 				listenerSet: &gatev1.ListenerSet{
@@ -13464,9 +13462,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 	}
 }
 
-// Test_loadListenerSetListeners covers the listener-level outcomes of merging the
-// ListenerSet listeners into the Gateway ones: the conflict conditions, the precedence
-// between siblings, and the programming gate of the parent Gateway.
+// Test_loadListenerSetListeners covers the listener-level outcomes of merging the ListenerSet listeners into the Gateway ones:
+// the conflict conditions, and the precedence of a ListenerSet over its later siblings.
 func Test_loadListenerSetListeners(t *testing.T) {
 	gateway := &gatev1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default"},
