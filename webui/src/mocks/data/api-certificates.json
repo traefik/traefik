@@ -50,7 +50,7 @@
     "resolver": "letsencrypt"
   },
   {
-    "name": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3",
+    "name": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b4",
     "sans": [
       "my.domain.com",
       "foo.my.domain.com",
@@ -69,7 +69,7 @@
     "keyType": "RSA",
     "keySize": 4096,
     "signatureAlgorithm": "SHA256-RSA",
-    "certFingerprint": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3",
+    "certFingerprint": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b4",
     "publicKeyFingerprint": "f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6",
     "status": "enabled",
     "resolver": "zerossl"

@@ -123,7 +123,11 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	value := reflect.ValueOf(*conf.Service)
 	var count int
 	for i := range value.NumField() {
-		if value.Type().Field(i).Name != "Middlewares" && !value.Field(i).IsNil() {
+		name := value.Type().Field(i).Name
+		if name == "Middlewares" || name == "Observability" {
+			continue
+		}
+		if !value.Field(i).IsNil() {
 			count++
 		}
 	}
@@ -183,22 +187,31 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, sErr
 	}
 
+	// We keep the originalLB and if it is StatusUpdater to allow wrapping to keep the state.
+	originalLB, isStatusUpdater := lb.(healthcheck.StatusUpdater)
+
 	if len(conf.Middlewares) > 0 {
 		if m.middlewareChainBuilder == nil {
 			// This should happen only in tests.
 			return nil, errors.New("chain builder not defined")
 		}
 		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
-		originalLB := lb
 		var err error
 		lb, err = chain.Then(lb)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
 		}
-		if su, ok := originalLB.(healthcheck.StatusUpdater); ok {
-			lb = &statusUpdaterHandler{Handler: lb, statusUpdater: su}
-		}
+	}
+
+	// Publish the service-level observability metadata to the per-request state
+	// container when this service is reached. No-op for services without metadata
+	// (Weighted/Mirroring/etc.), a published value for leaves with a backend
+	// identity (e.g. the Kubernetes Service name/namespace/port).
+	lb = observability.NewServiceMetadataHandler(conf.Observability, lb)
+
+	if isStatusUpdater {
+		lb = &statusUpdaterHandler{Handler: lb, statusUpdater: originalLB}
 	}
 
 	m.services[serviceName] = lb

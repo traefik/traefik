@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -21,6 +23,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -631,32 +634,54 @@ func TestDisableHTTP2(t *testing.T) {
 
 func TestKerberosRoundTripper(t *testing.T) {
 	testCases := []struct {
-		desc string
-
-		originalRoundTripperHeaders map[string][]string
-
+		desc                   string
+		authorizations         []string
 		expectedStatusCode     []int
 		expectedDedicatedCount int
 		expectedOriginalCount  int
 	}{
 		{
-			desc:                  "without special header",
+			desc:                  "without Authorization header",
+			authorizations:        []string{"", "", ""},
 			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
 			expectedOriginalCount: 3,
 		},
 		{
-			desc:                        "with Negotiate (Kerberos)",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"Negotiate"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
+			desc:                   "with a preauthenticated Negotiate (Kerberos) credential on the first request",
+			authorizations:         []string{"Negotiate dj1jdA==", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
 		},
 		{
-			desc:                        "with NTLM",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLM"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
+			desc:                   "with a preauthenticated NTLM credential on the first request",
+			authorizations:         []string{"NTLM TlRMTVNTUAAB", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
+		},
+		{
+			desc:                   "with a challenge-first Negotiate flow",
+			authorizations:         []string{"", "Negotiate dj1jdA==", ""},
+			expectedStatusCode:     []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:  1,
+			expectedDedicatedCount: 2,
+		},
+		{
+			desc:                   "with a lowercase negotiate scheme",
+			authorizations:         []string{"negotiate dj1jdA==", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
+		},
+		{
+			desc:                   "with a lowercase ntlm scheme",
+			authorizations:         []string{"ntlm TlRMTVNTUAAB", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
+		},
+		{
+			desc:                  "with a scheme that only starts like NTLM",
+			authorizations:        []string{"NTLMish dj1jdA==", "", ""},
+			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount: 3,
 		},
 	}
 
@@ -670,24 +695,22 @@ func TestKerberosRoundTripper(t *testing.T) {
 				new: func() http.RoundTripper {
 					return roundTripperFn(func(req *http.Request) (*http.Response, error) {
 						dedicatedCount++
-						return &http.Response{
-							StatusCode: http.StatusOK,
-						}, nil
+						return &http.Response{StatusCode: http.StatusOK}, nil
 					})
 				},
 				OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
 					origCount++
-					return &http.Response{
-						StatusCode: http.StatusUnauthorized,
-						Header:     test.originalRoundTripperHeaders,
-					}, nil
+					return &http.Response{StatusCode: http.StatusUnauthorized}, nil
 				}),
 			}
 
 			ctx := AddTransportOnContext(t.Context())
-			for _, expected := range test.expectedStatusCode {
+			for i, expected := range test.expectedStatusCode {
 				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
 				require.NoError(t, err)
+				if test.authorizations[i] != "" {
+					req.Header.Set("Authorization", test.authorizations[i])
+				}
 				resp, err := rt.RoundTrip(req)
 				require.NoError(t, err)
 				require.Equal(t, expected, resp.StatusCode)
@@ -697,6 +720,122 @@ func TestKerberosRoundTripper(t *testing.T) {
 			require.Equal(t, test.expectedDedicatedCount, dedicatedCount)
 		})
 	}
+}
+
+func TestKerberosRoundTripperDoesNotLeakAcrossServersTransports(t *testing.T) {
+	ntlmSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("WWW-Authenticate", "NTLM")
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(ntlmSrv.Close)
+
+	// The httptest certificate is not signed by the root CA pinned below.
+	untrustedSrv := httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(untrustedSrv.Close)
+
+	transportManager := NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{
+		"insecure": {InsecureSkipVerify: true},
+		"pinned": {
+			ServerName: "example.com",
+			RootCAs:    []types.FileOrContent{types.FileOrContent(localhostCert)},
+		},
+	})
+
+	insecureRT, err := transportManager.GetRoundTripper("insecure")
+	require.NoError(t, err)
+
+	pinnedRT, err := transportManager.GetRoundTripper("pinned")
+	require.NoError(t, err)
+
+	// Every request below carries this context, that is they all belong to the same client connection.
+	ctx := AddTransportOnContext(t.Context())
+
+	var certErr x509.UnknownAuthorityError
+
+	// As long as nothing is stuck on the connection, the pinned ServersTransport enforces its own root CA.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, untrustedSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	_, err = pinnedRT.RoundTrip(req)
+	require.ErrorAs(t, err, &certErr)
+
+	// The NTLM credential sticks a dedicated round tripper for the insecure ServersTransport on this connection.
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, ntlmSrv.URL, http.NoBody)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
+
+	resp, err := insecureRT.RoundTrip(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// The pinned ServersTransport must not be served by the round tripper stuck for the insecure one.
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, untrustedSrv.URL, http.NoBody)
+	require.NoError(t, err)
+
+	_, err = pinnedRT.RoundTrip(req)
+	assert.ErrorAs(t, err, &certErr)
+}
+
+func TestStickyRoundTrippersStickOnlyOnce(t *testing.T) {
+	var newCalls int
+
+	owner := &kerberosRoundTripper{
+		new: func() http.RoundTripper {
+			newCalls++
+
+			return http.DefaultTransport
+		},
+	}
+
+	connRoundTrippers := &stickyRoundTrippers{}
+	first := connRoundTrippers.stick(owner)
+	second := connRoundTrippers.stick(owner)
+
+	assert.Equal(t, 1, newCalls)
+	assert.NotNil(t, first)
+	assert.Same(t, first, second)
+	assert.Same(t, first, connRoundTrippers.get(owner))
+}
+
+func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
+	var newCalls atomic.Int32
+
+	rt := kerberosRoundTripper{
+		new: func() http.RoundTripper {
+			newCalls.Add(1)
+
+			return roundTripperFn(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusOK}, nil
+			})
+		},
+		OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusUnauthorized,
+			}, nil
+		}),
+	}
+
+	ctx := AddTransportOnContext(t.Context())
+
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
+			assert.NoError(t, err)
+			req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
+
+			_, err = rt.RoundTrip(req)
+			assert.NoError(t, err)
+		})
+	}
+
+	wg.Wait()
+
+	assert.EqualValues(t, 1, newCalls.Load())
 }
 
 func TestPeerCertSANs(t *testing.T) {
@@ -774,6 +913,186 @@ func TestPeerCertSANs(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestConnectionTimeouts(t *testing.T) {
+	testCases := []struct {
+		desc                      string
+		readTimeout               ptypes.Duration
+		writeTimeout              ptypes.Duration
+		serverWriteDelay          time.Duration
+		serverReads               bool
+		expectedReadTimeoutError  bool
+		expectedWriteTimeoutError bool
+	}{
+		{
+			desc:                     "read timeout - server delays longer than client timeout",
+			readTimeout:              ptypes.Duration(50 * time.Millisecond),
+			serverWriteDelay:         150 * time.Millisecond,
+			expectedReadTimeoutError: true,
+		},
+		{
+			desc:             "read succeeds with sufficient timeout",
+			readTimeout:      ptypes.Duration(500 * time.Millisecond),
+			serverWriteDelay: 100 * time.Millisecond,
+		},
+		{
+			desc:             "no read timeout - should succeed regardless of delay",
+			serverWriteDelay: 100 * time.Millisecond,
+		},
+		{
+			desc:                      "write timeout triggered when reader stops reading",
+			writeTimeout:              ptypes.Duration(50 * time.Millisecond),
+			expectedWriteTimeoutError: true,
+		},
+		{
+			desc:         "write succeeds within timeout",
+			writeTimeout: ptypes.Duration(500 * time.Millisecond),
+			serverReads:  true,
+		},
+		{
+			desc:        "no write timeout - should succeed",
+			serverReads: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// net.Pipe has no OS buffering: reads and writes block until the other side is ready,
+			// which allows the read and write deadlines to be exercised deterministically.
+			client, server := net.Pipe()
+			defer client.Close()
+			defer server.Close()
+
+			serverDone := make(chan struct{})
+			go func() {
+				defer close(serverDone)
+				_, _ = server.Write([]byte("HELLO1"))
+				if test.serverWriteDelay > 0 {
+					time.Sleep(test.serverWriteDelay)
+				}
+				_, _ = server.Write([]byte("HELLO2"))
+				if test.serverReads {
+					buf := make([]byte, 5)
+					_, _ = server.Read(buf)
+				}
+			}()
+
+			conn := &connWithTimeouts{
+				Conn:         client,
+				readTimeout:  time.Duration(test.readTimeout),
+				writeTimeout: time.Duration(test.writeTimeout),
+			}
+
+			buf := make([]byte, 6)
+			_, err := conn.Read(buf)
+			require.NoError(t, err)
+			require.Equal(t, "HELLO1", string(buf))
+
+			_, err = conn.Read(buf)
+			if test.expectedReadTimeoutError {
+				var netErr net.Error
+				require.ErrorAs(t, err, &netErr)
+				require.True(t, netErr.Timeout())
+				client.Close()
+				<-serverDone
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, "HELLO2", string(buf))
+
+			// Without a reader on the server side, the write only returns once the write deadline fires.
+			if test.serverReads || test.expectedWriteTimeoutError {
+				_, err = conn.Write([]byte("HELLO"))
+				if test.expectedWriteTimeoutError {
+					var netErr net.Error
+					require.ErrorAs(t, err, &netErr)
+					require.True(t, netErr.Timeout())
+				} else {
+					require.NoError(t, err)
+				}
+			}
+
+			client.Close()
+			<-serverDone
+		})
+	}
+}
+
+func TestConnectionTimeoutsAreDefined(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		readTimeout     ptypes.Duration
+		writeTimeout    ptypes.Duration
+		expectedWrapped bool
+	}{
+		{
+			desc:            "read timeout set - should wrap connection with read timeout",
+			readTimeout:     ptypes.Duration(50 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc:            "write timeout set - should wrap connection with write timeout",
+			writeTimeout:    ptypes.Duration(100 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc:            "both timeouts set - should wrap connection with both timeouts",
+			readTimeout:     ptypes.Duration(30 * time.Millisecond),
+			writeTimeout:    ptypes.Duration(60 * time.Millisecond),
+			expectedWrapped: true,
+		},
+		{
+			desc: "no timeouts set - should return raw connection",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			defer ln.Close()
+
+			go func() {
+				for {
+					conn, err := ln.Accept()
+					if err != nil {
+						return
+					}
+					conn.Close()
+				}
+			}()
+
+			dialer := &net.Dialer{Timeout: time.Second}
+
+			cfg := &dynamic.ForwardingTimeouts{
+				ReadTimeout:  test.readTimeout,
+				WriteTimeout: test.writeTimeout,
+			}
+
+			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+			defer cancel()
+
+			conn, err := customDialContext(dialer, cfg)(ctx, "tcp", ln.Addr().String())
+			require.NoError(t, err)
+			require.NotNil(t, conn)
+			defer conn.Close()
+
+			if !test.expectedWrapped {
+				require.IsType(t, &net.TCPConn{}, conn)
+				return
+			}
+
+			require.IsType(t, &connWithTimeouts{}, conn)
+			wrapped := conn.(*connWithTimeouts)
+			assert.Equal(t, time.Duration(test.readTimeout), wrapped.readTimeout)
+			assert.Equal(t, time.Duration(test.writeTimeout), wrapped.writeTimeout)
 		})
 	}
 }

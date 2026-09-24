@@ -1,6 +1,7 @@
 package fast
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -300,6 +301,28 @@ func TestPreservePath(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestOpaqueRequestURL(t *testing.T) {
+	var callCount int
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		callCount++
+		assert.Equal(t, "/", req.RequestURI)
+	}))
+	t.Cleanup(server.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, false)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http:evil.example.com/admin", http.NoBody)
+	res := httptest.NewRecorder()
+
+	proxyHandler.ServeHTTP(res, req)
+
+	assert.Equal(t, 1, callCount)
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
 func TestHeadRequest(t *testing.T) {
 	var callCount int
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -326,6 +349,56 @@ func TestHeadRequest(t *testing.T) {
 
 	assert.Equal(t, 1, callCount)
 	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+func TestInvalidStatusCode(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		rawStatusLine string
+	}{
+		{
+			desc:          "status code above 999",
+			rawStatusLine: "HTTP/1.1 99999 X",
+		},
+		{
+			desc:          "status code below 100",
+			rawStatusLine: "HTTP/1.1 50 X",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			backendListener, err := net.Listen("tcp", ":0")
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				_ = backendListener.Close()
+			})
+
+			go func() {
+				conn, err := backendListener.Accept()
+				if err != nil {
+					return
+				}
+
+				_, _ = conn.Write([]byte(test.rawStatusLine + "\r\n\r\n"))
+			}()
+
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+			serverURL := "http://" + backendListener.Addr().String()
+
+			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(serverURL), true, true)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			res := httptest.NewRecorder()
+
+			proxyHandler.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusInternalServerError, res.Code)
+		})
+	}
 }
 
 func TestNoContentLength(t *testing.T) {
@@ -515,8 +588,63 @@ func TestXForwardedFor(t *testing.T) {
 	}
 }
 
+// TestStickyConnPool ensures that a connection-bound NTLM/Negotiate authentication is isolated to the frontend
+// connection that carried the credential, and never leaks the authenticated backend connection to another one.
+func TestStickyConnPool(t *testing.T) {
+	const backendConnHeader = "X-Backend-Conn"
+
+	// RemoteAddr identifies the backend connection, so the test can observe which backend connection serves a request.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set(backendConnHeader, req.RemoteAddr)
+	}))
+	t.Cleanup(backend.Close)
+
+	// Requests are issued serially, so at most one connection is ever in flight and a pool never holds more than
+	// one idle connection: a single idle slot makes the reused backend connection deterministic to compare.
+	builder := NewProxyBuilder(&transportManagerMock{serversTransport: &dynamic.ServersTransport{MaxIdleConnsPerHost: 1}}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("default@internal", testhelpers.MustParseURL(backend.URL), false, false)
+	require.NoError(t, err)
+
+	// Each context stands for a distinct frontend connection, as the entrypoint would set it up.
+	backendConnFor := func(ctx context.Context, authorization string) string {
+		t.Helper()
+
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody).WithContext(ctx)
+		if authorization != "" {
+			req.Header.Set("Authorization", authorization)
+		}
+
+		res := httptest.NewRecorder()
+		proxyHandler.ServeHTTP(res, req)
+		require.Equal(t, http.StatusOK, res.Code)
+
+		return res.Header().Get(backendConnHeader)
+	}
+
+	firstConn := AddConnPoolsOnContext(context.Background())
+	secondConn := AddConnPoolsOnContext(context.Background())
+
+	// Credential-less requests are served from the shared pool, so they reuse the same backend connection.
+	sharedConn := backendConnFor(firstConn, "")
+	assert.Equal(t, sharedConn, backendConnFor(secondConn, ""))
+
+	// A request carrying an NTLM credential is moved onto a pool dedicated to its frontend connection.
+	firstStickyConn := backendConnFor(firstConn, "NTLM TlRMTVNTUAAB")
+	assert.NotEqual(t, sharedConn, firstStickyConn)
+	// That dedicated connection is then reused even by a later credential-less request, which is what a
+	// connection-bound authentication relies on.
+	assert.Equal(t, firstStickyConn, backendConnFor(firstConn, ""))
+
+	// A client must never be served by the connection another one authenticated on.
+	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, ""))
+	// Authenticated clients each get their own dedicated connection, never shared with one another.
+	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "NTLM TlRMTVNTUAAB"))
+}
+
 type transportManagerMock struct {
-	tlsConfig *tls.Config
+	tlsConfig        *tls.Config
+	serversTransport *dynamic.ServersTransport
 }
 
 func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
@@ -524,5 +652,8 @@ func (r *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
 }
 
 func (r *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
+	if r.serversTransport != nil {
+		return r.serversTransport, nil
+	}
 	return &dynamic.ServersTransport{}, nil
 }

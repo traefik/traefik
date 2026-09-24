@@ -62,7 +62,7 @@ func clientIP(tree *matchersTree, clientIP ...string) error {
 	return nil
 }
 
-var hostOrIP = regexp.MustCompile(`^(\*\.)?[[:word:]\.\-\:]+$`)
+var hostOrIP = regexp.MustCompile(`^(\*\*?\.)?[[:word:]\.\-\:]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {

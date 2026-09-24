@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: ingressroutes.traefik.io
 spec:
   group: traefik.io
@@ -492,7 +492,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: ingressroutetcps.traefik.io
 spec:
   group: traefik.io
@@ -755,7 +755,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: ingressrouteudps.traefik.io
 spec:
   group: traefik.io
@@ -871,7 +871,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: middlewares.traefik.io
 spec:
   group: traefik.io
@@ -2293,7 +2293,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: middlewaretcps.traefik.io
 spec:
   group: traefik.io
@@ -2382,7 +2382,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: serverstransports.traefik.io
 spec:
   group: traefik.io
@@ -2476,6 +2476,16 @@ spec:
                       on the HTTP/2 connection.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
+                  readTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ReadTimeout is the timeout for reading a response
+                      from the proxied server. The timeout between two successive
+                      read operations. The connection is closed if nothing is transmitted
+                      within this time.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
                     - type: integer
@@ -2483,6 +2493,16 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
+                  writeTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: WriteTimeout is the timeout for transmitting a request
+                      to the proxied server. The timeout between two successive write
+                      operations. The connection is closed if nothing is transmitted
+                      within this time.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                 type: object
@@ -2582,7 +2602,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: serverstransporttcps.traefik.io
 spec:
   group: traefik.io
@@ -2755,7 +2775,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: tlsoptions.traefik.io
 spec:
   group: traefik.io
@@ -2874,7 +2894,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: tlsstores.traefik.io
 spec:
   group: traefik.io
@@ -2971,7 +2991,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: traefikservices.traefik.io
 spec:
   group: traefik.io

@@ -52,6 +52,11 @@ This strategy is only available to load balance between [services](./service.md)
     This strategy can currently be defined with the [File provider](../../install-configuration/providers/others/file.md) 
     and the [Kubernetes CRD provider (IngressRouteUDP)](../kubernetes/crd/udp/ingressrouteudp.md).
 
+!!! warning "Weights"
+
+    A weight must be a non-negative integer, and a `0` weight takes the child service out of the rotation.
+    A weighted service declaring a negative weight is disabled, and the routers referencing it are not created.
+
 ```yaml tab="Structured (YAML)"
 udp:
   services:

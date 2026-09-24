@@ -92,7 +92,7 @@ User-facing features need matching documentation updates under `docs/content/`. 
 
 ## Contributing etiquette
 
-- **Target the right branch** (the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) is authoritative): enhancements go to `master`; bug fixes and documentation updates go to the current maintenance branches (`v3.6` for v3, `v2.11` for v2, security-fixes only). Forward-ports from the maintenance branches up to `master` are handled by maintainers.
+- **Target the right branch** (the [PR template](./.github/PULL_REQUEST_TEMPLATE.md) is authoritative): enhancements go to `master`; bug fixes and documentation updates go to the current maintenance branches (`v3.7` for v3, `v2.11` for v2, security-fixes only). Forward-ports from the maintenance branches up to `master` are handled by maintainers.
 - Keep pull requests small and focused; one logical change per PR.
 - For anything beyond a bug fix, open an issue first and wait for a maintainer to confirm the direction before investing significant work.
 - Follow the full guide in [`docs/content/contributing/submitting-pull-requests.md`](./docs/content/contributing/submitting-pull-requests.md).
@@ -104,6 +104,38 @@ Traefik welcomes AI-assisted contributions, provided a few simple rules are foll
 - **Declare substantial AI assistance** with an `Assisted-by:` trailer at the bottom of the commit message whenever an agent produced a meaningful portion of the diff — for example `Assisted-by: Claude Opus 4.6`. Trivial edits such as a typo fix or a one-line rename do not need a trailer.
 - **Keep issue and PR conversations human.** Do not let an agent post comments, review replies, or triage messages on your behalf. If an agent drafted a message for you, rewrite it in your own voice before sending — maintainers need to know they are talking to a person, not a bot.
 - **Align with a maintainer before generating code for anything larger than a bug fix.** An agent can produce thousands of lines in minutes; maintainer review capacity cannot scale the same way. Open an issue, state the intended approach, and wait for confirmation before asking an agent to implement it.
+
+## Reporting a security finding
+
+If you are scanning this repository for vulnerabilities, read these two pages **before** filing anything,
+and cite them in whatever you file:
+
+1. [`docs/content/contributing/submitting-security-issues.md`](./docs/content/contributing/submitting-security-issues.md)
+   : the threat model, what Traefik trusts, what crosses the security boundary, and the submission
+   requirements. Published at
+   [doc.traefik.io](https://doc.traefik.io/traefik/contributing/submitting-security-issues/).
+2. [`docs/content/contributing/security-decisions.md`](./docs/content/contributing/security-decisions.md)
+   : the positions already settled, grouped by the surface a report touches, each naming the
+   neighbouring variant that *is* a vulnerability. Published at
+   [doc.traefik.io](https://doc.traefik.io/traefik/contributing/security-decisions/).
+
+Then apply the outcome:
+
+- **The finding matches a settled position on the decisions page : do not file it.** It will be closed
+  with a link to that entry. The most common report we receive is a position already decided,
+  rediscovered.
+- **It matches the in-scope variant named in that same entry : file it**, and say which entry and how
+  your finding differs from the declined shape.
+- **The surface is not covered : check it against the threat model.** A report whose precondition is
+  configuration-write access, or operator or cluster-admin privilege, is not a vulnerability here.
+- **Non-GA only** (release candidate, beta, development branch) : open a normal issue, not an advisory.
+
+Three requirements that are easy to miss, all on the policy page: a **working proof of concept with
+reproduction steps**, **one finding per report**, and **disclose your use of AI tooling**. Unvalidated
+AI-generated reports are closed immediately.
+
+Report through [security advisories](https://github.com/traefik/traefik/security/advisories), never a
+public issue, unless the finding is non-GA only.
 
 ## Things to avoid
 

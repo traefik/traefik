@@ -2445,6 +2445,12 @@ func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
 			return
 		}
 
+		// The deprecated option only handles the names containing an underscore character.
+		if _, ok := r.Header["X.auth.user"]; !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		w.WriteHeader(http.StatusAccepted)
 	})
 
@@ -2482,8 +2488,68 @@ func (s *SimpleSuite) TestUnderscoreHeadersStrategy() {
 			require.NoError(s.T(), err)
 
 			req.Header.Set("X-Auth-User", "legit")
-			// Set the underscore variant directly on the map to bypass header name canonicalization.
+			// Set the aliasing variants directly on the map to bypass header name canonicalization.
 			req.Header["X_auth_user"] = []string{"spoof"}
+			req.Header["X.auth.user"] = []string{"spoof"}
+
+			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
+}
+
+func (s *SimpleSuite) TestAliasHeadersStrategy() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Header["X_auth_user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		if _, ok := r.Header["X.auth.user"]; ok {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	testCases := []struct {
+		strategy       string
+		expectedStatus int
+	}{
+		{
+			strategy:       "keep",
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			strategy:       "delete",
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			strategy:       "reject",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.strategy, func() {
+			file := s.adaptFile("fixtures/simple_alias_headers.toml", struct {
+				Strategy   string
+				TestServer string
+			}{test.strategy, ts.URL})
+
+			s.traefikCmd(withConfigFile(file))
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			req.Header.Set("X-Auth-User", "legit")
+			// Set the aliasing variants directly on the map to bypass header name canonicalization.
+			req.Header["X_auth_user"] = []string{"spoof"}
+			req.Header["X.auth.user"] = []string{"spoof"}
 
 			err = try.Request(req, 10*time.Second, try.StatusCodeIs(test.expectedStatus))
 			require.NoError(s.T(), err)

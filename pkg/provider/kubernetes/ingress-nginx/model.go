@@ -58,6 +58,9 @@ type backend struct {
 	// ServiceName is the original Kubernetes service name (without namespace or port).
 	ServiceName string
 
+	// ServicePort is the original port specification (number or name) from the Ingress rule.
+	ServicePort string
+
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
 }
@@ -164,6 +167,10 @@ type location struct {
 	IngressName string
 	ServiceName string
 	ServicePort string
+
+	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
+	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
+	SSLPassthrough bool
 
 	// SSLRedirectOnly is true when the non-TLS router should only perform an
 	// HTTPS redirect. All other middlewares are suppressed for that router.
@@ -281,6 +288,7 @@ func (c *canaryConfig) RequiresNonCanaryRouter() bool {
 }
 
 // sslPassthroughBackend holds a TLS passthrough entry.
+// It only describes the TCP router: the HTTP side of an ssl-passthrough ingress goes through the regular location path, like any other ingress.
 type sslPassthroughBackend struct {
 	// BackendName is the key into Configuration.Backends.
 	BackendName string
