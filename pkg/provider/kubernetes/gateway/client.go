@@ -813,8 +813,7 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 		// even when none of its listeners is currently loaded, so that a stale status is always refreshed.
 		// SectionName or Port is not used.
 		parent := listenerOwner{
-			Kind: string(ptr.Deref(currentParent.ParentRef.Kind, kindGateway)),
-			// TODO: routeNamespace is the right fallback?
+			Kind:      string(ptr.Deref(currentParent.ParentRef.Kind, kindGateway)),
 			Namespace: string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace))),
 			Name:      string(currentParent.ParentRef.Name),
 		}
