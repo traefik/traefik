@@ -8,8 +8,38 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
+
+func TestServerSnippetLocationMatchesOriginalPathBeforeRewriteTarget(t *testing.T) {
+	nextCalled := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	snippetHandler, err := New(t.Context(), next, &dynamic.Snippet{
+		ServerSnippet: `
+location ~* "^/prometheus/-(.*)" {
+		return 403;
+}`,
+	}, "test-snippet")
+	require.NoError(t, err)
+
+	handler, err := rewritetarget.New(t.Context(), snippetHandler, dynamic.RewriteTarget{
+		Regex:       `^/prometheus/?(.*)`,
+		Replacement: `/$1`,
+	}, "test-rewrite-target")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/prometheus/-bad", nil)
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, http.StatusForbidden, rw.Code)
+	assert.False(t, nextCalled)
+}
 
 func Test_New(t *testing.T) {
 	testCases := []struct {
@@ -703,6 +733,50 @@ location ~ ^/api/v[0-9]+/ {
 			path:               "/api/v2/users",
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "versioned",
+		},
+		{
+			desc: "location directive with quoted regex match and return",
+			serverSnippet: `
+location ~ "^/api/v[0-9]+/" {
+	return 200 "quoted-versioned";
+}
+`,
+			path:               "/api/v2/users",
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "quoted-versioned",
+		},
+		{
+			desc: "location directive with quoted case-insensitive regex match and return",
+			serverSnippet: `
+location ~* "^/API/V[0-9]+/" {
+	return 200 "quoted-versioned";
+}
+`,
+			path:               "/api/v2/users",
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "quoted-versioned",
+		},
+		{
+			desc: "location directive with quoted exact match and return",
+			serverSnippet: `
+location = "/exact" {
+	return 200 "quoted-exact";
+}
+`,
+			path:               "/exact",
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "quoted-exact",
+		},
+		{
+			desc: "location directive with quoted prefix match and return",
+			serverSnippet: `
+location "/quoted-prefix" {
+	return 200 "quoted-prefix";
+}
+`,
+			path:               "/quoted-prefix/users",
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       "quoted-prefix",
 		},
 		{
 			desc: "location directive with regex match - not matching continues to next",
