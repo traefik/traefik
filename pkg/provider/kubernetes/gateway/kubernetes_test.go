@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ktypes "k8s.io/apimachinery/pkg/types"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -13509,6 +13510,31 @@ func Test_loadListenerSetListeners(t *testing.T) {
 			wantListeners: []wantListener{{name: "http", reason: string(gatev1.ListenerReasonHostnameConflict)}},
 		},
 		{
+			desc:            "Protocol conflict with a Gateway listener",
+			gatewayListener: &gatev1.Listener{Name: "web", Protocol: gatev1.HTTPProtocolType, Port: 80},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{},
+					gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80, Hostname: new(gatev1.Hostname("foo.example.com"))},
+					gatev1.ListenerEntry{Name: "tcp", Protocol: gatev1.TCPProtocolType, Port: 80},
+				),
+			},
+			wantListeners: []wantListener{
+				{name: "http", attached: true},
+				{name: "tcp", reason: string(gatev1.ListenerReasonProtocolConflict)},
+			},
+		},
+		{
+			desc: "First ListenerSet wins the protocol conflict with a later sibling",
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("ls-first", time.Time{}, gatev1.ListenerEntry{Name: "tcp", Protocol: gatev1.TCPProtocolType, Port: 80}),
+				listenerSet("ls-second", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+			},
+			wantListeners: []wantListener{
+				{name: "tcp", attached: true},
+				{name: "http", reason: string(gatev1.ListenerReasonProtocolConflict)},
+			},
+		},
+		{
 			desc: "First ListenerSet wins the conflict with a later sibling",
 			listenerSets: []*gatev1.ListenerSet{
 				listenerSet("ls-first", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
@@ -13529,7 +13555,9 @@ func Test_loadListenerSetListeners(t *testing.T) {
 
 			allocatedListeners := make(map[string]struct{})
 			if test.gatewayListener != nil {
-				allocatedListeners[makeListenerKey(*test.gatewayListener)] = struct{}{}
+				gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
+				owner := listenerOwner{Kind: kindGateway, Namespace: gateway.Namespace, Name: gateway.Name}
+				p.loadGatewayListeners(t.Context(), gwNSN, owner, gateway.Generation, []gatev1.Listener{*test.gatewayListener}, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
 			}
 
 			listeners, _ := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})

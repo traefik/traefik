@@ -659,38 +659,22 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 		listenerKey := makeListenerKey(listener)
 
 		if _, ok := allocatedListeners[listenerKey]; ok {
-			const message = "A listener with the same protocol, port and hostname already exists"
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
-				metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.ListenerReasonHostnameConflict),
-					Message:            message,
-				},
-				metav1.Condition{
-					Type:               string(gatev1.ListenerConditionProgrammed),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.ListenerReasonHostnameConflict),
-					Message:            message,
-				},
-				metav1.Condition{
-					Type:               string(gatev1.ListenerConditionConflicted),
-					Status:             metav1.ConditionTrue,
-					ObservedGeneration: generation,
-					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1.ListenerReasonHostnameConflict),
-					Message:            message,
-				},
-			)
+				makeListenerConflictConditions(generation, gatev1.ListenerReasonHostnameConflict, "A listener with the same protocol, port and hostname already exists")...)
+
+			continue
+		}
+
+		portKey, conflictingPortKey := makeListenerPortKeys(listener)
+		if _, ok := allocatedListeners[conflictingPortKey]; ok {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+				makeListenerConflictConditions(generation, gatev1.ListenerReasonProtocolConflict, "A listener with an incompatible protocol already exists on the same port")...)
 
 			continue
 		}
 
 		allocatedListeners[listenerKey] = struct{}{}
+		allocatedListeners[portKey] = struct{}{}
 
 		if (listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.TCPProtocolType) && listener.TLS != nil {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -1837,6 +1821,50 @@ func makeListenerKey(l gatev1.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+// makeListenerPortKeys returns the key claiming the listener port for its kind of protocol,
+// and the key of the kind it conflicts with.
+// A TCP listener cannot share its port with an HTTP, HTTPS or TLS listener,
+// as the connections could not be matched to a single listener (Gateway API listener distinctness).
+func makeListenerPortKeys(l gatev1.Listener) (string, string) {
+	byPort := fmt.Sprintf("port|%d", l.Port)
+	byHostname := fmt.Sprintf("hostname|%d", l.Port)
+
+	if l.Protocol == gatev1.TCPProtocolType {
+		return byPort, byHostname
+	}
+
+	return byHostname, byPort
+}
+
+func makeListenerConflictConditions(generation int64, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {
+	return []metav1.Condition{
+		{
+			Type:               string(gatev1.ListenerConditionAccepted),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+		{
+			Type:               string(gatev1.ListenerConditionProgrammed),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+		{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+	}
 }
 
 type listenerSetInfo struct {

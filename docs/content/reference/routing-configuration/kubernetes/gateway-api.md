@@ -154,6 +154,8 @@ The parent `Gateway` must allow them through its `spec.allowedListeners` field, 
     A `ListenerSet` listener with the same protocol, port and hostname as another listener,
     of the parent `Gateway` or of a sibling `ListenerSet`,
     is rejected with a `Conflicted` status condition and the `HostnameConflict` reason.
+    A `TCP` listener sharing its port with an `HTTP`, `HTTPS` or `TLS` listener, or the other way around,
+    is rejected with the `ProtocolConflict` reason.
     The parent `Gateway` listeners win, then the ones of the oldest `ListenerSet`,
     then the ones of the first `ListenerSet` in alphabetical `{namespace}/{name}` order.
 
