@@ -452,8 +452,14 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			strings.Compare(a.GetName(), b.GetName()))
 	})
 
-	// ListenerSets are listed once and dispatched to their parent Gateway below.
+	// ListenerSets are listed once and dispatched to their parent Gateway below, oldest
+	// first, as the oldest ListenerSet wins a listener conflict with its siblings (GEP-1713).
 	listenerSets := p.client.ListListenerSets()
+	slices.SortStableFunc(listenerSets, func(a, b *gatev1.ListenerSet) int {
+		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
+			strings.Compare(a.GetNamespace(), b.GetNamespace()),
+			strings.Compare(a.GetName(), b.GetName()))
+	})
 
 	// selectedGateways is built in the order of gateways, so that both slices share indexes.
 	selectedGateways := make([]gatewayWithListeners, 0, len(gateways))
@@ -1000,8 +1006,8 @@ func hostnameMatcherValue(hostname string) string {
 }
 
 // loadListenerSetListeners loads the listeners of the ListenerSets referencing the given
-// Gateway, in precedence order: the Gateway listeners already in allocatedListeners win
-// over them, and the oldest ListenerSet wins over its siblings (GEP-1713).
+// Gateway, from listenerSets sorted oldest first: the Gateway listeners already in
+// allocatedListeners win over them, and each ListenerSet over its younger siblings.
 func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) ([]gatewayListener, map[ktypes.NamespacedName]*listenerSetInfo) {
 	infos := make(map[ktypes.NamespacedName]*listenerSetInfo)
 
@@ -1024,14 +1030,6 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 
 		allowed = append(allowed, listenerSet)
 	}
-
-	slices.SortStableFunc(allowed, func(a, b *gatev1.ListenerSet) int {
-		return cmp.Or(
-			a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time),
-			strings.Compare(a.Namespace, b.Namespace),
-			strings.Compare(a.Name, b.Name),
-		)
-	})
 
 	gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
 
