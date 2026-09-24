@@ -80,7 +80,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routerConfs, condition := p.loadTLSRoute(listener, route, hostnames, statusReport)
+				routerConfs, condition := p.loadTLSRoute(match.GatewayName, match.GatewayNamespace, listener, route, hostnames, statusReport)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -136,7 +136,7 @@ type tlsRouteRouter struct {
 	Conf *dynamic.Configuration
 }
 
-func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname, statusReport *statusReport) ([]tlsRouteRouter, metav1.Condition) {
+func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TLSRoute, hostnames []gatev1.Hostname, statusReport *statusReport) ([]tlsRouteRouter, metav1.Condition) {
 	var routers []tlsRouteRouter
 
 	condition := metav1.Condition{
@@ -167,7 +167,7 @@ func (p *Provider) loadTLSRoute(listener gatewayListener, route *gatev1.TLSRoute
 
 		// The rule tells apart the routers of the listeners sharing the entry point,
 		// as they differ by the hostnames they match.
-		routerName := makeRouterName(strings.ToLower(kindTLSRoute), rule, route.Namespace, route.Name, listener, ri)
+		routerName := makeRouterName(strings.ToLower(kindTLSRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener, ri)
 
 		routerConf := &dynamic.Configuration{
 			TCP: &dynamic.TCPConfiguration{

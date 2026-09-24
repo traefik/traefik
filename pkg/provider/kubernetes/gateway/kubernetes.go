@@ -1688,17 +1688,15 @@ func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) b
 	return true
 }
 
-func makeRouterName(kind, rule, namespace, name string, listener gatewayListener, ruleIndex int) string {
-	ownerSegment := fmt.Sprintf("gw-%s-%s", listener.Owner.Namespace, listener.Owner.Name)
-	components := []string{namespace, name, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, strconv.Itoa(ruleIndex)}
+func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName string, listener gatewayListener, ruleIndex int) string {
+	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", kind, namespace, name, gatewayNamespace, gatewayName, listener.EPName, ruleIndex))
+	components := []string{namespace, name, gatewayNamespace, gatewayName, listener.EPName, strconv.Itoa(ruleIndex)}
 	if listener.fromListenerSet() {
-		// The kind keeps the routers attached through a ListenerSet apart from the ones
-		// attached to a Gateway of the same name.
-		ownerSegment = fmt.Sprintf("ls-%s-%s", listener.Owner.Namespace, listener.Owner.Name)
-		components = slices.Insert(components, 2, kindListenerSet)
+		// The routers attached through a ListenerSet are named after it, and the kind keeps
+		// them apart from the ones attached to a Gateway of the same name.
+		label = provider.Normalize(fmt.Sprintf("%s-%s-%s-ls-%s-%s-ep-%s-%d", kind, namespace, name, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, ruleIndex))
+		components = []string{namespace, name, kindListenerSet, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, strconv.Itoa(ruleIndex)}
 	}
-
-	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-%s-ep-%s-%d", kind, namespace, name, ownerSegment, listener.EPName, ruleIndex))
 
 	h := sha256.New()
 
