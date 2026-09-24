@@ -471,7 +471,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		// whoever declares it. GEP-1713 forbids programming the listeners of a
 		// ListenerSet whose parent Gateway is not accepted, which holds on its own here:
 		// only a valid listener is programmed, and a valid one makes the Gateway accepted.
-		accepted := isGatewayAccepted(listeners)
+		accepted := len(listeners) == 0 || slices.ContainsFunc(listeners, func(listener gatewayListener) bool {
+			return len(listener.Status.Conditions) == 0
+		})
 
 		selectedGateways = append(selectedGateways, gatewayWithListeners{
 			Name:         gateway.Name,
@@ -1039,23 +1041,6 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 	}
 
 	return listeners, infos
-}
-
-// isGatewayAccepted reports whether at least one of the listeners serving the Gateway is
-// valid, counting the ones its ListenerSets declare, so that a Gateway delegating all of
-// its listeners is accepted. A listener carrying no condition is a valid one, hence this
-// must be called before makeGatewayStatus decorates the valid listeners with conditions.
-func isGatewayAccepted(listeners []gatewayListener) bool {
-	var validListeners, invalidListeners int
-	for _, listener := range listeners {
-		if len(listener.Status.Conditions) == 0 {
-			validListeners++
-		} else {
-			invalidListeners++
-		}
-	}
-
-	return invalidListeners == 0 || validListeners > 0
 }
 
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress, accepted bool) (gatev1.GatewayStatus, []metav1.Condition) {
