@@ -407,8 +407,12 @@ Below the fields displayed with the generic CLF format:
 
 ### Log Rotation
 
-Traefik close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
-This allows the logs to be rotated and processed by an external program, such as `logrotate`.
+Traefik does not rotate the access log file.
+When Traefik receives a USR1 signal, it closes and opens again the access log file.
+This lets an external program, such as `logrotate`, rotate the access log file.
+
+The USR1 signal has no effect on the Traefik log file.
+Traefik rotates the Traefik log file with the options [`log.maxSize`](#opt-log-maxSize), [`log.maxAge`](#opt-log-maxAge), and [`log.maxBackups`](#opt-log-maxBackups).
 
 !!! warning
     This does not work on Windows due to the lack of USR signals.
