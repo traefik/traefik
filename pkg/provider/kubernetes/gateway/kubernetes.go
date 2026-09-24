@@ -183,6 +183,7 @@ type gatewayWithListeners struct {
 	Name      string
 	Namespace string
 
+	gateway   *gatev1.Gateway
 	listeners []gatewayListener
 
 	// listenerSets are the ListenerSets referencing this Gateway, allowed by its AllowedListeners policy or not.
@@ -459,8 +460,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			strings.Compare(a.GetName(), b.GetName()))
 	})
 
-	// selectedGateways is built in the order of gateways, so that both slices share indexes.
-	selectedGateways := make([]gatewayWithListeners, 0, len(gateways))
+	var gatewaysWithListeners []gatewayWithListeners
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
@@ -484,48 +484,40 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			return len(listener.Status.Conditions) == 0
 		})
 
-		selectedGateways = append(selectedGateways, gatewayWithListeners{
+		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
 			Name:         gateway.Name,
 			Namespace:    gateway.Namespace,
+			gateway:      gateway,
 			listeners:    listeners,
 			listenerSets: listenerSetInfos,
 			accepted:     accepted,
 		})
 	}
 
-	statusReport.gatewayListeners = selectedGateways
+	statusReport.gatewayListeners = gatewaysWithListeners
 
 	// The isolation of a listener depends on the other listeners of its entry point.
-	listenerRouters := p.buildListenerRouters(selectedGateways, conf)
+	listenerRouters := p.buildListenerRouters(gatewaysWithListeners, conf)
 
-	p.loadHTTPAndGRPCRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadHTTPAndGRPCRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
-	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadTLSRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
-	p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadTCPRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
 	// A listener with no route attached gives a parent router with no child,
 	// which the router manager reports in error as it has no service either.
 	dropChildlessListenerRouters(conf, listenerRouters)
 
-	for i, gateway := range gateways {
+	for _, gwl := range gatewaysWithListeners {
+		gateway := gwl.gateway
+
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		selectedGateway := selectedGateways[i]
-
-		// The Gateway status only reports the listeners the Gateway declares itself,
-		// the ListenerSet ones being reported in their own ListenerSet status.
-		var gatewayListeners []gatewayListener
-		for _, listener := range selectedGateway.listeners {
-			if !listener.fromListenerSet() {
-				gatewayListeners = append(gatewayListeners, listener)
-			}
-		}
-
-		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, gatewayListeners, addresses, selectedGateway.accepted)
+		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, gwl.listeners, addresses, gwl.accepted)
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -541,8 +533,8 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		}
 
 		var attachedListenerSets int32
-		for nsn, info := range selectedGateway.listenerSets {
-			listenerSetStatus, listenerSetAccepted := makeListenerSetStatus(info, selectedGateway.listeners, selectedGateway.accepted)
+		for nsn, info := range gwl.listenerSets {
+			listenerSetStatus, listenerSetAccepted := makeListenerSetStatus(info, gwl.listeners, gwl.accepted)
 			statusReport.RecordListenerSetStatus(nsn, listenerSetStatus)
 			if listenerSetAccepted {
 				attachedListenerSets++
@@ -1050,6 +1042,11 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
+		// The ListenerSet listeners are reported in their own ListenerSet status.
+		if listener.fromListenerSet() {
+			continue
+		}
+
 		if len(listener.Status.Conditions) == 0 {
 			listener.Status.Conditions = append(listener.Status.Conditions,
 				metav1.Condition{
