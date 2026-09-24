@@ -28,6 +28,7 @@ on:
       - dequeued
   pull_request_review:
   issue_comment:
+  issues:
 
 permissions: {}
 
@@ -55,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           SOURCE_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_ACTION: ${{ github.event.action }}
           LABEL: ${{ github.event.label.name }}
@@ -65,7 +66,7 @@ jobs:
 
           gh workflow run dispatch.yml --repo traefik/ai \
             -f "source_repo=$SOURCE_REPO" \
-            -f "pr_number=$PR_NUMBER" \
+            -f "number=$NUMBER" \
             -f "event_name=$EVENT_NAME" \
             -f "action=$EVENT_ACTION" \
             -f "label=$LABEL" \
