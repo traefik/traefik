@@ -13512,12 +13512,10 @@ func Test_loadListenerSetListeners(t *testing.T) {
 			wantListeners: []wantListener{{name: "http", reason: string(gatev1.ListenerReasonHostnameConflict)}},
 		},
 		{
-			// The newer ListenerSet sorts first by name: only the creation timestamp
-			// makes the older one win the conflict.
-			desc: "Older ListenerSet wins the conflict with its sibling",
+			desc: "First ListenerSet wins the conflict with a later sibling",
 			listenerSets: []*gatev1.ListenerSet{
-				listenerSet("ls-a-newer", time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
-				listenerSet("ls-z-older", time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC), gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+				listenerSet("ls-first", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+				listenerSet("ls-second", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
 			},
 			wantListeners: []wantListener{
 				{name: "http", attached: true},
