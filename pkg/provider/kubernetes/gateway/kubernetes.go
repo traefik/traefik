@@ -629,7 +629,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 				ObservedGeneration: generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.ListenerReasonPortUnavailable),
-				Message:            fmt.Sprintf("Cannot find entryPoint for Gateway: %v", err),
+				Message:            fmt.Sprintf("Cannot find entryPoint for %s: %v", owner.Kind, err),
 			})
 
 			continue
@@ -720,7 +720,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("No TLS configuration for Gateway Listener %s:%d and protocol %q", listener.Name, listener.Port, listener.Protocol),
+					Message:            fmt.Sprintf("No TLS configuration for %s Listener %s:%d and protocol %q", owner.Kind, listener.Name, listener.Port, listener.Protocol),
 				})
 				continue
 			}
