@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12448,7 +12449,9 @@ func Test_makeGatewayStatus(t *testing.T) {
 			p := Provider{}
 			gateway := &gatev1.Gateway{Spec: gatev1.GatewaySpec{Infrastructure: test.infrastructure}}
 
-			status, _ := p.makeGatewayStatus(gateway, test.listeners, nil, isGatewayAccepted(test.listeners))
+			status, _ := p.makeGatewayStatus(gateway, test.listeners, nil, slices.ContainsFunc(test.listeners, func(listener gatewayListener) bool {
+				return len(listener.Status.Conditions) == 0
+			}))
 
 			condition := meta.FindStatusCondition(status.Conditions, string(gatev1.GatewayConditionAccepted))
 			require.NotNil(t, condition)
