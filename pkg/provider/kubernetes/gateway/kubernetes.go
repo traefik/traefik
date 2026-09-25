@@ -172,11 +172,6 @@ type gatewayListener struct {
 	ListenerSet *ktypes.NamespacedName
 }
 
-// fromListenerSet reports whether the listener is declared by a ListenerSet rather than by the Gateway itself.
-func (l gatewayListener) fromListenerSet() bool {
-	return l.ListenerSet != nil
-}
-
 type gatewayWithListeners struct {
 	gateway   *gatev1.Gateway
 	listeners []gatewayListener
@@ -1027,7 +1022,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
 		// The ListenerSet listeners are reported in their own ListenerSet status.
-		if listener.fromListenerSet() {
+		if listener.ListenerSet != nil {
 			continue
 		}
 
@@ -1621,8 +1616,8 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			// A Gateway parent targets the listeners the Gateway declares itself,
 			// and a ListenerSet parent only the listeners of that ListenerSet.
 			switch {
-			case owner.Kind == kindGateway && !listener.fromListenerSet(),
-				owner.Kind == kindListenerSet && listener.fromListenerSet() && *listener.ListenerSet == ktypes.NamespacedName{Namespace: owner.Namespace, Name: owner.Name}:
+			case owner.Kind == kindGateway && listener.ListenerSet == nil,
+				owner.Kind == kindListenerSet && listener.ListenerSet != nil && *listener.ListenerSet == ktypes.NamespacedName{Namespace: owner.Namespace, Name: owner.Name}:
 				listeners = append(listeners, listener)
 			}
 		}
@@ -1946,7 +1941,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 
 	var validListeners int
 	for _, listener := range listeners {
-		if !listener.fromListenerSet() || *listener.ListenerSet != (ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}) {
+		if listener.ListenerSet == nil || *listener.ListenerSet != (ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}) {
 			continue
 		}
 
