@@ -327,7 +327,7 @@ func TestRouterManager_Get(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
@@ -745,7 +745,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 			tlsManager.UpdateConfigs(t.Context(), nil, test.tlsOptions, nil)
 
 			parser, err := httpmuxer.NewSyntaxParser()
@@ -827,7 +827,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	tlsManager := traefiktls.NewManager(nil)
+	tlsManager := traefiktls.NewManager(nil, nil)
 
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(t, err)
@@ -882,7 +882,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	tlsManager := traefiktls.NewManager(nil)
+	tlsManager := traefiktls.NewManager(nil, nil)
 
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(b, err)
@@ -1067,7 +1067,7 @@ func TestProvidersPrecedence(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, labellingProxyBuilder{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)

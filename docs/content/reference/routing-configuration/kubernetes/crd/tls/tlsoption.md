@@ -72,6 +72,7 @@ The `clientAuth.clientAuthType` option governs the behavior as follows:
 - `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`.
 - `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate.
 - `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`.
+- `RequireAndVerifyClientCertWithExpiry`: same as `RequireAndVerifyClientCert`, and additionally enforces the client certificate expiry/revocation rules configured in `clientAuth.expiry.crl` (see below).
 
 !!! note "CA Secret"
     The CA secret must contain a base64 encoded certificate under either a `tls.ca` or a `ca.crt` key.
@@ -86,3 +87,51 @@ The default behavior is summed up in the table below:
 | <a id="opt-No-default-TLS-Option" href="#opt-No-default-TLS-Option" title="#opt-No-default-TLS-Option">No `default` TLS Option</a> | Default internal set of TLS Options by default.             |
 | <a id="opt-One-default-TLS-Option" href="#opt-One-default-TLS-Option" title="#opt-One-default-TLS-Option">One `default` TLS Option</a> | Custom TLS Options applied by default.                      |
 | <a id="opt-Many-default-TLS-Option" href="#opt-Many-default-TLS-Option" title="#opt-Many-default-TLS-Option">Many `default` TLS Option</a> | Error log + Default internal set of TLS Options by default. |
+
+### Client Certificate Revocation (CRL)
+
+When `clientAuth.clientAuthType` is set to `RequireAndVerifyClientCertWithExpiry`, Traefik checks every certificate of the verified client chain against the Certificate Revocation List (CRL) published at its `CRL Distribution Points` extension.
+
+| Field | Description | Default | Required |
+|:------|:------------|:--------|:---------|
+| <a id="opt-clientAuth-expiry-crl-mode" href="#opt-clientAuth-expiry-crl-mode" title="#opt-clientAuth-expiry-crl-mode">`clientAuth.expiry.crl.mode`</a> | Revocation checking mode. One of `NOOP`, `Lax`, `Strict`. `Lax` only enforces checking when a certificate carries a CRL distribution point; `Strict` additionally rejects certificates that do not carry one. | `NOOP` | No |
+| <a id="opt-clientAuth-expiry-crl-reloadInterval" href="#opt-clientAuth-expiry-crl-reloadInterval" title="#opt-clientAuth-expiry-crl-reloadInterval">`clientAuth.expiry.crl.reloadInterval`</a> | Interval between periodic refreshes of HTTP fetched CRLs. `0` disables periodic refresh (CRLs are then only reloaded once expired). | | No |
+| <a id="opt-clientAuth-expiry-crl-http-expirationStrategy" href="#opt-clientAuth-expiry-crl-http-expirationStrategy" title="#opt-clientAuth-expiry-crl-http-expirationStrategy">`clientAuth.expiry.crl.http.expirationStrategy`</a> | How to handle an expired/not-yet-loaded CRL. `Open`: serve stale data while refreshing in the background. `FailedClosed`: block and fail the request if the refresh fails. | `Open` | No |
+| <a id="opt-clientAuth-expiry-crl-http-timeout" href="#opt-clientAuth-expiry-crl-http-timeout" title="#opt-clientAuth-expiry-crl-http-timeout">`clientAuth.expiry.crl.http.timeout`</a> | HTTP timeout used when downloading a CRL from its distribution point. | | No |
+| <a id="opt-clientAuth-expiry-crl-http-errorBackoff" href="#opt-clientAuth-expiry-crl-http-errorBackoff" title="#opt-clientAuth-expiry-crl-http-errorBackoff">`clientAuth.expiry.crl.http.errorBackoff`</a> | Duration between CRL refresh attempt on unrespondsive distribution points. | `30s` | No |
+| <a id="opt-clientAuth-expiry-crl-http-maxCRLBytes" href="#opt-clientAuth-expiry-crl-http-maxCRLBytes" title="#opt-clientAuth-expiry-crl-http-maxCRLBytes">`clientAuth.expiry.crl.http.maxCRLBytes`</a> | Max CRL file size. | `1024*1024` (1MB) | No |
+| <a id="opt-clientAuth-expiry-crl-http-whitelist-enabled" href="#opt-clientAuth-expiry-crl-http-whitelist-enabled" title="#opt-clientAuth-expiry-crl-http-whitelist-enabled">`clientAuth.expiry.crl.http.whitelist.enabled`</a> | Restricts the CRL distribution point URLs Traefik is allowed to fetch over HTTP. | `false` | No |
+| <a id="opt-clientAuth-expiry-crl-http-whitelist-distributionPoints" href="#opt-clientAuth-expiry-crl-http-whitelist-distributionPoints" title="#opt-clientAuth-expiry-crl-http-whitelist-distributionPoints">`clientAuth.expiry.crl.http.whitelist.distributionPoints`</a> | Allowed CRL distribution point URLs, used when `whitelist.enabled` is `true`. | | No |
+
+Every downloaded CRL is verified against the certificate's issuer (signature and issuer name), checked for its validity window (`thisUpdate`/`nextUpdate`), and protected against rollback (its `Number` must never decrease compared to the previously cached CRL for the same distribution point).
+
+!!! important "Global, file based CRLs are not configurable via this CRD"
+
+    CRLs loaded from local files are configured once, process-wide, at the Traefik static/install configuration level (`tls.crlFiles` / `tls.crlReloadInterval`), and apply to every TLS Options regardless of the Kubernetes provider. When a certificate's distribution point is covered by that global store, it always takes precedence over the HTTP based mechanism described above, and bypasses the allow-list.
+
+```yaml tab="TLSOption"
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoption
+  namespace: default
+
+spec:
+  clientAuth:
+    secretNames:
+      - secret-ca1
+    clientAuthType: RequireAndVerifyClientCertWithExpiry
+    expiry:
+      crl:
+        mode: Lax
+        reloadInterval: 1h
+        http:
+          expirationStrategy: Open
+          timeout: 5s
+          errorBackoff: 30s
+          maxCRLBytes: 1024 # 1KB
+          whitelist:
+            enabled: true
+            distributionPoints:
+              - http://ca.example.com/intermediate.crl
+```

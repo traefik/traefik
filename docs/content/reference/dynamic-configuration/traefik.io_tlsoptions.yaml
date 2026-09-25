@@ -68,7 +68,87 @@ spec:
                     - RequireAnyClientCert
                     - VerifyClientCertIfGiven
                     - RequireAndVerifyClientCert
+                    - RequireAndVerifyClientCertWithExpiry
                     type: string
+                  expiry:
+                    description: Expiry defines the parameters of the client authentication
+                      regarding client certificate expiry.
+                    properties:
+                      crl:
+                        description: CRL based expiry configuration
+                        properties:
+                          http:
+                            description: HTTP config for Load mode HTTP
+                            properties:
+                              errorBackoff:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: |-
+                                  Error backoff duration for HTTP requests when endpoints are in error
+                                  If unset, a default duration is set by traefik admins
+                                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                                x-kubernetes-int-or-string: true
+                              expirationStrategy:
+                                description: |-
+                                  Defines how CRL expiry is handled.
+                                  Available values are: "Open", "FailedClosed"
+                                  Default: Open
+                                enum:
+                                - Open
+                                - FailedClosed
+                                type: string
+                              maxCRLBytes:
+                                description: |-
+                                  Max CRL file size exprimed in bytes.
+                                  Default: 1MB
+                                format: int64
+                                type: integer
+                              timeout:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: |-
+                                  Timeout for HTTP requests used to fetch CRLs for this TLS Options.
+                                  If unset, a default timeout configured at the Traefik static level is used.
+                                pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                                x-kubernetes-int-or-string: true
+                              whitelist:
+                                description: CRL Distribution Point whitelist config
+                                properties:
+                                  distrivutionPoints:
+                                    description: CRL locations whitelist
+                                    items:
+                                      type: string
+                                    type: array
+                                  enabled:
+                                    description: |-
+                                      Enables whitelist handling, setting it to false may lead to high memory usage
+                                      due to a high number of CRL being stored
+                                    type: boolean
+                                type: object
+                            type: object
+                          mode:
+                            description: |-
+                              Mode denotates how CRL validation will be handled.
+                              Available values are: "NOOP", "Lax", "Strict".
+                              Default: NOOP.
+                            enum:
+                            - NOOP
+                            - Lax
+                            - Strict
+                            type: string
+                          reloadInterval:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              Interval between files reload, setting it to 0 will turn off reload
+                              Default: 1H
+                            pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                            x-kubernetes-int-or-string: true
+                        type: object
+                    type: object
                   secretNames:
                     description: SecretNames defines the names of the referenced Kubernetes
                       Secret storing certificate details.

@@ -58,10 +58,18 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.ClientTLSWithCAOptionalApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Compress"):
 		return &traefikiov1alpha1.CompressApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("CRL"):
+		return &traefikiov1alpha1.CRLApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("CRLHTTP"):
+		return &traefikiov1alpha1.CRLHTTPApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("CRLHTTPWhitelist"):
+		return &traefikiov1alpha1.CRLHTTPWhitelistApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("DigestAuth"):
 		return &traefikiov1alpha1.DigestAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ErrorPage"):
 		return &traefikiov1alpha1.ErrorPageApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Expiry"):
+		return &traefikiov1alpha1.ExpiryApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Failover"):
 		return &traefikiov1alpha1.FailoverApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("FailoverError"):

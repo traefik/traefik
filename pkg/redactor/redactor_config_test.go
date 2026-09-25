@@ -452,6 +452,22 @@ func init() {
 				ClientAuth: traefiktls.ClientAuth{
 					CAFiles:        []types.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
+					Expiry: traefiktls.Expiry{
+						CRL: traefiktls.CRL{
+							Mode:           traefiktls.CRLNOOP,
+							ReloadInterval: ptypes.Duration(40),
+							HTTP: traefiktls.CRLHTTP{
+								ExpirationStrategy: traefiktls.CRLExpirationOpen,
+								Timeout:            ptypes.Duration(40),
+								ErrorBackoff:       ptypes.Duration(40),
+								MaxCRLBytes:        1024,
+								Whitelist: traefiktls.CRLHTTPWhitelist{
+									Enabled:            false,
+									DistributionPoints: []string{"http://localhost:8001/crl/issuer1.crl"},
+								},
+							},
+						},
+					},
 				},
 				SniStrict: true,
 			},
