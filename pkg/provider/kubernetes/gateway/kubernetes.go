@@ -165,9 +165,6 @@ type gatewayListener struct {
 	// the listener is the most specific match for.
 	RouterNames []string
 
-	// Gateway is the Gateway serving this listener.
-	Gateway ktypes.NamespacedName
-
 	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
 	ListenerSet *ktypes.NamespacedName
 }
@@ -591,7 +588,6 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 			Protocol: listener.Protocol,
 			TLS:      listener.TLS,
 			Hostname: listener.Hostname,
-			Gateway:  gateway,
 
 			ListenerSet: listenerSet,
 
