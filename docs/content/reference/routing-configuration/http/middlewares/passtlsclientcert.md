@@ -206,7 +206,7 @@ spec:
 
 | Field      | Description        | Default | Required |
 |:-----------|:------------------------------------------------------------|:--------|:---------|
-| <a id="opt-onlyLeaf" href="#opt-onlyLeaf" title="#opt-onlyLeaf">`onlyLeaf`</a> | Controls wether the middleware sends all the provided certificates or sends a lone leaf certificate.<br /> More information [here](#onlyleaf). | false      | No      |
+| <a id="opt-onlyLeaf" href="#opt-onlyLeaf" title="#opt-onlyLeaf">`onlyLeaf`</a> | Controls whether the middleware sends all the provided certificates or sends a lone leaf certificate.<br /> More information [here](#onlyleaf). | false      | No      |
 | <a id="opt-pem" href="#opt-pem" title="#opt-pem">`pem`</a> | Fills the `X-Forwarded-Tls-Client-Cert` header with the certificate information.<br /> More information [here](#pem). | false      | No      |
 | <a id="opt-info-serialNumber" href="#opt-info-serialNumber" title="#opt-info-serialNumber">`info.serialNumber`</a> | Add the `Serial Number` of the certificate.<br /> More information about `info` [here](#info). | false | No |
 | <a id="opt-info-notAfter" href="#opt-info-notAfter" title="#opt-info-notAfter">`info.notAfter`</a> | Add the `Not After` information from the `Validity` part. <br /> More information about `info` [here](#info). | false | No |
@@ -232,7 +232,7 @@ spec:
 
 ### onlyLeaf
 
-The `onlyLeaf` options controls wether this middleware will concatenate all the certificate with `,` or will only send the leaf certificate info/pem to the backend.
+The `onlyLeaf` options controls whether this middleware will concatenate all the certificate with `,` or will only send the leaf certificate info/pem to the backend.
 
 If `true`, only sends the leaf certificate.
 If `false`, sends all the provided certificates separated by a `,` (default).

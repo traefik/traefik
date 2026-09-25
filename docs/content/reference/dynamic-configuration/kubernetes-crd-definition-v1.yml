@@ -1961,7 +1961,7 @@ spec:
                         type: object
                     type: object
                   onlyLeaf:
-                    description: OnlyLeaf controls wether the full certificate chain
+                    description: OnlyLeaf controls whether the full certificate chain
                       is sent or only the leaf certificate.
                     type: boolean
                   pem:

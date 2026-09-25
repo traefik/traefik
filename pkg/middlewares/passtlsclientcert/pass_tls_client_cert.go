@@ -183,7 +183,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	p.next.ServeHTTP(rw, req)
 }
 
-// getCertInfo Build a string with the wanted client certificates information
+// getCertInfo builds a string with the wanted client certificates information
 // - the `,` is used to separate certificates
 // - the `;` is used to separate root fields
 // - the value of root fields is always wrapped by double quote
@@ -199,8 +199,7 @@ func (p *passTLSClientCert) getCertInfo(ctx context.Context, certs []*x509.Certi
 	return strings.Join(headerValues, certSeparator)
 }
 
-// extractCertInfo Build a string array containing all cert info for a single certificate
-// - the `,` is used to separate certificates
+// extractCertInfo builds a string array containing all cert info for a single certificate
 // - the value of root fields is always wrapped by double quote
 // - if a field is empty, the field is ignored.
 func (p *passTLSClientCert) extractCertInfo(ctx context.Context, peerCert *x509.Certificate) []string {
