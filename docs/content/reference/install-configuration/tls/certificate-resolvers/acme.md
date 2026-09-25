@@ -75,7 +75,7 @@ ACME certificate resolvers have the following configuration options:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| <a id="opt-acme-email" href="#opt-acme-email" title="#opt-acme-email">`acme.email`</a> | Email address used for registration. | "" | Yes |
+| <a id="opt-acme-email" href="#opt-acme-email" title="#opt-acme-email">`acme.email`</a> | Email address used for registration. | "" | No |
 | <a id="opt-acme-caServer" href="#opt-acme-caServer" title="#opt-acme-caServer">`acme.caServer`</a> | CA server to use. | https://acme-v02.api.letsencrypt.org/directory | No |
 | <a id="opt-acme-preferredChain" href="#opt-acme-preferredChain" title="#opt-acme-preferredChain">`acme.preferredChain`</a> | Preferred chain to use. If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used. | "" | No |
 | <a id="opt-acme-keyType" href="#opt-acme-keyType" title="#opt-acme-keyType">`acme.keyType`</a> | KeyType to use. | "RSA4096" | No |
