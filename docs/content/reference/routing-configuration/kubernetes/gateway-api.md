@@ -10,7 +10,7 @@ For detailed information on the Gateway API concepts and resources, refer to the
 
 The Kubernetes Gateway API provider supports version [v1.6.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.1) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
 For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.6.1/traefik-traefik).
 
@@ -139,6 +139,23 @@ spec:
         namespaces:
           from: Same
 ```
+
+### ListenerSets
+
+Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) resources, which attach additional listeners to an existing `Gateway`.
+
+!!! info "Listener ports"
+
+    Please note that `ListenerSet` listener ports must match the configured [EntryPoint ports](../../install-configuration/entrypoints.md) of the Traefik deployment, just like `Gateway` listeners.
+
+!!! warning "Shared TLS certificate store"
+
+    Traefik keeps all TLS certificates, from `Gateway` listeners and from every `ListenerSet` listener, in a single global certificate store.
+    During the TLS handshake, the certificate is selected by matching the SNI against the SANs of **all** certificates in that store; the selection is **not** scoped to the listener, port, or EntryPoint that received the connection.
+    A certificate attached to a `ListenerSet` listener can therefore be served for a connection destined to another listener, including the parent `Gateway`'s own listeners, when its SANs match the requested SNI.
+
+    Because a `ListenerSet` may reference a `Secret` in its own namespace without a `ReferenceGrant`, any namespace admitted through `allowedListeners` can introduce certificates that compete in SNI selection on all TLS EntryPoints.
+    Treat `allowedListeners` as a trust boundary, and only allow ListenerSets from namespaces you trust with TLS termination for the hostnames served by this Gateway.
 
 ## Exposing a Route
 

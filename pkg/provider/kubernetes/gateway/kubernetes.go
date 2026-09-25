@@ -50,6 +50,7 @@ const (
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 	kindService        = "Service"
+	kindListenerSet    = "ListenerSet"
 	kindConfigMap      = "ConfigMap"
 	kindSecret         = "Secret"
 
@@ -66,6 +67,8 @@ const (
 	// routeReasonHostnameConflict is raised when an HTTP and a GRPC route are
 	// attached to the same listener with intersecting hostnames.
 	routeReasonHostnameConflict gatev1.RouteConditionReason = "HostnameConflict"
+
+	conditionNoErrorMessage = "No error found"
 )
 
 // NamespacedName holds a Kubernetes resource reference with namespace and name.
@@ -136,8 +139,15 @@ type ExtensionBuilderRegistry interface {
 	RegisterBackendFuncs(group, kind string, builderFunc BuildBackendFunc)
 }
 
+// listenerOwner identifies the resource declaring listeners a route parentRef targets, a Gateway or a ListenerSet.
+type listenerOwner struct {
+	Kind      string
+	Namespace string
+	Name      string
+}
+
 type gatewayListener struct {
-	Name string
+	SectionName string
 
 	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
@@ -154,12 +164,15 @@ type gatewayListener struct {
 	// RouterNames holds one parent router per entry point hostname
 	// the listener is the most specific match for.
 	RouterNames []string
+
+	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
+	ListenerSet *ktypes.NamespacedName
+	// ListenerSetGeneration is the generation of that ListenerSet, reported in its status.
+	ListenerSetGeneration int64
 }
 
 type gatewayWithListeners struct {
-	Name      string
-	Namespace string
-
+	gateway   *gatev1.Gateway
 	listeners []gatewayListener
 }
 
@@ -420,49 +433,65 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			strings.Compare(a.GetName(), b.GetName()))
 	})
 
-	var selectedGateways []gatewayWithListeners
+	// ListenerSets are listed once and dispatched to their parent Gateway below,
+	// oldest first, as the oldest ListenerSet wins a listener conflict with its siblings (GEP-1713).
+	listenerSets := p.client.ListListenerSets()
+	slices.SortStableFunc(listenerSets, func(a, b *gatev1.ListenerSet) int {
+		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
+			strings.Compare(a.GetNamespace(), b.GetNamespace()),
+			strings.Compare(a.GetName(), b.GetName()))
+	})
+
+	var gatewaysWithListeners []gatewayWithListeners
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		selectedGateways = append(selectedGateways, gatewayWithListeners{
-			Name:      gateway.Name,
-			Namespace: gateway.Namespace,
-			listeners: p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf),
+		claims := newListenerClaims()
+
+		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, nil, claims, conf)
+
+		listeners = append(listeners, p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, claims, conf, statusReport)...)
+
+		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
+			gateway:   gateway,
+			listeners: listeners,
 		})
 	}
 
-	statusReport.gatewayListeners = selectedGateways
+	statusReport.gatewayListeners = gatewaysWithListeners
 
 	// The isolation of a listener depends on the other listeners of its entry point.
-	listenerRouters := p.buildListenerRouters(selectedGateways, conf)
+	listenerRouters := p.buildListenerRouters(gatewaysWithListeners, conf)
 
-	p.loadHTTPAndGRPCRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadHTTPAndGRPCRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
-	p.loadTLSRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadTLSRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
-	p.loadTCPRoutes(ctx, selectedGateways, conf, statusReport)
+	p.loadTCPRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
 	// A listener with no route attached gives a parent router with no child,
 	// which the router manager reports in error as it has no service either.
 	dropChildlessListenerRouters(conf, listenerRouters)
 
-	for _, gateway := range gateways {
+	for _, gwl := range gatewaysWithListeners {
 		logger := log.Ctx(ctx).With().
-			Str("gateway", gateway.Name).
-			Str("namespace", gateway.Namespace).
+			Str("gateway", gwl.gateway.Name).
+			Str("namespace", gwl.gateway.Namespace).
 			Logger()
 
-		var listeners []gatewayListener
-		for _, selectedGateway := range selectedGateways {
-			if selectedGateway.Name == gateway.Name && selectedGateway.Namespace == gateway.Namespace {
-				listeners = append(listeners, selectedGateway.listeners...)
-			}
-		}
+		// A Gateway is accepted as soon as one of the listeners serving it is valid, whoever declares it.
+		// GEP-1713 forbids programming the listeners of a ListenerSet whose parent Gateway is not accepted,
+		// which holds on its own here:
+		// only a valid listener is programmed, and a valid one makes the Gateway accepted.
+		// It is decided before makeGatewayStatus reports the valid listeners with their conditions.
+		accepted := len(gwl.listeners) == 0 || slices.ContainsFunc(gwl.listeners, func(listener gatewayListener) bool {
+			return len(listener.Status.Conditions) == 0
+		})
 
-		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
+		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, accepted)
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -477,7 +506,25 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 				Msg("Gateway Not Accepted")
 		}
 
-		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus)
+		// The refused ListenerSets have no listener, and got their status when refused.
+		listenerSetListeners := make(map[ktypes.NamespacedName][]gatewayListener)
+		for _, listener := range gwl.listeners {
+			if listener.ListenerSet != nil {
+				listenerSetListeners[*listener.ListenerSet] = append(listenerSetListeners[*listener.ListenerSet], listener)
+			}
+		}
+
+		var attachedListenerSets int32
+		for nsn, listeners := range listenerSetListeners {
+			listenerSetStatus, listenerSetAccepted := makeListenerSetStatus(listeners, accepted)
+			statusReport.RecordListenerSetStatus(nsn, listenerSetStatus)
+			if listenerSetAccepted {
+				attachedListenerSets++
+			}
+		}
+		gatewayStatus.AttachedListenerSets = &attachedListenerSets
+
+		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gwl.gateway.Name, Namespace: gwl.gateway.Namespace}, gatewayStatus)
 	}
 
 	return conf, statusReport, nil
@@ -520,18 +567,40 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	}
 }
 
-func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) []gatewayListener {
-	tlsCerts := make(map[string]*tls.CertAndStores)
-	allocatedListeners := make(map[string]struct{})
-	gatewayListeners := make([]gatewayListener, len(gateway.Spec.Listeners))
+// loadGatewayListeners loads the listeners of the given ListenerSet, or of the given Gateway when nil,
+// and records what the valid ones claim in claims.
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSet *gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration) []gatewayListener {
+	listeners, generation := gateway.Spec.Listeners, gateway.Generation
+	// The resource declaring the listeners drives the ReferenceGrant checks,
+	// and the namespace "Same" resolves to in allowedRoutes.
+	ownerKind, ownerNamespace := kindGateway, gateway.Namespace
 
-	for i, listener := range gateway.Spec.Listeners {
+	var listenerSetName *ktypes.NamespacedName
+	var listenerSetGeneration int64
+	if listenerSet != nil {
+		// A ListenerEntry mirrors a Gateway Listener field for field.
+		listeners = make([]gatev1.Listener, 0, len(listenerSet.Spec.Listeners))
+		for _, entry := range listenerSet.Spec.Listeners {
+			listeners = append(listeners, gatev1.Listener(entry))
+		}
+		generation = listenerSet.Generation
+		ownerKind, ownerNamespace = kindListenerSet, listenerSet.Namespace
+		listenerSetName = &ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}
+		listenerSetGeneration = listenerSet.Generation
+	}
+
+	tlsCerts := make(map[string]*tls.CertAndStores)
+	gatewayListeners := make([]gatewayListener, len(listeners))
+
+	for i, listener := range listeners {
 		gatewayListeners[i] = gatewayListener{
-			Name:     string(listener.Name),
-			Port:     listener.Port,
-			Protocol: listener.Protocol,
-			TLS:      listener.TLS,
-			Hostname: listener.Hostname,
+			SectionName:           string(listener.Name),
+			Port:                  listener.Port,
+			Protocol:              listener.Protocol,
+			TLS:                   listener.TLS,
+			Hostname:              listener.Hostname,
+			ListenerSet:           listenerSetName,
+			ListenerSetGeneration: listenerSetGeneration,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
 				SupportedKinds: []gatev1.RouteGroupKind{},
@@ -542,7 +611,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		// The listener protocol is validated first, so that an unsupported protocol
 		// is reported as such instead of being masked by the entryPoint lookup,
 		// which cannot succeed for a protocol Traefik does not know about.
-		supportedKinds, conditions := supportedRouteKinds(gateway.Generation, listener.Protocol)
+		supportedKinds, conditions := supportedRouteKinds(generation, listener.Protocol)
 		if len(conditions) > 0 {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
 			continue
@@ -554,10 +623,10 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 				Type:               string(gatev1.ListenerConditionAccepted),
 				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
+				ObservedGeneration: generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.ListenerReasonPortUnavailable),
-				Message:            fmt.Sprintf("Cannot find entryPoint for Gateway: %v", err),
+				Message:            fmt.Sprintf("Cannot find entryPoint for %s: %v", ownerKind, err),
 			})
 
 			continue
@@ -565,13 +634,13 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		gatewayListeners[i].EPName = ep
 
 		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)}})
-		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(gateway.Namespace, allowedRoutes.Namespaces)
+		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(ownerNamespace, allowedRoutes.Namespaces)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 				Type:               string(gatev1.ListenerConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
+				ObservedGeneration: generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidRouteNamespacesSelector", // Should never happen as the selector is validated by kubernetes
 				Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
@@ -580,7 +649,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			continue
 		}
 
-		routeKinds, conditions := allowedRouteKinds(gateway, listener, supportedKinds)
+		routeKinds, conditions := allowedRouteKinds(generation, listener, supportedKinds)
 		for _, kind := range routeKinds {
 			gatewayListeners[i].AllowedRouteKinds = append(gatewayListeners[i].AllowedRouteKinds, string(kind.Kind))
 		}
@@ -592,26 +661,31 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 		listenerKey := makeListenerKey(listener)
 
-		if _, ok := allocatedListeners[listenerKey]; ok {
-			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
-				Type:               string(gatev1.ListenerConditionConflicted),
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "DuplicateListener",
-				Message:            "A listener with same protocol, port and hostname already exists",
-			})
+		if _, ok := claims.listeners[listenerKey]; ok {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+				makeListenerConflictConditions(generation, gatev1.ListenerReasonHostnameConflict, "A listener with the same protocol, port and hostname already exists")...)
 
 			continue
 		}
 
-		allocatedListeners[listenerKey] = struct{}{}
+		// A TCP listener cannot share its port with an HTTP, HTTPS or TLS listener,
+		// as the connections could not be matched to a single listener (Gateway API listener distinctness).
+		isTCP := listener.Protocol == gatev1.TCPProtocolType
+		if tcp, claimed := claims.tcpPorts[listener.Port]; claimed && tcp != isTCP {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+				makeListenerConflictConditions(generation, gatev1.ListenerReasonProtocolConflict, "A listener with an incompatible protocol already exists on the same port")...)
+
+			continue
+		}
+
+		claims.listeners[listenerKey] = struct{}{}
+		claims.tcpPorts[listener.Port] = isTCP
 
 		if (listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.TCPProtocolType) && listener.TLS != nil {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 				Type:               string(gatev1.ListenerConditionAccepted),
 				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
+				ObservedGeneration: generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
 				Message:            "TLS configuration must no be defined when using HTTP or TCP protocol",
@@ -626,10 +700,10 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionFalse,
-					ObservedGeneration: gateway.Generation,
+					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("No TLS configuration for Gateway Listener %s:%d and protocol %q", listener.Name, listener.Port, listener.Protocol),
+					Message:            fmt.Sprintf("No TLS configuration for %s Listener %s:%d and protocol %q", ownerKind, listener.Name, listener.Port, listener.Protocol),
 				})
 				continue
 			}
@@ -649,7 +723,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionFalse,
-					ObservedGeneration: gateway.Generation,
+					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 					Message:            "HTTPS protocol is not supported with TLS mode Passthrough",
@@ -662,7 +736,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
-						ObservedGeneration: gateway.Generation,
+						ObservedGeneration: generation,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
 						Message:            "One TLS CertificateRef is required in Terminate mode",
@@ -677,7 +751,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 						errCertConditions = append(errCertConditions, metav1.Condition{
 							Type:               string(gatev1.ListenerConditionResolvedRefs),
 							Status:             metav1.ConditionFalse,
-							ObservedGeneration: gateway.Generation,
+							ObservedGeneration: generation,
 							LastTransitionTime: metav1.Now(),
 							Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
 							Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)),
@@ -685,12 +759,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 						continue
 					}
 
-					certificateNamespace := string(ptr.Deref(certificateRef.Namespace, gatev1.Namespace(gateway.Namespace)))
-					if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, kindSecret, string(certificateRef.Name), certificateNamespace); err != nil {
+					certificateNamespace := string(ptr.Deref(certificateRef.Namespace, gatev1.Namespace(ownerNamespace)))
+					if err := p.isReferenceGranted(ownerKind, ownerNamespace, groupCore, kindSecret, string(certificateRef.Name), certificateNamespace); err != nil {
 						errCertConditions = append(errCertConditions, metav1.Condition{
 							Type:               string(gatev1.ListenerConditionResolvedRefs),
 							Status:             metav1.ConditionFalse,
-							ObservedGeneration: gateway.Generation,
+							ObservedGeneration: generation,
 							LastTransitionTime: metav1.Now(),
 							Reason:             string(gatev1.ListenerReasonRefNotPermitted),
 							Message:            fmt.Sprintf("Cannot reference CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
@@ -705,7 +779,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 							errCertConditions = append(errCertConditions, metav1.Condition{
 								Type:               string(gatev1.ListenerConditionResolvedRefs),
 								Status:             metav1.ConditionFalse,
-								ObservedGeneration: gateway.Generation,
+								ObservedGeneration: generation,
 								LastTransitionTime: metav1.Now(),
 								Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
 								Message:            fmt.Sprintf("Cannot load CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
@@ -721,7 +795,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
 						Type:               string(gatev1.ListenerConditionProgrammed),
 						Status:             metav1.ConditionFalse,
-						ObservedGeneration: gateway.Generation,
+						ObservedGeneration: generation,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(gatev1.ListenerReasonInvalid),
 						Message:            "Invalid CertificateRefs",
@@ -908,15 +982,49 @@ func hostnameMatcherValue(hostname string) string {
 	return hostname
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
+// loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway,
+// and reports the status of the ones its AllowedListeners policy refuses.
+func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration, statusReport *statusReport) []gatewayListener {
+	var listeners []gatewayListener
+	for _, listenerSet := range listenerSets {
+		if !listenerSetRefsGateway(listenerSet, gateway) {
+			continue
+		}
+
+		if !p.isListenerSetAllowed(ctx, gateway, listenerSet) {
+			log.Ctx(ctx).Debug().
+				Str("listenerset", listenerSet.Name).
+				Str("namespace", listenerSet.Namespace).
+				Msg("ListenerSet not allowed by Gateway's AllowedListeners")
+
+			const message = "ListenerSet is not allowed by the Gateway's AllowedListeners policy"
+			statusReport.RecordListenerSetStatus(ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}, gatev1.ListenerSetStatus{
+				Conditions: []metav1.Condition{
+					makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, listenerSet.Generation, string(gatev1.ListenerSetReasonNotAllowed), message),
+					makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, listenerSet.Generation, string(gatev1.ListenerSetReasonNotAllowed), message),
+				},
+			})
+
+			continue
+		}
+
+		listeners = append(listeners, p.loadGatewayListeners(ctx, gateway, listenerSet, claims, conf)...)
+	}
+
+	return listeners
+}
+
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress, accepted bool) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
-	var acceptedListeners int
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
-		if len(listener.Status.Conditions) == 0 {
-			acceptedListeners++
+		// The ListenerSet listeners are reported in their own ListenerSet status.
+		if listener.ListenerSet != nil {
+			continue
+		}
 
+		if len(listener.Status.Conditions) == 0 {
 			listener.Status.Conditions = append(listener.Status.Conditions,
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
@@ -924,7 +1032,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonAccepted),
-					Message:            "No error found",
+					Message:            conditionNoErrorMessage,
 				},
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -932,7 +1040,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonResolvedRefs),
-					Message:            "No error found",
+					Message:            conditionNoErrorMessage,
 				},
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionProgrammed),
@@ -940,7 +1048,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonProgrammed),
-					Message:            "No error found",
+					Message:            conditionNoErrorMessage,
 				},
 			)
 
@@ -969,7 +1077,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		return gatewayStatus, append(errorConditions, condition)
 	}
 
-	if len(errorConditions) > 0 && acceptedListeners == 0 {
+	if !accepted {
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions,
 			// update "Accepted" status with "Accepted" reason
 			metav1.Condition{
@@ -1283,7 +1391,7 @@ func supportedRouteKinds(gatewayGeneration int64, protocol gatev1.ProtocolType) 
 	}}
 }
 
-func allowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+func allowedRouteKinds(generation int64, listener gatev1.Listener, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
 	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
 		return supportedKinds, nil
 	}
@@ -1304,7 +1412,7 @@ func allowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, suppor
 			conditions = append(conditions, metav1.Condition{
 				Type:               string(gatev1.ListenerConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
+				ObservedGeneration: generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
 				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %s/%s", listener.Protocol, groupToString(routeKind.Group), routeKind.Kind),
@@ -1413,7 +1521,7 @@ func (sr servedRules) register(name string, scope []string, rule string) (string
 
 // listenerRef identifies a listener of a Gateway.
 type listenerRef struct {
-	Name             string
+	SectionName      string
 	GatewayNamespace string
 	GatewayName      string
 }
@@ -1472,9 +1580,9 @@ type gatewayListenersForParentRef struct {
 	Listeners []gatewayListener
 }
 
-// matchingGatewayListenersForParentRef returns, for each parentRef referring to a
-// Gateway managed by this controller, all the listeners of that Gateway.
-// parentRefs that do not refer to one of our Gateways are omitted.
+// matchingGatewayListenersForParentRef returns, for each parentRef referring to a Gateway or a ListenerSet managed by this controller,
+// the listeners this parent declares.
+// parentRefs that do not refer to one of our Gateways or ListenerSets are omitted.
 func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
 	var matches []gatewayListenersForParentRef
 
@@ -1483,46 +1591,69 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			continue
 		}
 
-		if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+		owner := listenerOwner{
+			Kind:      string(ptr.Deref(parentRef.Kind, kindGateway)),
+			Namespace: string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace))),
+			Name:      string(parentRef.Name),
+		}
+		if owner.Kind != kindGateway && owner.Kind != kindListenerSet {
 			continue
 		}
 
-		parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
-
-		var matchingGateway *gatewayWithListeners
-		for _, gateway := range gateways {
-			if parentRefNamespace != gateway.Namespace {
-				continue
-			}
-
-			if string(parentRef.Name) != gateway.Name {
-				continue
-			}
-
-			matchingGateway = &gateway
-			break
+		gateway := gatewayForOwner(gateways, owner)
+		if gateway == nil {
+			continue
 		}
 
-		if matchingGateway != nil {
-			// All the Gateway listeners are kept: the parentRef is associated to its
-			// Gateway here, and whether each listener is actually targeted (SectionName,
-			// Port) is decided when loading the route, so that ResolvedRefs is reported
-			// even for parentRefs that match no listener.
-			matches = append(matches, gatewayListenersForParentRef{
-				ParentRef:        parentRef,
-				GatewayName:      matchingGateway.Name,
-				GatewayNamespace: matchingGateway.Namespace,
-				Listeners:        matchingGateway.listeners,
-			})
+		// All the parent listeners are kept:
+		// whether each listener is actually targeted (SectionName, Port) is decided when loading the route,
+		// so that ResolvedRefs is reported even for parentRefs that match no listener.
+		var listeners []gatewayListener
+		for _, listener := range gateway.listeners {
+			// A Gateway parent targets the listeners the Gateway declares itself,
+			// and a ListenerSet parent only the listeners of that ListenerSet.
+			switch {
+			case owner.Kind == kindGateway && listener.ListenerSet == nil,
+				owner.Kind == kindListenerSet && listener.ListenerSet != nil && *listener.ListenerSet == ktypes.NamespacedName{Namespace: owner.Namespace, Name: owner.Name}:
+				listeners = append(listeners, listener)
+			}
 		}
+
+		matches = append(matches, gatewayListenersForParentRef{
+			ParentRef:        parentRef,
+			GatewayName:      gateway.gateway.Name,
+			GatewayNamespace: gateway.gateway.Namespace,
+			Listeners:        listeners,
+		})
 	}
 
 	return matches
 }
 
+// gatewayForOwner returns the managed Gateway serving the listeners of the given owner, a Gateway or a ListenerSet,
+// or nil when this controller does not manage that owner.
+func gatewayForOwner(gateways []gatewayWithListeners, owner listenerOwner) *gatewayWithListeners {
+	for _, gateway := range gateways {
+		if owner.Kind == kindListenerSet {
+			for _, listener := range gateway.listeners {
+				if listener.ListenerSet != nil && (*listener.ListenerSet == ktypes.NamespacedName{Namespace: owner.Namespace, Name: owner.Name}) {
+					return &gateway
+				}
+			}
+			continue
+		}
+
+		if gateway.gateway.Namespace == owner.Namespace && gateway.gateway.Name == owner.Name {
+			return &gateway
+		}
+	}
+
+	return nil
+}
+
 func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
-	if sectionName != "" && sectionName != listener.Name {
+	if sectionName != "" && sectionName != listener.SectionName {
 		return false
 	}
 
@@ -1678,6 +1809,203 @@ func makeListenerKey(l gatev1.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+// listenerClaims holds what the listeners already loaded for a Gateway claim,
+// so that the listeners loaded after them are rejected when they conflict.
+type listenerClaims struct {
+	// listeners holds the keys of the listeners, made of their protocol, hostname and port.
+	listeners map[string]struct{}
+	// tcpPorts reports, for each claimed port, whether TCP listeners or hostname based ones claim it.
+	tcpPorts map[gatev1.PortNumber]bool
+}
+
+func newListenerClaims() *listenerClaims {
+	return &listenerClaims{
+		listeners: make(map[string]struct{}),
+		tcpPorts:  make(map[gatev1.PortNumber]bool),
+	}
+}
+
+func makeListenerConflictConditions(generation int64, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {
+	return []metav1.Condition{
+		{
+			Type:               string(gatev1.ListenerConditionAccepted),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+		{
+			Type:               string(gatev1.ListenerConditionProgrammed),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+		{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+	}
+}
+
+// listenerSetRefsGateway returns true if the ListenerSet's ParentRef references the given gateway.
+func listenerSetRefsGateway(ls *gatev1.ListenerSet, gw *gatev1.Gateway) bool {
+	ref := ls.Spec.ParentRef
+
+	if ref.Group != nil && string(*ref.Group) != gatev1.GroupName {
+		return false
+	}
+	if ref.Kind != nil && string(*ref.Kind) != kindGateway {
+		return false
+	}
+	if string(ref.Name) != gw.Name {
+		return false
+	}
+
+	refNS := ls.Namespace
+	if ref.Namespace != nil {
+		refNS = string(*ref.Namespace)
+	}
+	return refNS == gw.Namespace
+}
+
+// isListenerSetAllowed checks whether the gateway's AllowedListeners permits the given ListenerSet.
+func (p *Provider) isListenerSetAllowed(ctx context.Context, gw *gatev1.Gateway, ls *gatev1.ListenerSet) bool {
+	if gw.Spec.AllowedListeners == nil {
+		return false
+	}
+
+	ns := gw.Spec.AllowedListeners.Namespaces
+	if ns == nil || ns.From == nil {
+		return false
+	}
+
+	switch *ns.From {
+	case gatev1.NamespacesFromNone:
+		return false
+	case gatev1.NamespacesFromSame:
+		return ls.Namespace == gw.Namespace
+	case gatev1.NamespacesFromAll:
+		return true
+	case gatev1.NamespacesFromSelector:
+		if ns.Selector == nil {
+			return false
+		}
+		selector, err := metav1.LabelSelectorAsSelector(ns.Selector)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Invalid AllowedListeners namespace selector")
+			return false
+		}
+		namespaces, err := p.client.ListNamespaces(selector)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Unable to list namespaces for AllowedListeners selector")
+			return false
+		}
+		return slices.Contains(namespaces, ls.Namespace)
+	}
+
+	return false
+}
+
+func makeListenerSetStatus(listeners []gatewayListener, parentAccepted bool) (gatev1.ListenerSetStatus, bool) {
+	// The listeners of a ListenerSet share its generation.
+	generation := listeners[0].ListenerSetGeneration
+
+	var status gatev1.ListenerSetStatus
+
+	var validListeners int
+	for _, listener := range listeners {
+		// A ListenerEntryStatus mirrors a ListenerStatus field for field.
+		entryStatus := gatev1.ListenerEntryStatus(*listener.Status)
+		if len(entryStatus.Conditions) == 0 {
+			validListeners++
+
+			entryStatus.Conditions = []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerEntryConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonAccepted),
+					Message:            conditionNoErrorMessage,
+				},
+				{
+					Type:               string(gatev1.ListenerEntryConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonResolvedRefs),
+					Message:            conditionNoErrorMessage,
+				},
+				{
+					Type:               string(gatev1.ListenerEntryConditionProgrammed),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerEntryReasonProgrammed),
+					Message:            conditionNoErrorMessage,
+				},
+			}
+		}
+
+		status.Listeners = append(status.Listeners, entryStatus)
+	}
+
+	switch {
+	case !parentAccepted:
+		const message = "Parent Gateway is not accepted"
+		status.Conditions = []metav1.Condition{
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonParentNotAccepted), message),
+			// The Programmed condition documents this reason, but v1.6.1 defines no constant for it.
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, generation, "ParentNotProgrammed", message),
+		}
+
+		return status, false
+
+	case len(status.Listeners) > 0 && validListeners == 0:
+		// A ListenerSet with no valid listener at all is neither accepted nor programmed, per the spec.
+		const message = "No valid listener"
+		status.Conditions = []metav1.Condition{
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonListenersNotValid), message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonListenersNotValid), message),
+		}
+
+		return status, false
+
+	case validListeners < len(status.Listeners):
+		// The valid listeners are programmed, so the ListenerSet is accepted and programmed even though some listeners have errors.
+		status.Conditions = []metav1.Condition{
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonListenersNotValid), "Some listeners have errors"),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonProgrammed), "Valid listeners programmed"),
+		}
+
+	default:
+		status.Conditions = []metav1.Condition{
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonAccepted), "ListenerSet accepted"),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonProgrammed), "ListenerSet programmed"),
+		}
+	}
+
+	return status, true
+}
+
+func makeListenerSetCondition(conditionType gatev1.ListenerSetConditionType, status metav1.ConditionStatus, generation int64, reason, message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(conditionType),
+		Status:             status,
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Now(),
+		Reason:             reason,
+		Message:            message,
+	}
 }
 
 func filterReferenceGrantsFrom(referenceGrants []*gatev1.ReferenceGrant, group, kind, namespace string) []*gatev1.ReferenceGrant {

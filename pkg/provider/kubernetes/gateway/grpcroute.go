@@ -63,7 +63,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 			ref := listenerRef{
 				GatewayNamespace: match.GatewayNamespace,
 				GatewayName:      match.GatewayName,
-				Name:             listener.Name,
+				SectionName:      listener.SectionName,
 			}
 			if accepted && attachedRoutes.Conflicts(ref, kindGRPCRoute, hostnames) {
 				if acceptedCondition.Status == metav1.ConditionFalse {
@@ -398,7 +398,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 					Kind:        new(gatev1.Kind(kindGateway)),
 					Namespace:   new(gatev1.Namespace(gatewayNamespace)),
 					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: new(gatev1.SectionName(listener.Name)),
+					SectionName: new(gatev1.SectionName(listener.SectionName)),
 				},
 				ControllerName: controllerName,
 			}
