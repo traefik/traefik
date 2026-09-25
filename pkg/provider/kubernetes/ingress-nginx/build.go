@@ -829,6 +829,8 @@ func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error
 // content, matching ingress-nginx behavior. The loaded set is shared across
 // ingresses to avoid re-reading the same secret multiple times.
 func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcCerts map[string]certPair, loaded map[string]bool) error {
+	var errs []error
+
 	for _, t := range ing.Spec.TLS {
 		if t.SecretName == "" {
 			log.Ctx(ctx).Debug().Msg("Skipping TLS section: no secret name")
@@ -839,21 +841,23 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 		if loaded[secretKey] {
 			continue
 		}
-		loaded[secretKey] = true
 
 		blocks, err := p.certificateBlocks(ing.Namespace, t.SecretName)
 		if err != nil {
-			return fmt.Errorf("getting certificate blocks: %w", err)
+			errs = append(errs, fmt.Errorf("getting certificate blocks: %w", err))
+			continue
 		}
 
 		if blocks.cert == nil || blocks.key == nil {
-			return fmt.Errorf("no keypair found in secret %s/%s", ing.Namespace, t.SecretName)
+			errs = append(errs, fmt.Errorf("no keypair found in secret %s/%s", ing.Namespace, t.SecretName))
+			continue
 		}
 
 		mcCerts[secretKey] = certPair{Cert: string(blocks.cert), Key: string(blocks.key)}
+		loaded[secretKey] = true
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (*tls.Options, error) {
