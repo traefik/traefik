@@ -449,11 +449,11 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		allocatedListeners := make(map[string]struct{})
+		claims := newListenerClaims()
 
-		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, nil, allocatedListeners, conf)
+		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, nil, claims, conf)
 
-		listeners = append(listeners, p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf, statusReport)...)
+		listeners = append(listeners, p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, claims, conf, statusReport)...)
 
 		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
 			gateway:   gateway,
@@ -568,8 +568,8 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 }
 
 // loadGatewayListeners loads the listeners of the given ListenerSet, or of the given Gateway when nil,
-// and claims the valid ones in allocatedListeners.
-func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSet *gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
+// and records what the valid ones claim in claims.
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSet *gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration) []gatewayListener {
 	listeners, generation := gateway.Spec.Listeners, gateway.Generation
 	// The resource declaring the listeners drives the ReferenceGrant checks,
 	// and the namespace "Same" resolves to in allowedRoutes.
@@ -661,23 +661,25 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 		listenerKey := makeListenerKey(listener)
 
-		if _, ok := allocatedListeners[listenerKey]; ok {
+		if _, ok := claims.listeners[listenerKey]; ok {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
 				makeListenerConflictConditions(generation, gatev1.ListenerReasonHostnameConflict, "A listener with the same protocol, port and hostname already exists")...)
 
 			continue
 		}
 
-		portKey, conflictingPortKey := makeListenerPortKeys(listener)
-		if _, ok := allocatedListeners[conflictingPortKey]; ok {
+		// A TCP listener cannot share its port with an HTTP, HTTPS or TLS listener,
+		// as the connections could not be matched to a single listener (Gateway API listener distinctness).
+		isTCP := listener.Protocol == gatev1.TCPProtocolType
+		if tcp, claimed := claims.tcpPorts[listener.Port]; claimed && tcp != isTCP {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
 				makeListenerConflictConditions(generation, gatev1.ListenerReasonProtocolConflict, "A listener with an incompatible protocol already exists on the same port")...)
 
 			continue
 		}
 
-		allocatedListeners[listenerKey] = struct{}{}
-		allocatedListeners[portKey] = struct{}{}
+		claims.listeners[listenerKey] = struct{}{}
+		claims.tcpPorts[listener.Port] = isTCP
 
 		if (listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.TCPProtocolType) && listener.TLS != nil {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -982,7 +984,7 @@ func hostnameMatcherValue(hostname string) string {
 
 // loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway,
 // and reports the status of the ones its AllowedListeners policy refuses.
-func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration, statusReport *statusReport) []gatewayListener {
+func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration, statusReport *statusReport) []gatewayListener {
 	var listeners []gatewayListener
 	for _, listenerSet := range listenerSets {
 		if !listenerSetRefsGateway(listenerSet, gateway) {
@@ -1006,7 +1008,7 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 			continue
 		}
 
-		listeners = append(listeners, p.loadGatewayListeners(ctx, gateway, listenerSet, allocatedListeners, conf)...)
+		listeners = append(listeners, p.loadGatewayListeners(ctx, gateway, listenerSet, claims, conf)...)
 	}
 
 	return listeners
@@ -1809,19 +1811,20 @@ func makeListenerKey(l gatev1.Listener) string {
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
 }
 
-// makeListenerPortKeys returns the key claiming the listener port for its kind of protocol,
-// and the key of the kind it conflicts with.
-// A TCP listener cannot share its port with an HTTP, HTTPS or TLS listener,
-// as the connections could not be matched to a single listener (Gateway API listener distinctness).
-func makeListenerPortKeys(l gatev1.Listener) (string, string) {
-	byPort := fmt.Sprintf("port|%d", l.Port)
-	byHostname := fmt.Sprintf("hostname|%d", l.Port)
+// listenerClaims holds what the listeners already loaded for a Gateway claim,
+// so that the listeners loaded after them are rejected when they conflict.
+type listenerClaims struct {
+	// listeners holds the keys of the listeners, made of their protocol, hostname and port.
+	listeners map[string]struct{}
+	// tcpPorts reports, for each claimed port, whether TCP listeners or hostname based ones claim it.
+	tcpPorts map[gatev1.PortNumber]bool
+}
 
-	if l.Protocol == gatev1.TCPProtocolType {
-		return byPort, byHostname
+func newListenerClaims() *listenerClaims {
+	return &listenerClaims{
+		listeners: make(map[string]struct{}),
+		tcpPorts:  make(map[gatev1.PortNumber]bool),
 	}
-
-	return byHostname, byPort
 }
 
 func makeListenerConflictConditions(generation int64, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {
