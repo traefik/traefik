@@ -139,9 +139,7 @@ type ExtensionBuilderRegistry interface {
 	RegisterBackendFuncs(group, kind string, builderFunc BuildBackendFunc)
 }
 
-// listenerOwner identifies the resource declaring a listener, a Gateway or a ListenerSet.
-// The owner drives the ReferenceGrant checks, the namespace "Same" resolves to in allowedRoutes,
-// and the status the listener is reported in.
+// listenerOwner identifies the resource declaring listeners a route parentRef targets, a Gateway or a ListenerSet.
 type listenerOwner struct {
 	Kind      string
 	Namespace string
@@ -167,16 +165,16 @@ type gatewayListener struct {
 	// the listener is the most specific match for.
 	RouterNames []string
 
-	// Gateway is the Gateway serving this listener:
-	// the Owner itself for a Gateway listener, and the parent Gateway for a ListenerSet one.
+	// Gateway is the Gateway serving this listener.
 	Gateway ktypes.NamespacedName
 
-	Owner listenerOwner
+	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
+	ListenerSet *ktypes.NamespacedName
 }
 
 // fromListenerSet reports whether the listener is declared by a ListenerSet rather than by the Gateway itself.
 func (l gatewayListener) fromListenerSet() bool {
-	return l.Owner.Kind == kindListenerSet
+	return l.ListenerSet != nil
 }
 
 type gatewayWithListeners struct {
@@ -465,10 +463,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Logger()
 
 		gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
-		owner := listenerOwner{Kind: kindGateway, Namespace: gateway.Namespace, Name: gateway.Name}
 		allocatedListeners := make(map[string]struct{})
 
-		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gwNSN, owner, gateway.Generation, gateway.Spec.Listeners, allocatedListeners, conf)
+		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gwNSN, nil, gateway.Generation, gateway.Spec.Listeners, allocatedListeners, conf)
 
 		listenerSetListeners, listenerSetInfos := p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf)
 		listeners = append(listeners, listenerSetListeners...)
@@ -578,9 +575,17 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	}
 }
 
-// loadGatewayListeners loads the given listeners, declared by owner for the given Gateway,
+// loadGatewayListeners loads the given listeners of the given Gateway,
+// declared by the given ListenerSet, or by the Gateway itself when nil,
 // and claims the valid ones in allocatedListeners.
-func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.NamespacedName, owner listenerOwner, generation int64, listeners []gatev1.Listener, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.NamespacedName, listenerSet *ktypes.NamespacedName, generation int64, listeners []gatev1.Listener, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
+	// The resource declaring the listeners drives the ReferenceGrant checks,
+	// and the namespace "Same" resolves to in allowedRoutes.
+	ownerKind, ownerNamespace := kindGateway, gateway.Namespace
+	if listenerSet != nil {
+		ownerKind, ownerNamespace = kindListenerSet, listenerSet.Namespace
+	}
+
 	tlsCerts := make(map[string]*tls.CertAndStores)
 	gatewayListeners := make([]gatewayListener, len(listeners))
 
@@ -592,7 +597,9 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 			TLS:      listener.TLS,
 			Hostname: listener.Hostname,
 			Gateway:  gateway,
-			Owner:    owner,
+
+			ListenerSet: listenerSet,
+
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
 				SupportedKinds: []gatev1.RouteGroupKind{},
@@ -618,7 +625,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 				ObservedGeneration: generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.ListenerReasonPortUnavailable),
-				Message:            fmt.Sprintf("Cannot find entryPoint for %s: %v", owner.Kind, err),
+				Message:            fmt.Sprintf("Cannot find entryPoint for %s: %v", ownerKind, err),
 			})
 
 			continue
@@ -626,7 +633,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 		gatewayListeners[i].EPName = ep
 
 		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)}})
-		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(owner.Namespace, allowedRoutes.Namespaces)
+		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(ownerNamespace, allowedRoutes.Namespaces)
 		if err != nil {
 			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -693,7 +700,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 					ObservedGeneration: generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("No TLS configuration for %s Listener %s:%d and protocol %q", owner.Kind, listener.Name, listener.Port, listener.Protocol),
+					Message:            fmt.Sprintf("No TLS configuration for %s Listener %s:%d and protocol %q", ownerKind, listener.Name, listener.Port, listener.Protocol),
 				})
 				continue
 			}
@@ -749,8 +756,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 						continue
 					}
 
-					certificateNamespace := string(ptr.Deref(certificateRef.Namespace, gatev1.Namespace(owner.Namespace)))
-					if err := p.isReferenceGranted(owner.Kind, owner.Namespace, groupCore, kindSecret, string(certificateRef.Name), certificateNamespace); err != nil {
+					certificateNamespace := string(ptr.Deref(certificateRef.Namespace, gatev1.Namespace(ownerNamespace)))
+					if err := p.isReferenceGranted(ownerKind, ownerNamespace, groupCore, kindSecret, string(certificateRef.Name), certificateNamespace); err != nil {
 						errCertConditions = append(errCertConditions, metav1.Condition{
 							Type:               string(gatev1.ListenerConditionResolvedRefs),
 							Status:             metav1.ConditionFalse,
@@ -1000,7 +1007,7 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 
 	var listeners []gatewayListener
 	for _, listenerSet := range allowed {
-		owner := listenerOwner{Kind: kindListenerSet, Namespace: listenerSet.Namespace, Name: listenerSet.Name}
+		lsNSN := ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}
 
 		// A ListenerEntry mirrors a Gateway Listener field for field.
 		entries := make([]gatev1.Listener, 0, len(listenerSet.Spec.Listeners))
@@ -1008,7 +1015,7 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 			entries = append(entries, gatev1.Listener(entry))
 		}
 
-		listeners = append(listeners, p.loadGatewayListeners(ctx, gwNSN, owner, listenerSet.Generation, entries, allocatedListeners, conf)...)
+		listeners = append(listeners, p.loadGatewayListeners(ctx, gwNSN, &lsNSN, listenerSet.Generation, entries, allocatedListeners, conf)...)
 	}
 
 	return listeners, infos
@@ -1615,7 +1622,7 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			// and a ListenerSet parent only the listeners of that ListenerSet.
 			switch {
 			case owner.Kind == kindGateway && !listener.fromListenerSet(),
-				owner.Kind == kindListenerSet && listener.Owner == owner:
+				owner.Kind == kindListenerSet && listener.fromListenerSet() && *listener.ListenerSet == ktypes.NamespacedName{Namespace: owner.Namespace, Name: owner.Name}:
 				listeners = append(listeners, listener)
 			}
 		}
@@ -1939,7 +1946,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 
 	var validListeners int
 	for _, listener := range listeners {
-		if listener.Owner != (listenerOwner{Kind: kindListenerSet, Namespace: listenerSet.Namespace, Name: listenerSet.Name}) {
+		if !listener.fromListenerSet() || *listener.ListenerSet != (ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}) {
 			continue
 		}
 

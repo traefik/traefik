@@ -13211,8 +13211,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:  "http",
-					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Name:        "http",
+					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:           "http",
 						SupportedKinds: []gatev1.RouteGroupKind{{Kind: "HTTPRoute", Group: new(gatev1.Group(gatev1.GroupName))}},
@@ -13246,8 +13246,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:  "https",
-					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Name:        "https",
+					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "https",
 						Conditions: []metav1.Condition{
@@ -13281,8 +13281,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:  "http",
-					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Name:        "http",
+					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "http",
 						Conditions: []metav1.Condition{
@@ -13316,16 +13316,16 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:  "http",
-					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Name:        "http",
+					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:       "http",
 						Conditions: []metav1.Condition{},
 					},
 				},
 				{
-					Name:  "invalid",
-					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "my-ls"},
+					Name:        "invalid",
+					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "invalid",
 						Conditions: []metav1.Condition{
@@ -13360,16 +13360,15 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:  "http",
-					Owner: listenerOwner{Kind: kindListenerSet, Namespace: "default", Name: "other-ls"},
+					Name:        "http",
+					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "other-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:       "http",
 						Conditions: []metav1.Condition{},
 					},
 				},
 				{
-					Name:  "http-gw",
-					Owner: listenerOwner{Kind: kindGateway, Namespace: "default", Name: "my-gw"},
+					Name: "http-gw",
 					Status: &gatev1.ListenerStatus{
 						Name:       "http-gw",
 						Conditions: []metav1.Condition{},
@@ -13544,8 +13543,7 @@ func Test_loadListenerSetListeners(t *testing.T) {
 			allocatedListeners := make(map[string]struct{})
 			if test.gatewayListener != nil {
 				gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
-				owner := listenerOwner{Kind: kindGateway, Namespace: gateway.Namespace, Name: gateway.Name}
-				p.loadGatewayListeners(t.Context(), gwNSN, owner, gateway.Generation, []gatev1.Listener{*test.gatewayListener}, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
+				p.loadGatewayListeners(t.Context(), gwNSN, nil, gateway.Generation, []gatev1.Listener{*test.gatewayListener}, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
 			}
 
 			listeners, _ := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
