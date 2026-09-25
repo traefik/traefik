@@ -6,10 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/plugins"
 )
 
@@ -34,15 +31,10 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Manager, map[string]
 	plgs := map[string]plugins.Descriptor{}
 
 	if hasPlugins(staticCfg) {
-		httpClient := retryablehttp.NewClient()
-		httpClient.Logger = logs.NewRetryableHTTPLogger(log.Logger)
-		httpClient.HTTPClient = &http.Client{Timeout: 10 * time.Second}
-		httpClient.RetryMax = 3
-
 		// Create separate downloader for HTTP operations
 		archivesPath := filepath.Join(outputDir, "archives")
 		downloader, err := plugins.NewRegistryDownloader(plugins.RegistryDownloaderOptions{
-			HTTPClient:   httpClient.HTTPClient,
+			HTTPClient:   &http.Client{Timeout: 10 * time.Second},
 			ArchivesPath: archivesPath,
 		})
 		if err != nil {
