@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -199,7 +200,10 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 			}
 
-			rule := buildRule(srv.Hostname, loc)
+			var (
+				rule, originalRule = buildRule(srv.Hostname, loc)
+				priority           = pinnedPriority(rule, originalRule)
+			)
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -211,6 +215,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			rt := &dynamic.Router{
 				EntryPoints:   p.NonTLSEntryPoints,
 				Rule:          rule,
+				Priority:      priority,
 				RuleSyntax:    "default",
 				Service:       routerSvcName,
 				Observability: obs,
@@ -234,6 +239,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				rtTLS = &dynamic.Router{
 					EntryPoints: p.TLSEntryPoints,
 					Rule:        rule,
+					Priority:    priority,
 					RuleSyntax:  "default",
 					Service:     routerSvcName,
 					TLS: &dynamic.RouterTLSConfig{
@@ -255,10 +261,15 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
+				var (
+					canaryRule     = appendCanaryRule(rule, loc.Canary)
+					canaryPriority = pinnedPriority(canaryRule, appendCanaryRule(originalRule, loc.Canary))
+				)
 				canaryKey := routerKey + "-canary"
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
+					Rule:          canaryRule,
+					Priority:      canaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       canarySvcName,
 					Observability: obs,
@@ -270,7 +281,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canaryKeyTLS := canaryKey + "-tls"
 					canaryRouterTLS := &dynamic.Router{
 						EntryPoints:   rtTLS.EntryPoints,
-						Rule:          appendCanaryRule(rule, loc.Canary),
+						Rule:          canaryRule,
+						Priority:      canaryPriority,
 						RuleSyntax:    rtTLS.RuleSyntax,
 						Service:       canarySvcName,
 						TLS:           rtTLS.TLS,
@@ -282,10 +294,15 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
+				var (
+					nonCanaryRule     = appendNonCanaryRule(rule, loc.Canary)
+					nonCanaryPriority = pinnedPriority(nonCanaryRule, appendNonCanaryRule(originalRule, loc.Canary))
+				)
 				nonCanaryKey := routerKey + "-non-canary"
 				nonCanaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
+					Rule:          nonCanaryRule,
+					Priority:      nonCanaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       primarySvcName,
 					Observability: obs,
@@ -297,7 +314,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					nonCanaryKeyTLS := nonCanaryKey + "-tls"
 					nonCanaryRouterTLS := &dynamic.Router{
 						EntryPoints:   rtTLS.EntryPoints,
-						Rule:          appendNonCanaryRule(rule, loc.Canary),
+						Rule:          nonCanaryRule,
+						Priority:      nonCanaryPriority,
 						RuleSyntax:    rtTLS.RuleSyntax,
 						Service:       primarySvcName,
 						TLS:           rtTLS.TLS,
@@ -615,7 +633,6 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
-		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
 		Service:       unavailableServiceName,
@@ -624,7 +641,8 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	}
 }
 
-func buildRule(host string, loc *location) string {
+// buildRule returns the router rule and its form before lookahead translation.
+func buildRule(host string, loc *location) (rule, originalRule string) {
 	var rules []string
 
 	if host != "" {
@@ -640,30 +658,46 @@ func buildRule(host string, loc *location) string {
 		}
 	}
 
+	var pathRules, originalPathRules []string
+
 	if len(loc.Path) > 0 {
 		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
 
-		regexPath := loc.Path
+		regexPath := pathRegexp(loc)
 		if pathType == netv1.PathTypeImplementationSpecific {
 			pathType = netv1.PathTypePrefix
-			if hasAbsoluteRewriteTarget(loc) {
-				regexPath = makeTrailingGroupOptional(loc.Path)
-			}
 		}
 
 		switch pathType {
 		case netv1.PathTypeExact:
-			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
+			pathRules = append(pathRules, fmt.Sprintf("Path(%q)", loc.Path))
 		case netv1.PathTypePrefix:
 			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
+				verbatim := fmt.Sprintf("PathRegexp(%q)", nginxRegexPrefix+regexPath)
+				if loc.PathKeep != "" {
+					pathRules = []string{
+						fmt.Sprintf("PathRegexp(%q)", nginxRegexPrefix+loc.PathKeep),
+						fmt.Sprintf("!PathRegexp(%q)", nginxRegexPrefix+loc.PathExclude),
+					}
+					originalPathRules = []string{verbatim}
+				} else {
+					pathRules = []string{verbatim}
+				}
 			} else {
-				rules = append(rules, buildPrefixRule(loc.Path))
+				pathRules = append(pathRules, buildPrefixRule(loc.Path))
 			}
 		}
 	}
 
-	return strings.Join(rules, " && ")
+	if originalPathRules == nil {
+		originalPathRules = pathRules
+	}
+
+	joinRule := func(pathMatchers []string) string {
+		return strings.Join(slices.Concat(rules, pathMatchers), " && ")
+	}
+
+	return joinRule(pathRules), joinRule(originalPathRules)
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
@@ -678,6 +712,16 @@ func buildPrefixRule(path string) string {
 	}
 	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf("(Path(%q) || PathPrefix(%q))", path, path+"/")
+}
+
+// pathRegexp returns the path expression, widening it for absolute rewrite targets
+// on ImplementationSpecific paths before lookahead translation.
+func pathRegexp(loc *location) string {
+	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
+		return makeTrailingGroupOptional(loc.Path)
+	}
+
+	return loc.Path
 }
 
 // hasAbsoluteRewriteTarget reports whether the location's rewrite-target
@@ -729,4 +773,14 @@ func makeTrailingGroupOptional(path string) string {
 	}
 
 	return path[:idx] + "(?:" + path[idx:] + ")?"
+}
+
+// pinnedPriority uses the original rule length so lookahead translation does not increase priority.
+// It returns zero for unchanged rules, leaving the default priority calculation in place.
+func pinnedPriority(rule, originalRule string) int {
+	if rule == originalRule {
+		return 0
+	}
+
+	return httpmuxer.GetRulePriority(originalRule)
 }
