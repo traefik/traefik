@@ -174,9 +174,6 @@ type gatewayListener struct {
 type gatewayWithListeners struct {
 	gateway   *gatev1.Gateway
 	listeners []gatewayListener
-
-	// accepted reports whether the Gateway is accepted, counting the listeners of its ListenerSets.
-	accepted bool
 }
 
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
@@ -458,18 +455,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 		listeners = append(listeners, p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf, statusReport)...)
 
-		// A Gateway is accepted as soon as one of the listeners serving it is valid, whoever declares it.
-		// GEP-1713 forbids programming the listeners of a ListenerSet whose parent Gateway is not accepted,
-		// which holds on its own here:
-		// only a valid listener is programmed, and a valid one makes the Gateway accepted.
-		accepted := len(listeners) == 0 || slices.ContainsFunc(listeners, func(listener gatewayListener) bool {
-			return len(listener.Status.Conditions) == 0
-		})
-
 		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
 			gateway:   gateway,
 			listeners: listeners,
-			accepted:  accepted,
 		})
 	}
 
@@ -494,7 +482,16 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gwl.gateway.Namespace).
 			Logger()
 
-		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, gwl.accepted)
+		// A Gateway is accepted as soon as one of the listeners serving it is valid, whoever declares it.
+		// GEP-1713 forbids programming the listeners of a ListenerSet whose parent Gateway is not accepted,
+		// which holds on its own here:
+		// only a valid listener is programmed, and a valid one makes the Gateway accepted.
+		// It is decided before makeGatewayStatus reports the valid listeners with their conditions.
+		accepted := len(gwl.listeners) == 0 || slices.ContainsFunc(gwl.listeners, func(listener gatewayListener) bool {
+			return len(listener.Status.Conditions) == 0
+		})
+
+		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, accepted)
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -519,7 +516,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 		var attachedListenerSets int32
 		for nsn, listeners := range listenerSetListeners {
-			listenerSetStatus, listenerSetAccepted := makeListenerSetStatus(listeners, gwl.accepted)
+			listenerSetStatus, listenerSetAccepted := makeListenerSetStatus(listeners, accepted)
 			statusReport.RecordListenerSetStatus(nsn, listenerSetStatus)
 			if listenerSetAccepted {
 				attachedListenerSets++
