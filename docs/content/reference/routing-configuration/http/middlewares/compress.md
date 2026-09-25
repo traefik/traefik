@@ -3,7 +3,7 @@ title: "Traefik Compress Documentation"
 description: "Traefik Proxy's HTTP middleware lets you compress responses before sending them to the client. Read the technical documentation."
 ---
 
-The `compress` middleware compresses response. It supports Gzip, Brotli and Zstandard compression
+The `compress` middleware compresses response. It supports Gzip, Brotli and Zstandard compression.
 
 ## Configuration Examples
 
@@ -55,7 +55,7 @@ spec:
 | <a id="opt-defaultEncoding" href="#opt-defaultEncoding" title="#opt-defaultEncoding">`defaultEncoding`</a> | specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`). | "" | No |
 | <a id="opt-encodings" href="#opt-encodings" title="#opt-encodings">`encodings`</a> | Specifies the list of supported compression encodings. At least one encoding value must be specified, and valid entries are `zstd` (Zstandard), `br` (Brotli), and `gzip` (Gzip). The order of the list also sets the priority, the top entry has the highest priority. | gzip, br, zstd | No |
 | <a id="opt-includedContentTypes" href="#opt-includedContentTypes" title="#opt-includedContentTypes">`includedContentTypes`</a> | List of content types to compare the `Content-Type` header of the responses before compressing. <br /> The responses with content types defined in `includedContentTypes` are compressed. <br /> Content types are compared in a case-insensitive, whitespace-ignored manner.<br /> **The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.** | "" | No |
-| <a id="opt-minResponseBodyBytes" href="#opt-minResponseBodyBytes" title="#opt-minResponseBodyBytes">`minResponseBodyBytes`</a> | `Minimum amount of bytes a response body must have to be compressed. <br />Responses smaller than the specified values will **not** be compressed. | 1024 | No |
+| <a id="opt-minResponseBodyBytes" href="#opt-minResponseBodyBytes" title="#opt-minResponseBodyBytes">`minResponseBodyBytes`</a> | `Minimum amount of bytes a response body must have to be compressed. <br />Responses smaller than the specified values will **not** be compressed, **except** for chunked data which will ignore this setting. This prevents breaking [SSE streams](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) or any other uncompressed stream which, otherwise, could be blocked waiting for enough data. | 1024 | No |
 
 ## Compression activation
 
