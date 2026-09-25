@@ -484,7 +484,13 @@
           "foo"
         ],
         "clientAuth": {},
-        "sniStrict": true
+        "sniStrict": true,
+        "echKeys": [
+          "xxxx"
+        ],
+        "echDecryptOnlyKeys": [
+          "xxxx"
+        ]
       }
     },
     "stores": {
