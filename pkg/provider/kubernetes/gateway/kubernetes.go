@@ -594,13 +594,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 	for i, listener := range listeners {
 		gatewayListeners[i] = gatewayListener{
-			SectionName: string(listener.Name),
-			Port:        listener.Port,
-			Protocol:    listener.Protocol,
-			TLS:         listener.TLS,
-			Hostname:    listener.Hostname,
-			ListenerSet: listenerSetName,
-
+			SectionName:           string(listener.Name),
+			Port:                  listener.Port,
+			Protocol:              listener.Protocol,
+			TLS:                   listener.TLS,
+			Hostname:              listener.Hostname,
+			ListenerSet:           listenerSetName,
 			ListenerSetGeneration: listenerSetGeneration,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
