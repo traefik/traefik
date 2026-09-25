@@ -15,6 +15,12 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
+	// TapDefaultMaxBodySize is the TapRecord.MaxBodySize option default value.
+	TapDefaultMaxBodySize int64 = -1
+	// TapDefaultPath is the TapRecord.Path option default value.
+	TapDefaultPath = "/"
+	// TapDefaultTimeout is the Tap.Timeout option default value.
+	TapDefaultTimeout = 10 * time.Second
 )
 
 // +k8s:deepcopy-gen=true
@@ -47,6 +53,7 @@ type Middleware struct {
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
+	Tap               *Tap               `json:"tap,omitempty" toml:"tap,omitempty" yaml:"tap,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 
@@ -804,6 +811,61 @@ type StripPrefix struct {
 type StripPrefixRegex struct {
 	// Regex defines the regular expression to match the path prefix from the request URL.
 	Regex []string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Tap holds the tap middleware configuration.
+// This middleware sends a copy of the requests and responses going through it to Traefik services.
+// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/tap/
+type Tap struct {
+	// Request defines where and how the requests are sent.
+	// When omitted, requests are not sent.
+	Request *TapRecord `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
+	// Response defines where and how the responses are sent.
+	// When omitted, responses are not sent.
+	Response *TapRecord `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
+	// Timeout defines the maximum duration allowed to send a record.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (t *Tap) SetDefaults() {
+	t.Timeout = ptypes.Duration(TapDefaultTimeout)
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapRecord holds the configuration of the records sent by the tap middleware.
+type TapRecord struct {
+	// Service defines the name of the service the records are sent to.
+	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	// Path defines the path of the requests sending the records to the service.
+	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	// Body defines whether the body is part of the records.
+	Body *bool `json:"body,omitempty" toml:"body,omitempty" yaml:"body,omitempty" export:"true"`
+	// MaxBodySize defines the maximum body size in bytes kept in a record.
+	// A larger body is truncated, and the record is flagged as truncated.
+	// A negative value means no limit.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+	// RequestHeaders defines the request headers described in the records, along with the request line.
+	// It allows a response record to be understood, and correlated, without the matching request record.
+	// It is only allowed on the response records, as the request ones already describe the request.
+	RequestHeaders []string `json:"requestHeaders,omitempty" toml:"requestHeaders,omitempty" yaml:"requestHeaders,omitempty" export:"true"`
+	// FailClosed defines whether the record is sent before the data it describes is handed over:
+	// the request record before the request reaches the backend,
+	// and the response record before the response reaches the client.
+	// When the record cannot be sent, the request is rejected with an Internal Server Error.
+	// This guarantees that no request is served without being recorded, at the cost of
+	// coupling the client latency and availability to the tap service.
+	FailClosed bool `json:"failClosed,omitempty" toml:"failClosed,omitempty" yaml:"failClosed,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (t *TapRecord) SetDefaults() {
+	t.Path = TapDefaultPath
+	t.Body = new(true)
+	t.MaxBodySize = new(TapDefaultMaxBodySize)
 }
 
 // +k8s:deepcopy-gen=true
