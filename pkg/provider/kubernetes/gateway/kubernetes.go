@@ -1591,16 +1591,16 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			continue
 		}
 
-		parent := listenerOwner{
+		owner := listenerOwner{
 			Kind:      string(ptr.Deref(parentRef.Kind, kindGateway)),
 			Namespace: string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace))),
 			Name:      string(parentRef.Name),
 		}
-		if parent.Kind != kindGateway && parent.Kind != kindListenerSet {
+		if owner.Kind != kindGateway && owner.Kind != kindListenerSet {
 			continue
 		}
 
-		gateway := gatewayForParent(gateways, parent)
+		gateway := gatewayForOwner(gateways, owner)
 		if gateway == nil {
 			continue
 		}
@@ -1614,8 +1614,8 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 			// A Gateway parent targets the listeners the Gateway declares itself,
 			// and a ListenerSet parent only the listeners of that ListenerSet.
 			switch {
-			case parent.Kind == kindGateway && !listener.fromListenerSet(),
-				parent.Kind == kindListenerSet && listener.Owner == parent:
+			case owner.Kind == kindGateway && !listener.fromListenerSet(),
+				owner.Kind == kindListenerSet && listener.Owner == owner:
 				listeners = append(listeners, listener)
 			}
 		}
@@ -1631,19 +1631,19 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 	return matches
 }
 
-// gatewayForParent returns the managed Gateway serving the given route parent, a Gateway or a ListenerSet,
-// or nil when this controller does not manage that parent.
+// gatewayForOwner returns the managed Gateway serving the listeners of the given owner, a Gateway or a ListenerSet,
+// or nil when this controller does not manage that owner.
 // A ListenerSet is served by the Gateway it references, allowed by its AllowedListeners policy or not.
-func gatewayForParent(gateways []gatewayWithListeners, parent listenerOwner) *gatewayWithListeners {
+func gatewayForOwner(gateways []gatewayWithListeners, owner listenerOwner) *gatewayWithListeners {
 	for i, gateway := range gateways {
-		if parent.Kind == kindListenerSet {
-			if _, ok := gateway.listenerSets[ktypes.NamespacedName{Namespace: parent.Namespace, Name: parent.Name}]; ok {
+		if owner.Kind == kindListenerSet {
+			if _, ok := gateway.listenerSets[ktypes.NamespacedName{Namespace: owner.Namespace, Name: owner.Name}]; ok {
 				return &gateways[i]
 			}
 			continue
 		}
 
-		if gateway.gateway.Namespace == parent.Namespace && gateway.gateway.Name == parent.Name {
+		if gateway.gateway.Namespace == owner.Namespace && gateway.gateway.Name == owner.Name {
 			return &gateways[i]
 		}
 	}

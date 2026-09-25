@@ -812,12 +812,12 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 		// A ListenerSet parentRef is managed when the ListenerSet references one of the managed gateways,
 		// even when none of its listeners is currently loaded, so that a stale status is always refreshed.
 		// SectionName or Port is not used.
-		parent := listenerOwner{
+		owner := listenerOwner{
 			Kind:      string(ptr.Deref(currentParent.ParentRef.Kind, kindGateway)),
 			Namespace: string(ptr.Deref(currentParent.ParentRef.Namespace, gatev1.Namespace(routeNamespace))),
 			Name:      string(currentParent.ParentRef.Name),
 		}
-		if gatewayForParent(gateways, parent) == nil {
+		if gatewayForOwner(gateways, owner) == nil {
 			parentStatuses = append(parentStatuses, currentParent)
 		}
 	}
