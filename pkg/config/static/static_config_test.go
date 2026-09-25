@@ -2,11 +2,17 @@ package static
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/paerser/env"
+	ptypes "github.com/traefik/paerser/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
+	"github.com/traefik/traefik/v3/pkg/provider/rest"
 )
 
 func TestHasEntrypoint(t *testing.T) {
@@ -702,6 +708,89 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestConfiguration_InternalEntryPointAddressFromEnv(t *testing.T) {
+	for _, strategy := range []string{AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject} {
+		t.Run(strategy, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{Providers: &Providers{}}
+			err := env.Decode([]string{
+				"TRAEFIK_PING=true",
+				"TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80",
+				"TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443",
+				"TRAEFIK_ENTRYPOINTS_TRAEFIK_HTTP_ALIASHEADERSSTRATEGY=" + strategy,
+			}, env.DefaultNamePrefix, cfg)
+			require.NoError(t, err)
+
+			cfg.SetEffectiveConfiguration()
+
+			require.NotNil(t, cfg.Ping)
+			assert.Equal(t, DefaultInternalEntryPointName, cfg.Ping.EntryPoint)
+			require.NotNil(t, cfg.EntryPoints[DefaultInternalEntryPointName])
+			assert.Equal(t, ":8080", cfg.EntryPoints[DefaultInternalEntryPointName].Address)
+			assert.Equal(t, strategy, cfg.EntryPoints[DefaultInternalEntryPointName].HTTP.AliasHeadersStrategy)
+			assert.Equal(t, ":80", cfg.EntryPoints["web"].Address)
+			assert.Equal(t, ":443", cfg.EntryPoints["websecure"].Address)
+		})
+	}
+}
+
+func TestConfiguration_InternalEntryPointAddressPreservesOptions(t *testing.T) {
+	tests := []struct {
+		desc string
+		conf Configuration
+	}{
+		{
+			desc: "ping",
+			conf: Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+		},
+		{
+			desc: "insecure API",
+			conf: Configuration{API: &API{Insecure: true}},
+		},
+		{
+			desc: "Prometheus",
+			conf: Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName}}},
+		},
+		{
+			desc: "insecure REST",
+			conf: Configuration{Providers: &Providers{Rest: &rest.Provider{Insecure: true}}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ep := &EntryPoint{}
+			expected := &EntryPoint{Address: ":8080"}
+			for _, entryPoint := range []*EntryPoint{ep, expected} {
+				entryPoint.SetDefaults()
+				entryPoint.HTTP.AliasHeadersStrategy = AliasHeadersStrategyReject
+				entryPoint.HTTP.Middlewares = []string{"auth@file"}
+				entryPoint.HTTP.MaxHeaderBytes = 4096
+				entryPoint.Transport.RespondingTimeouts.ReadTimeout = ptypes.Duration(7 * time.Second)
+				entryPoint.ForwardedHeaders.TrustedIPs = []string{"192.0.2.0/24"}
+			}
+
+			cfg := test.conf
+			if cfg.Providers == nil {
+				cfg.Providers = &Providers{}
+			}
+			cfg.EntryPoints = EntryPoints{DefaultInternalEntryPointName: ep}
+			cfg.SetEffectiveConfiguration()
+
+			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
+			assert.Equal(t, expected, ep)
+
+			cfg.SetEffectiveConfiguration()
+
+			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
+			assert.Equal(t, expected, ep)
 		})
 	}
 }
