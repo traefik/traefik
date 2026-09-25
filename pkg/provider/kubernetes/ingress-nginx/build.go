@@ -557,10 +557,16 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 }
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
+	maxIdleConnsPerHost := p.UpstreamKeepaliveConnections
+	if maxIdleConnsPerHost == 0 {
+		// Unlike NGINX, Go uses its default idle connection limit for zero.
+		maxIdleConnsPerHost = -1
+	}
+
 	nst := namedServersTransport{
 		name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
-			MaxIdleConnsPerHost: p.UpstreamKeepaliveConnections,
+			MaxIdleConnsPerHost: maxIdleConnsPerHost,
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
 				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
