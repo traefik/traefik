@@ -4,8 +4,10 @@ import (
 	"errors"
 	"math"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -14,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -298,7 +302,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost")`,
 							RuleSyntax:  "default",
-							Priority:    math.MinInt32,
+							Priority:    math.MinInt32 + len(`Host("whoami.localhost")`),
 							Service:     "default-ingress-with-service-unavailable-default-backend-default-backend",
 							Middlewares: []string{"default-ingress-with-service-unavailable-default-backend-default-backend-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -315,7 +319,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-service-unavailable-default-backend-default-backend-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost")`,
-							Priority:    math.MinInt32,
+							Priority:    math.MinInt32 + len(`Host("whoami.localhost")`),
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-service-unavailable-default-backend-default-backend",
 							Middlewares: []string{"default-ingress-with-service-unavailable-default-backend-default-backend-tls-retry"},
@@ -5936,7 +5940,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-default-backend-annotations-default-backend": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost")`,
-							Priority:    math.MinInt32,
+							Priority:    math.MinInt32 + len(`Host("whoami.localhost")`),
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-default-backend-annotations-default-backend",
 							Middlewares: []string{"default-ingress-with-default-backend-annotations-default-backend-retry"},
@@ -5955,7 +5959,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost")`,
 							RuleSyntax:  "default",
-							Priority:    math.MinInt32,
+							Priority:    math.MinInt32 + len(`Host("whoami.localhost")`),
 							Service:     "default-ingress-with-default-backend-annotations-default-backend",
 							Middlewares: []string{"default-ingress-with-default-backend-annotations-default-backend-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
@@ -17284,6 +17288,88 @@ func TestLoadIngresses(t *testing.T) {
 
 			conf := p.loadConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestLoadIngressesDefaultBackendPriority(t *testing.T) {
+	t.Parallel()
+
+	objects := readResources(t, []string{
+		"services.yml",
+		"ingressclasses.yml",
+		"ingresses/ingress-with-default-backend-annotations.yml",
+	})
+	client := newClient(kubefake.NewClientset(objects...))
+	events, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-events
+
+	p := Provider{
+		k8sClient:                      client,
+		defaultBackendServiceName:      "whoami",
+		defaultBackendServiceNamespace: "default",
+		NonTLSEntryPoints:              []string{"http"},
+		TLSEntryPoints:                 []string{"https"},
+	}
+	p.SetDefaults()
+	conf := p.loadConfiguration(t.Context())
+
+	const ingressRouter = "default-ingress-with-default-backend-annotations"
+
+	for _, test := range []struct {
+		desc    string
+		suffix  string
+		reverse bool
+	}{
+		{desc: "HTTP global fallback first"},
+		{desc: "HTTP global fallback last", reverse: true},
+		{desc: "HTTPS global fallback first", suffix: "-tls"},
+		{desc: "HTTPS global fallback last", suffix: "-tls", reverse: true},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+			muxer := httpmuxer.NewMuxer(parser, nil)
+
+			routerNames := []string{
+				"default-backend" + test.suffix,
+				ingressRouter + "-default-backend" + test.suffix,
+				ingressRouter + "-rule-0-path-0" + test.suffix,
+			}
+			if test.reverse {
+				slices.Reverse(routerNames)
+			}
+
+			for _, name := range routerNames {
+				router := conf.HTTP.Routers[name]
+				require.NotNil(t, router)
+				priority := router.Priority
+				if priority == 0 {
+					priority = httpmuxer.GetRulePriority(router.Rule)
+				}
+
+				handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.Header().Set("Router", name)
+				})
+				require.NoError(t, muxer.AddRoute(router.Rule, router.RuleSyntax, priority, "kubernetesingressnginx", handler))
+			}
+
+			for _, request := range []struct {
+				url    string
+				router string
+			}{
+				{url: "http://whoami.localhost/", router: ingressRouter + "-rule-0-path-0"},
+				{url: "http://whoami.localhost/unmatched", router: ingressRouter + "-default-backend"},
+				{url: "http://other.localhost/unmatched", router: "default-backend"},
+			} {
+				recorder := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, request.url, http.NoBody)
+				requestdecorator.New(nil).ServeHTTP(recorder, req, muxer.ServeHTTP)
+				assert.Equal(t, request.router+test.suffix, recorder.Header().Get("Router"), request.url)
+			}
 		})
 	}
 }

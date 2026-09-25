@@ -216,8 +216,13 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.IsIngressDefaultBackend {
-				rt.Priority = math.MinInt32
-				rtTLS.Priority = math.MinInt32
+				priority := math.MinInt32
+				if srv.Hostname != "" {
+					// Keep host fallbacks above catch-all routers while preserving rule-length ordering.
+					priority += len(rule)
+				}
+				rt.Priority = priority
+				rtTLS.Priority = priority
 			}
 
 			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
