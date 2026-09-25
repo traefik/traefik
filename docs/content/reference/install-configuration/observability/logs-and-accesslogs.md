@@ -228,6 +228,7 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">`accesslog.format`</a> | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: [`common`](#traefik-clf-format-fields) (Traefik extended CLF), [`genericCLF`](#generic-clf-format-fields) (standard CLF compatible with analyzers), or [`json`](#json-format-fields).<br />If the given format is unsupported, the default (`common`) is used instead. | "common" | No      |
 | <a id="opt-accesslog-bufferingSize" href="#opt-accesslog-bufferingSize" title="#opt-accesslog-bufferingSize">`accesslog.bufferingSize`</a> | To process access logs asynchronously, set `bufferingSize` to a value greater than zero.<br />The value specifies the capacity, in log lines, of the in-memory queue.<br />Traefik writes queued log lines continuously and does not wait for the queue to become full.<br />A larger queue reduces the chance that access logging blocks requests under load. | 0 | No      |
 | <a id="opt-accesslog-addInternals" href="#opt-accesslog-addInternals" title="#opt-accesslog-addInternals">`accesslog.addInternals`</a> | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
+| <a id="opt-accesslog-sampleRate" href="#opt-accesslog-sampleRate" title="#opt-accesslog-sampleRate">`accesslog.sampleRate`</a> | Defines the proportion of access logs sent to the OpenTelemetry Collector, between 0.0 and 1.0. Only applies when `accesslog.otlp` is configured. See [sampleRate](#samplerate) for details. | 1.0 | No      |
 | <a id="opt-accesslog-filters-statusCodes" href="#opt-accesslog-filters-statusCodes" title="#opt-accesslog-filters-statusCodes">`accesslog.filters.statusCodes`</a> | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
 | <a id="opt-accesslog-filters-retryAttempts" href="#opt-accesslog-filters-retryAttempts" title="#opt-accesslog-filters-retryAttempts">`accesslog.filters.retryAttempts`</a> | Keep the access logs when at least one retry has happened. | false      | No      |
 | <a id="opt-accesslog-filters-minDuration" href="#opt-accesslog-filters-minDuration" title="#opt-accesslog-filters-minDuration">`accesslog.filters.minDuration`</a> | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).  |  0   | No      |
@@ -331,6 +332,17 @@ Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the 
     
     Note that this automatic detection can fail, like if the Traefik pod is running in host network mode.
     In this case, you should provide the attributes with the option or the env variable.
+
+#### sampleRate
+
+The `sampleRate` option controls the proportion of access logs sent to the OpenTelemetry Collector, specified between 0.0 and 1.0.
+
+This option only applies when `accesslog.otlp` is configured, and is independent of [`tracing.sampleRate`](tracing.md#samplerate).
+
+The OpenTelemetry Logs SDK does not expose a sampler, unlike the tracing SDK.
+Traefik therefore samples access logs randomly: each access log has a probability equal to `sampleRate` of being sent.
+Sampling is independent of tracing, so the access logs of a given trace may be partially sampled, and a request can appear in the traces while being absent from the access logs, and vice versa.
+When consistent log/trace correlation is required, prefer filtering logs in the OpenTelemetry Collector.
 
 ### Traefik CLF format fields
 
