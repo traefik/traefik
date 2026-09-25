@@ -185,7 +185,7 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(gatewayName, listener, routerConf, routerName, routeRule, route, statusReport)
+				router.Service, serviceCondition = p.loadGRPCService(gatewayName, gatewayNamespace, listener, routerConf, routerName, routeRule, route, statusReport)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -199,7 +199,7 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 	return routers, condition
 }
 
-func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadGRPCService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -208,7 +208,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
-		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, listener, conf, routerName, route, bi, backendRef, statusReport)
+		svcName, svc, errCondition := p.loadGRPCBackendRef(gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			condition = errCondition
@@ -237,7 +237,7 @@ func (p *Provider) loadGRPCService(gatewayName string, listener gatewayListener,
 	return name, condition
 }
 
-func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
+func (p *Provider) loadGRPCBackendRef(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.GRPCRoute, backendIndex int, backendRef gatev1.GRPCBackendRef, statusReport *statusReport) (string, *dynamic.Service, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -286,7 +286,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName string, listener gatewayListen
 		}
 	}
 
-	lb, st, errCondition := p.loadGRPCServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadGRPCServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -345,7 +345,7 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, namespace, r
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -396,7 +396,7 @@ func (p *Provider) loadGRPCServers(gatewayName, namespace string, route *gatev1.
 				AncestorRef: gatev1.ParentReference{
 					Group:       new(gatev1.Group(groupGateway)),
 					Kind:        new(gatev1.Kind(kindGateway)),
-					Namespace:   new(gatev1.Namespace(namespace)),
+					Namespace:   new(gatev1.Namespace(gatewayNamespace)),
 					Name:        gatev1.ObjectName(gatewayName),
 					SectionName: new(gatev1.SectionName(listener.Name)),
 				},

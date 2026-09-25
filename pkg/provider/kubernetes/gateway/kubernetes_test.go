@@ -12071,38 +12071,70 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 }
 
 func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *testing.T) {
-	k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/with_backend_tls_policy_cross_namespace.yml"})
-
-	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-	client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
-
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
-	require.NoError(t, err)
-
-	// just wait for the first event
-	<-eventCh
-
-	p := Provider{
-		EntryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
-		client:      client,
+	testCases := []struct {
+		desc        string
+		path        string
+		entryPoints map[string]Entrypoint
+		sectionName gatev1.SectionName
+	}{
+		{
+			desc:        "HTTPRoute",
+			path:        "httproute/with_backend_tls_policy_cross_namespace.yml",
+			entryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
+			sectionName: "http",
+		},
+		{
+			desc:        "GRPCRoute",
+			path:        "grpcroute/with_backend_tls_policy_cross_namespace.yml",
+			entryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
+			sectionName: "web",
+		},
+		{
+			desc:        "TLSRoute",
+			path:        "tlsroute/with_backend_tls_policy_cross_namespace.yml",
+			entryPoints: map[string]Entrypoint{"tls": {Address: ":9001"}},
+			sectionName: "tls",
+		},
 	}
 
-	_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
-	require.NoError(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	statusReport.Flush(t.Context(), client)
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
 
-	policy, err := gwClient.GatewayV1().BackendTLSPolicies("bar").Get(t.Context(), "policy-1", metav1.GetOptions{})
-	require.NoError(t, err)
-	require.Len(t, policy.Status.Ancestors, 1)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
 
-	assert.Equal(t, gatev1.ParentReference{
-		Group:       new(gatev1.Group(groupGateway)),
-		Kind:        new(gatev1.Kind(kindGateway)),
-		Namespace:   new(gatev1.Namespace("default")),
-		Name:        "my-gateway",
-		SectionName: new(gatev1.SectionName("http")),
-	}, policy.Status.Ancestors[0].AncestorRef)
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			// just wait for the first event
+			<-eventCh
+
+			p := Provider{
+				EntryPoints: test.entryPoints,
+				client:      client,
+			}
+
+			_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
+			statusReport.Flush(t.Context(), client)
+
+			policy, err := gwClient.GatewayV1().BackendTLSPolicies("bar").Get(t.Context(), "policy-1", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Len(t, policy.Status.Ancestors, 1)
+
+			assert.Equal(t, gatev1.ParentReference{
+				Group:       new(gatev1.Group(groupGateway)),
+				Kind:        new(gatev1.Kind(kindGateway)),
+				Namespace:   new(gatev1.Namespace("default")),
+				Name:        "my-gateway",
+				SectionName: new(test.sectionName),
+			}, policy.Status.Ancestors[0].AncestorRef)
+		})
+	}
 }
 
 func certificateCommonName(t *testing.T, certFile types.FileOrContent) string {
