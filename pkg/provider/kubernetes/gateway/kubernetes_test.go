@@ -12070,6 +12070,41 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 	assert.Equal(t, []string{"bar.example.com", "foo.example.com", "default-b.example.com", "default-a.example.com"}, commonNames)
 }
 
+func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/with_backend_tls_policy_cross_namespace.yml"})
+
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+	client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	// just wait for the first event
+	<-eventCh
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{"web": {Address: ":80"}},
+		client:      client,
+	}
+
+	_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+	require.NoError(t, err)
+
+	statusReport.Flush(t.Context(), client)
+
+	policy, err := gwClient.GatewayV1().BackendTLSPolicies("bar").Get(t.Context(), "policy-1", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Len(t, policy.Status.Ancestors, 1)
+
+	assert.Equal(t, gatev1.ParentReference{
+		Group:       new(gatev1.Group(groupGateway)),
+		Kind:        new(gatev1.Kind(kindGateway)),
+		Namespace:   new(gatev1.Namespace("default")),
+		Name:        "my-gateway",
+		SectionName: new(gatev1.SectionName("http")),
+	}, policy.Status.Ancestors[0].AncestorRef)
+}
+
 func certificateCommonName(t *testing.T, certFile types.FileOrContent) string {
 	t.Helper()
 
