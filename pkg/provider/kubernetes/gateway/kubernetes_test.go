@@ -13459,15 +13459,15 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				gateway.Spec.AllowedListeners = test.allowedListeners
 			}
 
-			allocatedListeners := make(map[string]struct{})
+			claims := newListenerClaims()
 			if test.gatewayListener != nil {
 				gatewayWithListener := gateway.DeepCopy()
 				gatewayWithListener.Spec.Listeners = []gatev1.Listener{*test.gatewayListener}
-				p.loadGatewayListeners(t.Context(), gatewayWithListener, nil, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
+				p.loadGatewayListeners(t.Context(), gatewayWithListener, nil, claims, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
 			}
 
 			statusReport := newStatusReport()
-			listeners := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}, statusReport)
+			listeners := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, claims, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}, statusReport)
 			require.Len(t, listeners, len(test.wantListeners))
 
 			require.Len(t, statusReport.listenerSets, len(test.wantNotAllowed))
