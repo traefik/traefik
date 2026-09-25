@@ -276,6 +276,8 @@ func TestAccessLogSampling(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			logCh := make(chan string, 1)
 			collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				logCh <- "exported"
