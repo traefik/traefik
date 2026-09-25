@@ -180,9 +180,6 @@ func (l gatewayListener) fromListenerSet() bool {
 }
 
 type gatewayWithListeners struct {
-	Name      string
-	Namespace string
-
 	gateway   *gatev1.Gateway
 	listeners []gatewayListener
 
@@ -485,8 +482,6 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		})
 
 		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
-			Name:         gateway.Name,
-			Namespace:    gateway.Namespace,
 			gateway:      gateway,
 			listeners:    listeners,
 			listenerSets: listenerSetInfos,
@@ -511,8 +506,8 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 	for _, gwl := range gatewaysWithListeners {
 		logger := log.Ctx(ctx).With().
-			Str("gateway", gwl.Name).
-			Str("namespace", gwl.Namespace).
+			Str("gateway", gwl.gateway.Name).
+			Str("namespace", gwl.gateway.Namespace).
 			Logger()
 
 		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, gwl.accepted)
@@ -540,7 +535,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		}
 		gatewayStatus.AttachedListenerSets = &attachedListenerSets
 
-		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gwl.Name, Namespace: gwl.Namespace}, gatewayStatus)
+		statusReport.RecordGatewayStatus(ktypes.NamespacedName{Name: gwl.gateway.Name, Namespace: gwl.gateway.Namespace}, gatewayStatus)
 	}
 
 	return conf, statusReport, nil
@@ -1627,8 +1622,8 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 
 		matches = append(matches, gatewayListenersForParentRef{
 			ParentRef:        parentRef,
-			GatewayName:      gateway.Name,
-			GatewayNamespace: gateway.Namespace,
+			GatewayName:      gateway.gateway.Name,
+			GatewayNamespace: gateway.gateway.Namespace,
 			Listeners:        listeners,
 		})
 	}
@@ -1648,7 +1643,7 @@ func gatewayForParent(gateways []gatewayWithListeners, parent listenerOwner) *ga
 			continue
 		}
 
-		if gateway.Namespace == parent.Namespace && gateway.Name == parent.Name {
+		if gateway.gateway.Namespace == parent.Namespace && gateway.gateway.Name == parent.Name {
 			return &gateways[i]
 		}
 	}

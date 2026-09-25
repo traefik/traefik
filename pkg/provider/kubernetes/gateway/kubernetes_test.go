@@ -10842,8 +10842,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Unsupported group",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10853,8 +10852,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Unsupported kind",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10865,8 +10863,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Namespace does not match the listener",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10878,8 +10875,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Route namespace defaulting does not match the listener",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{Name: "foo"}},
 			}},
 			routeNamespace: "foo",
@@ -10891,8 +10887,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Name does not match the listener",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10905,8 +10900,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Match",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10930,8 +10924,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Match with route namespace defaulting",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{}},
 			}},
 			routeNamespace: "default",
@@ -10957,8 +10950,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			// this controller.
 			desc: "Only parentRefs targeting our Gateways are returned",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{
@@ -10990,8 +10982,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "ParentRef is associated to all the listeners of its Gateway",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway: &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{
 					{Name: "web"},
 					{Name: "websecure"},
@@ -11024,13 +11015,11 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "ParentRef is only associated to the referenced Gateway",
 			gateways: []gatewayWithListeners{
 				{
-					Name:      "gateway-a",
-					Namespace: "default",
+					gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway-a", Namespace: "default"}},
 					listeners: []gatewayListener{{Name: "web"}},
 				},
 				{
-					Name:      "gateway-b",
-					Namespace: "default",
+					gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway-b", Namespace: "default"}},
 					listeners: []gatewayListener{{Name: "web"}},
 				},
 			},
@@ -11058,8 +11047,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			// ResolvedRefs even though the route attaches to none of them.
 			desc: "ParentRef with a non-matching port still returns the Gateway listeners",
 			gateways: []gatewayWithListeners{{
-				Name:      "gateway",
-				Namespace: "default",
+				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{{Name: "web", Port: 80}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -11419,7 +11407,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 // Traefik instance (our controllerName but a parentRef not targeting a managed
 // Gateway), while replacing our stale statuses with the freshly computed ones.
 func Test_mergeRouteParentStatuses(t *testing.T) {
-	gateways := []gatewayWithListeners{{Name: "my-gateway", Namespace: "default"}}
+	gateways := []gatewayWithListeners{{gateway: &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default"}}}}
 
 	otherController := gatev1.RouteParentStatus{
 		ControllerName: "example.com/other-controller",
