@@ -99,7 +99,7 @@ Add the Let's Encrypt certificate resolver to the Traefik service command sectio
 command:
   # ... existing commands ...
   # Let's Encrypt configuration
-  - "--certificatesresolvers.le.acme.email=your-email@example.com" # replace with your actual email
+  - "--certificatesresolvers.le.acme.email=your-email@example.com" # optional; replace with your actual email
   - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
   - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 ```
