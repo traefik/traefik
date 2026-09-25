@@ -127,6 +127,17 @@ func taskState(state swarmtypes.TaskState) func(*swarmtypes.TaskStatus) {
 	}
 }
 
+func taskPortStatus(protocol networktypes.IPProtocol, targetPort, publishedPort uint32, publishMode swarmtypes.PortConfigPublishMode) func(*swarmtypes.TaskStatus) {
+	return func(status *swarmtypes.TaskStatus) {
+		status.PortStatus.Ports = append(status.PortStatus.Ports, swarmtypes.PortConfig{
+			Protocol:      protocol,
+			TargetPort:    targetPort,
+			PublishedPort: publishedPort,
+			PublishMode:   publishMode,
+		})
+	}
+}
+
 func taskContainerStatus(id string) func(*swarmtypes.TaskStatus) {
 	return func(status *swarmtypes.TaskStatus) {
 		status.ContainerStatus = &swarmtypes.ContainerStatus{
@@ -184,6 +195,17 @@ func virtualIP(networkID, addr string) func(*swarmtypes.Endpoint) {
 		endpoint.VirtualIPs = append(endpoint.VirtualIPs, swarmtypes.EndpointVirtualIP{
 			NetworkID: networkID,
 			Addr:      mustParseAddrOrPrefix(addr),
+		})
+	}
+}
+
+func endpointPort(protocol networktypes.IPProtocol, targetPort, publishedPort uint32, publishMode swarmtypes.PortConfigPublishMode) func(*swarmtypes.Endpoint) {
+	return func(endpoint *swarmtypes.Endpoint) {
+		endpoint.Ports = append(endpoint.Ports, swarmtypes.PortConfig{
+			Protocol:      protocol,
+			TargetPort:    targetPort,
+			PublishedPort: publishedPort,
+			PublishMode:   publishMode,
 		})
 	}
 }
