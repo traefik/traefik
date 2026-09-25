@@ -13542,8 +13542,9 @@ func Test_loadListenerSetListeners(t *testing.T) {
 
 			allocatedListeners := make(map[string]struct{})
 			if test.gatewayListener != nil {
-				gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
-				p.loadGatewayListeners(t.Context(), gwNSN, nil, gateway.Generation, []gatev1.Listener{*test.gatewayListener}, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
+				gatewayWithListener := gateway.DeepCopy()
+				gatewayWithListener.Spec.Listeners = []gatev1.Listener{*test.gatewayListener}
+				p.loadGatewayListeners(t.Context(), gatewayWithListener, nil, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
 			}
 
 			listeners, _ := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
