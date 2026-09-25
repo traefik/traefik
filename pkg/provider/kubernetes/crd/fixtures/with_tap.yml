@@ -1,0 +1,23 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: tap
+  namespace: default
+
+spec:
+  tap:
+    timeout: 5s
+    request:
+      service:
+        name: whoami
+        port: 80
+      path: /records/requests
+      maxBodySize: 1024
+      failClosed: true
+    response:
+      service:
+        name: whoami
+        port: 80
+      body: false
+      requestHeaders:
+        - X-Request-Id

@@ -52,6 +52,7 @@ type MiddlewareSpec struct {
 	Retry             *Retry                     `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
+	Tap               *Tap                       `json:"tap,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
@@ -338,6 +339,56 @@ type Compress struct {
 	Encodings []string `json:"encodings,omitempty"`
 	// DefaultEncoding specifies the default encoding if the `Accept-Encoding` header is not in the request or contains a wildcard (`*`).
 	DefaultEncoding *string `json:"defaultEncoding,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Tap holds the tap middleware configuration.
+// This middleware sends a copy of the requests and responses going through it to Kubernetes Services.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/tap/
+type Tap struct {
+	// Request defines where and how the requests are sent.
+	// When omitted, requests are not sent.
+	Request *TapRecord `json:"request,omitempty"`
+	// Response defines where and how the responses are sent.
+	// When omitted, responses are not sent.
+	Response *TapRecord `json:"response,omitempty"`
+	// Timeout defines the maximum duration allowed to send a record.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// Default is `10s`.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapRecord holds the configuration of the records sent by the tap middleware.
+type TapRecord struct {
+	// Service defines the reference to a Kubernetes Service the records are sent to.
+	Service Service `json:"service,omitempty"`
+	// Path defines the path of the requests sending the records to the service.
+	// Default is `/`.
+	Path string `json:"path,omitempty"`
+	// Body defines whether the body is part of the records.
+	// Default is `true`.
+	Body *bool `json:"body,omitempty"`
+	// MaxBodySize defines the maximum body size in bytes kept in a record.
+	// A larger body is truncated, and the record is flagged as truncated.
+	// Default is `-1`, which means no limit.
+	// +kubebuilder:validation:Minimum=-1
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// RequestHeaders defines the request headers described in the records, along with the request line.
+	// It allows a response record to be understood, and correlated, without the matching request record.
+	// It is only allowed on the response records, as the request ones already describe the request.
+	RequestHeaders []string `json:"requestHeaders,omitempty"`
+	// FailClosed defines whether the record is sent before the data it describes is handed over:
+	// the request record before the request reaches the backend,
+	// and the response record before the response reaches the client.
+	// When the record cannot be sent, the request is rejected with an Internal Server Error.
+	// Default is `false`.
+	FailClosed bool `json:"failClosed,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
