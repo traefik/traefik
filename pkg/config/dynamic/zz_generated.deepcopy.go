@@ -2431,6 +2431,11 @@ func (in *TCPServersLoadBalancer) DeepCopyInto(out *TCPServersLoadBalancer) {
 		*out = new(TCPServerHealthCheck)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.PassiveHealthCheck != nil {
+		in, out := &in.PassiveHealthCheck, &out.PassiveHealthCheck
+		*out = new(PassiveServerHealthCheck)
+		**out = **in
+	}
 	return
 }
 
