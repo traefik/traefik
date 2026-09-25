@@ -226,7 +226,23 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+	// The loop below only stops once it pops a handler that is both up and not
+	// fenced. Without such a handler it would spin forever while holding the
+	// lock, so bail out early. This state is reachable when every up server is
+	// fenced (e.g. a draining server kept for sticky sessions) while the
+	// non-fenced servers are down.
+	var hasAvailable bool
+	for _, handler := range b.handlers {
+		if _, ok := b.status[handler.name]; !ok {
+			continue
+		}
+		if _, fenced := b.fenced[handler.name]; !fenced {
+			hasAvailable = true
+			break
+		}
+	}
+
+	if !hasAvailable {
 		return nil, errNoAvailableServer
 	}
 
