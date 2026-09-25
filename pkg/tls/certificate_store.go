@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -75,6 +76,10 @@ func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
 
 // GetBestCertificate returns the best match certificate, and caches the response.
 func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	return getBestCertificate(c, clientHello, matchDomain)
+}
+
+func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matcher func(string, string) bool) *tls.Certificate {
 	if c == nil {
 		return nil
 	}
@@ -111,7 +116,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		})
 
 		for _, certDomains := range sorted {
-			if matchDomain(serverName, certDomains) {
+			if matcher(serverName, certDomains) {
 				// cache best match
 				certificateData := certs[certDomains]
 				c.CertCache.SetDefault(serverName, certificateData)
@@ -176,6 +181,10 @@ func (c *CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}
+}
+
+func (c *CertificateStore) getBestACMEChallengeCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	return getBestCertificate(c, clientHello, matchDomainWithIPReverseAddress)
 }
 
 func (c *CertificateStore) getDefaultCertificateDomains() []string {
@@ -284,4 +293,31 @@ func matchDomain(serverName, certDomains string) bool {
 		}
 	}
 	return false
+}
+
+func matchDomainWithIPReverseAddress(serverName, certDomains string) bool {
+	if matchDomain(serverName, certDomains) {
+		return true
+	}
+
+	for certDomain := range strings.SplitSeq(certDomains, ",") {
+		if matchIPReverseAddress(serverName, certDomain) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func matchIPReverseAddress(serverName, certDomain string) bool {
+	if net.ParseIP(certDomain) == nil {
+		return false
+	}
+
+	reverseAddr, err := dns.ReverseAddr(certDomain)
+	if err != nil {
+		return false
+	}
+
+	return strings.TrimSuffix(serverName, ".") == strings.TrimSuffix(strings.ToLower(reverseAddr), ".")
 }
