@@ -569,10 +569,7 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
-	// The upstream vhost rewrites the Host header for the backend only, like
-	// nginx's proxy_set_header Host. It has to run after the middlewares that
-	// read the request Host, in particular the auth one, whose auth-signin
-	// redirect resolves $host from the incoming request.
+	// Apply upstream-vhost after auth so auth-signin uses the original request host.
 	if loc.UpstreamVhost != nil {
 		name := routerKey + "-vhost"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{UpstreamVHost: loc.UpstreamVhost}
