@@ -147,7 +147,7 @@ type listenerOwner struct {
 }
 
 type gatewayListener struct {
-	Name string
+	SectionName string
 
 	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
@@ -591,7 +591,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 	for i, listener := range listeners {
 		gatewayListeners[i] = gatewayListener{
-			Name:        string(listener.Name),
+			SectionName: string(listener.Name),
 			Port:        listener.Port,
 			Protocol:    listener.Protocol,
 			TLS:         listener.TLS,
@@ -1515,7 +1515,7 @@ func (sr servedRules) register(name string, scope []string, rule string) (string
 
 // listenerRef identifies a listener of a Gateway.
 type listenerRef struct {
-	Name             string
+	SectionName      string
 	GatewayNamespace string
 	GatewayName      string
 }
@@ -1647,7 +1647,7 @@ func gatewayForOwner(gateways []gatewayWithListeners, owner listenerOwner) *gate
 
 func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
 	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
-	if sectionName != "" && sectionName != listener.Name {
+	if sectionName != "" && sectionName != listener.SectionName {
 		return false
 	}
 
