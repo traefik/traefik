@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
 	"k8s.io/utils/ptr"
 )
@@ -32,20 +33,33 @@ const (
 	xForwardedProto = "X-Forwarded-Proto"
 )
 
+// hopHeaders are hop-by-hop headers that must not be forwarded from the backend response.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+var hopHeaders = map[string]struct{}{
+	forward.Connection:       {},
+	forward.KeepAlive:        {},
+	forward.Te:               {},
+	forward.Trailers:         {},
+	forward.TransferEncoding: {},
+	forward.Upgrade:          {},
+}
+
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
 // customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
-	name                string
-	next                http.Handler
-	backendHandler      http.Handler
-	httpCodeRanges      types.HTTPCodeRanges
-	backendQuery        string
-	requestHeaders      []string
-	statusRewrites      []statusRewrite
-	forwardNginxHeaders http.Header
+	name                 string
+	next                 http.Handler
+	backendHandler       http.Handler
+	httpCodeRanges       types.HTTPCodeRanges
+	backendQuery         string
+	requestHeaders       []string
+	statusRewrites       []statusRewrite
+	forwardNginxHeaders  http.Header
+	forwardHeaders       []string
+	errorResponseHeaders []string
 }
 
 type statusRewrite struct {
@@ -82,15 +96,38 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}
 
 	return &customErrors{
-		name:                name,
-		next:                next,
-		backendHandler:      backend,
-		httpCodeRanges:      httpCodeRanges,
-		backendQuery:        config.Query,
-		requestHeaders:      config.ErrorRequestHeaders,
-		statusRewrites:      statusRewrites,
-		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
+		name:                 name,
+		next:                 next,
+		backendHandler:       backend,
+		httpCodeRanges:       httpCodeRanges,
+		backendQuery:         config.Query,
+		requestHeaders:       config.ErrorRequestHeaders,
+		statusRewrites:       statusRewrites,
+		forwardNginxHeaders:  ptr.Deref(config.NginxHeaders, nil),
+		forwardHeaders:       normalizeResponseHeaders(config.ForwardHeaders),
+		errorResponseHeaders: normalizeResponseHeaders(config.ErrorResponseHeaders),
 	}, nil
+}
+
+// normalizeResponseHeaders canonicalizes and deduplicates names, excluding hop-by-hop headers.
+func normalizeResponseHeaders(headers []string) []string {
+	var names []string
+	seen := make(map[string]struct{}, len(headers))
+	for _, name := range headers {
+		canonical := http.CanonicalHeaderKey(strings.TrimSpace(name))
+		if canonical == "" {
+			continue
+		}
+		if _, isHop := hopHeaders[canonical]; isHop {
+			continue
+		}
+		if _, duplicate := seen[canonical]; duplicate {
+			continue
+		}
+		seen[canonical] = struct{}{}
+		names = append(names, canonical)
+	}
+	return names
 }
 
 func (c *customErrors) GetTracingInformation() (string, string) {
@@ -177,6 +214,26 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
+	// Listed response headers replace client-supplied values, including when absent from the response.
+	for _, name := range c.errorResponseHeaders {
+		pageReq.Header.Del(name)
+		if values := catcher.getHeaders().Values(name); len(values) > 0 {
+			pageReq.Header[name] = append([]string(nil), values...)
+		}
+	}
+
+	// Forward whitelisted response headers from the original backend error response to the client.
+	if len(c.forwardHeaders) > 0 {
+		backendHeaders := catcher.getHeaders()
+		for _, name := range c.forwardHeaders {
+			if vals := backendHeaders.Values(name); len(vals) > 0 {
+				for _, v := range vals {
+					rw.Header().Add(name, v)
+				}
+			}
+		}
 	}
 
 	if len(c.forwardNginxHeaders) > 0 {
@@ -329,6 +386,12 @@ func (cc *codeCatcher) getCode() int {
 // and for which the response should be deferred to the error handler.
 func (cc *codeCatcher) isFilteredCode() bool {
 	return cc.caughtFilteredCode
+}
+
+// getHeaders returns the response headers captured from the backend response.
+// These headers are normally discarded when a filtered status code is intercepted.
+func (cc *codeCatcher) getHeaders() http.Header {
+	return cc.headerMap
 }
 
 // codeModifier forwards a response back to the client,
