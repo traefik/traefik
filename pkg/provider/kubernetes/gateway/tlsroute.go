@@ -386,7 +386,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 					Kind:        new(gatev1.Kind(kindGateway)),
 					Namespace:   new(gatev1.Namespace(gatewayNamespace)),
 					Name:        gatev1.ObjectName(gatewayName),
-					SectionName: new(gatev1.SectionName(listener.Name)),
+					SectionName: new(gatev1.SectionName(listener.SectionName)),
 				},
 				ControllerName: controllerName,
 			}

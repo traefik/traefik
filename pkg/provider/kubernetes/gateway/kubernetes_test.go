@@ -10843,7 +10843,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "Unsupported group",
 			gateways: []gatewayWithListeners{{
 				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
-				listeners: []gatewayListener{{Name: "foo"}},
+				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Group: new(gatev1.Group("foo")),
@@ -10853,7 +10853,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "Unsupported kind",
 			gateways: []gatewayWithListeners{{
 				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
-				listeners: []gatewayListener{{Name: "foo"}},
+				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Group: new(gatev1.Group(gatev1.GroupName)),
@@ -10864,7 +10864,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "Namespace does not match the listener",
 			gateways: []gatewayWithListeners{{
 				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
-				listeners: []gatewayListener{{Name: "foo"}},
+				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Namespace: new(gatev1.Namespace("foo")),
@@ -10876,7 +10876,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "Route namespace defaulting does not match the listener",
 			gateways: []gatewayWithListeners{{
 				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
-				listeners: []gatewayListener{{Name: "foo"}},
+				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			routeNamespace: "foo",
 			parentRefs: []gatev1.ParentReference{{
@@ -10984,8 +10984,8 @@ func Test_matchingGatewayListener(t *testing.T) {
 			gateways: []gatewayWithListeners{{
 				gateway: &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
 				listeners: []gatewayListener{
-					{Name: "web"},
-					{Name: "websecure"},
+					{SectionName: "web"},
+					{SectionName: "websecure"},
 				},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -11004,8 +11004,8 @@ func Test_matchingGatewayListener(t *testing.T) {
 				GatewayName:      "gateway",
 				GatewayNamespace: "default",
 				Listeners: []gatewayListener{
-					{Name: "web"},
-					{Name: "websecure"},
+					{SectionName: "web"},
+					{SectionName: "websecure"},
 				},
 			}},
 		},
@@ -11016,11 +11016,11 @@ func Test_matchingGatewayListener(t *testing.T) {
 			gateways: []gatewayWithListeners{
 				{
 					gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway-a", Namespace: "default"}},
-					listeners: []gatewayListener{{Name: "web"}},
+					listeners: []gatewayListener{{SectionName: "web"}},
 				},
 				{
 					gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway-b", Namespace: "default"}},
-					listeners: []gatewayListener{{Name: "web"}},
+					listeners: []gatewayListener{{SectionName: "web"}},
 				},
 			},
 			parentRefs: []gatev1.ParentReference{{
@@ -11038,7 +11038,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 				},
 				GatewayName:      "gateway-a",
 				GatewayNamespace: "default",
-				Listeners:        []gatewayListener{{Name: "web"}},
+				Listeners:        []gatewayListener{{SectionName: "web"}},
 			}},
 		},
 		{
@@ -11048,7 +11048,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "ParentRef with a non-matching port still returns the Gateway listeners",
 			gateways: []gatewayWithListeners{{
 				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
-				listeners: []gatewayListener{{Name: "web", Port: 80}},
+				listeners: []gatewayListener{{SectionName: "web", Port: 80}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
 				Name:      "gateway",
@@ -11067,7 +11067,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 				},
 				GatewayName:      "gateway",
 				GatewayNamespace: "default",
-				Listeners:        []gatewayListener{{Name: "web", Port: 80}},
+				Listeners:        []gatewayListener{{SectionName: "web", Port: 80}},
 			}},
 		},
 	}
@@ -11295,7 +11295,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindHTTPRoute,
 			hostnames: []gatev1.Hostname{"foo.com"},
@@ -11307,7 +11307,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "websecure",
+				SectionName:      "websecure",
 			},
 			kind:      kindGRPCRoute,
 			hostnames: []gatev1.Hostname{"foo.com"},
@@ -11319,7 +11319,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindGRPCRoute,
 			hostnames: []gatev1.Hostname{"bar.com"},
@@ -11331,7 +11331,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindGRPCRoute,
 			hostnames: []gatev1.Hostname{"bar.com", "foo.com"},
@@ -11344,7 +11344,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindHTTPRoute,
 			hostnames: []gatev1.Hostname{"bar.foo.com"},
@@ -11357,7 +11357,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindHTTPRoute,
 			hostnames: []gatev1.Hostname{"*.foo.com"},
@@ -11370,7 +11370,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindGRPCRoute,
 			hostnames: []gatev1.Hostname{"foo.com"},
@@ -11383,7 +11383,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attachedListener: listenerRef{
 				GatewayNamespace: "default",
 				GatewayName:      "my-gateway",
-				Name:             "web",
+				SectionName:      "web",
 			},
 			kind:      kindGRPCRoute,
 			hostnames: nil,
@@ -11396,7 +11396,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 			attached := make(attachedRoutes)
 			attached.Record(test.attachedListener, test.attachedKind, test.attachedHostnames)
 
-			listener := listenerRef{GatewayNamespace: "default", GatewayName: "my-gateway", Name: "web"}
+			listener := listenerRef{GatewayNamespace: "default", GatewayName: "my-gateway", SectionName: "web"}
 			assert.Equal(t, test.expected, attached.Conflicts(listener, test.kind, test.hostnames))
 		})
 	}
@@ -11581,8 +11581,8 @@ func Test_matchListener(t *testing.T) {
 		{
 			desc: "Section do not match",
 			gwListener: gatewayListener{
-				Name: "foo",
-				Port: gatev1.PortNumber(80),
+				SectionName: "foo",
+				Port:        gatev1.PortNumber(80),
 			},
 			parentRef: gatev1.ParentReference{
 				SectionName: new(gatev1.SectionName("bar")),
@@ -11592,8 +11592,8 @@ func Test_matchListener(t *testing.T) {
 		{
 			desc: "Section matches",
 			gwListener: gatewayListener{
-				Name: "foo",
-				Port: gatev1.PortNumber(80),
+				SectionName: "foo",
+				Port:        gatev1.PortNumber(80),
 			},
 			parentRef: gatev1.ParentReference{
 				SectionName: new(gatev1.SectionName("foo")),
@@ -11604,8 +11604,8 @@ func Test_matchListener(t *testing.T) {
 		{
 			desc: "Port do not match",
 			gwListener: gatewayListener{
-				Name: "foo",
-				Port: gatev1.PortNumber(90),
+				SectionName: "foo",
+				Port:        gatev1.PortNumber(90),
 			},
 			parentRef: gatev1.ParentReference{
 				SectionName: new(gatev1.SectionName("foo")),
@@ -11615,8 +11615,8 @@ func Test_matchListener(t *testing.T) {
 		{
 			desc: "Port matches",
 			gwListener: gatewayListener{
-				Name: "foo",
-				Port: gatev1.PortNumber(80),
+				SectionName: "foo",
+				Port:        gatev1.PortNumber(80),
 			},
 			parentRef: gatev1.ParentReference{
 				SectionName: new(gatev1.SectionName("foo")),
@@ -11647,7 +11647,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Not allowed Kind",
 			gwListener: gatewayListener{
-				Name: "foo",
+				SectionName: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 					"bar",
@@ -11659,7 +11659,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Allowed Kind",
 			gwListener: gatewayListener{
-				Name: "foo",
+				SectionName: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 					"bar",
@@ -11674,7 +11674,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Not allowed namespace",
 			gwListener: gatewayListener{
-				Name: "foo",
+				SectionName: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 				},
@@ -11690,7 +11690,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Allowed namespace",
 			gwListener: gatewayListener{
-				Name: "foo",
+				SectionName: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 				},
@@ -11706,7 +11706,7 @@ func Test_allowRoute(t *testing.T) {
 		{
 			desc: "Allowed namespace",
 			gwListener: gatewayListener{
-				Name: "foo",
+				SectionName: "foo",
 				AllowedRouteKinds: []string{
 					"foo",
 				},
@@ -13211,7 +13211,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:        "http",
+					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:           "http",
@@ -13246,7 +13246,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:        "https",
+					SectionName: "https",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "https",
@@ -13281,7 +13281,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:        "http",
+					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "http",
@@ -13316,7 +13316,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:        "http",
+					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:       "http",
@@ -13324,7 +13324,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					},
 				},
 				{
-					Name:        "invalid",
+					SectionName: "invalid",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "invalid",
@@ -13360,7 +13360,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			},
 			allListeners: []gatewayListener{
 				{
-					Name:        "http",
+					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "other-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:       "http",
@@ -13368,7 +13368,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 					},
 				},
 				{
-					Name: "http-gw",
+					SectionName: "http-gw",
 					Status: &gatev1.ListenerStatus{
 						Name:       "http-gw",
 						Conditions: []metav1.Condition{},
@@ -13551,7 +13551,7 @@ func Test_loadListenerSetListeners(t *testing.T) {
 			require.Len(t, listeners, len(test.wantListeners))
 
 			for i, want := range test.wantListeners {
-				assert.Equal(t, want.name, listeners[i].Name)
+				assert.Equal(t, want.name, listeners[i].SectionName)
 				assert.Equal(t, want.attached, listeners[i].Attached)
 
 				if want.reason == "" {
