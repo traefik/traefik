@@ -50,7 +50,8 @@ type CollectableAction func(rw http.ResponseWriter, req *http.Request, ctx *acti
 
 // SnippetActions holds the parsed collectable actions from a snippet.
 type SnippetActions struct {
-	actions []CollectableAction
+	actions   []CollectableAction
+	locations []*snippetLocation
 }
 
 // BuildSnippetActions parses directives from a block and builds collectable actions.
@@ -60,6 +61,15 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 	for _, d := range block.GetDirectives() {
 		if err := isAllowedInContext(d); err != nil {
 			return nil, err
+		}
+
+		if d.GetName() == "location" {
+			location, err := createLocation(d)
+			if err != nil {
+				return nil, fmt.Errorf("building location action: %w", err)
+			}
+			sa.locations = append(sa.locations, location)
+			continue
 		}
 
 		action, err := buildCollectableAction(d)
@@ -109,7 +119,20 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 		}
 	}
 
-	return terminated, false, nil
+	if terminated {
+		return true, false, nil
+	}
+
+	// Server directives run before location selection, regardless of declaration order.
+	location := sa.selectLocation(req)
+	if location == nil {
+		return false, false, nil
+	}
+
+	pc.blockDepth++
+	terminated, skipToAccess, err = location.actions.Collect(rw, req, ctx, pc)
+	pc.blockDepth--
+	return terminated, skipToAccess, err
 }
 
 // HasAccess returns true if there are any access control actions collected.
@@ -146,8 +169,6 @@ func buildCollectableAction(d config.IDirective) (CollectableAction, error) {
 		return createRewriteCollectable(d)
 	case "if":
 		return createIfCollectable(d)
-	case "location":
-		return createLocationCollectable(d)
 
 	// Access phase - collect
 	case "allow", "deny":
@@ -261,7 +282,40 @@ func createIfCollectable(d config.IDirective) (CollectableAction, error) {
 	}, nil
 }
 
-func createLocationCollectable(d config.IDirective) (CollectableAction, error) {
+type snippetLocation struct {
+	modifier string
+	path     string
+	matcher  locationMatcher
+	actions  *SnippetActions
+}
+
+func (sa *SnippetActions) selectLocation(req *http.Request) *snippetLocation {
+	var longest *snippetLocation
+	for _, location := range sa.locations {
+		if location.modifier == "~" || location.modifier == "~*" || !location.matcher(req) {
+			continue
+		}
+		if location.modifier == "=" {
+			return location
+		}
+		if longest == nil || len(location.path) > len(longest.path) {
+			longest = location
+		}
+	}
+
+	if longest != nil && longest.modifier == "^~" {
+		return longest
+	}
+
+	for _, location := range sa.locations {
+		if (location.modifier == "~" || location.modifier == "~*") && location.matcher(req) {
+			return location
+		}
+	}
+	return longest
+}
+
+func createLocation(d config.IDirective) (*snippetLocation, error) {
 	params := d.GetParameters()
 	if len(params) == 0 {
 		return nil, errors.New("location directive requires a path pattern")
@@ -289,17 +343,19 @@ func createLocationCollectable(d config.IDirective) (CollectableAction, error) {
 		return nil, err
 	}
 
-	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (bool, error) {
-		if matcher(req) {
-			// Increase block depth for override behavior
-			pc.blockDepth++
-			// Recursively collect nested actions
-			terminated, _, err := nestedActions.Collect(rw, req, ctx, pc)
-			pc.blockDepth--
-			return terminated, err
+	location := &snippetLocation{
+		path:    pathPattern,
+		matcher: matcher,
+		actions: nestedActions,
+	}
+	for _, modifier := range []string{"~*", "~", "=", "^~"} {
+		if path, ok := strings.CutPrefix(pathPattern, modifier); ok {
+			location.modifier = modifier
+			location.path = strings.TrimSpace(path)
+			break
 		}
-		return false, nil
-	}, nil
+	}
+	return location, nil
 }
 
 // === Access phase directives (collect) ===
