@@ -454,10 +454,9 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
 		allocatedListeners := make(map[string]struct{})
 
-		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gwNSN, nil, gateway.Generation, gateway.Spec.Listeners, allocatedListeners, conf)
+		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, nil, allocatedListeners, conf)
 
 		listenerSetListeners, listenerSetInfos := p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, allocatedListeners, conf)
 		listeners = append(listeners, listenerSetListeners...)
@@ -567,15 +566,24 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	}
 }
 
-// loadGatewayListeners loads the given listeners of the given Gateway,
-// declared by the given ListenerSet, or by the Gateway itself when nil,
+// loadGatewayListeners loads the listeners of the given ListenerSet, or of the given Gateway when nil,
 // and claims the valid ones in allocatedListeners.
-func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.NamespacedName, listenerSet *ktypes.NamespacedName, generation int64, listeners []gatev1.Listener, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSet *gatev1.ListenerSet, allocatedListeners map[string]struct{}, conf *dynamic.Configuration) []gatewayListener {
+	listeners, generation := gateway.Spec.Listeners, gateway.Generation
 	// The resource declaring the listeners drives the ReferenceGrant checks,
 	// and the namespace "Same" resolves to in allowedRoutes.
 	ownerKind, ownerNamespace := kindGateway, gateway.Namespace
+
+	var listenerSetName *ktypes.NamespacedName
 	if listenerSet != nil {
+		// A ListenerEntry mirrors a Gateway Listener field for field.
+		listeners = make([]gatev1.Listener, 0, len(listenerSet.Spec.Listeners))
+		for _, entry := range listenerSet.Spec.Listeners {
+			listeners = append(listeners, gatev1.Listener(entry))
+		}
+		generation = listenerSet.Generation
 		ownerKind, ownerNamespace = kindListenerSet, listenerSet.Namespace
+		listenerSetName = &ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}
 	}
 
 	tlsCerts := make(map[string]*tls.CertAndStores)
@@ -583,14 +591,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway ktypes.Name
 
 	for i, listener := range listeners {
 		gatewayListeners[i] = gatewayListener{
-			Name:     string(listener.Name),
-			Port:     listener.Port,
-			Protocol: listener.Protocol,
-			TLS:      listener.TLS,
-			Hostname: listener.Hostname,
-
-			ListenerSet: listenerSet,
-
+			Name:        string(listener.Name),
+			Port:        listener.Port,
+			Protocol:    listener.Protocol,
+			TLS:         listener.TLS,
+			Hostname:    listener.Hostname,
+			ListenerSet: listenerSetName,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
 				SupportedKinds: []gatev1.RouteGroupKind{},
@@ -994,19 +1000,9 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 		allowed = append(allowed, listenerSet)
 	}
 
-	gwNSN := ktypes.NamespacedName{Namespace: gateway.Namespace, Name: gateway.Name}
-
 	var listeners []gatewayListener
 	for _, listenerSet := range allowed {
-		lsNSN := ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}
-
-		// A ListenerEntry mirrors a Gateway Listener field for field.
-		entries := make([]gatev1.Listener, 0, len(listenerSet.Spec.Listeners))
-		for _, entry := range listenerSet.Spec.Listeners {
-			entries = append(entries, gatev1.Listener(entry))
-		}
-
-		listeners = append(listeners, p.loadGatewayListeners(ctx, gwNSN, &lsNSN, listenerSet.Generation, entries, allocatedListeners, conf)...)
+		listeners = append(listeners, p.loadGatewayListeners(ctx, gateway, listenerSet, allocatedListeners, conf)...)
 	}
 
 	return listeners, infos
