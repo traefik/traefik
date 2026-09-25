@@ -13200,14 +13200,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		{
 			desc: "All listeners valid, Gateway accepted",
 			info: &listenerSetInfo{
-				listenerSet: &gatev1.ListenerSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "my-ls",
-						Namespace:  "default",
-						Generation: 1,
-					},
-				},
-				allowed: true,
+				generation: 1,
+				allowed:    true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -13235,14 +13229,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			// A parent Gateway is not accepted only when no listener serving it is valid, the ListenerSet ones included.
 			desc: "Gateway not accepted",
 			info: &listenerSetInfo{
-				listenerSet: &gatev1.ListenerSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "my-ls",
-						Namespace:  "default",
-						Generation: 1,
-					},
-				},
-				allowed: true,
+				generation: 1,
+				allowed:    true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -13270,14 +13258,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		{
 			desc: "No valid listener",
 			info: &listenerSetInfo{
-				listenerSet: &gatev1.ListenerSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "my-ls",
-						Namespace:  "default",
-						Generation: 1,
-					},
-				},
-				allowed: true,
+				generation: 1,
+				allowed:    true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -13305,14 +13287,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		{
 			desc: "At least one valid listener",
 			info: &listenerSetInfo{
-				listenerSet: &gatev1.ListenerSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "my-ls",
-						Namespace:  "default",
-						Generation: 1,
-					},
-				},
-				allowed: true,
+				generation: 1,
+				allowed:    true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -13349,14 +13325,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		{
 			desc: "Filters out listeners from other ListenerSets",
 			info: &listenerSetInfo{
-				listenerSet: &gatev1.ListenerSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "my-ls",
-						Namespace:  "default",
-						Generation: 1,
-					},
-				},
-				allowed: true,
+				generation: 1,
+				allowed:    true,
 			},
 			allListeners: []gatewayListener{
 				{
@@ -13386,14 +13356,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		{
 			desc: "ListenerSet not allowed by Gateway",
 			info: &listenerSetInfo{
-				listenerSet: &gatev1.ListenerSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "my-ls",
-						Namespace:  "other-ns",
-						Generation: 2,
-					},
-				},
-				allowed: false,
+				generation: 2,
+				allowed:    false,
 			},
 			allListeners:           nil,
 			wantAcceptedStatus:     metav1.ConditionFalse,
@@ -13408,7 +13372,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			status, accepted := makeListenerSetStatus(test.info, test.allListeners, test.parentAccepted)
+			status, accepted := makeListenerSetStatus(ktypes.NamespacedName{Namespace: "default", Name: "my-ls"}, test.info, test.allListeners, test.parentAccepted)
 
 			assert.Equal(t, test.wantAccepted, accepted)
 			assert.Len(t, status.Listeners, test.wantListenerEntryCount)
