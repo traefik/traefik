@@ -809,8 +809,7 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 		// TODO: Implement a mechanism to clean up old parentStatus for gateways that no instance manages.
 		// Also, keep statuses from gateways managed by other Traefik instances.
 		// We consider a status managed by the current instance when the parentRef targets one of the managed gateways.
-		// A ListenerSet parentRef is managed when the ListenerSet references one of the managed gateways,
-		// even when none of its listeners is currently loaded, so that a stale status is always refreshed.
+		// A ListenerSet parentRef is managed when one of the managed gateways loads the listeners of that ListenerSet.
 		// SectionName or Port is not used.
 		owner := listenerOwner{
 			Kind:      string(ptr.Deref(currentParent.ParentRef.Kind, kindGateway)),
