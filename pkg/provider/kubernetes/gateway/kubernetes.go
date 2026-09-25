@@ -1669,19 +1669,12 @@ func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) b
 	return true
 }
 
-func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName string, listener gatewayListener, ruleIndex int) string {
-	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", kind, namespace, name, gatewayNamespace, gatewayName, listener.EPName, ruleIndex))
-	components := []string{namespace, name, gatewayNamespace, gatewayName, listener.EPName, strconv.Itoa(ruleIndex)}
-	if listener.fromListenerSet() {
-		// The routers attached through a ListenerSet are named after it,
-		// and the kind keeps them apart from the ones attached to a Gateway of the same name.
-		label = provider.Normalize(fmt.Sprintf("%s-%s-%s-ls-%s-%s-ep-%s-%d", kind, namespace, name, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, ruleIndex))
-		components = []string{namespace, name, kindListenerSet, listener.Owner.Namespace, listener.Owner.Name, listener.EPName, strconv.Itoa(ruleIndex)}
-	}
+func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName, epName string, ruleIndex int) string {
+	label := provider.Normalize(fmt.Sprintf("%s-%s-%s-gw-%s-%s-ep-%s-%d", kind, namespace, name, gatewayNamespace, gatewayName, epName, ruleIndex))
 
 	h := sha256.New()
 
-	for _, c := range components {
+	for _, c := range []string{namespace, name, gatewayNamespace, gatewayName, epName, strconv.Itoa(ruleIndex)} {
 		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
 		fmt.Fprintf(h, "%d:%s", len(c), c)
 	}
