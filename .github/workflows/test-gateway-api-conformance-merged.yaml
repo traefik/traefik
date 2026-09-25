@@ -20,7 +20,7 @@ permissions:
 jobs:
 
   test-gateway-api-conformance-merged:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     steps:

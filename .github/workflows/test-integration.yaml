@@ -22,7 +22,7 @@ permissions:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     steps:
@@ -73,7 +73,7 @@ jobs:
           retention-days: 1
 
   test-integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90
     needs:
       - build
@@ -174,7 +174,7 @@ jobs:
           retention-days: 7
 
   merge-test-results:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs:
       - test-integration
     if: ${{ !cancelled() && needs.test-integration.result != 'skipped' }}

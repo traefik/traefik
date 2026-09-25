@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/template-webui.yaml
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     strategy:

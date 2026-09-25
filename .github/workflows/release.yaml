@@ -19,7 +19,7 @@ jobs:
 
   build:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
 
     strategy:
@@ -84,7 +84,7 @@ jobs:
 
   release:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
 
     needs:

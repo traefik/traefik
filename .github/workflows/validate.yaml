@@ -15,7 +15,7 @@ permissions:
 jobs:
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
 
     steps:
@@ -53,7 +53,7 @@ jobs:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
 
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
 
     steps:
@@ -92,7 +92,7 @@ jobs:
         run: make validate-files
 
   validate-generate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
 
     steps:

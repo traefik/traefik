@@ -15,7 +15,7 @@ jobs:
 
   docs:
     name: lint, build and verify
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out code

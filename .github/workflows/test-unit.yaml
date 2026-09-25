@@ -20,7 +20,7 @@ jobs:
 
   test-unit:
     name: Unit tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out code
@@ -38,7 +38,7 @@ jobs:
         run: go test -parallel 8 ./cmd/... ./pkg/...
 
   test-ui-unit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
 
     steps:

@@ -7,7 +7,7 @@ on:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
       packages: write
@@ -20,7 +20,7 @@ jobs:
           persist-credentials: false
 
       - uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
-      
+
       - name: Sync
         run: |
           EXCLUDED_TAGS="1.7.9-alpine v1.0.0-beta.392 v1.0.0-beta.404 v1.0.0-beta.704 v1.0.0-rc1 v1.7.9-alpine"
