@@ -1916,16 +1916,13 @@ func (p *Provider) isListenerSetAllowed(ctx context.Context, gw *gatev1.Gateway,
 }
 
 func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, parentAccepted bool) (gatev1.ListenerSetStatus, bool) {
-	listenerSet := info.listenerSet
-	generation := listenerSet.Generation
-
 	var status gatev1.ListenerSetStatus
 
 	if !info.allowed {
 		const message = "ListenerSet is not allowed by the Gateway's AllowedListeners policy"
 		status.Conditions = []metav1.Condition{
-			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonNotAllowed), message),
-			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonNotAllowed), message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, info.listenerSet.Generation, string(gatev1.ListenerSetReasonNotAllowed), message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, info.listenerSet.Generation, string(gatev1.ListenerSetReasonNotAllowed), message),
 		}
 
 		return status, false
@@ -1933,7 +1930,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 
 	var validListeners int
 	for _, listener := range listeners {
-		if listener.ListenerSet == nil || *listener.ListenerSet != (ktypes.NamespacedName{Namespace: listenerSet.Namespace, Name: listenerSet.Name}) {
+		if listener.ListenerSet == nil || *listener.ListenerSet != (ktypes.NamespacedName{Namespace: info.listenerSet.Namespace, Name: info.listenerSet.Name}) {
 			continue
 		}
 
@@ -1946,7 +1943,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 				{
 					Type:               string(gatev1.ListenerEntryConditionAccepted),
 					Status:             metav1.ConditionTrue,
-					ObservedGeneration: generation,
+					ObservedGeneration: info.listenerSet.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerEntryReasonAccepted),
 					Message:            conditionNoErrorMessage,
@@ -1954,7 +1951,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 				{
 					Type:               string(gatev1.ListenerEntryConditionResolvedRefs),
 					Status:             metav1.ConditionTrue,
-					ObservedGeneration: generation,
+					ObservedGeneration: info.listenerSet.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerEntryReasonResolvedRefs),
 					Message:            conditionNoErrorMessage,
@@ -1962,7 +1959,7 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 				{
 					Type:               string(gatev1.ListenerEntryConditionProgrammed),
 					Status:             metav1.ConditionTrue,
-					ObservedGeneration: generation,
+					ObservedGeneration: info.listenerSet.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerEntryReasonProgrammed),
 					Message:            conditionNoErrorMessage,
@@ -1977,9 +1974,9 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 	case !parentAccepted:
 		const message = "Parent Gateway is not accepted"
 		status.Conditions = []metav1.Condition{
-			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonParentNotAccepted), message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, info.listenerSet.Generation, string(gatev1.ListenerSetReasonParentNotAccepted), message),
 			// The Programmed condition documents this reason, but v1.6.1 defines no constant for it.
-			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, generation, "ParentNotProgrammed", message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, info.listenerSet.Generation, "ParentNotProgrammed", message),
 		}
 
 		return status, false
@@ -1988,8 +1985,8 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 		// A ListenerSet with no valid listener at all is neither accepted nor programmed, per the spec.
 		const message = "No valid listener"
 		status.Conditions = []metav1.Condition{
-			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonListenersNotValid), message),
-			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, generation, string(gatev1.ListenerSetReasonListenersNotValid), message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionFalse, info.listenerSet.Generation, string(gatev1.ListenerSetReasonListenersNotValid), message),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionFalse, info.listenerSet.Generation, string(gatev1.ListenerSetReasonListenersNotValid), message),
 		}
 
 		return status, false
@@ -1997,14 +1994,14 @@ func makeListenerSetStatus(info *listenerSetInfo, listeners []gatewayListener, p
 	case validListeners < len(status.Listeners):
 		// The valid listeners are programmed, so the ListenerSet is accepted and programmed even though some listeners have errors.
 		status.Conditions = []metav1.Condition{
-			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonListenersNotValid), "Some listeners have errors"),
-			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonProgrammed), "Valid listeners programmed"),
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, info.listenerSet.Generation, string(gatev1.ListenerSetReasonListenersNotValid), "Some listeners have errors"),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, info.listenerSet.Generation, string(gatev1.ListenerSetReasonProgrammed), "Valid listeners programmed"),
 		}
 
 	default:
 		status.Conditions = []metav1.Condition{
-			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonAccepted), "ListenerSet accepted"),
-			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, generation, string(gatev1.ListenerSetReasonProgrammed), "ListenerSet programmed"),
+			makeListenerSetCondition(gatev1.ListenerSetConditionAccepted, metav1.ConditionTrue, info.listenerSet.Generation, string(gatev1.ListenerSetReasonAccepted), "ListenerSet accepted"),
+			makeListenerSetCondition(gatev1.ListenerSetConditionProgrammed, metav1.ConditionTrue, info.listenerSet.Generation, string(gatev1.ListenerSetReasonProgrammed), "ListenerSet programmed"),
 		}
 	}
 
