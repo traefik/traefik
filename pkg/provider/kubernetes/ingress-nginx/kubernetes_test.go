@@ -17299,6 +17299,7 @@ func TestLoadIngressesDefaultBackendPriority(t *testing.T) {
 		"services.yml",
 		"ingressclasses.yml",
 		"ingresses/ingress-with-default-backend-annotations.yml",
+		"ingresses/ingress-with-wildcard-rule-and-default-backend.yml",
 	})
 	client := newClient(kubefake.NewClientset(objects...))
 	events, err := client.WatchAll(t.Context(), "", "")
@@ -17315,7 +17316,10 @@ func TestLoadIngressesDefaultBackendPriority(t *testing.T) {
 	p.SetDefaults()
 	conf := p.loadConfiguration(t.Context())
 
-	const ingressRouter = "default-ingress-with-default-backend-annotations"
+	const (
+		ingressRouter  = "default-ingress-with-default-backend-annotations"
+		wildcardRouter = "default-ingress-with-wildcard-rule-and-default-backend"
+	)
 
 	for _, test := range []struct {
 		desc    string
@@ -17336,8 +17340,10 @@ func TestLoadIngressesDefaultBackendPriority(t *testing.T) {
 
 			routerNames := []string{
 				"default-backend" + test.suffix,
+				wildcardRouter + "-default-backend" + test.suffix,
 				ingressRouter + "-default-backend" + test.suffix,
 				ingressRouter + "-rule-0-path-0" + test.suffix,
+				wildcardRouter + "-rule-0-path-0" + test.suffix,
 			}
 			if test.reverse {
 				slices.Reverse(routerNames)
@@ -17363,7 +17369,9 @@ func TestLoadIngressesDefaultBackendPriority(t *testing.T) {
 			}{
 				{url: "http://whoami.localhost/", router: ingressRouter + "-rule-0-path-0"},
 				{url: "http://whoami.localhost/unmatched", router: ingressRouter + "-default-backend"},
-				{url: "http://other.localhost/unmatched", router: "default-backend"},
+				{url: "http://other.localhost/web", router: wildcardRouter + "-rule-0-path-0"},
+				{url: "http://other.localhost/unmatched", router: wildcardRouter + "-default-backend"},
+				{url: "http://other.example.com/unmatched", router: "default-backend"},
 			} {
 				recorder := httptest.NewRecorder()
 				req := httptest.NewRequest(http.MethodGet, request.url, http.NoBody)
