@@ -199,7 +199,7 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 		}
 
 		var serviceCondition *metav1.Condition
-		router.Service, serviceCondition = p.loadTLSWRRService(gatewayName, listener, routerConf, routerName, routeRule.BackendRefs, route, statusReport)
+		router.Service, serviceCondition = p.loadTLSWRRService(gatewayName, gatewayNamespace, listener, routerConf, routerName, routeRule.BackendRefs, route, statusReport)
 		if serviceCondition != nil {
 			condition = *serviceCondition
 		}
@@ -212,7 +212,7 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 }
 
 // loadTLSWRRService is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTLSWRRService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadTLSWRRService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1.TLSRoute, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.TCP.Services[name]; ok {
 		return name, nil
@@ -221,7 +221,7 @@ func (p *Provider) loadTLSWRRService(gatewayName string, listener gatewayListene
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTLSService(gatewayName, listener, conf, routerName, route, bi, backendRef, statusReport)
+		svcName, svc, errCondition := p.loadTLSService(gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -255,7 +255,7 @@ func (p *Provider) loadTLSWRRService(gatewayName string, listener gatewayListene
 	return name, condition
 }
 
-func (p *Provider) loadTLSService(gatewayName string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.TLSRoute, backendIndex int, backendRef gatev1.BackendRef, statusReport *statusReport) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTLSService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.TLSRoute, backendIndex int, backendRef gatev1.BackendRef, statusReport *statusReport) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -320,7 +320,7 @@ func (p *Provider) loadTLSService(gatewayName string, listener gatewayListener, 
 		}
 	}
 
-	lb, st, errCondition := p.loadTLSServers(gatewayName, namespace, route, backendRef, listener, statusReport)
+	lb, st, errCondition := p.loadTLSServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -333,7 +333,7 @@ func (p *Provider) loadTLSService(gatewayName string, listener gatewayListener, 
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
-func (p *Provider) loadTLSServers(gatewayName, namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, *metav1.Condition) {
+func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -384,7 +384,7 @@ func (p *Provider) loadTLSServers(gatewayName, namespace string, route *gatev1.T
 				AncestorRef: gatev1.ParentReference{
 					Group:       new(gatev1.Group(groupGateway)),
 					Kind:        new(gatev1.Kind(kindGateway)),
-					Namespace:   new(gatev1.Namespace(namespace)),
+					Namespace:   new(gatev1.Namespace(gatewayNamespace)),
 					Name:        gatev1.ObjectName(gatewayName),
 					SectionName: new(gatev1.SectionName(listener.Name)),
 				},
