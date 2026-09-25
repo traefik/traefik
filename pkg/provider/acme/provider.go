@@ -71,7 +71,7 @@ type Configuration struct {
 func (a *Configuration) SetDefaults() {
 	a.CAServer = lego.DirectoryURLLetsEncrypt
 	a.Storage = "acme.json"
-	a.KeyType = "RSA4096"
+	a.KeyType = "EC256"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
