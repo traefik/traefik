@@ -1020,6 +1020,10 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 				return nil, err
 			}
 		}
+
+		if rateLimit.Redis.DenyOnError != nil {
+			rl.Redis.DenyOnError = new(*rateLimit.Redis.DenyOnError)
+		}
 	}
 
 	return rl, nil
