@@ -233,10 +233,6 @@ func TestMakeTrailingGroupOptional(t *testing.T) {
 	}
 }
 
-// The upstream vhost rewrites the request Host for the backend. The auth
-// middleware resolves $host in its auth-signin redirect from the incoming
-// request, so it has to run before the rewrite, otherwise the client is
-// redirected to the internal upstream host.
 func TestApplyMiddlewaresUpstreamVhostAfterAuth(t *testing.T) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
