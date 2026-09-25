@@ -162,11 +162,27 @@ func (t *Tracer) CaptureServerRequest(span trace.Span, r *http.Request) {
 
 	host, port, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		span.SetAttributes(semconv.ClientAddress(r.RemoteAddr))
+		host = r.RemoteAddr
+	}
+
+	// client.address SHOULD reflect the real client behind any intermediary,
+	// per https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/attributes-registry/client.md
+	// network.peer.address below always reflects the direct TCP peer instead.
+	// X-Forwarded-For is only present here if set or preserved by a trusted proxy:
+	// forwardedheaders.XForwarded strips it for untrusted peers earlier in the chain.
+	clientAddress := host
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if ip, _, _ := strings.Cut(xff, ","); strings.TrimSpace(ip) != "" {
+			clientAddress = strings.TrimSpace(ip)
+		}
+	}
+
+	if err != nil {
 		span.SetAttributes(semconv.NetworkPeerAddress(r.Host))
+		span.SetAttributes(semconv.ClientAddress(clientAddress))
 	} else {
 		span.SetAttributes(semconv.NetworkPeerAddress(host))
-		span.SetAttributes(semconv.ClientAddress(host))
+		span.SetAttributes(semconv.ClientAddress(clientAddress))
 		intPort, _ := strconv.Atoi(port)
 		span.SetAttributes(semconv.ClientPort(intPort))
 		span.SetAttributes(semconv.NetworkPeerPort(intPort))
