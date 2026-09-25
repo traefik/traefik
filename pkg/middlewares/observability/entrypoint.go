@@ -57,7 +57,12 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	start := time.Now()
 
 	// Follow semantic conventions defined by OTEL: https://opentelemetry.io/docs/specs/semconv/http/http-spans/#name
-	// At the moment this implementation only gets the {method} as there is no guarantee {target} is low cardinality.
+	// The span name initially uses only {method} (e.g. "GET") because the route
+	// is not yet known at the entrypoint level. When a router matches the
+	// request, the router tracing middleware enriches this server span with
+	// the http.route attribute and updates the span name to "{method} {route}"
+	// (e.g. "GET /api/v1/ml-scribe"). If no router matches (404), the span
+	// name remains "{method}".
 	tracingCtx, span := e.tracer.Start(tracingCtx, req.Method, trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
 	// Associate the request context with the logger.

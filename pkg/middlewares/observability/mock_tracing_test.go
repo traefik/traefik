@@ -50,7 +50,7 @@ var _ trace.Span = &mockSpan{}
 func (*mockSpan) SpanContext() trace.SpanContext {
 	return trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}})
 }
-func (*mockSpan) IsRecording() bool                  { return false }
+func (*mockSpan) IsRecording() bool                  { return true }
 func (s *mockSpan) SetStatus(_ codes.Code, _ string) {}
 func (s *mockSpan) SetAttributes(kv ...attribute.KeyValue) {
 	s.attributes = append(s.attributes, kv...)
