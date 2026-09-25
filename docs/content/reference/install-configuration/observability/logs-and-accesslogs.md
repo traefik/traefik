@@ -226,7 +226,7 @@ The section below describes how to configure Traefik access logs using the stati
 | <a id="opt-accesslog-filePath" href="#opt-accesslog-filePath" title="#opt-accesslog-filePath">`accesslog.filePath`</a> | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
 | <a id="opt-accesslog-dualOutput" href="#opt-accesslog-dualOutput" title="#opt-accesslog-dualOutput">`accesslog.dualOutput`</a> | Force Stdio logging, even if OTLP is configured. By default, Stdio logging is disabled when OTLP is enabled for performance reasons. | false      | No      |
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">`accesslog.format`</a> | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: [`common`](#traefik-clf-format-fields) (Traefik extended CLF), [`genericCLF`](#generic-clf-format-fields) (standard CLF compatible with analyzers), or [`json`](#json-format-fields).<br />If the given format is unsupported, the default (`common`) is used instead. | "common" | No      |
-| <a id="opt-accesslog-bufferingSize" href="#opt-accesslog-bufferingSize" title="#opt-accesslog-bufferingSize">`accesslog.bufferingSize`</a> | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
+| <a id="opt-accesslog-bufferingSize" href="#opt-accesslog-bufferingSize" title="#opt-accesslog-bufferingSize">`accesslog.bufferingSize`</a> | To process access logs asynchronously, set `bufferingSize` to a value greater than zero.<br />The value specifies the capacity, in log lines, of the in-memory queue.<br />Traefik writes queued log lines continuously and does not wait for the queue to become full.<br />A larger queue reduces the chance that access logging blocks requests under load. | 0 | No      |
 | <a id="opt-accesslog-addInternals" href="#opt-accesslog-addInternals" title="#opt-accesslog-addInternals">`accesslog.addInternals`</a> | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
 | <a id="opt-accesslog-sampleRate" href="#opt-accesslog-sampleRate" title="#opt-accesslog-sampleRate">`accesslog.sampleRate`</a> | Defines the proportion of access logs sent to the OpenTelemetry Collector, between 0.0 and 1.0. Only applies when `accesslog.otlp` is configured. See [sampleRate](#samplerate) for details. | 1.0 | No      |
 | <a id="opt-accesslog-filters-statusCodes" href="#opt-accesslog-filters-statusCodes" title="#opt-accesslog-filters-statusCodes">`accesslog.filters.statusCodes`</a> | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
@@ -419,8 +419,12 @@ Below the fields displayed with the generic CLF format:
 
 ### Log Rotation
 
-Traefik close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
-This allows the logs to be rotated and processed by an external program, such as `logrotate`.
+Traefik does not rotate the access log file.
+When Traefik receives a USR1 signal, it closes and opens again the access log file.
+This lets an external program, such as `logrotate`, rotate the access log file.
+
+The USR1 signal has no effect on the Traefik log file.
+Traefik rotates the Traefik log file with the options [`log.maxSize`](#opt-log-maxSize), [`log.maxAge`](#opt-log-maxAge), and [`log.maxBackups`](#opt-log-maxBackups).
 
 !!! warning
     This does not work on Windows due to the lack of USR signals.

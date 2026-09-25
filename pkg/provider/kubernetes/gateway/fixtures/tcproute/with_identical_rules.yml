@@ -1,0 +1,68 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-tcp-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tcp
+      protocol: TCP
+      port: 9000
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+
+# A TCPRoute has no routing criteria. Thus the two routes below give the rule HostSNI("*").
+# The route below is the older of the two routes. The creation time makes the decision.
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-first
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:01Z"
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-second
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:02Z"
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
