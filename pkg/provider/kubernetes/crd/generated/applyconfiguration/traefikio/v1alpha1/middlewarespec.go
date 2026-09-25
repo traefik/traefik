@@ -62,6 +62,7 @@ type MiddlewareSpecApplyConfiguration struct {
 	Retry             *RetryApplyConfiguration          `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType              `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb                  `json:"grpcWeb,omitempty"`
+	Tap               *TapApplyConfiguration            `json:"tap,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]v1.JSON `json:"plugin,omitempty"`
@@ -270,6 +271,14 @@ func (b *MiddlewareSpecApplyConfiguration) WithContentType(value dynamic.Content
 // If called multiple times, the GrpcWeb field is set to the value of the last call.
 func (b *MiddlewareSpecApplyConfiguration) WithGrpcWeb(value dynamic.GrpcWeb) *MiddlewareSpecApplyConfiguration {
 	b.GrpcWeb = &value
+	return b
+}
+
+// WithTap sets the Tap field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Tap field is set to the value of the last call.
+func (b *MiddlewareSpecApplyConfiguration) WithTap(value *TapApplyConfiguration) *MiddlewareSpecApplyConfiguration {
+	b.Tap = value
 	return b
 }
 

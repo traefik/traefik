@@ -334,6 +334,16 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		tap, tapServices, err := p.createTapMiddleware(ctxMid, client, middleware.Namespace, id, middleware.Spec.Tap)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading tap middleware")
+			continue
+		}
+
+		for serviceName, service := range tapServices {
+			addToConfig(log.Ctx(ctxMid), "service", serviceName, conf.HTTP.Services, service)
+		}
+
 		addToConfig(log.Ctx(ctxMid), "middleware", id, conf.HTTP.Middlewares, &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -360,6 +370,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
+			Tap:               tap,
 			Plugin:            plugin,
 		})
 	}
@@ -719,6 +730,82 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		Query:               errorPage.Query,
 		ErrorRequestHeaders: errorPage.ErrorRequestHeaders,
 	}, balancerServerHTTP, nil
+}
+
+// createTapMiddleware returns the tap middleware configuration,
+// along with the services to register for the destinations referencing a Kubernetes Service.
+func (p *Provider) createTapMiddleware(ctx context.Context, client Client, namespace, id string, tap *traefikv1alpha1.Tap) (*dynamic.Tap, map[string]*dynamic.Service, error) {
+	if tap == nil {
+		return nil, nil, nil
+	}
+
+	conf := &dynamic.Tap{}
+	conf.SetDefaults()
+
+	if tap.Timeout != nil {
+		if err := conf.Timeout.Set(tap.Timeout.String()); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
+		nameBuilder:               p.nameBuilder,
+	}
+
+	services := make(map[string]*dynamic.Service)
+
+	var err error
+	if conf.Request, err = cb.tapRecord(ctx, namespace, id+"-tap-request-service", tap.Request, services); err != nil {
+		return nil, nil, err
+	}
+
+	if conf.Response, err = cb.tapRecord(ctx, namespace, id+"-tap-response-service", tap.Response, services); err != nil {
+		return nil, nil, err
+	}
+
+	return conf, services, nil
+}
+
+func (c configBuilder) tapRecord(ctx context.Context, namespace, serviceKey string, record *traefikv1alpha1.TapRecord, services map[string]*dynamic.Service) (*dynamic.TapRecord, error) {
+	if record == nil {
+		return nil, nil
+	}
+
+	balancerName, balancerServerHTTP, err := c.nameAndService(ctx, namespace, record.Service.LoadBalancerSpec, serviceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &dynamic.TapRecord{}
+	conf.SetDefaults()
+
+	conf.Service = balancerName
+	if balancerServerHTTP != nil {
+		conf.Service = serviceKey
+		services[serviceKey] = balancerServerHTTP
+	}
+
+	if record.Path != "" {
+		conf.Path = record.Path
+	}
+
+	if record.Body != nil {
+		conf.Body = record.Body
+	}
+
+	if record.MaxBodySize != nil {
+		conf.MaxBodySize = record.MaxBodySize
+	}
+
+	conf.RequestHeaders = record.RequestHeaders
+	conf.FailClosed = record.FailClosed
+
+	return conf, nil
 }
 
 func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace string, chain *traefikv1alpha1.Chain) (*dynamic.Chain, error) {
