@@ -148,7 +148,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				ParentRefs: listener.RouterNames,
 			}
 
-			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener, ri)
+			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
 
 			routerConf := &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
