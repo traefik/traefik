@@ -4,6 +4,13 @@ description: "In Traefik Proxy's HTTP middleware, RedirectRegex redirecting clie
 ---
 
 The `RedirectRegex` redirects a request using regex matching and replacement.
+When the `regex` does not match the request URL, or when the replacement leaves the URL unchanged,
+the request is passed on to the next middleware, or to the router's service.
+
+!!! tip "Redirect-Only Routers"
+
+    To define a router that only redirects, without any backend,
+    use the built-in [`noop@internal`](../load-balancing/service.md#noop-service) service.
 
 ## Configuration Examples
 
