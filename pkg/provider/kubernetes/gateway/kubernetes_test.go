@@ -13182,8 +13182,7 @@ func Test_isListenerSetAllowed(t *testing.T) {
 func Test_makeListenerSetStatus(t *testing.T) {
 	testCases := []struct {
 		desc                   string
-		info                   *listenerSetInfo
-		allListeners           []gatewayListener
+		listeners              []gatewayListener
 		parentAccepted         bool
 		wantAccepted           bool
 		wantAcceptedStatus     metav1.ConditionStatus
@@ -13199,11 +13198,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 	}{
 		{
 			desc: "All listeners valid, Gateway accepted",
-			info: &listenerSetInfo{
-				generation: 1,
-				allowed:    true,
-			},
-			allListeners: []gatewayListener{
+			listeners: []gatewayListener{
 				{
 					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
@@ -13228,11 +13223,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		{
 			// A parent Gateway is not accepted only when no listener serving it is valid, the ListenerSet ones included.
 			desc: "Gateway not accepted",
-			info: &listenerSetInfo{
-				generation: 1,
-				allowed:    true,
-			},
-			allListeners: []gatewayListener{
+			listeners: []gatewayListener{
 				{
 					SectionName: "https",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
@@ -13257,11 +13248,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		},
 		{
 			desc: "No valid listener",
-			info: &listenerSetInfo{
-				generation: 1,
-				allowed:    true,
-			},
-			allListeners: []gatewayListener{
+			listeners: []gatewayListener{
 				{
 					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
@@ -13286,11 +13273,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		},
 		{
 			desc: "At least one valid listener",
-			info: &listenerSetInfo{
-				generation: 1,
-				allowed:    true,
-			},
-			allListeners: []gatewayListener{
+			listeners: []gatewayListener{
 				{
 					SectionName: "http",
 					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
@@ -13322,57 +13305,13 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
 			wantListenerEntryCount: 2,
 		},
-		{
-			desc: "Filters out listeners from other ListenerSets",
-			info: &listenerSetInfo{
-				generation: 1,
-				allowed:    true,
-			},
-			allListeners: []gatewayListener{
-				{
-					SectionName: "http",
-					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "other-ls"},
-					Status: &gatev1.ListenerStatus{
-						Name:       "http",
-						Conditions: []metav1.Condition{},
-					},
-				},
-				{
-					SectionName: "http-gw",
-					Status: &gatev1.ListenerStatus{
-						Name:       "http-gw",
-						Conditions: []metav1.Condition{},
-					},
-				},
-			},
-			parentAccepted:         true,
-			wantAccepted:           true,
-			wantAcceptedStatus:     metav1.ConditionTrue,
-			wantAcceptedReason:     string(gatev1.ListenerSetReasonAccepted),
-			wantProgrammedStatus:   metav1.ConditionTrue,
-			wantProgrammedReason:   string(gatev1.ListenerSetReasonProgrammed),
-			wantListenerEntryCount: 0, // No listeners belong to this ListenerSet.
-		},
-		{
-			desc: "ListenerSet not allowed by Gateway",
-			info: &listenerSetInfo{
-				generation: 2,
-				allowed:    false,
-			},
-			allListeners:           nil,
-			wantAcceptedStatus:     metav1.ConditionFalse,
-			wantAcceptedReason:     string(gatev1.ListenerSetReasonNotAllowed),
-			wantProgrammedStatus:   metav1.ConditionFalse,
-			wantProgrammedReason:   string(gatev1.ListenerSetReasonNotAllowed),
-			wantListenerEntryCount: 0,
-		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			status, accepted := makeListenerSetStatus(ktypes.NamespacedName{Namespace: "default", Name: "my-ls"}, test.info, test.allListeners, test.parentAccepted)
+			status, accepted := makeListenerSetStatus(test.listeners, test.parentAccepted)
 
 			assert.Equal(t, test.wantAccepted, accepted)
 			assert.Len(t, status.Listeners, test.wantListenerEntryCount)
@@ -13415,7 +13354,8 @@ func Test_makeListenerSetStatus(t *testing.T) {
 }
 
 // Test_loadListenerSetListeners covers the listener-level outcomes of merging the ListenerSet listeners into the Gateway ones:
-// the conflict conditions, and the precedence of a ListenerSet over its later siblings.
+// the conflict conditions, the precedence of a ListenerSet over its later siblings,
+// and the status of the ListenerSets the Gateway does not allow.
 func Test_loadListenerSetListeners(t *testing.T) {
 	gateway := &gatev1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default"},
@@ -13447,11 +13387,21 @@ func Test_loadListenerSetListeners(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc            string
-		gatewayListener *gatev1.Listener
-		listenerSets    []*gatev1.ListenerSet
-		wantListeners   []wantListener
+		desc             string
+		allowedListeners *gatev1.AllowedListeners
+		gatewayListener  *gatev1.Listener
+		listenerSets     []*gatev1.ListenerSet
+		wantListeners    []wantListener
+		wantNotAllowed   []string
 	}{
+		{
+			desc:             "ListenerSet not allowed by the Gateway",
+			allowedListeners: &gatev1.AllowedListeners{Namespaces: &gatev1.ListenerNamespaces{From: new(gatev1.NamespacesFromNone)}},
+			listenerSets: []*gatev1.ListenerSet{
+				listenerSet("my-listenerset", time.Time{}, gatev1.ListenerEntry{Name: "http", Protocol: gatev1.HTTPProtocolType, Port: 80}),
+			},
+			wantNotAllowed: []string{"my-listenerset"},
+		},
 		{
 			desc:            "Hostname conflict with a Gateway listener",
 			gatewayListener: &gatev1.Listener{Name: "web", Protocol: gatev1.HTTPProtocolType, Port: 80},
@@ -13504,6 +13454,11 @@ func Test_loadListenerSetListeners(t *testing.T) {
 
 			p := Provider{EntryPoints: map[string]Entrypoint{"web": {Address: ":80"}}}
 
+			gateway := gateway.DeepCopy()
+			if test.allowedListeners != nil {
+				gateway.Spec.AllowedListeners = test.allowedListeners
+			}
+
 			allocatedListeners := make(map[string]struct{})
 			if test.gatewayListener != nil {
 				gatewayWithListener := gateway.DeepCopy()
@@ -13511,8 +13466,19 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				p.loadGatewayListeners(t.Context(), gatewayWithListener, nil, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
 			}
 
-			listeners, _ := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}})
+			statusReport := newStatusReport()
+			listeners := p.loadListenerSetListeners(t.Context(), gateway, test.listenerSets, allocatedListeners, &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}, statusReport)
 			require.Len(t, listeners, len(test.wantListeners))
+
+			require.Len(t, statusReport.listenerSets, len(test.wantNotAllowed))
+			for _, name := range test.wantNotAllowed {
+				status, ok := statusReport.listenerSets[ktypes.NamespacedName{Namespace: "default", Name: name}]
+				require.True(t, ok)
+				require.Len(t, status.Conditions, 2)
+				for _, condition := range status.Conditions {
+					assert.Equal(t, string(gatev1.ListenerSetReasonNotAllowed), condition.Reason)
+				}
+			}
 
 			for i, want := range test.wantListeners {
 				assert.Equal(t, want.name, listeners[i].SectionName)
