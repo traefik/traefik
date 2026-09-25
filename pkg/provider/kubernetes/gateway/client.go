@@ -741,6 +741,34 @@ func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
 	return slices.Contains(c.watchedNamespaces, namespace)
 }
 
+// aggregateWatchedNamespaces aggregates namespaces from a static slice and/or
+// a label selector. If both are empty an empty slice is returned which means
+// watch all namespaces.
+func (c *clientWrapper) aggregateWatchedNamespaces(ctx context.Context, namespaces []string, namespaceSelector string) ([]string, error) {
+	if namespaceSelector == "" {
+		return namespaces, nil
+	}
+
+	_, err := labels.Parse(namespaceSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid namespace label selector %q: %w", namespaceSelector, err)
+	}
+
+	ns, err := c.csKube.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: namespaceSelector})
+	if err != nil {
+		return nil, fmt.Errorf("error listing namespaces: %w", err)
+	}
+
+	watchedNamespaces := slices.Clone(namespaces)
+	for _, item := range ns.Items {
+		if !slices.Contains(watchedNamespaces, item.Name) {
+			watchedNamespaces = append(watchedNamespaces, item.Name)
+		}
+	}
+
+	return watchedNamespaces, nil
+}
+
 // mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
 func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredParents []gatev1.RouteParentStatus, gateways []gatewayWithListeners) []gatev1.RouteParentStatus {
 	parentStatuses := make([]gatev1.RouteParentStatus, len(desiredParents))
