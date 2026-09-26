@@ -280,6 +280,12 @@ type ErrorPage struct {
 	// NginxHeaders defines the headers to forward to the Error page service.
 	// NginxHeaders option is unexposed to other providers than the IngressNGINX one.
 	NginxHeaders *http.Header `json:"nginxHeaders,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// IfAcceptContains defines whether the middleware should apply conditionally based on the Accept header.
+	// If not set, all requests will be processed.
+	// If set then custom errors will only be returned to requests which contain this value in their Accept header.
+	// Set this to eg `text/html` to return custom errors only to browsers and leave API endpoint responses unchanged.
+	IfAcceptContains string `json:"ifAcceptContains,omitempty" toml:"ifAcceptContains,omitempty" yaml:"ifAcceptContains,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
