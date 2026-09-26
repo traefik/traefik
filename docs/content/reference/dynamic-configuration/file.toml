@@ -342,6 +342,9 @@
           readTimeout = "42s"
           writeTimeout = "42s"
           dialTimeout = "42s"
+          masterName = "foobar"
+          sentinelUsername = "foobar"
+          sentinelPassword = "foobar"
           [http.middlewares.Middleware18.rateLimit.redis.tls]
             ca = "foobar"
             cert = "foobar"
