@@ -296,6 +296,14 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - serviceaccounts
   - services
   verbs:
@@ -346,6 +354,7 @@ rules:
   - gateway.networking.k8s.io
   resources:
   - gatewayclasses
+  - listenersets
   verbs:
   - get
   - list
