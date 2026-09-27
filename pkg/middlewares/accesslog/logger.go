@@ -72,6 +72,10 @@ type Handler struct {
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan handlerParams
 	wg             sync.WaitGroup
+	// done is closed by Close to stop the consumer. logHandlerChan is never
+	// closed, so a producer that arrives after Close races only against a
+	// send that can block, not one that panics on a closed channel.
+	done chan struct{}
 }
 
 // NewHandler creates a new Handler.
@@ -85,6 +89,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 		file = f
 	}
 	logHandlerChan := make(chan handlerParams, config.BufferingSize)
+	done := make(chan struct{})
 
 	var formatter logrus.Formatter
 
@@ -152,6 +157,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 		logger:         logger,
 		file:           file,
 		logHandlerChan: logHandlerChan,
+		done:           done,
 	}
 
 	if config.Filters != nil {
@@ -164,8 +170,22 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 
 	if config.BufferingSize > 0 {
 		logHandler.wg.Go(func() {
-			for handlerParams := range logHandler.logHandlerChan {
-				logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
+			for {
+				select {
+				case handlerParams := <-logHandler.logHandlerChan:
+					logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
+				case <-logHandler.done:
+					// Drain whatever is still buffered, then stop. The channel is
+					// never closed, so producers can never send on a closed channel.
+					for {
+						select {
+						case handlerParams := <-logHandler.logHandlerChan:
+							logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
+						default:
+							return
+						}
+					}
+				}
 			}
 		})
 	}
@@ -310,9 +330,14 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		}
 
 		if h.config.BufferingSize > 0 {
-			h.logHandlerChan <- handlerParams{
+			// A send here can race with Close. Because done is already closed and
+			// logHandlerChan is never closed, the send can only block, not panic.
+			select {
+			case h.logHandlerChan <- handlerParams{
 				ctx:          req.Context(),
 				logDataTable: logDataTable,
+			}:
+			case <-h.done:
 			}
 			return
 		}
@@ -324,8 +349,15 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 }
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
+//
+// It stops the consumer via the done channel and then drains what is buffered,
+// instead of closing logHandlerChan. Hijacked connections (e.g. WebSockets) can
+// outlive Close, because http.Server.Shutdown neither closes nor waits for them;
+// a producer arriving afterwards would otherwise send on a closed channel and
+// panic. Never closing the channel makes that impossible; such late entries are
+// dropped, which is acceptable during shutdown.
 func (h *Handler) Close() error {
-	close(h.logHandlerChan)
+	close(h.done)
 	h.wg.Wait()
 	return h.file.Close()
 }

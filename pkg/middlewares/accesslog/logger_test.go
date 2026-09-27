@@ -17,6 +17,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -481,6 +483,86 @@ func TestCommonLoggerWithBufferingSize(t *testing.T) {
 
 	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?param1=test1&param2=test2 HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
 	assertValidCommonLogData(t, expectedLog, logData)
+}
+
+func TestBufferedAccessLogCloseDoesNotPanicOnLateProducer(t *testing.T) {
+	// Regression test for #13693. With BufferingSize > 0 a hijacked connection
+	// (e.g. WebSocket) can outlive Handler.Close, because http.Server.Shutdown
+	// neither closes nor waits for hijacked connections. When such a handler
+	// finally unwinds it runs its deferred access-log send, which used to send
+	// on the channel that Close had closed, panicking with "send on closed
+	// channel". The fix never closes the channel, so the late send can only
+	// block on done, never panic.
+	config := &otypes.AccessLog{FilePath: filepath.Join(t.TempDir(), logFileNameSuffix), Format: CommonFormat, BufferingSize: 1024}
+
+	h, err := NewHandler(t.Context(), config)
+	require.NoError(t, err)
+
+	// Each request blocks inside next until released, mirroring a connection held
+	// open past graceTimeOut and torn down only after Close.
+	released := make(chan struct{})
+	var entered atomic.Int32
+
+	chain := alice.New()
+	chain = chain.Append(capture.Wrap)
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{AccessLogsEnabled: true}), nil
+	})
+	chain = chain.Append(h.AliceConstructor())
+	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		entered.Add(1)
+
+		<-released
+	}))
+	require.NoError(t, err)
+
+	const goroutines = 64
+	start := make(chan struct{})
+
+	var inFlight sync.WaitGroup
+	var panicked int32
+	for i := 0; i < goroutines; i++ {
+		inFlight.Add(1)
+
+		go func() {
+			defer inFlight.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					atomic.AddInt32(&panicked, 1)
+				}
+			}()
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost/ws", nil)
+			<-start
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+		}()
+	}
+
+	close(start)
+
+	// Wait for every goroutine to reach the blocked next before shutting down.
+	deadline := time.After(5 * time.Second)
+	for entered.Load() < goroutines {
+		select {
+		case <-deadline:
+			t.Fatalf("only %d of %d goroutines reached the blocked handler",
+				entered.Load(), goroutines)
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+
+	// Close (which stops the consumer) races with the in-flight deferred sends
+	// that run once released. On the buggy code these panic on a closed channel.
+	require.NoError(t, h.Close())
+	close(released)
+
+	inFlight.Wait()
+
+	if got := atomic.LoadInt32(&panicked); got != 0 {
+		t.Fatalf("expected 0 panics from late access-log producers, got %d", got)
+	}
 }
 
 func TestCommonLoggerDropQueryParameters(t *testing.T) {
