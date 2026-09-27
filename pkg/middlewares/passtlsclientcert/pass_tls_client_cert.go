@@ -146,6 +146,8 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	logger := middlewares.GetLogger(req.Context(), p.name, typeName)
 	ctx := logger.WithContext(req.Context())
 
+	// Note: the header names aliasing the managed ones (e.g. X_Forwarded_Tls_Client_Cert) are not handled here,
+	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 	if p.pem {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates))

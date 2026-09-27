@@ -95,6 +95,7 @@ Your PR will not be reviewed until these are green on the CI.
 * `make generate`
 * `make generate-crd`
 * `make test-gateway-api-conformance`
+* `make test-gateway-api-conformance-merged`
 * `make validate`
 * `make pull-images`
 * `make test`

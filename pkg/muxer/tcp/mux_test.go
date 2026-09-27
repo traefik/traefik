@@ -368,6 +368,15 @@ func TestParseHostSNI(t *testing.T) {
 			desc:       "HostSNI rule with no domain",
 			expression: "HostSNI() && ClientIP(`10.1`)",
 		},
+		{
+			desc:       "Negated HostSNI rule",
+			expression: "!HostSNI(`example.com`)",
+		},
+		{
+			desc:       "HostSNI rule and negated HostSNI rule",
+			expression: "HostSNI(`example.com`) && !HostSNI(`example.org`)",
+			domain:     []string{"example.com"},
+		},
 	}
 
 	for _, test := range testCases {

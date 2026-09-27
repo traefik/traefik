@@ -174,7 +174,7 @@ enabling the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | true      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disableDashboardAd" href="#opt-api-disableDashboardAd" title="#opt-api-disableDashboardAd">`api.disableDashboardAd`</a> | Disable the advertisement from the dashboard. | false      | No      |
-| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basepath).| false      | No      |
+| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.<br/>Please note that this mode is incompatible with the custom API [base path option](#opt-api-basePath).| false      | No      |
 
 ## Endpoints
 
@@ -222,7 +222,7 @@ The dashboard is available by default on the path  `/dashboard/`.
 
 !!! note
 
-    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
+    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
 	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
 As mentioned above in the [Security](#security) section, it is important to secure access to both the dashboard and the API.

@@ -175,7 +175,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 	), nil
 }
 
-// ParseDomains extract domains from rule.
+// ParseDomains extract the domains from positive Host matchers (not negated) in a rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
 	for matcher := range httpFuncs {
@@ -200,7 +200,7 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParseMatchers([]string{"Host"}), nil
+	return buildTree().ParsePositiveMatchers([]string{"Host"}), nil
 }
 
 // routes implements sort.Interface.

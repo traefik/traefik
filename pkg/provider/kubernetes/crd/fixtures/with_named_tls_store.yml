@@ -1,0 +1,20 @@
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  name: mystore
+  namespace: default
+
+spec:
+  defaultCertificate:
+    secretName: supersecret
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: supersecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=

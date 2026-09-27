@@ -55,6 +55,15 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		return o.observabilityContextHandler(next, internal, config), nil
 	})
 
+	// Seed the per-request service observability state container. The leaf
+	// service handler mutates it; the access-log middleware reads the final
+	// state at log emission.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			next.ServeHTTP(rw, req.WithContext(observability.WithServiceObservabilityState(req.Context())))
+		}), nil
+	})
+
 	// Capture middleware for accessLogs or metrics.
 	if o.shouldAccessLog(internal, config) || o.shouldMeter(internal, config) || o.shouldMeterSemConv(internal, config) {
 		chain = chain.Append(capture.Wrap)

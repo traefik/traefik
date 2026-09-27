@@ -22,6 +22,11 @@ Before creating `TLSOption` objects or referencing TLS options in the [`IngressR
     you'll have to add an annotation to the Ingress in the following form:
     `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
 
+    This `default` TLSOption carries the TLS enforcement policy (client authentication, TLS versions, cipher suites, SNI strictness)
+    of every router that does not reference a TLSOption explicitly.
+    The [`defaultTLSResourcesNamespace`](../../../../install-configuration/providers/kubernetes/kubernetes-crd.md#defaulttlsresourcesnamespace) provider option
+    restricts the namespace this cluster-wide default can be defined in.
+
 ## Configuration Example
 
 ```yaml tab="TLSOption"

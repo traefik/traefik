@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -44,13 +46,20 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 }
 
 func (p *Provider) buildSSLRedirect(loc *location) {
+	loc.SSLRedirectOnly = sslRedirectEnabled(loc.Config, loc.HasTLS)
+}
+
+// sslRedirectEnabled reports whether HTTP requests must be redirected to HTTPS.
+// It is shared by the location and the ssl-passthrough paths, so that both honor
+// the same semantics.
+func sslRedirectEnabled(cfg IngressConfig, hasTLS bool) bool {
 	// force-ssl-redirect redirects to HTTPS regardless of whether the Ingress has a TLS block.
-	forceSSLRedirect := ptr.Deref(loc.Config.ForceSSLRedirect, false)
+	forceSSLRedirect := ptr.Deref(cfg.ForceSSLRedirect, false)
 	// When an Ingress has a TLS block, by default SSL redirect should be applied.
 	// When an Ingress does not have a TLS block, SSL redirect should not be applied.
-	sslRedirect := loc.HasTLS && ptr.Deref(loc.Config.SSLRedirect, true)
+	sslRedirect := hasTLS && ptr.Deref(cfg.SSLRedirect, true)
 
-	loc.SSLRedirectOnly = forceSSLRedirect || sslRedirect
+	return forceSSLRedirect || sslRedirect
 }
 
 func (p *Provider) buildAccessLog(loc *location) {
@@ -97,6 +106,11 @@ func (p *Provider) buildAppRoot(loc *location) {
 
 func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHosts map[string]bool) {
 	if !ptr.Deref(loc.Config.FromToWwwRedirect, false) {
+		return
+	}
+
+	// ingress-nginx only flags a server for redirection from an Ingress rule, never for a default backend.
+	if hostname == "" {
 		return
 	}
 
@@ -244,18 +258,46 @@ func (p *Provider) buildIPAllowList(loc *location) {
 	}
 }
 
+// corsWildcardOriginRegexp is the same cors-allow-origin regexp used in ingress-nginx, with the
+// wildcard group made mandatory, so that it only matches the protocol://*.domain[:port] form:
+// https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/cors/main.go#L48
+var corsWildcardOriginRegexp = regexp.MustCompile(`^[a-z]+://\*\.[A-Za-z0-9\-.]*(:\d+)?$`)
+
+// wildcardOriginRegex converts a single-level wildcard origin (e.g. https://*.example.com)
+// into a regular expression, mirroring ingress-nginx semantics where '*' matches exactly
+// one DNS label.
+func wildcardOriginRegex(origin string) string {
+	quoted := regexp.QuoteMeta(origin)
+	return "^(?i)" + strings.Replace(quoted, `\*`, `[A-Za-z0-9-]+`, 1) + "$"
+}
+
 func (p *Provider) buildCORS(loc *location) {
 	if !ptr.Deref(loc.Config.EnableCORS, false) {
 		return
 	}
 
+	// ingress-nginx supports single-level wildcard origins, which the exact-match origin
+	// list cannot express; route them to the regex matcher to preserve behavior on migration.
+	// Values with a wildcard anywhere else are skipped, as ingress-nginx does.
+	var originList, originRegexList []string
+	for _, origin := range ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}) {
+		if origin != "*" && strings.Contains(origin, "*") {
+			if corsWildcardOriginRegexp.MatchString(origin) {
+				originRegexList = append(originRegexList, wildcardOriginRegex(origin))
+			}
+			continue
+		}
+		originList = append(originList, origin)
+	}
+
 	loc.CORS = &dynamic.Headers{
-		AccessControlAllowCredentials: ptr.Deref(loc.Config.EnableCORSAllowCredentials, true),
-		AccessControlExposeHeaders:    ptr.Deref(loc.Config.CORSExposeHeaders, []string{}),
-		AccessControlAllowHeaders:     ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
-		AccessControlAllowMethods:     ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
-		AccessControlAllowOriginList:  ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}),
-		AccessControlMaxAge:           new(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
+		AccessControlAllowCredentials:     ptr.Deref(loc.Config.EnableCORSAllowCredentials, true),
+		AccessControlExposeHeaders:        ptr.Deref(loc.Config.CORSExposeHeaders, []string{}),
+		AccessControlAllowHeaders:         ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
+		AccessControlAllowMethods:         ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
+		AccessControlAllowOriginList:      originList,
+		AccessControlAllowOriginListRegex: originRegexList,
+		AccessControlMaxAge:               new(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
 	}
 }
 
@@ -266,6 +308,9 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 	}
 
 	regex := loc.Path
+	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
+		regex = makeTrailingGroupOptional(loc.Path)
+	}
 
 	xfp := ""
 	if loc.Config.XForwardedPrefix != nil && regexPathWithCapture.MatchString(*loc.Config.XForwardedPrefix) {
