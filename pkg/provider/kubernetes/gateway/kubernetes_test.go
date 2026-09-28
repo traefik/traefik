@@ -13201,7 +13201,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "http",
-					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
+					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
 					Status: &gatev1.ListenerStatus{
 						Name:           "http",
 						SupportedKinds: []gatev1.RouteGroupKind{{Kind: "HTTPRoute", Group: new(gatev1.Group(gatev1.GroupName))}},
@@ -13226,7 +13226,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "https",
-					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
+					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
 					Status: &gatev1.ListenerStatus{
 						Name: "https",
 						Conditions: []metav1.Condition{
@@ -13251,7 +13251,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "http",
-					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
+					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
 					Status: &gatev1.ListenerStatus{
 						Name: "http",
 						Conditions: []metav1.Condition{
@@ -13276,7 +13276,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "http",
-					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
+					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
 					Status: &gatev1.ListenerStatus{
 						Name:       "http",
 						Conditions: []metav1.Condition{},
@@ -13284,7 +13284,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 				},
 				{
 					SectionName: "invalid",
-					ListenerSet: &ktypes.NamespacedName{Namespace: "default", Name: "my-ls"},
+					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
 					Status: &gatev1.ListenerStatus{
 						Name: "invalid",
 						Conditions: []metav1.Condition{
@@ -13311,7 +13311,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			status, accepted := makeListenerSetStatus(test.listeners, test.parentAccepted)
+			status, accepted := makeListenerSetStatus(0, test.listeners, test.parentAccepted)
 
 			assert.Equal(t, test.wantAccepted, accepted)
 			assert.Len(t, status.Listeners, test.wantListenerEntryCount)
