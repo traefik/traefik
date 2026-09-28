@@ -262,6 +262,26 @@ func Test_gatewayStatusEquals(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			desc: "Gateway with different attached listener sets count",
+			statusA: gatev1.GatewayStatus{
+				AttachedListenerSets: new(int32(1)),
+			},
+			statusB: gatev1.GatewayStatus{
+				AttachedListenerSets: new(int32(2)),
+			},
+			expected: false,
+		},
+		{
+			desc: "Gateway with same attached listener sets count",
+			statusA: gatev1.GatewayStatus{
+				AttachedListenerSets: new(int32(1)),
+			},
+			statusB: gatev1.GatewayStatus{
+				AttachedListenerSets: new(int32(1)),
+			},
+			expected: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -269,6 +289,106 @@ func Test_gatewayStatusEquals(t *testing.T) {
 			t.Parallel()
 
 			result := gatewayStatusEqual(test.statusA, test.statusB)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func Test_listenerSetStatusEqual(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		statusA  gatev1.ListenerSetStatus
+		statusB  gatev1.ListenerSetStatus
+		expected bool
+	}{
+		{
+			desc:     "Empty",
+			statusA:  gatev1.ListenerSetStatus{},
+			statusB:  gatev1.ListenerSetStatus{},
+			expected: true,
+		},
+		{
+			desc: "Same status",
+			statusA: gatev1.ListenerSetStatus{
+				Conditions: []metav1.Condition{{Type: "Accepted", Reason: "Accepted"}},
+				Listeners: []gatev1.ListenerEntryStatus{{
+					Name:           "foo",
+					AttachedRoutes: 1,
+					Conditions:     []metav1.Condition{{Type: "Programmed", Reason: "Programmed"}},
+				}},
+			},
+			statusB: gatev1.ListenerSetStatus{
+				Conditions: []metav1.Condition{{Type: "Accepted", Reason: "Accepted"}},
+				Listeners: []gatev1.ListenerEntryStatus{{
+					Name:           "foo",
+					AttachedRoutes: 1,
+					Conditions:     []metav1.Condition{{Type: "Programmed", Reason: "Programmed"}},
+				}},
+			},
+			expected: true,
+		},
+		{
+			desc: "Top-level conditions differ",
+			statusA: gatev1.ListenerSetStatus{
+				Conditions: []metav1.Condition{{Type: "Accepted", Reason: "Accepted"}},
+			},
+			statusB: gatev1.ListenerSetStatus{
+				Conditions: []metav1.Condition{{Type: "Accepted", Reason: "NotAllowed"}},
+			},
+			expected: false,
+		},
+		{
+			desc: "Listener entries length differ",
+			statusA: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{Name: "foo"}},
+			},
+			statusB:  gatev1.ListenerSetStatus{},
+			expected: false,
+		},
+		{
+			desc: "Listener entry names differ",
+			statusA: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{Name: "foo"}},
+			},
+			statusB: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{Name: "bar"}},
+			},
+			expected: false,
+		},
+		{
+			desc: "Listener entry attached routes differ",
+			statusA: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{Name: "foo", AttachedRoutes: 1}},
+			},
+			statusB: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{Name: "foo", AttachedRoutes: 2}},
+			},
+			expected: false,
+		},
+		{
+			desc: "Listener entry conditions differ",
+			statusA: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{
+					Name:       "foo",
+					Conditions: []metav1.Condition{{Type: "Programmed", Status: metav1.ConditionTrue}},
+				}},
+			},
+			statusB: gatev1.ListenerSetStatus{
+				Listeners: []gatev1.ListenerEntryStatus{{
+					Name:       "foo",
+					Conditions: []metav1.Condition{{Type: "Programmed", Status: metav1.ConditionFalse}},
+				}},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := listenerSetStatusEqual(test.statusA, test.statusB)
 
 			assert.Equal(t, test.expected, result)
 		})
