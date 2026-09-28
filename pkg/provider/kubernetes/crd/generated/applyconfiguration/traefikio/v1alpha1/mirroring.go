@@ -37,7 +37,7 @@ import (
 // Mirroring holds the mirroring service configuration.
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/load-balancing/service/#mirroring
 type MirroringApplyConfiguration struct {
-	LoadBalancerSpecApplyConfiguration `json:",inline"`
+	LoadBalancerSpecApplyConfiguration `json:""`
 	// MirrorBody defines whether the body of the request should be mirrored.
 	// Default value is true.
 	MirrorBody *bool `json:"mirrorBody,omitempty"`
