@@ -65,6 +65,7 @@ type Provider struct {
 	Token                        types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	CertAuthFilePath             string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces                   []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	NamespaceSelector            string              `description:"Kubernetes namespace label selector to watch for updates to Kubernetes objects." json:"namespaceSelector,omitempty" toml:"namespaceSelector,omitempty" yaml:"namespaceSelector,omitempty" export:"true"`
 	AllowCrossNamespace          bool                `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	AllowExternalNameServices    bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	CrossProviderNamespaces      []string            `description:"List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
@@ -125,7 +126,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			var eventsChan <-chan any
+			namespaces, err := k8sClient.aggregateWatchedNamespaces(ctxLog, p.Namespaces, p.NamespaceSelector)
+			if err == nil { // we were able to load the namespaces to watch.
+				eventsChan, err = k8sClient.WatchAll(namespaces, ctxPool.Done())
+			}
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
@@ -217,6 +222,14 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
 	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
+
+	_, err = labels.Parse(p.NamespaceSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid namespace label selector: %q", p.NamespaceSelector)
+	}
+	if p.NamespaceSelector != "" {
+		log.Ctx(ctx).Info().Msgf("namespace label selector is: %q", p.NamespaceSelector)
+	}
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
