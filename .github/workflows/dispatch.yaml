@@ -47,8 +47,8 @@ jobs:
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.AW_DISPATCH_APP_CLIENT_ID }}
-          private-key: ${{ secrets. AW_DISPATCH_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.AW_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AW_DISPATCH_APP_PRIVATE_KEY }}
           owner: traefik
           repositories: ai
 
@@ -67,6 +67,7 @@ jobs:
           set -euo pipefail
 
           gh workflow run dispatch.yml --repo traefik/ai \
+            --ref main \
             -f "source_repo=$SOURCE_REPO" \
             -f "number=$NUMBER" \
             -f "event_name=$EVENT_NAME" \
