@@ -44,6 +44,7 @@ jobs:
       # This workflow never checks out the pull request, and never runs code from it.
       - name: Generate a token for traefik/ai
         id: app-token
+        continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.AW_DISPATCH_APP_CLIENT_ID }}
@@ -52,6 +53,8 @@ jobs:
           repositories: ai
 
       - name: Dispatch the workflow
+        if: steps.app-token.outcome == 'success'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           SOURCE_REPO: ${{ github.repository }}
