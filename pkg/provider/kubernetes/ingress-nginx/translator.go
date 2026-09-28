@@ -506,6 +506,23 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
+	// Mirrors the proxy_set_header Authorization "" directive ingress-nginx emits alongside basic
+	// and digest auth. It is a service middleware because ingress-nginx still forwards the header
+	// to the auth-url service, which Traefik reaches through a router middleware.
+	if loc.BasicAuth != nil || loc.DigestAuth != nil {
+		if svc, ok := conf.HTTP.Services[rt.Service]; ok {
+			name := rt.Service + "-remove-authorization-header"
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{
+				Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Authorization": ""}},
+			}
+
+			// The TLS and non-TLS routers of a location share the same service.
+			if !slices.Contains(svc.Middlewares, name) {
+				svc.Middlewares = append(svc.Middlewares, name)
+			}
+		}
+	}
+
 	if loc.Buffering != nil {
 		name := routerKey + "-buffering"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Buffering: loc.Buffering}
