@@ -146,12 +146,11 @@ func (l *Listener) close() error {
 // we find that session, and otherwise we create a new one.
 // We then send the data the session's readLoop.
 func (l *Listener) readLoop() {
-	for {
-		// Allocating a new buffer for every read avoids
-		// overwriting data in c.msgs in case the next packet is received
-		// before c.msgs is emptied via Read()
-		buf := make([]byte, maxDatagramSize)
+	// The read buffer must be able to hold the largest possible datagram,
+	// as ReadFrom silently discards the bytes that do not fit.
+	buf := make([]byte, maxDatagramSize)
 
+	for {
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
 			return
@@ -161,8 +160,14 @@ func (l *Listener) readLoop() {
 			continue
 		}
 
+		// The datagram is copied into a buffer of its own size before being queued in c.msgs.
+		// Queuing buf[:n] directly would retain the whole maxDatagramSize backing array for each queued datagram,
+		// and would require allocating a new read buffer for every datagram to avoid overwriting queued data.
+		msg := make([]byte, n)
+		copy(msg, buf[:n])
+
 		select {
-		case conn.receiveCh <- buf[:n]:
+		case conn.receiveCh <- msg:
 		case <-conn.doneCh:
 			continue
 		}

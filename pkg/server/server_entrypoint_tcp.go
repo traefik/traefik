@@ -874,7 +874,7 @@ func isAliasingHeaderName(name string) bool {
 	return false
 }
 
-// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+// removeHeadersWithUnderscores removes any request header whose name contains an underscore character.
 func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
@@ -887,7 +887,7 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	})
 }
 
-// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header whose name contains an underscore character.
 func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
@@ -901,7 +901,7 @@ func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	})
 }
 
-// removeAliasingHeaders removes any request header and trailer whose name contains a character
+// removeAliasingHeaders removes any request header whose name contains a character
 // which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
 func removeAliasingHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -915,7 +915,7 @@ func removeAliasingHeaders(h http.Handler) http.Handler {
 	})
 }
 
-// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header or trailer whose name
+// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header whose name
 // contains a character which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
 func rejectAliasingHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
