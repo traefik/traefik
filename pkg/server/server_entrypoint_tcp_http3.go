@@ -136,9 +136,15 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.getter = rt.HTTP3TLSConfigMatcherFunc()
 }
 
-func (e *http3server) Shutdown(_ context.Context) error {
-	// TODO: use e.Server.CloseGracefully() when available.
-	return e.Server.Close()
+func (e *http3server) Shutdown(ctx context.Context) error {
+	// quic-go's Server.Shutdown sends a GOAWAY and waits for in-flight requests to finish before
+	// the grace-timeout context expires, unlike Server.Close which aborts connections immediately.
+	if err := e.Server.Shutdown(ctx); err != nil && !errors.Is(err, context.DeadlineExceeded) {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to gracefully shutdown the HTTP/3 server")
+		return err
+	}
+
+	return nil
 }
 
 func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {

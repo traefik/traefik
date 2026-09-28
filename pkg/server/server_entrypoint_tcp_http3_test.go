@@ -317,6 +317,118 @@ func TestHTTP3ReadTimeout(t *testing.T) {
 	}
 }
 
+// TestHTTP3GracefulShutdown is a regression test for an HTTP/3 server that aborted in-flight
+// responses on shutdown instead of honouring the grace timeout. An in-flight long-running
+// response must be allowed to finish during the grace period rather than being reset.
+func TestHTTP3GracefulShutdown(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	// A generous grace timeout so the slow response below has time to finish on graceful shutdown.
+	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(3 * time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:8092",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	const body = "slow-but-complete-body"
+	slowResponseStarted := make(chan struct{})
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		close(slowResponseStarted)
+		// Simulate a long in-flight response that a graceful shutdown must not abort.
+		time.Sleep(300 * time.Millisecond)
+		rw.WriteHeader(http.StatusOK)
+		_, writeErr := rw.Write([]byte(body))
+		t.Logf("slow HTTP/3 response finished write, err=%v", writeErr)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	transport := &http3.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:    certPool,
+			ServerName: "example.com",
+		},
+		// Force the dial to our local test server regardless of the request URL's host.
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return quic.DialAddr(ctx, "127.0.0.1:8092", tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = transport.Close() })
+
+	req, err := http.NewRequest(http.MethodGet, "https://example.com:8092/", http.NoBody)
+	require.NoError(t, err)
+
+	type result struct {
+		body string
+		err  error
+	}
+	done := make(chan result, 1)
+	go func() {
+		resp, err := transport.RoundTrip(req)
+		if err != nil {
+			done <- result{err: err}
+			return
+		}
+		defer resp.Body.Close()
+		data, err := io.ReadAll(resp.Body)
+		done <- result{body: string(data), err: err}
+	}()
+
+	// Let the request reach the handler and begin its slow response before we start shutting down,
+	// so an in-flight response is active precisely when the shutdown begins.
+	select {
+	case <-slowResponseStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("HTTP/3 request never reached the handler")
+	}
+	time.Sleep(50 * time.Millisecond)
+
+	// The in-flight response is still being produced. A graceful shutdown must honour the grace
+	// timeout and let it finish instead of aborting the connection.
+	start := time.Now()
+	entryPoint.Shutdown(ctx)
+	t.Logf("HTTP/3 Shutdown returned after %s", time.Since(start))
+
+	var res result
+	select {
+	case res = <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("in-flight HTTP/3 request did not finish after graceful shutdown")
+	}
+
+	t.Logf("in-flight HTTP/3 request finished: body=%q, err=%v", res.body, res.err)
+	assert.NoError(t, res.err, "graceful shutdown must not abort the in-flight HTTP/3 response")
+	assert.Equal(t, body, res.body, "the full response body must be delivered during the grace period")
+}
+
 func TestHTTP3StickyBackendTransport(t *testing.T) {
 	const backendConnHeader = "X-Backend-Conn"
 
