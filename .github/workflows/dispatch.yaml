@@ -26,7 +26,6 @@ on:
       - demilestoned
       - enqueued
       - dequeued
-  pull_request_review:
   issue_comment:
   issues:
 
