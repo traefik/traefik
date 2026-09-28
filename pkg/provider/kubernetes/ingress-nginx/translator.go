@@ -164,7 +164,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			primarySvc := buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
 			primarySvc.Observability = buildServiceObservability(backend)
 			conf.HTTP.Services[primarySvcName] = primarySvc
-			backendServices := []*dynamic.Service{primarySvc}
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
@@ -186,7 +185,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canarySvc := buildServiceWithLocConfig(canaryBackend, loc.ServersTransportName, loc.Config)
 					canarySvc.Observability = buildServiceObservability(canaryBackend)
 					conf.HTTP.Services[canarySvcName] = canarySvc
-					backendServices = append(backendServices, canarySvc)
 
 					conf.HTTP.Services[canaryWRRName] = &dynamic.Service{
 						Weighted: &dynamic.WeightedRoundRobin{
@@ -228,7 +226,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			if !loc.Error {
 				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
 				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
-				applyAuthorizationHeaderRemoval(loc, conf, backendServices...)
 			}
 
 			// An ssl-passthrough host is served over TCP on the TLS entryPoints, so it gets no TLS router at all.
@@ -254,7 +251,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				if !loc.Error {
 					p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
 					applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
-					applyAuthorizationHeaderRemoval(loc, conf, backendServices...)
 				}
 			}
 
@@ -329,25 +325,6 @@ func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
 				Port:      b.ServicePort,
 			},
 		},
-	}
-}
-
-// applyAuthorizationHeaderRemoval mirrors the proxy_set_header Authorization "" directive that
-// ingress-nginx emits on the backend location when basic or digest auth is enabled.
-// The header is stripped by a service middleware rather than by the auth middleware itself,
-// because ingress-nginx still forwards it to the external auth service configured with auth-url,
-// which Traefik reaches through a router middleware that runs before the service.
-func applyAuthorizationHeaderRemoval(loc *location, conf *dynamic.Configuration, services ...*dynamic.Service) {
-	if loc.BasicAuth == nil && loc.DigestAuth == nil {
-		return
-	}
-
-	name := loc.BackendName + "-remove-authorization-header"
-	conf.HTTP.Middlewares[name] = &dynamic.Middleware{
-		Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Authorization": ""}},
-	}
-	for _, svc := range services {
-		svc.Middlewares = []string{name}
 	}
 }
 
@@ -527,6 +504,23 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		name := routerKey + "-digest-auth"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth}
 		rt.Middlewares = append(rt.Middlewares, name)
+	}
+
+	// Mirrors the proxy_set_header Authorization "" directive ingress-nginx emits alongside basic
+	// and digest auth. It is a service middleware because ingress-nginx still forwards the header
+	// to the auth-url service, which Traefik reaches through a router middleware.
+	if loc.BasicAuth != nil || loc.DigestAuth != nil {
+		if svc, ok := conf.HTTP.Services[rt.Service]; ok {
+			name := rt.Service + "-remove-authorization-header"
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{
+				Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Authorization": ""}},
+			}
+
+			// The TLS and non-TLS routers of a location share the same service.
+			if !slices.Contains(svc.Middlewares, name) {
+				svc.Middlewares = append(svc.Middlewares, name)
+			}
+		}
 	}
 
 	if loc.Buffering != nil {
