@@ -299,7 +299,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.RequestURI = req.URL.RequestURI()
 
 	authCookies := forwardResponse.Cookies()
-	if len(authCookies) == 0 {
+	if len(authCookies) == 0 && fa.addAuthCookiesToResponseRegex == nil {
 		fa.next.ServeHTTP(rw, req)
 		return
 	}

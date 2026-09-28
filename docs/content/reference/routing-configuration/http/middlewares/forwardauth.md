@@ -61,6 +61,7 @@ spec:
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex). | "" | No      |
 | <a id="opt-authRequestHeaders" href="#opt-authRequestHeaders" title="#opt-authRequestHeaders">`authRequestHeaders`</a> | List of the headers to copy from the request to the authentication server. <br /> It allows filtering headers that should not be passed to the authentication server. <br /> If not set or empty, then all request headers are passed. | [] | No      |
 | <a id="opt-addAuthCookiesToResponse" href="#opt-addAuthCookiesToResponse" title="#opt-addAuthCookiesToResponse">`addAuthCookiesToResponse`</a> | List of cookies to copy from the authentication server to the response, replacing any existing conflicting cookie from the forwarded response.<br /> Please note that all backend cookies matching the configured list will not be added to the response. | [] | No      |
+| <a id="opt-addAuthCookiesToResponseRegex" href="#opt-addAuthCookiesToResponseRegex" title="#opt-addAuthCookiesToResponseRegex">`addAuthCookiesToResponseRegex`</a> | Regex matching cookie names to copy from the authentication server to the response. All matching backend cookies are removed, even when the authentication server returns no cookies.<br /> More information [here](#addauthcookiestoresponseregex). | "" | No |
 | <a id="opt-forwardBody" href="#opt-forwardBody" title="#opt-forwardBody">`forwardBody`</a> | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Traefik before forwarding, this breaks streaming. | false | No      |
 | <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). If left unset, the request body size is unrestricted which can have performance or security implications. < br/>More information [here](#maxbodysize).| -1 | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Defines a header field to store the authenticated user. | "" | No      |
@@ -80,6 +81,53 @@ It allows partial matching of the regular expression against the header key.
 The start of string (`^`) and end of string (`$`) anchors should be used to ensure a full match against the header key.
 
 Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
+
+### addAuthCookiesToResponseRegex
+
+The `addAuthCookiesToResponseRegex` option selects authentication response cookies by name.
+A cookie is copied if its name matches either this regex or the `addAuthCookiesToResponse` list.
+All backend cookies whose names match the regex are removed, even when the authentication server returns no cookies.
+
+Regular expressions allow partial matches. Use the `^` and `$` anchors to match a complete cookie name.
+
+```yaml tab="Structured (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        addAuthCookiesToResponseRegex: "^auth_cookie"
+```
+
+```toml tab="Structured (TOML)"
+[http.middlewares.test-auth.forwardAuth]
+  address = "https://example.com/auth"
+  addAuthCookiesToResponseRegex = "^auth_cookie"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.addauthcookiestoresponseregex=^auth_cookie"
+```
+
+```json tab="Tags"
+{
+  "Tags": [
+    "traefik.http.middlewares.test-auth.forwardauth.addauthcookiestoresponseregex=^auth_cookie"
+  ]
+}
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    addAuthCookiesToResponseRegex: "^auth_cookie"
+```
 
 ### maxBodySize
 

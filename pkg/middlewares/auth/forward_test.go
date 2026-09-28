@@ -922,3 +922,45 @@ func (s *mockSpan) SetName(name string) { s.name = name }
 func (s *mockSpan) TracerProvider() trace.TracerProvider {
 	return nil
 }
+
+func TestForwardAuthCookiesWithoutAuthCookies(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+
+	for _, test := range []struct {
+		desc        string
+		regex       string
+		wantCookies []string
+	}{
+		{
+			desc:        "regex strips matching backend cookies without auth cookies",
+			regex:       "^auth_",
+			wantCookies: []string{"backendCookie=Backend"},
+		},
+		{
+			desc:        "unset regex preserves existing behavior without auth cookies",
+			wantCookies: []string{"auth_session=Backend", "backendCookie=Backend"},
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Set-Cookie", "auth_session=Backend")
+				w.Header().Add("Set-Cookie", "backendCookie=Backend")
+				w.WriteHeader(http.StatusOK)
+			})
+			middleware, err := NewForward(t.Context(), next, dynamic.ForwardAuth{
+				Address:                       server.URL,
+				AddAuthCookiesToResponseRegex: test.regex,
+			}, "authTest")
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+			middleware.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "http://example.com/", nil))
+
+			assert.Equal(t, http.StatusOK, recorder.Code)
+			assert.Equal(t, test.wantCookies, recorder.Header().Values("Set-Cookie"))
+		})
+	}
+}
