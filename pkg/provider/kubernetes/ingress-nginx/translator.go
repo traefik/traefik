@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -425,6 +426,15 @@ func appendNonCanaryRule(rule string, c *canaryConfig) string {
 	return fmt.Sprintf("(%s) && (%s)", rule, strings.Join(rules, " || "))
 }
 
+func appendLimitAllowlistRule(rule string, allowlist []string) string {
+	quoted := make([]string, 0, len(allowlist))
+	for _, cidr := range allowlist {
+		quoted = append(quoted, fmt.Sprintf("%q", cidr))
+	}
+
+	return fmt.Sprintf("(%s) && ClientIP(%s)", rule, strings.Join(quoted, ", "))
+}
+
 // buildSticky returns a Sticky model if the affinity model is set to "cookie" and nil otherwise.
 // It also appends the given nameSuffix to the cookie name if not empty.
 func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
@@ -453,6 +463,46 @@ func buildSticky(cfg IngressConfig, nameSuffix string) *dynamic.Sticky {
 }
 
 func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, rt *dynamic.Router, conf *dynamic.Configuration) {
+	p.buildMiddlewareChain(mc, loc, routerKey, rt, conf, true)
+
+	// Every router carrying the location middlewares needs its own limit exemption.
+	p.applyLimitAllowlist(mc, loc, routerKey, rt, conf)
+}
+
+// applyLimitAllowlist adds a router matching the allowlisted client IPs, carrying the
+// same middleware chain as rt without the rate and connection limits. Bypassing the
+// limits with a dedicated router keeps the exemption in the routing layer, and covers
+// limit-connections the same way nginx does by emptying the shared counting key.
+func (p *Provider) applyLimitAllowlist(mc *model, loc *location, routerKey string, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if len(loc.LimitAllowlist) == 0 || !loc.hasLimits() {
+		return
+	}
+
+	allowlistKey := routerKey + "-limit-allowlist"
+	allowlistRouter := &dynamic.Router{
+		EntryPoints:   rt.EntryPoints,
+		Rule:          appendLimitAllowlistRule(rt.Rule, loc.LimitAllowlist),
+		RuleSyntax:    rt.RuleSyntax,
+		Service:       rt.Service,
+		TLS:           rt.TLS,
+		Observability: rt.Observability,
+	}
+
+	// The rule wrapping makes the allowlist rule longer than the rule it exempts, and
+	// the default priority is the rule length: left implicit, the allowlist router
+	// outranks unrelated routers of the same host and steals their traffic.
+	priority := rt.Priority
+	if priority == 0 {
+		priority = httpmuxer.GetRulePriority(rt.Rule)
+	}
+	allowlistRouter.Priority = priority + 1
+
+	conf.HTTP.Routers[allowlistKey] = allowlistRouter
+
+	p.buildMiddlewareChain(mc, loc, allowlistKey, allowlistRouter, conf, false)
+}
+
+func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey string, rt *dynamic.Router, conf *dynamic.Configuration, withLimits bool) {
 	if loc.SSLRedirectOnly && rt.TLS == nil {
 		name := routerKey + "-redirect-scheme"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
@@ -550,21 +600,23 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
-	if loc.RateLimitRPM != nil {
-		name := routerKey + "-limit-rpm"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPM}
-		rt.Middlewares = append(rt.Middlewares, name)
-	}
-	if loc.RateLimitRPS != nil {
-		name := routerKey + "-limit-rps"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPS}
-		rt.Middlewares = append(rt.Middlewares, name)
-	}
+	if withLimits {
+		if loc.RateLimitRPM != nil {
+			name := routerKey + "-limit-rpm"
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPM}
+			rt.Middlewares = append(rt.Middlewares, name)
+		}
+		if loc.RateLimitRPS != nil {
+			name := routerKey + "-limit-rps"
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPS}
+			rt.Middlewares = append(rt.Middlewares, name)
+		}
 
-	if loc.LimitConnections != nil {
-		name := routerKey + "-limit-connections"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{InFlightReq: loc.LimitConnections}
-		rt.Middlewares = append(rt.Middlewares, name)
+		if loc.LimitConnections != nil {
+			name := routerKey + "-limit-connections"
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{InFlightReq: loc.LimitConnections}
+			rt.Middlewares = append(rt.Middlewares, name)
+		}
 	}
 
 	// The middleware is attached to the plaintext router as well, and not only to the TLS one:
